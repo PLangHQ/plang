@@ -17,11 +17,8 @@ public abstract class @this : Channel
         // returns true and the step loop short-circuits. Snapshot carries enough
         // state for the channel to resume the goal once the user replies. Type="ask"
         // also satisfies the Type-side Exit check.
-        var ask = new module.output.Ask();
-        var d = new data.@this<module.output.Ask>("", ask, ask.Type, context: action.Context)
-        {
-            Snapshot = action.Snapshot(),
-        };
-        return Task.FromResult<data.@this>(d);
+        var pending = action.Context.Ok<module.output.Ask>(new module.output.Ask());
+        pending.Snapshot = action.Snapshot();
+        return Task.FromResult<data.@this>(pending);
     }
 }

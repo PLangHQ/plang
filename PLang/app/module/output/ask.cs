@@ -22,6 +22,21 @@ public sealed class Ask : global::app.type.item.@this, global::app.type.item.ICr
     protected internal override global::app.type.@this Type
         => new("ask", typeof(Ask));
 
+    /// <summary>A pending ask — no answer yet; the goal suspends on it.</summary>
+    public Ask() { }
+
+    /// <summary>An answered ask.</summary>
+    public Ask(string? answer) => Answer = answer;
+
+    /// <summary>What answers an ask is an Ask: an Ask is itself; any other answer (a line typed, a goal's
+    /// result, what a binding answered in the channel's place) is its text, answered.</summary>
+    public static Ask? Create(object? raw) => raw switch
+    {
+        null => null,
+        Ask ask => ask,
+        _ => new Ask(raw.ToString()),
+    };
+
     /// <summary>The user's response on the resume path. Null while the ask is
     /// pending — short-circuit semantics fire until this is bound.</summary>
     [Out] public string? Answer { get; init; }
@@ -78,26 +93,14 @@ public partial class ask : IContext
             // variable "!ask". Variable.Remove only takes flat keys; removing
             // the root consumes the marker. "!ask" is reserved for this use.
             await Context.Variable.Remove("!ask");
-            return Context.Ok<Ask>(new Ask { Answer = (await answer.Value())?.ToString() });
+            return Context.Ok<Ask>(new Ask((await answer.Value())?.ToString()));
         }
 
-        // Fresh path: delegate to the input channel. Stream blocks and returns
-        // the user's typed answer as a string Data; Message returns a suspending
-        // Ask with Snapshot attached. Coerce the wire shape into the Data<Ask>
-        // contract here so callers never see the legacy string-bearing form.
+        // Fresh path: the input channel answers as an Ask — answered (a stream's line, a goal's result) or
+        // pending with a Snapshot (a message channel), which the step loop's ShouldExit suspends on.
         var input = Context.Actor?.Channel.Get(global::app.channel.list.@this.Input)
             ?? throw new InvalidOperationException("No input channel registered on actor");
         // The wait ends when the run's cancellation says so — the program's timeout on the ask, a test's, Ctrl-C.
-        var askResult = await input.AskAsync(this, Context.CancellationToken);
-        if (!askResult.Success) return data.@this<Ask>.From(askResult);
-        // Stream-channel shape: a bare string answer. Lift into a resolved Ask
-        // (no Snapshot needed — the answer is already here).
-        var askVal = await askResult.Value();
-        if (askVal is not Ask ask)
-            return Context.Ok<Ask>(new Ask { Answer = askVal?.ToString() });
-        // Stateless-channel shape: a suspending Ask plus a Snapshot. Forward
-        // Snapshot + Type so the engine's ShouldExit and the channel's resume
-        // path both still trigger.
-        return data.@this<Ask>.From(askResult);
+        return await input.AskAsync(this, Context.CancellationToken);
     }
 }

@@ -138,7 +138,7 @@ public sealed class @this : global::app.channel.type.session.@this
                 return action.Context.Error(new ServiceError(
                     $"Channel '{Name}' has no interactive answerer (stream EOF)",
                     "ChannelEof", 400));
-            return action.Context.Ok(line);
+            return action.Context.Ok<module.output.Ask>(new module.output.Ask(line));
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException
                                                  or OperationCanceledException))
