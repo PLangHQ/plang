@@ -52,9 +52,10 @@ cp /tmp/good.pr <restore the .pr>
 > **`llmTrace` is gone** — replaced by the granular **`llm`** object. Only the flags
 > you set to `true` are emitted, each as its own `=== LLM SYSTEM/USER/SCHEMA/RESPONSE ===`
 > block: `system` (system prompt), `user` (user message — the single most useful one),
-> `schema` (the schema string sent), `response` (the raw model reply). Add
-> `"output":"file"` to write each block to a file instead of stderr. All-off / no `llm`
-> object means no tracing.
+> `schema` (the schema string sent), `response` (the raw model reply). Every block goes
+> to the debug channel (stderr, truncated to `maxLength`); for a file, redirect it
+> (`> /tmp/x.txt 2>&1`, as above) or back the `debug` channel with a file. All-off / no
+> `llm` object means no tracing.
 
 The `llm.query` lives in the `QueryAndValidatePlan` **sub-goal**, not in `Plan` —
 trace the sub-goal or you'll only see the orchestration. The `LLM USER` block is the

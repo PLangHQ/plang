@@ -21,22 +21,6 @@ public sealed class @this
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
 
-    /// <summary>
-    /// Path of the file the *current* LLM call's blocks land in. Set by
-    /// OnBeforeRequest, read by OnAfterResponse so request + response share one file.
-    /// LLM calls are sync so a single field suffices — no queue needed.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    internal global::app.type.item.path.@this? _currentLlmFilePath;
-
-    /// <summary>
-    /// Per-process counter for disambiguating LLM call retries. Increments on every
-    /// OnBeforeRequest. LlmFixer reuses the same (goal, step, trace.id) — without
-    /// this counter the retry would overwrite the original file we want to inspect.
-    /// </summary>
-    [System.Text.Json.Serialization.JsonIgnore]
-    private int _llmCallCounter;
-
     public @this(actor.context.@this context)
     {
         _context = context;
@@ -88,42 +72,39 @@ public sealed class @this
                 _context.App.actor.list.User, global::app.@event.binding.Scope.actor, Watches);
         }
 
-        // Subscribe to granular LLM tracing — each Llm.* flag emits its own block to stderr or file.
+        // Subscribe to granular LLM tracing — each Llm.* flag writes its own block to the debug channel, whose
+        // backing (stderr, a file) decides where it lands.
         if (Setting.Llm is { } llm && (llm.System == true || llm.User == true || llm.Response == true || llm.Schema == true))
         {
             if (_context.App.Code.Get<global::app.module.llm.code.ILlm>().Provider is global::app.module.llm.code.OpenAi oai)
             {
                 var context = _context.App.actor.list.User.Context;
-                var toFile = (TraceOutput)llm.Output == TraceOutput.file;
 
                 oai.OnBeforeRequest += async (messages, schema) =>
                 {
-                    // Resolve file path *once* per call so request + response share it.
-                    if (toFile) _currentLlmFilePath = ResolveLlmFilePath(context);
-
                     if (llm.System)
                     {
                         var sys = messages
                             .Where(m => string.Equals(m.Role, "system", StringComparison.OrdinalIgnoreCase))
                             .Select(m => m.Content ?? "(null)");
-                        await EmitLlmBlock("LLM SYSTEM", sys, context, toFile);
+                        await WriteLlmBlock("LLM SYSTEM", sys, context);
                     }
                     if (llm.User)
                     {
                         var users = messages
                             .Where(m => string.Equals(m.Role, "user", StringComparison.OrdinalIgnoreCase))
                             .Select(m => m.Content ?? "(null)");
-                        await EmitLlmBlock("LLM USER", users, context, toFile);
+                        await WriteLlmBlock("LLM USER", users, context);
                     }
                     if (llm.Schema == true && !string.IsNullOrEmpty(schema))
                     {
-                        await EmitLlmBlock("LLM SCHEMA", new[] { schema }, context, toFile);
+                        await WriteLlmBlock("LLM SCHEMA", new[] { schema }, context);
                     }
                 };
                 if (llm.Response)
                 {
                     oai.OnAfterResponse += (rawResponse) =>
-                        EmitLlmBlock("LLM RESPONSE", new[] { rawResponse ?? "(null)" }, context, toFile);
+                        WriteLlmBlock("LLM RESPONSE", new[] { rawResponse ?? "(null)" }, context);
                 }
             }
         }
@@ -259,7 +240,8 @@ public sealed class @this
     /// the same filter/truncate pipeline as the rest of debug output. Used by the
     /// granular Llm.* flag handlers — each flag fires its own block independently.
     /// </summary>
-    private static Task WriteLlmBlock(string title, IEnumerable<string> chunks, actor.context.@this context)
+    // internal for DebugTraceWriteTests (driving the LLM event lifecycle requires a real LLM call)
+    internal static Task WriteLlmBlock(string title, IEnumerable<string> chunks, actor.context.@this context)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"=== {title} ===");
@@ -267,105 +249,6 @@ public sealed class @this
             sb.AppendLine(chunk);
         sb.AppendLine($"=== END {title} ===");
         return WriteFiltered(sb, context);
-    }
-
-    /// <summary>
-    /// Routes an LLM block to either stderr (default) or the per-call file at
-    /// <c>.build/traces/{trace.id}/llm/{goalName}_{stepKey}.txt</c>. File mode skips
-    /// the maxLength truncation and stderr — the whole point of file mode is to
-    /// capture the full untruncated content for callers that exceed the terminal limit.
-    /// </summary>
-    // internal for DebugTraceWriteTests to drive the trace-write path
-    // (driving the full event lifecycle requires a real LLM call).
-    internal async Task EmitLlmBlock(string title, IEnumerable<string> chunks, actor.context.@this context, bool toFile)
-    {
-        if (toFile && _currentLlmFilePath != null)
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine($"=== {title} ===");
-            foreach (var chunk in chunks)
-                sb.AppendLine(chunk);
-            sb.AppendLine($"=== END {title} ===");
-            // Append routes through AuthGate(Write); a refused or failed write is reported on the debug channel.
-            var written = await _currentLlmFilePath.Append(sb.ToString(), context);
-            if (!written.Success)
-                await Write($"[debug] LLM file write failed: {written.Error?.Message} (path={_currentLlmFilePath}){Environment.NewLine}");
-            return;
-        }
-
-        await WriteLlmBlock(title, chunks, context);
-    }
-
-    /// <summary>
-    /// Builds the file path for the current LLM call. Reads:
-    /// - <c>trace.id</c> from <see cref="actor.context.@this.Trace"/> (C#-owned, born with Context).
-    /// - <c>%goal%</c> PLang variable (the user goal being built — set by the builder).
-    ///   Different from <c>context.Goal</c>, which is the *runtime* goal currently executing
-    ///   (typically the builder's own goal, e.g. BuildGoal — not what we want to label by).
-    /// - <c>%step%</c> PLang variable when present (BuildStep sets it for per-step LLM calls);
-    ///   absent for goal-level calls (BuildGoalCore), which use the literal "goal" as stepKey.
-    /// - <c>_llmCallCounter</c> appended when the same (goal, step) fires more than once
-    ///   in this process (LlmFixer retries reuse the same key).
-    /// </summary>
-    internal global::app.type.item.path.@this ResolveLlmFilePath(actor.context.@this context)
-    {
-        _llmCallCounter++;
-
-        var traceId = context.Trace.Id;
-
-        var goalData = context.Variable.Peek("goal");
-        var goalName = "unknown";
-        if (goalData != null && goalData.Peek() != null)
-        {
-            var nameProp = goalData.Peek()!.GetType().GetProperty("Name");
-            if (nameProp != null)
-                goalName = nameProp.GetValue(goalData.Peek())?.ToString() ?? "unknown";
-        }
-
-        var stepData = context.Variable.Peek("step");
-        var stepKey = "goal";
-        if (stepData != null && stepData.IsInitialized && stepData.Peek() != null)
-        {
-            var idxProp = stepData.Peek()!.GetType().GetProperty("Index");
-            if (idxProp != null)
-            {
-                var idx = idxProp.GetValue(stepData.Peek());
-                if (idx != null) stepKey = idx.ToString() ?? "goal";
-            }
-        }
-
-        var safeGoal = SanitizeFilenamePart(goalName);
-        // Derive directory via path verbs. Mkdir routes through AuthGate(Write);
-        // .build/ is in-root so it fast-passes.
-        var traceDir = global::app.type.item.path.@this.Resolve("/.build/traces", context)
-            .Combine(traceId).Combine("llm");
-        traceDir.Mkdir(context).GetAwaiter().GetResult();
-
-        // First call to a given (goal, step) gets a clean name; subsequent retries get _N.
-        var basePath = traceDir.Combine($"{safeGoal}_{stepKey}.txt");
-        { var __e = basePath.ExistsAsync(context).GetAwaiter().GetResult(); if (__e.Success && (__e.Peek() as global::app.type.item.@bool.@this)?.Value == false) return basePath; }
-
-        for (int n = 2; n < 100; n++)
-        {
-            var candidate = traceDir.Combine($"{safeGoal}_{stepKey}_{n}.txt");
-            { var __e = candidate.ExistsAsync(context).GetAwaiter().GetResult(); if (__e.Success && (__e.Peek() as global::app.type.item.@bool.@this)?.Value == false) return candidate; }
-        }
-        // Fallback if 100 retries somehow aren't enough — counter guarantees uniqueness.
-        return traceDir.Combine($"{safeGoal}_{stepKey}_call{_llmCallCounter}.txt");
-    }
-
-    // Conservative invalid-filename character set covering both Unix and
-    // Windows — keeps the sanitizer free of System.IO.Path reaches per the
-    // PLNG002 ban.
-    private static readonly char[] _invalidFileNameChars =
-        ['<', '>', ':', '"', '/', '\\', '|', '?', '*', '\0'];
-
-    private string SanitizeFilenamePart(string s)
-    {
-        var sb = new StringBuilder(s.Length);
-        foreach (var c in s)
-            sb.Append(Array.IndexOf(_invalidFileNameChars, c) >= 0 || char.IsControl(c) ? '_' : c);
-        return sb.ToString();
     }
 
     private static Task WriteFiltered(StringBuilder sb, actor.context.@this context)
@@ -605,22 +488,4 @@ public class LlmDebug
 
     /// <summary>Dump the JSON Schema string passed via the format instruction.</summary>
     public global::app.type.item.@bool.@this Schema { get; set; } = false;
-
-    /// <summary>
-    /// Where enabled blocks go. "stderr" (default) = existing labeled blocks to stderr,
-    /// subject to maxLength truncation. "file" = full untruncated blocks to a per-call
-    /// file at .build/traces/llm/{goalName}_{stepKey}_{traceId}.txt and stderr is suppressed.
-    /// File mode is the only way to get the full system prompt or raw response when they
-    /// exceed maxLength, since maxLength is for terminal display.
-    /// </summary>
-    public global::app.type.item.choice.@this<TraceOutput> Output { get; set; } = TraceOutput.stderr;
-}
-
-/// <summary>Where an enabled LLM trace block goes: labeled to stderr (truncated to maxLength), or whole to a
-/// per-call file.</summary>
-[global::app.Attributes.PlangType("traceoutput")]
-public enum TraceOutput
-{
-    stderr,
-    file,
 }

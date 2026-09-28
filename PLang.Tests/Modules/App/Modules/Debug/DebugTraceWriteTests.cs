@@ -1,62 +1,32 @@
 using TUnit.Core;
 using TUnit.Assertions;
 using TUnit.Assertions.Extensions;
-using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.Debug;
 
 /// <summary>
-/// <c>debug/this.cs</c> LLM trace writes.
-///
-/// Drives <c>EmitLlmBlock</c> + <c>ResolveLlmFilePath</c> directly —
-/// the actual handler methods. A mutation that reverted
-/// <c>_currentLlmFilePath.Append(...)</c> to <c>System.IO.File.AppendAllText</c>
-/// would not flip these tests (both end up writing to disk), so we also
-/// assert the underlying path is a <see cref="global::app.type.item.path.@this"/>
-/// instance — the typed channel is the audit-gate.
+/// <c>debug/this.cs</c> LLM trace writes: every block goes to the debug channel, whose backing (stderr, a
+/// file) decides where it lands. Drives <c>WriteLlmBlock</c> directly — the LLM event lifecycle needs a
+/// real LLM call.
 /// </summary>
 public class DebugTraceWriteTests
 {
-    private static PLangEngine NewApp(out string root)
+    [Test] public async Task LlmBlock_GoesToTheDebugChannel()
     {
-        root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-debug-" + System.Guid.NewGuid().ToString("N")[..8]);
-        System.IO.Directory.CreateDirectory(root);
-        return new PLangEngine(root);
-    }
+        await using var app = TestApp.Create("/app");
+        var captured = new System.IO.MemoryStream();
+        app.actor.list.System.Channel.Register(new global::app.channel.type.stream.@this(
+            global::app.channel.list.@this.Debug, captured,
+            global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
+        app.Debug = new global::app.module.debug.@this(app.actor.list.System.Context);
 
-    [Test] public async Task GenerateLlmFilePath_ProducedViaPathDerivationVerbs()
-    {
-        var app = NewApp(out var root);
-        var context = app.actor.list.User.Context;
-        var resolved = app.Debug.ResolveLlmFilePath(context);
-        // Typed channel: ResolveLlmFilePath must return a Path object (the
-        // .Absolute reach is auth-gated). A future mutation reverting to
-        // System.IO.Path.Combine + string would break this signature.
-        await Assert.That(resolved).IsNotNull();
-        await Assert.That(resolved is global::app.type.item.path.@this).IsTrue();
-        // And the derivation lands under .build/traces.
-        await Assert.That(resolved.Absolute.Replace('\\', '/'))
-            .Contains(".build/traces/");
-    }
+        await global::app.module.debug.@this.WriteLlmBlock("LLM TEST", new[] { "line one", "line two" },
+            app.actor.list.User.Context);
 
-    [Test] public async Task TraceWrite_GoesThroughPathVerbs_NotFileWriteAllText()
-    {
-        var app = NewApp(out var root);
-        var context = app.actor.list.User.Context;
-        // Pre-stage the trace file path the way the LLM event subscriber does.
-        app.Debug._currentLlmFilePath = app.Debug.ResolveLlmFilePath(context);
-        // Drive a trace emit. Append routes through AuthGate(Write); in-root
-        // fast-passes. If anyone reverts to System.IO.File.AppendAllText the
-        // PLNG002 analyzer fails the build — but we additionally verify the
-        // bytes land on disk.
-        await app.Debug.EmitLlmBlock("LLM TEST", new[] { "line one", "line two" }, context, toFile: true);
-        // Read back via the same gated verb.
-        var read = await app.Debug._currentLlmFilePath!.Touch(context);
-        await read.IsSuccess();
-        var content = (await read.Value())?.ToString() ?? "";
-        await Assert.That(content).Contains("LLM TEST");
-        await Assert.That(content).Contains("line one");
-        await Assert.That(content).Contains("line two");
+        var written = System.Text.Encoding.UTF8.GetString(captured.ToArray());
+        await Assert.That(written).Contains("=== LLM TEST ===");
+        await Assert.That(written).Contains("line one");
+        await Assert.That(written).Contains("line two");
+        await Assert.That(written).Contains("=== END LLM TEST ===");
     }
 }
