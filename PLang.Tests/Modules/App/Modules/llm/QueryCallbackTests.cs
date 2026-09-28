@@ -175,6 +175,27 @@ public class QueryCallbackTests
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("valid response");
     }
 
+    // The answer is the validator's %response%, in a frame for it — the caller's own %response% stays theirs.
+    [Test]
+    public async Task Query_OnValidateResponse_LeavesTheCallersResponseAlone()
+    {
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("the answer")));
+        await Ctx.Variable.Set("response", "mine");
+
+        var action = new query(Ctx) { Message = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Content = "validate me" }
+            }.ToListData<LlmMessage>(),
+            OnValidateResponse = Make.Call("NonExistentValidator"),
+            MaxValidationRetries = (global::app.type.item.number.@this)0
+        };
+        await action.Attach(null, Ctx);
+        await action.Start();
+
+        await Assert.That((await Ctx.Variable.GetValue("response"))?.ToString()).IsEqualTo("mine");
+    }
+
     [Test]
     public async Task Query_OnValidateResponse_Fails_RetriesWithFeedback()
     {

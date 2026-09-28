@@ -412,8 +412,10 @@ public sealed class OpenAi : ILlm
             // --- Custom validation ---
             if ((action.OnValidateResponse == null ? null : await action.OnValidateResponse.Value()) is { } validator)
             {
-                await context.Variable.Set("response", extracted);
-                var validationResult = await validator.Start(context);
+                // The answer is the validator's %response%, in a frame for it — never the caller's own variables.
+                data.@this validationResult;
+                await using (context.Variable.Calls.Push([new data.@this("response", extracted, context: context)], validator))
+                    validationResult = await validator.Start(context);
 
                 if (!validationResult.Success)
                 {
