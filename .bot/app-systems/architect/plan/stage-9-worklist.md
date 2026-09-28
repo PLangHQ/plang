@@ -67,6 +67,7 @@ Also pulled forward to stage 7's cleanup (decision 56), because this branch's ow
 - **Two sync-over-async sites, fixed when their callers move:** `Fluid.cs:378` (the IFileProvider include) and `OpenAi.cs:736` (`ReadAsDataUri`).
 - **A failing plang assertion prints its template, not its value** (`Actual: %a%`; found in 8h). The assertion error should carry the values as read.
 - **Open (decision 139): is a declared-type conversion inside a program action a birth?** `variable.set:262` re-types a converted leaf on `Make` (unfired). Decide while sweeping variable.
+- **`condition.Operator` lives in a module's action folder** (`module/action/condition/Operator.cs`), and since 9b.list.1 the list type depends on it (`list.Any` takes `choice<Operator>`). A type must not reach up into a module. Operator is comparison (`data.Comparison` is in `app.data`), so it moves there when condition comes up in 9b.
 - **Console presentation still in C#:** the report's summary and per-test lines, `coverage.Text`'s tables, and `test.Failure`'s block are all built with a StringBuilder. Presentation is os templates.
 
 ## Outside `Start()`
