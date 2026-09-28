@@ -192,7 +192,7 @@ public partial class Set : IContext, IScope
             if (type.kind.IsEmpty && targetType != null)
             {
                 var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: Context);
-                if (Context.App.type.list[typeName].Create(sourceValue, carrier)?.Type.kind is { IsEmpty: false } derivedKind)
+                if (Context.App.type.list[typeName].Make(sourceValue, carrier)?.Type.kind is { IsEmpty: false } derivedKind)
                     type = Context.App.type.list[new global::app.type.@this(type.Name, derivedKind.Name, type.Strict, type.Template), Context];
             }
             if (targetType == null)
@@ -259,7 +259,7 @@ public partial class Set : IContext, IScope
                 // materialized leaf, so this re-types eagerly. A kind-validatable target defers:
                 // its failure surfaces when the value loads (its own load validates and throws);
                 // anything else surfaces the failure here.
-                try { converted = type.Create(converted, Context); }
+                try { converted = type.Make(converted, Context); }
                 catch (System.Exception ex) when (ex is System.FormatException
                                                   or System.InvalidOperationException or System.Text.Json.JsonException)
                 {

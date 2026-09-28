@@ -215,13 +215,13 @@ public static class Make
 
     /// <summary>
     /// Test-only construction convenience for a source-backed (lazy) Data — the production
-    /// <c>data.FromRaw</c> dissolved into the one construction door (<c>type.Create</c>'s first
-    /// branch defers wire-raw to a lazy source). This is the same one-line compose the production
-    /// call sites now write inline; kept here so the lazy-source behavior tests stay concise.
+    /// <c>data.FromRaw</c> dissolved into the type's build (<c>type.Make</c>'s first branch defers
+    /// wire-raw to a lazy source). This is the same one-line compose the production call sites now
+    /// write inline; kept here so the lazy-source behavior tests stay concise.
     /// </summary>
     public static global::app.data.@this FromRaw(object raw, global::app.type.@this type,
         global::app.actor.context.@this? context = null, string name = "")
-        => new global::app.data.@this(name, type.Create(raw, context), context: context);
+        => new global::app.data.@this(name, type.Make(raw, context), context: context);
 
     /// <summary>
     /// Test-only: build a native list from a raw CLR sequence, wrapping each element as a Data

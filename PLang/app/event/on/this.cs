@@ -39,6 +39,7 @@ public class @this : global::app.type.item.@this
     // The shared empty start and load, typed.
     private static readonly start NoStart = (start)None["start"];
     private static readonly load NoLoad = (load)None["load"];
+    private static readonly create NoCreate = (create)None["create"];
     private static readonly set NoSet = (set)None["set"];
     private static readonly remove NoRemove = (remove)None["remove"];
     private static readonly write NoWrite = (write)None["write"];
@@ -53,6 +54,9 @@ public class @this : global::app.type.item.@this
 
     /// <summary>The load — what runs before and after the item is loaded.</summary>
     public virtual load load => NoLoad;
+
+    /// <summary>The create — what runs before and after a value of the item (a type) is born.</summary>
+    public virtual create create => NoCreate;
 
     /// <summary>The set — what runs before and after the item is set.</summary>
     public virtual set set => NoSet;

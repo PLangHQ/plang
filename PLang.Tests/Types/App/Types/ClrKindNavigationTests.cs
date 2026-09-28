@@ -116,11 +116,11 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
         // An unowned param answers the clr entity → a clr carrier → the probe's `is not clr` guard
         // leaves the param on its declared type instead of stamping a bogus item/* kind.
         var clrEntity = _app.type.list[typeof(Poco)];
-        var built = clrEntity.Create("anything", ctx.Ok(new global::app.type.item.@null.@this(clrEntity.Name)));
+        var built = clrEntity.Make("anything", ctx.Ok(new global::app.type.item.@null.@this(clrEntity.Name)));
         await Assert.That(built).IsTypeOf<global::app.type.clr.@this>();
 
         // Contrast: an owned type builds its own value with a real kind → the probe stamps it.
-        var numBuilt = _app.type.list["number"].Create("5", ctx.Ok(new global::app.type.item.@null.@this("number")));
+        var numBuilt = _app.type.list["number"].Make("5", ctx.Ok(new global::app.type.item.@null.@this("number")));
         await Assert.That(numBuilt is global::app.type.clr.@this).IsFalse();
         await Assert.That(numBuilt!.Type.kind.IsEmpty).IsFalse();
     }

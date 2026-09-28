@@ -50,7 +50,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         // A raw-backed json-array value materializes to the list value type on first touch (B+J).
         await using var app = NewApp();
         var ctx = app.User.Context;
-        var d = new global::app.data.@this("nums", ctx.App.type.list[new type("item", "json"), ctx].Create("[1,2,3]", ctx), context: ctx);
+        var d = new global::app.data.@this("nums", ctx.App.type.list[new type("item", "json"), ctx].Make("[1,2,3]", ctx), context: ctx);
         await Assert.That((await d.Value())).IsTypeOf<ListV>();
         await Assert.That(((ListV)(await d.Value())!).Count).IsEqualTo(3);
     }

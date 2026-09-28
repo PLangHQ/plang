@@ -252,7 +252,7 @@ public class SnapshotWireTests
         // `as snapshot` path: typeEntity.Create(envelopeString, context). A wire-raw string
         // defers to a lazy source declared {snapshot}; it materializes to the snapshot on .Value().
         var te = new global::app.type.@this("snapshot");
-        var conv = await new global::app.data.@this("", te.Create(json, context), context: context).Value();
+        var conv = await new global::app.data.@this("", te.Make(json, context), context: context).Value();
         await Assert.That(conv is global::app.snapshot.@this)
             .IsTrue(); // ← if false, the as-snapshot conversion is the bug
 
@@ -326,7 +326,7 @@ public class SnapshotWireTests
 
         var te = new global::app.type.@this("snapshot");
         // Wire-raw string → lazy source declared {snapshot}; materialize it to the snapshot.
-        var snap = await new global::app.data.@this("", te.Create(json, context), context: context).Value()
+        var snap = await new global::app.data.@this("", te.Make(json, context), context: context).Value()
             as global::app.snapshot.@this;
         await Assert.That(snap).IsNotNull();
 

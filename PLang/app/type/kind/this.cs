@@ -182,12 +182,13 @@ public class @this
     /// touched (<c>{image, png}</c>, <c>{text}</c>); a kind whose content is a whole Data (plang's own
     /// format) overrides it. Born with the caller's context.
     /// </summary>
-    public virtual global::System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
+    public virtual async global::System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
         global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,
         System.Threading.CancellationToken ct = default)
     {
+        // content decoded into a new value is a birth: it comes through its type's on.create
         var type = context.App.type.list[new global::app.type.@this(Owner ?? "binary", IsEmpty ? null : Name), context];
-        return global::System.Threading.Tasks.Task.FromResult(new global::app.data.@this(name, type.Create(raw, context), context: context));
+        return await type.Create(raw, context, name);
     }
 
     /// <summary>

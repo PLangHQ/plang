@@ -133,7 +133,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                     // the slot's own type, through the type door
                     if (typeof(global::app.type.item.@this).IsAssignableFrom(prop.PropertyType)
                         && !prop.PropertyType.IsInstanceOfType(built)
-                        && context.App.type.list[prop.PropertyType].Create(kvp.Value, new global::app.data.@this(kvp.Key, context: context)) is { } made
+                        && context.App.type.list[prop.PropertyType].Make(kvp.Value, new global::app.data.@this(kvp.Key, context: context)) is { } made
                         && prop.PropertyType.IsInstanceOfType(made))
                         built = made;
                     val = typeof(global::app.type.item.@this).IsAssignableFrom(prop.PropertyType)

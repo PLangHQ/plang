@@ -12,6 +12,7 @@ public sealed class own : @this
 
     private start? _start;
     private load? _load;
+    private create? _create;
     private set? _set;
     private remove? _remove;
     private write? _write;
@@ -25,6 +26,9 @@ public sealed class own : @this
 
     /// <summary>This item's own load — the one its indexer answers under <c>load</c>, held.</summary>
     public override load load => _load ??= (load)this["load"]!;
+
+    /// <summary>This item's own create — the one its indexer answers under <c>create</c>, held.</summary>
+    public override create create => _create ??= (create)this["create"]!;
 
     /// <summary>This item's own set — the one its indexer answers under <c>set</c>, held.</summary>
     public override set set => _set ??= (set)this["set"]!;

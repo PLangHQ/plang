@@ -82,7 +82,7 @@ public partial class @this
                 {
                     Name = declared.Name.ToLowerInvariant(),
                     Type = declared.Type,
-                    Value = declared.Type.Create(declared.Default, context),
+                    Value = declared.Type.Make(declared.Default, context),
                 });
             }
         foreach (var property in Property)

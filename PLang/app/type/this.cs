@@ -232,7 +232,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// as the <c>item</c> apex. A TYPE-SYSTEM concern, not serialization — json
     /// converts its own tokens then calls here for the leaves.
     /// </summary>
-    // The two Create doors' bound thunks. Both start as the one-shot `Bind` (set in the ctor) and
+    // The two Make builds' bound thunks. Both start as the one-shot `Bind` (set in the ctor) and
     // self-replace with the closed generic (or the decline) on first use — a non-ICreate entity
     // (primitive/host name) binds a null-thunk so the collection perimeter falls to the next rung.
     // Named for the discriminating parameter (fields can't overload); NOT `_context`/`_data` — a
@@ -240,16 +240,52 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     private System.Func<object?, global::app.actor.context.@this?, item.@this?> _byContext;
     private System.Func<object?, global::app.data.@this, item.@this?> _byData;
 
-    // THE born-native door — the ENTITY builds a plang VALUE of itself from a raw value, in one
+    /// <summary>
+    /// A program value of this type is born: <paramref name="raw"/> made into it, through this type's
+    /// <c>on.create</c> (<c>%!app.type.text.on.create%</c>) — before is handed the raw (a refusal or a handled
+    /// answer is the result, and nothing is made), after is handed the value.
+    /// <para>A birth is a value coming into being from outside the type system: an action making a value, or
+    /// content decoded into a new value (a file's bytes read into an image). A lazy value materializing — the
+    /// same value's delayed parse, a source or wire becoming its item — is not a birth, nor reading a
+    /// <c>.pr</c> slot, nor a re-type inside the type system: those are <see cref="Make(object?, actor.context.@this?)"/>,
+    /// which fires nothing.</para>
+    /// </summary>
+    // `new`: app.type.@this : item.@this, so this instance door (birth of the DECLARED type) deliberately
+    // hides item's static apex lift (build WHATEVER the raw is) — an entity instance calls this;
+    // item.@this.Create(...) reaches the apex.
+    public new System.Threading.Tasks.ValueTask<global::app.data.@this> Create(object? raw, global::app.actor.context.@this context)
+        => Create(raw, context, "");
+
+    /// <summary>The birth (<see cref="Create(object?, actor.context.@this)"/>) of a value named <paramref name="name"/>.</summary>
+    public System.Threading.Tasks.ValueTask<global::app.data.@this> Create(object? raw,
+        global::app.actor.context.@this context, string name)
+    {
+        // nothing bound: the value, made — nothing awaited, nothing else allocated
+        var events = on.create;
+        return events.IsBound(this, context)
+            ? Born(events, raw, context, name)
+            : new(new global::app.data.@this(name, Make(raw, context), context: context));
+    }
+
+    // The birth with something bound: before is handed the raw, after the value.
+    private async System.Threading.Tasks.ValueTask<global::app.data.@this> Born(global::app.@event.on.create events,
+        object? raw, global::app.actor.context.@this context, string name)
+    {
+        if (await events.Before(this, context, new global::app.data.@this(name, raw, context: context)) is { } answer
+            && (!answer.Success || answer.Handled))
+            return answer;
+        var made = new global::app.data.@this(name, Make(raw, context), context: context);
+        return await events.After(this, made, context);
+    }
+
+    // THE born-native build — the ENTITY builds a plang VALUE of itself from a raw value, in one
     // step: null → typed absence; a variable-named type → the variable; wire-raw (string/bytes) →
     // a lazy source (parse on first touch); an already-native container → held; a built leaf →
     // refined to the declared kind/template, or re-typed through its family courier; a raw CLR
     // scalar → born through the family lift, then refined. ALWAYS returns a value (never null); a
     // bad conversion throws (the throw boundary — rides MaterializeFailed like a reader parse).
-    // `new`: app.type.@this : item.@this, so this instance door (build the DECLARED type) deliberately
-    // hides item's static apex lift (build WHATEVER the raw is). Different questions, distinguished by
-    // receiver — an entity instance calls this; item.@this.Create(...) reaches the apex.
-    public new item.@this Create(object? raw, global::app.actor.context.@this? context)
+    // Fires nothing: it is the build a birth runs, and every re-type inside the type system.
+    internal item.@this Make(object? raw, global::app.actor.context.@this? context)
     {
         // context-never-null: a value is born WITH context. A null here is a construction site that
         // forgot to pass one — fail with a pointer, not an NRE deep in materialization.
@@ -308,7 +344,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             // its reason on the carrier's Error — this door is the throw boundary (rides MaterializeFailed).
             var lowered = leaf.Clr<object>();
             var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(this), context: context);
-            if (Create(lowered, carrier) is { } made) return made;
+            if (Make(lowered, carrier) is { } made) return made;
             if (carrier.Error != null) throw Failed(carrier.Error);
             // No family hook AND no error — nothing can build this shape (architect ruling: the
             // general CLR-target converter fallback dies; a leaf no family retypes is a producer bug).
@@ -321,8 +357,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // (the owner's lift or a clr carrier). The family lift speaks raw natively; refine re-enters here.
         if (_byContext(raw, context) is { } lifted)
             return string.Equals(Name, lifted.Type.Name, System.StringComparison.OrdinalIgnoreCase)
-                ? lifted : Create(lifted, context);
-        return Create(global::app.type.item.@this.Create(raw, context), context);
+                ? lifted : Make(lifted, context);
+        return Make(global::app.type.item.@this.Create(raw, context), context);
 
         static System.Exception Failed(global::app.error.Error? error)
             => new System.InvalidOperationException(error?.Message ?? "conversion failed");
@@ -330,9 +366,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>A still-encoded slice + the serializer that sliced it — the capture hands over
     /// itself. Mints the lazy <see cref="item.wire.@this"/>; the parse stays at first touch. The
-    /// capture door beside the content <see cref="Create(object?, actor.context.@this?)"/> door —
-    /// same verb, the capture's knowledge as an argument, never a format name.</summary>
-    public item.@this Create(string slice, global::app.type.item.wire.kind.plang.@this reader)
+    /// capture build beside the content <see cref="Make(object?, actor.context.@this?)"/> build —
+    /// same verb, the capture's knowledge as an argument, never a format name. Not a birth.</summary>
+    internal item.@this Make(string slice, global::app.type.item.wire.kind.plang.@this reader)
         => new item.wire.@this(slice, this, reader);
 
     /// <summary>Reads a value slot of this type off the reader — the one door for a
@@ -362,18 +398,18 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                 return global::app.type.item.variable.@this.Resolve(JsonSerializer.Deserialize<string>(slice)!, ctx.Context, ctx.Variable);
             return Template != null
                 ? new item.source(JsonSerializer.Deserialize<string>(slice)!, this, ctx.Variable)
-                : Create(slice, transport);
+                : Make(slice, transport);
         }
         // EVERY other slot is a wire: a VERBATIM Slice with the capturing transport named at the
         // mint site. Face validation is free — the type's own pull IS the validator on first touch.
         // A container is a template only by its own row's marker, holding its row's variables.
         var encoded = System.Text.Encoding.UTF8.GetString(reader.Slice());
-        return Template != null ? new item.wire.@this(encoded, this, transport, ctx.Variable) : Create(encoded, transport);
+        return Template != null ? new item.wire.@this(encoded, this, transport, ctx.Variable) : Make(encoded, transport);
     }
 
-    // The data door — the kind-aware build: THIS type makes itself from a value, reading the declared
+    // The data build — kind-aware: THIS type makes itself from a value, reading the declared
     // kind off the carrier's Type and landing a decline on data.Fail (the retype path Convert owned).
-    public item.@this? Create(object? raw, global::app.data.@this data) => _byData(raw, data);
+    internal item.@this? Make(object? raw, global::app.data.@this data) => _byData(raw, data);
 
     // The one-shot binders — same overload trick, one verb: on first use each swaps its field for the
     // closed thunk (or the decline) and forwards, so every later door call is a bare invocation.

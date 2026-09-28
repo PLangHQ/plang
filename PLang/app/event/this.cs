@@ -27,6 +27,15 @@ public abstract class @this : global::app.type.item.@this
     /// <summary>This event as <paramref name="on"/> holds it — the same event of another level.</summary>
     protected virtual @this Of(global::app.@event.on.@this on) => on[Name]!;
 
+    /// <summary>Whether anything is bound on this event, before or after it, at any of <paramref name="item"/>'s
+    /// levels — so a door whose before is handed something it would have to make asks first.</summary>
+    public bool IsBound(global::app.type.item.@this item, global::app.actor.context.@this context)
+    {
+        for (var depth = 0; item.Level(depth, context) is { } level; depth++)
+            if (Of(level.on) is { } at && (at.before.Count > 0 || at.after.Count > 0)) return true;
+        return false;
+    }
+
     /// <summary>
     /// Starts what is bound before <paramref name="item"/>'s event at each of its levels, outermost first
     /// (<see cref="global::app.type.item.@this.Level"/>). A failure or a Handled answer stops it and is the answer;
