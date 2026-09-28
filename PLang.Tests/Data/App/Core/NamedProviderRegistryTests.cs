@@ -1,13 +1,13 @@
 using app.actor.context;
 using app.error;
 using app.type.item.variable;
-using app.module.action.code;
-using app.module.action.signing;
-using app.module.action.signing.code;
-using app.module.action.identity.code;
-using app.module.action.crypto.code;
+using app.module.code;
+using app.module.signing;
+using app.module.signing.code;
+using app.module.identity.code;
+using app.module.crypto.code;
 using PLangEngine = global::app.@this;
-using EngineProviders = global::app.module.action.code.@this;
+using EngineProviders = global::app.module.code.@this;
 
 namespace PLang.Tests.App.Core;
 
@@ -51,7 +51,7 @@ public class NamedProviderRegistryTests
         var result = _app.Code.Get<ISigning>("custom");
         await Assert.That(result.Error).IsNull();
         await Assert.That(result.Provider).IsSameReferenceAs(provider);
-        await Assert.That(((global::app.module.action.code.ICode)result.Provider!).Name).IsEqualTo("custom");
+        await Assert.That(((global::app.module.code.ICode)result.Provider!).Name).IsEqualTo("custom");
     }
 
     [Test]
@@ -111,7 +111,7 @@ public class NamedProviderRegistryTests
 
         var result = _app.Code.Get<ISigning>();
         await Assert.That(result.Error).IsNull();
-        var entry = (global::app.module.action.code.ICode)result.Provider!;
+        var entry = (global::app.module.code.ICode)result.Provider!;
         await Assert.That(entry.Name).IsEqualTo("ed25519");
     }
 
@@ -194,7 +194,7 @@ public class NamedProviderRegistryTests
         await result.IsSuccess();
 
         await Assert.That(_app.Code.Get<ISigning>().Provider).IsSameReferenceAs(signing);
-        await Assert.That(((global::app.module.action.code.ICode)_app.Code.Get<IKey>().Provider!).Name).IsEqualTo("other-key");
+        await Assert.That(((global::app.module.code.ICode)_app.Code.Get<IKey>().Provider!).Name).IsEqualTo("other-key");
     }
 
     [Test]

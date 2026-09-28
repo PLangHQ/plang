@@ -1,0 +1,1041 @@
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
+using app.actor.context;
+using app.error;
+using app.goal;
+using PlangType = app.type.@this;
+using app.module.signing;
+using AppType = app.@this;
+using SysHttpMethod = System.Net.Http.HttpMethod;
+using Call = app.goal.step.action.@this;
+
+namespace app.module.http.code;
+
+/// <summary>
+/// Default HTTP provider. Owns all HTTP behavior — actions delegate to this via `this`.
+/// Lazily creates HttpClient on first request. Swappable via app.Code.
+/// </summary>
+public sealed class Default : IHttp
+{
+    public string Name { get; init; } = "default";
+    public bool IsBuiltIn { get; set; }
+    public string? Source { get; set; }
+
+    private readonly HttpMessageHandler? _handler;
+    private readonly Dictionary<(global::app.type.item.@bool.@this follow, global::app.type.item.number.@this max), HttpClient> _clients = new();
+
+    public Default() { }
+
+    /// <summary>
+    /// Test constructor: injects a custom HttpMessageHandler.
+    /// All real provider logic runs — only the HTTP transport is swapped.
+    /// </summary>
+    public Default(HttpMessageHandler handler) => _handler = handler;
+
+    // --- IHttp: action-level methods ---
+
+    public Task<data.@this> SendAsync(request action) => ExecuteHttpAsync(action.Context, async () =>
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var app = action.Context.App;
+        // T? convention — plang-null pass converts these !/Clr reads (value-door-plang-null branch)
+        var unsigned = (await action.Unsigned.Value())!.Value;
+        var timeout = (await action.TimeoutInSec.Value())!.ToDouble();
+        var contentType = (await action.ContentType.Value())!.Clr<string>()!;
+        var encoding = (await action.Encoding.Value())!.Clr<string>()!;
+        var followRedirects = (await action.FollowRedirects.Value())!;
+        var maxRedirects = (await action.MaxRedirects.Value())!;
+
+        var baseUrl = (await action.BaseUrl.Value())?.Clr<string>();
+        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, baseUrl, action.Context);
+        if (!urlResult.Success) return urlResult;
+        var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
+
+        var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
+            : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
+        var headers = MergeHeaders(action.Header == null || await action.Header.IsEmpty() ? null
+            : (await action.Header.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
+
+        // Build body
+        HttpContent? httpContent = null;
+        // An absent body is an Uninitialized Data whose value door answers @null (not C#
+        // null) — guard on IsEmpty so a no-body request (GET, etc.) skips serialization
+        // instead of serializing an empty value.
+        var bodyVal = action.Body == null || await action.Body.IsEmpty() ? null : await action.Body.Value();
+        if (bodyVal != null)
+        {
+            if (contentType.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
+                && bodyVal.Clr<Dictionary<string, object>>() is { } formDict)
+            {
+                var formValues = new Dictionary<string, string>();
+                foreach (var kvp in formDict)
+                    formValues[kvp.Key] = kvp.Value?.ToString() ?? "";
+                httpContent = new FormUrlEncodedContent(formValues);
+            }
+            else
+            {
+                // The content-type is a format, and the format writes the body value into the request
+                // (a dict/list/item writes itself) — never raw STJ on the value, which would reflect the base
+                // item property bag.
+                var ms = new MemoryStream();
+                var context = action.Context;
+                var serialized = await context.App.type.list.Mime(contentType).Encode(ms, action.Body!, context);
+                if (!serialized.Success) return serialized;
+                httpContent = new ByteArrayContent(ms.ToArray());
+                httpContent.Headers.ContentType = new MediaTypeHeaderValue(contentType) { CharSet = encoding };
+            }
+        }
+
+        var httpMethod = ToSystemMethod((await action.Method.Value())!.Value);
+        var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
+        ApplyHeaders(requestMessage, headers);
+
+        var completionOption = (action.OnStream == null ? null : await action.OnStream.Value()) != null
+            ? HttpCompletionOption.ResponseHeadersRead
+            : HttpCompletionOption.ResponseContentRead;
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
+        cts.CancelAfter(TimeSpan.FromSeconds(timeout));
+
+        var response = await SendHttpAsync(requestMessage, completionOption, followRedirects, maxRedirects, cts.Token);
+
+        if ((action.OnStream == null ? null : await action.OnStream.Value()) != null)
+        {
+            var maxSSEBuffer = (await action.MaxSSEBufferSize.Value())!.ToInt64();
+            return await HandleStreamingAsync(
+                response, requestMessage, (await action.OnStream.Value()), (action.StreamAs == null ? null : await action.StreamAs.Value())?.Value,
+                unsigned, app, action.Context, maxSSEBuffer, cts.Token);
+        }
+
+        var maxResponseSize = (await action.MaxResponseSize.Value())!.ToInt64();
+
+        using (response)
+        {
+            return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize, sw.Elapsed);
+        }
+    });
+
+    public Task<data.@this> DownloadAsync(download action) => ExecuteHttpAsync(action.Context, async () =>
+    {
+        var app = action.Context.App;
+        // T? convention — plang-null pass converts these (value-door-plang-null branch)
+        var unsigned = (await action.Unsigned.Value())!.Value;
+        var timeout = (await action.TimeoutInSec.Value())!.ToDouble();
+        var followRedirects = (await action.FollowRedirects.Value())!;
+        var maxRedirects = (await action.MaxRedirects.Value())!;
+
+        var baseUrl = (await action.BaseUrl.Value())?.Clr<string>();
+        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, baseUrl, action.Context);
+        if (!urlResult.Success) return urlResult;
+        var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
+
+        var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
+            : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
+        var headers = MergeHeaders(action.Header == null || await action.Header.IsEmpty() ? null
+            : (await action.Header.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
+        var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
+        ApplyHeaders(requestMessage, headers);
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
+        cts.CancelAfter(TimeSpan.FromSeconds(timeout));
+
+        using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, followRedirects, maxRedirects, cts.Token);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var (err, _) = await ReadErrorResponseAsync(response, requestMessage, action.Context, cts.Token);
+            return err;
+        }
+
+        var totalBytes = response.Content.Headers.ContentLength;
+        var maxDownloadSize = (await action.MaxDownloadSize.Value())!.ToInt64();
+        using var responseStream = await response.Content.ReadAsStreamAsync(cts.Token);
+        using var buffer = new MemoryStream();
+
+        await StreamWithProgressAsync(
+            responseStream, buffer, totalBytes, maxDownloadSize, (action.OnProgress == null ? null : await action.OnProgress.Value()), app, action.Context, cts.Token);
+
+        return action.Context.Ok(buffer.ToArray());
+    });
+
+    public Task<data.@this> UploadAsync(upload action) => ExecuteHttpAsync(action.Context, async () =>
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var app = action.Context.App;
+        // T? convention — plang-null pass converts these (value-door-plang-null branch)
+        var unsigned = (await action.Unsigned.Value())!.Value;
+        var timeout = (await action.TimeoutInSec.Value())!.ToDouble();
+        var encoding = (await action.Encoding.Value())!.Clr<string>()!;
+        var followRedirects = (await action.FollowRedirects.Value())!;
+        var maxRedirects = (await action.MaxRedirects.Value())!;
+
+        var baseUrl = (await action.BaseUrl.Value())?.Clr<string>();
+        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, baseUrl, action.Context);
+        if (!urlResult.Success) return urlResult;
+        var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
+
+        var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
+            : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
+        var headers = MergeHeaders(action.Header == null || await action.Header.IsEmpty() ? null
+            : (await action.Header.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
+
+        var (httpContent, contentErr) = await ResolveUploadContentAsync(action, app, encoding);
+        if (contentErr != null) return action.Context.Error(contentErr);
+
+        var httpMethod = ToSystemMethod((await action.Method.Value())!.Value);
+        var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
+        ApplyHeaders(requestMessage, headers);
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
+        cts.CancelAfter(TimeSpan.FromSeconds(timeout));
+
+        using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseContentRead, followRedirects, maxRedirects, cts.Token);
+
+        var maxResponseSize = (await action.MaxResponseSize.Value())!.ToInt64();
+        return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize, sw.Elapsed);
+    });
+
+    // --- Unified error handling ---
+
+    private async Task<data.@this> ExecuteHttpAsync(actor.context.@this context, Func<Task<data.@this>> operation)
+    {
+        try
+        {
+            return await operation();
+        }
+        catch (Exception ex) when (ex is TaskCanceledException or HttpRequestException
+            or IOException or UnauthorizedAccessException or FormatException)
+        {
+            var (key, statusCode) = ex switch
+            {
+                TaskCanceledException => ("Timeout", 408),
+                HttpRequestException hre => ("HttpError", (int)(hre.StatusCode ?? 0)),
+                IOException or UnauthorizedAccessException => ("IOError", 500),
+                FormatException => ("InvalidContent", 400),
+                _ => ("HttpError", 500)
+            };
+            return context.Error(new ServiceError(ex.Message, key, statusCode));
+        }
+    }
+
+    // --- Size-limited reads (security: untrusted external data) ---
+
+    private const long DefaultMaxResponseSize = 100 * 1024 * 1024; // 100MB
+    private const long MaxErrorBodySize = 4 * 1024; // 4KB for error messages
+
+    /// <summary>
+    /// Reads HTTP content as byte array with a size cap and slow-loris guard.
+    /// Returns Data so the size/throughput failures carry their own keys instead
+    /// of being laundered through the outer catch.
+    /// </summary>
+    private static async Task<data.@this<global::app.type.item.binary.@this>> ReadLimitedBytesAsync(
+        HttpContent content, long maxBytes, actor.context.@this context, CancellationToken ct = default)
+    {
+        using var stream = await content.ReadAsStreamAsync(ct);
+        using var limited = new MemoryStream();
+        var buffer = new byte[8192];
+        long totalRead = 0;
+        int bytesRead;
+        var throughputStart = DateTimeOffset.UtcNow;
+        long throughputBytes = 0;
+
+        while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
+        {
+            totalRead += bytesRead;
+            if (totalRead > maxBytes)
+                return context.Error<global::app.type.item.binary.@this>(new ServiceError(
+                    $"Response body exceeds maximum size of {FormatBytes(maxBytes)}",
+                    "ResponseTooLarge", 413));
+            limited.Write(buffer, 0, bytesRead);
+
+            throughputBytes += bytesRead;
+            var elapsed = (DateTimeOffset.UtcNow - throughputStart).TotalSeconds;
+            if (elapsed >= 30)
+            {
+                if (throughputBytes / elapsed < 1024)
+                    return context.Error<global::app.type.item.binary.@this>(new ServiceError(
+                        "Response too slow — possible slow-loris attack",
+                        "SlowResponse", 408));
+                throughputStart = DateTimeOffset.UtcNow;
+                throughputBytes = 0;
+            }
+        }
+
+        return context.Ok<global::app.type.item.binary.@this>(limited.ToArray());
+    }
+
+    /// <summary>
+    /// Reads HTTP content as UTF-8 string with a byte size limit. Thin wrapper
+    /// over <see cref="ReadLimitedBytesAsync"/> — size-cap / slow-loris logic
+    /// lives in one place.
+    /// </summary>
+    private static async Task<data.@this<global::app.type.item.text.@this>> ReadLimitedStringAsync(
+        HttpContent content, long maxBytes, actor.context.@this context, CancellationToken ct = default)
+    {
+        var bytes = await ReadLimitedBytesAsync(content, maxBytes, context, ct);
+        if (!bytes.Success) return context.Error<global::app.type.item.text.@this>(bytes.Error!);
+        return context.Ok<global::app.type.item.text.@this>(Encoding.UTF8.GetString((await bytes.Value())!.Clr<byte[]>()!));
+    }
+
+    // --- Internal HTTP transport ---
+
+    private Task<HttpResponseMessage> SendHttpAsync(
+        HttpRequestMessage request, HttpCompletionOption completionOption,
+        global::app.type.item.@bool.@this followRedirects, global::app.type.item.number.@this maxRedirects, CancellationToken ct)
+        => Client(followRedirects, maxRedirects).SendAsync(request, completionOption, ct);
+
+    public void Dispose()
+    {
+        foreach (var client in _clients.Values) client.Dispose();
+        _clients.Clear();
+    }
+
+    // One HttpClient per distinct (followRedirects, maxRedirects) — the whole plang values are the
+    // key (both value-equal). Redirect policy is baked into the handler at construction, so a client
+    // is reused across requests with the same policy (socket reuse / pooling) while each request
+    // still picks its own. The only lowering to CLR is at the SocketsHttpHandler (BCL) boundary.
+    private HttpClient Client(global::app.type.item.@bool.@this followRedirects, global::app.type.item.number.@this maxRedirects)
+    {
+        var key = (followRedirects, maxRedirects);
+        if (!_clients.TryGetValue(key, out var client))
+        {
+            client = _handler != null
+                ? new HttpClient(_handler, disposeHandler: false)
+                : new HttpClient(new SocketsHttpHandler
+                {
+                    PooledConnectionLifetime = TimeSpan.FromMinutes(2),
+                    AllowAutoRedirect = followRedirects.Value,
+                    MaxAutomaticRedirections = maxRedirects.ToInt32()
+                });
+            _clients[key] = client;
+        }
+        return client;
+    }
+    // --- Header helpers ---
+
+    private static Dictionary<string, string> MergeHeaders(
+        Dictionary<string, object>? stepHeaders,
+        Dictionary<string, object>? defaultHeaders)
+    {
+        var merged = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        if (defaultHeaders != null)
+        {
+            foreach (var kvp in defaultHeaders)
+                merged[kvp.Key] = kvp.Value?.ToString() ?? "";
+        }
+
+        if (stepHeaders != null)
+        {
+            foreach (var kvp in stepHeaders)
+                merged[kvp.Key] = kvp.Value?.ToString() ?? "";
+        }
+
+        return merged;
+    }
+
+    private static void ApplyHeaders(HttpRequestMessage request, Dictionary<string, string> headers)
+    {
+        foreach (var kvp in headers)
+        {
+            // Sanitize CRLF to prevent header injection
+            var value = kvp.Value.Replace("\r", "").Replace("\n", "");
+            if (IsContentHeader(kvp.Key))
+                request.Content?.Headers.TryAddWithoutValidation(kvp.Key, value);
+            else
+                request.Headers.TryAddWithoutValidation(kvp.Key, value);
+        }
+    }
+
+    private static bool IsContentHeader(string name) =>
+        name.Equals("Content-Type", StringComparison.OrdinalIgnoreCase) ||
+        name.Equals("Content-Length", StringComparison.OrdinalIgnoreCase) ||
+        name.Equals("Content-Encoding", StringComparison.OrdinalIgnoreCase) ||
+        name.Equals("Content-Language", StringComparison.OrdinalIgnoreCase) ||
+        name.Equals("Content-Disposition", StringComparison.OrdinalIgnoreCase) ||
+        name.Equals("Content-Range", StringComparison.OrdinalIgnoreCase);
+
+    // --- URL resolution ---
+
+    private static data.@this<global::app.type.item.text.@this> ResolveUrl(string url, string? baseUrl, actor.context.@this context)
+    {
+        if (url.StartsWith('/'))
+        {
+            if (string.IsNullOrEmpty(baseUrl))
+                return context.Error<global::app.type.item.text.@this>(new ServiceError(
+                    "Relative URL requires a BaseUrl configuration. Use 'configure http, base url https://...'",
+                    "NoBaseUrl", 400));
+
+            baseUrl = baseUrl.TrimEnd('/');
+            return context.Ok<global::app.type.item.text.@this>(baseUrl + url);
+        }
+
+        if (!url.Contains("://"))
+            url = "https://" + url;
+
+        // Security: only allow http/https schemes (blocks file://, gopher://, etc.)
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+        {
+            if (uri.Scheme != "http" && uri.Scheme != "https")
+                return context.Error<global::app.type.item.text.@this>(new ServiceError(
+                    $"Only http:// and https:// URLs are allowed, got {uri.Scheme}://",
+                    "InvalidUrlScheme", 400));
+        }
+
+        return context.Ok<global::app.type.item.text.@this>(url);
+    }
+
+    // --- Response parsing ---
+
+    private async Task<data.@this> ParseResponseAsync(
+        HttpResponseMessage response,
+        HttpRequestMessage request,
+        bool unsigned,
+        AppType app,
+        actor.context.@this context,
+        long maxResponseSize = DefaultMaxResponseSize,
+        System.TimeSpan duration = default)
+    {
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
+        var statusCode = (int)response.StatusCode;
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var (errorData, errorBody) = await ReadErrorResponseAsync(response, request, context);
+
+            if (!unsigned && !string.IsNullOrEmpty(errorBody))
+            {
+                // A failure reading the signed identity is a cause of the error it came with — never masking it,
+                // never dropped.
+                try { await TryExtractSignedErrorIdentity(errorBody, app, context); }
+                catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+                {
+                    errorData.Error?.list.Add(new ServiceError(
+                        $"the signed identity in the error response couldn't be read: {ex.Message}", "SignedIdentityUnreadable", 500) { Exception = ex });
+                }
+            }
+
+            return errorData;
+        }
+
+        // application/plang response — keeps the historic shape (deserialized
+        // Data flows through); no Response wrapping here.
+        if (contentType.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase))
+        {
+            if (unsigned)
+            {
+                var err = context.Error(new ServiceError(
+                    "Unsigned request received application/plang response — this is not allowed",
+                    "UnsignedPlang", 403));
+                BuildProperties(err, request, response);
+                return err;
+            }
+
+            return await ParsePlangResponseAsync(response, request, app, context, maxResponseSize);
+        }
+
+        // The response body is decoded by its Content-Type's format into LAZY Data, born with the asker's
+        // context — the body is NOT deserialized at read time, it materializes on first touch (navigation /
+        // As<T>). A status check (%response!status%) reads a Property and never touches the body. A response
+        // with no Content-Type is web text.
+        var bytesRead = await ReadLimitedBytesAsync(response.Content, maxResponseSize, context);
+        if (!bytesRead.Success)
+        {
+            BuildProperties(bytesRead, request, response);
+            return bytesRead;
+        }
+
+        var format = context.App.type.list.Mime(string.IsNullOrEmpty(contentType) ? "text/plain" : contentType);
+        var result = await format.Decode((await bytesRead.Value())!.Clr<byte[]>()!, context, "http");
+        // Metadata (status, headers, duration, url, ...) rides as Properties —
+        // read with `!`. BuildProperties populates the protocol metadata; duration
+        // is the one timing fact only this layer knows.
+        BuildProperties(result, request, response);
+        // Duration as seconds (double) — Properties hold wire-supported primitives,
+        // so a raw TimeSpan can't ride; total-seconds is queryable (%resp!Duration%).
+        result.Properties["Duration"] = duration.TotalSeconds;
+        return result;
+    }
+
+    /// <summary>
+    /// Parses application/plang response: read the wire as data.@this (with Signature via [In]),
+    /// verify signature, set %!ServiceIdentity%.
+    ///
+    /// The read routes through the registered transport (application/plang's own serializer) —
+    /// its read door owns the [In] signature inflow, the buffer path, and deferred verify, so
+    /// the module no longer duplicates a private Wire+options rig. Same door serves
+    /// <c>StreamPlangAsync</c>'s per-line NDJSON read and the signed-error-body probe.
+    /// </summary>
+    private async Task<data.@this> ParsePlangResponseAsync(
+        HttpResponseMessage response,
+        HttpRequestMessage request,
+        AppType app,
+        actor.context.@this context,
+        long maxResponseSize = DefaultMaxResponseSize)
+    {
+        var bodyRead = await ReadLimitedStringAsync(response.Content, maxResponseSize, context);
+        if (!bodyRead.Success)
+        {
+            BuildProperties(bodyRead, request, response);
+            return bodyRead;
+        }
+        var body = (await bodyRead.Value())!.Clr<string>()!;
+
+        // plang's own format reads the body — the whole Data, its signature layer verified ([In]
+        // signature inflow). Store view = an exact copy of the inbound message, not the Out wire view. A
+        // parse failure surfaces as a keyed Error (PlangDeserializeError), not a throw.
+        var read = await context.App.type.list["wire"].kind["plang"]!.Decode(Encoding.UTF8.GetBytes(body), context, view: global::app.View.Store);
+        if (!read.Success)
+        {
+            BuildProperties(read, request, response);
+            return read;
+        }
+        var data = read;
+
+        // Data.Signature is populated from the wire via [In] — pass straight to verify
+        var verifyAction = new signing.verify(context)
+        {
+            Data = data
+        };
+
+        var verifyResult = await app.Run<signing.verify>(verifyAction, context);
+        if (!verifyResult.Success)
+        {
+            BuildProperties(verifyResult, request, response);
+            return verifyResult;
+        }
+
+        await context.Variable.Set("!ServiceIdentity", (data?.Peek() as global::app.type.item.signature.@this)?.Identity?.ToString());
+
+        BuildProperties(data, request, response);
+        return data;
+    }
+
+    /// <summary>
+    /// Tries to extract identity from a signed error response body.
+    /// The error body may be a Data with Signature, or have a "signature" field.
+    /// </summary>
+    private async Task TryExtractSignedErrorIdentity(
+        string errorBody, AppType app, actor.context.@this context)
+    {
+        // Try deserializing as data.@this with transport options (may have Signature via [In])
+        // A non-plang error body reads back as a failure — data stays null and the legacy-format
+        // fallback below takes over.
+        var read = await context.App.type.list["wire"].kind["plang"]!.Decode(Encoding.UTF8.GetBytes(errorBody), context, view: global::app.View.Store);
+        data.@this? data = read.Success ? read : null;
+
+        // A signed response body reads back as a `signature` layer wrapping the
+        // inner data (the read boundary auto-verifies; verify peels it).
+        if (data?.Peek() is global::app.type.item.signature.@this layer)
+        {
+            var verifyAction = new signing.verify(context) { Data = data };
+            var verifyResult = await app.Run<signing.verify>(verifyAction, context);
+            if (verifyResult.Success)
+                await context.Variable.Set("!ServiceIdentity", layer.Identity.ToString());
+        }
+    }
+
+    /// <summary>
+    /// Reads an error HTTP response and builds a Data error with properties.
+    /// Returns the error Data and the raw error body (for signed error extraction).
+    /// </summary>
+    private static async Task<(data.@this Error, string Body)> ReadErrorResponseAsync(
+        HttpResponseMessage response, HttpRequestMessage request, actor.context.@this context, CancellationToken ct = default)
+    {
+        var errorBody = "";
+        global::app.error.Error? unread = null;
+        // An error body that can't be read (size cap, slow sender, network) is said on the error — the status
+        // still answers, and why its body is missing isn't lost.
+        try
+        {
+            var read = await ReadLimitedStringAsync(response.Content, MaxErrorBodySize, context, ct);
+            if (read.Success) errorBody = (await read.Value())!.Clr<string>()!;
+            else unread = read.Error;
+        }
+        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
+        {
+            unread = new ServiceError($"the error response's body couldn't be read: {ex.Message}", "HttpBodyUnreadable", 500) { Exception = ex };
+        }
+        var err = context.Error(new ServiceError(
+            $"{(int)response.StatusCode} {response.ReasonPhrase}: {errorBody}".Trim(),
+            "HttpError", (int)response.StatusCode));
+        if (unread != null) err.Error!.list.Add(unread);
+        BuildProperties(err, request, response);
+        return (err, errorBody);
+    }
+
+    // --- Response metadata ---
+
+    private static void BuildProperties(data.@this data, HttpRequestMessage request, HttpResponseMessage response)
+    {
+        var props = data.Properties;
+
+        props["Url"] = request.RequestUri?.ToString();
+        props["Method"] = request.Method.Method;
+
+        var reqHeaders = new Dictionary<string, object?>();
+        foreach (var h in request.Headers)
+            reqHeaders[h.Key] = string.Join(", ", h.Value);
+        props["RequestHeaders"] = reqHeaders;
+
+        if (request.Content != null)
+        {
+            props["ContentType"] = request.Content.Headers.ContentType?.ToString();
+            props["ContentLength"] = request.Content.Headers.ContentLength;
+        }
+
+        props["StatusCode"] = (int)response.StatusCode;
+        // `status` is the numeric code (the architect's %response!status% == 200);
+        // the human reason phrase rides as `reason`.
+        props["Status"] = (int)response.StatusCode;
+        props["Reason"] = response.ReasonPhrase;
+        props["IsSuccess"] = response.IsSuccessStatusCode;
+
+        var respHeaders = new Dictionary<string, object?>();
+        foreach (var h in response.Headers)
+            respHeaders[h.Key] = string.Join(", ", h.Value);
+        props["Headers"] = respHeaders;
+
+        var contentHeaders = new Dictionary<string, object?>();
+        foreach (var h in response.Content.Headers)
+            contentHeaders[h.Key] = string.Join(", ", h.Value);
+        props["ContentHeaders"] = contentHeaders;
+
+        if (response.Content.Headers.ContentType?.CharSet != null)
+            props["Charset"] = response.Content.Headers.ContentType.CharSet;
+    }
+
+    // --- Streaming ---
+
+    private async Task<data.@this> HandleStreamingAsync(
+        HttpResponseMessage response,
+        HttpRequestMessage request,
+        Call onStream,
+        StreamFormat? streamAs,
+        bool unsigned,
+        AppType app,
+        actor.context.@this context,
+        long maxSSEBufferSize,
+        CancellationToken ct)
+    {
+        if (!response.IsSuccessStatusCode)
+        {
+            using (response)
+            {
+                var (err, _) = await ReadErrorResponseAsync(response, request, context, ct);
+                return err;
+            }
+        }
+
+        var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
+        var format = streamAs ?? DetectStreamFormat(contentType);
+
+        var isPlang = contentType.StartsWith("application/plang", StringComparison.OrdinalIgnoreCase);
+        if (isPlang && unsigned)
+        {
+            using (response)
+            {
+                var err = context.Error(new ServiceError(
+                    "Unsigned request received application/plang streaming response — this is not allowed",
+                    "UnsignedPlang", 403));
+                BuildProperties(err, request, response);
+                return err;
+            }
+        }
+
+        using (response)
+        {
+            using var stream = await response.Content.ReadAsStreamAsync(ct);
+
+            switch (format)
+            {
+                case StreamFormat.Bytes:
+                    await StreamBytesAsync(stream, onStream, app, context, ct);
+                    break;
+
+                case StreamFormat.SSE:
+                    await StreamSSEAsync(stream, onStream, app, context, maxSSEBufferSize, ct);
+                    break;
+
+                default:
+                    if (isPlang)
+                        await StreamPlangAsync(stream, onStream, app, context, ct);
+                    else
+                        await StreamLinesAsync(stream, onStream, app, context, ct);
+                    break;
+            }
+
+            var result = context.Ok();
+            BuildProperties(result, request, response);
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Runs the held callback call once for one runtime value. The value is run-state: it binds as
+    /// the variable <paramref name="name"/> (the name the slot's <c>[GoalCallback]</c> advertises —
+    /// <c>%chunk%</c>, <c>%progress%</c>) in the context the call runs under; the held call then runs
+    /// as itself, binding its authored arguments after, so an authored name wins a collision.
+    /// </summary>
+    private static async Task RunCallbackAsync(
+        Call held, object? value, PlangType? type, string name,
+        AppType app, actor.context.@this context, CancellationToken ct)
+    {
+        // A Data payload rides AS the variable — re-boxing would nest a bare Data, which the store
+        // seam rejects.
+        data.@this bound;
+        if (value is data.@this dv) { dv.Name = name; bound = dv; }
+        else bound = new data.@this(name, value, type, context: context);
+        await context.Variable.Set(name, bound);
+
+        var result = await held.Start(context);
+        if (!result.Success)
+            await app.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteText(result.Error?.Message ?? "");
+    }
+
+    private static StreamFormat DetectStreamFormat(string contentType)
+    {
+        if (contentType.Equals("text/event-stream", StringComparison.OrdinalIgnoreCase))
+            return StreamFormat.SSE;
+        return StreamFormat.Line;
+    }
+
+    private static async Task StreamLinesAsync(
+        Stream stream, Call onStream,
+        AppType app, actor.context.@this context, CancellationToken ct)
+    {
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        while (!ct.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(ct);
+            if (line == null) break;
+            if (string.IsNullOrEmpty(line)) continue;
+
+            await RunCallbackAsync(onStream, line, context.App.type.list["text"], "chunk", app, context, ct);
+        }
+    }
+
+    private static async Task StreamSSEAsync(
+        Stream stream, Call onStream,
+        AppType app, actor.context.@this context, long maxBufferSize, CancellationToken ct)
+    {
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        var dataBuffer = new StringBuilder();
+        int consecutiveOverflows = 0;
+        const int maxConsecutiveOverflows = 3;
+
+        while (!ct.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(ct);
+            if (line == null)
+            {
+                if (dataBuffer.Length > 0)
+                    await RunCallbackAsync(onStream, dataBuffer.ToString(), context.App.type.list["text"], "chunk", app, context, ct);
+                break;
+            }
+
+            if (line.StartsWith("data:", StringComparison.Ordinal))
+            {
+                var data = line.Length > 5 ? line[5..].TrimStart() : "";
+
+                // Guard against unbounded SSE messages (no blank-line boundary)
+                if (dataBuffer.Length + data.Length + 1 > maxBufferSize)
+                {
+                    consecutiveOverflows++;
+                    if (consecutiveOverflows >= maxConsecutiveOverflows)
+                        throw new InvalidOperationException(
+                            $"SSE stream disconnected after {maxConsecutiveOverflows} consecutive buffer overflows — possible attack");
+
+                    await app.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(
+                        context.Error(new ServiceError(
+                            $"SSE message exceeds maximum buffer size of {maxBufferSize / (1024 * 1024)}MB",
+                            "SSEBufferOverflow", 413)));
+                    dataBuffer.Clear();
+                    continue;
+                }
+
+                if (dataBuffer.Length > 0) dataBuffer.Append('\n');
+                dataBuffer.Append(data);
+            }
+            else if (line.Length == 0 && dataBuffer.Length > 0)
+            {
+                consecutiveOverflows = 0; // successful event resets counter
+                await RunCallbackAsync(onStream, dataBuffer.ToString(), context.App.type.list["text"], "chunk", app, context, ct);
+                dataBuffer.Clear();
+            }
+        }
+    }
+
+    private static async Task StreamBytesAsync(
+        Stream stream, Call onStream,
+        AppType app, actor.context.@this context, CancellationToken ct)
+    {
+        var buffer = new byte[8192];
+        int bytesRead;
+        while ((bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
+        {
+            var chunk = new byte[bytesRead];
+            System.Buffer.BlockCopy(buffer, 0, chunk, 0, bytesRead);
+
+            await RunCallbackAsync(onStream, chunk, null, "chunk", app, context, ct);
+        }
+    }
+
+    private async Task StreamPlangAsync(
+        Stream stream, Call onStream,
+        AppType app, actor.context.@this context, CancellationToken ct)
+    {
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+
+        while (!ct.IsCancellationRequested)
+        {
+            var line = await reader.ReadLineAsync(ct);
+            if (line == null) break;
+            if (string.IsNullOrEmpty(line)) continue;
+
+            // Each NDJSON line is a whole Data in plang's own format, its Signature populated via [In].
+            var data = await context.App.type.list["wire"].kind["plang"]!.Decode(Encoding.UTF8.GetBytes(line), context, view: global::app.View.Store, ct: ct);
+            if (!data.Success)
+            {
+                await app.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(
+                    context.Error(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
+                continue;
+            }
+
+            // Verify signature — pass Data straight to verify
+            var verifyAction = new signing.verify(context)
+            {
+                Data = data
+            };
+
+            var verifyResult = await app.Run<signing.verify>(verifyAction, context);
+            if (!verifyResult.Success)
+            {
+                await RunCallbackAsync(onStream, verifyResult, null, "chunk", app, context, ct);
+                continue;
+            }
+
+            await context.Variable.Set("!ServiceIdentity", (data?.Peek() as global::app.type.item.signature.@this)?.Identity?.ToString());
+            await RunCallbackAsync(onStream, data, null, "chunk", app, context, ct);
+        }
+    }
+
+    // --- Progress reporting ---
+
+    private static async Task<long> StreamWithProgressAsync(
+        Stream source,
+        Stream destination,
+        long? totalBytes,
+        long maxBytes,
+        Call? onProgress,
+        AppType app,
+        actor.context.@this context,
+        CancellationToken ct)
+    {
+        var buffer = new byte[8192];
+        long bytesTransferred = 0;
+        var lastReport = DateTimeOffset.UtcNow;
+        var throughputStart = DateTimeOffset.UtcNow;
+        long throughputBytes = 0;
+
+        int bytesRead;
+        while ((bytesRead = await source.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
+        {
+            bytesTransferred += bytesRead;
+
+            // F1: size limit on file downloads
+            if (bytesTransferred > maxBytes)
+                throw new InvalidOperationException(
+                    $"Download exceeds maximum size of {FormatBytes(maxBytes)}");
+
+            await destination.WriteAsync(buffer, 0, bytesRead, ct);
+
+            // F3: slow-loris throughput check
+            throughputBytes += bytesRead;
+            var elapsed = (DateTimeOffset.UtcNow - throughputStart).TotalSeconds;
+            if (elapsed >= 30)
+            {
+                var bytesPerSec = throughputBytes / elapsed;
+                if (bytesPerSec < 1024) // < 1KB/sec for 30s
+                    throw new InvalidOperationException(
+                        $"Transfer too slow ({bytesPerSec:F0} bytes/sec) — possible slow-loris attack");
+                throughputStart = DateTimeOffset.UtcNow;
+                throughputBytes = 0;
+            }
+
+            if (onProgress != null)
+            {
+                var now = DateTimeOffset.UtcNow;
+                if ((now - lastReport).TotalMilliseconds >= 500)
+                {
+                    lastReport = now;
+                    var progress = new TransferProgress
+                    {
+                        BytesTransferred = bytesTransferred,
+                        TotalBytes = totalBytes,
+                        Percentage = totalBytes > 0 ? (double)bytesTransferred / totalBytes.Value * 100 : null
+                    };
+                    await RunCallbackAsync(onProgress, progress, null, "progress", app, context, ct);
+                }
+            }
+        }
+
+        return bytesTransferred;
+    }
+
+    // --- Upload content resolution ---
+
+    // HttpContent is a transport artifact, never a PLang value — it rides as a plain
+    // (HttpContent?, error) tuple, not Data<HttpContent>.
+    private static async Task<(HttpContent? Content, global::app.error.Error? Error)> ResolveUploadContentAsync(
+        upload action, global::app.@this app, string encoding)
+    {
+        var content = await action.Content.Value();
+        var context = action.Context;
+
+        // The value writes ITSELF in the body's format — no Lower + STJ (which emits the wrapper's C#
+        // property bag), no type-shape branch. Text writes a leaf bare and a container as json; json writes json.
+        async Task<string> Body(string mime)
+        {
+            using var ms = new MemoryStream();
+            await context.App.type.list.Mime(mime).Encode(ms, action.Content, context, encoding: Encoding.GetEncoding(encoding));
+            return Encoding.GetEncoding(encoding).GetString(ms.ToArray());
+        }
+
+        if ((action.As == null ? null : await action.As.Value()) is { } asChoice && asChoice is { } && (ContentAs?)asChoice is { } contentAs)
+        {
+            switch (contentAs)
+            {
+                case ContentAs.File: return await CreateFileContentAsync(app, context, content!.ToString()!);
+                case ContentAs.Base64: return (CreateBase64Content(content!.ToString()!), null);
+                case ContentAs.Form: return await CreateFormContentAsync(app, context, content!);
+                case ContentAs.Text:
+                    return (new StringContent(await Body("text/plain"), Encoding.GetEncoding(encoding)), null);
+                default:
+                    return (new StringContent(content!.ToString()!, Encoding.GetEncoding(encoding)), null);
+            }
+        }
+
+        // Auto-detect
+        if (content is global::app.type.item.dict.@this
+            || content is Clr { Value: Dictionary<string, object> or JsonElement { ValueKind: JsonValueKind.Object } })
+        {
+            return await CreateFormContentAsync(app, context, content);
+        }
+
+        if (content is global::app.type.item.text.@this)
+        {
+            var str = content.ToString()!;
+            // Try as file path — gated through path.ExistsAsync (AuthGate(Read)).
+            // Out-of-root probes prompt or deny; in-root fast-passes. Any failure
+            // (including denial) falls through to "treat as a string body" —
+            // matches the prior "if not a file, send as string" shape.
+            var p = global::app.type.item.path.@this.Resolve(str, context);
+            var exists = await p.ExistsAsync(context);
+            if (exists.Success && await exists.ToBooleanAsync())
+                return await CreateFileContentAsync(app, context, str);
+
+            return (new StringContent(str, Encoding.GetEncoding(encoding)), null);
+        }
+
+        // The native value writes ITSELF as json content (list/object), never the C# property bag.
+        return (new StringContent(
+            await Body("application/json"),
+            Encoding.GetEncoding(encoding),
+            "application/json"), null);
+    }
+
+    // internal so HttpStaticFileDenialTests can invoke the handler's read
+    // path directly (driving the full upload action requires a real HTTP
+    // endpoint).
+    internal static async Task<(HttpContent? Content, global::app.error.Error? Error)> CreateFileContentAsync(global::app.@this app, actor.context.@this context, string path)
+    {
+        // The file lands as a reference and hands its raw content; the gate fires inside —
+        // out-of-root paths the actor hasn't granted bubble up as Fail.
+        var resolved = global::app.type.item.path.@this.Resolve(path, context);
+        var read = await (await resolved.Read(context)).Use<global::app.type.item.IContent>(async file => await file.Content(context));
+        if (!read.Success || await read.Value() == null)
+            return (null, read.Error
+                ?? new ServiceError($"Could not read file: {path}", "FileReadError", 500));
+        var content = new ByteArrayContent((await read.Value())!.Clr<byte[]>()!);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        return (content, null);
+    }
+
+    private static HttpContent CreateBase64Content(string base64)
+    {
+        var bytes = Convert.FromBase64String(base64);
+        var content = new ByteArrayContent(bytes);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+        return content;
+    }
+
+    private static async Task<(HttpContent? Content, global::app.error.Error? Error)> CreateFormContentAsync(global::app.@this app, actor.context.@this context, object content)
+    {
+        var form = new MultipartFormDataContent();
+        Dictionary<string, object> fields;
+
+        // A native dict value (the production shape — Content resolved from %var%) lowers to its
+        // entries via its own Clr; a raw CLR Dictionary passes straight through.
+        if (((content as global::app.type.item.@this)?.Clr<Dictionary<string, object>>()
+             ?? content as Dictionary<string, object>) is { } dict)
+            fields = dict;
+        else if (content is JsonElement je)
+        {
+            fields = new Dictionary<string, object>();
+            foreach (var prop in je.EnumerateObject())
+                fields[prop.Name] = prop.Value.ToString();
+        }
+        else
+            fields = new Dictionary<string, object> { ["data"] = content };
+
+        foreach (var kvp in fields)
+        {
+            var value = kvp.Value?.ToString() ?? "";
+            if (value.StartsWith('@'))
+            {
+                // The file's raw content through its reference. The gate fires; out-of-root
+                // form fields the actor hasn't authorized get denied at the
+                // gate, not silently exfiltrated.
+                var fp = global::app.type.item.path.@this.Resolve(value[1..], context);
+                var read = await (await fp.Read(context)).Use<global::app.type.item.IContent>(async file => await file.Content(context));
+                if (!read.Success || await read.Value() == null)
+                    return (null, read.Error
+                        ?? new ServiceError($"Could not read form file: {value[1..]}", "FileReadError", 500));
+                var fileContent = new ByteArrayContent((await read.Value())!.Clr<byte[]>()!);
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                form.Add(fileContent, kvp.Key, fp.FileName);
+            }
+            else
+            {
+                form.Add(new StringContent(value), kvp.Key);
+            }
+        }
+
+        return (form, null);
+    }
+
+    // --- Static utilities ---
+
+    private static string FormatBytes(long bytes) => bytes switch
+    {
+        >= 1024 * 1024 => $"{bytes / (1024 * 1024)}MB",
+        >= 1024 => $"{bytes / 1024}KB",
+        _ => $"{bytes} bytes"
+    };
+
+    private static SysHttpMethod ToSystemMethod(HttpMethod method) => method switch
+    {
+        HttpMethod.GET => SysHttpMethod.Get,
+        HttpMethod.POST => SysHttpMethod.Post,
+        HttpMethod.PUT => SysHttpMethod.Put,
+        HttpMethod.DELETE => SysHttpMethod.Delete,
+        HttpMethod.PATCH => SysHttpMethod.Patch,
+        HttpMethod.HEAD => SysHttpMethod.Head,
+        HttpMethod.OPTIONS => SysHttpMethod.Options,
+        HttpMethod.QUERY => new SysHttpMethod("QUERY"),
+        _ => SysHttpMethod.Get
+    };
+}

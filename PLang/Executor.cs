@@ -68,7 +68,7 @@ namespace PLang
 			// (watchers, LLM hooks, grep regex, event bindings).
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
 			{
-				if (Flag<global::app.module.action.debug.setting.@this>("!debug") is { } debugError) return (null, debugError);
+				if (Flag<global::app.module.debug.setting.@this>("!debug") is { } debugError) return (null, debugError);
 				app.Debug = new Debug(app.actor.list.System.Context);
 				app.Debug.Activate();
 			}
@@ -100,17 +100,17 @@ namespace PLang
 			parameters.TryGetValue("!build", out var buildValue);
 			if (buildValue is not (null or false))
 			{
-				app.Build = new global::app.module.action.build.@this(app.actor.list.System.Context);
+				app.Build = new global::app.module.build.@this(app.actor.list.System.Context);
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", startupDirectory);
-				if (Flag<global::app.module.action.build.setting.@this>("!build") is { } buildError) return (null, buildError);
+				if (Flag<global::app.module.build.setting.@this>("!build") is { } buildError) return (null, buildError);
 
 				// Build-mode-inversion (§6.D, Case A): a cache-off build flows DOWN to llm.query
 				// as the `llm.cache` setting, so llm.query reads its own `action.Cache`
 				// (which resolves %!llm.query.cache% → %!llm.cache% → [Default]) instead of sniffing
 				// the build. The cache-off default reaches every llm.query without threading. The
 				// run's value is in memory, so the sync Configure sets it at once.
-				if (!app.actor.list.System.Context.Setting.Of<global::app.module.action.build.setting.@this>().Cache.Value)
+				if (!app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Cache.Value)
 					app.actor.list.System.Setting.Set("llm.cache", app.actor.list.System.Context.Ok(false))
 						.GetAwaiter().GetResult();
 			}

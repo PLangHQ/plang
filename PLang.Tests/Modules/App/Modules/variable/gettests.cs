@@ -1,7 +1,7 @@
 using app.actor.context;
 using app;
 using app.type.item.variable;
-using app.module.action.variable;
+using app.module.variable;
 
 namespace PLang.Tests.App.actions.variable;
 

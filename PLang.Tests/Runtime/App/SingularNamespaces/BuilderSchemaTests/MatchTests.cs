@@ -52,13 +52,13 @@ public class MatchTests
     private static async Task<global::app.data.@this> Match(Goal goal, string answer, global::app.actor.context.@this context,
         Dictionary<string, object?>? confirmed = null)
     {
-        var action = new global::app.module.action.build.match(context)
+        var action = new global::app.module.build.match(context)
         {
             Goal = context.Ok<Goal>(goal),
             Answer = context.Ok<global::app.type.item.text.@this>(answer),
             Confirmed = confirmed == null ? null : context.Ok<global::app.type.item.dict.@this>(Make.Dict(confirmed, context)),
         };
-        return await new global::app.module.action.build.code.Default().Match(action);
+        return await new global::app.module.build.code.Default().Match(action);
     }
 
     // The decider's yes or no to one number, under its id.

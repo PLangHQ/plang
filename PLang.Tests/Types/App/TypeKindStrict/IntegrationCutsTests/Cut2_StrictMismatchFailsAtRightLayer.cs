@@ -31,7 +31,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         => new(name, kind, strict);
 
     // The bound variable.set handler with a strict image/gif Type — as the build pass holds it.
-    private global::app.module.action.variable.Set Handler(object value)
+    private global::app.module.variable.Set Handler(object value)
     {
         var ctx = _app.actor.list.User.Context;
         return new(ctx)

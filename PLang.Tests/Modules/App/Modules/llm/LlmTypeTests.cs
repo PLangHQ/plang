@@ -3,9 +3,9 @@ using System.Text.Json;
 using app;
 using app.goal;
 using app.type.item.variable;
-using app.module.action.code;
-using app.module.action.llm;
-using app.module.action.llm.code;
+using app.module.code;
+using app.module.llm;
+using app.module.llm.code;
 
 namespace PLang.Tests.App.Modules.llm;
 
@@ -68,7 +68,7 @@ public class LlmTypeTests
     {
         await using var app = global::PLang.Tests.TestApp.Plain("/test");
         var (handler, _) = await Make.Tool("Any").Bind(app.actor.list.User.Context);
-        var call = (global::app.module.action.goal.Call)handler!;
+        var call = (global::app.module.goal.Call)handler!;
         await Assert.That(await call.Parallel.ToBooleanAsync()).IsFalse();
     }
 

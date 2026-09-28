@@ -15,7 +15,7 @@ public class SchemaTests
     public void Setup()
     {
         _app = TestApp.Create("/test");
-        _app.Build = new global::app.module.action.build.@this(_app.actor.list.System.Context);
+        _app.Build = new global::app.module.build.@this(_app.actor.list.System.Context);
     }
 
     [After(Test)]
@@ -27,7 +27,7 @@ public class SchemaTests
     // A closed set drawn on by a choice is never a type of its own — its options ride on the
     // {choice, kind} entity of the slot (goal.call's Actor: choice<actor> {system, user}).
     private global::app.type.@this ActorSlot()
-        => _app.type.list[typeof(global::app.module.action.goal.Call).GetProperty("Actor")!.PropertyType];
+        => _app.type.list[typeof(global::app.module.goal.Call).GetProperty("Actor")!.PropertyType];
 
     [Test]
     public async Task Build_ClosedSets_RideOnTheirSlot_NotAsTypes()

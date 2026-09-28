@@ -72,8 +72,8 @@ public class BootstrapTests
             if (second == null && pythonStill)
                 differ.Add($"{rel} {goal.Name}: after the retry C# takes what python still refused");
         }
-        var folded = await new global::app.module.action.build.code.Default().Fold(
-            new global::app.module.action.build.fold(context) { Goal = context.Ok<global::app.goal.@this>(root) });
+        var folded = await new global::app.module.build.code.Default().Fold(
+            new global::app.module.build.fold(context) { Goal = context.Ok<global::app.goal.@this>(root) });
         if (!folded.Success) differ.Add($"{rel}: fold: {folded.Error!.Message}");
         return (root, differ);
     }

@@ -1,10 +1,10 @@
 using app.actor.context;
 using app.error;
 using app.type.item.variable;
-using app.module.action.code;
-using app.module.action.signing;
-using app.module.action.signing.code;
-using app.module.action.crypto.code;
+using app.module.code;
+using app.module.signing;
+using app.module.signing.code;
+using app.module.crypto.code;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.provider;
@@ -83,7 +83,7 @@ public class ProviderModuleTests
         await result.IsSuccess();
         var retrieved = _app.Code.Get<ISigning>("mock");
         await Assert.That(retrieved.Error).IsNull();
-        await Assert.That(((global::app.module.action.code.ICode)retrieved.Provider!).Name).IsEqualTo("mock");
+        await Assert.That(((global::app.module.code.ICode)retrieved.Provider!).Name).IsEqualTo("mock");
     }
 
     [Test]
@@ -99,7 +99,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Load_NonExistentDll_IsNotFound()
     {
-        var action = new global::app.module.action.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/nonexistent/path/fake.dll", Ctx))
+        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/nonexistent/path/fake.dll", Ctx))
         };
         var result = await action.Start();
 
@@ -128,14 +128,14 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::app.module.action.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
+        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Start();
 
         await result.IsSuccess();
         var loaded = _app.Code.Get<ISigning>("test-signing");
         await Assert.That(loaded.Error).IsNull();
-        await Assert.That(((global::app.module.action.code.ICode)loaded.Provider!).Name).IsEqualTo("test-signing");
+        await Assert.That(((global::app.module.code.ICode)loaded.Provider!).Name).IsEqualTo("test-signing");
     }
 
     [Test]
@@ -149,7 +149,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::app.module.action.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
+        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Start();
 
@@ -168,7 +168,7 @@ public class ProviderModuleTests
             return;
         }
 
-        var action = new global::app.module.action.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
+        var action = new global::app.module.code.load(Ctx) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx)),
         };
         var result = await action.Start();
 
@@ -186,7 +186,7 @@ public class ProviderModuleTests
         _app.Code.Register<ISigning>(new MockSigningProvider("first"));
         _app.Code.Register<ISigning>(new MockSigningProvider("second"));
 
-        var action = new global::app.module.action.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"second",
+        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"second",
             Type = (global::app.type.item.text.@this)"signing"
         };
         var result = await action.Start();
@@ -199,7 +199,7 @@ public class ProviderModuleTests
     public async Task Remove_Default_ReturnsError()
     {
         // ed25519 is registered as default at engine startup
-        var action = new global::app.module.action.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"ed25519",
+        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"ed25519",
             Type = (global::app.type.item.text.@this)"signing"
         };
         var result = await action.Start();
@@ -211,7 +211,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Remove_NonExistent_ReturnsError()
     {
-        var action = new global::app.module.action.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"unknown",
+        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"unknown",
             Type = (global::app.type.item.text.@this)"signing"
         };
         var result = await action.Start();
@@ -223,7 +223,7 @@ public class ProviderModuleTests
     [Test]
     public async Task Remove_UnknownType_ReturnsError()
     {
-        var action = new global::app.module.action.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"anything",
+        var action = new global::app.module.code.remove(Ctx) { Name = (global::app.type.item.text.@this)"anything",
             Type = (global::app.type.item.text.@this)"invalid"
         };
         var result = await action.Start();
@@ -244,7 +244,7 @@ public class ProviderModuleTests
         _app.Code.Register<ISigning>(first);
         _app.Code.Register<ISigning>(second);
 
-        var action = new global::app.module.action.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"second",
+        var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"second",
             Type = (global::app.type.item.text.@this)"signing"
         };
         var result = await action.Start();
@@ -258,7 +258,7 @@ public class ProviderModuleTests
     {
         _app.Code.Register<ISigning>(new MockSigningProvider("first"));
 
-        var action = new global::app.module.action.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"unknown",
+        var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"unknown",
             Type = (global::app.type.item.text.@this)"signing"
         };
         var result = await action.Start();
@@ -270,7 +270,7 @@ public class ProviderModuleTests
     [Test]
     public async Task SetDefault_UnknownType_ReturnsError()
     {
-        var action = new global::app.module.action.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"anything",
+        var action = new global::app.module.code.setDefault(Ctx) { Name = (global::app.type.item.text.@this)"anything",
             Type = (global::app.type.item.text.@this)"invalid"
         };
         var result = await action.Start();
@@ -294,7 +294,7 @@ public class ProviderModuleTests
         var providers = _app.Code.List<ISigning>();
         await Assert.That(providers.Count).IsEqualTo(3); // ed25519 (built-in) + first + second
         // ed25519 is default from engine startup
-        await Assert.That(((global::app.module.action.code.ICode)_app.Code.Get<ISigning>().Provider!).Name).IsEqualTo("ed25519");
+        await Assert.That(((global::app.module.code.ICode)_app.Code.Get<ISigning>().Provider!).Name).IsEqualTo("ed25519");
     }
 
     [Test]
@@ -311,7 +311,7 @@ public class ProviderModuleTests
     {
         _app.Code.Register<ISigning>(new MockSigningProvider("extra"));
 
-        var action = new global::app.module.action.code.list(Ctx) { Type = null
+        var action = new global::app.module.code.list(Ctx) { Type = null
         };
         var result = await action.Start();
 
@@ -326,7 +326,7 @@ public class ProviderModuleTests
     {
         _app.Code.Register<ISigning>(new MockSigningProvider("extra"));
 
-        var action = new global::app.module.action.code.list(Ctx) { Type = (global::app.type.item.text.@this)"signing"
+        var action = new global::app.module.code.list(Ctx) { Type = (global::app.type.item.text.@this)"signing"
         };
         var result = await action.Start();
 
@@ -336,7 +336,7 @@ public class ProviderModuleTests
     [Test]
     public async Task ListAction_UnknownType_ReturnsError()
     {
-        var action = new global::app.module.action.code.list(Ctx) { Type = (global::app.type.item.text.@this)"quantum"
+        var action = new global::app.module.code.list(Ctx) { Type = (global::app.type.item.text.@this)"quantum"
         };
         var result = await action.Start();
 

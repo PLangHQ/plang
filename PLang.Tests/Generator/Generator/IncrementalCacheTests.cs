@@ -31,9 +31,9 @@ public class IncrementalCacheTests
     private static ActionClassInfo MakeInfo(string name = "Handler",
         params PropertyBase[] props)
         => new(
-            Namespace: "app.module.action.test",
+            Namespace: "app.module.test",
             ClassName: name,
-            FullName: $"app.module.action.test.{name}",
+            FullName: $"app.module.test.{name}",
             ImplementsIContext: true,
             ImplementsIChannel: false,
             ImplementsIAction: true,

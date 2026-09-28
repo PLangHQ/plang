@@ -36,8 +36,8 @@ public class FailureMatrixTests : System.IAsyncDisposable
         var tampered = wire.Replace("untampered", "TAMPERED!");
 
         var back = plang.Deserialize(tampered, app.actor.list.User.Context);
-        var verify = await app.Run<global::app.module.action.signing.verify>(
-            new global::app.module.action.signing.verify(app.actor.list.User.Context)
+        var verify = await app.Run<global::app.module.signing.verify>(
+            new global::app.module.signing.verify(app.actor.list.User.Context)
             {
                 Data = back,
                 SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", true)
@@ -81,8 +81,8 @@ public class FailureMatrixTests : System.IAsyncDisposable
 
     [Test] public async Task CryptoHash_WithUnsupportedAlgorithm_ReturnsDataWithUnsupportedAlgorithmError()
     {
-        var crypto = new global::app.module.action.crypto.code.Default();
-        var action = new global::app.module.action.crypto.Hash(app.actor.list.User.Context) { Data = app.Ok("x"),
+        var crypto = new global::app.module.crypto.code.Default();
+        var action = new global::app.module.crypto.Hash(app.actor.list.User.Context) { Data = app.Ok("x"),
             Algorithm = new global::app.data.@this<global::app.type.item.text.@this>("", "md5")
         };
         var result = await crypto.Hash(action);
@@ -111,7 +111,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
         // Empty MemoryStream — ReadLineAsync returns null (EOF).
         var ch = new global::app.channel.type.stream.@this("input", new MemoryStream(),
             global::app.channel.ChannelDirection.Bidirectional);
-        var action = new global::app.module.action.output.ask(app.actor.list.User.Context)
+        var action = new global::app.module.output.ask(app.actor.list.User.Context)
         {
             Question = new global::app.data.@this<global::app.type.item.text.@this>("", "")
         };

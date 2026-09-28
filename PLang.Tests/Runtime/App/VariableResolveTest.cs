@@ -67,13 +67,13 @@ public class VariableResolveTest : System.IAsyncDisposable
         await using var app = TestApp.Create("/tmp/var-set-bang-" + System.Guid.NewGuid().ToString("N")[..8]);
         var context = app.actor.list.User.Context;
 
-        await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.actor.list.User.Context)
+        await app.Run<global::app.module.variable.Set>(new global::app.module.variable.Set(app.actor.list.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("response")),
             Value = app.actor.list.User.Context.Ok("hello"),
         }, context);
 
-        await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.actor.list.User.Context)
+        await app.Run<global::app.module.variable.Set>(new global::app.module.variable.Set(app.actor.list.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("",
                 global::app.type.item.variable.@this.Resolve("%response!cost%", context)),
@@ -89,7 +89,7 @@ public class VariableResolveTest : System.IAsyncDisposable
         await using var app = TestApp.Create("/tmp/var-set-unset-" + System.Guid.NewGuid().ToString("N")[..8]);
         var context = app.actor.list.User.Context;
 
-        var result = await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.actor.list.User.Context)
+        var result = await app.Run<global::app.module.variable.Set>(new global::app.module.variable.Set(app.actor.list.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("",
                 global::app.type.item.variable.@this.Resolve("%response!cost%", context)),

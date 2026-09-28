@@ -33,13 +33,13 @@ public class ActorSettingsStoreTests
         // LLM cache and other persistent system data live across builds.
         await using (var engine = global::PLang.Tests.TestApp.Plain(_testDir))
         {
-            engine.Build = new global::app.module.action.build.@this(engine.actor.list.System.Context);
+            engine.Build = new global::app.module.build.@this(engine.actor.list.System.Context);
             await (await engine.store).Set("LlmCache", "testkey", engine.actor.list.User.Context.Ok("cached_response"));
         }
 
         await using (var engine2 = global::PLang.Tests.TestApp.Plain(_testDir))
         {
-            engine2.Build = new global::app.module.action.build.@this(engine2.actor.list.System.Context);
+            engine2.Build = new global::app.module.build.@this(engine2.actor.list.System.Context);
             var result = await (await engine2.store).Get<global::app.type.item.@this>("LlmCache", "testkey");
             await Assert.That((await result.Value())).IsNotNull();
             await Assert.That((await result.Value())!.ToString()).IsEqualTo("cached_response");
@@ -77,12 +77,12 @@ public class ActorSettingsStoreTests
         await using var engine = global::PLang.Tests.TestApp.Plain(_testDir);
         engine.test.list.Open();
 
-        var original = new global::app.module.action.identity.Identity("work")
+        var original = new global::app.module.identity.Identity("work")
             { PublicKey = "pub-abc", PrivateKey = "priv-xyz", IsDefault = true };
         await (await engine.store).Set("identity", "work",
             new Data("work", original));
 
-        var data   = await (await engine.store).Get<global::app.module.action.identity.Identity>("identity", "work");
+        var data   = await (await engine.store).Get<global::app.module.identity.Identity>("identity", "work");
         var loaded = await data.Value();
 
         await Assert.That((object?)loaded).IsNotNull();

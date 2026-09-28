@@ -41,7 +41,7 @@ public sealed class @this : global::app.channel.type.session.@this
         => Task.FromResult(global::app.data.@this.FromError(new global::app.error.ServiceError(
             $"Channel '{Name}' is a test's output; it is written, not read", "ChannelWriteOnly", 400)));
 
-    public override Task<global::app.data.@this> Ask(global::app.module.action.output.ask action, CancellationToken ct = default)
+    public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         => Task.FromResult(action.Context.Error(new global::app.error.ServiceError(
             $"Channel '{Name}' is a test's output; it has no one to answer", "ChannelWriteOnly", 400)));
 }

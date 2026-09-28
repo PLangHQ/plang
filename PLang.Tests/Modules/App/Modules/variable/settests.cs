@@ -178,7 +178,7 @@ public class SetTests
 
     private static readonly global::app.type.@this NumberInt = new("number", "int");
 
-    private global::app.module.action.variable.Set WithValue(object value, global::app.type.@this type)
+    private global::app.module.variable.Set WithValue(object value, global::app.type.@this type)
         => new(_app.actor.list.User.Context)
         {
             Value = new Data("Value", value, global::PLang.Tests.TestApp.SharedContext.App.type.list[type, _app.actor.list.User.Context], context: _app.actor.list.User.Context)

@@ -286,7 +286,7 @@ public class LibrariesTests
         await using var modulesHost = TestApp.Create("/app");
         var modules = modulesHost.module.list;
 
-        var count = modules.Discover(typeof(global::app.@this).Assembly, "app.module.action");
+        var count = modules.Discover(typeof(global::app.@this).Assembly, "app.module");
 
         await Assert.That(modulesHost.Module("variable")["set"] != null).IsTrue();
         await Assert.That(modulesHost.Module("output")["write"] != null).IsTrue();

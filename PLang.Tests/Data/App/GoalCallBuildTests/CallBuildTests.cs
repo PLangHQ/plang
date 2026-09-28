@@ -32,7 +32,7 @@ public class CallBuildTests
             })
         };
 
-        var (handler, err) = await new global::app.module.action.goal.Call(ctx).Resolve(action, ctx);
+        var (handler, err) = await new global::app.module.goal.Call(ctx).Resolve(action, ctx);
         await Assert.That(err).IsNull();
         await ((global::app.module.IClass)handler!).Build();
 

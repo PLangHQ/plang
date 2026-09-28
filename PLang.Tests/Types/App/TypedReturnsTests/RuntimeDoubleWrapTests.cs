@@ -1,7 +1,7 @@
 using System.Reflection;
-using app.module.action.list;
+using app.module.list;
 using app.type.item.variable;
-using MathAdd = app.module.action.math.Add;
+using MathAdd = app.module.math.Add;
 
 namespace PLang.Tests.App.TypedReturnsTests;
 
@@ -37,7 +37,7 @@ public class RuntimeDoubleWrapTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("xs", new List<object?> { 42L, "two", "three" });
 
-        var action = new First(context) { ListName = new @this("xs") };
+        var action = new First(context) { ListName = new global::app.type.item.variable.@this("xs") };
         await action.Attach(null, context);
         var result = await action.Start();
 
@@ -53,7 +53,7 @@ public class RuntimeDoubleWrapTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("xs", new List<object?> { "a", "b", "c" });
 
-        var action = new Get(context) { ListName = new @this("xs"), Index = (global::app.type.item.number.@this)1 };
+        var action = new Get(context) { ListName = new global::app.type.item.variable.@this("xs"), Index = (global::app.type.item.number.@this)1 };
         await action.Attach(null, context);
         var result = await action.Start();
 
@@ -68,7 +68,7 @@ public class RuntimeDoubleWrapTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("xs", new List<object?> { 1L, 2L, 3L });
 
-        var action = new Last(context) { ListName = new @this("xs") };
+        var action = new Last(context) { ListName = new global::app.type.item.variable.@this("xs") };
         await action.Attach(null, context);
         var result = await action.Start();
 
@@ -146,7 +146,7 @@ public class RuntimeDoubleWrapTests
         var u2 = new global::app.type.item.dict.@this(); u2.Set(new global::app.data.@this("age", 15L, context: context)); users.Add(new global::app.data.@this("", u2));
         context.Variable.Set("users", users);
 
-        var action = new global::app.module.action.list.Where(context) { ListName = new @this("users"),
+        var action = new global::app.module.list.Where(context) { ListName = new global::app.type.item.variable.@this("users"),
             Field = new global::app.data.@this<global::app.type.item.text.@this>("", "age"),
             Operator = new global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>>("", new global::app.data.Operator(">")),
             Value = new global::app.data.@this("", 20L, context: context),

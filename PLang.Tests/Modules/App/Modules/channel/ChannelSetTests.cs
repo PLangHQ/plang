@@ -31,7 +31,7 @@ public class ChannelSetTests
                 Make.Action("variable", "set", Make.Param("Name", "seenLevel", "variable"), Make.Param("Value", "%level%", "variable")),
                 Make.Action("variable", "set", Make.Param("Name", "seenMessage", "variable"), Make.Param("Value", "%message%", "variable"))))));
         var call = Make.Call("SeeIt", ("level", "debug"));
-        var action = new global::app.module.action.channel.Set(ctx)
+        var action = new global::app.module.channel.Set(ctx)
         {
             Name = new global::app.type.item.text.@this("logger"),
             Goal = call,
@@ -57,9 +57,9 @@ public class ChannelSetTests
     public async Task Set_WithNothingGiven_TheChannelKeepsItsOwnDefaults_AndItsNameDecidesTheDirection()
     {
         var ctx = _app.actor.list.User.Context;
-        await (await new global::app.module.action.channel.Set(ctx)
+        await (await new global::app.module.channel.Set(ctx)
             { Name = new global::app.type.item.text.@this("output"), Goal = Make.Call("LogIt") }.Start()).IsSuccess();
-        await (await new global::app.module.action.channel.Set(ctx)
+        await (await new global::app.module.channel.Set(ctx)
             { Name = new global::app.type.item.text.@this("chat"), Goal = Make.Call("LogIt"),
               Direction = (global::app.type.item.choice.@this<global::app.channel.ChannelDirection>)global::app.channel.ChannelDirection.Input, Buffer = (global::app.type.item.number.@this)65536 }.Start()).IsSuccess();
 
@@ -78,7 +78,7 @@ public class ChannelSetTests
     public async Task Set_HeldCallToMissingGoal_FailsOnTheMessage()
     {
         var ctx = _app.actor.list.User.Context;
-        var action = new global::app.module.action.channel.Set(ctx)
+        var action = new global::app.module.channel.Set(ctx)
         {
             Name = new global::app.type.item.text.@this("logger"),
             Goal = Make.Call("NoSuchGoal"),
@@ -98,8 +98,8 @@ public class ChannelSetTests
     public async Task Remove_TakesARegisteredChannel_RefusesADefault_AndOneNotThere()
     {
         var ctx = _app.actor.list.User.Context;
-        global::app.module.action.channel.Remove Of(string name) => new(ctx) { Name = new global::app.type.item.text.@this(name) };
-        await (await new global::app.module.action.channel.Set(ctx)
+        global::app.module.channel.Remove Of(string name) => new(ctx) { Name = new global::app.type.item.text.@this(name) };
+        await (await new global::app.module.channel.Set(ctx)
             { Name = new global::app.type.item.text.@this("logger"), Goal = Make.Call("LogIt") }.Start()).IsSuccess();
 
         await (await Of("logger").Start()).IsSuccess();

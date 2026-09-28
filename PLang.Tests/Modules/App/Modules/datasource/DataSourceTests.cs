@@ -1,5 +1,5 @@
 using app.actor.context;
-using app.module.action.setting;
+using app.module.setting;
 using app.error;
 using app.type.item.variable;
 using PLangEngine = global::app.@this;

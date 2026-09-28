@@ -21,7 +21,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task TestDiscover_Run_ReturnsTaskDataListOfTest()
     {
-        var ret = StartReturnType<global::app.module.action.test.discover>();
+        var ret = StartReturnType<global::app.module.test.discover>();
         var expected = typeof(Task<global::app.data.@this<global::app.type.item.list.@this<global::app.test.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
@@ -29,7 +29,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task TestStart_Start_ReturnsTaskDataListOfTest()
     {
-        var ret = StartReturnType<global::app.module.action.test.start>();
+        var ret = StartReturnType<global::app.module.test.start>();
         var expected = typeof(Task<global::app.data.@this<global::app.type.item.list.@this<global::app.test.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
@@ -40,15 +40,15 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task OutputAsk_Run_ReturnsTaskDataOfAsk()
     {
-        var ret = StartReturnType<global::app.module.action.output.ask>();
-        var expected = typeof(Task<global::app.data.@this<global::app.module.action.output.Ask>>);
+        var ret = StartReturnType<global::app.module.output.ask>();
+        var expected = typeof(Task<global::app.data.@this<global::app.module.output.Ask>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
 
     [Test]
     public async Task ChannelSet_Run_ReturnsBareTaskOfData_VoidLike()
     {
-        var ret = StartReturnType<global::app.module.action.channel.Set>();
+        var ret = StartReturnType<global::app.module.channel.Set>();
         await Assert.That(ret).IsEqualTo(typeof(Task<Data>))
             .Because("channel.set produces no value — bare Task<Data> is the contract.");
     }
@@ -95,7 +95,7 @@ public class Stage2_MechanicalTypings_Part1Tests
     [Test]
     public async Task DataValueFromTypedRun_NotDoubleWrapped()
     {
-        var ret = StartReturnType<global::app.module.action.test.discover>();
+        var ret = StartReturnType<global::app.module.test.discover>();
         // Task<Data<T>> → unwrap → Data<T>
         var dataWrapper = ret.GetGenericArguments()[0];
         var t = dataWrapper.GetGenericArguments()[0];

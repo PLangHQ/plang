@@ -1,7 +1,7 @@
-using app.module.action.ui;
-using app.module.action.ui.code;
+using app.module.ui;
+using app.module.ui.code;
 using Op = global::app.data.Operator;
-using Where = global::app.module.action.list.Where;
+using Where = global::app.module.list.Where;
 using ItemList = global::app.type.item.list.@this;
 
 namespace PLang.Tests.App.Modules.Stage4Spike;
@@ -86,7 +86,7 @@ public class HostRenderSpikeTests
             Template = (global::app.type.item.text.@this)template,
             IsFile = (global::app.type.item.@bool.@this)false,
         };
-        var result = await new global::app.module.action.ui.code.Fluid().Render(action);
+        var result = await new global::app.module.ui.code.Fluid().Render(action);
         await result.IsSuccess();
         return (await result.Value())?.ToString() ?? "";
     }

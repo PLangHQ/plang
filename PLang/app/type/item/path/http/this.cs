@@ -451,11 +451,11 @@ public sealed partial class @this : global::app.type.item.path.@this
             // path produces a fresh, destination-specific signature. Path only by
             // design — the recipient validates the host against itself.
             var canonical = $"{method}\n{_uri.PathAndQuery}\n{body ?? ""}";
-            var sign = new module.action.signing.sign(context)
+            var sign = new module.signing.sign(context)
             {
                 Data = new data.@this("", canonical, context: context),
             };
-            var signResult = await context.App.Run<module.action.signing.sign>(sign, context);
+            var signResult = await context.App.Run<module.signing.sign>(sign, context);
             // a request asked to be signed and not signed doesn't go out unsigned: the signing failure is the request's
             if (!signResult.Success)
                 throw new InvalidOperationException($"the request to {_uri} couldn't be signed: {signResult.Error?.Message}");

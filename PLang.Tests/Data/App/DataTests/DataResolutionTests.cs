@@ -95,12 +95,12 @@ public class DataResolutionTests
         var data = TemplateStamp.Container("messages", raw, _app.actor.list.User.Context);
 
         _app.actor.list.User.Context.Variable.Set("comment", "value1");
-        var first = data.As<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>(await data.Value<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>());
-        await Assert.That(first.GetValue<List<global::app.module.action.llm.LlmMessage>>()![0].Content).IsEqualTo("value1");
+        var first = data.As<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>(await data.Value<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>());
+        await Assert.That(first.GetValue<List<global::app.module.llm.LlmMessage>>()![0].Content).IsEqualTo("value1");
 
         _app.actor.list.User.Context.Variable.Set("comment", "value2");
-        var second = data.As<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>(await data.Value<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>());
-        await Assert.That(second.GetValue<List<global::app.module.action.llm.LlmMessage>>()![0].Content).IsEqualTo("value2");
+        var second = data.As<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>(await data.Value<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>());
+        await Assert.That(second.GetValue<List<global::app.module.llm.LlmMessage>>()![0].Content).IsEqualTo("value2");
     }
 
     // Concurrent As<T> calls on the same parameter Data → no race, two valid (independent) results.

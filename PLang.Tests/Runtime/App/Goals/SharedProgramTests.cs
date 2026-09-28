@@ -43,8 +43,8 @@ public class SharedProgramTests
         var shared = await ActionFromPr("list", "add", ("ListName", Var("ListName", "l")), ("Value", "%x%"));
 
         // Two runs interleave: the System run binds, the User run binds, then the System run reads.
-        var onSystem = await Bound<global::app.module.action.list.Add>(shared, _app.actor.list.System.Context);
-        var onUser = await Bound<global::app.module.action.list.Add>(shared, _app.actor.list.User.Context);
+        var onSystem = await Bound<global::app.module.list.Add>(shared, _app.actor.list.System.Context);
+        var onUser = await Bound<global::app.module.list.Add>(shared, _app.actor.list.User.Context);
 
         await Assert.That((await onSystem.Value.Value()).ToString()).IsEqualTo("system");
         await Assert.That((await onUser.Value.Value()).ToString()).IsEqualTo("user");
@@ -57,8 +57,8 @@ public class SharedProgramTests
         await _app.actor.list.User.Context.Variable.Set("n", "user");
         var shared = await ActionFromPr("list", "split", ("Value", "%n%"));
 
-        var onSystem = await Bound<global::app.module.action.list.Split>(shared, _app.actor.list.System.Context);
-        var onUser = await Bound<global::app.module.action.list.Split>(shared, _app.actor.list.User.Context);
+        var onSystem = await Bound<global::app.module.list.Split>(shared, _app.actor.list.System.Context);
+        var onUser = await Bound<global::app.module.list.Split>(shared, _app.actor.list.User.Context);
 
         await Assert.That((await onSystem.Value.Value())!.ToString()).IsEqualTo("system");
         await Assert.That((await onUser.Value.Value())!.ToString()).IsEqualTo("user");
@@ -71,8 +71,8 @@ public class SharedProgramTests
         await _app.actor.list.User.Context.Variable.Set("x", "user");
         var shared = await ActionFromPr("list", "add", ("ListName", Var("ListName", "l")), ("Value", new List<object?> { "%x%" }));
 
-        var onSystem = await Bound<global::app.module.action.list.Add>(shared, _app.actor.list.System.Context);
-        var onUser = await Bound<global::app.module.action.list.Add>(shared, _app.actor.list.User.Context);
+        var onSystem = await Bound<global::app.module.list.Add>(shared, _app.actor.list.System.Context);
+        var onUser = await Bound<global::app.module.list.Add>(shared, _app.actor.list.User.Context);
         var systemList = (global::app.type.item.list.@this)(await onSystem.Value.Value())!;
         var userList = (global::app.type.item.list.@this)(await onUser.Value.Value())!;
 
@@ -87,8 +87,8 @@ public class SharedProgramTests
         await _app.actor.list.User.Context.Variable.Set("x", "user");
         var shared = await ActionFromPr("list", "add", ("ListName", Var("ListName", "l")), ("Value", new Dictionary<string, object?> { ["k"] = "%x%" }));
 
-        var onSystem = await Bound<global::app.module.action.list.Add>(shared, _app.actor.list.System.Context);
-        var onUser = await Bound<global::app.module.action.list.Add>(shared, _app.actor.list.User.Context);
+        var onSystem = await Bound<global::app.module.list.Add>(shared, _app.actor.list.System.Context);
+        var onUser = await Bound<global::app.module.list.Add>(shared, _app.actor.list.User.Context);
 
         await Assert.That((await (await onSystem.Value.Get("k")).Value()).ToString()).IsEqualTo("system");
         await Assert.That((await (await onUser.Value.Get("k")).Value()).ToString()).IsEqualTo("user");
@@ -102,7 +102,7 @@ public class SharedProgramTests
         var property = shared["Value"]!;
         var held = property.Value;
 
-        var bound = await Bound<global::app.module.action.list.Add>(shared, _app.actor.list.User.Context);
+        var bound = await Bound<global::app.module.list.Add>(shared, _app.actor.list.User.Context);
         await bound.Value.Value();
 
         await Assert.That(ReferenceEquals(bound.Value.Context, _app.actor.list.User.Context)).IsTrue();

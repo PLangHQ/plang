@@ -341,7 +341,7 @@ public static class @this
         if (info.ImplementsIStep) sb.AppendLine("        Step = action?.Step!;");
         if (info.ImplementsIStatic)
         {
-            const string prefix = "app.module.action.";
+            const string prefix = "app.module.";
             var moduleName = info.Namespace.StartsWith(prefix)
                 ? info.Namespace.Substring(prefix.Length).Split('.')[0]
                 : info.Namespace;

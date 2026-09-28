@@ -27,8 +27,8 @@ public class ActorChoiceTests
     }
 
     // channel.set requires its Name and Goal — the actor choice is read beside them
-    private Task<global::app.module.action.channel.Set> ChannelSet(object? actor)
-        => Bound<global::app.module.action.channel.Set>("channel", "set", actor, ("Name", "c"), ("Goal", global::PLang.Tests.Shared.Make.Call("G")));
+    private Task<global::app.module.channel.Set> ChannelSet(object? actor)
+        => Bound<global::app.module.channel.Set>("channel", "set", actor, ("Name", "c"), ("Goal", global::PLang.Tests.Shared.Make.Call("G")));
 
     private async Task SelectsSystem(global::app.data.@this<global::app.type.item.choice.@this<global::app.actor.Name>>? slot)
     {
@@ -38,16 +38,16 @@ public class ActorChoiceTests
     }
 
     [Test] public async Task GoalCall_System_SelectsSystem()
-        => await SelectsSystem((await Bound<global::app.module.action.goal.Call>("goal", "call", "system")).Actor);
+        => await SelectsSystem((await Bound<global::app.module.goal.Call>("goal", "call", "system")).Actor);
 
     [Test] public async Task EnvironmentStart_System_SelectsSystem()
-        => await SelectsSystem((await Bound<global::app.module.action.environment.start>("environment", "start", "system")).Actor);
+        => await SelectsSystem((await Bound<global::app.module.environment.start>("environment", "start", "system")).Actor);
 
     [Test] public async Task ChannelSet_System_SelectsSystem()
         => await SelectsSystem((await ChannelSet("system")).Actor);
 
     [Test] public async Task ChannelRemove_System_SelectsSystem()
-        => await SelectsSystem((await Bound<global::app.module.action.channel.Remove>("channel", "remove", "system", ("Name", "c"))).Actor);
+        => await SelectsSystem((await Bound<global::app.module.channel.Remove>("channel", "remove", "system", ("Name", "c"))).Actor);
 
     [Test]
     public async Task GoalCall_SystemActor_RunsOnSystemContext()
@@ -56,7 +56,7 @@ public class ActorChoiceTests
         _app.goal.list.Add(await RealGoalLoad.ViaChannel(_app, Make.Goal("TestGoal",
             Make.Step("set %seen% = %onSystem%",
                 Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%onSystem%", "variable"))))));
-        var action = new global::app.module.action.goal.Call(Ctx)
+        var action = new global::app.module.goal.Call(Ctx)
         {
             Name = new global::app.type.item.text.@this("TestGoal"),
             Actor = new global::app.type.item.choice.@this<global::app.actor.Name>(global::app.actor.Name.system),
@@ -104,7 +104,7 @@ public class ActorChoiceTests
     public async Task Registry_ActorStaysTheActorItem_SlotNamesChoiceOfActor()
     {
         await Assert.That(_app.type.list["actor"].ClrType).IsEqualTo(typeof(global::app.actor.@this));
-        var slot = typeof(global::app.module.action.goal.Call).GetProperty("Actor")!.PropertyType;
+        var slot = typeof(global::app.module.goal.Call).GetProperty("Actor")!.PropertyType;
         var entity = _app.type.list[slot];
         await Assert.That(entity.Name).IsEqualTo("choice");
         await Assert.That(entity.kind.Name).IsEqualTo("actor");

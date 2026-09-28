@@ -68,22 +68,22 @@
   "app.module": {
     "word": "module"
   },
-  "app.module.action.code.defaultoverride": {
+  "app.module.code.defaultoverride": {
     "word": null
   },
-  "app.module.action.code.registration": {
+  "app.module.code.registration": {
     "word": null
   },
-  "app.module.action.crypto.type.hash": {
+  "app.module.crypto.type.hash": {
     "word": "hash"
   },
-  "app.module.action.identity.identity": {
+  "app.module.identity.identity": {
     "word": "identity"
   },
-  "app.module.action.llm.llmmessage": {
+  "app.module.llm.llmmessage": {
     "word": "llmmessage"
   },
-  "app.module.action.output.ask": {
+  "app.module.output.ask": {
     "word": "ask"
   },
   "app.snapshot": {

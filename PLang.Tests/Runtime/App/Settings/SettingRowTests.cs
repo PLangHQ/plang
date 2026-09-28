@@ -124,7 +124,7 @@ public class SettingRowTests
     [Test] public async Task ModuleRow_ReachesTheSeam()
     {
         await using var app = TestApp.Create(_dir);
-        var llm = (global::app.module.action.llm.setting.@this)(await Read("%!llm%", app.actor.list.User.Context)).Peek()!;
+        var llm = (global::app.module.llm.setting.@this)(await Read("%!llm%", app.actor.list.User.Context)).Peek()!;
         llm.Cache = false;
         await (await app.actor.list.User.Setting.Save(llm)).IsSuccess();
 

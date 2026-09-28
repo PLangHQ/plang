@@ -111,7 +111,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// other action state. Session blocks until answer; Message returns
     /// <c>Data&lt;Ask&gt;</c> with Snapshot attached (engine short-circuits).
     /// </summary>
-    public abstract Task<global::app.data.@this> Ask(module.action.output.ask action, CancellationToken ct = default);
+    public abstract Task<global::app.data.@this> Ask(module.output.ask action, CancellationToken ct = default);
 
     // The context the channel's events fire in — its actor's, else its list's app's system context (a
     // Service-owned list has no actor); null for a channel that belongs to no list.
@@ -178,7 +178,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// action's context. After fires when the ask completes (Session: post-answer; Message: pre-suspend — the
     /// channel kind decides timing).
     /// </summary>
-    public virtual async Task<global::app.data.@this> AskAsync(module.action.output.ask action, CancellationToken ct = default)
+    public virtual async Task<global::app.data.@this> AskAsync(module.output.ask action, CancellationToken ct = default)
     {
         var context = action.Context;
         var answer = await on.ask.Before(this, context);

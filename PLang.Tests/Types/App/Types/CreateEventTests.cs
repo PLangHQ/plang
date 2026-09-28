@@ -132,7 +132,7 @@ public class CreateEventTests : System.IAsyncDisposable
         await Ctx.Variable.Set("doc", await global::app.type.item.path.@this.Resolve("given.txt", Ctx).Read(Ctx));
 
         var (handler, _) = await TestAction.Create("variable", "set", ("name", "%y%"), ("value", "%doc%")).Bind(Ctx);
-        var given = await ((global::app.module.action.variable.Set)handler!).Given();
+        var given = await ((global::app.module.variable.Set)handler!).Given();
 
         await given.IsSuccess();
         var file = (given.Peek() as global::app.type.item.dict.@this)!.Get("Value", Ctx)!.Peek() as global::app.type.item.file.@this;

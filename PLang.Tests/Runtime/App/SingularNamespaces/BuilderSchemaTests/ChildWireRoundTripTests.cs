@@ -23,8 +23,8 @@ public class ChildWireRoundTripTests
             Make.Step("if %x% = 1", Make.Action("condition", "if", ("Left", "%x%"), ("Operator", "="), ("Right", 1))),
             Make.Step("write out inside", 1, Make.Action("output", "write", ("Content", "inside"))));
 
-        var fold = new global::app.module.action.build.fold(context) { Goal = context.Ok<global::app.goal.@this>(goal) };
-        var folded = await new global::app.module.action.build.code.Default().Fold(fold);
+        var fold = new global::app.module.build.fold(context) { Goal = context.Ok<global::app.goal.@this>(goal) };
+        var folded = await new global::app.module.build.code.Default().Fold(fold);
         await Assert.That(folded.Success).IsTrue();
 
         var loaded = await RealGoalLoad.ViaChannel(app, goal);

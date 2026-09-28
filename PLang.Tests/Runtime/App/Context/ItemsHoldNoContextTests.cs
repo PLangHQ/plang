@@ -17,7 +17,7 @@ public class ItemsHoldNoContextTests
         typeof(global::app.error.Error),
         typeof(global::app.snapshot.@this),
         // The signing handler doubles as a value type; it is parked with signing.
-        typeof(global::app.module.action.signing.sign),
+        typeof(global::app.module.signing.sign),
     };
 
     private static bool IsContext(System.Type t) => t == typeof(global::app.actor.context.@this);

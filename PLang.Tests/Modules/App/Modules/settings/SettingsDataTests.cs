@@ -31,8 +31,8 @@ public class SettingsDataTests
     }
 
     // The setting as the actor's settings hold it now — llm's own class.
-    private global::app.module.action.llm.setting.@this Llm(global::app.actor.context.@this ctx)
-        => ctx.Setting.Of<global::app.module.action.llm.setting.@this>();
+    private global::app.module.llm.setting.@this Llm(global::app.actor.context.@this ctx)
+        => ctx.Setting.Of<global::app.module.llm.setting.@this>();
 
     private static global::app.data.@this<global::app.type.item.setting.@this> Given(
         global::app.type.item.setting.@this setting, global::app.actor.context.@this ctx)
@@ -45,7 +45,7 @@ public class SettingsDataTests
         var llm = Llm(ctx);
         llm.Cache = false;
 
-        var result = await new global::app.module.action.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start();
+        var result = await new global::app.module.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start();
         await result.IsSuccess();
         // no value rides out — a setting may hold secrets
         await Assert.That(result.Peek() is null or global::app.type.item.@null.@this).IsTrue();
@@ -58,9 +58,9 @@ public class SettingsDataTests
         var ctx = _app.actor.list.System.Context;
         var llm = Llm(ctx);
         llm.Cache = false;
-        await (await new global::app.module.action.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start()).IsSuccess();
+        await (await new global::app.module.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start()).IsSuccess();
 
-        var result = await new global::app.module.action.setting.Remove(ctx) { Setting = Given(Llm(ctx), ctx) }.Start();
+        var result = await new global::app.module.setting.Remove(ctx) { Setting = Given(Llm(ctx), ctx) }.Start();
         await result.IsSuccess();
         await Assert.That(Llm(ctx).Cache == true).IsTrue();
     }
@@ -71,7 +71,7 @@ public class SettingsDataTests
         var ctx = _app.actor.list.System.Context;
         var node = new global::app.type.item.setting.module.@this("http");
 
-        var result = await new global::app.module.action.setting.Save(ctx) { Setting = Given(node, ctx) }.Start();
+        var result = await new global::app.module.setting.Save(ctx) { Setting = Given(node, ctx) }.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotASettingClass");
     }

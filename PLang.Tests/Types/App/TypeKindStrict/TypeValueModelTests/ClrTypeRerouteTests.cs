@@ -7,8 +7,8 @@ namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 
 // Three call-sites read `type.ClrType` today. After the reroute, ClrType is
 // non-public and these sites resolve via App.type.list.Clr(name) / .Get(name):
-//   - app.module.action.file.read    (CLR type for read-back conversion)
-//   - app.module.action.variable.set (CLR type for value conversion before mint)
+//   - app.module.file.read    (CLR type for read-back conversion)
+//   - app.module.variable.set (CLR type for value conversion before mint)
 //   - app.store.sqlite.@this (CLR type for column mapping)
 // Smoke: after the reroute the registry still hands back the same CLR type
 // the entity used to surface directly.

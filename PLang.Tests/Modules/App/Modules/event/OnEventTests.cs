@@ -1,4 +1,4 @@
-using app.module.action.on;
+using app.module.on;
 
 namespace PLang.Tests.App.actions.EventTests;
 

@@ -104,7 +104,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         var ch = new StreamChannel("i", ms, ChannelDirection.Bidirectional, ownsStream: false)
         { Mime = "text/plain" };
         app.actor.list.User.Channel.Register(ch);
-        var result = await ch.Ask(new global::app.module.action.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) });
+        var result = await ch.Ask(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) });
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("answer");
     }
@@ -124,7 +124,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
             Encoding = "iso-8859-1"
         };
         app.actor.list.User.Channel.Register(ch);
-        var result = await ch.Ask(new global::app.module.action.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) });
+        var result = await ch.Ask(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) });
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("é");
     }
@@ -139,7 +139,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
             Timeout = TimeSpan.FromMilliseconds(50)
         };
         app.actor.list.User.Channel.Register(ch);
-        var result = await ch.Ask(new global::app.module.action.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) });
+        var result = await ch.Ask(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) });
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("late answer");
     }
@@ -156,7 +156,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         ctx.PushCancellation(cts);
         try
         {
-            var ask = new global::app.module.action.output.ask(ctx) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?", context: ctx) };
+            var ask = new global::app.module.output.ask(ctx) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?", context: ctx) };
             var result = await ask.Start();
             await result.IsFailure();
             await Assert.That(cts.IsCancellationRequested).IsTrue();

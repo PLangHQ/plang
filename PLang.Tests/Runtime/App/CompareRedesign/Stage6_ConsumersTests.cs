@@ -65,10 +65,10 @@ public class Stage6_ConsumersTests
     {
         // assert/code/Default.cs Equals/NotEquals/GreaterThan/LessThan/Contains/NotContains await Compare and map per the table
         // the comparing asserts are async (they await data.Compare) — the interface pins it
-        var m = typeof(global::app.module.action.assert.code.IAssert).GetMethod("Equals");
+        var m = typeof(global::app.module.assert.code.IAssert).GetMethod("Equals");
         await Assert.That(m).IsNotNull();
         await Assert.That(typeof(Task).IsAssignableFrom(m!.ReturnType)).IsTrue();
-        var gt = typeof(global::app.module.action.assert.code.IAssert).GetMethod("GreaterThan");
+        var gt = typeof(global::app.module.assert.code.IAssert).GetMethod("GreaterThan");
         await Assert.That(typeof(Task).IsAssignableFrom(gt!.ReturnType)).IsTrue();
     }
 
@@ -139,7 +139,7 @@ public class Stage6_ConsumersTests
         var list = new global::app.type.item.list.@this();
         list.Add(new Data("", dict, context: ctx));
         await ctx.Variable.Set("items", list);
-        var result = await app.Run(new global::app.module.action.list.IndexOf(ctx) { ListName = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items")),
+        var result = await app.Run(new global::app.module.list.IndexOf(ctx) { ListName = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items")),
             Value = D(app, 99, "number"),
         }, ctx);
         await result.IsSuccess();
@@ -158,7 +158,7 @@ public class Stage6_ConsumersTests
         list.Add(new Data("", 5, context: ctx));
         list.Add(new Data("", 5, context: ctx));
         await ctx.Variable.Set("items", list);
-        var result = await app.Run(new global::app.module.action.list.Unique(ctx) { ListName = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items")),
+        var result = await app.Run(new global::app.module.list.Unique(ctx) { ListName = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items")),
         }, ctx);
         await result.IsSuccess();
     }

@@ -15,13 +15,13 @@ public class ConfirmTemplateTests
 
     private static async Task<string> Rendered(string template, global::app.actor.context.@this context)
     {
-        var render = new global::app.module.action.ui.Render(context)
+        var render = new global::app.module.ui.Render(context)
         {
             Template = (global::app.type.item.text.@this)System.IO.File.ReadAllText(
                 System.IO.Path.Combine(RepoRoot(), "os", "system", "builder", "llm", "templates", template)),
             IsFile = (global::app.type.item.@bool.@this)false,
         };
-        var result = await new global::app.module.action.ui.code.Fluid().Render(render);
+        var result = await new global::app.module.ui.code.Fluid().Render(render);
         return result.Success ? (await result.Value())!.ToString() : $"render failed: {result.Error!.Message}";
     }
 

@@ -1,9 +1,9 @@
 using System.Reflection;
 using app.actor.context;
-using app.module.action.setting;
+using app.module.setting;
 using app.error;
 using app.type.item.variable;
-using app.module.action.identity;
+using app.module.identity;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.identity;
@@ -52,7 +52,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             await _app.store));
 
-        var getHandler = new global::app.module.action.identity.Get(Ctx) { Name = null };
+        var getHandler = new global::app.module.identity.Get(Ctx) { Name = null };
         await getHandler.Attach(null, Ctx);
         var result = await getHandler.Start();
         await result.IsFailure();
@@ -72,7 +72,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             await _app.store));
 
-        var getHandler = new global::app.module.action.identity.Get(Ctx) { Name = null };
+        var getHandler = new global::app.module.identity.Get(Ctx) { Name = null };
         await getHandler.Attach(null, Ctx);
         var result = await getHandler.Start();
         await result.IsFailure();
@@ -88,7 +88,7 @@ public class IdentityErrorPathTests
         SwapDataSource(_app, new FailingSaveDataSource(
             await _app.store));
 
-        var handler = new global::app.module.action.identity.Get(Ctx) { Name = null };
+        var handler = new global::app.module.identity.Get(Ctx) { Name = null };
         await handler.Attach(null, Ctx);
         var result = await handler.Start();
 

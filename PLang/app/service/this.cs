@@ -1,4 +1,4 @@
-using app.module.action.identity;
+using app.module.identity;
 
 namespace app.service;
 

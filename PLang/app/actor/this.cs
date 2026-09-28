@@ -1,7 +1,7 @@
 using app;
-using app.module.action.setting;
-using app.module.action.identity;
-using app.module.action.identity.code;
+using app.module.setting;
+using app.module.identity;
+using app.module.identity.code;
 
 namespace app.actor;
 
@@ -119,7 +119,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             var (provider, _) = App.Code.Get<IIdentity>();
             if (provider == null) return null;
             // sync over async: a computed value answers synchronously on read
-            var result = provider.GetOrCreateDefaultAsync(new global::app.module.action.identity.Get(App.actor.list.System.Context)).GetAwaiter().GetResult();
+            var result = provider.GetOrCreateDefaultAsync(new global::app.module.identity.Get(App.actor.list.System.Context)).GetAwaiter().GetResult();
             return result.Success
                 ? (result.Peek() as global::app.type.item.@this)?.Clr<Identity>() ?? result.Peek() as Identity
                 : null;

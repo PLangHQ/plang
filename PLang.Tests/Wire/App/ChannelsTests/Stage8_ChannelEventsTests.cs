@@ -176,7 +176,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         Data? received = null;
         Bind(ch, "ask", When.after, (_, result, ctx) => { received = result; return Task.FromResult(ctx.Ok()); });
 
-        var result = await ch.AskAsync(new global::app.module.action.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") });
+        var result = await ch.AskAsync(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") });
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("answer");
         await Assert.That((await received!.Value())?.ToString()).IsEqualTo("answer");
@@ -190,7 +190,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         var fired = false;
         Bind(ch, "ask", When.after, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); });
 
-        await ch.AskAsync(new global::app.module.action.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?") });
+        await ch.AskAsync(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?") });
 
         await Assert.That(fired).IsTrue();
     }
@@ -232,7 +232,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         public override Task<Data> Write(Data data, CancellationToken ct = default)
             => throw new IOException("boom");
         public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> Ask(global::app.module.action.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
+        public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(Data.Ok());
     }
 
     private sealed class MessageProbeChannel : global::app.channel.type.message.@this
@@ -240,6 +240,6 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         public MessageProbeChannel(string name) { Name = name; }
         public override Task<Data> Write(Data data, CancellationToken ct = default) => Task.FromResult(Data.Ok());
         public override Task<Data> Read(CancellationToken ct = default) => Task.FromResult(Data.Ok());
-        public override Task<Data> Ask(global::app.module.action.output.ask action, CancellationToken ct = default) => Task.FromResult(action.Context.Ok("answer-from-resume"));
+        public override Task<Data> Ask(global::app.module.output.ask action, CancellationToken ct = default) => Task.FromResult(action.Context.Ok("answer-from-resume"));
     }
 }

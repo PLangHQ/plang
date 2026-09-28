@@ -1,7 +1,7 @@
 using app.actor.context;
 using app;
 using app.type.item.variable;
-using app.module.action.condition;
+using app.module.condition;
 using Operator = global::app.data.Operator;
 using app.type.item.path;
 using Action = global::app.goal.step.action.@this;

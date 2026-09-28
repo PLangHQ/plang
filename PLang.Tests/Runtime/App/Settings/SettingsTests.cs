@@ -47,7 +47,7 @@ public class SettingsTests
         await Assert.That(result.Success).IsTrue().Because(result.Error?.Message ?? "ok");
 
         // The consumer's read: each string row lifts to a REAL path (text→path via the lift door).
-        var files = app.actor.list.System.Context.Setting.Of<global::app.module.action.build.setting.@this>().Files;
+        var files = app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Files;
         var paths = new List<global::app.type.item.path.@this>();
         foreach (var row in files.Items(global::PLang.Tests.TestApp.SharedContext))
             paths.Add((await row.Value<global::app.type.item.path.@this>())!);

@@ -70,7 +70,7 @@ public class ListNestingTests
         var ctx = app.actor.list.User.Context;
         ctx.Variable.Set("l", Parsed("[[1,2],3]"));
 
-        var result = await app.Run(new global::app.module.action.list.Flatten(ctx)
+        var result = await app.Run(new global::app.module.list.Flatten(ctx)
         {
             ListName = new global::app.type.item.variable.@this("l"),
         }, ctx);

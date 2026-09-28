@@ -23,12 +23,12 @@ public class FirstIdentityTests
                     return Task.FromResult(c.Ok());
                 }, who, global::app.@event.binding.Scope.actor);
 
-            var identity = await app.Run(new global::app.module.action.identity.Get(ctx), ctx);
+            var identity = await app.Run(new global::app.module.identity.Get(ctx), ctx);
             await identity.IsSuccess();
 
             // the one ask, and the one its own save makes — never a chain down to the stack's limit
             await Assert.That(gets).IsLessThanOrEqualTo(4);
-            await Assert.That(app.actor.list.System.Setting.Of<global::app.module.action.identity.setting.@this>().Identity.CountRaw).IsEqualTo(1);
+            await Assert.That(app.actor.list.System.Setting.Of<global::app.module.identity.setting.@this>().Identity.CountRaw).IsEqualTo(1);
         }
         finally { System.IO.Directory.Delete(root, recursive: true); }
     }

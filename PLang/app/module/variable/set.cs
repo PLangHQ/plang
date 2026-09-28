@@ -1,0 +1,355 @@
+using app.Attributes;
+
+namespace app.module.variable;
+
+/// <summary>
+/// Sets a variable in the current context's variable store.
+/// When AsDefault is true, only sets if the variable doesn't already exist.
+///
+/// variable.set is the binding site. With no `as` clause it shallow-clones the source
+/// Data under the target name — value (lazy raw included), type, signature and
+/// properties shared by reference, no materialize, no deep clone. A `Type` clause
+/// converts/mints the declared Data&lt;T&gt;. Variables.Set then replaces the binding
+/// (Data values are never mutated in place), carrying event subscribers across the name.
+/// </summary>
+[Action("set", Cacheable = false)]
+public partial class Set : IContext, IScope, IKeep
+{
+    /// <summary>At the build's walk: the name takes what the build knows the value is — one literal,
+    /// or one whole variable the store knows. A template, a navigation, a variable the store doesn't
+    /// know, a setting (<c>%!x%</c>) or a property (<c>%x!p%</c>) leaves the name unknown.</summary>
+    public async Task Scope()
+    {
+        var name = await Name.Value();
+        if (name == null || name.Code.Count != 1 || name.Code.Root.Name.StartsWith('!')) return;
+        if (Value.IsVariable)
+        {
+            if (await Value.Follow(Context) is { IsInitialized: true } known) await name.Set(known, Context);
+            return;
+        }
+        // a text with variables inside is unknown; a literal is read as the value it is
+        if (Value.HasVariable) return;
+        if (await Value.Value() is { IsNull: false }) await name.Set(Value, Context);
+    }
+
+    /// <summary>Build-time judgement of my own properties, read as authored — Peek, never the
+    /// value door: a %var% is unknown at build and defers to Run.</summary>
+    public async System.Threading.Tasks.Task<global::app.error.Error?> Validate()
+    {
+        // The strict probe reasons over the value's raw face at this proven leaf (ValidateKind is
+        // CLR-facing machinery).
+        // Strict kind enforcement at build for literals: the user-named type entity (a type, not a
+        // string) against the literal's content. %var% values defer to Run. The raw face is read only
+        // here, where a strict type asks for it.
+        if (Type?.Peek() is global::app.type.@this t && t.Strict && !t.kind.IsEmpty && !Value.HasVariable
+            && Value.Peek() is { } peeked
+            && (peeked is global::app.type.item.@this value ? value.Backing : peeked) is { } valueBacking)
+        {
+            var clr = t.ClrType;
+            if (clr != null && typeof(global::app.data.IKindValidatable).IsAssignableFrom(clr))
+            {
+                var probe = TryInstantiateValidator(clr, valueBacking);
+                if (probe is global::app.data.IKindValidatable v)
+                {
+                    var (ok, actual) = v.ValidateKind(valueBacking, t.kind.Name);
+                    if (!ok)
+                        return new global::app.error.ProgramError(
+                            $"Strict kind mismatch: declared {t.Name}/{t.kind}"
+                            + (actual != null ? $" but content is {actual}." : "."),
+                            key: "StrictKindMismatch");
+                }
+            }
+        }
+
+        // Real content truth has two owners, both elsewhere: the strict-kind probe above
+        // (magic bytes, at build) and the first-touch parse at runtime (strict at the load
+        // seam). A declared-but-unparsed value (a source) is valid by construction — nothing
+        // has become anything yet — so there is no build-time type-match check to make here.
+        return null;
+    }
+
+    public partial data.@this<app.type.item.variable.@this> Name { get; init; }
+    public partial data.@this Value { get; init; }
+    /// <summary>
+    /// Optional <c>as</c> clause. Carries the whole <c>type</c> entity (Name,
+    /// Kind, Strict) the LLM constructed — replaces the historical bare string.
+    /// <c>Start</c> reads <c>Type.Value.Name</c> to resolve the CLR type via the
+    /// registry and stamps the entire entity (kind included) onto the minted
+    /// variable.
+    /// </summary>
+    public partial data.@this? Type { get; init; }
+    [Default(false)]
+    public partial data.@this<global::app.type.item.@bool.@this> AsDefault { get; init; }
+
+    // Build-time: with no `as` clause, adopt the type of what I capture. The
+    // preceding action published its return as %!buildData%; I take its type onto
+    // my own Type parameter. An explicit user hint (Type present) wins — I only
+    // stamp when absent. The build pass stays generic; the decision lives here.
+    // (Build-scoped handle, distinct from runtime's %!data%, which the System
+    // actor is actively using while the builder runs.)
+    public async Task<data.@this> Build()
+    {
+        // TAPER (see .bot/context-never-null/coder/builder-read-unification-plan.md): the
+        // clean typed version (this.Type = …, one deserializer) pends the architect. For
+        // now, adopt the type of what I capture (%!buildData%, published by the build pass
+        // from the preceding action) by adding my Type property to the program action.
+        // User hint wins — an authored Type property already present is left alone.
+        if (__action["Type"] != null) return Context.Ok();
+
+        var source = (await Context.Variable.Get("!buildData")).Peek();
+        var inferred = source as global::app.type.@this;
+        if (inferred == null && source is global::app.type.item.text.@this t && t.ToString() is { Length: > 0 } n
+            && await Context.App.type.Get(n) is { Success: true } named)
+            inferred = await named.Value();
+        if (inferred is { IsNull: false })
+            __action.Property.Add(new global::app.type.property.@this
+                { Name = "Type", Type = Context.App.type.list["type"], Value = inferred });
+        return Context.Ok();
+    }
+
+    public async Task<data.@this> Start()
+    {
+        // Resolve the name door up front; the VALUE door stays closed on this path —
+        // a plain `set %x% = %y%` forwards the binding (Copy shares the lazy
+        // raw), so opening the door here would parse a lazily-read file on store and
+        // defeat verbatim passthrough. Only the branches that genuinely need content
+        // (a Properties write, a forced-type conversion) open it below.
+        var name = await Name.Value();
+
+        // The Name slot must NAME a thing. A value typed as something other than
+        // `variable` (a string-typed literal) declines creation — variable.Create
+        // fails the Name binding (CreateVariableDeclined) and answers null. Surface that
+        // decline instead of NRE'ing on a null name below.
+        if (name == null)
+            return Context.Error(Name.Error
+                ?? new global::app.error.Error("variable.set: Name did not resolve to a variable.", "CreateVariableDeclined", 400));
+
+        // `set default` writes only where nothing is — a setting included (%!build.cache% holds its
+        // class's default, or this run's value).
+        if (await AsDefault.ToBooleanAsync())
+        {
+            var existing = await name.Start(Context);
+            if (existing.IsInitialized)
+                return existing;
+        }
+
+        // Forced type via [Type]: convert via TryConvert and mint Data<T>. Conversion failure
+        // surfaces as Data.Error (Success=false) — Variables.Set is not called in that case so
+        // the binding stays whatever it was. For primitives this is straight coercion ("42" → 42).
+        // For json (TypeMapping maps "json" → typeof(JsonNode)), TryConvert parses the string
+        // into a JsonObject which IS IDictionary — that's what enables `convert %json% from
+        // json` (mapped to variable.set Type=json) followed by foreach over the resulting dict.
+        //
+        // Strict-kind is enforced at THREE genuinely different times in this block — they are
+        // NOT redundant, each catches a case the others can't see:
+        //   1. Validate (above) — a literal value, at BUILD time.
+        //   2. the IKindValidatable probe below — a %var% value resolved at RUN time.
+        //   3. the IStrictKindEnforcer load seam below — byte-backed values, at MATERIALIZATION.
+        // An omitted `as` clause is an EMPTY slot, not C# null — the value door
+        // answers the `absent` citizen (non-null, ToString() == ""). Gate on the
+        // value's own emptiness so an absent type skips the conversion block
+        // instead of minting a type with an empty name (UnknownType '').
+        var typeValue = Type == null || await Type.IsEmpty() ? null : await Type.Value();
+        if (typeValue != null)
+        {
+            // The Type value reads through the `type` reader, so it materializes as the type
+            // entity itself ({name, kind?, strict?} → type.@this). A bare type-name (raw string)
+            // still names a type by name. No dict rebuild — that was the pre-reader path.
+            // The developer named the type — an unknown name is their error, answered as plang's.
+            var declaredName = (typeValue as global::app.type.@this)?.Name ?? typeValue.ToString()!;
+            var named = await Context.App.type.Get(declaredName);
+            if (!named.Success || await named.Value() is not { } declared)
+                return Context.Error(
+                    new global::app.error.ServiceError($"Unknown type '{declaredName}'", "UnknownType", 400));
+            // The declared type through the types: its item class, its kind canonicalised
+            // (`markdown` → `md`, `jpeg` → `jpg`). The declared type object is the program's (shared
+            // by every run), so a changed kind is this run's own type object.
+            var type = typeValue is global::app.type.@this written ? Context.App.type.list[written, Context] : declared;
+            var typeName = type.Name;
+            var targetType = type.ClrType;
+
+            // A value that already is the declared type is kept as it is — followed to what it names
+            // (`%!data%` is the Data it names), never read and never converted: a file stays the file,
+            // unread, and is no new birth. Only a value that isn't the type is opened and converted below
+            // (a re-kind and a strict declaration go on too).
+            var incoming = await Value.Follow(Context);
+            if (!type.Strict && incoming.Peek() is { IsNull: false } held && held.Is(type)
+                && (type.kind.IsEmpty || string.Equals(held.Type.kind.Name, type.kind.Name, StringComparison.OrdinalIgnoreCase)))
+                return await name.Set(Value, Context);
+
+            // Kind-derivation and the strict probe read the IN-MEMORY value only: a
+            // raw-backed (unparsed) value contributes null — deriving a kind from
+            // content would force the parse the verbatim fast-path below exists to
+            // avoid. Content is read (door opened) only for a value that isn't the declared type.
+            object? sourceValue = incoming.RawUntouched ? null : await incoming.Value();
+            // The kind hooks and the strict probe below reason over the raw CLR
+            // face (ctor matching, magic-byte/extension sniffing) — a born-typed
+            // text/binary leaf presents its backing here. Minting re-lifts, so
+            // the stored value stays born-typed either way.
+            if (sourceValue is global::app.type.item.text.@this st) sourceValue = st.Clr<string>();
+            else if (sourceValue is global::app.type.item.binary.@this sb) sourceValue = sb.Value;
+
+            // Stamp kind from the value by building through the family's eager door and
+            // reading the kind off the built value (image parses its path's extension → jpg;
+            // number reads the literal's precision → int). `text` has no kind for a literal
+            // (a spelling is not a kind), so a text literal naturally derives nothing. A decline
+            // (null / error on the throwaway carrier) → no kind.
+            if (type.kind.IsEmpty && targetType != null)
+            {
+                var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: Context);
+                if (Context.App.type.list[typeName].Make(sourceValue, carrier)?.Type.kind is { IsEmpty: false } derivedKind)
+                    type = Context.App.type.list[new global::app.type.@this(type.Name, derivedKind.Name, type.Strict, type.Template), Context];
+            }
+            if (targetType == null)
+            {
+                return Context.Error(
+                    new global::app.error.ServiceError($"Unknown type '{typeName}'", "UnknownType", 400));
+            }
+
+            // Strict kind enforcement at runtime — for `%var%` paths
+            // Validate deferred to here. When the resolved CLR type
+            // implements IKindValidatable and Strict is true, sniff the value.
+            // We construct a sample instance using the raw value as the first
+            // ctor argument (image's primary ctor takes byte[]); a type without
+            // a fitting ctor is treated as "no probe available".
+            if (type.Strict && !type.kind.IsEmpty
+                && typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))
+            {
+                var probe = TryInstantiateValidator(targetType, sourceValue);
+                if (probe is global::app.data.IKindValidatable v)
+                {
+                    var (ok, actual) = v.ValidateKind(sourceValue!, type.kind.Name);
+                    if (!ok)
+                        return Context.Error(
+                            new global::app.error.ServiceError(
+                                $"Strict kind mismatch: declared {typeName}/{type.kind}"
+                                + (actual != null ? $" but content is {actual}." : "."),
+                                "StrictKindMismatch", 400));
+                }
+            }
+
+            // The incoming value is ALREADY a raw-backed Data of the declared type
+            // — a lazy read assigned via `write to %var%` (file.read/channel.read
+            // stamp {table,csv}/{object,json} and the same stamp lands here). Store
+            // it as-is so it stays lazy: scalar %var% remains the raw source form
+            // and verbatim passthrough holds. Re-materializing (Value.Value below)
+            // would parse it on store and defeat the whole lazy path.
+            if (Value.RawUntouched && Value.Type is { } vt
+                && string.Equals(vt.Name, type.Name, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(vt.kind.Name, type.kind.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                Value.Name = name!;
+                return await Context.Variable.Set(Value);
+            }
+
+            if (Value.RawUntouched) sourceValue = await Value.Value();
+            object? converted = sourceValue;
+
+            // The incoming value composes the declared type as a facet under a DIFFERENT
+            // name (an image has-a path, so an image bound to a `path` slot satisfies `path`)
+            // — keep its own richer type; downgrading would drop the bytes. Same-name is
+            // excluded so `as text/md` over `{text}` (and strict) still applies.
+            // Ask the VALUE — its type history answers "an image is-a path" from the "path" entry
+            // it was born with (no CLR-inheritance lattice on the type entity).
+            var keepAsIs = Value.Type != null
+                && !string.Equals(Value.Type.Name, type.Name, StringComparison.OrdinalIgnoreCase)
+                && Value.Is(type);
+
+            // `as <type>` is a converter: the TYPE makes a value of itself (kind-aware), and a value
+            // converted to another type is born — its type's on.create fires (a before may refuse or
+            // answer instead). A byte-backed family (image) keeps a literal path-string — the Type
+            // entity carries the declared meaning and the value loads later.
+            if (!keepAsIs && converted != null && !targetType.IsInstanceOfType(converted))
+            {
+                // The build throws on a bad conversion (the throw boundary) — converted is a
+                // materialized leaf, so this re-types eagerly. A kind-validatable target defers:
+                // its failure surfaces when the value loads (its own load validates and throws);
+                // anything else surfaces the failure here.
+                try
+                {
+                    var born = await type.Create(converted, Context, name);
+                    if (!born.Success || born.Handled) return born;
+                    converted = born.Peek();
+                }
+                catch (System.Exception ex) when (ex is System.FormatException
+                                                  or System.InvalidOperationException or System.Text.Json.JsonException)
+                {
+                    if (!typeof(global::app.data.IKindValidatable).IsAssignableFrom(targetType))
+                        return Context.Error(new global::app.error.Error(ex.Message, "TypeConversionFailed", 400));
+                }
+            }
+
+            // The converted value already carries its type — store it in a Data directly
+            // (no reflective Data<T> mint). keepAsIs keeps the value's own richer type.
+            var typedData = new data.@this(name, converted, keepAsIs ? null : type, context: Context);
+
+            // Strict kind for a reference fundamental rides WITH the value to its
+            // load seam (Ingi: validate at byte-materialization, throw if strict).
+            // An already-loaded value (read-lift, raw bytes in hand) validates
+            // now; a lazy path-backed value defers — its own load enforces (e.g.
+            // image.BytesAsync throws on mismatch). Raw byte[] slots are handled
+            // separately above via the IKindValidatable probe.
+            if (type.Strict && !type.kind.IsEmpty
+                && (await typedData.Value()) is global::app.data.IStrictKindEnforcer enforcer)
+            {
+                enforcer.RequireStrictKind(type.kind.Name);
+                if (enforcer.CheckStrictKind() is { ok: false } mismatch)
+                    return Context.Error(
+                        new global::app.error.ServiceError(
+                            $"Strict kind mismatch: declared {typeName}/{type.kind}"
+                            + (mismatch.actualKind != null ? $" but content is {mismatch.actualKind}." : "."),
+                            "StrictKindMismatch", 400));
+            }
+
+            CopyProperties(Value, typedData);
+            return await Context.Variable.Set(typedData);
+        }
+
+        // No forced type — just set the data. Data flows: bind the Value's Data under the target
+        // name as-is, without inspecting or computing it (no AsCanonical, no .Value). A reference
+        // or template resolves/renders on its own door at read; a literal is itself. A self-write
+        // (`set %a%=%a%`) is dropped at build, never handled here. The variable writes itself: a
+        // bare name rebinds, `%x.a%` sets a member, `%x!cost%` the binding's Properties, `%!llm.cache%` a
+        // setting's option for this run.
+        return await name.Set(Value, Context);
+    }
+
+    /// <summary>
+    /// Properties carry per-Data result metadata (test.report's summaryFail, condition.if's
+    /// branchIndex, etc.) that downstream <c>%var.prop%</c> navigation depends on. The
+    /// forced-type path (<c>as</c> clause) builds a fresh Data<T> from the converted value;
+    /// without this copy, Properties + Signature would be dropped at that mint. The no-type
+    /// path shallow-clones and so carries them for free.
+    /// </summary>
+    private static void CopyProperties(data.@this source, data.@this target)
+    {
+        if (ReferenceEquals(source, target)) return;
+        if (source.Properties.Count == 0) return;
+        foreach (var p in source.Properties)
+            target.Properties[p.Key] = p.Value;
+    }
+
+
+    /// <summary>
+    /// Reflection construction of Data&lt;T&gt; for a runtime type not in the hot if-chain.
+    /// </summary>
+    private static object? TryInstantiateValidator(System.Type targetType, object? rawValue)
+    {
+        if (rawValue == null) return null;
+        foreach (var ctor in targetType.GetConstructors())
+        {
+            var ps = ctor.GetParameters();
+            if (ps.Length == 0) continue;
+            if (!ps[0].ParameterType.IsAssignableFrom(rawValue.GetType())) continue;
+            var args = new object?[ps.Length];
+            args[0] = rawValue;
+            for (int i = 1; i < ps.Length; i++)
+                args[i] = ps[i].HasDefaultValue ? ps[i].DefaultValue
+                    : ps[i].ParameterType == typeof(string) ? string.Empty : null;
+            // a constructor that takes the value and throws is the value refused — it bubbles
+            return ctor.Invoke(args);
+        }
+        return null;
+    }
+
+}

@@ -5,7 +5,7 @@ namespace app.type.item.setting;
 /// initializers are the defaults (<c>app.goal.list.setting</c>'s <c>Os</c>, llm's <c>Cache</c>). Each class
 /// is a kind of this type, named by its path: its namespace, which is its owner's path in plang
 /// (<c>%!app.goal.list.setting%</c>); a module's own class is read by the module's name
-/// (<c>app.module.action.llm.setting</c> → <c>llm</c>, <c>%!llm.cache%</c>). A bare setting is a node — a
+/// (<c>app.module.llm.setting</c> → <c>llm</c>, <c>%!llm.cache%</c>). A bare setting is a node — a
 /// path that leads to settings (a module, an action's <c>llm.query</c>). The asker's settings build one,
 /// the saved row and this run's values on it.
 /// </summary>
@@ -20,7 +20,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     protected @this()
     {
         var path = GetType().Namespace!;
-        const string module = "app.module.action.", own = ".setting";
+        const string module = "app.module.", own = ".setting";
         Path = path.StartsWith(module) && path.EndsWith(own) ? path[module.Length..^own.Length] : path;
     }
 

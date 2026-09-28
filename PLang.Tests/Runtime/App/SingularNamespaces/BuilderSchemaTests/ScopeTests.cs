@@ -34,12 +34,12 @@ public class ScopeTests
 
     private static async Task<global::app.data.@this> Match(Goal goal, string answer, global::app.actor.context.@this context)
     {
-        var action = new global::app.module.action.build.match(context)
+        var action = new global::app.module.build.match(context)
         {
             Goal = context.Ok<Goal>(goal),
             Answer = context.Ok<global::app.type.item.text.@this>(answer),
         };
-        return await new global::app.module.action.build.code.Default().Match(action);
+        return await new global::app.module.build.code.Default().Match(action);
     }
 
     private static string Shown(global::app.goal.step.@this step) =>
@@ -192,8 +192,8 @@ public class ScopeTests
 
         // as llm.query reads its Message: the typed view, then lowered — the %sys% rendered
         var messages = (await app.actor.list.User.Context.Variable.Get("messages"))
-            .As<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>();
-        var lowered = (await messages.Value()).Clr<List<global::app.module.action.llm.LlmMessage>>();
+            .As<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>();
+        var lowered = (await messages.Value()).Clr<List<global::app.module.llm.LlmMessage>>();
         await Assert.That(lowered![0].Content?.ToString()).IsEqualTo("hello");
     }
 

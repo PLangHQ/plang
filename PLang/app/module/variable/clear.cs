@@ -1,0 +1,11 @@
+namespace app.module.variable;
+
+[Action("clear", Cacheable = false)]
+public partial class Clear : IContext
+{
+    public Task<data.@this> Start()
+    {
+        Context.Variable.Clear();
+        return Task.FromResult(Data());
+    }
+}

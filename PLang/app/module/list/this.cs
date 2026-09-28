@@ -23,7 +23,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.module.
     public @this(global::app.@this app) : base(new List<object?>())
     {
         App = app;
-        Discover(typeof(@this).Assembly, "app.module.action");
+        Discover(typeof(@this).Assembly, "app.module");
     }
 
     /// <summary>A module removed from the app is emptied too — anyone still holding it finds no actions.</summary>
@@ -51,7 +51,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.module.
     /// </summary>
     public int Discover(Assembly assembly, string? baseNamespace = null)
     {
-        baseNamespace ??= "app.module.action";
+        baseNamespace ??= "app.module";
         int count = 0;
 
         var actionTypes = assembly.GetTypes()

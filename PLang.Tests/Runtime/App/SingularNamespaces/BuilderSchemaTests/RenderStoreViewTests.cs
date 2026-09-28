@@ -1,4 +1,4 @@
-using Render = global::app.module.action.ui.Render;
+using Render = global::app.module.ui.Render;
 
 namespace PLang.Tests.App.SingularNamespaces.BuilderSchemaTests;
 
@@ -20,7 +20,7 @@ public class RenderStoreViewTests
             Template = (global::app.type.item.text.@this)template,
             IsFile = (global::app.type.item.@bool.@this)false,
         };
-        var result = await new global::app.module.action.ui.code.Fluid().Render(action);
+        var result = await new global::app.module.ui.code.Fluid().Render(action);
         var err = result.Error?.Message;                                   // capture BEFORE Value() (which re-fails on an errored Data)
         var outp = result.Success ? (await result.Value())?.ToString() ?? "" : "";
         return (result.Success, err, outp);

@@ -1,5 +1,5 @@
-using app.module.action.signing;
-using app.module.action.signing.code;
+using app.module.signing;
+using app.module.signing.code;
 
 namespace PLang.Tests.App.Serialization;
 

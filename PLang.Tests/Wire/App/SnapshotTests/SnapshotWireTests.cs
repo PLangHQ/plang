@@ -34,7 +34,7 @@ public class SnapshotWireTests
         // The App's Mode rides the wire as one value: building here, so the destination builds
         // and its Test (TestApp.Create sets one) is cleared.
         var src = global::PLang.Tests.TestApp.Create("/src");
-        src.Build = new global::app.module.action.build.@this(src.actor.list.System.Context);
+        src.Build = new global::app.module.build.@this(src.actor.list.System.Context);
 
         var wired = await RoundTrip(src, src.Snapshot(src.actor.list.User.Context));
 

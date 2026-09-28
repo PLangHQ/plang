@@ -24,7 +24,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task BuilderGoals_Run_ReturnsTaskDataOfBuilderGoalsRecord()
     {
-        var ret = RunReturnType<global::app.module.action.build.goals>();
+        var ret = RunReturnType<global::app.module.build.goals>();
         var expected = typeof(Task<global::app.data.@this<global::app.type.item.list.@this<global::app.goal.@this>>>);
         await Assert.That(ret).IsEqualTo(expected);
     }
@@ -34,7 +34,7 @@ public class Stage2_MechanicalTypings_Part2Tests
     [Test]
     public async Task TestTag_Run_ReturnsTaskDataOfBool_OrStaysVoidLike()
     {
-        var ret = RunReturnType<global::app.module.action.test.Tag>();
+        var ret = RunReturnType<global::app.module.test.Tag>();
         var bareData = typeof(Task<Data>);
         var dataOfBool = typeof(Task<global::app.data.@this<global::app.type.item.@bool.@this>>);
 

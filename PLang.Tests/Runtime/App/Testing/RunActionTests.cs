@@ -95,7 +95,7 @@ public class RunActionTests
         if (parallel.HasValue) run["parallel"] = parallel.Value;
         if (timeoutSec.HasValue) run["timeoutSeconds"] = timeoutSec.Value;
         if (run.Count > 0) await _app.actor.list.User.Context.Setting.Set("app.test.setting", run).IsSuccess();
-        var action = new global::app.module.action.test.start(_app.actor.list.User.Context) { Tests = tests.ToListData<global::app.test.@this>() };
+        var action = new global::app.module.test.start(_app.actor.list.User.Context) { Tests = tests.ToListData<global::app.test.@this>() };
         var result = await action.Start();
         // run returns list<test>; materialize the executed tests (each row's value is a test).
         var list = (global::app.type.item.list.@this)(await result.Value())!;

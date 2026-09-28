@@ -1,5 +1,5 @@
 using app.type.item.variable;
-using app.module.action.condition;
+using app.module.condition;
 using Operator = global::app.data.Operator;
 
 namespace PLang.Tests.App.Modules.condition;

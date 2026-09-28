@@ -1,4 +1,4 @@
-using app.module.action.ui;
+using app.module.ui;
 
 namespace PLang.Tests.App.Modules.Stage4Spike;
 
@@ -16,7 +16,7 @@ public class RealCatalogRenderTests
             Template = (global::app.type.item.text.@this)template,
             IsFile = (global::app.type.item.@bool.@this)false,
         };
-        var result = await new global::app.module.action.ui.code.Fluid().Render(action);
+        var result = await new global::app.module.ui.code.Fluid().Render(action);
         await result.IsSuccess();
         return (await result.Value())?.ToString() ?? "";
     }

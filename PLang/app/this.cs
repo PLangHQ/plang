@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Reflection;
 using app.actor.context;
-using app.module.action.setting;
+using app.module.setting;
 using app.error;
 using app.module;
 using app.Utils;
@@ -156,7 +156,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
     /// </summary>
-    public ICache Cache { get; internal set; } = new global::app.module.action.cache.Memory();
+    public ICache Cache { get; internal set; } = new global::app.module.cache.Memory();
 
     /// <summary>
     /// The app's store — <c>.db/system.sqlite</c> (in memory while testing). One per app — actors
@@ -190,7 +190,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// Build mode controller. null = off; non-null = on (born under --build).
     /// When present, actors use in-memory datasources.
     /// </summary>
-    public global::app.module.action.build.@this? Build { get; set; }
+    public global::app.module.build.@this? Build { get; set; }
 
     /// <summary>What this App is doing — derived from what it holds: building when it has a Build,
     /// testing while its test session is open, otherwise running. Not a stored field, so there is no
@@ -393,8 +393,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         if (Covers(new global::app.callstack.setting.@this().Path))
             foreach (var one in actor.list.Items())
                 one.CallStack.Setting = one.Context.Setting.Of<global::app.callstack.setting.@this>();
-        if (Debug != null && Covers(new global::app.module.action.debug.setting.@this().Path))
-            Debug.Setting = actor.list.System.Context.Setting.Of<global::app.module.action.debug.setting.@this>();
+        if (Debug != null && Covers(new global::app.module.debug.setting.@this().Path))
+            Debug.Setting = actor.list.System.Context.Setting.Of<global::app.module.debug.setting.@this>();
     }
 
     // The app's identity, from .build/app.pr when there is one.

@@ -25,7 +25,7 @@ public class ErrorRecordTests : System.IAsyncDisposable
     [Test]
     public async Task Record_UnderDebug_CapturesTheVariablesWhole()
     {
-        _app.Debug = new global::app.module.action.debug.@this(_app.actor.list.System.Context);
+        _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
 
         var error = await Recorded();
 

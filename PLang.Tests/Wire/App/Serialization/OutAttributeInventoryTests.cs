@@ -21,19 +21,19 @@ public class OutAttributeInventoryTests
     // 1. Identity ------------------------------------------------------------
     [Test] public async Task Identity_Name_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.action.identity.Identity), "Name")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.identity.Identity), "Name")).IsTrue();
     }
     [Test] public async Task Identity_PublicKey_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.action.identity.Identity), "PublicKey")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.identity.Identity), "PublicKey")).IsTrue();
     }
     [Test] public async Task Identity_PrivateKey_StaysSensitive_NoOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.action.identity.Identity), "PrivateKey")).IsFalse();
+        await Assert.That(HasOut(typeof(global::app.module.identity.Identity), "PrivateKey")).IsFalse();
     }
     [Test] public async Task Identity_IsDefault_IsArchived_Created_NotOut()
     {
-        var t = typeof(global::app.module.action.identity.Identity);
+        var t = typeof(global::app.module.identity.Identity);
         await Assert.That(HasOut(t, "IsDefault")).IsFalse();
         await Assert.That(HasOut(t, "IsArchived")).IsFalse();
         await Assert.That(HasOut(t, "Created")).IsFalse();
@@ -147,7 +147,7 @@ public class OutAttributeInventoryTests
     // 11. Ask ----------------------------------------------------------------
     [Test] public async Task Ask_Answer_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.action.output.Ask), "Answer")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.module.output.Ask), "Answer")).IsTrue();
     }
 
     // 13. condition.Operator -------------------------------------------------

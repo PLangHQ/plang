@@ -1,7 +1,7 @@
 using app.actor.context;
 using app;
 using app.type.item.variable;
-using app.module.action.list;
+using app.module.list;
 
 namespace PLang.Tests.App.actions.list;
 
@@ -353,7 +353,7 @@ public class ListTests
     {
         var (context, _) = CreateContext();
 
-        var action = new global::app.module.action.list.Range(context) { From = (global::app.type.item.number.@this)1, To = (global::app.type.item.number.@this)5, Step = (global::app.type.item.number.@this)1 };
+        var action = new global::app.module.list.Range(context) { From = (global::app.type.item.number.@this)1, To = (global::app.type.item.number.@this)5, Step = (global::app.type.item.number.@this)1 };
         var result = await action.Start();
 
         var listResult = (await result.Value()) as global::app.type.item.list.@this;

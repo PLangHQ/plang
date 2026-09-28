@@ -398,7 +398,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         => assembly.GetType(@namespace + ".this") is { } owner && typeof(@this).IsAssignableFrom(owner) ? NameOf(owner) : null;
 
     /// <summary>The identity of a class's type: its namespace — an <c>@this</c> class is its folder
-    /// (<c>app.type.item.text</c>), any other class its folder and its name (<c>app.module.action.llm.llmmessage</c>);
+    /// (<c>app.type.item.text</c>), any other class its folder and its name (<c>app.module.llm.llmmessage</c>);
     /// lowercase, the <c>@</c> of a keyword folder dropped.</summary>
     internal static string NamespaceOf(System.Type t)
         => _namespaces.GetOrAdd(t, static ct =>

@@ -97,7 +97,7 @@ public class ErrorHandleTests
     public async Task Handle_IgnoreError_StaysInAudit_PrintedUnderDebug()
     {
         var capture = CaptureDebug();
-        _app.Debug = new global::app.module.action.debug.@this(_app.actor.list.System.Context);
+        _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
         var action = Throw("boom", key: "Oops",
             modifiers: new PrAction[] { ErrorHandler(("ignoreError", true)) });
 

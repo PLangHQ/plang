@@ -38,7 +38,7 @@ public sealed class @this : global::app.type.kind.@this
             if (context.Actor != null && data.Peek() is not global::app.type.item.signature.@this)
             {
                 var signed = await context.App.Run(
-                    new global::app.module.action.signing.sign(context) { Data = data,
+                    new global::app.module.signing.sign(context) { Data = data,
                         // Hash in the view being written, so the verifier (re-hashing the wire-reconstructed bag in
                         // the same view) gets matching bytes.
                         StoreView = new global::app.data.@this<global::app.type.item.@bool.@this>("", view == global::app.View.Store, context: context) },
@@ -81,7 +81,7 @@ public sealed class @this : global::app.type.kind.@this
             if (read.PendingVerification is { } layer)
             {
                 read.PendingVerification = null;
-                var verified = await context.App.Run(new global::app.module.action.signing.verify(context)
+                var verified = await context.App.Run(new global::app.module.signing.verify(context)
                 {
                     Data = context.Ok(layer),
                     SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", view == global::app.View.Store),

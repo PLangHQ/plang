@@ -61,7 +61,7 @@ public class ReportActionTests
 
     private async Task Report()
     {
-        var action = new global::app.module.action.test.report(_app.actor.list.User.Context);
+        var action = new global::app.module.test.report(_app.actor.list.User.Context);
         await action.Start();
     }
 

@@ -12,8 +12,8 @@ public class FoldTests
 {
     private static async Task<global::app.data.@this> Fold(Goal goal, global::app.actor.context.@this context)
     {
-        var action = new global::app.module.action.build.fold(context) { Goal = context.Ok<Goal>(goal) };
-        return await new global::app.module.action.build.code.Default().Fold(action);
+        var action = new global::app.module.build.fold(context) { Goal = context.Ok<Goal>(goal) };
+        return await new global::app.module.build.code.Default().Fold(action);
     }
 
     [Test]

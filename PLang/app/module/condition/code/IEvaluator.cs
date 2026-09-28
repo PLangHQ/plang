@@ -1,0 +1,17 @@
+using System.Threading.Tasks;
+using app.module.code;
+using Operator = global::app.data.Operator;
+
+namespace app.module.condition.code;
+
+// Evaluation is async: an operand may be IBooleanResolvable (a path), whose
+// truthiness is resolved with I/O.
+public interface IEvaluator : ICode
+{
+    Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(If action);
+    Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(Elseif action);
+    Task<data.@this<global::app.type.item.@bool.@this>> Evaluate(Compare action);
+
+    /// <summary>Build-time: what's wrong with a condition's operands as written, or null.</summary>
+    Task<global::app.error.Error?> Operands(data.@this<global::app.type.item.choice.@this<Operator>>? op, data.@this? right);
+}

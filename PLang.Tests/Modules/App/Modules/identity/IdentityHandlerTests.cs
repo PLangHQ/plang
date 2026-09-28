@@ -1,6 +1,6 @@
 using app.actor.context;
 using app.type.item.variable;
-using app.module.action.identity;
+using app.module.identity;
 using PLangEngine = global::app.@this;
 
 namespace PLang.Tests.App.Modules.identity;
@@ -61,7 +61,7 @@ public class IdentityHandlerTests
         await Assert.That(((Identity)(await got.Value())!).PublicKey).IsEqualTo(key);
 
         await next.actor.list.User.Setting.Load();
-        await Assert.That(next.actor.list.User.Setting.Of<global::app.module.action.identity.setting.@this>().Identity.CountRaw).IsEqualTo(0);
+        await Assert.That(next.actor.list.User.Setting.Of<global::app.module.identity.setting.@this>().Identity.CountRaw).IsEqualTo(0);
     }
 
     // --- create ---

@@ -71,13 +71,13 @@ public class KeptStepTests
 
         // the answer's lines for kept steps are set aside; the changed step takes its code
         var kept = second.Step[0].Code;
-        var match = new global::app.module.action.build.match(context)
+        var match = new global::app.module.build.match(context)
         {
             Goal = context.Ok<global::app.goal.@this>(second),
             Answer = context.Ok<global::app.type.item.text.@this>(
                 "[0] output.write(Data=\"x\")\n[1] output.write(Data=\"B\")\n[2] output.write(Data=\"y\")"),
         };
-        var matched = await new global::app.module.action.build.code.Default().Match(match);
+        var matched = await new global::app.module.build.code.Default().Match(match);
         await matched.IsSuccess();
         await Assert.That(second.Step[0].Code).IsSameReferenceAs(kept);
 
@@ -127,8 +127,8 @@ public class KeptStepTests
         await Assert.That((await (await new global::app.type.item.variable.@this("goal.Step.IsCached").Start(context)).Value())?.ToString()).IsEqualTo("true");
 
         // the build's guard: `if %goal.IsCached%` — a bare if, Left's own truth
-        var guard = new global::app.module.action.condition.If(context) { Left = await new global::app.type.item.variable.@this("goal.IsCached").Start(context) };
-        var answer = await new global::app.module.action.condition.code.Default().Evaluate(guard);
+        var guard = new global::app.module.condition.If(context) { Left = await new global::app.type.item.variable.@this("goal.IsCached").Start(context) };
+        var answer = await new global::app.module.condition.code.Default().Evaluate(guard);
         await Assert.That((await answer.Value())?.ToString()).IsEqualTo("true");
     }
 
