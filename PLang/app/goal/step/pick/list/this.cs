@@ -314,11 +314,15 @@ public sealed class @this
         var certain = _listed.Where(l => l.Mark == listed.Mark.Certain && !(l.Name == "variable.set" && known != null))
             .Select(l => Catalog(l.Name, context)).Where(a => a != null).Select(a => a!)
             .OrderBy(a => a.Link ?? 3).ToList();
-        // each certain action takes its own place (a clause right after the action it is a clause of)
-        var filled = new List<string>();
-        foreach (var action in certain) action.Prefill(filled, Call(action, text));
-        if (known != null) filled.Add($"variable.set(Name={known.Text}, Value=%!data%)");
-        return filled.Count > 0 ? string.Join("; ", filled) : null;
+        // each certain action takes its own place (a clause right after the action it is a clause of); a lone if
+        // — no elseif or else listed, nothing indented below the step — holds the step's other actions in its { }
+        var chain = _listed.Any(l => l.Name is "condition.elseif" or "condition.else");
+        var below = _step.Goal is { } goal && _step.Index < goal.Step.CountRaw
+                    && ReferenceEquals(goal.Step[_step.Index], _step) && goal.Step.Body(_step.Index).CountRaw > 0;
+        var line = new line.@this(nests: certain.Count(a => a.Link == 0) == 1 && !chain && !below);
+        foreach (var action in certain) action.Prefill(line, Call(action, text));
+        if (known != null) line.Append($"variable.set(Name={known.Text}, Value=%!data%)");
+        return line.ToString();
     }
 
     // The known code, written in formal and read the way an answer is read. A line that doesn't read

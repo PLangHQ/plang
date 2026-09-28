@@ -236,13 +236,9 @@ public partial class @this
     /// <summary>What the build refuses in this action as it follows <paramref name="before"/>: nothing.</summary>
     internal virtual global::app.error.Error? Refuse(@this? before) => null;
 
-    /// <summary>This catalog action's place in a step's pre-filled formal: after the ones before it — or at the
-    /// head, where a clause left <c>?</c> for the action it is a clause of.</summary>
-    internal virtual void Prefill(List<string> filled, string call)
-    {
-        if (filled.Count > 0 && filled[0] == "?") filled[0] = call;
-        else filled.Add(call);
-    }
+    /// <summary>This catalog action's place in a step's pre-filled formal: a step action after the ones before
+    /// it; an if opens the body the step's other actions go into, when the line nests.</summary>
+    internal virtual void Prefill(global::app.goal.step.pick.line.@this line, string call) => line.Add(call, opens: Link == 0);
 
     /// <summary>What this catalog action adds to a step's known code: its call.</summary>
     internal virtual void Know(List<string> line, string call) => line.Add(call);

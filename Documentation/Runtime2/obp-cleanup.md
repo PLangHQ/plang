@@ -261,3 +261,12 @@ trigger to MATCH (`GetMatchingBindings` compares `b.Type == trigger` on every ev
 resolving means the binding reading its own carriers ONCE at registration — born from the `event.on`
 action's typed slots, or taking the `Data` carriers. 72 test sites construct `EventBinding` with the
 plain enum; its own item.
+
+## pick writes formal text beside the formal writer [logged 2026-09-28, architect's note on 8h]
+
+`goal/step/pick/line/this.cs` (and `pick/list`'s `Call`) builds the step's pre-filled formal as strings —
+`condition.if(Left=?) { goal.return() }` — a second producer of formal text beside
+`type/format/formal/writer.cs`, whose doc says the writer owns the layout. Pick needs HOLES (`?`,
+`Recovery=[goal.call(Name=?)]`), which the writer can't write: its values are real values. Fix when cheap:
+a hole value the writer writes as `?`, and the prefill built as catalog actions with hole rows, written by
+the writer. The eval twin (`tools/decider/prompt_c.py` `Line`/`prefill`) moves with it.

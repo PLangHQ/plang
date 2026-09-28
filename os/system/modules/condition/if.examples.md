@@ -6,3 +6,6 @@ Properties: `{"Left": "%content%", "Operator": "isnotempty"}` — the negation i
 
 Step text: `if %flag% is true, call Go`
 Properties: `{"Left": "%flag%", "Operator": "==", "Right": true}`
+
+Step text: `if %done%, return %result%`
+Properties: `{"Left": "%done%"}` — Left's own truth; the return is the body: `condition.if(Left=%done%) { goal.return(Data=%result%) }`, never beside the if.

@@ -223,6 +223,31 @@ def scope(store, code, text):
             if t.startswith('list<'): store[item] = t[5:-1]
     return [(n, known[n]) for n in names if n in known]
 
+class Line:
+    """A step's pre-filled formal line (goal/step/pick/line): the step's actions in order, `?` where one is still
+    to come; on a lone if, the if opens a body its step's other actions go into."""
+    def __init__(self, nests):
+        self.nests, self.line, self.head, self.body = nests, [], -1, None
+
+    def add(self, call, opens):
+        if opens and self.nests and self.body is None:
+            self.line.append(call); self.head = len(self.line) - 1; self.body = []; return
+        into = self.body if self.body is not None else self.line
+        if into and into[0] == '?': into[0] = call
+        else: into.append(call)
+
+    def insert(self, call):
+        into = self.body if self.body is not None else self.line
+        if not into: into.append('?')
+        into.insert(1, call)
+
+    def append(self, call):
+        self.line.append(call)
+
+    def written(self):
+        return '; '.join(f'{c} {{ {"; ".join(self.body)} }}' if i == self.head and self.body else c
+                         for i, c in enumerate(self.line))
+
 def user_message_c(goal, picks):
     """picks: {step index: {action: score}} — every score the decider gave."""
     lines = []
@@ -250,18 +275,20 @@ def user_message_c(goal, picks):
         # the certain picks pre-filled; a known value (write to) pre-fills its variable.set, last
         certain = sorted([a for a, p in step_picks if p >= CERTAIN and not (a == 'variable.set' and known)],
                          key=link)   # a certain condition chain leads (action.Link); the rest by score
-        # each certain pick takes its own place (action.Prefill): a step action after the ones before it (or
-        # where a clause left `?`), a clause right after the step's first action — the action it is a clause of
-        filled = []
+        # each certain pick takes its own place (action.Prefill, pick.line): a step action after the ones before
+        # it (or where a clause left `?`), a clause right after the first action where the step's actions go; a
+        # lone if — no elseif or else listed, nothing indented below the step — holds them in its { }
+        chain = any(a in ('condition.elseif', 'condition.else') for a, _ in step_picks)
+        steps = goal['steps']
+        at = steps.index(s)
+        below = at + 1 < len(steps) and steps[at + 1].get('indent', 0) > s.get('indent', 0)
+        line = Line(sum(1 for a in certain if link(a) == 0) == 1 and not chain and not below)
         for a in certain:
             call = prefill(a, s['text'])
-            if b.declared(*a.split('.', 1))[1]:
-                if not filled: filled.append('?')
-                filled.insert(1, call)
-            elif filled and filled[0] == '?': filled[0] = call
-            else: filled.append(call)
-        if known: filled.append(prefill('variable.set', s['text']))
-        if filled: out += ' => formal: ' + '; '.join(filled)
+            if b.declared(*a.split('.', 1))[1]: line.insert(call)
+            else: line.add(call, link(a) == 0)
+        if known: line.append(prefill('variable.set', s['text']))
+        if line.written(): out += ' => formal: ' + line.written()
         types = scope(store, known_code([a for a, p in step_picks if p >= CERTAIN], s['text']), s['text'])
         if types: out += ' => types: ' + ', '.join(f'%{n}% {t}' for n, t in types)
         shown += [a for a, _ in step_picks]

@@ -43,11 +43,7 @@ public class @this : global::app.goal.step.action.@this
 
     /// <summary>A clause is shown right after the step's first action — the action it is a clause of (<c>?</c>
     /// while that action isn't known).</summary>
-    internal override void Prefill(List<string> filled, string call)
-    {
-        if (filled.Count == 0) filled.Add("?");
-        filled.Insert(1, call);
-    }
+    internal override void Prefill(global::app.goal.step.pick.line.@this line, string call) => line.Insert(call);
 
     /// <summary>A clause adds nothing to the known code: it binds nothing and answers no <c>%!data%</c>.</summary>
     internal override void Know(List<string> line, string call) { }
