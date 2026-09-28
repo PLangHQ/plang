@@ -31,9 +31,16 @@ Ingi, 2026-09-28 (a curious-architect conversation):
 - save %report% to %!identity.file%/report.pdf      → .data/user/<caller id>/file/report.pdf
 ```
 
+- **The boundary follows where a value came from, not who is running** (Ingi: "if we change /change.txt, that is coming from source … it never came from the wire"; "we can check when we are writing file down to disk, did this come from the wire or source").
+  - The check lives at the path's write gate (`AuthGate`), which every file verb already passes through.
+  - Source (written in the program) goes where the developer said, under the `/.data/` rule.
+  - From the wire (identity X), it's kept inside `.data/user/X/`, and `../..` can't climb out.
+  - **Mixed** (`"/.data/file/%filename%"` with X's filename): any wire part makes it the sender's.
+- **What it takes:** a value carries its **origin**, and derived values inherit it (a rendered template takes the origin of the variables it used). Today a verified wire value drops its signature (`data/this.Transport.cs:24-27`; `wire/kind/plang/this.cs:81-83`), so in memory it can't tell where it came from. This is a small first step of `Documentation/Runtime2/cool.md`'s "Causal lineage" (only the outside origin, not the full graph).
+
 ## Open
 
-1. **Is a request from identity X kept inside `.data/user/X/`,** with only the System actor (admin goals running as System) reaching across identities? (Asked; this decides the security.)
+1. **Input without an identity** (an LLM's answer, an unsigned web request, an `ask` answer, a file's or url's content): where may it write? The app level `.data/file/`, a sandbox such as `.data/input/`, or nowhere without the System actor? (Asked. Lean: two kinds of value, source and input; input never writes outside `.data/` or into another identity's folder.)
 2. **The id on disk:** a short fingerprint of the key as the folder name, with the full key in the identity (lean).
 3. **Callers without an identity** (an unsigned browser request): no folder, the app level only, or refused?
 4. **Naming:** `actor.Identity` today means the actor's own signing keys, while "the user's identities" means the callers. That's one word for "who I am" and "who came to me"; name them apart.
