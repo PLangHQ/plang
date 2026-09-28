@@ -67,7 +67,9 @@ public sealed class Writer : IWriter
     public void String(string value) { Element(); Quote(value); }
     public void DateTime(System.DateTime value) => String(value.ToString("O", CultureInfo.InvariantCulture));
     public void DateTimeOffset(System.DateTimeOffset value) => String(value.ToString("O", CultureInfo.InvariantCulture));
-    public void TimeSpan(System.TimeSpan value) => String(value.ToString("c", CultureInfo.InvariantCulture));
+    /// <summary>A length of time in ISO 8601 (<c>"PT5S"</c>) — the form the duration type teaches and reads, bare
+    /// or quoted.</summary>
+    public void TimeSpan(System.TimeSpan value) => String(System.Xml.XmlConvert.ToString(value));
     public void Guid(System.Guid value) => String(value.ToString());
     public void Enum(System.Enum value) => String(value.ToString());
     public void Bytes(byte[] value) => String(System.Convert.ToBase64String(value));

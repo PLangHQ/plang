@@ -30,6 +30,7 @@ Each stage is a goal in [start.goal](start.goal); each behaviour there is a comm
 - [start.goal](start.goal) runs the plan's tests; each lives under this folder at the path of what it tests.
 - At the end of each stage, that stage's tests are built and run. A stage is accepted when its tests are green, the checks below hold, and the architect's OBP review is clean.
 - **Every test must fail without its change:** once green, the change is reverted briefly and each test is confirmed red. (Two early tests passed while testing nothing; this is the guard.)
+- For a change in the builder, the revert check is its deterministic pin (LineTwinTests, MatchTests, RenderTests, the formal golden): reverting the change turns the pin red. A plan test built before the revert keeps its compiled `.pr`, and an LLM rebuild isn't deterministic, so the plan test can't show it.
 - Only the plan's tests are built; the rest of the test tree isn't rebuilt by this plan.
 
 ## What tests can't show

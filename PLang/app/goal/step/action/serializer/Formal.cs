@@ -303,6 +303,13 @@ public sealed class Formal
                 _pos += text.Length;
                 value = Scalar(System.Text.Json.JsonSerializer.Serialize(text), System.Text.Json.JsonValueKind.String);
             }
+            else if (declared.Type.Name == "duration" && Match(@"-?P[0-9A-Za-z.]+(?![\w.(%])") is { } iso
+                     && global::app.type.item.duration.@this.Resolve(iso, _context) != null)
+            {
+                // a duration reads its own literal bare, as a choice reads its option: After=PT5S is After="PT5S"
+                _pos += iso.Length;
+                value = Scalar(System.Text.Json.JsonSerializer.Serialize(iso), System.Text.Json.JsonValueKind.String);
+            }
             else value = Value(declared.Type.Name);
 
             var raw = value.Json != null && value.Kind == System.Text.Json.JsonValueKind.String

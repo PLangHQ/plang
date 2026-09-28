@@ -59,6 +59,7 @@ BAD = [
     'condition.if(Left=%n%, Operator=<>, Right=5)',
     'on.error(Recovery=[goal.call(Name="Fix")]); file.read(Path="x")',
     'file.read(Path="x"); on.error(Recovery=[goal.call(Name="Fix")]) { goal.call(Name="Y") }',
+    'file.read(Path="x"); on.timeout(After=PT5X)',
     '',
 ]
 
@@ -66,6 +67,8 @@ BAD = [
 BARE = [f'condition.if(Left=%n%, Operator={op}, Right=5) {{ goal.return() }}' for op in ('==', '!=', '>', '<', '>=', '<=')]
 # In an open (item) slot a list of dicts with bare keys is a list of dicts, not misplaced argument rows.
 BARE += ['variable.set(Name=%messages%, Value=[{Role:"system", Content:%system%}, {Role:"user", Content:%user%}])']
+# A duration reads its own ISO literal bare, as a choice reads its option.
+BARE += ['file.read(Path="a.txt"); on.timeout(After=PT5S); on.cache(Duration=PT1M)']
 bare = [{'input': text, 'formal': f.write(f.parse(text))} for text in BARE]
 json.dump(bare, open(OUT.replace('formal_golden.json', 'formal_bare.json'), 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
 print(len(bare), 'bare cases:', '; '.join(b['formal'].split('Operator: ')[1].split(',')[0] if 'Operator: ' in b['formal'] else b['formal'][:40] for b in bare))

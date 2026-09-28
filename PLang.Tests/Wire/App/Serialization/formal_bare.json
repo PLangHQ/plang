@@ -26,5 +26,9 @@
  {
   "input": "variable.set(Name=%messages%, Value=[{Role:\"system\", Content:%system%}, {Role:\"user\", Content:%user%}])",
   "formal": "variable.set(Name: variable = %messages%, Value: list = [{\"Role\": \"system\", \"Content\": \"%system%\"}, {\"Role\": \"user\", \"Content\": \"%user%\"}])"
+ },
+ {
+  "input": "file.read(Path=\"a.txt\"); on.timeout(After=PT5S); on.cache(Duration=PT1M)",
+  "formal": "file.read(Path: path = \"a.txt\"); on.timeout(After: duration = \"PT5S\"); on.cache(Duration: duration = \"PT1M\")"
  }
 ]

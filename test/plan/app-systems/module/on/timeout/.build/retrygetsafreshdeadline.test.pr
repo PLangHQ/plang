@@ -179,6 +179,55 @@
           },
           "code": [
             {
+              "module": "math",
+              "name": "add",
+              "property": [
+                {
+                  "name": "A",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%attempts%",
+                  "variable": [
+                    {
+                      "text": "%attempts%",
+                      "code": [
+                        {
+                          "variable": "attempts"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "B",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ],
+              "default": [
+                {
+                  "name": "overflow",
+                  "type": {
+                    "name": "choice",
+                    "kind": "overflow"
+                  },
+                  "value": "Promote"
+                },
+                {
+                  "name": "precision",
+                  "type": {
+                    "name": "choice",
+                    "kind": "precision"
+                  },
+                  "value": "Error"
+                }
+              ]
+            },
+            {
               "module": "variable",
               "name": "set",
               "property": [
@@ -225,55 +274,6 @@
                     "name": "bool"
                   },
                   "value": false
-                }
-              ]
-            },
-            {
-              "module": "math",
-              "name": "add",
-              "property": [
-                {
-                  "name": "A",
-                  "type": {
-                    "name": "item",
-                    "template": "plang"
-                  },
-                  "value": "%attempts%",
-                  "variable": [
-                    {
-                      "text": "%attempts%",
-                      "code": [
-                        {
-                          "variable": "attempts"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "B",
-                  "type": {
-                    "name": "number"
-                  },
-                  "value": 1
-                }
-              ],
-              "default": [
-                {
-                  "name": "overflow",
-                  "type": {
-                    "name": "choice",
-                    "kind": "overflow"
-                  },
-                  "value": "Promote"
-                },
-                {
-                  "name": "precision",
-                  "type": {
-                    "name": "choice",
-                    "kind": "precision"
-                  },
-                  "value": "Error"
                 }
               ]
             }

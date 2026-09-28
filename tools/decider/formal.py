@@ -52,6 +52,25 @@ def properties(module, name):
     """{Name: {type, options, …}} the action declares — the catalogue's rows, action- and goal-typed included."""
     return dict(b.declared(module, name)[0])
 
+def is_iso_duration(s):
+    """An ISO-8601 duration as duration.Resolve reads it (type/item/duration/this.Parse.cs TryParseIso): P, then
+    number+unit pairs (W, D; after T: H, M, S); calendar units (Y, a month's M) are not durations."""
+    if s.startswith('-'): s = s[1:]
+    if len(s) < 2 or s[0] != 'P': return False
+    s, in_time, i = s[1:], False, 0
+    while i < len(s):
+        if s[i] == 'T': in_time = True; i += 1; continue
+        start = i
+        while i < len(s) and (s[i].isdigit() or s[i] == '.'): i += 1
+        if i == start or i >= len(s): return False
+        try: float(s[start:i])
+        except ValueError: return False
+        unit = s[i]
+        if unit == 'Y' or (unit == 'M' and not in_time): return False
+        if not (unit in 'WD' or (in_time and unit in 'HMS')): return False
+        i += 1
+    return True
+
 def is_action(v):
     """Is this value an action (held as a value, a recovery, a child)? An action has a module AND a name;
     a dict literal may have a `module` key ({module: %item%}) and is still a dict."""
@@ -259,6 +278,11 @@ class _Reader:
             value = bare.group()
         elif bare and bare.group() not in ('true', 'false', 'null'):
             self.fail(f'`{prop}` is one of {", ".join(spec["options"])}; `{bare.group()}` is not', at)
+        elif declared == 'duration' and (iso := re.compile(r'-?P[0-9A-Za-z.]+(?![\w.(%])').match(self.text, self.pos)) \
+                and is_iso_duration(iso.group()):
+            # a duration reads its own literal bare, as a choice reads its option: After=PT5S is After="PT5S"
+            self.pos = iso.end()
+            value = iso.group()
         elif declared == 'text' and (word := re.compile(r'[A-Za-z_]\w*(?![\w.(%])').match(self.text, self.pos)) \
                 and word.group() not in ('true', 'false', 'null'):
             # A single unquoted word in a text property is that text (Name=HandleBuildFailure): it is not a

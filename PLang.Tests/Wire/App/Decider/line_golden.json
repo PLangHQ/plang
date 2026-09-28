@@ -143,5 +143,63 @@
    ]
   ],
   "written": "loop.foreach(Collection=?); goal.call(Name=?)"
+ },
+ {
+  "name": "set %x% = %x% + 1: the keep follows the action that produces its value, keeping %!data%",
+  "nests": false,
+  "moves": [
+   [
+    "keep",
+    "variable.set(Name=?, Value=?)",
+    "variable.set(Name=?, Value=%!data%)"
+   ],
+   [
+    "add",
+    "math.add(A=?, B=?)",
+    false,
+    true
+   ]
+  ],
+  "written": "math.add(A=?, B=?); variable.set(Name=?, Value=%!data%)"
+ },
+ {
+  "name": "set %x% = 5, write out %x%: a sink produces nothing, so the keep stays first",
+  "nests": false,
+  "moves": [
+   [
+    "keep",
+    "variable.set(Name=?, Value=?)",
+    "variable.set(Name=?, Value=%!data%)"
+   ],
+   [
+    "add",
+    "output.write(Data=?)",
+    false,
+    false
+   ]
+  ],
+  "written": "variable.set(Name=?, Value=?); output.write(Data=?)"
+ },
+ {
+  "name": "a keep follows the producers, and a write-to stays last",
+  "nests": false,
+  "moves": [
+   [
+    "keep",
+    "variable.set(Name=?, Value=?)",
+    "variable.set(Name=?, Value=%!data%)"
+   ],
+   [
+    "add",
+    "math.add(A=?, B=?)",
+    false,
+    true
+   ],
+   [
+    "append",
+    "variable.set(Name=%y%, Value=%!data%)"
+   ]
+  ],
+  "written": "math.add(A=?, B=?); variable.set(Name=?, Value=%!data%); variable.set(Name=%y%, Value=%!data%)"
  }
 ]

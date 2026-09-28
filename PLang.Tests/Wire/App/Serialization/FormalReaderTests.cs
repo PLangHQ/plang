@@ -164,7 +164,7 @@ public class FormalReaderTests
             var written = read.Success ? await Written(read) : read.Error!.Message;
             if (written != c.GetProperty("formal").GetString()) differ.Add($"{input}\n  python: {c.GetProperty("formal").GetString()}\n  c#:     {written}");
         }
-        await Assert.That(cases.Count).IsEqualTo(7);
+        await Assert.That(cases.Count).IsEqualTo(8);
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 

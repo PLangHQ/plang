@@ -223,8 +223,10 @@ class Line:
     to come; on a lone if, the if opens a body its step's other actions go into."""
     def __init__(self, nests):
         self.nests, self.line, self.head, self.body = nests, [], -1, None
+        self.produced, self.kept, self.appended = False, [], 0
 
-    def add(self, call, opens):
+    def add(self, call, opens, produces=False):
+        self.produced = self.produced or produces
         if opens and self.nests and self.body is None:
             self.line.append(call); self.head = len(self.line) - 1; self.body = []; return
         into = self.body if self.body is not None else self.line
@@ -240,12 +242,26 @@ class Line:
         if not into: into.append('?')
         into.insert(1, call)
 
+    def keep(self, stands, follows):
+        marker = f'\x01keep{len(self.kept)}'
+        self.kept.append((marker, stands, follows))
+        self.add(marker, False)
+
     def append(self, call):
         self.line.append(call)
+        self.appended += 1
+
+    def placed(self, calls, top):
+        kept = {m: (s, f) for m, s, f in self.kept}
+        if not self.produced: return [kept[c][0] if c in kept else c for c in calls]
+        own = [c for c in calls if c not in kept]
+        n = len(own) - (self.appended if top else 0)
+        return own[:n] + [kept[c][1] for c in calls if c in kept] + own[n:]
 
     def written(self):
-        return '; '.join(f'{c} {{ {"; ".join(self.body)} }}' if i == self.head and self.body else c
-                         for i, c in enumerate(self.line))
+        line = self.placed(self.line, True)
+        return '; '.join(f'{c} {{ {"; ".join(self.placed(self.body, False))} }}' if i == self.head and self.body else c
+                         for i, c in enumerate(line))
 
 def user_message_c(goal, picks):
     """picks: {step index: {action: score}} — every score the decider gave."""
@@ -286,7 +302,8 @@ def user_message_c(goal, picks):
             call = prefill(a, s['text'])
             if b.declared(*a.split('.', 1))[1]: line.insert(call)
             elif b.is_loop(*a.split('.', 1)): line.lead(call)
-            else: line.add(call, link(a) == 0)
+            elif b.is_keep(*a.split('.', 1)): line.keep(call, call.replace('Value=?', 'Value=%!data%'))
+            else: line.add(call, link(a) == 0, link(a) == 3 and b.returns(*a.split('.', 1)) != 'item')   # a condition's verdict is never kept
         if known: line.append(prefill('variable.set', s['text']))
         if line.written(): out += ' => formal: ' + line.written()
         types = scope(store, known_code([a for a, p in step_picks if p >= CERTAIN], s['text']), s['text'])

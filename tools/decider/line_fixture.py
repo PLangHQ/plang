@@ -28,15 +28,23 @@ CASES = [
      [['add', 'goal.call(Name=?)', False], ['insert', 'on.error(Recovery=?)'], ['insert', 'on.timeout(After=?)']]),
     ('a loop leads, whatever its score put before it', False,
      [['add', 'goal.call(Name=?)', False], ['lead', 'loop.foreach(Collection=?)']]),
+    ('set %x% = %x% + 1: the keep follows the action that produces its value, keeping %!data%', False,
+     [['keep', 'variable.set(Name=?, Value=?)', 'variable.set(Name=?, Value=%!data%)'], ['add', 'math.add(A=?, B=?)', False, True]]),
+    ('set %x% = 5, write out %x%: a sink produces nothing, so the keep stays first', False,
+     [['keep', 'variable.set(Name=?, Value=?)', 'variable.set(Name=?, Value=%!data%)'], ['add', 'output.write(Data=?)', False, False]]),
+    ('a keep follows the producers, and a write-to stays last', False,
+     [['keep', 'variable.set(Name=?, Value=?)', 'variable.set(Name=?, Value=%!data%)'], ['add', 'math.add(A=?, B=?)', False, True],
+      ['append', 'variable.set(Name=%y%, Value=%!data%)']]),
 ]
 
 out = []
 for name, nests, moves in CASES:
     line = c.Line(nests)
     for m in moves:
-        if m[0] == 'add': line.add(m[1], m[2])
+        if m[0] == 'add': line.add(m[1], m[2], m[3] if len(m) > 3 else False)
         elif m[0] == 'insert': line.insert(m[1])
         elif m[0] == 'lead': line.lead(m[1])
+        elif m[0] == 'keep': line.keep(m[1], m[2])
         else: line.append(m[1])
     out.append({'name': name, 'nests': nests, 'moves': moves, 'written': line.written()})
 json.dump(out, open(OUT, 'w', encoding='utf-8'), indent=1, ensure_ascii=False)

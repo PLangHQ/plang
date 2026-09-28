@@ -71,7 +71,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Takes ownership of one action: its lifecycle entry AND its catalog element, born
     /// as the subtype its handler says it is (a clause when it is an <see cref="IClause"/>, a loop when it is an
-    /// <see cref="ILoop"/>). The module is the only thing that ever adds to its own contents.</summary>
+    /// <see cref="ILoop"/>, a keep when it is an <see cref="IKeep"/>). The module is the only thing that ever adds to its own contents.</summary>
     internal void Add(string actionName, System.Type? type, IAction? instance)
     {
         var clr = type ?? instance?.GetType();
@@ -85,6 +85,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                     { Module = this, Name = actionName, Cacheable = cacheable, Property = new(this, actionName) }
             : clr != null && typeof(global::app.module.ILoop).IsAssignableFrom(clr)
                 ? new global::app.goal.step.action.loop.@this
+                    { Module = this, Name = actionName, Cacheable = cacheable, Property = new(this, actionName) }
+            : clr != null && typeof(global::app.module.IKeep).IsAssignableFrom(clr)
+                ? new global::app.goal.step.action.keep.@this
                     { Module = this, Name = actionName, Cacheable = cacheable, Property = new(this, actionName) }
             : new global::app.goal.step.action.@this
                 { Module = this, Name = actionName, Cacheable = cacheable, Property = new(this, actionName) };

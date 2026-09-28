@@ -68,6 +68,9 @@
   "app.goal.step.action.clause": {
     "word": "clause"
   },
+  "app.goal.step.action.keep": {
+    "word": "keep"
+  },
   "app.goal.step.action.loop": {
     "word": "loop"
   },

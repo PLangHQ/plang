@@ -13,7 +13,7 @@ namespace app.module.action.variable;
 /// (Data values are never mutated in place), carrying event subscribers across the name.
 /// </summary>
 [Action("set", Cacheable = false)]
-public partial class Set : IContext, IScope
+public partial class Set : IContext, IScope, IKeep
 {
     /// <summary>At the build's walk: the name takes what the build knows the value is — one literal,
     /// or one whole variable the store knows. A template, a navigation, a variable the store doesn't

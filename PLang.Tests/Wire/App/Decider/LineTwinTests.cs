@@ -22,16 +22,17 @@ public class LineTwinTests
                 var m = move.EnumerateArray().ToList();
                 switch (m[0].GetString())
                 {
-                    case "add": line.Add(m[1].GetString()!, m[2].GetBoolean()); break;
+                    case "add": line.Add(m[1].GetString()!, m[2].GetBoolean(), m.Count > 3 && m[3].GetBoolean()); break;
                     case "insert": line.Insert(m[1].GetString()!); break;
                     case "lead": line.Lead(m[1].GetString()!); break;
+                    case "keep": line.Keep(m[1].GetString()!, m[2].GetString()!); break;
                     default: line.Append(m[1].GetString()!); break;
                 }
             }
             var expected = c.GetProperty("written").GetString();
             if (line.ToString() != expected) differ.Add($"{c.GetProperty("name").GetString()}\n  python: {expected}\n  c#:     {line}");
         }
-        await Assert.That(cases.Count).IsEqualTo(8);
+        await Assert.That(cases.Count).IsEqualTo(11);
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 }

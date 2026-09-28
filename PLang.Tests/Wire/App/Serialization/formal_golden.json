@@ -3616,5 +3616,248 @@
   ],
   "formal": "output.write(Data: text = \"Report sent\", channel: text = \"log\")",
   "untyped": "output.write(Data=\"Report sent\", channel=\"log\")"
+ },
+ {
+  "goal": "show",
+  "index": 0,
+  "text": "set %template% = \"/system/error/%error.StatusCode%.txt\"",
+  "pr": [
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%template%",
+      "variable": [
+       {
+        "text": "%template%",
+        "code": [
+         {
+          "variable": "template"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "text",
+       "template": "plang"
+      },
+      "value": "/system/error/%error.StatusCode%.txt",
+      "variable": [
+       {
+        "text": "%error.StatusCode%",
+        "code": [
+         {
+          "variable": "error"
+         },
+         {
+          "property": "StatusCode"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "variable.set(Name: variable = %template%, Value: text = \"/system/error/%error.StatusCode%.txt\")",
+  "untyped": "variable.set(Name=%template%, Value=\"/system/error/%error.StatusCode%.txt\")"
+ },
+ {
+  "goal": "show",
+  "index": 1,
+  "text": "render %template%, error=%error%, on error 404 call Fallback then retry once, write to %text%",
+  "pr": [
+   {
+    "module": "ui",
+    "name": "render",
+    "property": [
+     {
+      "name": "Template",
+      "type": {
+       "name": "text",
+       "template": "plang"
+      },
+      "value": "%template%",
+      "variable": [
+       {
+        "text": "%template%",
+        "code": [
+         {
+          "variable": "template"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "error",
+        "type": {
+         "name": "item",
+         "template": "plang"
+        },
+        "value": "%error%",
+        "variable": [
+         {
+          "text": "%error%",
+          "code": [
+           {
+            "variable": "error"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "module": "on",
+    "name": "error",
+    "property": [
+     {
+      "name": "StatusCode",
+      "type": {
+       "name": "number"
+      },
+      "value": 404
+     },
+     {
+      "name": "RetryCount",
+      "type": {
+       "name": "number"
+      },
+      "value": 1
+     },
+     {
+      "name": "Order",
+      "type": {
+       "name": "choice",
+       "kind": "errororder"
+      },
+      "value": "GoalFirst"
+     },
+     {
+      "name": "Recovery",
+      "type": {
+       "name": "list",
+       "kind": "action"
+      },
+      "value": [
+       {
+        "module": "goal",
+        "name": "call",
+        "property": [
+         {
+          "name": "Name",
+          "type": {
+           "name": "text"
+          },
+          "value": "Fallback"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "module": "variable",
+    "name": "set",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%text%",
+      "variable": [
+       {
+        "text": "%text%",
+        "code": [
+         {
+          "variable": "text"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "Value",
+      "type": {
+       "name": "item",
+       "template": "plang"
+      },
+      "value": "%!data%",
+      "variable": [
+       {
+        "text": "%!data%",
+        "code": [
+         {
+          "variable": "!data"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "ui.render(Template: text = \"%template%\", Parameter: list = {error: item = %error%}); on.error(StatusCode: number = 404, RetryCount: number = 1, Order: choice<errororder> = \"GoalFirst\", Recovery: list<action> = [goal.call(Name: text = \"Fallback\")]); variable.set(Name: variable = %text%, Value: item = %!data%)",
+  "untyped": "ui.render(Template=\"%template%\", Parameter={error: %error%}); on.error(StatusCode=404, RetryCount=1, Order=\"GoalFirst\", Recovery=[goal.call(Name=\"Fallback\")]); variable.set(Name=%text%, Value=%!data%)"
+ },
+ {
+  "goal": "show",
+  "index": 2,
+  "text": "write %text% to error channel",
+  "pr": [
+   {
+    "module": "output",
+    "name": "write",
+    "property": [
+     {
+      "name": "Data",
+      "type": {
+       "name": "item",
+       "template": "plang"
+      },
+      "value": "%text%",
+      "variable": [
+       {
+        "text": "%text%",
+        "code": [
+         {
+          "variable": "text"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "channel",
+      "type": {
+       "name": "text"
+      },
+      "value": "error"
+     }
+    ]
+   }
+  ],
+  "formal": "output.write(Data: item = %text%, channel: text = \"error\")",
+  "untyped": "output.write(Data=%text%, channel=\"error\")"
  }
 ]

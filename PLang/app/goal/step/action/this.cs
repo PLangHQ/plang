@@ -237,8 +237,11 @@ public partial class @this
     internal virtual global::app.error.Error? Refuse(@this? before) => null;
 
     /// <summary>This catalog action's place in a step's pre-filled formal: a step action after the ones before
-    /// it; an if opens the body the step's other actions go into, when the line nests.</summary>
-    internal virtual void Prefill(global::app.goal.step.pick.line.@this line, string call) => line.Add(call, opens: Link == 0);
+    /// it; an if opens the body the step's other actions go into, when the line nests. One whose Start declares
+    /// a value (not a bare <c>item</c>) produces what a keep in the same step keeps — but not a condition, whose
+    /// verdict gates its body and is never kept.</summary>
+    internal virtual void Prefill(global::app.goal.step.pick.line.@this line, string call)
+        => line.Add(call, opens: Link == 0, produces: Link == null && Return is { } made && made.Name != "item");
 
     /// <summary>What this catalog action adds to a step's known code: its call.</summary>
     internal virtual void Know(List<string> line, string call) => line.Add(call);
