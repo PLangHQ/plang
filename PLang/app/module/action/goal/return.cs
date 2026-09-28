@@ -11,14 +11,13 @@ public partial class Return : IContext
     [Default(1)]
     public partial data.@this<global::app.type.item.number.@this> Depth { get; init; }
 
-    public Task<data.@this> Start()
+    // The value returned, marked as the goal's return, leaving Depth goals (at least the current one); a depth
+    // that didn't resolve is the answer. The number lowers itself at the engine's int return-depth slot.
+    public Task<data.@this> Start() => Depth.Use(depth =>
     {
-        var result = this.Data ?? Context.Ok();
+        var result = Data ?? Context.Ok();
         result.Returned = true;
-        // Sync seam — Peek (the .pr literal is in memory); the number lowers
-        // itself at the engine's int return-depth slot.
-        int depth = (Depth.Peek() as global::app.type.item.number.@this)?.ToInt32() ?? 0;
-        result.ReturnDepth = depth > 0 ? depth : 1;
+        result.ReturnDepth = depth.ToInt32() is > 0 and var levels ? levels : 1;
         return Task.FromResult(result);
-    }
+    });
 }
