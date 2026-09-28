@@ -1,8 +1,9 @@
 <Project>
-  <!-- Builds every test project in one MSBuild invocation, in parallel.
-       Used by dev.sh; `dotnet msbuild PLang.Tests/All.proj /t:Build`. -->
+  <!-- Builds every test project and the console (plang, which the plang tests run) in one MSBuild
+       invocation, in parallel. Used by dev.sh; `dotnet msbuild PLang.Tests/All.proj /t:Build`. -->
   <ItemGroup>
     <ProjectFile Include="$(MSBuildThisFileDirectory)*/PLang.Tests.*.csproj" />
+    <ProjectFile Include="$(MSBuildThisFileDirectory)../PlangConsole/PLangConsole.csproj" />
   </ItemGroup>
   <Target Name="Build">
     <MSBuild Projects="@(ProjectFile)" Targets="Build" BuildInParallel="true" Properties="Configuration=$(Configuration);RunAnalyzers=$(RunAnalyzers)" />
