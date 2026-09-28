@@ -63,6 +63,19 @@ public sealed partial class @this
     /// (a goal's own frame, an action composed in C#, before any frame is pushed).</summary>
     public global::app.goal.step.@this? Step => _current.Value?.Step;
 
+    /// <summary>The frame of the goal run in play (<c>%!callStack.Scope%</c>) — the nearest frame outward from
+    /// <see cref="Current"/> pushed for a goal itself (a goal, no step). Its steps' frames come and go inside
+    /// it; what lives for the goal's run (its tags) lives here. Null outside any goal.</summary>
+    public call.@this? Scope
+    {
+        get
+        {
+            for (var frame = _current.Value; frame != null; frame = frame.Caller)
+                if (frame.Goal != null && frame.Step == null) return frame;
+            return null;
+        }
+    }
+
     /// <summary>
     /// The error in play — what PLang reads as <c>%!error%</c>. Walks <c>Caller</c> outward from
     /// <see cref="Current"/> and answers with the first frame that holds an unrecovered error;

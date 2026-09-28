@@ -1,15 +1,14 @@
 namespace app.module.debug;
 
 /// <summary>
-/// Writes tags onto the surrounding (caller's) Call frame — <c>- tag critical=true, owner=checkout</c>;
+/// Writes tags onto the running goal's frame — <c>- tag critical=true, owner=checkout</c>;
 /// a bare <c>- tag "manual-checkpoint"</c> is the dict <c>{manual-checkpoint: true}</c>.
-/// No-op when CallStack.Current is null (executing outside a tracked dispatch).
+/// Read back as <c>%!callStack.Scope.Tags.critical%</c>. No-op outside any frame.
 /// Observability action — Cacheable=false; tags are diagnostic side-effects, not values.
 ///
-/// Tags attach to the CALLER's frame, not this action's own frame: the user's intent
-/// is to annotate the surrounding step/goal scope, and the tag-action's own Call pops
-/// the moment Start() returns (its Tags would vanish from the live tree before the next
-/// assertion could read them).
+/// Tags attach to the goal's frame (<c>CallStack.Scope</c>), not the tag action's or its step's:
+/// those pop when the step ends, before a later step could read them. An action run outside any
+/// goal tags the frame it runs in.
 /// </summary>
 [Action("tag", Cacheable = false)]
 public partial class Tag : IContext
@@ -20,9 +19,8 @@ public partial class Tag : IContext
 
     public Task<global::app.data.@this> Start()
     {
-        // Tag the CALLER's Call, not our own — see class summary. Falls back to Current
-        // if there's no caller (we're already at the root, e.g. a single-action scope).
-        var target = Context.CallStack?.Current?.Caller ?? Context.CallStack?.Current;
+        // The goal's frame — see class summary; outside a goal, the frame this runs in.
+        var target = Context.CallStack?.Scope ?? Context.CallStack?.Current;
         if (target == null) return Task.FromResult(Context.Ok());
         return Tags.Use(tags =>
         {
