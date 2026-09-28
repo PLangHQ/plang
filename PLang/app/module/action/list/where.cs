@@ -1,4 +1,4 @@
-using app.module.action.condition;
+using Operator = global::app.data.Operator;
 
 namespace app.module.action.list;
 

@@ -163,10 +163,10 @@ public class OutAttributeInventoryTests
     // 13. condition.Operator -------------------------------------------------
     [Test] public async Task ConditionOperator_Value_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.module.action.condition.Operator), "Value")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.data.Operator), "Value")).IsTrue();
     }
     [Test] public async Task ConditionOperator_Evaluate_NotOut_Delegate()
     {
-        await Assert.That(HasOut(typeof(global::app.module.action.condition.Operator), "Evaluate")).IsFalse();
+        await Assert.That(HasOut(typeof(global::app.data.Operator), "Evaluate")).IsFalse();
     }
 }

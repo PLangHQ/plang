@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using app.error;
+using Operator = global::app.data.Operator;
 
 namespace app.module.action.condition.code;
 

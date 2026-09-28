@@ -1,5 +1,5 @@
 using Comparison = global::app.data.Comparison;
-using Operator = global::app.module.action.condition.Operator;
+using Operator = global::app.data.Operator;
 
 namespace PLang.Tests.App.CompareRedesign;
 

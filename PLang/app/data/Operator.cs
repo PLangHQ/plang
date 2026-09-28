@@ -3,7 +3,7 @@ using System.Globalization;
 using System.Threading.Tasks;
 using Answer = global::app.data.@this<global::app.type.item.@bool.@this>;
 
-namespace app.module.action.condition;
+namespace app.data;
 
 /// <summary>
 /// Represents a condition operator in PLang. Owns both the identity (which operator)

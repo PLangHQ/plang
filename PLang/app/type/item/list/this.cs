@@ -789,7 +789,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>Whether any element's field holds (<see cref="global::app.type.item.@this.Holds"/>, each element's
     /// own): true at the first that does, false when none does; an error is the answer.</summary>
     public async System.Threading.Tasks.Task<Data> Any(global::app.data.@this<global::app.type.item.text.@this> field,
-        global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
+        global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
         Data value, actor.context.@this context)
     {
         foreach (var element in Items(context))
@@ -923,16 +923,16 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>A list has no field of its own to hold (navigating it by a name reaches its elements'), so as a
     /// subject its field is missing — NotFound through the operator, like a dict without the key.</summary>
     public override System.Threading.Tasks.Task<Data> Holds(global::app.data.@this<global::app.type.item.text.@this> field,
-        global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
+        global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
         Data value, actor.context.@this context)
-        => field.Use(name => op.Use(async compare => (Data)await ((global::app.module.action.condition.Operator)compare)
+        => field.Use(name => op.Use(async compare => (Data)await ((global::app.data.Operator)compare)
             .Evaluate(Data.NotFound(name.ToString()), value, context)));
 
     /// <summary>The elements whose field holds (<see cref="global::app.type.item.@this.Holds"/>, each element's
     /// own — an element without the field doesn't hold). An error is the answer. A new list, born through its
     /// type.</summary>
     public override async System.Threading.Tasks.Task<Data> Where(global::app.data.@this<global::app.type.item.text.@this> field,
-        global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
+        global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
         Data value, actor.context.@this context)
     {
         var kept = new @this();

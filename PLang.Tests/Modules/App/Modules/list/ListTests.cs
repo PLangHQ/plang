@@ -374,7 +374,7 @@ public class ListTests
 
         var action = new Any(context) { ListName = new app.type.item.variable.@this("items"),
             Key = (global::app.type.item.text.@this)"level",
-            Operator = (global::app.type.item.choice.@this<global::app.module.action.condition.Operator>)new global::app.module.action.condition.Operator("=="),
+            Operator = (global::app.type.item.choice.@this<global::app.data.Operator>)new global::app.data.Operator("=="),
             Value = new global::app.data.@this("", "high", context: context)
         };
         var result = await action.Start();
@@ -385,8 +385,8 @@ public class ListTests
 
     // --- Where: the value answers ---
 
-    private static global::app.type.item.choice.@this<global::app.module.action.condition.Operator> Op(string op)
-        => (global::app.type.item.choice.@this<global::app.module.action.condition.Operator>)new global::app.module.action.condition.Operator(op);
+    private static global::app.type.item.choice.@this<global::app.data.Operator> Op(string op)
+        => (global::app.type.item.choice.@this<global::app.data.Operator>)new global::app.data.Operator(op);
 
     [Test]
     public async Task Where_OnAList_KeepsTheElementsWhoseFieldHolds()
@@ -502,7 +502,7 @@ public class ListTests
 
         var action = new Any(context) { ListName = new app.type.item.variable.@this("items"),
             Key = (global::app.type.item.text.@this)"level",
-            Operator = (global::app.type.item.choice.@this<global::app.module.action.condition.Operator>)new global::app.module.action.condition.Operator("=="),
+            Operator = (global::app.type.item.choice.@this<global::app.data.Operator>)new global::app.data.Operator("=="),
             Value = new global::app.data.@this("", "high", context: context)
         };
         var result = await action.Start();
@@ -519,7 +519,7 @@ public class ListTests
 
         var action = new Any(context) { ListName = new app.type.item.variable.@this("items"),
             Key = (global::app.type.item.text.@this)"level",
-            Operator = (global::app.type.item.choice.@this<global::app.module.action.condition.Operator>)new global::app.module.action.condition.Operator("=="),
+            Operator = (global::app.type.item.choice.@this<global::app.data.Operator>)new global::app.data.Operator("=="),
             Value = new global::app.data.@this("", "high", context: context)
         };
         var result = await action.Start();
@@ -540,7 +540,7 @@ public class ListTests
 
         var action = new Any(context) { ListName = new app.type.item.variable.@this("items"),
             Key = (global::app.type.item.text.@this)"status",
-            Operator = (global::app.type.item.choice.@this<global::app.module.action.condition.Operator>)new global::app.module.action.condition.Operator("!="),
+            Operator = (global::app.type.item.choice.@this<global::app.data.Operator>)new global::app.data.Operator("!="),
             Value = new global::app.data.@this("", "active", context: context)
         };
         var result = await action.Start();

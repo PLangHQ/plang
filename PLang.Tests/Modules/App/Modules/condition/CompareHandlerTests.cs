@@ -2,6 +2,7 @@ using app;
 using app.actor.context;
 using app.type.item.variable;
 using app.module.action.condition;
+using Operator = global::app.data.Operator;
 using app.type.item.path;
 
 namespace PLang.Tests.App.Modules.condition;

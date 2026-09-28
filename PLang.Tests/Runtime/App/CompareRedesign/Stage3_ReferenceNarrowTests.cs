@@ -81,7 +81,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         System.IO.File.WriteAllText(TempPath("report.csv"), "name,age\nAda,42\n");
         var data = await Read("report.csv");
         await Assert.That(data.Type!.kind.Name).IsEqualTo("csv");
-        var op = new global::app.module.action.condition.Operator("is");
+        var op = new global::app.data.Operator("is");
         var right = new Data("", "table", context: _app.User.Context);
         var isTable = (await op.Evaluate(data, right, _app.User.Context)).ToBoolean();
         var rightList = new Data("", "list", context: _app.User.Context);

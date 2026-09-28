@@ -1,7 +1,7 @@
 using app.type.item.variable;
 using ListV = global::app.type.item.list.@this;
 using DictV = global::app.type.item.dict.@this;
-using Op = global::app.module.action.condition.Operator;
+using Op = global::app.data.Operator;
 using Where = global::app.module.action.list.Where;
 using Sort = global::app.module.action.list.Sort;
 using Unique = global::app.module.action.list.Unique;

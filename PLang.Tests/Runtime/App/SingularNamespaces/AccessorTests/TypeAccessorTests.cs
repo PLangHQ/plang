@@ -39,7 +39,7 @@ public class TypeAccessorTests
     [Test] public async Task AppType_IndexByClr_Choice_IsChoiceWithSetKindAndValues()
     {
         await using var app = TestApp.Create("/test");
-        var t = app.type.list[typeof(global::app.type.item.choice.@this<global::app.module.action.condition.Operator>)];
+        var t = app.type.list[typeof(global::app.type.item.choice.@this<global::app.data.Operator>)];
         await Assert.That(t.Name).IsEqualTo("choice");
         await Assert.That(t.kind.Name).IsEqualTo("operator");
         await Assert.That(t.Values!).Contains("==");

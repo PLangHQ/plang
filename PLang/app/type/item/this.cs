@@ -447,9 +447,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public virtual System.Threading.Tasks.Task<global::app.data.@this> Holds(
         global::app.data.@this<global::app.type.item.text.@this> field,
-        global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
+        global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
         global::app.data.@this value, global::app.actor.context.@this context)
-        => field.Use(name => op.Use(async compare => (global::app.data.@this)await ((global::app.module.action.condition.Operator)compare)
+        => field.Use(name => op.Use(async compare => (global::app.data.@this)await ((global::app.data.Operator)compare)
             .Evaluate(await Get(new global::app.data.@this("", this, context: context), name.ToString()), value, context)));
 
     /// <summary>
@@ -460,7 +460,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public virtual System.Threading.Tasks.Task<global::app.data.@this> Where(
         global::app.data.@this<global::app.type.item.text.@this> field,
-        global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
+        global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
         global::app.data.@this value, global::app.actor.context.@this context)
         => System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.ValidationError(
             $"'where {field.Peek()} …' needs a list or dict to scope into — a {Type.Name} has no fields.", "WhereOnApex")));

@@ -1,6 +1,6 @@
 using app.module.action.ui;
 using app.module.action.ui.code;
-using Op = global::app.module.action.condition.Operator;
+using Op = global::app.data.Operator;
 using Where = global::app.module.action.list.Where;
 using ItemList = global::app.type.item.list.@this;
 

@@ -11,7 +11,7 @@ public partial class Any : IContext
     [IsNotNull]
     public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
     [IsNotNull]
-    public partial data.@this<global::app.type.item.choice.@this<condition.Operator>> Operator { get; init; }
+    public partial data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> Operator { get; init; }
     public partial data.@this Value { get; init; }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> Start() => data.@this<global::app.type.item.@bool.@this>.From(

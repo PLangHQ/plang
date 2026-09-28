@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using app.module.action.code;
+using Operator = global::app.data.Operator;
 
 namespace app.module.action.condition.code;
 
