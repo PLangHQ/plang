@@ -12,7 +12,7 @@ public class NumberUnaryTests
 {
     [Test] public async Task Abs_Int_PreservesIntKind()
     {
-        var r = number.Abs(((number)(-5)));
+        var r = ((number)(-5)).Abs();
         await Assert.That(r.Kind.Name).IsEqualTo("int");
         await Assert.That(((global::app.type.item.number.@this)r).Clr<int>()).IsEqualTo(5);
     }
@@ -21,7 +21,7 @@ public class NumberUnaryTests
     {
         // System.Math.Abs(int.MinValue) throws; the unary surface lifts to Long
         // so the value is representable.
-        var r = number.Abs(((number)(int.MinValue)));
+        var r = ((number)(int.MinValue)).Abs();
         await Assert.That(r.Kind.Name).IsEqualTo("long");
         await Assert.That(((global::app.type.item.number.@this)r).Clr<long>()).IsEqualTo(-(long)int.MinValue);
     }
@@ -31,41 +31,41 @@ public class NumberUnaryTests
         // Way 3: abs(long.MinValue) = 9223372036854775808 exceeds the long range,
         // so it widens along the signed track to Int128 rather than overflowing.
         // (Was MathOverflow pre-Way-3.)
-        var r = number.Abs(((number)(long.MinValue)));
+        var r = ((number)(long.MinValue)).Abs();
         await Assert.That(r.Kind.Name).IsEqualTo("int128");
     }
 
     [Test] public async Task Abs_Decimal_PreservesDecimalKind()
     {
-        var r = number.Abs(((number)(-3.14m)));
+        var r = ((number)(-3.14m)).Abs();
         await Assert.That(r.Kind.Name).IsEqualTo("decimal");
         await Assert.That(((global::app.type.item.number.@this)r).Clr<decimal>()).IsEqualTo(3.14m);
     }
 
     [Test] public async Task Floor_Int_Unchanged()
     {
-        var r = number.Floor(((number)(7)));
+        var r = ((number)(7)).Floor();
         await Assert.That(r.Kind.Name).IsEqualTo("int");
         await Assert.That(((global::app.type.item.number.@this)r).Clr<int>()).IsEqualTo(7);
     }
 
     [Test] public async Task Floor_Decimal_RoundsDown()
     {
-        var r = number.Floor(((number)(3.9m)));
+        var r = ((number)(3.9m)).Floor();
         await Assert.That(r.Kind.Name).IsEqualTo("decimal");
         await Assert.That(((global::app.type.item.number.@this)r).Clr<decimal>()).IsEqualTo(3m);
     }
 
     [Test] public async Task Ceiling_Double_RoundsUp()
     {
-        var r = number.Ceiling(((number)(3.1)));
+        var r = ((number)(3.1)).Ceiling();
         await Assert.That(r.Kind.Name).IsEqualTo("double");
         await Assert.That(((global::app.type.item.number.@this)r).Clr<double>()).IsEqualTo(4.0);
     }
 
     [Test] public async Task Sqrt_PositiveInt_ReturnsDouble()
     {
-        var r = number.Sqrt(((number)(16)));
+        var r = ((number)(16)).Sqrt();
         await Assert.That(r.Kind.Name).IsEqualTo("double");
         await Assert.That(((global::app.type.item.number.@this)r).Clr<double>()).IsEqualTo(4.0);
     }
@@ -75,19 +75,19 @@ public class NumberUnaryTests
         // number.Sqrt throws ArithmeticException → Wrap maps to "ArithmeticError"
         // key. math.sqrt handler relies on this — no pre-check, one canonical
         // error key for negative-sqrt across both call paths.
-        var ex = await Assert.That(() => number.Sqrt(((number)(-1)))).Throws<global::app.error.AppException>();
+        var ex = await Assert.That(() => ((number)(-1)).Sqrt()).Throws<global::app.error.AppException>();
         await Assert.That(ex!.Key).IsEqualTo("ArithmeticError");
     }
 
     [Test] public async Task Round_DecimalToTwoPlaces_AwayFromZero()
     {
-        var r = number.Round(((number)(2.345m)), 2);
+        var r = ((number)(2.345m)).Round(2);
         await Assert.That(((global::app.type.item.number.@this)r).Clr<decimal>()).IsEqualTo(2.35m);
     }
 
     [Test] public async Task Round_Int_Unchanged()
     {
-        var r = number.Round(((number)(7)), 2);
+        var r = ((number)(7)).Round(2);
         await Assert.That(r.Kind.Name).IsEqualTo("int");
     }
 

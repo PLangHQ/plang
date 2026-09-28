@@ -109,28 +109,28 @@ public sealed class Default : IMath
     {
         var n = await action.Value.Value<number>();
         return n == null ? Invalid(action.Context, "abs", "a number")
-            : action.Context.Data(() => number.Abs(n));
+            : action.Context.Data(() => n.Abs());
     }
 
     public async Task<data.@this<number>> Ceiling(Ceiling action)
     {
         var n = await action.Value.Value<number>();
         return n == null ? Invalid(action.Context, "ceiling", "a number")
-            : action.Context.Data(() => number.Ceiling(n));
+            : action.Context.Data(() => n.Ceiling());
     }
 
     public async Task<data.@this<number>> Floor(Floor action)
     {
         var n = await action.Value.Value<number>();
         return n == null ? Invalid(action.Context, "floor", "a number")
-            : action.Context.Data(() => number.Floor(n));
+            : action.Context.Data(() => n.Floor());
     }
 
     public async Task<data.@this<number>> Sqrt(Sqrt action)
     {
         var n = await action.Value.Value<number>();
         return n == null ? Invalid(action.Context, "sqrt", "a number")
-            : action.Context.Data(() => number.Sqrt(n));
+            : action.Context.Data(() => n.Sqrt());
     }
 
     public async Task<data.@this<number>> Round(Round action)
@@ -138,6 +138,6 @@ public sealed class Default : IMath
         var n = await action.Value.Value<number>();
         if (n == null) return Invalid(action.Context, "round", "a number");
         var decimals = (await action.Decimals.Value())!;
-        return action.Context.Data(() => number.Round(n, decimals));
+        return action.Context.Data(() => n.Round(decimals));
     }
 }
