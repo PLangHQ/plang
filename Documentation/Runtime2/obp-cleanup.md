@@ -296,3 +296,9 @@ keeps anything else). One rows member on item (a list hands its elements, anythi
 `ValueKind` switch (string / number / bool / null / raw text) — a second JSON reader beside the json kind,
 which the same file already uses to encode a tool result. The arguments should be decoded by the json kind
 (a dict), and the tool binds the declared names out of it.
+
+## A code provider remembers its DLL as a string [logged 2026-09-28, stage 9b code]
+
+`module/action/code/this.Load.cs` `Register` stamps `instance.Source = source.Absolute` so a snapshot can reload
+the DLL: a string copy of the path (and a reach for `.Absolute` outside `app.type.path.**`). The provider should
+hold the path itself; the snapshot writes and reloads it as a path.

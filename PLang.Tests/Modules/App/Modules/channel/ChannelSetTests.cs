@@ -42,6 +42,29 @@ public class ChannelSetTests
         await Assert.That((await (await ctx.Variable.Get("level"))!.Value())?.RawText).IsEqualTo("debug");
     }
 
+    // What the step doesn't give, the channel decides: its own defaults, and — unnamed — a channel called
+    // "output" writes out while any other goes both ways.
+    [Test]
+    public async Task Set_WithNothingGiven_TheChannelKeepsItsOwnDefaults_AndItsNameDecidesTheDirection()
+    {
+        var ctx = _app.User.Context;
+        await (await new global::app.module.action.channel.Set(ctx)
+            { Name = new global::app.type.item.text.@this("output"), Goal = Make.Call("LogIt") }.Start()).IsSuccess();
+        await (await new global::app.module.action.channel.Set(ctx)
+            { Name = new global::app.type.item.text.@this("chat"), Goal = Make.Call("LogIt"),
+              Direction = new global::app.type.item.text.@this("input"), Buffer = (global::app.type.item.number.@this)65536 }.Start()).IsSuccess();
+
+        var output = (global::app.channel.type.goal.@this)ctx.Actor!.Channel.Get("output")!;
+        var chat = (global::app.channel.type.goal.@this)ctx.Actor!.Channel.Get("chat")!;
+        await Assert.That(output.Direction).IsEqualTo(global::app.channel.ChannelDirection.Output);
+        await Assert.That(output.Buffer).IsEqualTo(4096L);
+        await Assert.That(output.Timeout).IsEqualTo(System.TimeSpan.FromSeconds(30));
+        await Assert.That(output.Mime).IsEqualTo("text/plain");
+        await Assert.That(output.Signing).IsEqualTo("auto");
+        await Assert.That(chat.Direction).IsEqualTo(global::app.channel.ChannelDirection.Input);
+        await Assert.That(chat.Buffer).IsEqualTo(65536L);
+    }
+
     [Test]
     public async Task Set_HeldCallToMissingGoal_FailsOnTheMessage()
     {

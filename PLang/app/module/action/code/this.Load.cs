@@ -5,35 +5,34 @@ namespace app.module.action.code;
 public sealed partial class @this
 {
     /// <summary>
-    /// The assembly at <paramref name="path"/> loaded into the app: through the path's Execute gate (a Read
-    /// grant on the folder is no permission to run code from it), its plang types joined to the app's
-    /// types. The one door a DLL comes in by — code.load and module.add both. Answers the assembly (a clr
-    /// carrier); a missing file is NotFound.
+    /// The assembly at <paramref name="path"/> loaded into the app — through the path's Execute gate (a Read
+    /// grant on the folder is no permission to run code from it; a missing file is the path's NotFound) — its
+    /// plang types joined to the app's, then handed on with what the types said they took. The one door a
+    /// DLL comes in by: code.load and module.add both.
     /// </summary>
-    public async Task<data.@this> Load(global::app.type.item.path.@this path, actor.context.@this context)
+    public async Task<data.@this> Load(global::app.type.item.path.@this path, actor.context.@this context,
+        System.Func<System.Reflection.Assembly, data.@this, Task<data.@this>> then)
     {
-        var exists = await path.ExistsAsync(context);
-        if (!exists.Success) return exists;
-        if (!await exists.ToBooleanAsync())
-            return context.Error(new ServiceError($"Not found: {path}", "NotFound", 404));
         var loaded = await path.LoadAssemblyAsync(context);
         if (!loaded.Success) return loaded;
-        var types = context.App.type.list.Add((await loaded.Value()).Clr<System.Reflection.Assembly>()!, context);
-        return types.Success ? loaded : types;
+        var assembly = (await loaded.Value()).Clr<System.Reflection.Assembly>()!;
+        var types = context.App.type.list.Add(assembly, context);
+        return types.Success ? await then(assembly, types) : types;
     }
 
     /// <summary>
     /// The code providers <paramref name="assembly"/> brings, registered for each code interface they
     /// implement, each remembering the DLL it came from (<paramref name="source"/>) so a snapshot can reload
-    /// it. An assembly that brings neither providers nor plang types is NoProviders; a provider with no
-    /// parameterless constructor is ProviderConstructor.
+    /// it. An assembly that brought neither providers nor plang types (<paramref name="types"/>, what the
+    /// app's types took from it) is NoProviders; a provider with no parameterless constructor is
+    /// ProviderConstructor.
     /// </summary>
-    public data.@this Register(System.Reflection.Assembly assembly, global::app.type.item.path.@this source,
-        actor.context.@this context)
+    public async Task<data.@this> Register(System.Reflection.Assembly assembly, data.@this types,
+        global::app.type.item.path.@this source, actor.context.@this context)
     {
-        var exported = assembly.GetExportedTypes();
-        var providerTypes = exported.Where(t => typeof(ICode).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract).ToList();
-        if (providerTypes.Count == 0 && !exported.Any(t => typeof(global::app.type.item.@this).IsAssignableFrom(t)))
+        var providerTypes = assembly.GetExportedTypes()
+            .Where(t => typeof(ICode).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract).ToList();
+        if (providerTypes.Count == 0 && await types.IsEmpty())
             return context.Error(new ActionError("No ICode or [PlangType] entries found in assembly", "NoProviders", 400));
 
         var registered = new List<ICode>();

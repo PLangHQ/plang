@@ -1,4 +1,3 @@
-using app;
 using app.error;
 
 namespace app.module.action.channel;
@@ -24,64 +23,29 @@ public partial class Set : IContext
     public partial data.@this<global::app.type.item.duration.@this>? Timeout { get; init; }
     public partial data.@this<global::app.type.item.text.@this>? Mime { get; init; }
     public partial data.@this<global::app.type.item.text.@this>? Encoding { get; init; }
-    /// <summary>"input", "output", or "bidirectional". Default: bidirectional unless
-    /// the channel name is "input" or "output", in which case the name decides.</summary>
+    /// <summary>"input", "output", or "bidirectional". Unnamed, the channel decides (a channel called
+    /// "input" or "output" is that way).</summary>
     public partial data.@this<global::app.type.item.text.@this>? Direction { get; init; }
     public partial data.@this<app.type.item.variable.@this>? Encryption { get; init; }
     public partial data.@this<app.type.item.variable.@this>? Signing { get; init; }
 
-    public async Task<data.@this> Start()
+    // The channel owns its defaults and its direction: only what the step gives is handed over.
+    public Task<data.@this> Start() => Name.Use(name => Goal.Use(async call =>
     {
-        var name = (await Name.Value())?.Clr<string>();
-        if (string.IsNullOrEmpty(name))
-            return Context.Error(new ServiceError("Channel name is required", "ValueRequired", 400));
-
         var named = Actor == null ? null : await Actor.Value();
         var actor = named == null ? Context.Actor : (await (await Context.App.actor.Get(named.ToString()!)).Value())!;
-
-        if ((await Goal.Value()) is not { } call)
-            return Context.Error(new ServiceError("Goal is required", "ValueRequired", 400));
-
-        var direction = ResolveDirection(name, Direction == null ? null : (await Direction.Value())?.Clr<string>());
+        var ch = new app.channel.type.goal.@this(name.ToString(), call, actor,
+            direction: Direction == null ? null : (await Direction.Value())?.ToString(),
+            buffer: Buffer == null ? null : (await Buffer.Value())?.ToInt64(),
+            timeout: Timeout == null ? null : (await Timeout.Value()) is { } to ? (TimeSpan)to : null,
+            mime: Mime == null ? null : (await Mime.Value())?.ToString(),
+            encoding: Encoding == null ? null : (await Encoding.Value())?.ToString(),
+            encryption: Encryption == null ? null : (await Encryption.Value())?.Name,
+            signing: Signing == null ? null : (await Signing.Value())?.Name);
 
         // Upsert: dispose any existing channel under this name before re-registering.
-        await actor.Channel.RemoveAsync(name);
-
-        var ch = new app.channel.type.goal.@this(name, call, actor, direction)
-        {
-            Buffer = (await Buffer.Value())?.ToInt64() ?? 4096L,
-            Timeout = (await Timeout.Value()) is { } __to ? (TimeSpan)__to : TimeSpan.FromSeconds(30),
-            Mime = (Mime == null ? null : (await Mime.Value())?.Clr<string>()) ?? "text/plain",
-            Encoding = (Encoding == null ? null : (await Encoding.Value())?.Clr<string>()) ?? "utf-8",
-            Encryption = (Encryption == null ? null : await Encryption.Value())?.Name,
-            Signing = (Signing == null ? null : await Signing.Value())?.Name ?? "auto"
-        };
+        await actor.Channel.RemoveAsync(ch.Name);
         actor.Channel.Register(ch);
-        return Context.Ok(ch);
-    }
-
-    /// <summary>
-    /// Direction precedence: explicit Direction parameter wins; otherwise the channel
-    /// name "input"/"output" decides; otherwise Bidirectional. Goal channels extend
-    /// Session and can answer Ask, so a name without a direction shortcut (e.g.
-    /// "chat") defaults to Bidirectional rather than the historical Output.
-    /// </summary>
-    private static app.channel.ChannelDirection ResolveDirection(string name, string? explicitDirection)
-    {
-        if (!string.IsNullOrEmpty(explicitDirection))
-        {
-            return explicitDirection.ToLowerInvariant() switch
-            {
-                "input" => app.channel.ChannelDirection.Input,
-                "output" => app.channel.ChannelDirection.Output,
-                "bidirectional" or "both" => app.channel.ChannelDirection.Bidirectional,
-                _ => app.channel.ChannelDirection.Bidirectional
-            };
-        }
-        if (string.Equals(name, app.channel.list.@this.Input, StringComparison.OrdinalIgnoreCase))
-            return app.channel.ChannelDirection.Input;
-        if (string.Equals(name, app.channel.list.@this.Output, StringComparison.OrdinalIgnoreCase))
-            return app.channel.ChannelDirection.Output;
-        return app.channel.ChannelDirection.Bidirectional;
-    }
+        return (data.@this)Context.Ok(ch);
+    }));
 }

@@ -29,6 +29,8 @@ public sealed partial class @this
     {
         if (await AuthGate(Verb.Execute, context) is { } early)
             return early;
+        if (!System.IO.File.Exists(Absolute))
+            return context.Error(new global::app.error.ServiceError($"Not found: {this}", "NotFound", 404));
         try
         {
             var asm = System.Reflection.Assembly.LoadFrom(Absolute);

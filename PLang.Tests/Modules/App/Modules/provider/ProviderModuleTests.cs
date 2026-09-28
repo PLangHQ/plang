@@ -110,9 +110,8 @@ public class ProviderModuleTests
     [Test]
     public async Task Load_NullPath_IsValueRequired()
     {
-        var action = new global::app.module.action.code.load(Ctx) { Path = null
-        };
-        var result = await action.Start();
+        // dispatched as a program runs it — the required slot's guard answers before the action starts
+        var result = await TestAction.Create("code", "load").Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ValueRequired");

@@ -31,13 +31,32 @@ public class @this : global::app.channel.type.session.@this
     /// finds no channel there instead of looping back into itself.</summary>
     public override bool Available => !IsExecuting;
 
+    /// <summary>A channel named <paramref name="name"/> that runs <paramref name="call"/> for <paramref name="actor"/>.
+    /// A setting that isn't given keeps the channel's own default. The direction is the one named
+    /// (<c>input</c>, <c>output</c>, <c>bidirectional</c> / <c>both</c>); unnamed, a channel called
+    /// <c>input</c> or <c>output</c> is that way, and any other both ways (a goal channel can answer an ask).</summary>
     public @this(string name, global::app.goal.step.action.@this call, global::app.actor.@this actor,
-        ChannelDirection direction = ChannelDirection.Bidirectional)
+        string? direction = null, long? buffer = null, TimeSpan? timeout = null, string? mime = null,
+        string? encoding = null, string? encryption = null, string? signing = null)
     {
         Name = name;
         Call = call;
         Actor = actor;
-        Direction = direction;
+        Direction = direction?.ToLowerInvariant() switch
+        {
+            "input" => ChannelDirection.Input,
+            "output" => ChannelDirection.Output,
+            not null => ChannelDirection.Bidirectional,
+            null when string.Equals(name, list.@this.Input, StringComparison.OrdinalIgnoreCase) => ChannelDirection.Input,
+            null when string.Equals(name, list.@this.Output, StringComparison.OrdinalIgnoreCase) => ChannelDirection.Output,
+            null => ChannelDirection.Bidirectional,
+        };
+        if (buffer is { } b) Buffer = b;
+        if (timeout is { } t) Timeout = t;
+        if (mime is { } m) Mime = m;
+        if (encoding is { } e) Encoding = e;
+        if (encryption is { } key) Encryption = key;
+        if (signing is { } s) Signing = s;
     }
 
     public override async Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)

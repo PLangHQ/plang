@@ -8,19 +8,13 @@ namespace app.module.action.code;
 public partial class load : IContext
 {
     /// <summary>Path to the DLL to load (relative to app root or absolute).</summary>
-    public partial data.@this<global::app.type.item.path.@this>? Path { get; init; }
+    [IsNotNull]
+    public partial data.@this<global::app.type.item.path.@this> Path { get; init; }
 
     /// <summary>Optional display name for the provider (not currently used — provider supplies its own Name).</summary>
     public partial data.@this<global::app.type.item.text.@this>? Name { get; init; }
 
     // The DLL comes in through the code registry's one door; the providers it brings are registered.
-    public async Task<data.@this> Start() => Path == null
-        ? Context.Error(new global::app.error.Error("'path' must have a value", "ValueRequired", 400))
-        : await Path.Use(async path =>
-        {
-            var loaded = await Context.App.Code.Load(path, Context);
-            return loaded.Success
-                ? Context.App.Code.Register((await loaded.Value()).Clr<System.Reflection.Assembly>()!, path, Context)
-                : loaded;
-        });
+    public Task<data.@this> Start() => Path.Use(path => Context.App.Code.Load(path, Context,
+        (assembly, types) => Context.App.Code.Register(assembly, types, path, Context)));
 }
