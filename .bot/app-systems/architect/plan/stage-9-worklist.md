@@ -60,6 +60,8 @@ Also pulled forward to stage 7's cleanup (decision 56), because this branch's ow
   - `ReadText` goes (stored twice with the file item's decode), `ReadAsBase64` goes (no callers), and data-URI becomes the item's written form.
   - The 14 callers land the reference and ask it (`app/this.cs:420`, `goal/this.cs:353`, `goal/setup/this.cs:56`, `test/discover.cs:72,117`, `http/code/Default.cs:958,1003`, `ui/code/Fluid.cs:47`, `image/this.cs:216`, `OpenAi.cs:736`, `channel/type/file/this.cs:44`).
 - **Build warnings get one door on the build walk (9a.1):** `action.Build` knows `{Module}.{Name}`, so attribution is its job. Today `file.read` (through `path.Expect`) and `on.event.Build` each hand-build a `{action, message}` dict. If the "a slot holding a variable can't be probed at build" check (`Path.HasVariable` in file.read's Build) repeats in other Builds, it belongs to the build walk too.
+- **file and url store the same shape twice (9a.2):** Path, the `_bytes` sample, `Bytes`, `ContentText`, `Release` and ToString. They want one reference base.
+- **`file.IsTruthy`/`Size` read a synchronous `fp.Exists`.** A path's truthiness is async (`IBooleanResolvable`, CLAUDE.md), so the file item should ask its path the async way.
 - **A false build warning (9a.1):** "'a.txt' does not exist on disk" appears although it exists; likely older than 9a. Guess: a relative literal resolves against the builder's goal at build time, not the app's. Trace it.
 - **Two sync-over-async sites, fixed when their callers move:** `Fluid.cs:378` (the IFileProvider include) and `OpenAi.cs:736` (`ReadAsDataUri`).
 - **A failing plang assertion prints its template, not its value** (`Actual: %a%`; found in 8h). The assertion error should carry the values as read.
