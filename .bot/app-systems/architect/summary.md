@@ -2,7 +2,7 @@
 
 The branch's summary is [`spec/AppSystems.goal`](spec/AppSystems.goal): a root goal with a sub-goal per stage, whose steps are the behaviour we want. Each behaviour is a test in `spec/<Stage>/`, which the coder places in `Tests/AppSystems/<Stage>/`; checks that can't be a `.test.goal` are in [`spec/checks.md`](spec/checks.md). A stage is done when its tests pass, its checks hold, and its OBP review is clean.
 
-**The spec tests are built only when Ingi says so** (Ingi, 2026-09-28). Until then they stay placed as unbuilt source in `Tests/AppSystems/`.
+**The spec tests are built only when Ingi says so** (Ingi, 2026-09-28). Until then they stay placed as unbuilt source in `Tests/AppSystems/`. The coder may ask when it thinks a stage is ready; the request goes to Ingi.
 
 **How work is handed over from here on (Ingi):** the spec goals, plus the OBP rules that apply. The implementation is a conversation between the coder and the architect, part by part.
 
