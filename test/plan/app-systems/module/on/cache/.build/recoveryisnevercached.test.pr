@@ -1,0 +1,724 @@
+{
+  "name": "Start",
+  "comment": "Stage 8g (decision 151): the cache stores only the real work's success, never a recovery's result. One cached step\nruns three times (one cache key: the step's place). Try 1 fails and recovers; if that recovery had been cached, try\n2 would be a hit and MaybeFail would not run. Try 2 succeeds and is stored; try 3 is served from the cache. So\n%tries% is 2 only when the recovery is NOT cached AND the cache clause is really bound (dropped: 3).",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %tries% = 0",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tries%",
+              "variable": [
+                {
+                  "text": "%tries%",
+                  "code": [
+                    {
+                      "variable": "tries"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %recoveries% = 0",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%recoveries%",
+              "variable": [
+                {
+                  "text": "%recoveries%",
+                  "code": [
+                    {
+                      "variable": "recoveries"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "foreach [1, 2, 3], call Attempt",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "loop",
+          "name": "foreach",
+          "property": [
+            {
+              "name": "Collection",
+              "type": {
+                "name": "list"
+              },
+              "value": [1,2,3]
+            }
+          ],
+          "default": [
+            {
+              "name": "item",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%item%",
+              "variable": [
+                {
+                  "text": "%item%",
+                  "code": [
+                    {
+                      "variable": "item"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "Attempt"
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %recoveries% equals 1, \"only the first try fails\"",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%recoveries%",
+              "variable": [
+                {
+                  "text": "%recoveries%",
+                  "code": [
+                    {
+                      "variable": "recoveries"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "only the first try fails"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert %tries% equals 2, \"a recovery is never cached; a success is\"",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%tries%",
+              "variable": [
+                {
+                  "text": "%tries%",
+                  "code": [
+                    {
+                      "variable": "tries"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a recovery is never cached; a success is"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [
+    {
+      "name": "Attempt",
+      "step": [
+        {
+          "index": 0,
+          "text": "call MaybeFail, cache for 10 minutes, on error call Recover",
+          "line": {
+            "number": 13
+          },
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "MaybeFail"
+                }
+              ],
+              "default": [
+                {
+                  "name": "parallel",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            },
+            {
+              "module": "on",
+              "name": "cache",
+              "property": [
+                {
+                  "name": "Duration",
+                  "type": {
+                    "name": "duration"
+                  },
+                  "value": "PT10M"
+                }
+              ],
+              "default": [
+                {
+                  "name": "sliding",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            },
+            {
+              "module": "on",
+              "name": "error",
+              "property": [
+                {
+                  "name": "Recovery",
+                  "type": {
+                    "name": "list",
+                    "kind": "action"
+                  },
+                  "value": [
+                    {
+                      "module": "goal",
+                      "name": "call",
+                      "property": [
+                        {
+                          "name": "Name",
+                          "type": {
+                            "name": "text"
+                          },
+                          "value": "Recover"
+                        }
+                      ],
+                      "default": [
+                        {
+                          "name": "parallel",
+                          "type": {
+                            "name": "bool"
+                          },
+                          "value": false
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "ignoreerror",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/module/on/cache/RecoveryIsNeverCached.test.goal",
+      "prPath": "/plan/app-systems/module/on/cache/.build/recoveryisnevercached.test.pr",
+      "hash": "5f5dee583c5537f3c2e7eb940301dde1eade6fd2f0c66cffa60027c2b2ea3259",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true
+    },
+    {
+      "name": "MaybeFail",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %tries% = %tries% + 1",
+          "line": {
+            "number": 16
+          },
+          "code": [
+            {
+              "module": "math",
+              "name": "add",
+              "property": [
+                {
+                  "name": "A",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%tries%",
+                  "variable": [
+                    {
+                      "text": "%tries%",
+                      "code": [
+                        {
+                          "variable": "tries"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "B",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ],
+              "default": [
+                {
+                  "name": "overflow",
+                  "type": {
+                    "name": "choice",
+                    "kind": "overflow"
+                  },
+                  "value": "Promote"
+                },
+                {
+                  "name": "precision",
+                  "type": {
+                    "name": "choice",
+                    "kind": "precision"
+                  },
+                  "value": "Error"
+                }
+              ]
+            },
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%tries%",
+                  "variable": [
+                    {
+                      "text": "%tries%",
+                      "code": [
+                        {
+                          "variable": "tries"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "if %tries% equals 1, throw error \"the first try fails\"",
+          "line": {
+            "number": 17
+          },
+          "code": [
+            {
+              "module": "condition",
+              "name": "if",
+              "property": [
+                {
+                  "name": "Left",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%tries%",
+                  "variable": [
+                    {
+                      "text": "%tries%",
+                      "code": [
+                        {
+                          "variable": "tries"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Operator",
+                  "type": {
+                    "name": "choice",
+                    "kind": "operator"
+                  },
+                  "value": "=="
+                },
+                {
+                  "name": "Right",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ],
+              "child": [
+                {
+                  "index": 0,
+                  "text": "error.throw(Message=\"the first try fails\")",
+                  "line": {
+                    "number": 17
+                  },
+                  "code": [
+                    {
+                      "module": "error",
+                      "name": "throw",
+                      "property": [
+                        {
+                          "name": "Message",
+                          "type": {
+                            "name": "text"
+                          },
+                          "value": "the first try fails"
+                        }
+                      ],
+                      "default": [
+                        {
+                          "name": "statuscode",
+                          "type": {
+                            "name": "number"
+                          },
+                          "value": 400
+                        },
+                        {
+                          "name": "key",
+                          "type": {
+                            "name": "text"
+                          },
+                          "value": "error"
+                        }
+                      ]
+                    }
+                  ],
+                  "waitForExecution": true
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/module/on/cache/RecoveryIsNeverCached.test.goal",
+      "prPath": "/plan/app-systems/module/on/cache/.build/recoveryisnevercached.test.pr",
+      "hash": "6d8b815b7374b9d6ffb31a0919f534965055d1ba4704177149dacefa043974f3",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true
+    },
+    {
+      "name": "Recover",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %recoveries% = %recoveries% + 1",
+          "line": {
+            "number": 20
+          },
+          "code": [
+            {
+              "module": "math",
+              "name": "add",
+              "property": [
+                {
+                  "name": "A",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%recoveries%",
+                  "variable": [
+                    {
+                      "text": "%recoveries%",
+                      "code": [
+                        {
+                          "variable": "recoveries"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "B",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ],
+              "default": [
+                {
+                  "name": "overflow",
+                  "type": {
+                    "name": "choice",
+                    "kind": "overflow"
+                  },
+                  "value": "Promote"
+                },
+                {
+                  "name": "precision",
+                  "type": {
+                    "name": "choice",
+                    "kind": "precision"
+                  },
+                  "value": "Error"
+                }
+              ]
+            },
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%recoveries%",
+                  "variable": [
+                    {
+                      "text": "%recoveries%",
+                      "code": [
+                        {
+                          "variable": "recoveries"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/module/on/cache/RecoveryIsNeverCached.test.goal",
+      "prPath": "/plan/app-systems/module/on/cache/.build/recoveryisnevercached.test.pr",
+      "hash": "e05cab81770cd00d9b7a6ceb2d50171438875b5252c6f2f3162323ef10d1d233",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/app-systems/module/on/cache/RecoveryIsNeverCached.test.goal",
+  "prPath": "/plan/app-systems/module/on/cache/.build/recoveryisnevercached.test.pr",
+  "hash": "afc5113c3d0bec9b82cc8ed9320495ca2e68b7fbb005a3c706cf7aba66ad51d2",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

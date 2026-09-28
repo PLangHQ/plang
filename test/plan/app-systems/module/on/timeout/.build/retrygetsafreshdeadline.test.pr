@@ -1,0 +1,423 @@
+{
+  "name": "Start",
+  "comment": "Stage 8g (decision 151): a retry is a fresh attempt with its own deadline. The first two attempts are slow and\ntime out; the third is fast. With one shared deadline the third attempt would start already cancelled.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %attempts% = 0",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%attempts%",
+              "variable": [
+                {
+                  "text": "%attempts%",
+                  "code": [
+                    {
+                      "variable": "attempts"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call SlowTwice, timeout after 100ms, on error retry 2 times",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "SlowTwice"
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "timeout",
+          "property": [
+            {
+              "name": "After",
+              "type": {
+                "name": "duration"
+              },
+              "value": "PT0.1S"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "RetryCount",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            }
+          ],
+          "default": [
+            {
+              "name": "ignoreerror",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %attempts% equals 3, \"each retry has its own deadline\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%attempts%",
+              "variable": [
+                {
+                  "text": "%attempts%",
+                  "code": [
+                    {
+                      "variable": "attempts"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "each retry has its own deadline"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [
+    {
+      "name": "SlowTwice",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %attempts% = %attempts% + 1",
+          "line": {
+            "number": 9
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%attempts%",
+                  "variable": [
+                    {
+                      "text": "%attempts%",
+                      "code": [
+                        {
+                          "variable": "attempts"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            },
+            {
+              "module": "math",
+              "name": "add",
+              "property": [
+                {
+                  "name": "A",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%attempts%",
+                  "variable": [
+                    {
+                      "text": "%attempts%",
+                      "code": [
+                        {
+                          "variable": "attempts"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "B",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ],
+              "default": [
+                {
+                  "name": "overflow",
+                  "type": {
+                    "name": "choice",
+                    "kind": "overflow"
+                  },
+                  "value": "Promote"
+                },
+                {
+                  "name": "precision",
+                  "type": {
+                    "name": "choice",
+                    "kind": "precision"
+                  },
+                  "value": "Error"
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "if %attempts% is less than 3, call Slow",
+          "line": {
+            "number": 10
+          },
+          "code": [
+            {
+              "module": "condition",
+              "name": "if",
+              "property": [
+                {
+                  "name": "Left",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%attempts%",
+                  "variable": [
+                    {
+                      "text": "%attempts%",
+                      "code": [
+                        {
+                          "variable": "attempts"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Operator",
+                  "type": {
+                    "name": "choice",
+                    "kind": "operator"
+                  },
+                  "value": "<"
+                },
+                {
+                  "name": "Right",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 3
+                }
+              ],
+              "child": [
+                {
+                  "index": 0,
+                  "text": "goal.call(Name=\"Slow\")",
+                  "line": {
+                    "number": 10
+                  },
+                  "code": [
+                    {
+                      "module": "goal",
+                      "name": "call",
+                      "property": [
+                        {
+                          "name": "Name",
+                          "type": {
+                            "name": "text"
+                          },
+                          "value": "Slow"
+                        }
+                      ],
+                      "default": [
+                        {
+                          "name": "parallel",
+                          "type": {
+                            "name": "bool"
+                          },
+                          "value": false
+                        }
+                      ]
+                    }
+                  ],
+                  "waitForExecution": true
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline.test.goal",
+      "prPath": "/plan/app-systems/module/on/timeout/.build/retrygetsafreshdeadline.test.pr",
+      "hash": "5a6a80593e6c5cd86f837f4b110f1c967f054d7cce1bceff97f343065911ba26",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true
+    },
+    {
+      "name": "Slow",
+      "step": [
+        {
+          "index": 0,
+          "text": "sleep 1000 ms",
+          "line": {
+            "number": 13
+          },
+          "code": [
+            {
+              "module": "timer",
+              "name": "sleep",
+              "property": [
+                {
+                  "name": "Ms",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1000
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline.test.goal",
+      "prPath": "/plan/app-systems/module/on/timeout/.build/retrygetsafreshdeadline.test.pr",
+      "hash": "f03cd007ad1c801b36279db0316ba9e50f429cc2b2c681e1d3b11ccc4a2002a3",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline.test.goal",
+  "prPath": "/plan/app-systems/module/on/timeout/.build/retrygetsafreshdeadline.test.pr",
+  "hash": "e529c2af2c8fdf97a0c016d156c6805d2320e8b1e21063c7051eddf82cd79642",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

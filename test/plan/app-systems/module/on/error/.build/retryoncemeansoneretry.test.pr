@@ -1,0 +1,327 @@
+{
+  "name": "Start",
+  "comment": "Stage 8h (decision 157): the step's own words give the count. \"retry once\" is one retry, in any human language:\nthe builder must not refuse it as an invented number, and the check that guards against invented values must not\nread human language itself. How is the conversation between the coder and the architect.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %attempts% = 0",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%attempts%",
+              "variable": [
+                {
+                  "text": "%attempts%",
+                  "code": [
+                    {
+                      "variable": "attempts"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "call Flaky, on error retry once, ignore",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "Flaky"
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "RetryCount",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "IgnoreError",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %attempts% equals 2, \"the first attempt and one retry\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%attempts%",
+              "variable": [
+                {
+                  "text": "%attempts%",
+                  "code": [
+                    {
+                      "variable": "attempts"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the first attempt and one retry"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [
+    {
+      "name": "Flaky",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %attempts% = %attempts% + 1",
+          "line": {
+            "number": 10
+          },
+          "code": [
+            {
+              "module": "math",
+              "name": "add",
+              "property": [
+                {
+                  "name": "A",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%attempts%",
+                  "variable": [
+                    {
+                      "text": "%attempts%",
+                      "code": [
+                        {
+                          "variable": "attempts"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "B",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ],
+              "default": [
+                {
+                  "name": "overflow",
+                  "type": {
+                    "name": "choice",
+                    "kind": "overflow"
+                  },
+                  "value": "Promote"
+                },
+                {
+                  "name": "precision",
+                  "type": {
+                    "name": "choice",
+                    "kind": "precision"
+                  },
+                  "value": "Error"
+                }
+              ]
+            },
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%attempts%",
+                  "variable": [
+                    {
+                      "text": "%attempts%",
+                      "code": [
+                        {
+                          "variable": "attempts"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "asdefault",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "throw error \"flaky\"",
+          "line": {
+            "number": 11
+          },
+          "code": [
+            {
+              "module": "error",
+              "name": "throw",
+              "property": [
+                {
+                  "name": "Message",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "flaky"
+                }
+              ],
+              "default": [
+                {
+                  "name": "statuscode",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 400
+                },
+                {
+                  "name": "key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "error"
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/module/on/error/RetryOnceMeansOneRetry.test.goal",
+      "prPath": "/plan/app-systems/module/on/error/.build/retryoncemeansoneretry.test.pr",
+      "hash": "aa035e7a8cc9f120e07605a486b2c810d33eb2b98564550d6024b2807d8b80b4",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/app-systems/module/on/error/RetryOnceMeansOneRetry.test.goal",
+  "prPath": "/plan/app-systems/module/on/error/.build/retryoncemeansoneretry.test.pr",
+  "hash": "a56b82607611920c580c441f39c76d6f0fbe73dcba33b337a5742dac8cfe5d25",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}
