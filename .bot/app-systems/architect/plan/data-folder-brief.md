@@ -20,21 +20,22 @@ Ingi, 2026-09-28 (a curious-architect conversation):
 ```
 .data/
   setting/data.sqlite  file/  cache/  trace/        the app level (defaults)
-  user/<id>/
-    setting/data.sqlite  file/  cache/  trace/      one identity's own; reads fall back to the app level
+  identity/<id>/                                    one identity's own; reads fall back to the app level
 ```
 
+The folder is named for the concept, `identity` (Ingi: "so it is just /.data/identity/%identity%/file.txt"). The developer writes the path:
+
 ```
-%!app.actor.user.identity.list%                     the identities that have reached this app
-%!app.actor.user.identity["<id>"].file%            ↔ .data/user/<id>/file/
-%!identity%                                         the identity of the request running now
-- save %report% to %!identity.file%/report.pdf      → .data/user/<caller id>/file/report.pdf
+- save %report% to "/.data/identity/%identity%/report.pdf"   → .data/identity/<id>/report.pdf
+%!app.actor.user.identity.list%                              the identities that have reached this app
 ```
+
+(To confirm: is there a kind level inside an identity's folder (`file/`, `setting/`), or do files sit directly in it? And is the running request's identity `%!identity%`?)
 
 - **The boundary follows where a value came from, not who is running** (Ingi: "if we change /change.txt, that is coming from source … it never came from the wire"; "we can check when we are writing file down to disk, did this come from the wire or source").
   - The check lives at the path's write gate (`AuthGate`), which every file verb already passes through.
   - Source (written in the program) goes where the developer said, under the `/.data/` rule.
-  - From the wire (identity X), it's kept inside `.data/user/X/`, and `../..` can't climb out.
+  - From the wire (identity X), it's kept inside `.data/identity/X/`, and `../..` can't climb out.
   - **Mixed** (`"/.data/file/%filename%"` with X's filename): any wire part makes it the sender's.
 - **What it takes:** a value carries its **origin**, and derived values inherit it (a rendered template takes the origin of the variables it used). Today a verified wire value drops its signature (`data/this.Transport.cs:24-27`; `wire/kind/plang/this.cs:81-83`), so in memory it can't tell where it came from. This is a small first step of `Documentation/Runtime2/cool.md`'s "Causal lineage" (only the outside origin, not the full graph).
 
@@ -42,7 +43,7 @@ Ingi, 2026-09-28 (a curious-architect conversation):
 
 1. **Settled (Ingi): "they all have identity, cant write if they dont have identity."** Every writer has an identity. A value whose origin has no identity can't be written to disk. Still to settle: which identity each kind of input carries. A signed wire request carries its signer's. An `ask` answer carries the local user's. An LLM's answer and a url's content: the provider's, or the asking actor's? The latter would put them in the asker's folder.
 2. **The id on disk:** a short fingerprint of the key as the folder name, with the full key in the identity (lean).
-3. **Callers without an identity** (an unsigned browser request): no folder, the app level only, or refused?
+3. ~~Callers without an identity~~: settled in 1, no identity means no write.
 4. **Naming:** `actor.Identity` today means the actor's own signing keys, while "the user's identities" means the callers. That's one word for "who I am" and "who came to me"; name them apart.
 5. Is `cache/` per identity or shared at the app level (the LLM cache shared saves cost)? Does `trace/` move out of `.build/traces/`?
 6. Setup's executed steps belong to the app level. Once each part owns its storage, what's left of `store`?
