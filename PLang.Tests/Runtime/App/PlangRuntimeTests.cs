@@ -81,14 +81,9 @@ public class PlangRuntimeTests : IDisposable
     {
         var context = _app.User.Context;
 
-        var onAction = new global::app.module.action.on.OnEvent(context)
-        {
-            Item = new global::app.data.@this<global::app.type.item.@this>("Item", _app.type.list["step"], context: context),
-            When = (global::app.type.item.choice.@this<global::app.@event.When>)global::app.@event.When.before,
-            Event = (global::app.type.item.text.@this)"start",
-            Action = Make.Call("LogBefore"),
-        };
-        await onAction.Start();
+        // a program's step: the event by its path
+        await (await Make.Action("on", "event", ("Event", "%!app.type.step.on.start%"), ("When", "before"),
+            ("Action", Make.Call("LogBefore"))).Start(context)).IsSuccess();
 
         var before = _app.type.list["step"].on["start"]!.before;
         await Assert.That(before.Count).IsEqualTo(1);

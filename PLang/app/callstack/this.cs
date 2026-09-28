@@ -80,6 +80,20 @@ public sealed partial class @this
     }
 
     /// <summary>
+    /// The event in play — what PLang reads as <c>%!event%</c>: the nearest frame outward whose event's bound
+    /// call is running. Null outside any such call.
+    /// </summary>
+    public global::app.data.@this? Event
+    {
+        get
+        {
+            for (var node = _current.Value; node != null; node = node.Caller)
+                if (node.Event is { } running) return running;
+            return null;
+        }
+    }
+
+    /// <summary>
     /// First Call pushed in this run. Null until first Push.
     /// </summary>
     public call.@this? Root => _root;

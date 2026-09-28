@@ -65,21 +65,27 @@
           "name": "event",
           "property": [
             {
-              "name": "Item",
+              "name": "Event",
               "type": {
-                "name": "item",
+                "name": "app.event",
                 "template": "plang"
               },
-              "value": "%!channels.audit%",
+              "value": "%!channels.audit.on.write%",
               "variable": [
                 {
-                  "text": "%!channels.audit%",
+                  "text": "%!channels.audit.on.write%",
                   "code": [
                     {
                       "variable": "!channels"
                     },
                     {
                       "property": "audit"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "write"
                     }
                   ]
                 }
@@ -123,13 +129,6 @@
             }
           ],
           "default": [
-            {
-              "name": "event",
-              "type": {
-                "name": "text"
-              },
-              "value": "start"
-            },
             {
               "name": "scope",
               "type": {

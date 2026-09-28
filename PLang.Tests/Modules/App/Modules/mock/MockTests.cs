@@ -127,15 +127,12 @@ public class MockTests
         await Assert.That(mock.CallCount).IsEqualTo(0);
     }
 
-    // --- a parameter's expected value, where * stands for any text ---
+    // --- a parameter's expected value: the same text, case aside ---
 
     [Test]
     [Arguments("config.json", "config.json", true)]
     [Arguments("config.json", "data.json", false)]
-    [Arguments("https://example.org/api/*", "https://example.org/api/users", true)]
-    [Arguments("https://example.org/api/*", "https://other.org/api/users", false)]
     [Arguments("Config.JSON", "config.json", true)]
-    [Arguments("*keyword*", "this has keyword inside", true)]
     [Arguments("a.b", "axb", false)]
     public async Task Match(string expected, string actual, bool matches)
         => await Assert.That(Mock.Match(expected, actual)).IsEqualTo(matches);

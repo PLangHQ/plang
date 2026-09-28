@@ -13,15 +13,15 @@
           "name": "event",
           "property": [
             {
-              "name": "Item",
+              "name": "Event",
               "type": {
-                "name": "item",
+                "name": "app.event",
                 "template": "plang"
               },
-              "value": "%!app.type.goal%",
+              "value": "%!app.type.goal.on.start%",
               "variable": [
                 {
-                  "text": "%!app.type.goal%",
+                  "text": "%!app.type.goal.on.start%",
                   "code": [
                     {
                       "variable": "!app"
@@ -31,6 +31,12 @@
                     },
                     {
                       "property": "goal"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
                     }
                   ]
                 }
@@ -58,7 +64,7 @@
                     "type": {
                       "name": "text"
                     },
-                    "value": "LogBefore"
+                    "value": "/Modules/Event/Basic/LogBefore"
                   }
                 ],
                 "default": [
@@ -74,13 +80,6 @@
             }
           ],
           "default": [
-            {
-              "name": "event",
-              "type": {
-                "name": "text"
-              },
-              "value": "start"
-            },
             {
               "name": "scope",
               "type": {
@@ -106,15 +105,15 @@
           "name": "event",
           "property": [
             {
-              "name": "Item",
+              "name": "Event",
               "type": {
-                "name": "item",
+                "name": "app.event",
                 "template": "plang"
               },
-              "value": "%!app.type.goal%",
+              "value": "%!app.type.goal.on.start%",
               "variable": [
                 {
-                  "text": "%!app.type.goal%",
+                  "text": "%!app.type.goal.on.start%",
                   "code": [
                     {
                       "variable": "!app"
@@ -124,6 +123,12 @@
                     },
                     {
                       "property": "goal"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
                     }
                   ]
                 }
@@ -151,7 +156,7 @@
                     "type": {
                       "name": "text"
                     },
-                    "value": "LogAfter"
+                    "value": "/Modules/Event/Basic/LogAfter"
                   }
                 ],
                 "default": [
@@ -167,13 +172,6 @@
             }
           ],
           "default": [
-            {
-              "name": "event",
-              "type": {
-                "name": "text"
-              },
-              "value": "start"
-            },
             {
               "name": "scope",
               "type": {
@@ -293,7 +291,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "TestGoal"
+              "value": "/Modules/Event/Basic/TestGoal"
             }
           ],
           "default": [

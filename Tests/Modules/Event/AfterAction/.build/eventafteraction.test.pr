@@ -63,15 +63,15 @@
           "name": "event",
           "property": [
             {
-              "name": "Item",
+              "name": "Event",
               "type": {
-                "name": "item",
+                "name": "app.event",
                 "template": "plang"
               },
-              "value": "%!app.type.action%",
+              "value": "%!app.type.action.output.write%",
               "variable": [
                 {
-                  "text": "%!app.type.action%",
+                  "text": "%!app.type.action.output.write%",
                   "code": [
                     {
                       "variable": "!app"
@@ -81,6 +81,12 @@
                     },
                     {
                       "property": "action"
+                    },
+                    {
+                      "property": "output"
+                    },
+                    {
+                      "property": "write"
                     }
                   ]
                 }
@@ -124,13 +130,6 @@
             }
           ],
           "default": [
-            {
-              "name": "event",
-              "type": {
-                "name": "text"
-              },
-              "value": "start"
-            },
             {
               "name": "scope",
               "type": {

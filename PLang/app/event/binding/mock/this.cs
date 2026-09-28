@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 namespace app.@event.binding.mock;
 
 /// <summary>
@@ -63,7 +61,7 @@ public sealed class @this : global::app.@event.binding.@this, global::app.type.i
         return parameters;
     }
 
-    // Whether the action's parameters are the ones this mock takes: each named value, where * stands for any text.
+    // Whether the action's parameters are the ones this mock takes: each named value.
     private async Task<bool> Matches(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
     {
         foreach (var (name, expected) in _parameters!)
@@ -82,12 +80,11 @@ public sealed class @this : global::app.@event.binding.@this, global::app.type.i
         return property.Value;
     }
 
-    // An expected parameter value against the actual one: equal text, where * in the expected stands for any text.
+    // An expected parameter value against the actual one: the same text, case aside.
     internal static bool Match(object? expected, object? actual)
     {
         if (expected == null || actual == null) return expected == null && actual == null;
-        var pattern = "^" + string.Join(".*", (expected.ToString() ?? "").Split('*').Select(Regex.Escape)) + "$";
-        return Regex.IsMatch(actual.ToString() ?? "", pattern, RegexOptions.IgnoreCase);
+        return string.Equals(expected.ToString(), actual.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 }
 

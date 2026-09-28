@@ -63,15 +63,15 @@
           "name": "event",
           "property": [
             {
-              "name": "Item",
+              "name": "Event",
               "type": {
-                "name": "item",
+                "name": "app.event",
                 "template": "plang"
               },
-              "value": "%!app.type.step%",
+              "value": "%!app.type.step.on.after%",
               "variable": [
                 {
-                  "text": "%!app.type.step%",
+                  "text": "%!app.type.step.on.after%",
                   "code": [
                     {
                       "variable": "!app"
@@ -81,6 +81,12 @@
                     },
                     {
                       "property": "step"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "after"
                     }
                   ]
                 }
@@ -108,7 +114,7 @@
                     "type": {
                       "name": "text"
                     },
-                    "value": "TrackAfterStep"
+                    "value": "/Modules/Event/AfterStep/TrackAfterStep"
                   }
                 ],
                 "default": [
@@ -124,13 +130,6 @@
             }
           ],
           "default": [
-            {
-              "name": "event",
-              "type": {
-                "name": "text"
-              },
-              "value": "start"
-            },
             {
               "name": "scope",
               "type": {

@@ -37,6 +37,10 @@ public sealed partial class @this : IAsyncDisposable
     /// <summary>The action this frame runs. Null in a goal's or a step's frame.</summary>
     public global::app.goal.step.action.@this? Action { get; }
 
+    /// <summary>The event whose bound call is running in this frame, as <c>%!event%</c> reads it — its value the
+    /// running event, its properties <c>item</c> and <c>result</c>. Set only while that call runs.</summary>
+    public global::app.data.@this? Event { get; internal set; }
+
     /// <summary>
     /// Sync parent in this execution chain — whatever AsyncLocal.Current was at Push time.
     /// Walk this for the "stack trace" view.

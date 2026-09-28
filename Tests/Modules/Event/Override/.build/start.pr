@@ -13,27 +13,30 @@
           "name": "event",
           "property": [
             {
-              "name": "Item",
+              "name": "Event",
               "type": {
-                "name": "item",
+                "name": "app.event",
                 "template": "plang"
               },
-              "value": "%!app.module.file.read%",
+              "value": "%!app.type.goal.on.start%",
               "variable": [
                 {
-                  "text": "%!app.module.file.read%",
+                  "text": "%!app.type.goal.on.start%",
                   "code": [
                     {
                       "variable": "!app"
                     },
                     {
-                      "property": "module"
+                      "property": "type"
                     },
                     {
-                      "property": "file"
+                      "property": "goal"
                     },
                     {
-                      "property": "read"
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
                     }
                   ]
                 }
@@ -77,13 +80,6 @@
             }
           ],
           "default": [
-            {
-              "name": "event",
-              "type": {
-                "name": "text"
-              },
-              "value": "start"
-            },
             {
               "name": "scope",
               "type": {

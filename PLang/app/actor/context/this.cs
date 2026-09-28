@@ -152,6 +152,9 @@ public sealed class @this : IDisposable
         // walks Caller outward for the first frame holding an unrecovered one — nesting
         // shadows for free, and parallel branches don't cross (the stack is AsyncLocal).
         vars.Set(new data.DynamicData("!error", () => CallStack.Error, this));
+        // %!event% reads the CALL STACK too: the running event lives on the frame it fired in while its bound
+        // call runs — the whole Data (%!event!item%, %!event!result%), gone when the call returns.
+        vars.Set(new data.DynamicData("!event", () => CallStack.Event, this));
         vars.Set(new data.DynamicData("!data", () => App.System.Context.Variable.Peek("data")?.Peek(), this));
         vars.Set(new data.DynamicData("!test", () => Test, this));
     }

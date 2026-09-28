@@ -153,7 +153,7 @@ public partial class @this
     [JsonIgnore]
     [LlmIgnore]
     [Out, Store]
-    public Properties Properties { get; set; } = new();
+    public virtual Properties Properties { get; set; } = new();
 
 
     [JsonConstructor]
@@ -771,9 +771,25 @@ public class DynamicData : @this
     {
     }
 
+    /// <summary>A Data found per read (<c>%!event%</c>: the call stack's running event) — its value and its
+    /// properties are the found Data's; none found, the null citizen and an empty bag. A property set through it
+    /// lands in the found Data's own bag.</summary>
+    public DynamicData(string name, Func<@this?> found, actor.context.@this context)
+        : this(name, new global::app.type.item.computed(() => found()?.Peek()), context)
+        => _found = found;
+
     private DynamicData(string name, global::app.type.item.computed cell, actor.context.@this context)
         : base(name, cell, context: context)
         => _cell = cell;
+
+    // The Data this stands for, found per read — only the Data form has one.
+    private readonly Func<@this?>? _found;
+
+    public override Properties Properties
+    {
+        get => _found?.Invoke()?.Properties ?? base.Properties;
+        set => base.Properties = value;
+    }
 
     /// <summary>In memory now = the current computation, lifted with this Data's context.</summary>
     public override global::app.type.item.@this Peek() => _cell.Compute(Context);

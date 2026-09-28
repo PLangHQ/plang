@@ -3,9 +3,102 @@
   "step": [
     {
       "index": 0,
-      "text": "mock.intercept pattern=\"file.read\", return=\"mocked content\", write to %mockRead%",
+      "text": "read file 'fixture.txt', write to %fixture%",
       "line": {
-        "number": 2
+        "number": 3
+      },
+      "comment": "a mocked file.read answers what file.read answers: a file — the fixture's",
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "fixture.txt"
+            }
+          ],
+          "default": [
+            {
+              "name": "resolvevariables",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%fixture%",
+              "variable": [
+                {
+                  "text": "%fixture%",
+                  "code": [
+                    {
+                      "variable": "fixture"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "txt"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "mock.intercept pattern=\"file.read\", return=%fixture%, write to %mockRead%",
+      "line": {
+        "number": 4
       },
       "code": [
         {
@@ -22,9 +115,20 @@
             {
               "name": "Return",
               "type": {
-                "name": "text"
+                "name": "item",
+                "template": "plang"
               },
-              "value": "mocked content"
+              "value": "%fixture%",
+              "variable": [
+                {
+                  "text": "%fixture%",
+                  "code": [
+                    {
+                      "variable": "fixture"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         },
@@ -82,10 +186,10 @@
       "waitForExecution": true
     },
     {
-      "index": 1,
+      "index": 2,
       "text": "assert %mockRead.callCount% equals 0, \"mock should start with 0 calls\"",
       "line": {
-        "number": 3
+        "number": 5
       },
       "code": [
         {
@@ -133,10 +237,10 @@
       "waitForExecution": true
     },
     {
-      "index": 2,
+      "index": 3,
       "text": "assert %mockRead.isSpy% equals false",
       "line": {
-        "number": 8
+        "number": 10
       },
       "comment": "%mockRead.pattern% equality check is covered by C# MockTests.cs — the\nLLM planner mis-compiles any goal-text line containing the literal\n\"file.read\" as a file.read action call, so we can't assert the pattern\nin PLang here without rebuilding the mock handle's value mid-test.",
       "code": [
@@ -178,10 +282,10 @@
       "waitForExecution": true
     },
     {
-      "index": 3,
+      "index": 4,
       "text": "mock.intercept pattern=\"output.write\", write to %spyWrite%",
       "line": {
-        "number": 9
+        "number": 11
       },
       "code": [
         {
@@ -251,10 +355,10 @@
       "waitForExecution": true
     },
     {
-      "index": 4,
+      "index": 5,
       "text": "assert %spyWrite.isSpy% equals true",
       "line": {
-        "number": 10
+        "number": 12
       },
       "code": [
         {
@@ -295,10 +399,10 @@
       "waitForExecution": true
     },
     {
-      "index": 5,
+      "index": 6,
       "text": "read file 'test_output.txt', write to %mockResult%",
       "line": {
-        "number": 12
+        "number": 14
       },
       "comment": "exercise the mock — call intercepted action, verify callCount",
       "code": [
@@ -388,10 +492,10 @@
       "waitForExecution": true
     },
     {
-      "index": 6,
+      "index": 7,
       "text": "assert %mockRead.callCount% equals 1, \"callCount should increment after mock intercept\"",
       "line": {
-        "number": 13
+        "number": 15
       },
       "code": [
         {
@@ -439,10 +543,10 @@
       "waitForExecution": true
     },
     {
-      "index": 7,
+      "index": 8,
       "text": "mock verify %mockRead% was called 1 time",
       "line": {
-        "number": 15
+        "number": 17
       },
       "comment": "verify",
       "code": [
@@ -481,10 +585,10 @@
       "waitForExecution": true
     },
     {
-      "index": 8,
+      "index": 9,
       "text": "mock reset %mockRead%",
       "line": {
-        "number": 17
+        "number": 19
       },
       "comment": "reset",
       "code": [
@@ -516,10 +620,10 @@
       "waitForExecution": true
     },
     {
-      "index": 9,
+      "index": 10,
       "text": "assert %mockRead.callCount% equals 0, \"reset should clear callCount\"",
       "line": {
-        "number": 18
+        "number": 20
       },
       "code": [
         {
@@ -571,7 +675,7 @@
   "visibility": "Public",
   "path": "/Modules/Mock/Mock.test.goal",
   "prPath": "/Modules/Mock/.build/mock.test.pr",
-  "hash": "309441f8ffea70e5cf06658fc8719c35f0274ff3f98a1c72f13c42f6ba00833e",
+  "hash": "7c3c238537910e03db479bd3a5713abc2121ed770a1dd1b3672ecad7bcf2243f",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

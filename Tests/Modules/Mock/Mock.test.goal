@@ -1,5 +1,7 @@
 Start
-- mock.intercept pattern="file.read", return="mocked content", write to %mockRead%
+/ a mocked file.read answers what file.read answers: a file — the fixture's
+- read file 'fixture.txt', write to %fixture%
+- mock.intercept pattern="file.read", return=%fixture%, write to %mockRead%
 - assert %mockRead.callCount% equals 0, "mock should start with 0 calls"
 / %mockRead.pattern% equality check is covered by C# MockTests.cs — the
 / LLM planner mis-compiles any goal-text line containing the literal

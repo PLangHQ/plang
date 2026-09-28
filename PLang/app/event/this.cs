@@ -6,7 +6,7 @@ namespace app.@event;
 /// (<c>app/event/on/&lt;name&gt;.cs</c>); the item an event fires for is handed to its bindings when it starts,
 /// never kept (one event serves every item of a type).
 /// </summary>
-public abstract class @this : global::app.type.item.@this
+public abstract class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     private protected @this(string name, binding.list.before before, binding.list.after after)
     {

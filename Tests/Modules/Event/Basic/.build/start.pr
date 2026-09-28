@@ -13,15 +13,15 @@
           "name": "event",
           "property": [
             {
-              "name": "Item",
+              "name": "Event",
               "type": {
-                "name": "item",
+                "name": "app.event",
                 "template": "plang"
               },
-              "value": "%!app.type.goal%",
+              "value": "%!app.type.goal.on.start%",
               "variable": [
                 {
-                  "text": "%!app.type.goal%",
+                  "text": "%!app.type.goal.on.start%",
                   "code": [
                     {
                       "variable": "!app"
@@ -31,6 +31,12 @@
                     },
                     {
                       "property": "goal"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
                     }
                   ]
                 }
@@ -75,13 +81,6 @@
           ],
           "default": [
             {
-              "name": "event",
-              "type": {
-                "name": "text"
-              },
-              "value": "start"
-            },
-            {
               "name": "scope",
               "type": {
                 "name": "choice",
@@ -106,15 +105,15 @@
           "name": "event",
           "property": [
             {
-              "name": "Item",
+              "name": "Event",
               "type": {
-                "name": "item",
+                "name": "app.event",
                 "template": "plang"
               },
-              "value": "%!app.type.goal%",
+              "value": "%!app.type.goal.on.start%",
               "variable": [
                 {
-                  "text": "%!app.type.goal%",
+                  "text": "%!app.type.goal.on.start%",
                   "code": [
                     {
                       "variable": "!app"
@@ -124,6 +123,12 @@
                     },
                     {
                       "property": "goal"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
                     }
                   ]
                 }
@@ -168,13 +173,6 @@
           ],
           "default": [
             {
-              "name": "event",
-              "type": {
-                "name": "text"
-              },
-              "value": "start"
-            },
-            {
               "name": "scope",
               "type": {
                 "name": "choice",
@@ -199,15 +197,15 @@
           "name": "event",
           "property": [
             {
-              "name": "Item",
+              "name": "Event",
               "type": {
-                "name": "item",
+                "name": "app.event",
                 "template": "plang"
               },
-              "value": "%!app.type.action%",
+              "value": "%!app.type.action.on.start%",
               "variable": [
                 {
-                  "text": "%!app.type.action%",
+                  "text": "%!app.type.action.on.start%",
                   "code": [
                     {
                       "variable": "!app"
@@ -217,6 +215,12 @@
                     },
                     {
                       "property": "action"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
                     }
                   ]
                 }
@@ -260,13 +264,6 @@
             }
           ],
           "default": [
-            {
-              "name": "event",
-              "type": {
-                "name": "text"
-              },
-              "value": "start"
-            },
             {
               "name": "scope",
               "type": {

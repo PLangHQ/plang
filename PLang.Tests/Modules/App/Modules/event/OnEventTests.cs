@@ -1,10 +1,10 @@
 using app.module.action.on;
-using When = app.@event.When;
 
 namespace PLang.Tests.App.actions.EventTests;
 
-// on.event binds a call on an item's event; the call reads %!event% (the running event, with %!event!item% and
-// %!event!result% for this firing). on.unbind takes the binding off; on.cancel, from a call bound before an event,
+// on.event binds a call on an event, reached by its path (%!app.type.goal.on.start%); the call reads %!event% (the
+// running event, with %!event!item% and %!event!result% for this firing) — on the frame the event fired in, for
+// exactly as long as the call runs. on.unbind takes the binding off; on.cancel, from a call bound before an event,
 // cancels it with a value.
 public class OnEventTests
 {
@@ -18,33 +18,34 @@ public class OnEventTests
 
     private global::app.actor.context.@this Ctx => _app.User.Context;
 
-    private async Task<global::app.@event.binding.@this> Bind(global::app.type.item.@this item, When when, string @event, string goal,
-        params (string, object?)[] args)
+    // A program's on.event step, run: the path resolves the way a .pr's does.
+    private async Task<global::app.data.@this> On(string eventPath, string when, string goal, params (string, object?)[] args)
+        => await Make.Action("on", "event", ("Event", eventPath), ("When", when), ("Action", Make.Call(goal, args))).Start(Ctx);
+
+    private async Task<global::app.@event.binding.@this> Bind(string eventPath, string when, string goal, params (string, object?)[] args)
     {
-        var bound = await new OnEvent(Ctx)
-        {
-            Item = new global::app.data.@this<global::app.type.item.@this>("Item", item, context: Ctx),
-            When = (global::app.type.item.choice.@this<When>)when,
-            Event = (global::app.type.item.text.@this)@event,
-            Action = Make.Call(goal, args),
-        }.Start();
+        var bound = await On(eventPath, when, goal, args);
         await bound.IsSuccess();
-        return (await bound.Value())!;
+        return (global::app.@event.binding.@this)bound.Peek();
     }
 
-    private Goal Goal(string name)
+    private Goal Goal(string name, params Make.StepDef[] steps)
     {
-        var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = Make.Goal(name, steps);
         _app.goal.list.Add(goal);
         return goal;
     }
 
-    private async Task<global::app.data.@this?> Event() => await Ctx.Variable.Get("!event");
+    // A handler that keeps what it read: %name% = the value at %path%
+    private Make.StepDef Keep(string name, string path)
+        => Make.Step($"set %{name}% = {path}", Make.Action("variable", "set", Make.Param("Name", name, "variable"), ("Value", path)));
+
+    private async Task<object?> Value(string name) => await (await Ctx.Variable.Get(name)).Value();
 
     [Test]
     public async Task BeforeEachGoal_BindsOnTheGoalTypesStart_ForThisActor()
     {
-        var binding = await Bind(_app.type.list["goal"], When.before, "start", "Log");
+        var binding = await Bind("%!app.type.goal.on.start%", "before", "Log");
 
         var before = _app.type.list["goal"].on.start.before;
         await Assert.That(before.Count).IsEqualTo(1);
@@ -53,15 +54,22 @@ public class OnEventTests
     }
 
     [Test]
-    public async Task AnEventTheItemHasNot_IsTheError()
+    public async Task BindingOneItemsEvent_LeavesEveryOtherItemUnbound()
     {
-        var bound = await new OnEvent(Ctx)
-        {
-            Item = new global::app.data.@this<global::app.type.item.@this>("Item", _app.type.list["goal"], context: Ctx),
-            When = (global::app.type.item.choice.@this<When>)When.before,
-            Event = (global::app.type.item.text.@this)"explode",
-            Action = Make.Call("Log"),
-        }.Start();
+        // file.read nothing is bound on answers the shared empty events; the binding lands on its own
+        await Bind("%!app.module.file.read.on.start%", "before", "Log");
+
+        await Assert.That(_app.Module("file")["read"]!.on.start.before.Count).IsEqualTo(1);
+        await Assert.That(_app.Module("file")["save"]!.on.start.before.Count).IsEqualTo(0);
+        await Assert.That(_app.Module("file").on.start.before.Count).IsEqualTo(0);
+        await Assert.That(_app.type.list["action"].on.start.before.Count).IsEqualTo(0);
+        await Assert.That(_app.Module("output")["write"]!.on.start.before.Count).IsEqualTo(0);
+    }
+
+    [Test]
+    public async Task WhatIsNotAnEvent_IsTheError()
+    {
+        var bound = await On("%!app.type.goal%", "before", "Log");
 
         await bound.IsFailure();
         await Assert.That(bound.Error!.Key).IsEqualTo("EventNotFound");
@@ -71,57 +79,82 @@ public class OnEventTests
     public async Task AfterAGoal_TheCallRuns_WithItsArguments()
     {
         Goal("AfterCallback");
-        var main = Goal("MainGoal");
-        await Bind(main, When.after, "start", "AfterCallback", ("callbackRan", true));
+        Goal("MainGoal");
+        await Bind("%!app.type.goal.on.start%", "after", "AfterCallback", ("callbackRan", true));
 
         await Make.Call("MainGoal").Start(Ctx);
 
-        var ran = await Ctx.Variable.Get("callbackRan");
-        await Assert.That((await ran!.Value())?.ToString()).IsEqualTo("true");
+        await Assert.That(await Value("callbackRan")).IsNotNull();
     }
 
     [Test]
-    public async Task TheCall_ReadsTheEvent_AndTheItemItFiredFor()
+    public async Task TheCall_ReadsTheItemItFiredFor_AndItsWritesStay_AndTheEventIsGoneAfter()
     {
-        Goal("Watch");
+        Goal("Watch", Keep("seen", "%!event!item%"));
         var target = Goal("Target");
-        await Bind(_app.type.list["goal"], When.before, "start", "Watch");
+        await Bind("%!app.goal[\"/Target\"].on.start%", "before", "Watch");
 
         await Make.Call("Target").Start(Ctx);
 
-        var @event = await Event();
-        await Assert.That(@event!.Peek()).IsTypeOf<global::app.@event.on.start>();
-        await Assert.That(await @event.Properties.Value("item")).IsSameReferenceAs(target);
-        // plang reads the firing's own facts as properties: %!event!item%
-        var item = await new global::app.type.item.variable.@this("!event!item").Start(Ctx);
-        await Assert.That(await item.Value()).IsSameReferenceAs(target);
+        await Assert.That(await Value("seen")).IsSameReferenceAs(target);
+        await Assert.That(Ctx.CallStack.Event).IsNull();
     }
 
     [Test]
     public async Task AfterAnAction_TheCallReadsItsResult()
     {
-        Goal("Watch");
-        // every action of this app (Make.Action's actions belong to the shared test app's modules)
-        await Bind(_app.type.list["action"], When.after, "start", "Watch");
+        Goal("Watch", Keep("seenResult", "%!event!result%"));
+        await Bind("%!app.type.action.on.start%", "after", "Watch");
 
-        var goal = Goal("Main");
-        var step = new Step { Goal = goal, Index = 0, Text = "set %x% = 1" };
-        goal.Step.Add(step);
-        var set = Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", "one"));
-        set.Step = step;
-        step.Code.Add(set);
-        await step.Start(Ctx);
+        var main = Goal("Main", Make.Step("set %x% = one", Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", "one"))));
+        await Make.Call("Main").Start(Ctx);
 
-        var @event = await Event();
-        // the item is the action that ran: the one the step holds
-        await Assert.That(await @event!.Properties.Value("item")).IsSameReferenceAs(step.Code[0]);
-        await Assert.That(await @event.Properties.Value("result")).IsNotNull();
+        await Assert.That((await Value("seenResult"))?.ToString()).IsEqualTo("one");
+    }
+
+    [Test]
+    public async Task ANestedEventsCall_SeesItsOwnEvent_AndTheOuterCallItsOwnAgain()
+    {
+        // before Outer starts, Watch runs: it calls Inner (whose own before-start runs InnerWatch), then reads again
+        Goal("InnerWatch", Keep("innerSeen", "%!event!item%"));
+        var inner = Goal("Inner");
+        Goal("Watch",
+            Keep("outerBefore", "%!event!item%"),
+            Make.Step("call Inner", Make.Call("Inner")),
+            Keep("outerAfter", "%!event!item%"));
+        var outer = Goal("Outer");
+        await Bind("%!app.goal[\"/Outer\"].on.start%", "before", "Watch");
+        await Bind("%!app.goal[\"/Inner\"].on.start%", "before", "InnerWatch");
+
+        await Make.Call("Outer").Start(Ctx);
+
+        await Assert.That(await Value("outerBefore")).IsSameReferenceAs(outer);
+        await Assert.That(await Value("innerSeen")).IsSameReferenceAs(inner);
+        await Assert.That(await Value("outerAfter")).IsSameReferenceAs(outer);
+    }
+
+    [Test]
+    public async Task TwoParallelFirings_EachCallSeesItsOwnEvent()
+    {
+        // each handler waits between being handed its event and reading it — a shared slot would cross them
+        var sleep = Make.Step("wait", Make.Action("timer", "sleep", ("Ms", 50)));
+        Goal("WatchA", sleep, Keep("seenA", "%!event!item%"));
+        Goal("WatchB", sleep, Keep("seenB", "%!event!item%"));
+        var a = Goal("A");
+        var b = Goal("B");
+        await Bind("%!app.goal[\"/A\"].on.start%", "before", "WatchA");
+        await Bind("%!app.goal[\"/B\"].on.start%", "before", "WatchB");
+
+        await Task.WhenAll(Make.Call("A").Start(Ctx), Make.Call("B").Start(Ctx));
+
+        await Assert.That(await Value("seenA")).IsSameReferenceAs(a);
+        await Assert.That(await Value("seenB")).IsSameReferenceAs(b);
     }
 
     [Test]
     public async Task Unbind_TakesTheBindingOff()
     {
-        var binding = await Bind(_app.type.list["goal"], When.before, "start", "Log");
+        var binding = await Bind("%!app.type.goal.on.start%", "before", "Log");
 
         var unbound = await new OnUnbind(Ctx)
         {
@@ -136,15 +169,15 @@ public class OnEventTests
     public async Task ABinding_FiresOnlyWhileItsActorRuns()
     {
         Goal("Watch");
-        var target = Goal("Target");
-        await Bind(target, When.before, "start", "Watch", ("watched", true));
+        Goal("Target");
+        await Bind("%!app.goal[\"/Target\"].on.start%", "before", "Watch", ("watched", true));
 
         await Make.Call("Target").Start(_app.System.Context);
-        await Assert.That((await _app.System.Context.Variable.Get("watched"))?.IsInitialized ?? false).IsFalse();
+        await Assert.That((await _app.System.Context.Variable.Get("watched")).IsInitialized).IsFalse();
 
         // the same goal under the actor that bound it: it fires
         await Make.Call("Target").Start(Ctx);
-        await Assert.That((await Ctx.Variable.Get("watched"))?.IsInitialized ?? false).IsTrue();
+        await Assert.That((await Ctx.Variable.Get("watched")).IsInitialized).IsTrue();
     }
 
     [Test]

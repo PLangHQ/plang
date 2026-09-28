@@ -14,21 +14,27 @@
           "name": "event",
           "property": [
             {
-              "name": "Item",
+              "name": "Event",
               "type": {
-                "name": "item",
+                "name": "app.event",
                 "template": "plang"
               },
-              "value": "%!channels.input%",
+              "value": "%!channels.input.on.ask%",
               "variable": [
                 {
-                  "text": "%!channels.input%",
+                  "text": "%!channels.input.on.ask%",
                   "code": [
                     {
                       "variable": "!channels"
                     },
                     {
                       "property": "input"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "ask"
                     }
                   ]
                 }
@@ -41,13 +47,6 @@
                 "kind": "when"
               },
               "value": "before"
-            },
-            {
-              "name": "Event",
-              "type": {
-                "name": "text"
-              },
-              "value": "ask"
             },
             {
               "name": "Action",
