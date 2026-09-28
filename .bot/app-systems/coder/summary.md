@@ -41,6 +41,17 @@ is reported to the architect (plang-cd session) and reviewed before the next.
   `IModifier`, `ModifierAttribute`, `cache.wrap`, `timeout.after` gone. Python twins, fixtures, templates,
   Properties.llm, teaching md, decider.json updated. `action.Step` is init-only (tests use `action.In(step)`).
 
+- **Decider render fix** (1efe274a7; decisions 152–154) — the builder's stage 1 never asked its common
+  yes/no questions: `read decider.json` leaves a `clr(JsonElement)` host and Fluid only knew dict/list/JsonNode.
+  Never worked since decider v5 (`bec5f56df`, bisected). Fluid now has one value (`Item`) over any container,
+  reading its own doors. `os/system/builder/BuildGoal/Decide.code.md` placed (Ingi's rule: a part's `.code.md`).
+- **8g review** (fc8572e18; decisions 155–156, accepted) — `IsClause` gone: each walk asks the action
+  (`Attach`/`Anchor`/`Follow`/`Refuse`/`Prefill`/`Know`/`Nest`, clause overrides); `item.IsSequence` tells
+  Fluid array vs hash.
+- **8h steps 2–3** (7fc596b18; decision 159, accepted) — the prefilled formal put a body's action beside its if;
+  `pick.line` opens a lone if's `{ }` (chain flat), twin `Line` in prompt_c, `LineTwinTests`. Teaching for
+  `if …, return` and render's dict arguments.
+
 ## Known reds (deliberate)
 - 5 `PickListTests` (decider golden fixtures: `event.on` left the catalog, on.error's signature changed) —
   regenerate with 8h's eval.
@@ -60,7 +71,10 @@ bootstrap, or fix the file-read→template issue in 8g. How to rebuild once unbl
 `TYPESAFE_API_KEY="$(cat /shared/hopkaup/secrets/typesafe.txt)" plang '--build={"files":[…]}'`, restore the link.
 
 ## Next
-Finish 8g (above), 8h (the one eval for 8f+8g: goldens + bootstrap), then stages 9–12. Dead files for Ingi:
+PAUSED before 8h step 4 (architect, decision 159): Ingi is reviewing a plang-spec summary; the architect then
+starts 8h as a spec conversation. Open: step 1 (invented numbers — decision 157 withdrew the word table; the
+architect proposes the LLM cites the words it read, Ingi to answer), step 4 (rebuild BuildGoal/start.pr +
+error/show.pr with the recipe above, delete TRANSITIONAL), step 5 (the eval; pick_golden regenerates). Then 9–12. Dead files for Ingi:
 `os/system/events/*.goal`, `os/system/.build/run.pr`, `os/system/modules/event/Modules.goal`.
 
 ## Code example
