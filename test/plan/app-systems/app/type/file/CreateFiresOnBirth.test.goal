@@ -1,10 +1,9 @@
-/ Stage 9 (decisions 138–141): every plang value is born through its type's Create, so a program can bind a value's
-/ birth. Today file.read makes its file with `new`, so "after file create" misses it. The file is saved before the
-/ binding, so only the read counts.
+/ Every plang value is born through its type's Create, so a program can bind a value's birth: reading a file
+/ births a file value. The file is saved before the binding, so only the read counts.
 Start
 - save "spec_create.txt" with content "x"
 - set %created% = 0
-- after file create, call CountCreated
+- after %!app.type.file.on.create% call CountCreated
 - read file "spec_create.txt", write to %file%
 - assert %created% equals 1, "reading a file is the birth of a file value"
 - delete file "spec_create.txt"

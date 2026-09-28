@@ -114,11 +114,11 @@ public partial class @this
     [JsonIgnore]
     public bool IsVariable => _item?.IsVariable ?? false;
 
-    /// <summary>The Data instance this reference is bound to — the lazy name-hop, delegated
-    /// to the item (the reference carrier resolves its own name). Only meaningful when
-    /// <see cref="IsVariable"/>; content answers null. The value door is never opened.</summary>
-    public System.Threading.Tasks.ValueTask<@this?> Get(actor.context.@this ctx)
-        => _item?.Get(ctx) ?? default;
+    /// <summary>The Data this value is: a reference (<see cref="IsVariable"/>, <c>%!data%</c>) answers the Data it
+    /// names — the lazy name-hop, the reference carrier resolving its own name — and any other value answers
+    /// itself. The value door is never opened, so a pending read stays unread.</summary>
+    public async System.Threading.Tasks.ValueTask<@this> Follow(actor.context.@this ctx)
+        => IsVariable && _item != null && await _item.Get(ctx) is { } named ? named : this;
 
     /// <summary>
     /// True when the value holds a variable — the value's own answer (a template's <c>%…%</c>, a

@@ -2,8 +2,8 @@
 / "a.txt" is text; as a path it is a new value, born through the path type.
 Start
 - set %created% = 0
-- after path create, call CountCreated
-- set %p% as path = "a.txt"
+- bind CountCreated to run after %!app.type.path.on.create%
+- set %p% = "a.txt" as path
 - assert %created% equals 1, "converting to another type is a birth"
 
 CountCreated

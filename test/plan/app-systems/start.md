@@ -39,6 +39,7 @@ Each stage is a goal in [start.goal](start.goal); each behaviour there is a comm
 - **Every test must fail without its change:** once green, the change is reverted briefly and each test is confirmed red. (Two early tests passed while testing nothing; this is the guard.)
 - For a change in the builder, the revert check is its deterministic pin (LineTwinTests, MatchTests, RenderTests, the formal golden): reverting the change turns the pin red. A plan test built before the revert keeps its compiled `.pr`, and an LLM rebuild isn't deterministic, so the plan test can't show it.
 - Only the plan's tests are built; the rest of the test tree isn't rebuilt by this plan.
+- The plan's plang says what is wanted; the coder writes each test in real plang that compiles, keeping what it proves.
 
 ## What tests can't show
 

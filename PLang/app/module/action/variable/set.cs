@@ -22,9 +22,9 @@ public partial class Set : IContext, IScope, IKeep
     {
         var name = await Name.Value();
         if (name == null || name.Code.Count != 1 || name.Code.Root.Name.StartsWith('!')) return;
-        if (Value.Peek() is global::app.type.item.source { IsVariable: true } source)
+        if (Value.IsVariable)
         {
-            if (await source.Get(Context) is { IsInitialized: true } known) await name.Set(known, Context);
+            if (await Value.Follow(Context) is { IsInitialized: true } known) await name.Set(known, Context);
             return;
         }
         // a text with variables inside is unknown; a literal is read as the value it is
@@ -152,22 +152,6 @@ public partial class Set : IContext, IScope, IKeep
         var typeValue = Type == null || await Type.IsEmpty() ? null : await Type.Value();
         if (typeValue != null)
         {
-            // Kind-derivation and the strict probe read the IN-MEMORY value only: a
-            // raw-backed (unparsed) value contributes null — deriving a kind from
-            // content would force the parse the verbatim fast-path below exists to
-            // avoid. Content is read (door opened) only past that fast-path, where
-            // conversion genuinely needs it. A reference (file/url) stays itself —
-            // opening the door would read content on store, and the reference IS
-            // the declared value (the lazy contract).
-            object? sourceValue = Value.RawUntouched ? null
-                : Value.Peek() is (global::app.type.item.file.@this or global::app.type.item.url.@this) and { } reference ? reference
-                : await Value.Value();
-            // The kind hooks and the strict probe below reason over the raw CLR
-            // face (ctor matching, magic-byte/extension sniffing) — a born-typed
-            // text/binary leaf presents its backing here. Minting re-lifts, so
-            // the stored value stays born-typed either way.
-            if (sourceValue is global::app.type.item.text.@this st) sourceValue = st.Clr<string>();
-            else if (sourceValue is global::app.type.item.binary.@this sb) sourceValue = sb.Value;
             // The Type value reads through the `type` reader, so it materializes as the type
             // entity itself ({name, kind?, strict?} → type.@this). A bare type-name (raw string)
             // still names a type by name. No dict rebuild — that was the pre-reader path.
@@ -183,6 +167,27 @@ public partial class Set : IContext, IScope, IKeep
             var type = typeValue is global::app.type.@this written ? Context.App.type.list[written, Context] : declared;
             var typeName = type.Name;
             var targetType = type.ClrType;
+
+            // A value that already is the declared type is kept as it is — followed to what it names
+            // (`%!data%` is the Data it names), never read and never converted: a file stays the file,
+            // unread, and is no new birth. Only a value that isn't the type is opened and converted below
+            // (a re-kind and a strict declaration go on too).
+            var incoming = await Value.Follow(Context);
+            if (!type.Strict && incoming.Peek() is { IsNull: false } held && held.Is(type)
+                && (type.kind.IsEmpty || string.Equals(held.Type.kind.Name, type.kind.Name, StringComparison.OrdinalIgnoreCase)))
+                return await name.Set(Value, Context);
+
+            // Kind-derivation and the strict probe read the IN-MEMORY value only: a
+            // raw-backed (unparsed) value contributes null — deriving a kind from
+            // content would force the parse the verbatim fast-path below exists to
+            // avoid. Content is read (door opened) only for a value that isn't the declared type.
+            object? sourceValue = incoming.RawUntouched ? null : await incoming.Value();
+            // The kind hooks and the strict probe below reason over the raw CLR
+            // face (ctor matching, magic-byte/extension sniffing) — a born-typed
+            // text/binary leaf presents its backing here. Minting re-lifts, so
+            // the stored value stays born-typed either way.
+            if (sourceValue is global::app.type.item.text.@this st) sourceValue = st.Clr<string>();
+            else if (sourceValue is global::app.type.item.binary.@this sb) sourceValue = sb.Value;
 
             // Stamp kind from the value by building through the family's eager door and
             // reading the kind off the built value (image parses its path's extension → jpg;

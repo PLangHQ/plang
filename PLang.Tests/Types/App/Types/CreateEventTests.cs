@@ -92,6 +92,39 @@ public class CreateEventTests : System.IAsyncDisposable
         await Assert.That(seen).IsSameReferenceAs(landed.Peek());
     }
 
+    [Test] public async Task ReadingAFile_AndKeepingItAsAFile_IsOneBirth()
+    {
+        System.IO.Directory.CreateDirectory(app.AbsolutePath);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.AbsolutePath, "once.txt"), "x");
+        var births = new System.Collections.Generic.List<string>();
+        On("file", global::app.@event.When.after, (data, _) => { births.Add(System.Environment.StackTrace); return data; });
+
+        var landed = await global::app.type.item.path.@this.Resolve("once.txt", Ctx).Read(Ctx);
+        await Ctx.Variable.Set("!data", landed);
+        var kept = await TestAction.Create("variable", "set", ("name", "%file%"), ("value", "%!data%"),
+            ("type", new global::app.type.@this("file", (string?)null))).Start(Ctx);
+
+        await kept.IsSuccess();
+        await Assert.That(births.Count).IsEqualTo(1).Because(string.Join("\n----\n", births.Skip(1)));
+    }
+
+    [Test] public async Task KeepingAReadFileAsAFile_LeavesItUnread_UntilItIsUsed()
+    {
+        System.IO.Directory.CreateDirectory(app.AbsolutePath);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.AbsolutePath, "lazy.txt"), "x");
+
+        var landed = await global::app.type.item.path.@this.Resolve("lazy.txt", Ctx).Read(Ctx);
+        await Ctx.Variable.Set("!data", landed);
+        await (await TestAction.Create("variable", "set", ("name", "%file%"), ("value", "%!data%"),
+            ("type", new global::app.type.@this("file", (string?)null))).Start(Ctx)).IsSuccess();
+
+        var kept = (await Ctx.Variable.Get("file")).Peek() as global::app.type.item.file.@this;
+        await Assert.That(kept).IsNotNull();
+        await Assert.That(kept!.IsLoaded).IsFalse();
+        await Assert.That((await (await Ctx.Variable.Get("file")).Value())?.ToString()).IsEqualTo("x");
+        await Assert.That(kept.IsLoaded).IsTrue();
+    }
+
     [Test] public async Task AFileMadeFromAPath_IsTheReferenceToIt_WithTheDeclaredTemplate()
     {
         var path = global::app.type.item.path.@this.Resolve("some.txt", Ctx);

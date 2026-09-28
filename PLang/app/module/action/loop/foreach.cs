@@ -15,8 +15,7 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
     /// of the collection's kind — when the store knows the collection and its kind.</summary>
     public async Task Scope()
     {
-        if (Collection.Peek() is not global::app.type.item.source { IsVariable: true } source
-            || await source.Get(Context) is not { IsInitialized: true } known
+        if (!Collection.IsVariable || await Collection.Follow(Context) is not { IsInitialized: true } known
             || known.Type?.kind is not { IsEmpty: false } kind || !Context.App.type.list.Contains(kind.Name)) return;
         var element = Context.App.type.list[kind.Name];
         var named = (Item == null ? null : await Item.Value()) ?? new app.type.item.variable.@this("item");

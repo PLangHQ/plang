@@ -89,8 +89,8 @@ public partial class @this
         // `place=%city%` reads the CALLER's memory, whichever store it lands in).
         if (value is data.@this reference && reference.IsVariable)
         {
-            var bound = await reference.Get(reference.Context);
-            value = bound is { IsInitialized: true } ? bound.Copy(name) : bound;
+            var bound = await reference.Follow(reference.Context);
+            value = bound.IsInitialized ? bound.Copy(name) : bound;
         }
 
         // The name is a variable's root; a write deeper in is the variable's own (variable.Set).

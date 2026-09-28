@@ -55,7 +55,7 @@ public partial class OnEvent : IContext
     {
         // The path navigates event ← its on ← the item. An item nothing is bound on answers the shared empty
         // events, which don't know their item: the item is the navigation's, and it binds on its own events.
-        var reached = Event.IsVariable ? await Event.Get(Context) ?? Event : Event;
+        var reached = await Event.Follow(Context);
         if (reached.Peek() is not global::app.@event.@this named || reached.Parent?.Parent?.Peek() is not global::app.type.item.@this item)
             return Context.Error<global::app.@event.binding.@this>(new global::app.error.ActionError(
                 "on.event binds on an item's event, reached by its path — e.g. %!app.type.goal.on.start%", "EventNotFound", 404));
