@@ -1,0 +1,6 @@
+/ Stage 10 (decision 67): a typed list holds its element type. The type door can make a closed list<T>, so what
+/ goes in is born as a path, not left as text.
+Start
+- set %files% as list of path = ["a.txt", "b.txt"]
+- assert %files!type.name% equals "list"
+- assert %files[0]!type.name% equals "path", "each element is born as the list's element type"

@@ -1,0 +1,6 @@
+/ Stage 10 (plan, Settings: "app.setting are … the app.id and such"): the app's name is its setting, so the one
+/ place it lives is app.setting (how app.pr and the settings rows become one store is the coder's trace first).
+Start
+- set %!app.setting.name% = "Shop"
+- assert %!app.name% equals "Shop", "the app answers its name from its setting"
+- remove %!app.setting%

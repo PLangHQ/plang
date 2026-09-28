@@ -1,0 +1,11 @@
+/ Stage 8h (decision 157): the step's own words give the count. "retry once" is one retry, in any human language:
+/ the builder must not refuse it as an invented number, and the check that guards against invented values must not
+/ read human language itself. How is the conversation between the coder and the architect.
+Start
+- set %attempts% = 0
+- call Flaky, on error retry once, ignore
+- assert %attempts% equals 2, "the first attempt and one retry"
+
+Flaky
+- set %attempts% = %attempts% + 1
+- throw error "flaky"

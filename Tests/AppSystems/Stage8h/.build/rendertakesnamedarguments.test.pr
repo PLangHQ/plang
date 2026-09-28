@@ -1,0 +1,192 @@
+{
+  "name": "Start",
+  "comment": "Stage 8h: a render's arguments are named (one dict), as /system/error/show.goal writes them: \"render …, error=%error%\".",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %message% = \"boom\"",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%message%",
+              "variable": [
+                {
+                  "text": "%message%",
+                  "code": [
+                    {
+                      "variable": "message"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "boom"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "render template \"Failed: {{ error }}\", error=%message%, write to %html%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "ui",
+          "name": "render",
+          "property": [
+            {
+              "name": "Template",
+              "type": {
+                "name": "text"
+              },
+              "value": "Failed: {{ error }}"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"error","type":{"name":"item","template":"plang"},"value":"%message%","variable":[{"text":"%message%","code":[{"variable":"message"}]}]}]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%html%",
+              "variable": [
+                {
+                  "text": "%html%",
+                  "code": [
+                    {
+                      "variable": "html"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %html% equals \"Failed: boom\", \"the named argument reaches the template\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "Failed: boom"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%html%",
+              "variable": [
+                {
+                  "text": "%html%",
+                  "code": [
+                    {
+                      "variable": "html"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the named argument reaches the template"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/AppSystems/Stage8h/RenderTakesNamedArguments.test.goal",
+  "prPath": "/AppSystems/Stage8h/.build/rendertakesnamedarguments.test.pr",
+  "hash": "ff023138385b864a83ab770cc66e21987a088aa6110ed7d5c0c5a90f60c16266",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

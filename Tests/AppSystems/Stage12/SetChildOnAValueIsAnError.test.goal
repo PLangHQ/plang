@@ -1,0 +1,8 @@
+/ Stage 12 (decision 59): a problem the programmer caused is an error result with its own key, never an exception.
+/ Today item.Set throws NotSupported and data.Set catches it (a bridge that also hides real bugs), so the error has
+/ no key of its own. The key's name is settled in the conversation; the spec is that it names the problem.
+Start
+- set %n% = 5
+- set %n.name% = "x", on error set %key% = %!error.key%
+- assert %key% is not null
+- assert %key% is not "ServiceError", "the error names what went wrong, not that something threw"

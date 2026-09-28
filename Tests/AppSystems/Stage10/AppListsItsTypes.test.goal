@@ -1,0 +1,5 @@
+/ Stage 10 (plan row 10): %!app holds its types, and %!app.list% lists them by name.
+Start
+- set %types% = %!app.list%
+- assert %types% contains "text", "a built-in type is one of the app's"
+- assert %types% contains "goal", "a concept is a type too"

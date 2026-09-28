@@ -1,0 +1,13 @@
+/ Stage 8g (decision 151): the cache stores only the real work's success, never a recovery's result. The same cached
+/ step runs twice (one cache key: the step's place); if the first run's recovery had been cached, the second run
+/ would be served from the cache and Recover would not run again.
+Start
+- set %recoveries% = 0
+- foreach [1, 2], call Attempt
+- assert %recoveries% equals 2, "a recovery's result is never served from the cache"
+
+Attempt
+- throw error "boom", cache for 10 minutes, on error call Recover
+
+Recover
+- set %recoveries% = %recoveries% + 1

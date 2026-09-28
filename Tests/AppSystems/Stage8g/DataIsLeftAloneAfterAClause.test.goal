@@ -1,0 +1,7 @@
+/ Stage 8g (decision 151): a clause (cache, timeout, on error) is bound when the program is read and is never
+/ started as a step, so it never answers %!data%. The write-to after it gets the read's content.
+Start
+- save "spec_clause.txt" with content "hello"
+- read file "spec_clause.txt", cache for 1 minute, timeout after 5 seconds, write to %content%
+- assert %content% equals "hello", "%!data% after a clause is the action's result"
+- delete file "spec_clause.txt"
