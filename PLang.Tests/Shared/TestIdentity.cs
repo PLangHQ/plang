@@ -17,7 +17,6 @@ namespace PLang.Tests.Shared;
 public sealed class TestIdentity : global::app.module.action.identity.code.IIdentity
 {
     public string Name => "test-identity";
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

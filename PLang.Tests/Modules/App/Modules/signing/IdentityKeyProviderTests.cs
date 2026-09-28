@@ -41,7 +41,7 @@ public class IdentityKeyProviderTests
     [Test]
     public async Task Create_UsesKeyProviderFromRegistry()
     {
-        var mockProvider = new MockKeyProvider("mock-pub-key", "mock-priv-key");
+        var mockProvider = new MockKeyProvider();
         _app.Code.Register<IKey>(mockProvider);
         _app.Code.SetDefault<IKey>("mock");
 
@@ -52,8 +52,8 @@ public class IdentityKeyProviderTests
         await result.IsSuccess();
         var identity = (await result.Value()) as Identity;
         await Assert.That(identity).IsNotNull();
-        await Assert.That(identity!.PublicKey).IsEqualTo("mock-pub-key");
-        await Assert.That(identity.PrivateKey).IsEqualTo("mock-priv-key");
+        await Assert.That(identity!.PublicKey).IsEqualTo(mockProvider.Keys.PublicKey);
+        await Assert.That(identity.PrivateKey).IsEqualTo(mockProvider.Keys.PrivateKey);
     }
 
     [Test]
@@ -92,7 +92,7 @@ public class IdentityKeyProviderTests
     [Test]
     public async Task Create_StoresKeysFromProvider()
     {
-        var mockProvider = new MockKeyProvider("stored-pub", "stored-priv");
+        var mockProvider = new MockKeyProvider();
         _app.Code.Register<IKey>(mockProvider);
         _app.Code.SetDefault<IKey>("mock");
 
@@ -108,15 +108,15 @@ public class IdentityKeyProviderTests
         await getResult.IsSuccess();
         var loaded = (await getResult.Value()) as Identity;
         await Assert.That(loaded).IsNotNull();
-        await Assert.That(loaded!.PublicKey).IsEqualTo("stored-pub");
-        await Assert.That(loaded.PrivateKey).IsEqualTo("stored-priv");
+        await Assert.That(loaded!.PublicKey).IsEqualTo(mockProvider.Keys.PublicKey);
+        await Assert.That(loaded.PrivateKey).IsEqualTo(mockProvider.Keys.PrivateKey);
     }
 
     [Test]
     public async Task Create_WithProviderParam_UsesNamedProvider()
     {
         // Ed25519 already registered as default IKey at engine startup
-        var mock = new MockKeyProvider("named-pub", "named-priv") { ProviderName = "mock" };
+        var mock = new MockKeyProvider();
         _app.Code.Register<IKey>(mock);
 
         var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"named-test", SetAsDefault = (global::app.type.item.@bool.@this)true, Provider = (global::app.type.item.text.@this)"mock" };
@@ -125,35 +125,26 @@ public class IdentityKeyProviderTests
 
         await result.IsSuccess();
         var identity = (await result.Value()) as Identity;
-        await Assert.That(identity!.PublicKey).IsEqualTo("named-pub");
+        await Assert.That(identity!.PublicKey).IsEqualTo(mock.Keys.PublicKey);
     }
 
+    // Hands out one fixed pair — real Ed25519 keys, since the identity's own row is signed with them
     private class MockKeyProvider : IKey
     {
-        private readonly string _pubKey;
-        private readonly string _privKey;
+        public KeyPair Keys { get; } = new Ed25519().GenerateKeyPair().keys!;
 
-        public string ProviderName { get; set; } = "mock";
-        public string Name => ProviderName;
-        public bool IsDefault { get; set; }
+        public string Name => "mock";
 
         public bool IsBuiltIn { get; set; }
 
         public string? Source { get; set; }
 
-        public MockKeyProvider(string pubKey, string privKey)
-        {
-            _pubKey = pubKey;
-            _privKey = privKey;
-        }
-
-        public (KeyPair? keys, global::app.error.Error? error) GenerateKeyPair() => (new KeyPair(_pubKey, _privKey), null);
+        public (KeyPair? keys, global::app.error.Error? error) GenerateKeyPair() => (Keys, null);
     }
 
     private class ThrowingKeyProvider : IKey
     {
         public string Name => "throwing";
-        public bool IsDefault { get; set; }
 
         public bool IsBuiltIn { get; set; }
 

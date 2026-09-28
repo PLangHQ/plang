@@ -13,7 +13,6 @@ using number = global::app.type.item.number.@this;
 public sealed class Default : IMath
 {
     public string Name => "default";
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

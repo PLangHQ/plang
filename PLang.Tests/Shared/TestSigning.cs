@@ -13,7 +13,6 @@ namespace PLang.Tests.Shared;
 public sealed class TestSigning : global::app.module.action.signing.code.ISigning
 {
     public string Name => "test-signing";
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

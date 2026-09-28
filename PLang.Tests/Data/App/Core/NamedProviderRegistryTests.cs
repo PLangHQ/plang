@@ -62,7 +62,7 @@ public class NamedProviderRegistryTests
 
         // Ed25519 was registered first at engine startup, so it's the default
         // "first" should NOT be default
-        await Assert.That(provider.IsDefault).IsFalse();
+        await Assert.That(_app.Code.Get<ISigning>().Provider).IsNotSameReferenceAs(provider);
     }
 
     [Test]
@@ -87,8 +87,7 @@ public class NamedProviderRegistryTests
         _app.Code.Register<ISigning>(second);
 
         var builtIn = _app.Code.Get<ISigning>("ed25519");
-        await Assert.That(((global::app.module.action.code.ICode)builtIn.Provider!).IsDefault).IsTrue();
-        await Assert.That(second.IsDefault).IsFalse();
+        await Assert.That(_app.Code.Get<ISigning>().Provider).IsSameReferenceAs(builtIn.Provider);
     }
 
     [Test]
@@ -106,14 +105,13 @@ public class NamedProviderRegistryTests
     #region Get
 
     [Test]
-    public async Task Get_DefaultCryptoProvider_ReturnsIsDefaultTrue()
+    public async Task Get_NoName_ReturnsTheDefault()
     {
         _app.Code.Register<ISigning>(new MockSigningProvider("second"));
 
         var result = _app.Code.Get<ISigning>();
         await Assert.That(result.Error).IsNull();
         var entry = (global::app.module.action.code.ICode)result.Provider!;
-        await Assert.That(entry.IsDefault).IsTrue();
         await Assert.That(entry.Name).IsEqualTo("ed25519");
     }
 
@@ -182,10 +180,21 @@ public class NamedProviderRegistryTests
 
         var result = _app.Code.SetDefault<ISigning>("second");
         await result.IsSuccess();
-        await Assert.That(second.IsDefault).IsTrue();
+        await Assert.That(_app.Code.Get<ISigning>().Provider).IsSameReferenceAs(second);
+    }
 
-        var builtIn = _app.Code.Get<ISigning>("ed25519");
-        await Assert.That(((global::app.module.action.code.ICode)builtIn.Provider!).IsDefault).IsFalse();
+    [Test]
+    public async Task SetDefault_OneInterface_LeavesTheProvidersOtherInterfacesAlone()
+    {
+        // Ed25519 is both ISigning and IKey; choosing another IKey must not unseat it as ISigning's default
+        var signing = _app.Code.Get<ISigning>().Provider;
+        _app.Code.Register<IKey>(new MockKeyProvider("other-key"));
+
+        var result = _app.Code.SetDefault<IKey>("other-key");
+        await result.IsSuccess();
+
+        await Assert.That(_app.Code.Get<ISigning>().Provider).IsSameReferenceAs(signing);
+        await Assert.That(((global::app.module.action.code.ICode)_app.Code.Get<IKey>().Provider!).Name).IsEqualTo("other-key");
     }
 
     [Test]
@@ -355,7 +364,6 @@ public class NamedProviderRegistryTests
     private class MockSigningProvider : ISigning
     {
         public string Name { get; }
-        public bool IsDefault { get; set; }
 
         public bool IsBuiltIn { get; set; }
 
@@ -368,5 +376,13 @@ public class NamedProviderRegistryTests
         public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature) => new global::app.type.item.@bool.@this(true);
         public Task<global::app.data.@this> SignAsync(sign action) => Task.FromResult(global::app.data.@this.Ok());
         public Task<global::app.data.@this<global::app.type.item.@bool.@this>> VerifyAsync(verify action) => Task.FromResult(global::app.data.@this<global::app.type.item.@bool.@this>.Ok(true));
+    }
+
+    private class MockKeyProvider(string name) : IKey
+    {
+        public string Name { get; } = name;
+        public bool IsBuiltIn { get; set; }
+        public string? Source { get; set; }
+        public (KeyPair? keys, global::app.error.Error? error) GenerateKeyPair() => (new KeyPair("mockPub", "mockPriv"), null);
     }
 }

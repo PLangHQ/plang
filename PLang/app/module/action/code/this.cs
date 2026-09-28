@@ -25,10 +25,12 @@ public sealed partial class @this : IAsyncDisposable
 
     public @this(actor.context.@this context) => Context = context;
 
-    // Remembers which provider RegisterDefaults marked as the type's default. Used by
-    // Snapshot capture to decide whether the *current* default differs from what a
-    // freshly-booted App would set. Without this, SetDefault() clearing the built-in's
-    // IsDefault flag would erase the evidence needed to detect the override.
+    // The default's name per interface. A default is selection, and selection is the registry's: one
+    // provider can serve several interfaces (Ed25519 is ISigning and IKey), each with its own default.
+    private readonly ConcurrentDictionary<System.Type, string> _defaults = new();
+
+    // The default each interface was born with at RegisterDefaults. Snapshot capture compares the
+    // current default against it to tell a user's selection from what a fresh App sets itself.
     private readonly ConcurrentDictionary<System.Type, string> _builtInDefaults = new();
 
     /// <summary>
@@ -78,9 +80,8 @@ public sealed partial class @this : IAsyncDisposable
             return ((T)provider, null);
         }
 
-        foreach (var kvp in typeDict)
-            if (kvp.Value.IsDefault)
-                return ((T)kvp.Value, null);
+        if (_defaults.TryGetValue(typeof(T), out var defaultName) && typeDict.TryGetValue(defaultName, out var chosen))
+            return ((T)chosen, null);
 
         return (null, new ActionError($"No default {typeof(T).Name} provider registered", "ProviderNotFound", 404));
     }
@@ -152,8 +153,7 @@ public sealed partial class @this : IAsyncDisposable
         if (!typeDict.TryAdd(provider.Name, provider))
             return Context.Error(new ActionError($"Provider '{provider.Name}' already registered for {providerType.Name}", "ProviderExists", 409));
 
-        if (typeDict.Count == 1)
-            provider.IsDefault = true;
+        _defaults.TryAdd(providerType, provider.Name);
 
         // A provider is engine plumbing, never a plang value — the registration
         // just succeeds. Returning the provider as the value would wrap a CLR
@@ -183,7 +183,8 @@ public sealed partial class @this : IAsyncDisposable
         if (!typeDict.TryGetValue(name, out var provider))
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
-        if (provider.IsDefault)
+        if (_defaults.TryGetValue(providerType, out var defaultName)
+            && string.Equals(defaultName, provider.Name, StringComparison.OrdinalIgnoreCase))
             return Context.Error(new ActionError($"Cannot remove default provider '{name}'. Set another as default first.", "CannotRemoveDefault", 400));
 
         typeDict.TryRemove(name, out _);
@@ -204,13 +205,8 @@ public sealed partial class @this : IAsyncDisposable
         if (!typeDict.TryGetValue(name, out var newDefault))
             return Context.Error(new ActionError($"Provider '{name}' not found", "ProviderNotFound", 404));
 
-        // Set new default first, then clear old — avoids window where Get<T>() returns null
-        newDefault.IsDefault = true;
-        foreach (var kvp in typeDict)
-        {
-            if (kvp.Value != newDefault)
-                kvp.Value.IsDefault = false;
-        }
+        // One slot per interface — the provider's other interfaces keep their own default.
+        _defaults[providerType] = newDefault.Name;
         return Context.Ok();
     }
 

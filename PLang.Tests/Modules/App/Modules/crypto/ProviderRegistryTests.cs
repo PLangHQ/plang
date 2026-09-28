@@ -109,7 +109,6 @@ public class ProviderRegistryTests
     private class NamedCryptoProvider : ICrypto
     {
         public string Name { get; }
-        public bool IsDefault { get; set; }
 
         public bool IsBuiltIn { get; set; }
 

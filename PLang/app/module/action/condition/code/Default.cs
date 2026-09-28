@@ -6,7 +6,6 @@ namespace app.module.action.condition.code;
 public sealed class Default : IEvaluator
 {
     public string Name => "default";
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

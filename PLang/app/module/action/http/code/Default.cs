@@ -20,7 +20,6 @@ namespace app.module.action.http.code;
 public sealed class Default : IHttp
 {
     public string Name { get; init; } = "default";
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

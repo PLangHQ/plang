@@ -10,7 +10,6 @@ namespace app.module.action.build.code;
 public class Default : IBuilder
 {
     public string Name => "default";
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

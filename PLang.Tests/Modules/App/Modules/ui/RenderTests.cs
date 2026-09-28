@@ -665,7 +665,6 @@ public class RenderTests : IDisposable
     private class StubTemplateProvider : ITemplate
     {
         public string Name => "stub";
-        public bool IsDefault { get; set; }
 
         public bool IsBuiltIn { get; set; }
 

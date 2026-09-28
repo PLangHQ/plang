@@ -14,7 +14,6 @@ namespace app.module.action.signing.code;
 public class Ed25519 : ISigning
 {
     public string Name => "ed25519";
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

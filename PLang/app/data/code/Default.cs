@@ -10,7 +10,6 @@ namespace app.data.code;
 public class Default : IGrep
 {
     public string Name => "default";
-    public bool IsDefault { get; set; } = true;
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

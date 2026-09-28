@@ -43,7 +43,9 @@ public sealed class @this : global::app.type.kind.@this
                         // the same view) gets matching bytes.
                         StoreView = new global::app.data.@this<global::app.type.item.@bool.@this>("", view == global::app.View.Store, context: context) },
                     context);
-                if (signed.Success) data = signed;
+                // A Data that should cross signed and couldn't be is the write's failure — never sent unsigned.
+                if (!signed.Success) return signed;
+                data = signed;
             }
             await using var utf8 = new Utf8JsonWriter(stream);
             var writer = new global::app.type.format.json.Writer(utf8, view, emitsSchema: true);

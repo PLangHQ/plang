@@ -17,7 +17,6 @@ namespace app.module.action.identity.code;
 public sealed class Default : IIdentity
 {
     public string Name => "default";
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

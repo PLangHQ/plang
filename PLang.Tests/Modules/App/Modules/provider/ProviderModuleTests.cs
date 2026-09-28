@@ -251,8 +251,7 @@ public class ProviderModuleTests
         var result = await action.Start();
 
         await result.IsSuccess();
-        await Assert.That(second.IsDefault).IsTrue();
-        await Assert.That(first.IsDefault).IsFalse();
+        await Assert.That(_app.Code.Get<ISigning>().Provider).IsSameReferenceAs(second);
     }
 
     [Test]
@@ -296,8 +295,7 @@ public class ProviderModuleTests
         var providers = _app.Code.List<ISigning>();
         await Assert.That(providers.Count).IsEqualTo(3); // ed25519 (built-in) + first + second
         // ed25519 is default from engine startup
-        await Assert.That(first.IsDefault).IsFalse();
-        await Assert.That(second.IsDefault).IsFalse();
+        await Assert.That(((global::app.module.action.code.ICode)_app.Code.Get<ISigning>().Provider!).Name).IsEqualTo("ed25519");
     }
 
     [Test]
@@ -352,7 +350,6 @@ public class ProviderModuleTests
     private class MockSigningProvider : ISigning
     {
         public string Name { get; }
-        public bool IsDefault { get; set; }
 
         public bool IsBuiltIn { get; set; }
 

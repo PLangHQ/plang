@@ -14,7 +14,6 @@ namespace app.module.action.ui.code;
 public class Fluid : ITemplate
 {
     public string Name => "default";
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

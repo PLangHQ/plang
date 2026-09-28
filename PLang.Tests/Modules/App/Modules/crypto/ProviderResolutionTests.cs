@@ -85,7 +85,6 @@ public class ProviderResolutionTests
     private class MockCryptoProvider : ICrypto
     {
         public string Name => "mock";
-        public bool IsDefault { get; set; }
 
         public bool IsBuiltIn { get; set; }
 
@@ -96,7 +95,6 @@ public class ProviderResolutionTests
     private class AlwaysTrueVerifier : ICrypto
     {
         public string Name => "always-true";
-        public bool IsDefault { get; set; }
 
         public bool IsBuiltIn { get; set; }
 

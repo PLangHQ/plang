@@ -11,7 +11,6 @@ namespace TestProvider;
 public class TestSigningProvider : ISigning
 {
     public string Name => "test-signing";
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

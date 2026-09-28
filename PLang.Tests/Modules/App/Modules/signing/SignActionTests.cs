@@ -240,12 +240,15 @@ public class SignActionTests
     [Test]
     public async Task Sign_ThrowingKeyProvider_ReturnsError()
     {
-        // Register a key provider that throws to simulate identity creation failure
-        var throwingProvider = new ThrowingKeyProvider();
-        _app.Code.Register<IKey>(throwingProvider);
-        _app.Code.SetDefault<IKey>("throwing-key");
+        // An app with no identity yet — signing must create one, and its key generation fails
+        var root = System.IO.Path.Combine(_tempDir, "no-identity");
+        System.IO.Directory.CreateDirectory(root);
+        await using var bare = new PLangEngine(root);
+        bare.Code.Register<IKey>(new ThrowingKeyProvider());
+        bare.Code.SetDefault<IKey>("throwing-key");
 
-        var result = await SignData("test");
+        var ctx = bare.System.Context;
+        var result = await bare.Run<sign>(new sign(ctx) { Data = new Data("", "test", context: ctx) }, ctx);
         await result.IsFailure();
         // Key generation fails, identity creation fails, sign fails
         await Assert.That(result.Error).IsNotNull();
@@ -274,7 +277,6 @@ public class SignActionTests
     {
         private readonly Ed25519 _inner = new();
         public string Name { get; }
-        public bool IsDefault { get; set; }
 
         public bool IsBuiltIn { get; set; }
 
@@ -293,7 +295,6 @@ public class SignActionTests
     private class ThrowingSigningProvider : ISigning
     {
         public string Name => "throwing";
-        public bool IsDefault { get; set; }
 
         public bool IsBuiltIn { get; set; }
 
@@ -308,7 +309,6 @@ public class SignActionTests
     private class ThrowingKeyProvider : IKey
     {
         public string Name => "throwing-key";
-        public bool IsDefault { get; set; }
 
         public bool IsBuiltIn { get; set; }
 

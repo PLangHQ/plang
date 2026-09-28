@@ -7,7 +7,6 @@ namespace app.module.action.assert.code;
 public class Default : IAssert
 {
     public string Name => "default";
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

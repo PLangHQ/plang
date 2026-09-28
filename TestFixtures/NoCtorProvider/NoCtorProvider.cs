@@ -11,7 +11,6 @@ public class NoCtorSigningProvider : ISigning
     public NoCtorSigningProvider(string name) { _name = name; }
 
     public string Name => _name;
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

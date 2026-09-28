@@ -49,7 +49,6 @@ public class DeciderProviderTests
 
         await Assert.That(result.Error).IsNull();
         await Assert.That(result.Provider).IsTypeOf<TypeSafe>();
-        await Assert.That(((global::app.module.action.code.ICode)result.Provider!).IsDefault).IsTrue();
         await Assert.That(_app.Code.ResolveType("decider")).IsEqualTo(typeof(IDecider));
     }
 

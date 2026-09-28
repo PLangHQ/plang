@@ -9,7 +9,6 @@ namespace app.module.action.crypto.code;
 public class Default : ICrypto
 {
     public string Name => "default";
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

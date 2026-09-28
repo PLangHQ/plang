@@ -23,7 +23,6 @@ namespace app.module.action.llm.code;
 public sealed class OpenAi : ILlm
 {
     public string Name { get; init; } = "OpenAi";
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

@@ -240,7 +240,6 @@ public class HashActionTests
     private class FailingCryptoProvider : ICrypto
     {
         public string Name => "failing";
-        public bool IsDefault { get; set; }
 
         public bool IsBuiltIn { get; set; }
 

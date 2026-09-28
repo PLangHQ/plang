@@ -31,12 +31,10 @@ public sealed partial class @this : ISnapshot
 
         foreach (var (type, dict) in _providers)
         {
-            string? currentDefaultName = null;
+            _defaults.TryGetValue(type, out var currentDefaultName);
 
             foreach (var (name, provider) in dict)
             {
-                if (provider.IsDefault)
-                    currentDefaultName = name;
                 if (!provider.IsBuiltIn)
                     registrations.Add(new Registration
                     {

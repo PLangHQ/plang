@@ -13,7 +13,6 @@ namespace app.module.action.llm.code;
 public sealed class TypeSafe : IDecider
 {
     public string Name { get; init; } = "TypeSafe";
-    public bool IsDefault { get; set; }
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 

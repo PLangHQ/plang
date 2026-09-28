@@ -8,7 +8,6 @@ public class ProvidersSnapshotTests
     public sealed class CustomGrep : global::app.data.code.IGrep
     {
         public string Name => "custom";
-        public bool IsDefault { get; set; }
         public bool IsBuiltIn { get; set; }
         public string? Source { get; set; }
         public Data Grep(Data data, string pattern, int contextLines = 0) => data.Context.Ok(true);
