@@ -79,6 +79,38 @@ public class QueryCallbackTests
         await result.IsSuccess();
     }
 
+    // OnToolCall's name/arguments/status/result are the callback's, in a frame for it — never written into
+    // the caller's own variables (a user's %name% stays theirs).
+    [Test]
+    public async Task Query_OnToolCall_LeavesTheCallersOwnVariablesAlone()
+    {
+        int callIndex = 0;
+        _handler.Handler = _ =>
+        {
+            callIndex++;
+            if (callIndex == 1)
+                return Task.FromResult(LlmTestHelper.JsonResponse(
+                    LlmTestHelper.MakeToolCallResponse(("call_1", "TestTool", "{}"))));
+            return Task.FromResult(LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("done")));
+        };
+        await Ctx.Variable.Set("name", "mine");
+        await Ctx.Variable.Set("status", "my status");
+
+        var action = new query(Ctx) { Message = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Content = "use tool" }
+            }.ToListData<LlmMessage>(),
+            Tool = new List<global::app.goal.step.action.@this> { Make.Call("TestTool") }.ToListData(),
+            OnToolCall = Make.Call("LogToolCall")
+        };
+        await action.Attach(null, Ctx);
+        await (await action.Start()).IsSuccess();
+
+        await Assert.That((await Ctx.Variable.GetValue("name"))?.ToString()).IsEqualTo("mine");
+        await Assert.That((await Ctx.Variable.GetValue("status"))?.ToString()).IsEqualTo("my status");
+        await Assert.That(await Ctx.Variable.GetValue("result")).IsNull();
+    }
+
     [Test]
     public async Task Query_OnToolCall_ToolLoopCompletesWithCallback()
     {

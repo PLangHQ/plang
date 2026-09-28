@@ -488,7 +488,14 @@ public class QueryToolTests
             }.ToListData<LlmMessage>(),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Call("MixedTool")
+                Make.Tool("MixedTool", parameter: new List<Data>
+                {
+                    new Data("flag", null, Ctx.App.type.list["bool"], context: Ctx),
+                    new Data("disabled", null, Ctx.App.type.list["bool"], context: Ctx),
+                    new Data("count", null, Ctx.App.type.list["number"], context: Ctx),
+                    new Data("label", null, Ctx.App.type.list["text"], context: Ctx),
+                    new Data("nested", null, Ctx.App.type.list["dict"], context: Ctx),
+                })
             }.ToListData()
         };
         await action.Attach(null, Ctx);
@@ -499,6 +506,39 @@ public class QueryToolTests
         await Assert.That(_handler.CallCount).IsEqualTo(2);
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
         await Assert.That(secondReq).Contains("tool");
+        await Assert.That(secondReq).DoesNotContain("is not an argument");
+    }
+
+    // A name the tool doesn't declare is never bound — the argument frame is read before the caller's own
+    // variables, so a prompt-injected model could shadow %userId%. It goes back to the model as an error.
+    [Test]
+    public async Task Query_ToolArgs_UndeclaredName_IsAnErrorToTheModel_NeverBound()
+    {
+        int callIndex = 0;
+        _handler.Handler = _ =>
+        {
+            callIndex++;
+            if (callIndex == 1)
+                return Task.FromResult(LlmTestHelper.JsonResponse(
+                    LlmTestHelper.MakeToolCallResponse(("call_1", "GetWeather", "{\"city\":\"London\",\"userId\":\"admin\"}"))));
+            return Task.FromResult(LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
+        };
+
+        var action = new query(Ctx) { Message = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Content = "weather" }
+            }.ToListData<LlmMessage>(),
+            Tool = new List<global::app.goal.step.action.@this>
+            {
+                Make.Tool("GetWeather", parameter: new List<Data> { new Data("city", null, Ctx.App.type.list["text"], context: Ctx) })
+            }.ToListData()
+        };
+        await action.Attach(null, Ctx);
+        var result = await action.Start();
+
+        await result.IsSuccess();
+        var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
+        await Assert.That(secondReq).Contains("userId\\u0027 is not an argument of GetWeather");
     }
 
     #endregion

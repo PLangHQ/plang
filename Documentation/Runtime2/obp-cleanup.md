@@ -287,3 +287,5 @@ value's elements join (extend: an O(1) chunk, nothing copied) or the value is on
 the value's type, moved from the handler into the list, not dissolved. The direction: the value hands over its
 rows — a list its elements, anything else itself — as a member on item with no `is`. Kept for now because the
 extend path joins a list as one chunk (reference semantics, no copy); a rows hand-over must keep that.
+The same fork is in `list.Flatten` (`await element.Value() is @this nested` lifts a nested list's elements,
+keeps anything else). One rows member on item (a list hands its elements, anything else itself) dissolves both.

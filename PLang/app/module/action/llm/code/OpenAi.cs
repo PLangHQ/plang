@@ -535,14 +535,11 @@ public sealed class OpenAi : ILlm
         var context = action.Context;
         var onToolCall = action.OnToolCall == null ? null : await action.OnToolCall.Value();
 
-        // OnToolCall — starting. The run-state binds as variables; the held call runs as itself.
+        // OnToolCall — starting. The run-state binds in a frame for the held call (never the caller's own
+        // variables: a user's %name% stays theirs); the held call runs as itself.
         if (onToolCall != null)
-        {
-            await context.Variable.Set("name", toolCall.Name);
-            await context.Variable.Set("arguments", toolCall.Arguments);
-            await context.Variable.Set("status", "starting");
-            await onToolCall.Start(context);
-        }
+            await using (context.Variable.Calls.Push(State(toolCall, "starting", null, context), onToolCall))
+                await onToolCall.Start(context);
 
         string result;
         var tool = tools?.Find(t => t.Name == toolCall.Name);
@@ -555,7 +552,7 @@ public sealed class OpenAi : ILlm
             // The model's arguments are what this invocation supplies: the held call runs inside a
             // frame born with them, FOR it — its declaration rows bind nothing, its valued rows are
             // defaults that yield to a supplied name, and a parallel sibling sees its own frame.
-            var parameters = ParseToolArguments(toolCall.Arguments, context);
+            var parameters = tool.Arguments(toolCall.Arguments, context);
             var parseError = parameters.Find(p => !p.Success);
             if (parseError != null)
             {
@@ -585,55 +582,19 @@ public sealed class OpenAi : ILlm
 
         // OnToolCall — completed
         if (onToolCall != null)
-        {
-            await context.Variable.Set("name", toolCall.Name);
-            await context.Variable.Set("arguments", toolCall.Arguments);
-            await context.Variable.Set("result", result);
-            await context.Variable.Set("status", "completed");
-            await onToolCall.Start(context);
-        }
+            await using (context.Variable.Calls.Push(State(toolCall, "completed", result, context), onToolCall))
+                await onToolCall.Start(context);
 
         return result;
     }
 
-    /// <summary>
-    /// Parses the model's JSON arguments into the arguments it supplied — only those. A tool row with
-    /// a value is a default the held call binds itself where the model was silent.
-    /// </summary>
-    private static List<data.@this> ParseToolArguments(string argumentsJson, actor.context.@this context)
+    // What OnToolCall is handed: the tool's name and arguments, where the call is, and — once it ran — its result.
+    private static IEnumerable<data.@this> State(ToolCall toolCall, string status, string? result, actor.context.@this context)
     {
-        var result = new List<data.@this>();
-
-        if (string.IsNullOrEmpty(argumentsJson))
-            return result;
-
-        try
-        {
-            using var doc = JsonDocument.Parse(argumentsJson);
-            foreach (var prop in doc.RootElement.EnumerateObject())
-            {
-                object? value = prop.Value.ValueKind switch
-                {
-                    JsonValueKind.String => prop.Value.GetString(),
-                    JsonValueKind.Number => prop.Value.TryGetInt64(out var l) ? l : prop.Value.GetDouble(),
-                    JsonValueKind.True => true,
-                    JsonValueKind.False => false,
-                    JsonValueKind.Null => null,
-                    _ => prop.Value.GetRawText()
-                };
-                result.Add(new data.@this(prop.Name, value, context: context));
-            }
-        }
-        catch (JsonException ex)
-        {
-            // Return error Data so the caller sees the parse failure with full exception
-            return new List<data.@this>
-            {
-                context.Error(ActionError.FromException(ex, "JsonParseError", 400))
-            };
-        }
-
-        return result;
+        yield return new data.@this("name", toolCall.Name, context: context);
+        yield return new data.@this("arguments", toolCall.Arguments, context: context);
+        yield return new data.@this("status", status, context: context);
+        if (result != null) yield return new data.@this("result", result, context: context);
     }
 
     // --- Message formatting ---
@@ -1058,6 +1019,45 @@ public sealed class OpenAi : ILlm
         public IReadOnlyList<data.@this> Declared
             => (Call.Parameter?.Peek() as global::app.type.item.list.@this)?.Items(Call.Context).ToList()
                ?? (IReadOnlyList<data.@this>)System.Array.Empty<data.@this>();
+
+        /// <summary>
+        /// The model's JSON arguments as this tool takes them — only the names it declares. A name the tool
+        /// doesn't declare is never bound (the frame is read before the caller's memory, so an undeclared
+        /// name would shadow the caller's own variable): it answers the model as an error, like invalid JSON.
+        /// A declared row with a value is a default the held call binds itself where the model was silent.
+        /// </summary>
+        public List<data.@this> Arguments(string json, actor.context.@this context)
+        {
+            var arguments = new List<data.@this>();
+            if (string.IsNullOrEmpty(json)) return arguments;
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                var declared = Declared.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                foreach (var prop in doc.RootElement.EnumerateObject())
+                {
+                    if (!declared.Contains(prop.Name))
+                        return [context.Error(new ServiceError(
+                            $"'{prop.Name}' is not an argument of {Name}" + (declared.Count == 0 ? " — it takes none" : $" — it takes {string.Join(", ", declared)}"),
+                            "UnknownArgument", 400))];
+                    object? value = prop.Value.ValueKind switch
+                    {
+                        JsonValueKind.String => prop.Value.GetString(),
+                        JsonValueKind.Number => prop.Value.TryGetInt64(out var l) ? l : prop.Value.GetDouble(),
+                        JsonValueKind.True => true,
+                        JsonValueKind.False => false,
+                        JsonValueKind.Null => null,
+                        _ => prop.Value.GetRawText()
+                    };
+                    arguments.Add(new data.@this(prop.Name, value, context: context));
+                }
+            }
+            catch (JsonException ex)
+            {
+                return [context.Error(ActionError.FromException(ex, "JsonParseError", 400))];
+            }
+            return arguments;
+        }
     }
 
     // The tools ride as a plang list of held goal.call actions. Null when no tools were passed.

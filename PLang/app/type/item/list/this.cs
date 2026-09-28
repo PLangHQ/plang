@@ -786,22 +786,20 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             return (Data)context.Ok<global::app.type.item.text.@this>(string.Join(between.ToString(), parts));
         });
 
-    /// <summary>Whether any element's <paramref name="field"/> holds against <paramref name="value"/> under
-    /// <paramref name="op"/>: the first that does — or an error — is the answer, else false. A field or an
-    /// operator that didn't resolve is its own answer.</summary>
-    public System.Threading.Tasks.Task<Data> Any(global::app.data.@this<global::app.type.item.text.@this> field,
+    /// <summary>Whether any element keeps itself under <c>where</c> (<see cref="Where"/> asks each element's
+    /// own): true at the first that does, false when none does; an error is the answer.</summary>
+    public async System.Threading.Tasks.Task<Data> Any(global::app.data.@this<global::app.type.item.text.@this> field,
         global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
         Data value, actor.context.@this context)
-        => field.Use(key => op.Use(async compare =>
+    {
+        foreach (var element in Items(context))
         {
-            var operation = (global::app.module.action.condition.Operator)compare;
-            foreach (var element in Items(context))
-            {
-                var matched = await operation.Evaluate(await element.Get(key.ToString()), value, context);
-                if (!matched.Success || matched.ToBoolean()) return matched;
-            }
-            return (Data)context.Ok<global::app.type.item.@bool.@this>(false);
-        }));
+            var kept = await (await element.Value()).Where(field, op, value, context);
+            if (!kept.Success) return kept;
+            if (!kept.Peek().IsNull) return context.Ok<global::app.type.item.@bool.@this>(true);
+        }
+        return context.Ok<global::app.type.item.@bool.@this>(false);
+    }
 
     /// <summary>Adds <paramref name="value"/> at <paramref name="at"/> when that is a position in this list,
     /// else at the end: a list's elements join this one (nothing copied), anything else is one element that
@@ -922,24 +920,21 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             return await context.App.type.list["list"].Create(groups, context);
         });
 
-    /// <summary>The elements whose <paramref name="field"/> holds against <paramref name="value"/> under
-    /// <paramref name="op"/> — each element is the subject its field is read from. A field, an operator or a
-    /// comparison that fails is the answer. A new list, born through its type.</summary>
-    public override System.Threading.Tasks.Task<Data> Where(global::app.data.@this<global::app.type.item.text.@this> field,
+    /// <summary>The elements that keep themselves under the same <c>where</c> — each element is the subject
+    /// (a dict decides whether its field holds). An error is the answer. A new list, born through its type.</summary>
+    public override async System.Threading.Tasks.Task<Data> Where(global::app.data.@this<global::app.type.item.text.@this> field,
         global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
         Data value, actor.context.@this context)
-        => field.Use(name => op.Use(async compare =>
+    {
+        var kept = new @this();
+        foreach (var element in Items(context))
         {
-            var operation = (global::app.module.action.condition.Operator)compare;
-            var kept = new @this();
-            foreach (var element in Items(context))
-            {
-                var holds = await operation.Evaluate(await element.Get(name.ToString()), value, context);
-                if (!holds.Success) return holds;
-                if (holds.ToBoolean()) kept.Add(element);
-            }
-            return await context.App.type.list["list"].Create(kept, context);
-        }));
+            var held = await (await element.Value()).Where(field, op, value, context);
+            if (!held.Success) return held;
+            if (!held.Peek().IsNull) kept.Add(element);
+        }
+        return await context.App.type.list["list"].Create(kept, context);
+    }
 
     /// <summary>The item emptiness hook — no elements (an empty chunk holds none).</summary>
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()

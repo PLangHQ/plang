@@ -427,15 +427,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         => System.Threading.Tasks.ValueTask.FromResult(_value.Count == 0);
 
     /// <summary>This dict is the subject its <paramref name="field"/> is read from: it is kept when the field
-    /// holds against <paramref name="value"/> under <paramref name="op"/>, else nothing is. A field, an
-    /// operator or a comparison that fails is the answer.</summary>
+    /// holds against <paramref name="value"/> under <paramref name="op"/>, else nothing is — the one place
+    /// "a field holds" is decided (a list asks each element). A field, an operator or a comparison that fails
+    /// is the answer.</summary>
     public override System.Threading.Tasks.Task<Data> Where(global::app.data.@this<global::app.type.item.text.@this> field,
         global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
         Data value, actor.context.@this context)
         => field.Use(name => op.Use(async compare =>
         {
-            var self = new Data("", this, context: context);
-            var holds = await ((global::app.module.action.condition.Operator)compare).Evaluate(await self.Get(name.ToString()), value, context);
+            var key = name.ToString();
+            var holds = await ((global::app.module.action.condition.Operator)compare).Evaluate(
+                Get(key, context) ?? Data.NotFound(key), value, context);
             if (!holds.Success) return holds;
             return holds.ToBoolean() ? context.Ok(this) : context.Ok(null, context.App.type.list["dict"]);
         }));
