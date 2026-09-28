@@ -22,3 +22,17 @@ Read at 9c398c543+. The comparison with the coder's trace goes at the end.
   - (b) Make stream read and write honour it. That's new behaviour: a slow network write would fail at 30 s by default.
   
   My lean is (a): a limit nothing enforces shouldn't exist, and a transport limit can come back when a transport needs one.
+- **A `.goal` sets it:** `Tests/Channels/Add/WithConfig/Start.test.goal:4` (`timeout: PT30S` on `set channel`).
+
+## Comparison with the coder's trace (its 126 message, read after this was pushed)
+
+- **Same:**
+  - the stream's `CancelAfter(Timeout)` is the only limit;
+  - the other channels apply none;
+  - `ask.cs:90` passes no token;
+  - `timeout.after` is the program's limit, with no new ask parameter.
+- **The coder's adds:**
+  - a test's own timeout (`test/this.cs:134-136`) and Ctrl-C also can't end a waiting ask today;
+  - the concrete test flips.
+- **Mine adds:** `channel.Timeout` has no reader after the change, because read and write never apply it. The coder's "Timeout stays for read and write" is not what the code does. There is also the `.goal` that sets it.
+- **Ruling:** the coder's changes 1–3 go ahead. Whether `channel.Timeout` (and `channel.set`'s parameter) is deleted is plang-visible, so it goes to Ingi; the coder leaves it untouched in this slice.
