@@ -37,13 +37,24 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // and an aliased source stays the same instance for the CLR exit door).
     private readonly List<object?> _items;
 
-    // The rows' one guard, private to the list: every mutation holds it, and a reader walks a copy
-    // of the rows taken under it — so an enumeration never sees the list mid-change, whoever else
-    // is adding. A chunk's list guards its own rows.
+    // The rows' one guard, private to the list: every mutation holds it and drops the rows' snapshot,
+    // so an enumeration never sees the list mid-change, whoever else is adding. A chunk's list guards
+    // its own rows.
     private readonly object _gate = new();
 
-    // The rows as they are now — a copy, for a reader to walk.
-    private object?[] Rows { get { lock (_gate) return _items.ToArray(); } }
+    // The rows as they were at the last change — copied once, the first time a reader needs them after
+    // a change, and shared by every read until the next one: a read takes no lock and copies nothing.
+    private object?[]? _rows;
+
+    // The rows as they are now, for a reader to walk.
+    private object?[] Rows
+    {
+        get
+        {
+            if (System.Threading.Volatile.Read(ref _rows) is { } rows) return rows;
+            lock (_gate) return _rows ??= _items.ToArray();
+        }
+    }
 
     // The backing has diverged from a pure-raw aliased source: at least one slot
     // holds a Data or an item.@this wrapper (a write elevated it, `add` dropped one
@@ -139,6 +150,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         {
             if (IsWrapped(raw)) _hasWrapped = true;   // a Data / nested wrapper diverges the backing
             _items.Add(raw);
+            _rows = null;
         }
         return this;
     }
@@ -298,6 +310,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         {
             _hasWrapped = true;
             _items.Add(value);
+            _rows = null;
         }
         return this;
     }
@@ -313,6 +326,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         {
             _hasWrapped = true;
             _items.Add(new Chunk(other));
+            _rows = null;
         }
         return this;
     }
@@ -338,6 +352,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                 _items.Insert(row, new Chunk(head));
             }
             else _items.Add(new Chunk(other));   // index >= Count → append
+            _rows = null;
         }
         return this;
     }
@@ -351,6 +366,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         {
             _hasWrapped = true;
             _items.Add(item);
+            _rows = null;
         }
         return this;
     }
@@ -370,6 +386,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                 else _items.Insert(row, item);
             }
             else _items.Add(item);   // index >= Count → append
+            _rows = null;
         }
         return this;
     }
@@ -397,6 +414,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                 if (inner.Count == 0) _items.RemoveAt(row);   // drop an emptied chunk
             }
             else _items.RemoveAt(row);
+            _rows = null;
         }
     }
 
@@ -513,6 +531,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             _hasWrapped = true;
             _items.Clear();
             _items.AddRange(slots);
+            _rows = null;
         }
     }
 
@@ -534,6 +553,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                 else _items[row] = slot;
             }
             else if (index == Count) _items.Add(slot);
+            _rows = null;
         }
     }
 
