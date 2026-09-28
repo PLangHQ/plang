@@ -107,7 +107,7 @@ public class Stage6_ConsumersTests
     public async Task ComparerObjectDefault_NotUsedAnywhere_GrepGate()
     {
         // sort.cs no longer references Comparer<object>.Default — uses the typed Compare pipeline
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "action", "list", "sort.cs"));
+        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "list", "sort.cs"));
         await Assert.That(src).DoesNotContain("Comparer<object>.Default");
         var listSrc = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "type", "list", "this.cs"));
         await Assert.That(listSrc).DoesNotContain("Comparer<object>.Default");
@@ -181,7 +181,7 @@ public class Stage6_ConsumersTests
         // llm/OpenAi.cs — cache restore NAVIGATES the entry uniformly (dict.Entries or
         // clr(json).Enumerate), not a raw Dictionary copy via ToRaw. The old per-shape
         // reconstruction is gone — a clr(json) round-trips as raw json now.
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "action", "llm", "code", "OpenAi.cs"));
+        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "llm", "code", "OpenAi.cs"));
         await Assert.That(src).DoesNotContain("ToRaw");
         await Assert.That(src).Contains("d.Entries");
         await Assert.That(src).Contains("c.Enumerate(");
@@ -192,7 +192,7 @@ public class Stage6_ConsumersTests
     {
         // ui/Fluid.cs — a container renders through one value reading the item's own doors (Item);
         // no deep-copy lowering of a container.
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "action", "ui", "code", "Fluid.cs"));
+        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "ui", "code", "Fluid.cs"));
         await Assert.That(src).DoesNotContain(".Clr<object>()");
         await Assert.That(src).Contains("private sealed class Item(");
     }
