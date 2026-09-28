@@ -851,9 +851,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// have no order between them are an error, not a throw. Answers this list.</summary>
     public System.Threading.Tasks.Task<Data> Sort(global::app.data.@this<global::app.type.item.text.@this>? by,
         global::app.data.@this<global::app.type.item.@bool.@this> descending, actor.context.@this context)
-        => descending.Use(down => by is not { IsInitialized: true }
-            ? Sorted(null, down.Value, context)
-            : by.Use(field => Sorted(field.ToString(), down.Value, context)));
+        => descending.Use(async down =>
+        {
+            var field = by == null ? null : await by.Given();
+            return field is { Success: false } ? field : await Sorted(field?.Peek().ToString(), down.Value, context);
+        });
 
     private async System.Threading.Tasks.Task<Data> Sorted(string? by, bool descending, actor.context.@this context)
     {

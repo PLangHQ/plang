@@ -484,8 +484,8 @@ public class ListTests
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { 2L, 1L });
 
-        var result = await new Sort(context) { ListName = new app.type.item.variable.@this("myList"),
-            By = new global::app.data.@this<global::app.type.item.text.@this>("by", null, context: context) }.Start();
+        // `sort %myList% by %field%` with %field% never set: the given `by` fails to resolve
+        var result = await TestAction.Create("list", "sort", ("listName", "%myList%"), ("by", "%field%")).Start(context);
 
         await result.IsFailure();
     }
