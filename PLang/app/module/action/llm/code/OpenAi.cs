@@ -538,7 +538,7 @@ public sealed class OpenAi : ILlm
         // OnToolCall — starting. The run-state binds in a frame for the held call (never the caller's own
         // variables: a user's %name% stays theirs); the held call runs as itself.
         if (onToolCall != null)
-            await using (context.Variable.Calls.Push(State(toolCall, "starting", null, context), onToolCall))
+            await using (context.Variable.Calls.Push(toolCall.State("starting", null, context), onToolCall))
                 await onToolCall.Start(context);
 
         string result;
@@ -582,19 +582,10 @@ public sealed class OpenAi : ILlm
 
         // OnToolCall — completed
         if (onToolCall != null)
-            await using (context.Variable.Calls.Push(State(toolCall, "completed", result, context), onToolCall))
+            await using (context.Variable.Calls.Push(toolCall.State("completed", result, context), onToolCall))
                 await onToolCall.Start(context);
 
         return result;
-    }
-
-    // What OnToolCall is handed: the tool's name and arguments, where the call is, and — once it ran — its result.
-    private static IEnumerable<data.@this> State(ToolCall toolCall, string status, string? result, actor.context.@this context)
-    {
-        yield return new data.@this("name", toolCall.Name, context: context);
-        yield return new data.@this("arguments", toolCall.Arguments, context: context);
-        yield return new data.@this("status", status, context: context);
-        if (result != null) yield return new data.@this("result", result, context: context);
     }
 
     // --- Message formatting ---

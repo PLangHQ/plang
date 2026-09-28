@@ -786,7 +786,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             return (Data)context.Ok<global::app.type.item.text.@this>(string.Join(between.ToString(), parts));
         });
 
-    /// <summary>Whether any element keeps itself under <c>where</c> (<see cref="Where"/> asks each element's
+    /// <summary>Whether any element's field holds (<see cref="global::app.type.item.@this.Holds"/>, each element's
     /// own): true at the first that does, false when none does; an error is the answer.</summary>
     public async System.Threading.Tasks.Task<Data> Any(global::app.data.@this<global::app.type.item.text.@this> field,
         global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
@@ -794,9 +794,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         foreach (var element in Items(context))
         {
-            var kept = await (await element.Value()).Where(field, op, value, context);
-            if (!kept.Success) return kept;
-            if (!kept.Peek().IsNull) return context.Ok<global::app.type.item.@bool.@this>(true);
+            var holds = await (await element.Value()).Holds(field, op, value, context);
+            if (!holds.Success) return holds;
+            if (holds.ToBoolean()) return context.Ok<global::app.type.item.@bool.@this>(true);
         }
         return context.Ok<global::app.type.item.@bool.@this>(false);
     }
@@ -920,8 +920,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             return await context.App.type.list["list"].Create(groups, context);
         });
 
-    /// <summary>The elements that keep themselves under the same <c>where</c> — each element is the subject
-    /// (a dict decides whether its field holds). An error is the answer. A new list, born through its type.</summary>
+    /// <summary>A list has no field of its own to hold (navigating it by a name reaches its elements'), so as a
+    /// subject its field is missing — NotFound through the operator, like a dict without the key.</summary>
+    public override System.Threading.Tasks.Task<Data> Holds(global::app.data.@this<global::app.type.item.text.@this> field,
+        global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
+        Data value, actor.context.@this context)
+        => field.Use(name => op.Use(async compare => (Data)await ((global::app.module.action.condition.Operator)compare)
+            .Evaluate(Data.NotFound(name.ToString()), value, context)));
+
+    /// <summary>The elements whose field holds (<see cref="global::app.type.item.@this.Holds"/>, each element's
+    /// own — an element without the field doesn't hold). An error is the answer. A new list, born through its
+    /// type.</summary>
     public override async System.Threading.Tasks.Task<Data> Where(global::app.data.@this<global::app.type.item.text.@this> field,
         global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
         Data value, actor.context.@this context)
@@ -929,9 +938,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         var kept = new @this();
         foreach (var element in Items(context))
         {
-            var held = await (await element.Value()).Where(field, op, value, context);
-            if (!held.Success) return held;
-            if (!held.Peek().IsNull) kept.Add(element);
+            var holds = await (await element.Value()).Holds(field, op, value, context);
+            if (!holds.Success) return holds;
+            if (holds.ToBoolean()) kept.Add(element);
         }
         return await context.App.type.list["list"].Create(kept, context);
     }

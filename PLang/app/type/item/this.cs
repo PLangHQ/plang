@@ -440,6 +440,19 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         => System.Threading.Tasks.ValueTask.FromResult(false);
 
     /// <summary>
+    /// Whether this value's <paramref name="field"/> holds against <paramref name="value"/> under
+    /// <paramref name="op"/> — the one predicate <c>where</c> and <c>any</c> ask. The field is read through the
+    /// value's own navigation; a value without it (a scalar, a list) answers it as missing, like a dict without
+    /// the key. A field or an operator that didn't resolve is its own answer.
+    /// </summary>
+    public virtual System.Threading.Tasks.Task<global::app.data.@this> Holds(
+        global::app.data.@this<global::app.type.item.text.@this> field,
+        global::app.data.@this<global::app.type.item.choice.@this<global::app.module.action.condition.Operator>> op,
+        global::app.data.@this value, global::app.actor.context.@this context)
+        => field.Use(name => op.Use(async compare => (global::app.data.@this)await ((global::app.module.action.condition.Operator)compare)
+            .Evaluate(await Get(new global::app.data.@this("", this, context: context), name.ToString()), value, context)));
+
+    /// <summary>
     /// What of this value holds when its <paramref name="field"/> is compared to <paramref name="value"/>
     /// under <paramref name="op"/> (<c>where %users% age &gt; 20</c>) — each type owns its answer: a list keeps
     /// the elements that do, a dict keeps itself or nothing. The default: a value with no fields has nothing

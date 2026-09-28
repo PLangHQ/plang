@@ -408,6 +408,32 @@ public class ListTests
         await Assert.That((await (await kept.First(context)!.Get("name")).Value())?.ToString()).IsEqualTo("a");
     }
 
+    // Only the dict that has the field and holds is kept: a scalar or a nested list has no such field — it
+    // doesn't hold, like a dict without the key (never an error, never "kept because it's a list").
+    [Test]
+    public async Task Where_And_Any_OverAMixedList_OnlyAFieldThatHoldsCounts()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("mixed", new List<object?>
+        {
+            new Dictionary<string, object?> { ["age"] = 30L },
+            5L,
+            new List<object?> { new Dictionary<string, object?> { ["age"] = 99L } },
+        });
+
+        var kept = await new Where(context) { ListName = new app.type.item.variable.@this("mixed"),
+            Field = (global::app.type.item.text.@this)"age", Operator = Op("=="),
+            Value = new global::app.data.@this("", 30L, context: context) }.Start();
+        var none = await new Any(context) { ListName = new app.type.item.variable.@this("mixed"),
+            Key = (global::app.type.item.text.@this)"age", Operator = Op("=="),
+            Value = new global::app.data.@this("", 99L, context: context) }.Start();
+
+        await kept.IsSuccess();
+        await Assert.That(((global::app.type.item.list.@this)(await kept.Value())!).CountRaw).IsEqualTo(1);
+        await none.IsSuccess();
+        await Assert.That((await none.Value())?.ToString()).IsEqualTo("false");
+    }
+
     [Test]
     public async Task Where_OnADict_KeepsItOrNothing()
     {
