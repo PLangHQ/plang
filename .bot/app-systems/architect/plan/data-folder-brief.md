@@ -8,9 +8,10 @@ Ingi, 2026-09-28: "that .db folder should be named .data folder and in there is 
 .data/
   setting/data.sqlite        the app's defaults (today's system level)
   file/  cache/  trace/
-  <user.id>/
-    setting/data.sqlite      this user's own; a read falls back to .data/setting/
-    file/  cache/  trace/
+  user/
+    <user.id>/
+      setting/data.sqlite    this user's own; a read falls back to .data/setting/
+      file/  cache/  trace/  e.g. a report the user saves: .data/user/<user.id>/file/report.pdf
 ```
 
 - **Each part owns its storage,** instead of one `.db/system.sqlite` holding every table (settings rows, setup's steps, the LLM cache, identities).
