@@ -45,14 +45,14 @@ public static class MatrixRunner
             Step = step
         };
         foreach (var p in parameters ?? Array.Empty<(string, object?)>())
-            action.Property.Add(global::PLang.Tests.Shared.Make.Property(new Data(p.name, p.value, context: app.User.Context)));
+            action.Property.Add(global::PLang.Tests.Shared.Make.Property(new Data(p.name, p.value, context: app.actor.list.User.Context)));
         foreach (var d in defaults ?? Array.Empty<(string, object?)>())
-            action.Default.Add(global::PLang.Tests.Shared.Make.Property(new Data(d.name, d.value, context: app.User.Context)));
+            action.Default.Add(global::PLang.Tests.Shared.Make.Property(new Data(d.name, d.value, context: app.actor.list.User.Context)));
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.
         TemplateStamp.Apply(action);
 
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         if (variables != null)
         {
             foreach (var kv in variables)
@@ -85,14 +85,14 @@ public static class MatrixRunner
             Step = step
         };
         foreach (var p in parameters ?? Array.Empty<(string, object?)>())
-            action.Property.Add(global::PLang.Tests.Shared.Make.Property(new Data(p.name, p.value, context: app.User.Context)));
+            action.Property.Add(global::PLang.Tests.Shared.Make.Property(new Data(p.name, p.value, context: app.actor.list.User.Context)));
         foreach (var d in defaults ?? Array.Empty<(string, object?)>())
-            action.Default.Add(global::PLang.Tests.Shared.Make.Property(new Data(d.name, d.value, context: app.User.Context)));
+            action.Default.Add(global::PLang.Tests.Shared.Make.Property(new Data(d.name, d.value, context: app.actor.list.User.Context)));
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.
         TemplateStamp.Apply(action);
 
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         if (variables != null)
         {
             foreach (var kv in variables)

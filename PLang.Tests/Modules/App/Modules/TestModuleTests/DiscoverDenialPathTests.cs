@@ -30,10 +30,10 @@ public class DiscoverDenialPathTests
     [Test] public async Task Discover_WithTestPathOutsideRoot_DenialNotSilentEmpty()
     {
         var app = NewApp(out _);
-        app.User.Channel.Register(new CannedChannel("n"));
+        app.actor.list.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = "//etc";
-        var action = new global::app.module.action.test.discover(app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
-                global::app.type.item.path.@this.Resolve(outOfRoot, app.User.Context)),
+        var action = new global::app.module.action.test.discover(app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+                global::app.type.item.path.@this.Resolve(outOfRoot, app.actor.list.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", false)
         };
@@ -45,9 +45,9 @@ public class DiscoverDenialPathTests
     [Test] public async Task Discover_WithDotDotTraversal_DeniedByAuthGate()
     {
         var app = NewApp(out _);
-        app.User.Channel.Register(new CannedChannel("n"));
-        var action = new global::app.module.action.test.discover(app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
-                global::app.type.item.path.@this.Resolve("//../../../etc", app.User.Context)),
+        app.actor.list.User.Channel.Register(new CannedChannel("n"));
+        var action = new global::app.module.action.test.discover(app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+                global::app.type.item.path.@this.Resolve("//../../../etc", app.actor.list.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", false)
         };

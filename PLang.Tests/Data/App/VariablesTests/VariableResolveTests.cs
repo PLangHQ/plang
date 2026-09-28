@@ -19,7 +19,7 @@ public class VariableResolveTests
     [Test]
     public async Task Resolve_PercentWrapped_IsTextAndRootCode()
     {
-        var v = @this.Resolve("%x%", _app.User.Context);
+        var v = @this.Resolve("%x%", _app.actor.list.User.Context);
 
         await Assert.That(v.Text).IsEqualTo("%x%");
         await Assert.That(v.Name).IsEqualTo("x");
@@ -30,7 +30,7 @@ public class VariableResolveTests
     [Test]
     public async Task Resolve_BareName_IsTheSameVariable()
     {
-        var v = @this.Resolve("x", _app.User.Context);
+        var v = @this.Resolve("x", _app.actor.list.User.Context);
 
         await Assert.That(v.Text).IsEqualTo("%x%");
         await Assert.That(v.Name).IsEqualTo("x");
@@ -39,14 +39,14 @@ public class VariableResolveTests
     [Test]
     public async Task Resolve_EmptyString_IsNotAVariable()
     {
-        await Assert.That(() => @this.Resolve("", _app.User.Context))
+        await Assert.That(() => @this.Resolve("", _app.actor.list.User.Context))
             .Throws<global::app.error.AppException>();
     }
 
     [Test]
     public async Task Convert_NotAVariable_DeclinesWithTheParsersReason()
     {
-        var born = @this.Convert("%x!!cost%", null, _app.User.Context);
+        var born = @this.Convert("%x!!cost%", null, _app.actor.list.User.Context);
 
         await born.IsFailure();
         await Assert.That(born.Error!.Key).IsEqualTo("InvalidVariable");
@@ -58,7 +58,7 @@ public class VariableResolveTests
     [Test]
     public async Task SlotData_AsVariable_NameIsX()
     {
-        var slot = new global::app.data.@this<@this>("Name", @this.Resolve("%x%", _app.User.Context), context: _app.User.Context);
+        var slot = new global::app.data.@this<@this>("Name", @this.Resolve("%x%", _app.actor.list.User.Context), context: _app.actor.list.User.Context);
 
         var resolved = await slot.Value<@this>();
 
@@ -70,8 +70,8 @@ public class VariableResolveTests
     [Test]
     public async Task SlotData_AsVariable_IgnoresExistingValue()
     {
-        await _app.User.Context.Variable.Set("x", 5);
-        var slot = new global::app.data.@this<@this>("Name", @this.Resolve("%x%", _app.User.Context), context: _app.User.Context);
+        await _app.actor.list.User.Context.Variable.Set("x", 5);
+        var slot = new global::app.data.@this<@this>("Name", @this.Resolve("%x%", _app.actor.list.User.Context), context: _app.actor.list.User.Context);
 
         var resolved = await slot.Value<@this>();
 

@@ -28,7 +28,7 @@ public class GoalPathTypingTests
     [Test] public async Task GoalPrPath_IsDerivedFromPath_ViaInBuildFolder()
     {
         var (app, _) = MakeApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var goal = new Goal
         {
             Name = "Test",
@@ -42,7 +42,7 @@ public class GoalPathTypingTests
     [Test] public async Task GoalPrPath_InitSetter_IsNoOp_SwallowsJsonValue()
     {
         var (app, _) = MakeApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         // Construct with both Path and a JSON-shaped prPath init — the init {}
         // swallows the value and the getter recomputes from Path.
         var goal = new Goal
@@ -59,7 +59,7 @@ public class GoalPathTypingTests
     [Test] public async Task GoalGetRuntimeDirectory_DerivesFromLoadedFromPrPath()
     {
         var (app, root) = MakeApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var goal = new Goal { Name = "Test" };
         goal.LoadedFromPrPath = global::app.type.item.path.@this.Resolve("/Cache/.build/test.pr", context);
         var dir = goal.GetRuntimeDirectory();
@@ -71,7 +71,7 @@ public class GoalPathTypingTests
     [Test] public async Task Goal_JsonRoundTrip_PreservesPathAsRelativeString()
     {
         var (app, _) = MakeApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var goal = new Goal
         {
             Name = "Test",
@@ -90,7 +90,7 @@ public class GoalPathTypingTests
     [Test] public async Task Goal_JsonRoundTrip_ReconstitutesPath_UnderDifferentAppRoot()
     {
         var (app1, _) = MakeApp();
-        var ctx1 = app1.User.Context;
+        var ctx1 = app1.actor.list.User.Context;
         var goal = new Goal
         {
             Name = "Test",
@@ -98,7 +98,7 @@ public class GoalPathTypingTests
         };
         // The goal writes its own .pr and is read back under a different App / Context.
         var (app2, _) = MakeApp();
-        var ctx2 = app2.User.Context;
+        var ctx2 = app2.actor.list.User.Context;
         var loaded = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app2, goal);
         await Assert.That(loaded).IsNotNull();
         await Assert.That(loaded!.Path).IsNotNull();
@@ -109,7 +109,7 @@ public class GoalPathTypingTests
     [Test] public async Task Goal_JsonRoundTrip_ResolvesPathUnderReaderRoot()
     {
         var (app, _) = MakeApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var goal = new Goal
         {
             Name = "Test",

@@ -17,7 +17,7 @@ public class PropertyAccessTests : System.IAsyncDisposable
 
     [Test] public async Task PropertyRead_ReadsFromProperties_NotValue()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("{\"big\":\"body\"}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg");
         d.Properties["status"] = 200;
         var status = await d.Get("!status");
@@ -26,7 +26,7 @@ public class PropertyAccessTests : System.IAsyncDisposable
 
     [Test] public async Task PropertyRead_NeverMaterialisesValue()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("{\"big\":\"body\"}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg");
         d.Properties["status"] = 200;
         _ = (await (await d.Get("!status")).Value());       // read the property

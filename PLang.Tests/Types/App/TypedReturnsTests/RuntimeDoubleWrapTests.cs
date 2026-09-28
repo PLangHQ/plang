@@ -34,7 +34,7 @@ public class RuntimeDoubleWrapTests
     [Test]
     public async Task ListFirst_OnPopulatedList_ValueIsRawNotData()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("xs", new List<object?> { 42L, "two", "three" });
 
         var action = new First(context) { ListName = new @this("xs") };
@@ -50,7 +50,7 @@ public class RuntimeDoubleWrapTests
     [Test]
     public async Task ListGet_OnPopulatedList_ValueIsRawNotData()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("xs", new List<object?> { "a", "b", "c" });
 
         var action = new Get(context) { ListName = new @this("xs"), Index = (global::app.type.item.number.@this)1 };
@@ -65,7 +65,7 @@ public class RuntimeDoubleWrapTests
     [Test]
     public async Task ListLast_OnPopulatedList_ValueIsRawNotData()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("xs", new List<object?> { 1L, 2L, 3L });
 
         var action = new Last(context) { ListName = new @this("xs") };
@@ -80,7 +80,7 @@ public class RuntimeDoubleWrapTests
     [Test]
     public async Task MathAdd_OnLongs_ValueIsRawNotData()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new MathAdd(context) { A = new Data("", 5L, context: context), B = new Data("", 3L, context: context) };
         await action.Attach(null, context);
         var result = await action.Start();
@@ -140,7 +140,7 @@ public class RuntimeDoubleWrapTests
         // where wraps a list/dict value (owned construction), never an inner Data —
         // so Data<object>.Ok does not double-wrap.
         var app = TestApp.Create("/app");
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var users = new global::app.type.item.list.@this();
         var u1 = new global::app.type.item.dict.@this(); u1.Set(new global::app.data.@this("age", 25L, context: context)); users.Add(new global::app.data.@this("", u1));
         var u2 = new global::app.type.item.dict.@this(); u2.Set(new global::app.data.@this("age", 15L, context: context)); users.Add(new global::app.data.@this("", u2));

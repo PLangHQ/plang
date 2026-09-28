@@ -40,7 +40,7 @@ public class SignActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.actor.context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.System.Context;
 
     private async Task<Data> SignData(object? data, List<string>? contracts = null,
         TimeSpan? expires = null, Dictionary<string, object>? headers = null)
@@ -247,7 +247,7 @@ public class SignActionTests
         bare.Code.Register<IKey>(new ThrowingKeyProvider());
         bare.Code.SetDefault<IKey>("throwing-key");
 
-        var ctx = bare.System.Context;
+        var ctx = bare.actor.list.System.Context;
         var result = await bare.Run<sign>(new sign(ctx) { Data = new Data("", "test", context: ctx) }, ctx);
         await result.IsFailure();
         // Key generation fails, identity creation fails, sign fails

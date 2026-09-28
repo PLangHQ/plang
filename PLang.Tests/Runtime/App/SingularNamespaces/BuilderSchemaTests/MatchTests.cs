@@ -73,9 +73,9 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = RetryOnce();
-        await Picked(goal, app.System.Context, (0, "goal.call"), (0, "on.error"));
+        await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"));
 
-        var result = await Match(goal, RetryOnceAnswer, app.System.Context);
+        var result = await Match(goal, RetryOnceAnswer, app.actor.list.System.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnwrittenNumber");
@@ -89,9 +89,9 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = RetryOnce();
-        await Picked(goal, app.System.Context, (0, "goal.call"), (0, "on.error"));
+        await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"));
 
-        var result = await Match(goal, RetryOnceAnswer, app.System.Context, Confirm("s0_on.error.RetryCount=1", 0.97));
+        var result = await Match(goal, RetryOnceAnswer, app.actor.list.System.Context, Confirm("s0_on.error.RetryCount=1", 0.97));
 
         await result.IsSuccess();
         await Assert.That(goal.Step[0].Code.Count).IsGreaterThan(0);
@@ -102,9 +102,9 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = RetryOnce();
-        await Picked(goal, app.System.Context, (0, "goal.call"), (0, "on.error"));
+        await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"));
 
-        var result = await Match(goal, RetryOnceAnswer, app.System.Context, Confirm("s0_on.error.RetryCount=1", 0.03));
+        var result = await Match(goal, RetryOnceAnswer, app.actor.list.System.Context, Confirm("s0_on.error.RetryCount=1", 0.03));
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("StepsRefused");
@@ -116,9 +116,9 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("G", Make.Step("call Flaky, on error retry once, ignore"), Make.Step("write out \"b\""));
-        await Picked(goal, app.System.Context, (0, "goal.call"), (0, "on.error"), (1, "output.write"));
+        await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"), (1, "output.write"));
 
-        var result = await Match(goal, RetryOnceAnswer, app.System.Context);   // step 1 has no line
+        var result = await Match(goal, RetryOnceAnswer, app.actor.list.System.Context);   // step 1 has no line
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("StepsRefused");
@@ -133,9 +133,9 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("G", Make.Step("""set %sourceFixMessages% = [{"Role":"system", "Content":"%sourceFixSystem%"}, {"Role":"user", "Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}]"""));
-        await Picked(goal, app.System.Context, (0, "variable.set"));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
 
-        var result = await Match(goal, """[0] variable.set(Name=%sourceFixMessages%, Value=[{"Role":"system", "Content":"%sourceFixSystem%"}, {"Role":"user", "Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}])""", app.System.Context);
+        var result = await Match(goal, """[0] variable.set(Name=%sourceFixMessages%, Value=[{"Role":"system", "Content":"%sourceFixSystem%"}, {"Role":"user", "Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}])""", app.actor.list.System.Context);
 
         await result.IsSuccess();
         await Assert.That(goal.Step[0].Code.Count).IsEqualTo(1);
@@ -148,9 +148,9 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("G", Make.Step("""if %itemCount% is 0, write out "Your cart is empty" """.TrimEnd()));
-        await Picked(goal, app.System.Context, (0, "condition.if"), (0, "output.write"));
+        await Picked(goal, app.actor.list.System.Context, (0, "condition.if"), (0, "output.write"));
 
-        var result = await Match(goal, """[0] condition.if(Left=%itemCount%) { output.write(Data="Your cart is empty") }""", app.System.Context);
+        var result = await Match(goal, """[0] condition.if(Left=%itemCount%) { output.write(Data="Your cart is empty") }""", app.actor.list.System.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("0 is in the step but not in your answer");
@@ -161,9 +161,9 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("G", Make.Step("""if %itemCount% is 0, write out "Your cart is empty" """.TrimEnd()));
-        await Picked(goal, app.System.Context, (0, "condition.if"), (0, "output.write"));
+        await Picked(goal, app.actor.list.System.Context, (0, "condition.if"), (0, "output.write"));
 
-        var result = await Match(goal, """[0] condition.if(Left=%itemCount%, Operator="==", Right=0) { output.write(Data="Your cart is empty") }""", app.System.Context);
+        var result = await Match(goal, """[0] condition.if(Left=%itemCount%, Operator="==", Right=0) { output.write(Data="Your cart is empty") }""", app.actor.list.System.Context);
 
         await result.IsSuccess();
     }
@@ -175,9 +175,9 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("G", Make.Step("""set %messages% = [{"Role":"user", "Content":"%why%\n\nThe goal:\n%goal%"}]"""));
-        await Picked(goal, app.System.Context, (0, "variable.set"));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
 
-        var result = await Match(goal, """[0] variable.set(Name=%messages%, Value=[{"Role":"user", "Content":"%why%\\n\\nThe goal:\\n%goal%"}])""", app.System.Context);
+        var result = await Match(goal, """[0] variable.set(Name=%messages%, Value=[{"Role":"user", "Content":"%why%\\n\\nThe goal:\\n%goal%"}])""", app.actor.list.System.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("your answer doubles its backslashes");
@@ -188,9 +188,9 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = MenuModule();
-        await Picked(goal, app.System.Context, MenuModulePicks);
+        await Picked(goal, app.actor.list.System.Context, MenuModulePicks);
 
-        var result = await Match(goal, NanoAnswer, app.System.Context);
+        var result = await Match(goal, NanoAnswer, app.actor.list.System.Context);
 
         await result.IsSuccess();
         await Assert.That(goal.Step.Items().All(s => s.Code.Count > 0)).IsTrue();
@@ -201,9 +201,9 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = MenuModule();
-        await Picked(goal, app.System.Context, MenuModulePicks);
+        await Picked(goal, app.actor.list.System.Context, MenuModulePicks);
 
-        var result = await Match(goal, MiniMergedAnswer, app.System.Context);
+        var result = await Match(goal, MiniMergedAnswer, app.actor.list.System.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("StepsRefused");
@@ -218,9 +218,9 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("G", Make.Step("write out \"a\""), Make.Step("write out \"b\""));
-        await Picked(goal, app.System.Context, (0, "output.write"), (1, "output.write"));
+        await Picked(goal, app.actor.list.System.Context, (0, "output.write"), (1, "output.write"));
 
-        var result = await Match(goal, "[0] output.write(Data=\"a\")\n[1] ", app.System.Context);
+        var result = await Match(goal, "[0] output.write(Data=\"a\")\n[1] ", app.actor.list.System.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("step 1 does not parse: a step holds at least one action");
@@ -231,9 +231,9 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("G", Make.Step("write out \"a\""));
-        await Picked(goal, app.System.Context, (0, "output.write"));
+        await Picked(goal, app.actor.list.System.Context, (0, "output.write"));
 
-        var result = await Match(goal, "[0] output.write(Data=\"a\")\n[0] output.write(Data=\"a\")\n[1] output.write(Data=\"b\")", app.System.Context);
+        var result = await Match(goal, "[0] output.write(Data=\"a\")\n[0] output.write(Data=\"a\")\n[1] output.write(Data=\"b\")", app.actor.list.System.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("entry 1 is extra: the goal has 1 steps");
@@ -258,9 +258,9 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = MaybeProcess();
-        await Picked(goal, app.System.Context, (0, "condition.if"), (1, "goal.call"), (2, "output.write"));
+        await Picked(goal, app.actor.list.System.Context, (0, "condition.if"), (1, "goal.call"), (2, "output.write"));
 
-        var result = await Match(goal, NanoChildOverIndentAnswer, app.System.Context);
+        var result = await Match(goal, NanoChildOverIndentAnswer, app.actor.list.System.Context);
 
         await result.IsSuccess();
         await Assert.That(goal.Step[0].Code[0].Child.Count).IsEqualTo(0);
@@ -271,10 +271,10 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = MaybeProcess();
-        await Picked(goal, app.System.Context, (0, "condition.if"), (0, "variable.set"), (1, "goal.call"), (2, "output.write"));
+        await Picked(goal, app.actor.list.System.Context, (0, "condition.if"), (0, "variable.set"), (1, "goal.call"), (2, "output.write"));
 
         var result = await Match(goal, NanoChildOverIndentAnswer.Replace("{ goal.call(Name=\"ProcessItems\") }", "{ variable.set(Name=%x%, Value=1) }"),
-            app.System.Context);
+            app.actor.list.System.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains(
@@ -287,13 +287,13 @@ public class MatchTests
     {
         await using var app = TestApp.Create("/test");
         var goal = MenuModule();
-        await Picked(goal, app.System.Context, MenuModulePicks);
-        await Match(goal, MiniMergedAnswer, app.System.Context);
+        await Picked(goal, app.actor.list.System.Context, MenuModulePicks);
+        await Match(goal, MiniMergedAnswer, app.actor.list.System.Context);
         var kept = goal.Step[0].Code;
 
         var retry = await Match(goal,
             "[3] condition.if(Left=%module.Action.Count%, Operator=\">\", Right=1) { list.add(ListName=%choices%, Value=\"%module.Name%.%actionAnswer[key].choice%\") }",
-            app.System.Context);
+            app.actor.list.System.Context);
 
         await Assert.That(goal.Step[0].Code).IsSameReferenceAs(kept);
         await Assert.That(goal.Step[3].Code.Count).IsGreaterThan(0);
@@ -312,11 +312,11 @@ public class MatchTests
             Make.Step("write out \"a\"", Make.Action("output", "write", ("Data", "a"))),
             Make.Step("write out \"b\"", Make.Action("output", "write", ("Data", "b"))),
             Make.Step("if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%"));
-        await Picked(goal, app.System.Context, (4, "condition.if"), (4, "goal.call"));
+        await Picked(goal, app.actor.list.System.Context, (4, "condition.if"), (4, "goal.call"));
 
         var result = await Match(goal,
             "[4] condition.if(Left=%order.coupon%, Operator=isempty, Right=null) { } ; condition.else() { goal.call(Name=\"ApplyCoupon\", Parameter={code: %order.coupon%, order: %order%}) }",
-            app.System.Context);
+            app.actor.list.System.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains(

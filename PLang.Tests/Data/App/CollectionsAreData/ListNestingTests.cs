@@ -17,7 +17,7 @@ public class ListNestingTests
     private static async Task<System.Text.Json.JsonElement> WrittenParameters(global::app.goal.step.action.@this action)
     {
         var goal = global::PLang.Tests.Shared.Make.Goal("Start", "/Start.goal", global::PLang.Tests.Shared.Make.Step("a step", action));
-        using var doc = System.Text.Json.JsonDocument.Parse(await TestApp.SharedContext.App.User.Context.Pr(goal));
+        using var doc = System.Text.Json.JsonDocument.Parse(await TestApp.SharedContext.App.actor.list.User.Context.Pr(goal));
         return doc.RootElement.GetProperty("step")[0].GetProperty("code")[0].GetProperty("property").Clone();
     }
 
@@ -67,7 +67,7 @@ public class ListNestingTests
     public async Task Flatten_LiftsANestedElement()
     {
         var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "listnest-" + System.Guid.NewGuid().ToString("N")[..6]));
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         ctx.Variable.Set("l", Parsed("[[1,2],3]"));
 
         var result = await app.Run(new global::app.module.action.list.Flatten(ctx)

@@ -41,7 +41,7 @@ public class PrEnvelopeTests : System.IAsyncDisposable
         var goal = global::PLang.Tests.Shared.Make.Goal("Start", "/Start.goal",
             global::PLang.Tests.Shared.Make.Step("if %n% >= 5 — write out 'big'",
                 global::PLang.Tests.Shared.Make.Action("output", "write", ("Data", "it's big — n >= 5"))));
-        var text = await _app.User.Context.Pr(goal);
+        var text = await _app.actor.list.User.Context.Pr(goal);
 
         await Assert.That(text).Contains("\"if %n% >= 5 — write out 'big'\"");
         await Assert.That(text).Contains("it's big — n >= 5");
@@ -52,6 +52,6 @@ public class PrEnvelopeTests : System.IAsyncDisposable
 
     private async Task<string> Write(global::app.goal.@this goal)
     {
-        return await _app.User.Context.Pr(goal);
+        return await _app.actor.list.User.Context.Pr(goal);
     }
 }

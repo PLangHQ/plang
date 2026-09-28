@@ -18,7 +18,7 @@ public class TypeEntityHomeTests
         // plang-types ALREADY shipped this — the regression pin still passes today
         // even though the entity lives at app.type.@this (Stage 4 moves it).
         await using var app = TestApp.Create("/test");
-        var d = new global::app.data.@this<global::app.type.item.number.@this>("", 42, context: app.User.Context);
+        var d = new global::app.data.@this<global::app.type.item.number.@this>("", 42, context: app.actor.list.User.Context);
         await Assert.That(d.Type).IsNotNull();
         await Assert.That(d.Type!.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
@@ -31,7 +31,7 @@ public class TypeEntityHomeTests
         // name/@this duality. The stable identity a stamped Data resolves by is the
         // NAME, so that is what the app.type.list indexer round-trips on.
         await using var app = TestApp.Create("/test");
-        var d = new global::app.data.@this("", System.Guid.NewGuid(), context: app.User.Context);
+        var d = new global::app.data.@this("", System.Guid.NewGuid(), context: app.actor.list.User.Context);
         var fromRegistry = app.type.list[d.Type!.Name];
         await Assert.That(d.Type.Name).IsEqualTo(fromRegistry.Name);
     }
@@ -49,9 +49,9 @@ public class TypeEntityHomeTests
     {
         // Both doors return values of the SAME entity type (app.type.@this).
         await using var app = TestApp.Create("/test");
-        var d = new global::app.data.@this<global::app.type.item.number.@this>("", 42, context: app.User.Context);
+        var d = new global::app.data.@this<global::app.type.item.number.@this>("", 42, context: app.actor.list.User.Context);
         var typeFromData = d.Type;
-        var entityFromRegistry = app.type.list[new global::app.type.@this("number", "int"), app.User.Context];
+        var entityFromRegistry = app.type.list[new global::app.type.@this("number", "int"), app.actor.list.User.Context];
         await Assert.That(typeFromData).IsNotNull();
         await Assert.That(typeFromData!.GetType()).IsEqualTo(typeof(global::app.type.@this));
         await Assert.That(typeFromData.ClrType).IsEqualTo(entityFromRegistry.ClrType);

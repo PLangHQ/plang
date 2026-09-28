@@ -16,14 +16,14 @@ public class JsonRebindPinTests : System.IAsyncDisposable
     [Test]
     public async Task Set_OneLevelIntoJsonHost_MaterialisesAndSetsKey()
     {
-        var stack = _app.User.Context.Variable;
+        var stack = _app.actor.list.User.Context.Variable;
 
         // A clr(json) object value under %j% — an immutable JsonElement host.
         using var doc = System.Text.Json.JsonDocument.Parse("""{"a":"one","b":"two"}""");
         var j = new global::app.data.@this("j",
-            _app.User.Context.App.type.list[new global::app.type.@this("item", "json"), _app.User.Context]
-                .Make(doc.RootElement.Clone(), _app.User.Context),
-            context: _app.User.Context);
+            _app.actor.list.User.Context.App.type.list[new global::app.type.@this("item", "json"), _app.actor.list.User.Context]
+                .Make(doc.RootElement.Clone(), _app.actor.list.User.Context),
+            context: _app.actor.list.User.Context);
         await stack.Set("j", j);
 
         // One-level deep write — json host materialises into a dict, sets the key.

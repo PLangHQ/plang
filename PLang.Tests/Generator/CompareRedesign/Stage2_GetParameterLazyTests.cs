@@ -62,7 +62,7 @@ public class Stage2_GetParameterLazyTests
         // file.read with an unregistered scheme: the path conversion fails as a typed
         // error Data (SchemeNotRegistered), surfaced by the post-resolve guard — no NRE.
         await using var app = TestApp.Create("/app");
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var slot = new Data("path", "s3://bucket/key", context: context);
         var failedPath = slot.As<global::app.type.item.path.@this>(await slot.Value<global::app.type.item.path.@this>());
         await failedPath.IsFailure();
@@ -75,7 +75,7 @@ public class Stage2_GetParameterLazyTests
         // A handler hands a carrier's value on through Use; a carrier whose resolution failed
         // answers itself — its typed error — and what it would have been handed to never runs.
         await using var app = TestApp.Create("/app");
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var slot = new Data("path", "s3://bucket/key", context: context);
         var failedPath = slot.As<global::app.type.item.path.@this>(await slot.Value<global::app.type.item.path.@this>());
         var ran = false;
@@ -91,7 +91,7 @@ public class Stage2_GetParameterLazyTests
     public async Task Use_OnAResolvedCarrier_HandsItsValueWhole()
     {
         await using var app = TestApp.Create("/app");
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var slot = new Data("path", "/tmp/x.txt", context: context);
         var carrier = slot.As<global::app.type.item.path.@this>(await slot.Value<global::app.type.item.path.@this>());
         global::app.type.item.path.@this? handed = null;

@@ -16,7 +16,7 @@ public class AtomicStepTests : System.IAsyncDisposable
     [Test]
     public async Task Replace_NameReplacedInBetween_LeavesTheNewerValue()
     {
-        var store = new Variables(_app.User.Context);
+        var store = new Variables(_app.actor.list.User.Context);
         await store.Set("l", new List());
         var held = await store.Get("l");
         var newer = new List();
@@ -32,12 +32,12 @@ public class AtomicStepTests : System.IAsyncDisposable
     [Test]
     public async Task Replace_WhatIsBoundOnTheSetRefusing_IsTheAnswer_NothingWritten()
     {
-        var store = _app.User.Context.Variable;
+        var store = _app.actor.list.User.Context.Variable;
         await store.Set("l", new List());
         var held = await store.Get("l");
         _app.variable.Own().Bind("set", global::app.@event.When.before,
             (_, _, c) => System.Threading.Tasks.Task.FromResult(c.Error(new global::app.error.Error("not today", "Refused", 403))),
-            _app.User, global::app.@event.binding.Scope.actor);
+            _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
         var answer = await store.Replace("l", held, new List());
 
@@ -49,7 +49,7 @@ public class AtomicStepTests : System.IAsyncDisposable
     [Test]
     public async Task Replace_NameStillHeld_WritesTheValue()
     {
-        var store = new Variables(_app.User.Context);
+        var store = new Variables(_app.actor.list.User.Context);
         await store.Set("l", new List());
         var held = await store.Get("l");
         var value = new List();
@@ -64,11 +64,11 @@ public class AtomicStepTests : System.IAsyncDisposable
     [Test]
     public async Task Ensure_NameHoldsAValue_AnswersIt()
     {
-        var store = new Variables(_app.User.Context);
+        var store = new Variables(_app.actor.list.User.Context);
         var existing = new List();
         await store.Set("l", existing);
 
-        var held = await store.Ensure("l", () => _app.type.list["list"].Create(System.Array.Empty<object?>(), _app.User.Context));
+        var held = await store.Ensure("l", () => _app.type.list["list"].Create(System.Array.Empty<object?>(), _app.actor.list.User.Context));
 
         await Assert.That(ReferenceEquals(await held.Value(), existing)).IsTrue();
     }
@@ -76,11 +76,11 @@ public class AtomicStepTests : System.IAsyncDisposable
     [Test]
     public async Task Ensure_ManyAtOnce_AllAnswerOneValue()
     {
-        var store = new Variables(_app.User.Context);
+        var store = new Variables(_app.actor.list.User.Context);
 
         var held = await Task.WhenAll(Enumerable.Range(0, 200)
             .Select(_ => Task.Run(async () => await (await store.Ensure("l",
-                () => _app.type.list["list"].Create(System.Array.Empty<object?>(), _app.User.Context))).Value())));
+                () => _app.type.list["list"].Create(System.Array.Empty<object?>(), _app.actor.list.User.Context))).Value())));
 
         await Assert.That(held.Distinct(ReferenceEqualityComparer.Instance).Count()).IsEqualTo(1);
     }

@@ -14,7 +14,7 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
 
     private async System.Threading.Tasks.Task<Goal> ReadOneAction(string actionsJson)
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         // Goal first, then its step — a step is born knowing its goal (Goal is init).
         var goal = new Goal
         {
@@ -62,7 +62,7 @@ public class ActionNameWireReadTests : System.IAsyncDisposable
         await Assert.That(held.Name).IsEqualTo("call");
         await Assert.That(held.Step).IsSameReferenceAs(goal.Step[0]);
         // A reader of the program makes its own Data, with its own context.
-        await Assert.That((await held["Name"]!.Data(_app.User.Context).Value())?.RawText).IsEqualTo("LogIt");
+        await Assert.That((await held["Name"]!.Data(_app.actor.list.User.Context).Value())?.RawText).IsEqualTo("LogIt");
     }
 
     [Test]

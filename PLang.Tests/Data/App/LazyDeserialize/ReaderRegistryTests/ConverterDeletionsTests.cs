@@ -81,7 +81,7 @@ public class ConverterDeletionsTests
             .IsAssignableFrom(converterType!)).IsTrue();
 
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var p = global::app.type.item.path.@this.Resolve("/srv/app/cfg.json", ctx);
         var opts = new System.Text.Json.JsonSerializerOptions
         { Converters = { new global::app.type.format.json.Converter(ctx) } };
@@ -115,7 +115,7 @@ public class ConverterDeletionsTests
         // resolved under the reader's root (only the registry-with-context
         // path produces that), proving the route, not a bare stub.
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var opts = new System.Text.Json.JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
@@ -139,7 +139,7 @@ public class ConverterDeletionsTests
         // (Outer.Mid.Inner.File) deserialises via the single Converter — the
         // case a payload-level registry alone could not serve.
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var opts = new System.Text.Json.JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,

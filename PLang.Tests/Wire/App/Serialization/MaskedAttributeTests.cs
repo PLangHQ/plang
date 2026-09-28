@@ -33,7 +33,7 @@ public class MaskedAttributeTests
     private static async Task<string> Written(global::app.View view)
     {
         var app = TestApp.Create("/test");
-        return await app.User.Context.Pr(new MaskedItem { key = "ApiKey", value = "sk-real-secret" }, view);
+        return await app.actor.list.User.Context.Pr(new MaskedItem { key = "ApiKey", value = "sk-real-secret" }, view);
     }
 
     [Test] public async Task Wire_MaskedValue_WritesFourStars_KeyVisible()

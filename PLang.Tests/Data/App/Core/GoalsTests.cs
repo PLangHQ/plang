@@ -248,7 +248,7 @@ public class GoalsTests
             await using var engine = global::PLang.Tests.TestApp.Create(dir);
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "start.pr"),
                 """{"name":"Start","path":"/Start.goal","step":[],"child":[{"name":"Show","path":"/Start.goal","step":[]}]}""");
-            var context = engine.User.Context;
+            var context = engine.actor.list.User.Context;
 
             var appOnly = new global::app.type.item.dict.@this();
             appOnly.Set("os", false);

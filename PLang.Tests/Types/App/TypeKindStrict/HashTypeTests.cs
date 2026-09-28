@@ -30,7 +30,7 @@ public class HashTypeTests
     [Test] public async Task CryptoHash_ReturnsHashValueWithAlgorithmKind()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var action = TestAction.Create("crypto", "hash",
             ("data", "hello"), ("algorithm", "sha256"));
         var result = await action.Start(ctx);
@@ -46,7 +46,7 @@ public class HashTypeTests
     [Test] public async Task CryptoVerify_DefaultsAlgorithmFromHashValue()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var crypto = new global::app.module.action.crypto.code.Default();
 
         // Produce a sha256 digest of a Data, then verify the SAME Data against

@@ -39,7 +39,7 @@ public class ProviderModuleTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.actor.context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.System.Context;
 
     // Fixture DLL paths — pre-built DLLs committed under PLang.Tests/Shared/Fixtures/dlls/
     private static readonly string FixtureBase = System.IO.Path.GetFullPath(
@@ -64,12 +64,12 @@ public class ProviderModuleTests
             global::app.type.item.permission.Verb.Execute,
         };
         var permission = new global::app.type.item.permission.@this(
-            Actor: _app.System.Name,
+            Actor: _app.actor.list.System.Name,
             Path: resolved.Absolute,
             Verbs: verbs,
             Match: global::app.type.item.permission.Match.Exact);
         var data = new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: Ctx);
-        await _app.System.Permission.Add(data, persist: true);
+        await _app.actor.list.System.Permission.Add(data, persist: true);
     }
 
     #region Load

@@ -16,16 +16,16 @@ public class SnapshotWireTests
     public async Task Variables_SurviveWireRoundTrip_WithValueAndType()
     {
         var src = global::PLang.Tests.TestApp.Create("/src");
-        src.User.Context.Variable.Set("count", 42L);
-        src.User.Context.Variable.Set("name", "plang");
+        src.actor.list.User.Context.Variable.Set("count", 42L);
+        src.actor.list.User.Context.Variable.Set("name", "plang");
 
-        var wired = await RoundTrip(src, src.Snapshot(src.User.Context));
+        var wired = await RoundTrip(src, src.Snapshot(src.actor.list.User.Context));
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        await dst.Restore(wired, dst.User.Context);
+        await dst.Restore(wired, dst.actor.list.User.Context);
 
-        await Assert.That((await (await dst.User.Context.Variable.Get("count")).Value())?.ToString()).IsEqualTo("42");
-        await Assert.That((await (await dst.User.Context.Variable.Get("name")).Value())?.ToString()).IsEqualTo("plang");
+        await Assert.That((await (await dst.actor.list.User.Context.Variable.Get("count")).Value())?.ToString()).IsEqualTo("42");
+        await Assert.That((await (await dst.actor.list.User.Context.Variable.Get("name")).Value())?.ToString()).IsEqualTo("plang");
     }
 
     [Test]
@@ -34,12 +34,12 @@ public class SnapshotWireTests
         // The App's Mode rides the wire as one value: building here, so the destination builds
         // and its Test (TestApp.Create sets one) is cleared.
         var src = global::PLang.Tests.TestApp.Create("/src");
-        src.Build = new global::app.module.action.build.@this(src.System.Context);
+        src.Build = new global::app.module.action.build.@this(src.actor.list.System.Context);
 
-        var wired = await RoundTrip(src, src.Snapshot(src.User.Context));
+        var wired = await RoundTrip(src, src.Snapshot(src.actor.list.User.Context));
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        await dst.Restore(wired, dst.User.Context);
+        await dst.Restore(wired, dst.actor.list.User.Context);
 
         await Assert.That(dst.Build != null).IsTrue();
         await Assert.That(dst.test.list.Session == null).IsTrue();
@@ -57,11 +57,11 @@ public class SnapshotWireTests
         // it through the wire. The int keys must come back as int (not long) so
         // CallStack.Restore's Read<int> resolves them.
         var src = global::PLang.Tests.TestApp.Create("/src");
-        var snap = new global::app.snapshot.@this(src.User.Context);
+        var snap = new global::app.snapshot.@this(src.actor.list.User.Context);
         // Emulate one captured frame's scalar shape.
         var cs = snap.Section("CallStack");
         var frames = new List<global::app.snapshot.@this>();
-        var f = new global::app.snapshot.@this(src.User.Context);
+        var f = new global::app.snapshot.@this(src.actor.list.User.Context);
         f.Write("goalPrPath", "/.build/Start/00. Goal.pr");
         f.Write("goalHash", "abc123");
         f.Write("stepIndex", 3);
@@ -101,7 +101,7 @@ public class SnapshotWireTests
         // captured step and running to success with nothing held in memory.
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-wire-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
 
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         SetStep(goal, 0, "s0", "first");
@@ -112,7 +112,7 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.CallStack.Push(step1.Code[0], context.Variable))
         {
-            json = await app.SnapshotToWire(app.Snapshot(app.User.Context));   // <-- to disk (string)
+            json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));   // <-- to disk (string)
             await call.DisposeAsync();
         }
 
@@ -134,7 +134,7 @@ public class SnapshotWireTests
         // then Resume re-enters the suspended step and succeeds.
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-conv-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
 
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         SetStep(goal, 0, "s0", "first");
@@ -144,7 +144,7 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.CallStack.Push(step1.Code[0], context.Variable))
         {
-            json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
+            json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
             await call.DisposeAsync();
         }
 
@@ -182,7 +182,7 @@ public class SnapshotWireTests
         //  - Survivor vars are intact.
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-mid-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         context.Variable.Set("keep", "alive");
         context.Variable.Set("i", 1L);
 
@@ -205,7 +205,7 @@ public class SnapshotWireTests
         await using (var startFrame = context.CallStack.Push(start.Step[1].Code[0], context.Variable))
         await using (var subFrame = context.CallStack.Push(sub.Step[1].Code[0], context.Variable))
         {
-            json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
+            json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
         }
 
         // Round-trip through the disk string, then patch %i% 1 → 2 (the fix the
@@ -235,7 +235,7 @@ public class SnapshotWireTests
         // navigable snapshot.@this and whether the edit survives resume.
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-aspath-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
 
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(goal, 0, "x", "1");
@@ -246,7 +246,7 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.CallStack.Push(goal.Step[1].Code[0], context.Variable))
         {
-            json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
+            json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
         }
 
         // `as snapshot` path: typeEntity.Create(envelopeString, context). A wire-raw string
@@ -277,10 +277,10 @@ public class SnapshotWireTests
         // NOT the top-level plang wire envelope. (A resumable save uses a plang-registered extension.)
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-fs-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         context.Variable.Set("x", 1L);
 
-        var snap = app.Snapshot(app.User.Context);
+        var snap = app.Snapshot(app.actor.list.User.Context);
         var d = new global::app.data.@this<global::app.snapshot.@this>("", snap,
             new global::app.type.@this("snapshot"), context: context);
 
@@ -305,10 +305,10 @@ public class SnapshotWireTests
     {
         // The ONE difference from the passing edit-resume tests: the snapshot comes
         // from app.Snapshot(error) (throw-time: SnapshotAt + error.CallFrames), the
-        // path Error.Callback uses in the .test.goal — not app.Snapshot(app.User.Context) (live).
+        // path Error.Callback uses in the .test.goal — not app.Snapshot(app.actor.list.User.Context) (live).
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-tt-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
 
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(goal, 0, "x", "1");
@@ -321,7 +321,7 @@ public class SnapshotWireTests
         {
             var err = new ServiceError("boom", goal.Step[1],
                 context.CallStack.Current!.SnapshotChain());
-            json = await app.SnapshotToWire(app.Snapshot(err, app.User.Context));   // throw-time overload
+            json = await app.SnapshotToWire(app.Snapshot(err, app.actor.list.User.Context));   // throw-time overload
         }
 
         var te = new global::app.type.@this("snapshot");
@@ -349,7 +349,7 @@ public class SnapshotWireTests
         // see RawStringInSnap counterpart: an untyped string loses the edit).
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-typed-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
 
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(goal, 0, "x", "1");
@@ -359,7 +359,7 @@ public class SnapshotWireTests
         context.Variable.Set("x", 1L);
         string json;
         await using (var call = context.CallStack.Push(goal.Step[1].Code[0], context.Variable))
-            json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
+            json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
 
         // %snap% = string value, but TYPED as snapshot (what an honored `as snapshot` yields).
         context.Variable.Set(new global::app.data.@this(
@@ -382,7 +382,7 @@ public class SnapshotWireTests
         // into resumed execution. Mirrors the .test.goal.
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-nav-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
 
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         var step0 = SetStep(goal, 0, "x", "1");
@@ -394,7 +394,7 @@ public class SnapshotWireTests
         string json;
         await using (var call = context.CallStack.Push(goal.Step[1].Code[0], context.Variable))
         {
-            json = await app.SnapshotToWire(app.Snapshot(app.User.Context));
+            json = await app.SnapshotToWire(app.Snapshot(app.actor.list.User.Context));
         }
 
         // Read the snapshot back as a value, bind it under %snap%.
@@ -418,12 +418,12 @@ public class SnapshotWireTests
     public async Task EmptyApp_WireIsValidJson_AndRestoresClean()
     {
         var src = global::PLang.Tests.TestApp.Create("/src");
-        var json = await src.SnapshotToWire(src.Snapshot(src.User.Context));
+        var json = await src.SnapshotToWire(src.Snapshot(src.actor.list.User.Context));
 
         await Assert.That(json.StartsWith("{")).IsTrue();
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        dst.Restore(await src.SnapshotFromWire(json, dst.User.Context), dst.User.Context);
+        dst.Restore(await src.SnapshotFromWire(json, dst.actor.list.User.Context), dst.actor.list.User.Context);
 
         await Assert.That(dst.Build != null).IsFalse();
     }

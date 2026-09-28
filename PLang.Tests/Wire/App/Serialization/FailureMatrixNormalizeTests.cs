@@ -21,7 +21,7 @@ public class FailureMatrixNormalizeTests : System.IAsyncDisposable
         // it into a PlangDeserializeError. Pin the read-level behavior; the channel wrap is
         // exercised in higher-level tests.
         var truncated = System.Text.Encoding.UTF8.GetBytes("{\"name\":\"x\",\"value\":");
-        var wire = new global::app.data.Wire(global::app.View.Out, app.User.Context);
+        var wire = new global::app.data.Wire(global::app.View.Out, app.actor.list.User.Context);
         try
         {
             wire.ReadBuffered(truncated);

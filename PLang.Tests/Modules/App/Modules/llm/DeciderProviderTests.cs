@@ -37,7 +37,7 @@ public class DeciderProviderTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.actor.context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.System.Context;
 
     private global::app.data.@this<Dict> DictData(Dictionary<string, object?> value)
         => new("", (Dict)global::app.type.item.@this.Create(value, Ctx), context: Ctx);

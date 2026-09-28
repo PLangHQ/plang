@@ -106,7 +106,7 @@ public class PickListTests
     public async Task TheStageOneRequest_IsTheOnePythonSends()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
-        var context = os.User.Context;
+        var context = os.actor.list.User.Context;
         var differ = new List<string>();
         foreach (var entry in Golden())
         {
@@ -124,7 +124,7 @@ public class PickListTests
     public async Task ThePromptCUserMessage_IsTheOnePythonSends()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
-        var context = os.User.Context;
+        var context = os.actor.list.User.Context;
         var differ = new List<string>();
         foreach (var entry in Golden())
         {
@@ -152,7 +152,7 @@ public class PickListTests
     public async Task ThePromptCSettingsAndKeys_AreTheOnesPythonSends()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
-        var context = os.User.Context;
+        var context = os.actor.list.User.Context;
         var cases = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(
             RepoRoot(), "PLang.Tests", "Wire", "App", "Decider", "settings_golden.json"))).RootElement.EnumerateArray().ToList();
         await Assert.That(cases.Count).IsGreaterThan(0);
@@ -186,7 +186,7 @@ public class PickListTests
     public async Task TheStageTwoState_IsTheOnePythonSends()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
-        var context = os.User.Context;
+        var context = os.actor.list.User.Context;
         var differ = new List<string>();
         foreach (var entry in Golden())
         {
@@ -205,7 +205,7 @@ public class PickListTests
     public async Task StageOnesAnswer_RendersTheStageTwoQuestionsPythonAsked()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
-        var context = os.User.Context;
+        var context = os.actor.list.User.Context;
         var differ = new List<string>();
         foreach (var entry in Golden())
         {

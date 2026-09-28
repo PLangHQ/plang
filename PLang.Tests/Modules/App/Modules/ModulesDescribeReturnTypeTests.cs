@@ -30,7 +30,7 @@ public class ModulesDescribeReturnTypeTests
             "plang_test_returntype_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = TestApp.Create(_tempDir);
-        _app.Build = new global::app.module.action.build.@this(_app.System.Context);
+        _app.Build = new global::app.module.action.build.@this(_app.actor.list.System.Context);
     }
 
     [After(Test)]
@@ -84,7 +84,7 @@ public class ModulesDescribeReturnTypeTests
     {
         // file.list → Task<Data<global::app.type.item.list.@this<path>>>.
         var row = Find("file", "list");
-        await Assert.That(row.Return).IsEqualTo(_app.type.list[new global::app.type.@this("list", "path"), _app.User.Context]);
+        await Assert.That(row.Return).IsEqualTo(_app.type.list[new global::app.type.@this("list", "path"), _app.actor.list.User.Context]);
     }
 
     // Data<Identity> — domain type. [PlangType("identity")] on the class
@@ -101,7 +101,7 @@ public class ModulesDescribeReturnTypeTests
     public async Task Return_DataOfListOfIdentity_IsListOfIdentity()
     {
         var row = Find("identity", "list");
-        await Assert.That(row.Return).IsEqualTo(_app.type.list[new global::app.type.@this("list", "identity"), _app.User.Context]);
+        await Assert.That(row.Return).IsEqualTo(_app.type.list[new global::app.type.@this("list", "identity"), _app.actor.list.User.Context]);
     }
 
     // Sanity: every catalog row carries a type — item or a real T.

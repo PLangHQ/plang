@@ -13,7 +13,7 @@ public class ErrorRecordTests : System.IAsyncDisposable
 
     private async Task<global::app.error.Error> Recorded()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         await context.Variable.Set("secret", "hunter2");
         var action = TestAction.Create("variable", "set", ("name", "%x%"), ("value", 1));
         var error = new global::app.error.ServiceError("boom", "Boom", 500);
@@ -25,7 +25,7 @@ public class ErrorRecordTests : System.IAsyncDisposable
     [Test]
     public async Task Record_UnderDebug_CapturesTheVariablesWhole()
     {
-        _app.Debug = new global::app.module.action.debug.@this(_app.System.Context);
+        _app.Debug = new global::app.module.action.debug.@this(_app.actor.list.System.Context);
 
         var error = await Recorded();
 
@@ -46,6 +46,6 @@ public class ErrorRecordTests : System.IAsyncDisposable
     {
         var error = await Recorded();
 
-        await Assert.That(ReferenceEquals(error.Context, _app.User.Context)).IsTrue();
+        await Assert.That(ReferenceEquals(error.Context, _app.actor.list.User.Context)).IsTrue();
     }
 }

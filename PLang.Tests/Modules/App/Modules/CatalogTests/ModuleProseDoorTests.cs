@@ -80,7 +80,7 @@ public class ModuleProseDoorTests
         await Assert.That(handle.IsTruthy()).IsTrue();   // existence, no content read yet
         await Assert.That(handle.IsLoaded).IsFalse();
 
-        var content = await new data("prose", handle, context: _app.System.Context).Value();
+        var content = await new data("prose", handle, context: _app.actor.list.System.Context).Value();
         await Assert.That(content?.ToString()).IsEqualTo("Action rule.");
     }
 

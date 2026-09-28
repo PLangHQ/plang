@@ -19,7 +19,7 @@ public class LoudRunTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-loud-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = TestApp.Create(_tempDir);
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, new System.IO.MemoryStream(),
             ChannelDirection.Output, ownsStream: true) { Mime = "text/plain" });
     }
@@ -106,7 +106,7 @@ public class LoudRunTests
         _app.test.list.Add(NewTest("A", Status.Pass));
         _app.test.list.Add(NewTest("Old", Status.Stale, "no .pr"));
 
-        var result = await new global::app.module.action.test.report(_app.User.Context).Start();
+        var result = await new global::app.module.action.test.report(_app.actor.list.User.Context).Start();
 
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error?.Key).IsEqualTo("TestRunFailed");
@@ -120,7 +120,7 @@ public class LoudRunTests
     {
         _app.test.list.Add(NewTest("A", Status.Pass));
 
-        var result = await new global::app.module.action.test.report(_app.User.Context).Start();
+        var result = await new global::app.module.action.test.report(_app.actor.list.User.Context).Start();
 
         await result.IsSuccess();
     }

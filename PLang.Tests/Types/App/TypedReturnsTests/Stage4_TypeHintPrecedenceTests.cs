@@ -26,7 +26,7 @@ public class Stage4_TypeHintPrecedenceTests
         {
             Module = _app.Module(module),
             Name = action,
-            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList())
+            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.actor.list.User.Context)).ToList())
         };
 
     private static StepActions ActionsOf(params PrAction[] actions)
@@ -39,7 +39,7 @@ public class Stage4_TypeHintPrecedenceTests
     [Test]
     public async Task FormatByExtension_SingleSegment_Resolves()
     {
-        var json = _app.type.list.Extension(".json", _app.User.Context).kind;
+        var json = _app.type.list.Extension(".json", _app.actor.list.User.Context).kind;
         await Assert.That(json.Name).IsEqualTo("json");
     }
 
@@ -48,7 +48,7 @@ public class Stage4_TypeHintPrecedenceTests
     {
         var chain = new global::app.goal.step.action.list.@this();
         foreach (var a in actions) chain.Add(a);
-        return await chain.Build(app.User.Context) is { } failed ? new() { failed.Message } : new();
+        return await chain.Build(app.actor.list.User.Context) is { } failed ? new() { failed.Message } : new();
     }
 
     [Test]
@@ -104,8 +104,8 @@ public class Stage4_TypeHintPrecedenceTests
     public async Task OutputAsk_Build_ReturnsBareOk_DefersToHint()
     {
         var action = Make("output", "ask", ("Question", "?"));
-        var (shell, _) = action.Instance(_app.User.Context);
-        var (handler, _) = await shell!.Resolve(action, _app.User.Context);
+        var (shell, _) = action.Instance(_app.actor.list.User.Context);
+        var (handler, _) = await shell!.Resolve(action, _app.actor.list.User.Context);
         var result = await ((IClass)handler!).Build();
 
         await result.IsSuccess();

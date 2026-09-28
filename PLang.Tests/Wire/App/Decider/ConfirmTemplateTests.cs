@@ -29,7 +29,7 @@ public class ConfirmTemplateTests
     public async Task EachNumber_IsOneNoulUnderItsId_AndTheStateNamesItsStepAndAction()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
-        var context = os.User.Context;
+        var context = os.actor.list.User.Context;
         var numbers = new List<global::app.goal.step.unwritten.@this>
         {
             new(1, "on.error", "RetryCount", "1", "call Flaky, on error retry once, ignore"),
@@ -56,7 +56,7 @@ public class ConfirmTemplateTests
         var golden = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(
             System.IO.Path.Combine(RepoRoot(), "PLang.Tests", "Wire", "App", "Decider", "confirm_golden.json"))).RootElement;
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
-        var context = os.User.Context;
+        var context = os.actor.list.User.Context;
         var numbers = golden.GetProperty("numbers").EnumerateArray().Select(n => new global::app.goal.step.unwritten.@this(
             n.GetProperty("step").GetInt32(), n.GetProperty("action").GetString()!, n.GetProperty("property").GetString()!,
             n.GetProperty("value").GetString()!, n.GetProperty("text").GetString()!)).ToList();

@@ -12,7 +12,7 @@ public class NestedTypedRoundTripTests
     public async Task PlanDict_StoreRoundTrip_KeepsNestedListType()
     {
         var app = global::PLang.Tests.TestApp.Create("/nest");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var steps = new global::app.type.item.list.@this()
             .Add(new global::app.data.@this("", new global::app.type.item.dict.@this().Set("index", 1L), context: ctx));
         var plan = new global::app.type.item.dict.@this()

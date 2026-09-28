@@ -20,7 +20,7 @@ public class ChannelReadBoundaryTests
     private static stream Input(global::app.@this app, string mime, byte[] body)
     {
         var ch = new stream("c", new System.IO.MemoryStream(body), global::app.channel.ChannelDirection.Input) { Mime = mime };
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         return ch;
     }
 
@@ -102,8 +102,8 @@ public class ChannelReadBoundaryTests
     [Test] public async Task ChannelRead_ApplicationPlangBody_DelegatesToPlangSerializer_LazyContainer()
     {
         await using var app = NewApp();
-        var plang = app.User.Context.Format("application/plang");
-        var wire = (await plang.Serialize(app.Ok("hello"), app.User.Context).Value())!.Clr<string>()!;
+        var plang = app.actor.list.User.Context.Format("application/plang");
+        var wire = (await plang.Serialize(app.Ok("hello"), app.actor.list.User.Context).Value())!.Clr<string>()!;
 
         var ch = Input(app, "application/plang", Encoding.UTF8.GetBytes(wire));
         var d = await ch.Read();

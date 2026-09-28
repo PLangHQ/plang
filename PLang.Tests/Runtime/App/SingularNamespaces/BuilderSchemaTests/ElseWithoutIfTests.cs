@@ -22,7 +22,7 @@ public class ElseWithoutIfTests
         await using var app = TestApp.Create("/test");
         var list = new global::app.goal.step.action.list.@this();
         foreach (var a in actions) list.Add(a);
-        return await list.Validate(app.System.Context);
+        return await list.Validate(app.actor.list.System.Context);
     }
 
     [Test]
@@ -118,7 +118,7 @@ public class ElseWithoutIfTests
     {
         // `- if %count% > 0` with steps indented under it: its body comes from the layout (build.fold).
         await using var app = TestApp.Create("/test");
-        var ctx = app.System.Context;
+        var ctx = app.actor.list.System.Context;
         var goal = global::app.goal.@this.Parse("G\n- if %count% > 0\n    - call ProcessItems\n",
             global::app.type.item.path.@this.Resolve("/G.goal", ctx), ctx)!;
         var ifStep = goal.Step[0];
@@ -134,7 +134,7 @@ public class ElseWithoutIfTests
     public async Task StepValidate_KeepsTheChainsKey_ForTheBuilderToRouteBy()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.System.Context;
+        var ctx = app.actor.list.System.Context;
         var goal = global::app.goal.@this.Parse("G\n- else\n- if %n% > 5, call Big\n",
             global::app.type.item.path.@this.Resolve("/G.goal", ctx), ctx)!;
         var elseStep = goal.Step[0];
@@ -165,7 +165,7 @@ public class ElseWithoutIfTests
     public async Task ElseWithoutIf_InSettle_GoesToSourceErrorOnly_AndCarriesTheFix()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var shared = TestApp.SharedContext;
         const string fix = "- if %x% == 1, write out \"one\", else write out \"other\"";
 
@@ -202,7 +202,7 @@ public class ElseWithoutIfTests
         var elseStep = goal.Step[1];
         elseStep.Code.Add(Else().In(elseStep));
 
-        var error = await elseStep.Code.Validate(app.System.Context);
+        var error = await elseStep.Code.Validate(app.actor.list.System.Context);
 
         await Assert.That(error!.Key).IsEqualTo("ElseWithoutIf");
         await Assert.That(error.Message).IsEqualTo("step 1 \"else\" — an else must be in the same step as its if.");

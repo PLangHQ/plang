@@ -53,7 +53,7 @@ public class CleanupBindingsTests
     {
         await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-dt-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var dt = global::app.type.item.datetime.@this.Resolve("2024-03-15T10:30:00+02:00", app.User.Context);
+        var dt = global::app.type.item.datetime.@this.Resolve("2024-03-15T10:30:00+02:00", app.actor.list.User.Context);
         await Assert.That(dt).IsNotNull();
         await Assert.That(dt!.Value.Year).IsEqualTo(2024);
         await Assert.That(dt.Value.Offset).IsEqualTo(System.TimeSpan.FromHours(2));
@@ -63,7 +63,7 @@ public class CleanupBindingsTests
     {
         await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-d1-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var d = global::app.type.item.duration.@this.Resolve("1.02:03:04", app.User.Context);
+        var d = global::app.type.item.duration.@this.Resolve("1.02:03:04", app.actor.list.User.Context);
         await Assert.That(d).IsNotNull();
         await Assert.That(d!.Value.Days).IsEqualTo(1);
         await Assert.That(d.Value.Hours).IsEqualTo(2);
@@ -73,7 +73,7 @@ public class CleanupBindingsTests
     {
         await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-d2-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var d = global::app.type.item.duration.@this.Resolve("PT5M", app.User.Context);
+        var d = global::app.type.item.duration.@this.Resolve("PT5M", app.actor.list.User.Context);
         await Assert.That(d).IsNotNull();
         await Assert.That(d!.Value).IsEqualTo(System.TimeSpan.FromMinutes(5));
     }

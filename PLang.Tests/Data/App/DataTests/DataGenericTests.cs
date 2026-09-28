@@ -21,7 +21,7 @@ public class DataGenericTests : System.IAsyncDisposable
     [Test]
     public async Task Ok_WithType_SetsType()
     {
-        var data = _app.User.Context.Ok(42, _app.type.list[new Type("number", "int"), _app.User.Context]);
+        var data = _app.actor.list.User.Context.Ok(42, _app.type.list[new Type("number", "int"), _app.actor.list.User.Context]);
 
         await Assert.That((await data.Value())?.ToString()).IsEqualTo("42");
         await Assert.That(data.Type).IsNotNull();
@@ -42,7 +42,7 @@ public class DataGenericTests : System.IAsyncDisposable
     public async Task Value_WrongType_ReturnsDefault()
     {
         // Create a global::app.data.@this<global::app.type.item.number.@this> then set base value to a string via base class
-        var data = new global::app.data.@this<global::app.type.item.number.@this>("test", 42, context: _app.User.Context);
+        var data = new global::app.data.@this<global::app.type.item.number.@this>("test", 42, context: _app.actor.list.User.Context);
         ((Data)data).SetValue("not an int");
 
         // Born-native: number is a reference wrapper, so a failed conversion yields its

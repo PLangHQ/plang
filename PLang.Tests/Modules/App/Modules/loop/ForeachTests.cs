@@ -17,7 +17,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_OrchestatesGoalCall()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var items = new List<object?> { "a", "b", "c" };
         context.Variable.Set("items", items);
 
@@ -43,7 +43,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_EmptyCollection_ReturnsZeroCount()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("items", new List<object?>());
 
         var action = TestAction.Create("loop", "foreach",
@@ -59,7 +59,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_SetsItemVariable()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("items", new List<object?> { "hello" });
 
         _app.goal.list.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
@@ -84,7 +84,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_IteratesDictionary()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var dict = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
         context.Variable.Set("dict", dict);
 
@@ -106,7 +106,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_Dictionary_KeyIsStringNotIndex()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         // Use single-entry dict so final state = only iteration
         var dict = new Dictionary<string, object?> { ["greeting"] = "hello" };
         context.Variable.Set("dict", dict);
@@ -135,7 +135,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_NullCollection_ReturnsZeroCount()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
 
         var action = TestAction.Create("loop", "foreach",
             ("collection", null), ("item", "%item%"));
@@ -150,7 +150,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_Cancellation_StopsIteration()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("items", new List<object?> { "a", "b", "c", "d", "e" });
 
         var cts = new CancellationTokenSource();
@@ -174,7 +174,7 @@ public class ForeachTests
     [Test]
     public async Task Foreach_ClrJsonPlanSteps_BindsStepWithIndex()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         const string planJson =
             "{\"description\":\"d\",\"steps\":[{\"index\":0,\"actions\":[\"a\"]},{\"index\":1,\"actions\":[\"b\"]}]}";
         // Born the way llm.query's answer is: the json kind decodes it.

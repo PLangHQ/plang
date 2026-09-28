@@ -85,7 +85,7 @@ public class BootstrapTests
         var differ = new List<string>();
         var files = Files();
         foreach (var rel in files)
-            differ.AddRange((await Built(rel, os.User.Context)).Differ);
+            differ.AddRange((await Built(rel, os.actor.list.User.Context)).Differ);
 
         await Assert.That(files.Count).IsEqualTo(7);
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");

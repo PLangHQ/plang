@@ -36,12 +36,12 @@ public class SqliteAuthorizeDenialTests
     [Test] public async Task SqliteOpen_DataSourceOutsideRoot_DeniedAnswer_DoesNotOpenDb()
     {
         var app = NewApp(out _);
-        app.User.Channel.Register(new CannedChannel("n"));
+        app.actor.list.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "external.sqlite");
         var dbPath = new FilePath(outOfRoot);
         bool threw = false;
-        try { using var _ = await global::app.store.sqlite.@this.CreateAsync(dbPath, app.User.Context); }
+        try { using var _ = await global::app.store.sqlite.@this.CreateAsync(dbPath, app.actor.list.User.Context); }
         catch (System.InvalidOperationException) { threw = true; }
         await Assert.That(threw).IsTrue();
         await Assert.That(System.IO.File.Exists(outOfRoot)).IsFalse();
@@ -51,9 +51,9 @@ public class SqliteAuthorizeDenialTests
     {
         var app = NewApp(out var root);
         var ch = new CannedChannel("UNEXPECTED");
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         var dbPath = new FilePath(System.IO.Path.Combine(root, "data.sqlite"));
-        using var _ = await global::app.store.sqlite.@this.CreateAsync(dbPath, app.User.Context);
+        using var _ = await global::app.store.sqlite.@this.CreateAsync(dbPath, app.actor.list.User.Context);
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
 }

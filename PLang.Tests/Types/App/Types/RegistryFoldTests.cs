@@ -65,7 +65,7 @@ public class RegistryFoldTests
         // meet at the same lookup.
         foreach (var extension in new[] { ".csv", ".json", ".yaml" })
         {
-            var type = _app.type.list.Extension(extension, _app.User.Context);
+            var type = _app.type.list.Extension(extension, _app.actor.list.User.Context);
             await Assert.That(_app.type.list.Contains(type.Name)).IsTrue();
             await Assert.That(type.kind.IsEmpty).IsFalse();   // the extension's canonical kind (.yaml → yml)
         }

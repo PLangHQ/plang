@@ -46,9 +46,9 @@ public class ConditionIfBranchIndexTests
                     captured = result;
                 return Task.FromResult(context.Ok());
             },
-            _app.User, global::app.@event.binding.Scope.actor);
+            _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
-        await _app.Start(goal, _app.User.Context);
+        await _app.Start(goal, _app.actor.list.User.Context);
         return captured!;
     }
 
@@ -76,7 +76,7 @@ public class ConditionIfBranchIndexTests
     // Runs it, captures the orchestrating condition.if's final result (after sub-actions).
     private async Task<Data> RunMultiBranch(int xValue, params (string? op, object? right, string bodyVar, int bodyVal)[] branches)
     {
-        var vars = _app.User.Context.Variable;
+        var vars = _app.actor.list.User.Context.Variable;
         vars.Set("x", xValue);
 
         var actions = new List<PrAction>();
@@ -108,9 +108,9 @@ public class ConditionIfBranchIndexTests
                     captured = result;
                 return Task.FromResult(context.Ok());
             },
-            _app.User, global::app.@event.binding.Scope.actor);
+            _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
-        await _app.Start(goal, _app.User.Context);
+        await _app.Start(goal, _app.actor.list.User.Context);
         return captured!;
     }
 
@@ -177,9 +177,9 @@ public class ConditionIfBranchIndexTests
             Name = "if",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
-                new("Left", "hello", context: _app.User.Context),
-                new("Operator", ">", context: _app.User.Context),
-                new("Right", new app.type.item.dict.@this(), context: _app.User.Context) // not orderable
+                new("Left", "hello", context: _app.actor.list.User.Context),
+                new("Operator", ">", context: _app.actor.list.User.Context),
+                new("Right", new app.type.item.dict.@this(), context: _app.actor.list.User.Context) // not orderable
             })
         };
 

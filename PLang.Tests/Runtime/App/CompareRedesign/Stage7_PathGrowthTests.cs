@@ -14,7 +14,7 @@ public class Stage7_PathGrowthTests
         var dir = Path.Combine(Path.GetTempPath(), "plang_st7pg_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
         var app = TestApp.Create(dir);
-        return (app, app.User.Context, dir);
+        return (app, app.actor.list.User.Context, dir);
     }
 
     [Test]

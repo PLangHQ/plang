@@ -31,11 +31,11 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     private string TempPath(string rel) => System.IO.Path.Combine(_tempDir, rel);
 
     private global::app.data.@this<PLangPath> MakePath(string rel) =>
-        new("", new PLangFilePath(TempPath(rel)), context: _app.User.Context);
+        new("", new PLangFilePath(TempPath(rel)), context: _app.actor.list.User.Context);
 
     private async Task<Data> Read(string rel)
     {
-        var action = new Read(_app.User.Context) { Path = MakePath(rel) };
+        var action = new Read(_app.actor.list.User.Context) { Path = MakePath(rel) };
         var result = await action.Start();
         await result.IsSuccess();
         return result;
@@ -66,7 +66,7 @@ public class Stage3_ReferenceNarrowTests : IDisposable
     {
         // remote scheme routes to `url` with NO fetch — pure construction
         var http = new global::app.type.item.path.http.@this("http://example.com/data.json") {};
-        var action = new Read(_app.User.Context) { Path = new global::app.data.@this<PLangPath>("", http) };
+        var action = new Read(_app.actor.list.User.Context) { Path = new global::app.data.@this<PLangPath>("", http) };
         var result = await action.Start();
         await result.IsSuccess();
         await Assert.That(result.Type!.Name).IsEqualTo("url");
@@ -82,10 +82,10 @@ public class Stage3_ReferenceNarrowTests : IDisposable
         var data = await Read("report.csv");
         await Assert.That(data.Type!.kind.Name).IsEqualTo("csv");
         var op = new global::app.data.Operator("is");
-        var right = new Data("", "table", context: _app.User.Context);
-        var isTable = (await op.Evaluate(data, right, _app.User.Context)).ToBoolean();
-        var rightList = new Data("", "list", context: _app.User.Context);
-        var isList = (await op.Evaluate(data, rightList, _app.User.Context)).ToBoolean();
+        var right = new Data("", "table", context: _app.actor.list.User.Context);
+        var isTable = (await op.Evaluate(data, right, _app.actor.list.User.Context)).ToBoolean();
+        var rightList = new Data("", "list", context: _app.actor.list.User.Context);
+        var isList = (await op.Evaluate(data, rightList, _app.actor.list.User.Context)).ToBoolean();
         await Assert.That(isTable || isList).IsTrue()
             .Because("csv content narrows to table (or list)");
     }

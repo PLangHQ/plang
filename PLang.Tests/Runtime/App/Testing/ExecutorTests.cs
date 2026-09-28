@@ -46,7 +46,7 @@ public class ExecutorTests
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
         await Assert.That(engine!.test.list.Session != null).IsTrue();
-        await Assert.That((string?)await engine.System.Context.Variable.GetValue("goalFile"))
+        await Assert.That((string?)await engine.actor.list.System.Context.Variable.GetValue("goalFile"))
             .IsEqualTo("/system/.build/test.pr");
         await using var _ = engine;
     }
@@ -63,8 +63,8 @@ public class ExecutorTests
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
         await Assert.That(engine!.test.list.Session != null).IsTrue();
-        await Assert.That(engine.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds).IsEqualTo(5);
-        await Assert.That(engine.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel).IsEqualTo(3);
+        await Assert.That(engine.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds).IsEqualTo(5);
+        await Assert.That(engine.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel).IsEqualTo(3);
         await using var _ = engine;
     }
 
@@ -108,7 +108,7 @@ public class ExecutorTests
         await Assert.That(engine).IsNotNull();
         await Assert.That(engine!.Build != null).IsTrue();
         // %!build.cache% — what the builder's goals hand llm.query (`cache=%!build.cache%`)
-        var cacheVar = await new global::app.type.item.variable.@this("!build.cache").Start(engine.User.Context);
+        var cacheVar = await new global::app.type.item.variable.@this("!build.cache").Start(engine.actor.list.User.Context);
         await Assert.That((await cacheVar.Value())?.ToString()).IsEqualTo("true");
         await using var _ = engine;
     }
@@ -122,7 +122,7 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await using var _ = engine!;
-        var cacheVar = await new global::app.type.item.variable.@this("!build.cache").Start(engine!.User.Context);
+        var cacheVar = await new global::app.type.item.variable.@this("!build.cache").Start(engine!.actor.list.User.Context);
         await Assert.That((await cacheVar.Value())?.ToString()).IsEqualTo("false");
     }
 
@@ -149,7 +149,7 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
-        var vars = engine!.User.Context.Variable;
+        var vars = engine!.actor.list.User.Context.Variable;
         await Assert.That((long)(await vars.GetValue("count"))!).IsEqualTo(42L);
         await Assert.That((string?)await vars.GetValue("label")).IsEqualTo("hello");
         await using var _ = engine;
@@ -168,7 +168,7 @@ public class ExecutorTests
         await Assert.That(engine!.test.list.Session != null).IsFalse();
         await Assert.That(engine.Debug != null).IsFalse();
         await Assert.That(engine.Build != null).IsFalse();
-        await Assert.That((string?)await engine.System.Context.Variable.GetValue("goalFile"))
+        await Assert.That((string?)await engine.actor.list.System.Context.Variable.GetValue("goalFile"))
             .IsEqualTo("/.build/start.pr");
         await using var _ = engine;
     }

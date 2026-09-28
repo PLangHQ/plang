@@ -48,14 +48,14 @@ public class CollectedTypeTests
     [Test] public async Task AppType_Navigation_AMemberFirst_ThenAType()
     {
         await using var app = TestApp.Create("/test");
-        var parent = new global::app.data.@this("type", app.type, context: app.User.Context);
+        var parent = new global::app.data.@this("type", app.type, context: app.actor.list.User.Context);
 
         var list = await app.type.Get(parent, "list");
         await Assert.That(list.Peek()).IsSameReferenceAs(app.type.list);
 
         var number = await app.type.Get(parent, "number");
         await Assert.That(((global::app.type.@this)number.Peek()).Name).IsEqualTo("number");
-        await Assert.That(number.Context).IsSameReferenceAs(app.User.Context);
+        await Assert.That(number.Context).IsSameReferenceAs(app.actor.list.User.Context);
 
         var none = await app.type.Get(parent, "nope");
         await Assert.That(none.Success).IsFalse();
@@ -67,7 +67,7 @@ public class CollectedTypeTests
     {
         var buffer = new System.IO.MemoryStream();
         using (var utf8 = new System.Text.Json.Utf8JsonWriter(buffer))
-            await value.Output(new global::app.type.format.json.Writer(utf8, view), view, app.User.Context);
+            await value.Output(new global::app.type.format.json.Writer(utf8, view), view, app.actor.list.User.Context);
         return System.Text.Encoding.UTF8.GetString(buffer.ToArray());
     }
 
@@ -104,7 +104,7 @@ public class CollectedTypeTests
     {
         await using var app = TestApp.Create("/test");
         var probes = new global::app.type.@this<Probe.@this, global::app.type.item.list.@this<Probe.@this>>(app);
-        var current = probes.current(app.User.Context);
+        var current = probes.current(app.actor.list.User.Context);
         await Assert.That(current.Success).IsFalse();
         await Assert.That(current.Error!.StatusCode).IsEqualTo(404);
     }

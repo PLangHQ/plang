@@ -18,7 +18,7 @@ public class Stage5_ListDictOpsTests
     private global::app.@this _app = null!;
     [Before(Test)] public void Setup() => _app = global::PLang.Tests.TestApp.Create("/app");
     [After(Test)] public async Task TearDown() { await _app.DisposeAsync(); }
-    private (global::app.actor.context.@this ctx, Variables vars) Ctx() => (_app.User.Context, _app.User.Context.Variable);
+    private (global::app.actor.context.@this ctx, Variables vars) Ctx() => (_app.actor.list.User.Context, _app.actor.list.User.Context.Variable);
     private Data D(object? v) => _app.Data("", v);
     private DictV Person(string field, object? val) { var d = new DictV(); d.Set(_app.Data(field, val)); return d; }
 

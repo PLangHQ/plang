@@ -20,7 +20,7 @@ public class DictTypedEntryRoundTripTests
     public async Task DictOfTypedEntries_StoreRoundTrip_PreservesNestedTypes()
     {
         await using var app = NewApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
 
         // value = dict { description: text, steps: list[ dict{index:number} ] }
         var steps = new global::app.type.item.list.@this()

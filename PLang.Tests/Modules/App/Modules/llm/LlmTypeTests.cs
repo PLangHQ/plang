@@ -67,7 +67,7 @@ public class LlmTypeTests
     public async Task Call_Parallel_DefaultsFalse()
     {
         await using var app = global::PLang.Tests.TestApp.Plain("/test");
-        var (handler, _) = await Make.Tool("Any").Bind(app.User.Context);
+        var (handler, _) = await Make.Tool("Any").Bind(app.actor.list.User.Context);
         var call = (global::app.module.action.goal.Call)handler!;
         await Assert.That(await call.Parallel.ToBooleanAsync()).IsFalse();
     }

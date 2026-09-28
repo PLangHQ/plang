@@ -16,7 +16,7 @@ public class Cut1_TypedSetRoundTripsKind
     // here the developer declared `md`, so it survives.
     [Test] public async Task SetAsTextMd_DocTypeIsTextWithKindMd()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%doc%"),
             ("value", "readme.md"),
@@ -32,7 +32,7 @@ public class Cut1_TypedSetRoundTripsKind
 
     [Test] public async Task SetAsTextMd_NavigationResolvesKindFromVariableExpression()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%doc%"),
             ("value", "readme.md"),

@@ -221,18 +221,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     internal global::app.type.@this channel { get; }
 
     /// <summary>
-    /// System actor — the root of the cancellation hierarchy.
-    /// Cancelling System cascades to User and Service.
-    /// Links to App's shutdown token so RequestShutdown() cascades through everything.
-    /// </summary>
-    public global::app.actor.@this System => actor.list.System;
-
-    /// <summary>
-    /// User actor for end user operations. Links to System's cancellation token.
-    /// </summary>
-    public global::app.actor.@this User => actor.list.User;
-
-    /// <summary>
     /// Flat per-call Service collection. Each Service is one outbound call's I/O
     /// scope (channels, identity, parent ref). Stage 7: replaces runtime1's
     /// Service-as-actor model.
@@ -287,7 +275,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // startup — null = off. Presence is the enable signal (no IsEnabled).
         type = new(this);
         type.list.Replace(type);   // %!app.type% and the list's entry named type are one object
-        Code = new AppCode(System.Context);
+        Code = new AppCode(actor.list.System.Context);
         _store = new Lazy<Task<global::app.store.@this>>(Open);
         module = new(this);
         goal = new(this);
@@ -302,8 +290,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         step = type.list["step"];
         action = type.list["action"];
         channel = type.list["channel"];
-        System.Setting.Written += Refresh;
-        User.Setting.Written += Refresh;
+        actor.list.System.Setting.Written += Refresh;
+        actor.list.User.Setting.Written += Refresh;
 
         Code.RegisterDefaults();
         // path's schemes, each a kind of path that builds its own path subclass. (The types' own
@@ -324,8 +312,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // itself to bind real stdin.
         if (autoWireConsoleChannels)
         {
-            WireConsoleChannels(System, interactiveInput: false);
-            WireConsoleChannels(User, interactiveInput: false);
+            WireConsoleChannels(actor.list.System, interactiveInput: false);
+            WireConsoleChannels(actor.list.User, interactiveInput: false);
         }
     }
 
@@ -386,7 +374,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     {
         await Identity();
         // the actors' saved settings, read once: after this a setting is built in memory
-        await User.Setting.Load();
+        await actor.list.User.Setting.Load();
         Refresh("");
     }
 
@@ -406,18 +394,18 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             foreach (var one in actor.list.Items())
                 one.CallStack.Setting = one.Context.Setting.Of<global::app.callstack.setting.@this>();
         if (Debug != null && Covers(new global::app.module.action.debug.setting.@this().Path))
-            Debug.Setting = System.Context.Setting.Of<global::app.module.action.debug.setting.@this>();
+            Debug.Setting = actor.list.System.Context.Setting.Of<global::app.module.action.debug.setting.@this>();
     }
 
     // The app's identity, from .build/app.pr when there is one.
     private async Task Identity()
     {
-        var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", System.Context!);
-        var exists = await prPath.ExistsAsync(System.Context!);
+        var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", actor.list.System.Context!);
+        var exists = await prPath.ExistsAsync(actor.list.System.Context!);
         if (!exists.Success || (await exists.Value())?.Value != true) return;
         // app.pr is the app's identity, not a goal: its raw content. Its value would go through the .pr
         // format's goal reader, which refuses a file that isn't a goal.
-        var bytes = await (await prPath.Read(System.Context!)).Use<global::app.type.item.IContent>(async file => await file.Content(System.Context!));
+        var bytes = await (await prPath.Read(actor.list.System.Context!)).Use<global::app.type.item.IContent>(async file => await file.Content(actor.list.System.Context!));
         if (!bytes.Success)
             throw new InvalidOperationException($"{prPath} could not be read: {bytes.Error?.Message}");
         if (bytes.Peek().IsNull) return;
@@ -446,10 +434,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         if (Created == default) Created = Updated;
         // App says where; the file writes it — .pr is a program file, so its format writes the host's [Store]
         // face. No hard-coded field list (add a [Store] prop → it persists).
-        var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", System.Context!);
-        var written = await prPath.Save(System.Context!.Ok(new global::app.type.clr.@this<global::app.@this>(this, System.Context!)), System.Context!);
+        var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", actor.list.System.Context!);
+        var written = await prPath.Save(actor.list.System.Context!.Ok(new global::app.type.clr.@this<global::app.@this>(this, actor.list.System.Context!)), actor.list.System.Context!);
         if (!written.Success) return written;
-        return System.Context!.Ok(this);
+        return actor.list.System.Context!.Ok(this);
     }
 
     /// <summary>
@@ -539,7 +527,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     private async Task<data.@this> Show(data.@this failed)
     {
         if (failed.Error is not { } error) return failed;
-        var context = User.Context;
+        var context = actor.list.User.Context;
         var loaded = await goal.Load("/system/error/.build/show.pr");
         if (!loaded.Success || await loaded.Value() is not Goal show)
         {
@@ -561,15 +549,15 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
         // Invariant: every I/O actor must have all three role-channels registered
         // by the entry point before goal execution. Surface a clear error otherwise.
-        foreach (var actor in new[] { System, User })
+        foreach (var each in actor.list.Items())
         {
-            var invariant = actor.Channel.Verify();
+            var invariant = each.Channel.Verify();
             if (!invariant.Success) return invariant;
         }
 
         // Bootstrap runs under System's context; user code runs under User's context (below).
         // Execution flows the actor via its context — there is no global "current actor".
-        var context = System.Context;
+        var context = actor.list.System.Context;
 
         // Build → PLang builder (runs as User — user is building their code).
         if (Mode.Value == global::app.Mode.Build) return await Build!.Start();
@@ -588,7 +576,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
         // User code executes under the User actor's context — the app starts running through its on.start: a
         // before that fails or cancels is the answer and the goal doesn't start; every after runs on the result.
-        var user = User.Context;
+        var user = actor.list.User.Context;
         var answer = await on.start.Before(this, user);
         var result = answer is { Success: false } or { Handled: true } ? answer : await goal.Start(user);
         return await on.start.After(this, result, user);
@@ -609,13 +597,13 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
         // so the App.Id scoping is load-bearing.
         if (Mode.Value == global::app.Mode.Test)
-            return global::app.store.sqlite.@this.InMemory($"system-{Id}", System.Context);
+            return global::app.store.sqlite.@this.InMemory($"system-{Id}", actor.list.System.Context);
 
         // Lift to Path: AuthGate fires inside CreateAsync on Write,
         // parent dir creation via path.Mkdir. Async all the way — no sync-wait,
         // so parallel App constructions never starve the threadpool.
-        var dbPath = global::app.type.item.path.@this.Resolve("/.db/system.sqlite", System.Context);
-        return await global::app.store.sqlite.@this.CreateAsync(dbPath, System.Context);
+        var dbPath = global::app.type.item.path.@this.Resolve("/.db/system.sqlite", actor.list.System.Context);
+        return await global::app.store.sqlite.@this.CreateAsync(dbPath, actor.list.System.Context);
     }
 
     public async ValueTask DisposeAsync()

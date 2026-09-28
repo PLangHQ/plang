@@ -15,7 +15,7 @@ public class Stage2_PlaneResolverTests
     {
         // %dict.field% → dict's content via the type's own resolver; no central case-table
         await using var app = NewApp();
-        var d = new Data("cfg", new Dictionary<string, object?> { ["field"] = "content" }, context: app.User.Context);
+        var d = new Data("cfg", new Dictionary<string, object?> { ["field"] = "content" }, context: app.actor.list.User.Context);
         var child = await d.Get("field");
         await Assert.That((await child.Value())?.ToString()).IsEqualTo("content");
     }
@@ -25,7 +25,7 @@ public class Stage2_PlaneResolverTests
     {
         // %text!length% — the value's own property, answered in a PLang value
         await using var app = NewApp();
-        var t = new Data("s", new global::app.type.item.text.@this("hello"), context: app.User.Context);
+        var t = new Data("s", new global::app.type.item.text.@this("hello"), context: app.actor.list.User.Context);
         var length = await t.Get("!length");
         await Assert.That(length.Peek()).IsTypeOf<global::app.type.item.number.@this>();
         await Assert.That(length.Peek()!.ToString()).IsEqualTo("5");
@@ -41,7 +41,7 @@ public class Stage2_PlaneResolverTests
         // %x!type% → headline type name (post-narrow: `dict`)
         await using var app = NewApp();
         var d = new Data("x", new Dictionary<string, object?> { ["k"] = 1 },
-            global::PLang.Tests.TestApp.SharedContext.App.type.list["dict"], context: app.User.Context);
+            global::PLang.Tests.TestApp.SharedContext.App.type.list["dict"], context: app.actor.list.User.Context);
         var t = await d.Get("!type");
         await Assert.That(((await t.Value()) as global::app.type.@this)?.Name).IsEqualTo("dict");
     }
@@ -88,14 +88,14 @@ public class Stage2_PlaneResolverTests
         // label is not API surface); the Store view keeps it (.pr parameters
         // bind by name). `%x.name%` reads the content's own field.
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = new Data("myBinding", new Dictionary<string, object?> { ["name"] = "ingi" }, context: ctx);
 
         // A Data writes itself via Data.Output through the serializer's async path — the Wire
         // converter is read-only and throws on STJ Write. Out drops the envelope name; Store keeps it.
-        var plang = app.User.Context.Format("application/plang");
-        var outbound = plang.Serialize(d, app.User.Context).Peek()!.ToString()!;
-        var store = plang.Store(d, app.User.Context).Peek()!.ToString()!;
+        var plang = app.actor.list.User.Context.Format("application/plang");
+        var outbound = plang.Serialize(d, app.actor.list.User.Context).Peek()!.ToString()!;
+        var store = plang.Store(d, app.actor.list.User.Context).Peek()!.ToString()!;
 
         await Assert.That(outbound).DoesNotContain("\"myBinding\"");
         await Assert.That(store).Contains("\"myBinding\"");
@@ -109,7 +109,7 @@ public class Stage2_PlaneResolverTests
     {
         // %dict.size% (content key=10) and %dict!size% (property bag=28) — sigil picks the plane
         await using var app = NewApp();
-        var d = new Data("dict", new Dictionary<string, object?> { ["size"] = 10 }, context: app.User.Context);
+        var d = new Data("dict", new Dictionary<string, object?> { ["size"] = 10 }, context: app.actor.list.User.Context);
         d.Properties["size"] = 28;
         var content = await d.Get("size");     // `.` — the data plane (content key)
         var property = await d.Get("!size");   // `!` — the property plane (Properties bag)

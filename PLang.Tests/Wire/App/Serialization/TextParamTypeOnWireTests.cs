@@ -9,11 +9,11 @@ public class TextParamTypeOnWireTests
     {
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-ptype-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var plang = app.User.Context.Format("application/plang");
+        var plang = app.actor.list.User.Context.Format("application/plang");
 
         // No Context → no signing, so we see the raw {name, type?, value} shape.
         var data = new global::app.data.@this("Content", "Hi %name%", context: global::PLang.Tests.TestApp.SharedContext);
-        var json = (await plang.Store(data, app.User.Context).Value())!.Clr<string>()!;
+        var json = (await plang.Store(data, app.actor.list.User.Context).Value())!.Clr<string>()!;
 
         // A text param is self-describing — it carries its type, so the read is typed
         // (text.Read borns the template) and no Judge has to infer it.

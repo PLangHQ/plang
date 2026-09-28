@@ -10,7 +10,7 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
         "/tmp/jss-" + System.Guid.NewGuid().ToString("N")[..6]);
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
-    private global::app.actor.context.@this Ctx => app.User.Context;
+    private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
     private global::app.type.kind.@this Json => Ctx.Format("application/json");
 
     [Test]

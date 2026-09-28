@@ -22,7 +22,7 @@ public class @this : global::app.goal.step.action.@this
     internal override void Attach(global::app.goal.step.action.@this? before)
     {
         if (before != null)
-            ((global::app.module.IClause)Module.Create(Name, Module.App.System.Context)!).Bind(this, before);
+            ((global::app.module.IClause)Module.Create(Name, Module.App.actor.list.System.Context)!).Bind(this, before);
     }
 
     /// <summary>A clause belongs to the step action before it, and so does what follows it.</summary>

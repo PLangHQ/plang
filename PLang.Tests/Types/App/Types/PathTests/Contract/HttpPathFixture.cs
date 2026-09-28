@@ -35,7 +35,7 @@ public sealed class HttpPathFixture : IPathSchemeFixture, IDisposable
 
     public Task Cleanup(Path p) => Task.CompletedTask;   // server entries die with the server
 
-    public global::app.actor.context.@this Context => _app.User.Context;
+    public global::app.actor.context.@this Context => _app.actor.list.User.Context;
 
     public bool CanPerform(VerbName verb) => verb != VerbName.List;
 

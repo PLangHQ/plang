@@ -18,7 +18,7 @@ public class SetMintCarriesKindTests
         // the polymorphic Value slot); the test asserts only Name as the
         // contract for the bare-set path. Stamping kind from extension at the
         // bare-set path is the `as text` enhancement, not this path.
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%doc%"),
             ("value", "readme.md"));
@@ -34,7 +34,7 @@ public class SetMintCarriesKindTests
         // 9-char string "readme.md", not a markdown document. `text` never
         // derives a kind from a literal — kind comes only from an explicit
         // `as text/<kind>` or a producing action'(await s Build()).
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%doc%"),
             ("value", "readme.md"),
@@ -50,7 +50,7 @@ public class SetMintCarriesKindTests
     {
         // A reference fundamental DOES parse its kind from the path — the value
         // is a path/handle whose extension is a real format signal.
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%pic%"),
             ("value", "file.jpg"),
@@ -66,7 +66,7 @@ public class SetMintCarriesKindTests
     {
         // No `as` clause → the value-shape type wins. A media extension in a
         // bare literal does NOT promote it to image — there is no image literal.
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%x%"),
             ("value", "file.jpg"));
@@ -79,7 +79,7 @@ public class SetMintCarriesKindTests
 
     [Test] public async Task Run_SetAsImageGifWithGifBytes_MintTypeIsImageGif()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%img%"),
             ("value", "real.gif"),

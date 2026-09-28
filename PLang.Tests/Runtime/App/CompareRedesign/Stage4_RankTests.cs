@@ -13,7 +13,7 @@ public class Stage4_RankTests
         System.IO.Path.GetTempPath(), "plang-stage4r-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     private static Data D(global::app.@this app, object? v, string typeName)
-        => new("x", v, global::PLang.Tests.TestApp.SharedContext.App.type.list[typeName], context: app.User.Context);
+        => new("x", v, global::PLang.Tests.TestApp.SharedContext.App.type.list[typeName], context: app.actor.list.User.Context);
 
     [Test]
     public async Task Rank_NumberOverText_DateOverText_TextIsFloor()
@@ -44,8 +44,8 @@ public class Stage4_RankTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-rank-" + System.Guid.NewGuid().ToString("N")[..8]);
         await using var app2 = new global::app.@this(root);
         var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "cfg.json"));
-        await (await p.WriteText("5", app2.User.Context)).IsSuccess();
-        var pending = await p.Decoded(app2.User.Context);   // raw-backed, unparsed
+        await (await p.WriteText("5", app2.actor.list.User.Context)).IsSuccess();
+        var pending = await p.Decoded(app2.actor.list.User.Context);   // raw-backed, unparsed
         var other = D(app2, 5, "number");
         _ = await pending.Compare(other);
         await Assert.That(pending.MaterializeCount()).IsGreaterThanOrEqualTo(1);   // compare reads the value

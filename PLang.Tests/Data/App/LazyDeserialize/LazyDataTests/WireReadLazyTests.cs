@@ -53,7 +53,7 @@ public class WireReadLazyTests
         // a Context is present (the realistic runtime path — the context-less
         // fallback can't resolve a kind and lifts the bare JSON number as long).
         await using var app = global::PLang.Tests.TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
         var d = app.Ok(5);                 // number / int derived
         d.Name = "n";

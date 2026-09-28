@@ -27,7 +27,7 @@ public class Stage2_NavigationAsyncTests
         // ValueTask.IsCompletedSuccessfully on materialised dict navigation; zero alloc on hot path
         await using var app = NewApp(out _);
         var dict = new Dictionary<string, object?> { ["name"] = "alice" };
-        var d = new Data("user", dict, context: app.User.Context);
+        var d = new Data("user", dict, context: app.actor.list.User.Context);
         var vt = d.Get("name");
         await Assert.That(vt.IsCompletedSuccessfully).IsTrue();   // in-memory: no async hop
         await Assert.That((await (await vt).Value())?.ToString()).IsEqualTo("alice");
@@ -38,7 +38,7 @@ public class Stage2_NavigationAsyncTests
     {
         // first nav on a pending reference awaits; subsequent navs sync-complete
         await using var app = NewApp(out _);
-        var vars = app.User.Context.Variable;
+        var vars = app.actor.list.User.Context.Variable;
         await vars.Set("x", 42);
         var vt = vars.Get("x");
         await Assert.That(vt.IsCompletedSuccessfully).IsTrue();   // in-memory value: sync-complete
@@ -50,12 +50,12 @@ public class Stage2_NavigationAsyncTests
     {
         // %a.b.c.d% — single `await` in caller, no `.Result`, no `GetAwaiter().GetResult()` anywhere on the chain
         await using var app = NewApp(out _);
-        var vars = app.User.Context.Variable;
+        var vars = app.actor.list.User.Context.Variable;
         await vars.Set("a", new Dictionary<string, object?>
         {
             ["b"] = new Dictionary<string, object?> { ["c"] = "deep" }
         });
-        var resolved = await app.User.Context.Rendered("%a.b.c%");   // ONE await in the caller
+        var resolved = await app.actor.list.User.Context.Rendered("%a.b.c%");   // ONE await in the caller
         await Assert.That(resolved).IsEqualTo("deep");
     }
 
@@ -85,8 +85,8 @@ public class Stage2_NavigationAsyncTests
         // (so `%file!file!path%` stays at 0, `%file.field%` increments)
         await using var app = NewApp(out var root);
         var p = new global::app.type.item.path.file.@this(System.IO.Path.Combine(root, "cfg.json"));
-        await (await p.WriteText("{\"port\":8080}", app.User.Context)).IsSuccess();
-        var d = await p.Decoded(app.User.Context);
+        await (await p.WriteText("{\"port\":8080}", app.actor.list.User.Context)).IsSuccess();
+        var d = await p.Decoded(app.actor.list.User.Context);
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);       // read step: nothing parsed
         var port = await (await d.Get("port")).Value();      // first navigation parses
         await Assert.That(d.MaterializeCount()).IsEqualTo(1);

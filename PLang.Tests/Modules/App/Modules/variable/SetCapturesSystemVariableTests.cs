@@ -10,7 +10,7 @@ public class SetCapturesSystemVariableTests
     public async Task SetFromNow_HoldsTheMomentOfTheSet()
     {
         await using var app = TestApp.Create("/tmp/setnow-" + System.Guid.NewGuid().ToString("N")[..8]);
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%start%"), ("value", "%Now%"));
         await (await action.Start(context)).IsSuccess();
 

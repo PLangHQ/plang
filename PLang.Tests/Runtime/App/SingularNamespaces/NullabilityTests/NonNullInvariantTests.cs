@@ -33,7 +33,7 @@ public class NonNullInvariantTests
         // A declared type that doesn't know its class is born through the types by the Data,
         // which holds the context.
         var d = new global::app.data.@this("", "any/raw/value",
-            new global::app.type.@this("path"), context: app.User.Context);
+            new global::app.type.@this("path"), context: app.actor.list.User.Context);
         await Assert.That(d.Type.ClrType).IsEqualTo(typeof(global::app.type.item.path.@this))
             .Because("the Data births its declared type through the types, which know path's class.");
         var clr = d.Context!.App.type.list.Clr(d.Type.Name);

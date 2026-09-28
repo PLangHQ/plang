@@ -54,10 +54,10 @@ public sealed class @this
     {
         // Debug surface routes via System actor's "error" channel (stderr equivalent).
         // Stage 6: was app.channels.WriteAsync; now per-actor.
-        var ch = _context.App.System.Channel.Get(app.channel.list.@this.Debug)
-              ?? _context.App.System.Channel.Get(app.channel.list.@this.Error);
+        var ch = _context.App.actor.list.System.Channel.Get(app.channel.list.@this.Debug)
+              ?? _context.App.actor.list.System.Channel.Get(app.channel.list.@this.Error);
         if (ch == null) return Task.CompletedTask;
-        var envelope = message is app.data.@this d ? d : _context.App.System.Context.Ok(message);
+        var envelope = message is app.data.@this d ? d : _context.App.actor.list.System.Context.Ok(message);
         return ch.WriteAsync(envelope);
     }
 
@@ -83,9 +83,9 @@ public sealed class @this
             bool Watches(global::app.type.item.@this item, actor.context.@this _)
                 => item is global::app.type.item.variable.@this variable && watched.Contains(variable.Name);
             variables.Bind("set", When.after, (item, result, context) => Watch((global::app.type.item.variable.@this)item, "SET", result, context),
-                _context.App.User, global::app.@event.binding.Scope.actor, Watches);
+                _context.App.actor.list.User, global::app.@event.binding.Scope.actor, Watches);
             variables.Bind("remove", When.after, (item, result, context) => Watch((global::app.type.item.variable.@this)item, "DELETED", null, context),
-                _context.App.User, global::app.@event.binding.Scope.actor, Watches);
+                _context.App.actor.list.User, global::app.@event.binding.Scope.actor, Watches);
         }
 
         // Subscribe to granular LLM tracing — each Llm.* flag emits its own block to stderr or file.
@@ -93,7 +93,7 @@ public sealed class @this
         {
             if (_context.App.Code.Get<global::app.module.action.llm.code.ILlm>().Provider is global::app.module.action.llm.code.OpenAi oai)
             {
-                var context = _context.App.User.Context;
+                var context = _context.App.actor.list.User.Context;
                 var toFile = string.Equals(llm.Output.ToString(), "file", StringComparison.OrdinalIgnoreCase);
 
                 oai.OnBeforeRequest += async (messages, schema) =>
@@ -142,7 +142,7 @@ public sealed class @this
         // Debug watches user execution, so its bindings on the step, goal (and action) types' on.start are the
         // User actor's (where user goals run) — Debug itself is born with System's context. They live as long
         // as the app whose types they are bound on.
-        var user = _context.App.User;
+        var user = _context.App.actor.list.User;
         var types = _context.App.type.list;
         var step = Setting.Step?.ToInt32();
 

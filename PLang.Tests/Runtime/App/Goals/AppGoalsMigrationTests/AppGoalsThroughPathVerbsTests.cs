@@ -55,7 +55,7 @@ public class AppGoalsThroughPathVerbsTests
         var goal = new Goal
         {
             Name = "ProcessData",
-            Path = global::app.type.item.path.@this.Resolve("/processdata.goal", app.User.Context)
+            Path = global::app.type.item.path.@this.Resolve("/processdata.goal", app.actor.list.User.Context)
         };
         app.goal.list.Add(goal);
         // Fuzzy by-name lookup: case-insensitive, picks up the goal.

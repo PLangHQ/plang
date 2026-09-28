@@ -12,7 +12,7 @@ public class TypeCatalogTwinTests
         await using var app = TestApp.Create("/test");
         var types = new List<global::app.type.@this>();
         for (var i = 0; i < app.type.list.CountRaw; i++)
-            types.Add((global::app.type.@this)app.type.list.At(i, app.User.Context)!.Peek()!);
+            types.Add((global::app.type.@this)app.type.list.At(i, app.actor.list.User.Context)!.Peek()!);
 
         var root = new System.Text.Json.Nodes.JsonObject();
         foreach (var type in types.Where(t => t.Namespace != null).OrderBy(t => t.Namespace, StringComparer.Ordinal))

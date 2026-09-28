@@ -49,7 +49,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
     {
         // A raw-backed json-array value materializes to the list value type on first touch (B+J).
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = new global::app.data.@this("nums", ctx.App.type.list[new type("item", "json"), ctx].Make("[1,2,3]", ctx), context: ctx);
         await Assert.That((await d.Value())).IsTypeOf<ListV>();
         await Assert.That(((ListV)(await d.Value())!).Count).IsEqualTo(3);
@@ -107,7 +107,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
     {
         // Coercing the list value type to a typed List<T> reads each element Data's value (I).
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var list = new ListV();
         list.Add(app.Data("", 1L));
         list.Add(app.Data("", 2L));
@@ -133,7 +133,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
     public async Task F1_SignedElementInList_SurvivesPlangWireRoundTrip()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
 
         var list = new ListV();

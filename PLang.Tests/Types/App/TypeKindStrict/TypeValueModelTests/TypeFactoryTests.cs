@@ -20,7 +20,7 @@ public class TypeFactoryTests
 
     [Test] public async Task Door_NameKindStrict_CarriesAllThree()
     {
-        var t = _app.type.list[new TypeEntity("image", "gif", strict: true), _app.User.Context];
+        var t = _app.type.list[new TypeEntity("image", "gif", strict: true), _app.actor.list.User.Context];
         await Assert.That(t.Name).IsEqualTo("image");
         await Assert.That(t.kind.Name).IsEqualTo("gif");
         await Assert.That(t.Strict).IsTrue();
@@ -34,7 +34,7 @@ public class TypeFactoryTests
 
     [Test] public async Task Door_Identity_CanonicalisesKind()
     {
-        var t = _app.type.list[new TypeEntity("text", "markdown"), _app.User.Context];
+        var t = _app.type.list[new TypeEntity("text", "markdown"), _app.actor.list.User.Context];
         await Assert.That(t.Name).IsEqualTo("text");
         await Assert.That(t.kind.Name).IsEqualTo("md");
     }
@@ -49,7 +49,7 @@ public class TypeFactoryTests
     [Test] public async Task Door_StrictDefaultsFalse()
     {
         var a = _app.type.list["text"];
-        var b = _app.type.list[new TypeEntity("text", "md"), _app.User.Context];
+        var b = _app.type.list[new TypeEntity("text", "md"), _app.actor.list.User.Context];
         await Assert.That(a.Strict).IsFalse();
         await Assert.That(b.Strict).IsFalse();
     }
@@ -70,8 +70,8 @@ public class TypeFactoryTests
 
     [Test] public async Task Door_SameIdentity_SameFullType()
     {
-        var a = _app.type.list[new TypeEntity("image", "gif"), _app.User.Context];
-        var b = _app.type.list[new TypeEntity("image", "gif"), _app.User.Context];
+        var a = _app.type.list[new TypeEntity("image", "gif"), _app.actor.list.User.Context];
+        var b = _app.type.list[new TypeEntity("image", "gif"), _app.actor.list.User.Context];
         await Assert.That(a.Equals(b)).IsTrue();
     }
 
@@ -86,7 +86,7 @@ public class TypeFactoryTests
     {
         // strict on a family without IKindValidatable degrades to "kind-name-accepted" —
         // the door never throws; the byte-sniff path simply never runs.
-        var t = _app.type.list[new TypeEntity("text", "md", strict: true), _app.User.Context];
+        var t = _app.type.list[new TypeEntity("text", "md", strict: true), _app.actor.list.User.Context];
         await Assert.That(t.Strict).IsTrue();
         await Assert.That(t.Name).IsEqualTo("text");
         await Assert.That(t.kind.Name).IsEqualTo("md");

@@ -13,16 +13,16 @@ public class SharedListNavigationTests
         await using var app = TestApp.Create("/tmp/sharedlist-" + System.Guid.NewGuid().ToString("N")[..8]);
         var goal = Make.Goal("Start", Make.Step("first step"), Make.Step("second step"));
         var before = goal.Step.Slots().ToList();
-        var user = new Data("goal", goal, context: app.User.Context);
-        var system = new Data("goal", goal, context: app.System.Context);
+        var user = new Data("goal", goal, context: app.actor.list.User.Context);
+        var system = new Data("goal", goal, context: app.actor.list.System.Context);
 
         var reads = await Task.WhenAll(Enumerable.Range(0, 20).Select(i =>
             (i % 2 == 0 ? user : system).Get("Step[0].Text").AsTask()));
 
         foreach (var read in reads)
             await Assert.That((await read.Value())?.ToString()).IsEqualTo("first step");
-        await Assert.That((await user.Get("Step[0]")).Context).IsSameReferenceAs(app.User.Context);
-        await Assert.That((await system.Get("Step[0]")).Context).IsSameReferenceAs(app.System.Context);
+        await Assert.That((await user.Get("Step[0]")).Context).IsSameReferenceAs(app.actor.list.User.Context);
+        await Assert.That((await system.Get("Step[0]")).Context).IsSameReferenceAs(app.actor.list.System.Context);
 
         // The stored slots are the same step items as before — nothing was wrapped or stamped.
         var after = goal.Step.Slots().ToList();

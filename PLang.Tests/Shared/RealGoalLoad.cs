@@ -27,7 +27,7 @@ public static class RealGoalLoad
     {
         // Write the .pr the way the real builder now does — through goal.Output (Store), not STJ —
         // so the test exercises the actual write path, not the soon-to-be-deleted PrWrite.
-        return await Read(app, await app.User.Context.Pr(goal));
+        return await Read(app, await app.actor.list.User.Context.Pr(goal));
     }
 
     /// <summary>A .pr's text read the way the runtime reads one off I/O: a stream channel, mime
@@ -40,7 +40,7 @@ public static class RealGoalLoad
         {
             Mime = "application/plang-goal",
         };
-        app.User.Channel.Register(channel);
+        app.actor.list.User.Channel.Register(channel);
 
         var read = await channel.Read();
         if (!read.Success)

@@ -31,7 +31,7 @@ public class ForeachErrorPropagationTests
     [Test]
     public async Task Foreach_BodyGoalCallFails_PropagatesError()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("MissingGoalRunner",
@@ -63,7 +63,7 @@ public class ForeachErrorPropagationTests
     [Test]
     public async Task Foreach_BodyInnerGoalFailsInsideConditionIf_PropagatesError()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
         // Inner goal with a single step: [condition.if(true), goal.call Missing]
@@ -127,7 +127,7 @@ public class ForeachErrorPropagationTests
     [Test]
     public async Task Foreach_BodySucceeds_CompletesAllIterations()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
         _app.goal.list.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });

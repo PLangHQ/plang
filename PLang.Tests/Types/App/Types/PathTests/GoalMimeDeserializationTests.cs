@@ -34,7 +34,7 @@ public class GoalMimeDeserializationTests
         var abs = System.IO.Path.Combine(root, "Start.goal");
         await System.IO.File.WriteAllTextAsync(abs, SimpleGoalText);
         var p = new FilePath(abs);
-        var read = await p.Touch(app.User.Context);
+        var read = await p.Touch(app.actor.list.User.Context);
         await read.IsSuccess();
         await Assert.That((await read.Value())?.ToString()).IsEqualTo(SimpleGoalText);
     }
@@ -45,7 +45,7 @@ public class GoalMimeDeserializationTests
         var abs = System.IO.Path.Combine(root, "Start.test.goal");
         await System.IO.File.WriteAllTextAsync(abs, SimpleGoalText);
         var p = new FilePath(abs);
-        var read = await p.Touch(app.User.Context);
+        var read = await p.Touch(app.actor.list.User.Context);
         await read.IsSuccess();
         await Assert.That((await read.Value())?.ToString()).IsEqualTo(SimpleGoalText);
     }
@@ -57,7 +57,7 @@ public class GoalMimeDeserializationTests
         var json = "{\"path\":\"Start.goal\",\"name\":\"Start\"}";
         await System.IO.File.WriteAllTextAsync(prAbs, json);
         var p = new FilePath(prAbs);
-        var read = await p.Touch(app.User.Context);
+        var read = await p.Touch(app.actor.list.User.Context);
         await read.IsSuccess();
         await Assert.That((await read.Value()) is Goal).IsTrue();
     }
@@ -69,9 +69,9 @@ public class GoalMimeDeserializationTests
         var abs = System.IO.Path.Combine(root, "Start.goal");
         await System.IO.File.WriteAllTextAsync(abs, SimpleGoalText);
         var p = new FilePath(abs);
-        var read = await p.Touch(app.User.Context);
+        var read = await p.Touch(app.actor.list.User.Context);
         var text = (await read.Value())?.ToString() ?? "";
-        var goal = Goal.Parse(text, p, app.User.Context);
+        var goal = Goal.Parse(text, p, app.actor.list.User.Context);
         await Assert.That(goal).IsNotNull();
         await Assert.That(goal!.Name).IsEqualTo("Start");
     }
@@ -82,9 +82,9 @@ public class GoalMimeDeserializationTests
         var abs = System.IO.Path.Combine(root, "Bad.goal");
         await System.IO.File.WriteAllTextAsync(abs, "");
         var p = new FilePath(abs);
-        var read = await p.Touch(app.User.Context);
+        var read = await p.Touch(app.actor.list.User.Context);
         var text = (await read.Value())?.ToString() ?? "";
-        await Assert.That(Goal.Parse(text, p, app.User.Context)).IsNull();
+        await Assert.That(Goal.Parse(text, p, app.actor.list.User.Context)).IsNull();
     }
 
     [Test] public async Task GoalMimeRegistration_DotGoalIsTextPlain()
@@ -93,7 +93,7 @@ public class GoalMimeDeserializationTests
         // Stage 2's mop-up after PLang scripts that read .goal contents as
         // text needed to keep working.
         var (app, _) = MakeApp();
-        var mime = global::app.type.item.path.@this.Resolve("/x.goal", app.User.Context)!.MimeType(app.User.Context);
+        var mime = global::app.type.item.path.@this.Resolve("/x.goal", app.actor.list.User.Context)!.MimeType(app.actor.list.User.Context);
         await Assert.That(mime).IsEqualTo("text/plain");
     }
 }

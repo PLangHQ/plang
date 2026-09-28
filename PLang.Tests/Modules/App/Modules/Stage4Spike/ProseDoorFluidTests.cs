@@ -17,7 +17,7 @@ public class ProseDoorFluidTests
 
     private static async Task<string> Render(global::app.@this app, string template)
     {
-        var ctx = app.System.Context;
+        var ctx = app.actor.list.System.Context;
         ctx.Variable.Set(new Data("m", app.Module(FixtureModule)!["setvalue"], context: ctx));
         var action = new Render(ctx)
         {

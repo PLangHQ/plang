@@ -8,7 +8,7 @@ public class VariableResolveTest : System.IAsyncDisposable
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private global::app.type.item.variable.@this Resolve(string raw)
-        => global::app.type.item.variable.@this.Resolve(raw, _app.User.Context);
+        => global::app.type.item.variable.@this.Resolve(raw, _app.actor.list.User.Context);
 
     private static string[] Hops(global::app.type.item.variable.@this v)
         => v.Code.Items().Select(h => $"{h.Kind}:{h.Text}").ToArray();
@@ -65,19 +65,19 @@ public class VariableResolveTest : System.IAsyncDisposable
     [Test] public async Task VariableSet_BangSyntax_WritesProperty()
     {
         await using var app = TestApp.Create("/tmp/var-set-bang-" + System.Guid.NewGuid().ToString("N")[..8]);
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
 
-        await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.User.Context)
+        await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.actor.list.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("response")),
-            Value = app.User.Context.Ok("hello"),
+            Value = app.actor.list.User.Context.Ok("hello"),
         }, context);
 
-        await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.User.Context)
+        await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.actor.list.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("",
                 global::app.type.item.variable.@this.Resolve("%response!cost%", context)),
-            Value = app.User.Context.Ok(100),
+            Value = app.actor.list.User.Context.Ok(100),
         }, context);
 
         var response = await context.Variable.Get("response");
@@ -87,13 +87,13 @@ public class VariableResolveTest : System.IAsyncDisposable
     [Test] public async Task VariableSet_BangOnUnsetVariable_IsVariableNotFound()
     {
         await using var app = TestApp.Create("/tmp/var-set-unset-" + System.Guid.NewGuid().ToString("N")[..8]);
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
 
-        var result = await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.User.Context)
+        var result = await app.Run<global::app.module.action.variable.Set>(new global::app.module.action.variable.Set(app.actor.list.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("",
                 global::app.type.item.variable.@this.Resolve("%response!cost%", context)),
-            Value = app.User.Context.Ok(100),
+            Value = app.actor.list.User.Context.Ok(100),
         }, context);
 
         await result.IsFailure();

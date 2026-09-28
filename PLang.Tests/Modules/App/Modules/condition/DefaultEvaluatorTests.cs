@@ -11,13 +11,13 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/defeval-" + System.Guid.NewGuid().ToString("N")[..6]);
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
-    private Data D(object? value) => value == null ? new Data("") : _app.User.Context.Ok(value);
+    private Data D(object? value) => value == null ? new Data("") : _app.actor.list.User.Context.Ok(value);
 
     private Task<global::app.data.@this<global::app.type.item.@bool.@this>> Eval(object? left, string op, object? right)
-        => _eval.Evaluate(new Compare(_app.User.Context) { Left = D(left), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(op)), Right = D(right) });
+        => _eval.Evaluate(new Compare(_app.actor.list.User.Context) { Left = D(left), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(op)), Right = D(right) });
 
     private Task<global::app.data.@this<global::app.type.item.@bool.@this>> EvalIf(object? left, string op = "==", object? right = null)
-        => _eval.Evaluate(new If(_app.User.Context) { Left = D(left), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(op)), Right = D(right) });
+        => _eval.Evaluate(new If(_app.actor.list.User.Context) { Left = D(left), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(op)), Right = D(right) });
 
     private bool IsTrue(global::app.data.@this<global::app.type.item.@bool.@this> result) => result.Success && (result.Peek() as global::app.type.item.@bool.@this)?.Value == true;
     private bool IsFalse(global::app.data.@this<global::app.type.item.@bool.@this> result) => result.Success && (result.Peek() as global::app.type.item.@bool.@this)?.Value == false;
@@ -160,7 +160,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
 
     [Test] public async Task GreaterThan_DictAndNumber_IsTheReturnedOrderingError()
     {
-        var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, _app.User.Context);
+        var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, _app.actor.list.User.Context);
         var result = await EvalIf(dict, ">", 5);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
@@ -200,7 +200,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     // --- `if %x%` alone — no Operator: Left's own truth ---
 
     private Task<global::app.data.@this<global::app.type.item.@bool.@this>> Truth(object? left)
-        => _eval.Evaluate(new If(_app.User.Context) { Left = D(left) });
+        => _eval.Evaluate(new If(_app.actor.list.User.Context) { Left = D(left) });
 
     [Test] public async Task BareIf_TrueBool_IsTrue() => await Assert.That(IsTrue(await Truth(true))).IsTrue();
     [Test] public async Task BareIf_FalseBool_IsFalse() => await Assert.That(IsFalse(await Truth(false))).IsTrue();
@@ -221,7 +221,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     // --- Operands, judged at build ---
 
     private global::app.data.@this<global::app.type.item.choice.@this<Operator>> Op(string op)
-        => _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(op));
+        => _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(op));
 
     [Test] public async Task Operands_AComparisonWithoutRight_IsRefused()
         => await Assert.That((await _eval.Operands(Op("=="), null))?.Key).IsEqualTo("OperandMissing");
@@ -233,7 +233,7 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
         => await Assert.That((await _eval.Operands(null, D(1)))?.Key).IsEqualTo("OperandExtra");
 
     [Test] public async Task Operands_RightNullWritten_IsARight()
-        => await Assert.That(await _eval.Operands(Op("=="), _app.User.Context.Ok((object?)null))).IsNull();
+        => await Assert.That(await _eval.Operands(Op("=="), _app.actor.list.User.Context.Ok((object?)null))).IsNull();
 
     [Test] public async Task Operands_LeftAlone_IsLeftsTruth()
         => await Assert.That(await _eval.Operands(null, null)).IsNull();

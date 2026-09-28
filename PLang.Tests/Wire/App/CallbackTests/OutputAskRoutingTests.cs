@@ -31,7 +31,7 @@ public class OutputAskRoutingTests
     [Test] public async Task OutputAsk_AnswerSentinelPresent_ReturnsOkAndConsumesIt()
     {
         var app = NewApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var answer = new global::app.type.item.variable.@this(ask.AnswerVariableName);
         await answer.Set("Alice", context);
 
@@ -45,10 +45,10 @@ public class OutputAskRoutingTests
     [Test] public async Task OutputAsk_NoAnswerSentinel_DelegatesToChannelAsk()
     {
         var app = NewApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
 
         var msg = new TestMessageChannel("input");
-        app.User.Channel.Register(msg);
+        app.actor.list.User.Channel.Register(msg);
 
         var handler = new ask(context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?") };
         var result = await handler.Start();
@@ -65,7 +65,7 @@ public class OutputAskRoutingTests
         { Mime = "text/plain" };
         // Empty question to skip WriteCore — exercises Ask's read-line path
         // without needing a registered Channels collection for the serializer.
-        var action = new ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") };
+        var action = new ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") };
         var result = await ch.Ask(action);
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Alice");
@@ -84,8 +84,8 @@ public class OutputAskRoutingTests
     {
         var app = NewApp();
         var ch = new TestMessageChannel("input");
-        app.User.Channel.Register(ch);
-        var action = new ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "Allow X?", context: app.User.Context)
+        app.actor.list.User.Channel.Register(ch);
+        var action = new ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "Allow X?", context: app.actor.list.User.Context)
         };
         var result = await ch.Ask(action);
         await Assert.That((await result.Value())).IsTypeOf<global::app.module.action.output.Ask>();
@@ -97,8 +97,8 @@ public class OutputAskRoutingTests
     {
         var app = NewApp();
         var ch = new TestMessageChannel("input");
-        app.User.Channel.Register(ch);
-        var action = new ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "?", context: app.User.Context)
+        app.actor.list.User.Channel.Register(ch);
+        var action = new ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "?", context: app.actor.list.User.Context)
         };
         var result = await ch.Ask(action);
         await Assert.That(result.Snapshot).IsNotNull();

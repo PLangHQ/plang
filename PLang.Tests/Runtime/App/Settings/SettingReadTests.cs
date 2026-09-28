@@ -13,7 +13,7 @@ public class SettingReadTests
     [Test] public async Task ClassOption_IsItsDefault()
     {
         await using var app = TestApp.Create("/test");
-        var read = await Read("%!app.goal.list.setting.os%", app.User.Context);
+        var read = await Read("%!app.goal.list.setting.os%", app.actor.list.User.Context);
         await read.IsSuccess();
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("true");
     }
@@ -21,7 +21,7 @@ public class SettingReadTests
     [Test] public async Task ClassOption_TakesThisRunsValue()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         await ctx.Setting.Set("app.goal.list.setting.os", ctx.Ok(false));
 
         var read = await Read("%!app.goal.list.setting.os%", ctx);
@@ -31,7 +31,7 @@ public class SettingReadTests
     [Test] public async Task Class_IsOneInstance()
     {
         await using var app = TestApp.Create("/test");
-        var read = await Read("%!app.goal.list.setting%", app.User.Context);
+        var read = await Read("%!app.goal.list.setting%", app.actor.list.User.Context);
         await read.IsSuccess();
         await Assert.That(read.Peek()).IsTypeOf<global::app.goal.list.setting.@this>();
     }
@@ -40,16 +40,16 @@ public class SettingReadTests
     [Test] public async Task ModuleOption_FallsBackToTheSystem()
     {
         await using var app = TestApp.Create("/test");
-        await app.System.Setting.Set("llm.cache", app.System.Context.Ok(false));
+        await app.actor.list.System.Setting.Set("llm.cache", app.actor.list.System.Context.Ok(false));
 
-        var read = await Read("%!llm.cache%", app.User.Context);
+        var read = await Read("%!llm.cache%", app.actor.list.User.Context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
     }
 
     [Test] public async Task BuildCache_IsTrueByDefault()
     {
         await using var app = TestApp.Create("/test");
-        var read = await Read("%!build.cache%", app.User.Context);
+        var read = await Read("%!build.cache%", app.actor.list.User.Context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("true");
     }
 
@@ -57,7 +57,7 @@ public class SettingReadTests
     [Test] public async Task ActionOption_DefaultThenThisRun()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         await Assert.That((await (await Read("%!llm.query.cache%", ctx)).Value())?.ToString()).IsEqualTo("true");
 
         await ctx.Setting.Set("llm.cache", ctx.Ok(false));
@@ -71,12 +71,12 @@ public class SettingReadTests
     [Test] public async Task ModuleAndAction_AreNodes()
     {
         await using var app = TestApp.Create("/test");
-        var http = await Read("%!http%", app.User.Context);
+        var http = await Read("%!http%", app.actor.list.User.Context);
         await http.IsSuccess();
         await Assert.That(http.Peek()).IsTypeOf<global::app.type.item.setting.module.@this>();
         foreach (var path in new[] { "%!http.request%", "%!llm.query%" })
         {
-            var read = await Read(path, app.User.Context);
+            var read = await Read(path, app.actor.list.User.Context);
             await read.IsSuccess();
             await Assert.That(read.Peek()).IsTypeOf<global::app.type.item.setting.action.@this>();
         }
@@ -86,7 +86,7 @@ public class SettingReadTests
     [Test] public async Task UnknownOption_WriteIsAnError()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var set = await new global::app.type.item.variable.parser.@this("%!app.goal.list.setting.foo%").Variable.Single()
             .Set(new global::app.data.@this("foo", 1, context: ctx), ctx);
         await set.IsFailure();
@@ -96,7 +96,7 @@ public class SettingReadTests
     [Test] public async Task ActionOption_NotTheActionsMember()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         await ctx.Setting.Set("variable.set.name", ctx.Ok("%x%"));
         await Assert.That((await (await Read("%!variable.set.name%", ctx)).Value())?.ToString()).IsEqualTo("%x%");
     }
@@ -106,20 +106,20 @@ public class SettingReadTests
     [Test] public async Task OwnerOption_WrittenThroughItsPath()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var written = await new global::app.type.item.variable.parser.@this("%!app.goal.list.setting.os%").Variable.Single()
             .Set(new global::app.data.@this("os", false, context: ctx), ctx);
         await written.IsSuccess();
 
         await Assert.That((await (await Read("%!app.goal.list.setting.os%", ctx)).Value())?.ToString()).IsEqualTo("false");
-        await Assert.That((await (await Read("%!app.goal.list.setting.os%", app.System.Context)).Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await (await Read("%!app.goal.list.setting.os%", app.actor.list.System.Context)).Value())?.ToString()).IsEqualTo("true");
     }
 
     [Test] public async Task UnknownPath_IsNotFound()
     {
         await using var app = TestApp.Create("/test");
         // a name that is no module's names no setting: unset, not an error
-        var read = await Read("%!nothing.here%", app.User.Context);
+        var read = await Read("%!nothing.here%", app.actor.list.User.Context);
         await Assert.That(read.IsInitialized).IsFalse();
     }
 
@@ -127,7 +127,7 @@ public class SettingReadTests
     [Test] public async Task Binding_AnswersFirst()
     {
         await using var app = TestApp.Create("/test");
-        var read = await Read("%!app%", app.User.Context);
+        var read = await Read("%!app%", app.actor.list.User.Context);
         await Assert.That(read.IsInitialized).IsTrue();
         await Assert.That(read.Peek()).IsNotTypeOf<global::app.type.item.setting.@this>();
     }

@@ -13,17 +13,17 @@ public class IntegrationCutsTests
         var userOutput = new MemoryStream();
         var userError = new MemoryStream();
         var userInput = new MemoryStream();
-        app.User.Channel.Register(new StreamChannel("output", userOutput, ChannelDirection.Output, ownsStream: false)
+        app.actor.list.User.Channel.Register(new StreamChannel("output", userOutput, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
-        app.User.Channel.Register(new StreamChannel("error", userError, ChannelDirection.Output, ownsStream: false)
+        app.actor.list.User.Channel.Register(new StreamChannel("error", userError, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
-        app.User.Channel.Register(new StreamChannel("input", userInput, ChannelDirection.Input, ownsStream: false)
+        app.actor.list.User.Channel.Register(new StreamChannel("input", userInput, ChannelDirection.Input, ownsStream: false)
         { Mime = "text/plain" });
-        global::app.@this.WireDefaultConsoleChannels(app.System);
+        global::app.@this.WireDefaultConsoleChannels(app.actor.list.System);
 
         // Direct write through the resolved Output channel — proves
         // Channels.Get(null) returns Output role channel and WriteAsync routes there.
-        var ch = app.User.Channel.Get(global::app.channel.list.@this.Output);
+        var ch = app.actor.list.User.Channel.Get(global::app.channel.list.@this.Output);
         await ch.WriteAsync(app.Ok("hello"));
 
         var got = global::System.Text.Encoding.UTF8.GetString(userOutput.ToArray());
@@ -48,22 +48,22 @@ public class IntegrationCutsTests
         { Mime = "text/plain" };
         var metrics = new StreamChannel("metrics", metricsCapture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" };
-        app.User.Channel.Register(audit);
-        app.User.Channel.Register(metrics);
+        app.actor.list.User.Channel.Register(audit);
+        app.actor.list.User.Channel.Register(metrics);
 
         // Before a write to audit: refuse a value containing "REJECT" — the refusal is the write's answer.
         audit.Own().Bind("write", global::app.@event.When.before, (_, payload, ctx) =>
             Task.FromResult(payload.Peek()?.ToString() is { } s && s.Contains("REJECT")
                 ? ctx.Error(new global::app.error.Error("rejected by approval", "Rejected", 400))
                 : ctx.Ok()),
-            app.User, global::app.@event.binding.Scope.actor);
+            app.actor.list.User, global::app.@event.binding.Scope.actor);
 
         // After a write to audit (it runs on every result): count the writes that went through.
         audit.Own().Bind("write", global::app.@event.When.after, async (_, result, ctx) =>
         {
             if (result.Success) await metrics.WriteAsync(app.Ok("+1"));
             return ctx.Ok();
-        }, app.User, global::app.@event.binding.Scope.actor);
+        }, app.actor.list.User, global::app.@event.binding.Scope.actor);
 
         var ok = await audit.WriteAsync(app.Ok("ok-payload"));
         var bad = await audit.WriteAsync(app.Ok("REJECT-this"));

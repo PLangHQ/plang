@@ -9,7 +9,7 @@ namespace PLang.Tests.App.VariablesTests;
 public class VariableCodeTests
 {
     private global::app.@this _app = null!;
-    private global::app.actor.context.@this Context => _app.User.Context;
+    private global::app.actor.context.@this Context => _app.actor.list.User.Context;
 
     [Before(Test)]
     public void Setup() => _app = global::PLang.Tests.TestApp.Create("/test");

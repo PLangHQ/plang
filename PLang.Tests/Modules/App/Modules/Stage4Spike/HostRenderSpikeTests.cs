@@ -79,7 +79,7 @@ public class HostRenderSpikeTests
     // bind a native list; a variable does.
     private static async Task<string> Render(global::app.@this app, string template, ItemList modules)
     {
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         ctx.Variable.Set(new Data("modules", modules, context: ctx));
         var action = new Render(ctx)
         {
@@ -96,7 +96,7 @@ public class HostRenderSpikeTests
     public async Task LegA_EnumerateHostElements()
     {
         var app = global::PLang.Tests.TestApp.Plain("/tmp/s4spike-a");
-        var modules = SampleModules(app.User.Context);
+        var modules = SampleModules(app.actor.list.User.Context);
         var outp = await Render(app, "{% for m in modules %}[{{ m.Name }}]{% endfor %}", modules);
         await Assert.That(outp).IsEqualTo("[file][variable]");
     }
@@ -106,7 +106,7 @@ public class HostRenderSpikeTests
     public async Task LegB_FluidFilterOverElements()
     {
         var app = global::PLang.Tests.TestApp.Plain("/tmp/s4spike-b");
-        var modules = SampleModules(app.User.Context);
+        var modules = SampleModules(app.actor.list.User.Context);
         // where: filter on element property Name, then map: to collect names.
         var outp = await Render(app,
             "{% assign f = modules | where: 'Name', 'file' %}{{ f | map: 'Name' | join: ',' }}", modules);
@@ -121,7 +121,7 @@ public class HostRenderSpikeTests
         // through its own members (Name, Type.Name, Nullable) — the menu template's shape. A property
         // typed `variable` names a variable, so it advertises as %var%.
         var app = global::PLang.Tests.TestApp.Plain("/tmp/s4spike-c");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var actions = NativeList(ctx, app.Module("file")["read"]!, app.Module("variable")["set"]!);
         var outp = await Render(app,
             "{% for a in modules %}{{ a.Name }}:{% for p in a.Property %} {{ p.Name }}=" +
@@ -140,7 +140,7 @@ public class HostRenderSpikeTests
     public async Task LegD_ProseDoorMustBeSyncProperty()
     {
         var app = global::PLang.Tests.TestApp.Plain("/tmp/s4spike-d");
-        var modules = SampleModules(app.User.Context);
+        var modules = SampleModules(app.actor.list.User.Context);
         var syncOut = await Render(app, "{% for m in modules %}[{{ m.DescriptionSync }}]{% endfor %}", modules);
         var methodOut = await Render(app, "{% for m in modules %}[{{ m.DescriptionMethod }}]{% endfor %}", modules);
 
@@ -153,7 +153,7 @@ public class HostRenderSpikeTests
     public async Task LegE_WhereOverClrAction()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/s4spike-e");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
 
         // Real catalog action elements ride as raw POCOs (clr) in a native list —
         // the shape 4a's app.module surface will answer.

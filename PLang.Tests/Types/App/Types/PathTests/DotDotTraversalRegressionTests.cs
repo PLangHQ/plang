@@ -34,7 +34,7 @@ public class DotDotTraversalRegressionTests
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(dir, "subdir"));
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(dir, "subdir", ".build"));
         var app = TestApp.Create(dir);
-        return (app, app.User.Context, dir);
+        return (app, app.actor.list.User.Context, dir);
     }
 
     [Test]
@@ -92,7 +92,7 @@ public class DotDotTraversalRegressionTests
         try
         {
             // Channel that denies any AuthGate prompt.
-            app.User.Channel.Register(new CannedChannel("n"));
+            app.actor.list.User.Channel.Register(new CannedChannel("n"));
 
             var prPath = Path.Resolve(System.IO.Path.Combine(root, "subdir", ".build", "probe.pr"), context);
             await using var inGoal = context.CallStack.Push(new Goal

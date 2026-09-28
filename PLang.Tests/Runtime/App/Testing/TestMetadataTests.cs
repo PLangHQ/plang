@@ -25,7 +25,7 @@ public class TestMetadataTests
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = TestApp.Create(_tempDir);
         _captureStream = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, _captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -90,7 +90,7 @@ public class TestMetadataTests
         _app.Version = "v2.0"; // current app builder version
         _app.test.list.Add(NewTest("T", builderVersion: "v1.0")); // stale
 
-        var action = new global::app.module.action.test.report(_app.User.Context);
+        var action = new global::app.module.action.test.report(_app.actor.list.User.Context);
         await action.Start();
 
         var output = CapturedOutput();

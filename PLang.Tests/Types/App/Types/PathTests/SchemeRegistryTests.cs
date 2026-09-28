@@ -19,7 +19,7 @@ public class SchemeRegistryTests
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-scheme-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
         var app = TestApp.Create(dir);
-        return (app, app.User.Context);
+        return (app, app.actor.list.User.Context);
     }
 
     [Test] public async Task Register_ThenFrom_ReturnsRegisteredSubclass()

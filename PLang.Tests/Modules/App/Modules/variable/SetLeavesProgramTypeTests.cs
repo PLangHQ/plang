@@ -19,7 +19,7 @@ public class SetLeavesProgramTypeTests
     // (A .pr-read row holds the type unloaded; each run's copy loads its own.)
     private (global::app.goal.step.action.@this Action, global::app.type.@this RowType) SetComposed(object? value, global::app.type.@this type)
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var action = global::PLang.Tests.Shared.Make.Action("variable", "set",
             ("Name", new Data("Name", "x", new global::app.type.@this("variable"), context: ctx)),
             ("Value", value),
@@ -32,8 +32,8 @@ public class SetLeavesProgramTypeTests
     {
         var (set, rowType) = SetComposed("hello", new global::app.type.@this("text", "markdown"));
 
-        await (await set.Start(_app.User.Context)).IsSuccess();
-        await (await set.Start(_app.User.Context)).IsSuccess();
+        await (await set.Start(_app.actor.list.User.Context)).IsSuccess();
+        await (await set.Start(_app.actor.list.User.Context)).IsSuccess();
 
         await Assert.That(rowType.kind.Name).IsEqualTo("markdown");
     }
@@ -43,7 +43,7 @@ public class SetLeavesProgramTypeTests
     {
         var (set, _) = SetComposed(5, new global::app.type.@this("foo"));
 
-        var result = await set.Start(_app.User.Context);
+        var result = await set.Start(_app.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("UnknownType");
@@ -55,8 +55,8 @@ public class SetLeavesProgramTypeTests
     {
         var (set, rowType) = SetComposed(5, new global::app.type.@this("number"));
 
-        await (await set.Start(_app.User.Context)).IsSuccess();
-        await (await set.Start(_app.User.Context)).IsSuccess();
+        await (await set.Start(_app.actor.list.User.Context)).IsSuccess();
+        await (await set.Start(_app.actor.list.User.Context)).IsSuccess();
 
         await Assert.That(rowType.kind.IsEmpty).IsTrue();
     }

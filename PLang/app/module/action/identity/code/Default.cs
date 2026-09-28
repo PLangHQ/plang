@@ -27,7 +27,7 @@ public sealed class Default : IIdentity
 
         // Refresh cached %MyIdentity% when resolving the default
         if ((action.Name == null ? null : await action.Name.Value()) == null)
-            action.Context.App.System.Identity = (await result.Value())!;
+            action.Context.App.actor.list.System.Identity = (await result.Value())!;
 
         return result;
     }
@@ -63,7 +63,7 @@ public sealed class Default : IIdentity
         if (!result.Success) return data.@this<Identity>.From(result);
 
         if (await action.SetAsDefault.ToBooleanAsync())
-            app.System.Identity = identity;
+            app.actor.list.System.Identity = identity;
 
         return action.Context.Ok<Identity>(identity);
     }
@@ -131,7 +131,7 @@ public sealed class Default : IIdentity
         var saveResult = await SaveAsync(action, target);
         if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
 
-        app.System.Identity = target;
+        app.actor.list.System.Identity = target;
         return action.Context.Ok<Identity>(target);
     }
 
@@ -172,7 +172,7 @@ public sealed class Default : IIdentity
         }
 
         if (identity.IsDefault)
-            app.System.Identity = identity;
+            app.actor.list.System.Identity = identity;
 
         return action.Context.Ok<Identity>(identity);
     }
@@ -229,7 +229,7 @@ public sealed class Default : IIdentity
     // not be read are the error, never an empty list (a default made then would replace them).
     private async Task<(setting.@this? Setting, global::app.error.Error? Error)> Setting(IContext action)
     {
-        var system = action.Context.App.System.Setting;
+        var system = action.Context.App.actor.list.System.Setting;
         var loaded = await system.Load();
         return loaded.Success ? (system.Of<setting.@this>(), null) : (null, loaded.Error);
     }
@@ -247,7 +247,7 @@ public sealed class Default : IIdentity
     private async Task<data.@this> Store(IContext action, setting.@this setting, List<Identity> identities)
     {
         setting.Identity = new global::app.type.item.list.@this<Identity>(identities);
-        return await action.Context.App.System.Setting.Save(setting);
+        return await action.Context.App.actor.list.System.Setting.Save(setting);
     }
 
     /// <summary>
@@ -274,18 +274,18 @@ public sealed class Default : IIdentity
         // None stored yet. One held in memory is the one being stored right now — its own row is signed with
         // it on the way into the store, and that signing asks for the identity here — so it answers, rather
         // than making another for every row.
-        if (action.Context.App.System.Identity is { IsArchived: false } making)
+        if (action.Context.App.actor.list.System.Identity is { IsArchived: false } making)
             return action.Context.Ok<Identity>(making);
 
         // No identities at all — auto-create; it is the app's identity from here, before its row is stored
         var genResult = await GenerateIdentity(action, "default", true);
         if (!genResult.Success) return genResult;
         var identity = (await genResult.Value())!;
-        action.Context.App.System.Identity = identity;
+        action.Context.App.actor.list.System.Identity = identity;
         var result = await SaveAsync(action, identity);
         if (!result.Success)
         {
-            action.Context.App.System.Identity = null;   // not stored: not the app's identity
+            action.Context.App.actor.list.System.Identity = null;   // not stored: not the app's identity
             return data.@this<Identity>.From(result);
         }
         return action.Context.Ok<Identity>(identity);

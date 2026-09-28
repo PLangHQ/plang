@@ -44,7 +44,7 @@ public class GoalCallResolutionTests
     /// the goal's own writer (the shape the reader reads back).</summary>
     private async Task WritePr(string relativePrPath, string goalName)
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var goal = new PLangGoal { Name = goalName, Path = global::app.type.item.path.@this.Resolve("/" + goalName + ".goal", ctx) };
         var pr = await ctx.Pr(goal);
 
@@ -87,7 +87,7 @@ public class GoalCallResolutionTests
     public async Task SlashName_IsTheFolderAndTheName_NeverAnyGoalOfThatName()
     {
         // BuildGoal calls BuildGoal/Start: a Start elsewhere is not it, and neither is BuildGoal itself
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var caller = new PLangGoal { Name = "BuildGoal", Path = global::app.type.item.path.@this.Resolve("/builder/BuildGoal.goal", ctx) };
         _app.goal.list.Add(caller);
         _app.goal.list.Add(new PLangGoal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/other/Start.goal", ctx) });

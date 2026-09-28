@@ -22,7 +22,7 @@ public class AppTests
             "plang_test_builder_app_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = TestApp.Create(_tempDir);
-        _app.Build = new global::app.module.action.build.@this(_app.System.Context);
+        _app.Build = new global::app.module.action.build.@this(_app.actor.list.System.Context);
     }
 
     [After(Test)]

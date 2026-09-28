@@ -15,7 +15,7 @@ public class MockTests
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
-    private global::app.actor.context.@this Ctx => _app.User.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
     private async Task<Mock> Intercept(string pattern, object? returns = null)
     {

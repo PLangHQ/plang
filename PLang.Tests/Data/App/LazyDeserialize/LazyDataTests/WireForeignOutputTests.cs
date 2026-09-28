@@ -17,7 +17,7 @@ public class WireForeignOutputTests
 {
     private static async Task<string> TextOut(app.@this app, string rawSlice, string typeName, string? kind = null)
     {
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var type = new global::app.type.@this(typeName, kind);
         var wire = new Wire(rawSlice, type, (global::app.type.item.wire.kind.plang.@this)app.type.list["wire"].kind["plang"]!);   // packed slice, plang-captured
         var data = new global::app.data.@this("slot", wire, context: ctx);

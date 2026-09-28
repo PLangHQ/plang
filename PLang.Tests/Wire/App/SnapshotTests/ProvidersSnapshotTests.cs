@@ -25,7 +25,7 @@ public class ProvidersSnapshotTests
         src.Code.Register(typeof(global::app.data.code.IGrep), custom);
         src.Code.SetDefault(typeof(global::app.data.code.IGrep), "custom");
 
-        var snap = src.Snapshot(src.User.Context);
+        var snap = src.Snapshot(src.actor.list.User.Context);
         var registrations = await snap.Section("Providers")
             .Records<global::app.module.action.code.registration.@this>("registrations");
         var overrides = await snap.Section("Providers")
@@ -49,7 +49,7 @@ public class ProvidersSnapshotTests
         src.Code.Register(typeof(global::app.data.code.IGrep), custom);
         src.Code.SetDefault(typeof(global::app.data.code.IGrep), "custom");
 
-        var snap = src.Snapshot(src.User.Context);
+        var snap = src.Snapshot(src.actor.list.User.Context);
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         // Pre-grant Execute on the snapshotted DLL source for the System actor —
         // restore reloads the DLL via path.LoadAssemblyAsync, which gates on
@@ -57,18 +57,18 @@ public class ProvidersSnapshotTests
         // snapshot doesn't (yet) carry actor permissions, so replay it here.
         var dllSrc = typeof(CustomGrep).Assembly.Location;
         var grantPath = dllSrc.StartsWith("/") ? "/" + dllSrc : dllSrc;
-        var resolved = global::app.type.item.path.@this.Resolve(grantPath, dst.User.Context!);
+        var resolved = global::app.type.item.path.@this.Resolve(grantPath, dst.actor.list.User.Context!);
         var verbs = new HashSet<global::app.type.item.permission.Verb>
         {
             global::app.type.item.permission.Verb.Read,
             global::app.type.item.permission.Verb.Execute,
         };
         var permission = new global::app.type.item.permission.@this(
-            Actor: dst.User.Name, Path: resolved.Absolute, Verbs: verbs,
+            Actor: dst.actor.list.User.Name, Path: resolved.Absolute, Verbs: verbs,
             Match: global::app.type.item.permission.Match.Exact);
-        await dst.User.Permission.Add(
-            new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: dst.User.Context), persist: false);
-        await dst.Restore(snap, dst.User.Context);
+        await dst.actor.list.User.Permission.Add(
+            new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: dst.actor.list.User.Context), persist: false);
+        await dst.Restore(snap, dst.actor.list.User.Context);
 
         var defaultGrep = dst.Code.Get<global::app.data.code.IGrep>();
         await Assert.That(defaultGrep.Error).IsNull();
@@ -95,7 +95,7 @@ public class ProvidersSnapshotTests
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
         {
-            await dst.Restore(snap, dst.User.Context);
+            await dst.Restore(snap, dst.actor.list.User.Context);
             await Task.CompletedTask;
         });
     }
@@ -119,7 +119,7 @@ public class ProvidersSnapshotTests
         var dst = global::PLang.Tests.TestApp.Create("/dst");
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
         {
-            await dst.Restore(snap, dst.User.Context);
+            await dst.Restore(snap, dst.actor.list.User.Context);
             await Task.CompletedTask;
         });
     }
@@ -130,7 +130,7 @@ public class ProvidersSnapshotTests
         // RegisterDefaults output is reconstructed on App boot — only post-defaults
         // registrations end up in the captured payload.
         var app = global::PLang.Tests.TestApp.Create("/test");
-        var snap = app.Snapshot(app.User.Context);
+        var snap = app.Snapshot(app.actor.list.User.Context);
         var registrations = await snap.Section("Providers")
             .Records<global::app.module.action.code.registration.@this>("registrations");
 
@@ -149,7 +149,7 @@ public class ProvidersSnapshotTests
         var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
         src.Code.Register(typeof(global::app.data.code.IGrep), custom);
 
-        var snap = src.Snapshot(src.User.Context);
+        var snap = src.Snapshot(src.actor.list.User.Context);
         var registrations = await snap.Section("Providers")
             .Records<global::app.module.action.code.registration.@this>("registrations");
 

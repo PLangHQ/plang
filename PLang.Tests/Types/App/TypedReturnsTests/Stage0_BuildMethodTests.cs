@@ -40,7 +40,7 @@ public class Stage0_BuildMethodTests
         {
             Module = _app.Module(module),
             Name = actionName,
-            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList())
+            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.actor.list.User.Context)).ToList())
         };
 
     private static StepActions ActionsOf(params PrAction[] actions)
@@ -55,7 +55,7 @@ public class Stage0_BuildMethodTests
     {
         var chain = new global::app.goal.step.action.list.@this();
         foreach (var a in actions) chain.Add(a);
-        return await chain.Build(_app.User.Context) is { } failed ? new() { failed.Message } : new();
+        return await chain.Build(_app.actor.list.User.Context) is { } failed ? new() { failed.Message } : new();
     }
 
     // IClass declares Build() returning Task<Data>. Reflection check guards the
@@ -73,7 +73,7 @@ public class Stage0_BuildMethodTests
     [Test]
     public async Task IClass_BuildDefaultImpl_ReturnsDataOkNoValue()
     {
-        var handler = (IClass)new NoopBuild(_app.User.Context);
+        var handler = (IClass)new NoopBuild(_app.actor.list.User.Context);
         var result = await handler.Build();
         await result.IsSuccess();
         await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();

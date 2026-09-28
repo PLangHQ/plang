@@ -22,7 +22,7 @@ public class ReadFailureTests
     [Test] public async Task Read_OfMalformedJson_ProducesError_NotThrow()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("{not valid json", ctx.App.type.list[new type("item", "json"), ctx], ctx, "bad");
         // Touch must NOT throw — the failure is cached as Data.Error.
         var v = await d.Value();
@@ -51,7 +51,7 @@ public class ReadFailureTests
     [Test] public async Task Read_WrappedAsTaskFailure_NeverEscapesToCourier()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("{not valid json", ctx.App.type.list[new type("item", "json"), ctx], ctx, "bad");
 
         // A courier (variable memory) holds and relays the Data without touching

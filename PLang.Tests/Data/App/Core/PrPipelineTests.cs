@@ -27,7 +27,7 @@ public class PrPipelineTests
         await loadResult.IsSuccess();
 
         // Execute
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await Make.Call("FullPipeline").Start(context);
         await result.IsSuccess();
 
@@ -59,7 +59,7 @@ public class PrPipelineTests
         var loadResult = await engine.goal.Load("ReadFile.pr");
         await loadResult.IsSuccess();
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await Make.Call("ReadFile").Start(context);
         await result.IsSuccess();
 
@@ -85,7 +85,7 @@ public class PrPipelineTests
         var loadResult = await engine.goal.Load("FilePathsFromRoot.pr");
         await loadResult.IsSuccess();
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await Make.Call("FilePathsFromRoot").Start(context);
         await result.IsSuccess();
 
@@ -111,7 +111,7 @@ public class PrPipelineTests
         var loadResult = await engine.goal.Load(System.IO.Path.Combine("sub", "FilePathsFromSub.pr"));
         await loadResult.IsSuccess();
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await Make.Call("FilePathsFromSub").Start(context);
 
         // Step 0 (/testdata.txt) succeeds — absolute paths work from any goal location
@@ -134,7 +134,7 @@ public class PrPipelineTests
                 Make.Action("file", "read", ("path", "subdata.txt")))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         // File found — relative resolves to {root}/sub/subdata.txt (goal folder)
@@ -154,7 +154,7 @@ public class PrPipelineTests
                 Make.Action("file", "read", ("path", "../testdata.txt")))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
@@ -173,7 +173,7 @@ public class PrPipelineTests
                 Make.Action("file", "read", ("path", "../sub/subdata.txt")))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
@@ -192,7 +192,7 @@ public class PrPipelineTests
                 Make.Action("file", "read", ("path", "nonexistent.txt")))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         // file/read returns Data.FromError for missing files
@@ -212,7 +212,7 @@ public class PrPipelineTests
                 Make.Action("file", "read", ("path", "../../etc/passwd")))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         // PLangFileSystem should block path escape — either throws FileAccessException or returns error

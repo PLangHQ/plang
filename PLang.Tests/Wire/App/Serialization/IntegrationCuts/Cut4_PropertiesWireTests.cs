@@ -12,12 +12,12 @@ public class Cut4_PropertiesWireTests
     private static async Task<(string wire, global::app.data.@this back, global::app.@this app)> WriteAndRead()
     {
         var app = NewApp();
-        var plang = app.User.Context.Format("application/plang");
-        var d = new global::app.data.@this("response", "Hello!", context: app.User.Context);
+        var plang = app.actor.list.User.Context.Format("application/plang");
+        var d = new global::app.data.@this("response", "Hello!", context: app.actor.list.User.Context);
         d.Properties["cost"] = 100;
         d.Properties["model"] = "claude-opus-4-7";
-        var wire = (await plang.Serialize(d, app.User.Context).Value())!.Clr<string>()!;
-        var back = plang.Deserialize(wire, app.User.Context);
+        var wire = (await plang.Serialize(d, app.actor.list.User.Context).Value())!.Clr<string>()!;
+        var back = plang.Deserialize(wire, app.actor.list.User.Context);
         return (wire, back, app);
     }
 
@@ -86,14 +86,14 @@ public class Cut4_PropertiesWireTests
         {
             var tampered = wire.Replace("\"cost\":100", "\"cost\":999");
             await Assert.That(tampered).IsNotEqualTo(wire);
-            var plang = app.User.Context.Format("application/plang");
-            var back = plang.Deserialize(tampered, app.User.Context);
+            var plang = app.actor.list.User.Context.Format("application/plang");
+            var back = plang.Deserialize(tampered, app.actor.list.User.Context);
             var verify = await app.Run<global::app.module.action.signing.verify>(
-                new global::app.module.action.signing.verify(app.User.Context)
+                new global::app.module.action.signing.verify(app.actor.list.User.Context)
                 {
                     Data = back,
                     SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", true)
-                }, app.User.Context);
+                }, app.actor.list.User.Context);
             await verify.IsFailure();
         }
     }

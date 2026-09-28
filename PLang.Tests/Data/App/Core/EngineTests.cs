@@ -63,7 +63,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        var system = engine.System;
+        var system = engine.actor.list.System;
 
         await Assert.That(system.Name).IsEqualTo("System");
     }
@@ -73,7 +73,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        var user = engine.User;
+        var user = engine.actor.list.User;
 
         await Assert.That(user.Name).IsEqualTo("User");
     }
@@ -84,7 +84,7 @@ public class EngineTests
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
         // Access only User actor
-        var user = engine.User;
+        var user = engine.actor.list.User;
 
         // User should have its own context
         await Assert.That(user.Context).IsNotNull();
@@ -97,11 +97,11 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        engine.User.Context.Variable.Set("key", "user-value");
-        engine.System.Context.Variable.Set("key", "system-value");
+        engine.actor.list.User.Context.Variable.Set("key", "user-value");
+        engine.actor.list.System.Context.Variable.Set("key", "system-value");
 
-        await Assert.That((await engine.User.Context.Variable.GetValue("key"))).IsEqualTo("user-value");
-        await Assert.That((await engine.System.Context.Variable.GetValue("key"))).IsEqualTo("system-value");
+        await Assert.That((await engine.actor.list.User.Context.Variable.GetValue("key"))).IsEqualTo("user-value");
+        await Assert.That((await engine.actor.list.System.Context.Variable.GetValue("key"))).IsEqualTo("system-value");
     }
 
     [Test]
@@ -109,13 +109,13 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        engine.User.Channel.CreateMemoryChannel("test");
-        engine.System.Channel.CreateMemoryChannel("test");
+        engine.actor.list.User.Channel.CreateMemoryChannel("test");
+        engine.actor.list.System.Channel.CreateMemoryChannel("test");
 
-        await Assert.That(engine.User.Channel.Contains("test")).IsTrue();
-        await Assert.That(engine.System.Channel.Contains("test")).IsTrue();
+        await Assert.That(engine.actor.list.User.Channel.Contains("test")).IsTrue();
+        await Assert.That(engine.actor.list.System.Channel.Contains("test")).IsTrue();
         // They are separate instances
-        await Assert.That(engine.User.Channel.Get("test")).IsNotEqualTo(engine.System.Channel.Get("test"));
+        await Assert.That(engine.actor.list.User.Channel.Get("test")).IsNotEqualTo(engine.actor.list.System.Channel.Get("test"));
     }
 
     [Test]
@@ -123,9 +123,9 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        await Assert.That(engine.User.Context.Actor).IsEqualTo(engine.User);
-        await Assert.That(engine.System.Context.Actor).IsEqualTo(engine.System);
-        await Assert.That(engine.System.Context.Actor).IsEqualTo(engine.System);
+        await Assert.That(engine.actor.list.User.Context.Actor).IsEqualTo(engine.actor.list.User);
+        await Assert.That(engine.actor.list.System.Context.Actor).IsEqualTo(engine.actor.list.System);
+        await Assert.That(engine.actor.list.System.Context.Actor).IsEqualTo(engine.actor.list.System);
     }
 
     [Test]
@@ -133,8 +133,8 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        var user1 = engine.User;
-        var user2 = engine.User;
+        var user1 = engine.actor.list.User;
+        var user2 = engine.actor.list.User;
 
         await Assert.That(user1).IsEqualTo(user2);
     }
@@ -148,7 +148,7 @@ public class EngineTests
 
         await Assert.That(engine.AbsolutePath).IsEqualTo("/app");
         await Assert.That(engine.Module).IsNotNull();
-        await Assert.That(engine.User.Channel).IsNotNull();
+        await Assert.That(engine.actor.list.User.Channel).IsNotNull();
         await Assert.That(engine.goal).IsNotNull();
         await Assert.That(engine.AbsolutePath).IsNotNull();
     }
@@ -185,7 +185,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        engine.Debug = new global::app.module.action.debug.@this(engine.System.Context);
+        engine.Debug = new global::app.module.action.debug.@this(engine.actor.list.System.Context);
 
         await Assert.That(engine.Debug != null).IsTrue();
     }
@@ -204,7 +204,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        await Assert.That(engine.type.list.Stamp("application/json", engine.User.Context).kind.Name).IsEqualTo("json");
+        await Assert.That(engine.type.list.Stamp("application/json", engine.actor.list.User.Context).kind.Name).IsEqualTo("json");
     }
 
     [Test]
@@ -229,7 +229,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
 
         await Assert.That(context).IsNotNull();
         await Assert.That(context.App).IsEqualTo(engine);
@@ -241,7 +241,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
 
-        var result = await Make.Call("NonexistentGoal").Start(engine.User.Context);
+        var result = await Make.Call("NonexistentGoal").Start(engine.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("GoalNotFound");
@@ -254,7 +254,7 @@ public class EngineTests
         var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         engine.goal.list.Add(goal);
 
-        var result = await Make.Call("EmptyGoal").Start(engine.User.Context);
+        var result = await Make.Call("EmptyGoal").Start(engine.actor.list.User.Context);
 
         await result.IsSuccess();
     }
@@ -279,7 +279,7 @@ public class EngineTests
         // Cancel via the engine's shutdown — Goal.RunAsync checks context.CancellationToken
         engine.RequestShutdown();
 
-        var result = await Make.Call("TestGoal").Start(engine.User.Context);
+        var result = await Make.Call("TestGoal").Start(engine.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
@@ -291,7 +291,7 @@ public class EngineTests
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         engine.goal.list.Add(goal);
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         await engine.Start(goal, context);
 
         // Goal is restored after execution, but during execution context.Goal was set.
@@ -307,7 +307,7 @@ public class EngineTests
         var goal = new Goal { Name = "TestGoal", Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         await engine.Start(goal, context);
 
         // After completion, AsyncLocal Current is restored to its pre-Push value (null).
@@ -324,7 +324,7 @@ public class EngineTests
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "hello")))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
@@ -348,7 +348,7 @@ public class EngineTests
         };
         engine.goal.list.Add(goal);
 
-        var result = await Make.Call("TestGoal").Start(engine.User.Context);
+        var result = await Make.Call("TestGoal").Start(engine.actor.list.User.Context);
 
         await result.IsFailure();
     }
@@ -358,7 +358,7 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
         var step = MakeStep("nonexistent", "method");
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
 
         var steps = new GoalSteps { step };
         var result = await steps.Start(context);
@@ -375,7 +375,7 @@ public class EngineTests
         var step = MakeStep("variable", "set",
             new Dictionary<string, object?> { { "name", "source" }, { "value", "hello" } });
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var steps = new GoalSteps { step };
         await steps.Start(context);
 
@@ -391,7 +391,7 @@ public class EngineTests
         engine.module.list.Register("throwing", "fail", throwingHandler);
 
         var step = MakeStep("throwing", "fail");
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
 
         // v4: App.Run owns try/catch around handler dispatch — exceptions from a handler
         // are translated to ServiceError there, not at the Step level. Step.RunAsync's
@@ -411,7 +411,7 @@ public class EngineTests
         engine.module.list.Register("legacy", "do", nonGeneratedHandler);
 
         var step = MakeStep("legacy", "do");
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
 
         var steps = new GoalSteps { step };
         var result = await steps.Start(context);
@@ -461,9 +461,9 @@ public class EngineTests
         var engine = global::PLang.Tests.TestApp.Create("/app");
 
         // Access actors to create them
-        var user = engine.User;
-        var system = engine.System;
-        var service = engine.System;
+        var user = engine.actor.list.User;
+        var system = engine.actor.list.System;
+        var service = engine.actor.list.System;
 
         // Get references to contexts
         var userContext = user.Context;
@@ -498,12 +498,12 @@ public class EngineTests
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "hello")))));
         engine.goal.list.Add(goal);
 
-        var result = await engine.Start(goal, engine.System.Context);
+        var result = await engine.Start(goal, engine.actor.list.System.Context);
 
         await result.IsSuccess();
-        await Assert.That((await engine.System.Context.Variable.GetValue("test"))).IsEqualTo("hello");
+        await Assert.That((await engine.actor.list.System.Context.Variable.GetValue("test"))).IsEqualTo("hello");
         // User context should NOT have the variable
-        await Assert.That((await engine.User.Context.Variable.GetValue("test"))).IsNull();
+        await Assert.That((await engine.actor.list.User.Context.Variable.GetValue("test"))).IsNull();
     }
 
     [Test]
@@ -516,10 +516,10 @@ public class EngineTests
                 Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "system-value")))));
         engine.goal.list.Add(goal);
 
-        var result = await Make.Call("TestGoal").Start(engine.System.Context);
+        var result = await Make.Call("TestGoal").Start(engine.actor.list.System.Context);
 
         await result.IsSuccess();
-        await Assert.That((await engine.System.Context.Variable.GetValue("test"))).IsEqualTo("system-value");
+        await Assert.That((await engine.actor.list.System.Context.Variable.GetValue("test"))).IsEqualTo("system-value");
     }
 
     // Handler that does NOT implement ICodeGenerated - used to test engine rejects it

@@ -16,7 +16,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     [Test]
     public async Task ClrJsonElement_DerivesKindJson()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var clr = new global::app.type.clr.@this(Json("{\"a\":1}"), ctx);
         await Assert.That(clr.Kind.ToString()).IsEqualTo("json");
     }
@@ -24,7 +24,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     [Test]
     public async Task ClrJsonElement_NavigatesObjectArrayScalar_AsJson()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"steps\":[{\"index\":3}]}"), ctx));
         var idx = await d.Get("steps[0].index");
         await Assert.That((await idx.Value())?.ToString()).IsEqualTo("3");
@@ -33,7 +33,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     [Test]
     public async Task ClrJsonElement_MissingKey_IsNotFound()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"a\":1}"), ctx));
         var r = await d.Get("nope");
         await Assert.That(r.IsInitialized).IsFalse();
@@ -42,7 +42,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     [Test]
     public async Task ClrPoco_FallsBackToReflection()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var d = ctx.Ok(new global::app.type.clr.@this(new Poco { Label = "hi" }, ctx));
         await Assert.That((await (await d.Get("Label")).Value())?.ToString()).IsEqualTo("hi");
     }
@@ -50,7 +50,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     [Test]
     public async Task ClrJson_ConvertsToDict_OutboundOwnsIt()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"a\":1}"), ctx));
         var dict = await d.Convert(ctx.App.type.list.Kind("dict"));
         await Assert.That(dict.Success).IsTrue();
@@ -60,7 +60,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     [Test]
     public async Task ClrJson_SerializesAsRawJson_NoValueKindLeak()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var d = ctx.Ok(new global::app.type.clr.@this(Json("{\"a\":1,\"b\":[2,3]}"), ctx));
         var json = ctx.Format("application/plang").Serialize(d, ctx).Peek()!.ToString()!;
         await Assert.That(json).Contains("\"a\":1");
@@ -90,7 +90,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     [Test]
     public async Task ApexLift_UnownedPoco_BecomesClrCarrier_Terminates()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         // The lift routes an unowned object through the clr entity's Create — terminal, no bounce back
         // into the lift. Completing at all is the no-recursion proof; the carrier still navigates.
         var lifted = global::app.type.item.@this.Create(new Poco { Label = "hi" }, ctx);
@@ -101,7 +101,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     [Test]
     public async Task ApexLift_NonItemNamedHost_BecomesClrCarrier_NoRecursion()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         // A non-item host (the reader registry) — rung 2's item⟺ICreate guard sends it to the clr
         // entity instead of resurrecting a non-Creatable named entity whose decline used to loop.
         var lifted = global::app.type.item.@this.Create(ctx.App.type.list.Reader, ctx);
@@ -111,7 +111,7 @@ public class ClrKindNavigationTests : System.IAsyncDisposable
     [Test]
     public async Task KindProbe_UnownedParam_BuildsClrCarrier_SoProbeSkipsStamp()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         // The build-time kind probe stamps a param ONLY when the built value has its own item type.
         // An unowned param answers the clr entity → a clr carrier → the probe's `is not clr` guard
         // leaves the param on its declared type instead of stamping a bogus item/* kind.

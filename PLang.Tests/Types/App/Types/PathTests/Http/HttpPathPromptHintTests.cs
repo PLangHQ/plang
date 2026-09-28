@@ -44,8 +44,8 @@ public class HttpPathPromptHintTests
         System.IO.Directory.CreateDirectory(dir);
         var app = new AppEngine(dir);
         var ch = new CapturingChannel();
-        app.User.Channel.Register(ch);
-        return (app, app.User.Context, ch);
+        app.actor.list.User.Channel.Register(ch);
+        return (app, app.actor.list.User.Context, ch);
     }
 
     [Test]

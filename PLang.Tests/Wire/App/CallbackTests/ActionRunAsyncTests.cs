@@ -18,7 +18,7 @@ public class ActionRunAsyncTests
     [Test] public async Task ActionRunAsync_IsSingleEntry_PushAnchorExecute()
     {
         var app = NewApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%v%"), ("value", "ok"));
         var result = await action.Start(context);
         await result.IsSuccess();

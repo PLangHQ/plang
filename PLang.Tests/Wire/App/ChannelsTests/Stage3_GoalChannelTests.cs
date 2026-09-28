@@ -19,13 +19,13 @@ public class Stage3_GoalChannelTests
         var app = global::PLang.Tests.TestApp.Create("/tmp/g1");
         var goal = new EngineGoal { Name = "Probe", Path = global::app.type.item.path.@this.Resolve("Probe.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/Probe.pr", global::PLang.Tests.TestApp.SharedContext) };
         app.goal.list.Add(goal);
-        var ch = await Make.GoalChannel("logger", Make.Call(goal.Name), app.User);
+        var ch = await Make.GoalChannel("logger", Make.Call(goal.Name), app.actor.list.User);
         var dataIn = app.Ok("payload-A");
         var result = await ch.Write(dataIn);
         await result.IsSuccess();
 
         // %message% is the goal's argument (read inside it: the test below); it isn't left behind
-        await Assert.That((await app.User.Context.Variable.Get("message")).IsInitialized).IsFalse();
+        await Assert.That((await app.actor.list.User.Context.Variable.Get("message")).IsInitialized).IsFalse();
     }
 
     // The goal reads what was written as its argument %message% — from its very first step.
@@ -36,11 +36,11 @@ public class Stage3_GoalChannelTests
         var goal = Make.Goal("Sink", Make.Step("set %seen% = %message%",
             Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), ("Value", "%message%"))));
         app.goal.list.Add(goal);
-        var ch = await Make.GoalChannel("sink", Make.Call(goal.Name), app.User);
+        var ch = await Make.GoalChannel("sink", Make.Call(goal.Name), app.actor.list.User);
 
         await (await ch.Write(app.Ok("Building path: /"))).IsSuccess();
 
-        var seen = await app.User.Context.Variable.Get("seen");
+        var seen = await app.actor.list.User.Context.Variable.Get("seen");
         await Assert.That((await seen.Value())?.ToString()).IsEqualTo("Building path: /");
     }
 
@@ -50,7 +50,7 @@ public class Stage3_GoalChannelTests
         var app = global::PLang.Tests.TestApp.Create("/tmp/g2");
         var goal = new EngineGoal { Name = "ReturnsOk", Path = global::app.type.item.path.@this.Resolve("Returns.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/R.pr", global::PLang.Tests.TestApp.SharedContext) };
         app.goal.list.Add(goal);
-        var ch = await Make.GoalChannel("c", Make.Call(goal.Name), app.User);
+        var ch = await Make.GoalChannel("c", Make.Call(goal.Name), app.actor.list.User);
         var result = await ch.Write(app.Ok("x"));
         await result.IsSuccess();
     }
@@ -61,7 +61,7 @@ public class Stage3_GoalChannelTests
         var app = global::PLang.Tests.TestApp.Create("/tmp/g_exec");
         var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         app.goal.list.Add(goal);
-        var ch = await Make.GoalChannel("x", Make.Call(goal.Name), app.User);
+        var ch = await Make.GoalChannel("x", Make.Call(goal.Name), app.actor.list.User);
         await Assert.That(ch.IsExecuting).IsFalse();
         await ch.Write(app.Ok("x"));
         await Assert.That(ch.IsExecuting).IsFalse();
@@ -76,11 +76,11 @@ public class Stage3_GoalChannelTests
         var app = global::PLang.Tests.TestApp.Create("/tmp/g_recurse");
         var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         app.goal.list.Add(goal);
-        var ch = await Make.GoalChannel("logger", Make.Call(goal.Name), app.User);
-        app.User.Channel.Register(ch);
+        var ch = await Make.GoalChannel("logger", Make.Call(goal.Name), app.actor.list.User);
+        app.actor.list.User.Channel.Register(ch);
 
         // Not executing → resolves normally.
-        await Assert.That(app.User.Channel.Get("logger")).IsEqualTo((Channel?)ch);
+        await Assert.That(app.actor.list.User.Channel.Get("logger")).IsEqualTo((Channel?)ch);
 
         // Simulate mid-execution by flipping the AsyncLocal directly.
         var field = typeof(GoalChannel).GetField("_executing",
@@ -89,13 +89,13 @@ public class Stage3_GoalChannelTests
         asyncLocal.Value = true;
         try
         {
-            await Assert.That(app.User.Channel.Get("logger")).IsNull();
-            await Assert.That(app.User.Channel.Get("logger")).IsNull();
+            await Assert.That(app.actor.list.User.Channel.Get("logger")).IsNull();
+            await Assert.That(app.actor.list.User.Channel.Get("logger")).IsNull();
         }
         finally { asyncLocal.Value = false; }
 
         // Restored: resolves again.
-        await Assert.That(app.User.Channel.Get("logger")).IsEqualTo((Channel?)ch);
+        await Assert.That(app.actor.list.User.Channel.Get("logger")).IsEqualTo((Channel?)ch);
     }
 
     [Test]
@@ -108,13 +108,13 @@ public class Stage3_GoalChannelTests
         var app = global::PLang.Tests.TestApp.Create("/tmp/g_late");
         var sinkGoal = new EngineGoal { Name = "Sink", Path = global::app.type.item.path.@this.Resolve("S.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/S.pr", global::PLang.Tests.TestApp.SharedContext) };
         app.goal.list.Add(sinkGoal);
-        var sink = await Make.GoalChannel("sink", Make.Call(sinkGoal.Name), app.User);
-        app.User.Channel.Register(sink);
+        var sink = await Make.GoalChannel("sink", Make.Call(sinkGoal.Name), app.actor.list.User);
+        app.actor.list.User.Channel.Register(sink);
 
         // Register "builder" AFTER "sink" exists. Old code froze foundational
         // before this; this test passes only because no freeze is involved.
         var builder = StreamChannel.Memory("builder");
-        app.User.Channel.Register(builder);
+        app.actor.list.User.Channel.Register(builder);
 
         // Inside sink's body, "builder" must still resolve.
         var sinkExec = (AsyncLocal<bool>)typeof(GoalChannel)
@@ -123,9 +123,9 @@ public class Stage3_GoalChannelTests
         sinkExec.Value = true;
         try
         {
-            await Assert.That(app.User.Channel.Get("builder")).IsEqualTo((Channel?)builder);
+            await Assert.That(app.actor.list.User.Channel.Get("builder")).IsEqualTo((Channel?)builder);
             // And "sink" itself is correctly hidden.
-            await Assert.That(app.User.Channel.Get("sink")).IsNull();
+            await Assert.That(app.actor.list.User.Channel.Get("sink")).IsNull();
         }
         finally { sinkExec.Value = false; }
     }
@@ -136,8 +136,8 @@ public class Stage3_GoalChannelTests
         var app = global::PLang.Tests.TestApp.Create("/tmp/g8");
         var goal = new EngineGoal { Name = "Asker", Path = global::app.type.item.path.@this.Resolve("Asker.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/A.pr", global::PLang.Tests.TestApp.SharedContext) };
         app.goal.list.Add(goal);
-        var ch = await Make.GoalChannel("input", Make.Call(goal.Name), app.User);
-        var result = await ch.Ask(new global::app.module.action.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?") });
+        var ch = await Make.GoalChannel("input", Make.Call(goal.Name), app.actor.list.User);
+        var result = await ch.Ask(new global::app.module.action.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?") });
         await result.IsSuccess();
     }
 
@@ -147,10 +147,10 @@ public class Stage3_GoalChannelTests
         var app = global::PLang.Tests.TestApp.Create("/tmp/g9");
         var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         app.goal.list.Add(goal);
-        var ch = await Make.GoalChannel("c", Make.Call(goal.Name), app.User);
+        var ch = await Make.GoalChannel("c", Make.Call(goal.Name), app.actor.list.User);
         await ch.DisposeAsync();
         // Goal still usable — re-register as a different channel.
-        var ch2 = await Make.GoalChannel("c2", Make.Call(goal.Name), app.User);
+        var ch2 = await Make.GoalChannel("c2", Make.Call(goal.Name), app.actor.list.User);
         var result = await ch2.Write(app.Ok("x"));
         await result.IsSuccess();
     }

@@ -65,15 +65,15 @@ public class PrLoadTests : System.IAsyncDisposable
         built.Step[1].Line = new() { Indent = 1 };
         built.Step[1].Warning.Add(new global::app.warning.@this { Key = "Unsure", Message = "step 1 uses output.write" });
         var output = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, output, ChannelDirection.Output, ownsStream: true) { Mime = "text/plain" });
 
         var goal = await RealGoalLoad.ViaChannel(_app, built);
-        var ran = await goal.Start(_app.User.Context);
+        var ran = await goal.Start(_app.actor.list.User.Context);
 
         await ran.IsSuccess();
         await Assert.That(System.Text.Encoding.UTF8.GetString(output.ToArray())).Contains("n is 5");
-        await Assert.That((await (await _app.User.Context.Variable.Get("n")).Value())?.ToString()).IsEqualTo("5");
+        await Assert.That((await (await _app.actor.list.User.Context.Variable.Get("n")).Value())?.ToString()).IsEqualTo("5");
         await Assert.That(goal.Step[1].Line.Indent).IsEqualTo(1);
         await Assert.That(goal.Step[1].Warning.Single().Key).IsEqualTo("Unsure");
     }

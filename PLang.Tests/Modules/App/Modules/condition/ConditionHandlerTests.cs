@@ -32,8 +32,8 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfTrue_NoGoals_ReturnsSuccessWithTrue()
     {
-        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(true), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
-        await action.Attach(null, _app.User.Context);
+        var action = new If(_app.actor.list.User.Context) { Left = _app.actor.list.User.Context.Ok(true), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.actor.list.User.Context.Ok(true) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -43,8 +43,8 @@ public class ConditionHandlerTests : IDisposable
     [Test]
     public async Task IfFalse_NoGoals_ReturnsSuccessWithFalse()
     {
-        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(false), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
-        await action.Attach(null, _app.User.Context);
+        var action = new If(_app.actor.list.User.Context) { Left = _app.actor.list.User.Context.Ok(false), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.actor.list.User.Context.Ok(true) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -57,7 +57,7 @@ public class ConditionHandlerTests : IDisposable
     public async Task IfTrue_Orchestrate_RunsThenBranch()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -67,20 +67,20 @@ public class ConditionHandlerTests : IDisposable
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("condition"), Name = "if",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
-                new Data("Left", true, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
+                new Data("Left", true, context: _app.actor.list.User.Context), new Data("Operator", "==", context: _app.actor.list.User.Context), new Data("Right", true, context: _app.actor.list.User.Context)
             })
         };
         var thenAction = new Action
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "true-branch", context: _app.User.Context) })
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "true-branch", context: _app.actor.list.User.Context) })
         };
 
         var step = new Step { Index = 0, Text = "if true, write true-branch" };
         step.Code.Add(condAction.In(step));
         step.Code.Add(thenAction);
 
-        var result = await step.Start(_app.User.Context);
+        var result = await step.Start(_app.actor.list.User.Context);
 
         await result.IsSuccess();
 
@@ -93,7 +93,7 @@ public class ConditionHandlerTests : IDisposable
     public async Task IfFalse_Orchestrate_RunsElseBranch()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -103,26 +103,26 @@ public class ConditionHandlerTests : IDisposable
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("condition"), Name = "if",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
-                new Data("Left", false, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
+                new Data("Left", false, context: _app.actor.list.User.Context), new Data("Operator", "==", context: _app.actor.list.User.Context), new Data("Right", true, context: _app.actor.list.User.Context)
             })
         };
         var thenAction = new Action
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "then-branch", context: _app.User.Context) })
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "then-branch", context: _app.actor.list.User.Context) })
         };
         var elseCondAction = new Action
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("condition"), Name = "if",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
-                new Data("Left", true, context: _app.User.Context), new Data("Operator", "==", context: _app.User.Context), new Data("Right", true, context: _app.User.Context)
+                new Data("Left", true, context: _app.actor.list.User.Context), new Data("Operator", "==", context: _app.actor.list.User.Context), new Data("Right", true, context: _app.actor.list.User.Context)
             })
         };
         var elseAction = new Action
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "else-branch", context: _app.User.Context) })
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "else-branch", context: _app.actor.list.User.Context) })
         };
 
         var step = new Step { Index = 0, Text = "if false then, else write else" };
@@ -131,7 +131,7 @@ public class ConditionHandlerTests : IDisposable
         step.Code.Add(elseCondAction);
         step.Code.Add(elseAction);
 
-        var result = await step.Start(_app.User.Context);
+        var result = await step.Start(_app.actor.list.User.Context);
 
         await result.IsSuccess();
 

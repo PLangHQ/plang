@@ -11,8 +11,8 @@ public class Stage7_AppServicesTests
     public async Task Services_NewWithParent_CreatesService_AddsToCollection()
     {
         await using var app = global::PLang.Tests.TestApp.Create("/tmp/s7a");
-        var s = app.Services.New(parent: app.User);
-        await Assert.That(s.Parent).IsEqualTo(app.User);
+        var s = app.Services.New(parent: app.actor.list.User);
+        await Assert.That(s.Parent).IsEqualTo(app.actor.list.User);
         await Assert.That(app.Services.Count).IsEqualTo(1);
         await Assert.That(app.Services.Contains(s)).IsTrue();
     }
@@ -21,7 +21,7 @@ public class Stage7_AppServicesTests
     public async Task Service_Channels_IsEmptyOnConstruction()
     {
         await using var app = global::PLang.Tests.TestApp.Create("/tmp/s7b");
-        var s = app.Services.New(parent: app.User);
+        var s = app.Services.New(parent: app.actor.list.User);
         await Assert.That(s.Channels.ChannelNames.Any()).IsFalse();
     }
 
@@ -29,19 +29,19 @@ public class Stage7_AppServicesTests
     public async Task Service_Identity_NavigatesToAppSystemIdentity()
     {
         await using var app = global::PLang.Tests.TestApp.Create("/tmp/s7c");
-        app.System.Identity = new global::app.module.action.identity.Identity { Name = "system-id" };
-        var s = app.Services.New(parent: app.User);
-        await Assert.That(s.Identity).IsEqualTo(app.System.Identity);
+        app.actor.list.System.Identity = new global::app.module.action.identity.Identity { Name = "system-id" };
+        var s = app.Services.New(parent: app.actor.list.User);
+        await Assert.That(s.Identity).IsEqualTo(app.actor.list.System.Identity);
     }
 
     [Test]
     public async Task Service_Parent_IsTheActorPassedAtCreation()
     {
         await using var app = global::PLang.Tests.TestApp.Create("/tmp/s7d");
-        var sUser = app.Services.New(parent: app.User);
-        var sSystem = app.Services.New(parent: app.System);
-        await Assert.That(sUser.Parent).IsEqualTo(app.User);
-        await Assert.That(sSystem.Parent).IsEqualTo(app.System);
+        var sUser = app.Services.New(parent: app.actor.list.User);
+        var sSystem = app.Services.New(parent: app.actor.list.System);
+        await Assert.That(sUser.Parent).IsEqualTo(app.actor.list.User);
+        await Assert.That(sSystem.Parent).IsEqualTo(app.actor.list.System);
     }
 
     [Test]
@@ -51,7 +51,7 @@ public class Stage7_AppServicesTests
         AppService captured;
         global::app.channel.@this disposedCh;
         {
-            await using var s = app.Services.New(parent: app.User);
+            await using var s = app.Services.New(parent: app.actor.list.User);
             captured = s;
             disposedCh = StreamChannel.Memory("input");
             s.Channels.Register(disposedCh);
@@ -65,8 +65,8 @@ public class Stage7_AppServicesTests
     public async Task TwoParallelServices_DontCollide_OnChannelNames()
     {
         await using var app = global::PLang.Tests.TestApp.Create("/tmp/s7f");
-        await using var sA = app.Services.New(parent: app.User);
-        await using var sB = app.Services.New(parent: app.User);
+        await using var sA = app.Services.New(parent: app.actor.list.User);
+        await using var sB = app.Services.New(parent: app.actor.list.User);
         sA.Channels.Register(StreamChannel.Memory("input"));
         sB.Channels.Register(StreamChannel.Memory("input"));
         await Assert.That(sA.Channels.Get("input")).IsNotEqualTo(sB.Channels.Get("input"));
@@ -90,7 +90,7 @@ public class Stage7_AppServicesTests
         await using var app = global::PLang.Tests.TestApp.Create("/tmp/s7-race");
         const int n = 200;
         var pool = new AppService[n];
-        for (int i = 0; i < n; i++) pool[i] = app.Services.New(parent: app.User);
+        for (int i = 0; i < n; i++) pool[i] = app.Services.New(parent: app.actor.list.User);
 
         // Half are removed concurrently; the other half stay alive and must remain.
         var removeTasks = new Task[n / 2];
@@ -102,7 +102,7 @@ public class Stage7_AppServicesTests
         // Concurrently spawn another batch — these should also all land.
         var addTasks = new Task<AppService>[n / 2];
         for (int i = 0; i < n / 2; i++)
-            addTasks[i] = Task.Run(() => app.Services.New(parent: app.User));
+            addTasks[i] = Task.Run(() => app.Services.New(parent: app.actor.list.User));
 
         await Task.WhenAll(removeTasks);
         var added = await Task.WhenAll(addTasks);

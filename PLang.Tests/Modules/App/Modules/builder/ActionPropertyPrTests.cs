@@ -17,14 +17,14 @@ public class ActionPropertyPrTests
 
     private async Task<string> Write(global::app.goal.@this goal)
     {
-        return await _app.User.Context.Pr(goal);
+        return await _app.actor.list.User.Context.Pr(goal);
     }
 
     private async Task<global::app.data.@this> Read(string pr)
     {
         var channel = new global::app.channel.type.stream.@this("pr", new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(pr)),
             global::app.channel.ChannelDirection.Input, ownsStream: true) { Mime = "application/plang-goal" };
-        _app.User.Channel.Register(channel);
+        _app.actor.list.User.Channel.Register(channel);
         return await channel.Read();
     }
 
@@ -73,7 +73,7 @@ public class ActionPropertyPrTests
     {
         var action = Make.Action("file", "read", ("Path", "notes.txt"), ("Bogus", 1));
 
-        var verdict = await action.Validate(_app.User.Context);
+        var verdict = await action.Validate(_app.actor.list.User.Context);
 
         await Assert.That(verdict).IsNotNull();
         await Assert.That(verdict!.list!.Select(c => c.Key)).Contains("UnknownProperty");
@@ -83,7 +83,7 @@ public class ActionPropertyPrTests
     {
         var action = Make.Action("file", "read");
 
-        var verdict = await action.Validate(_app.User.Context);
+        var verdict = await action.Validate(_app.actor.list.User.Context);
 
         await Assert.That(verdict).IsNotNull();
         await Assert.That(verdict!.list!.Select(c => c.Key)).Contains("MissingProperty");

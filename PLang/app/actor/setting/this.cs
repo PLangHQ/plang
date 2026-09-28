@@ -5,7 +5,7 @@ namespace app.actor.setting;
 /// <summary>
 /// Settings, in layers: a class's defaults ← the actor's saved row (the user's, else the system's) ←
 /// this run's values (<c>set %!x%</c>, the CLI flags) ← the step's own. Each actor has one
-/// (<c>app.System.Setting</c>, <c>app.User.Setting</c>, the user's falling back to the system's) that holds
+/// (<c>app.actor.list.System.Setting</c>, <c>app.actor.list.User.Setting</c>, the user's falling back to the system's) that holds
 /// the actor's rows; a context's own layer (<c>context.Setting</c>) chains up to its actor's, so a
 /// goal-local value shadows the rest. The rows are read once, when the app starts (<see cref="Load"/>);
 /// after that a setting is built in memory.

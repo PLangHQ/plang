@@ -7,20 +7,20 @@ public class VariablesSnapshotTests
     {
         // Set %x%=1 and %obj%={a:1}; Capture; Restore into fresh Variables; deep-equal.
         var src = global::PLang.Tests.TestApp.Create("/src");
-        src.User.Context.Variable.Set("x", 1);
-        src.User.Context.Variable.Set("obj", new Dictionary<string, object?> { ["a"] = 1 });
+        src.actor.list.User.Context.Variable.Set("x", 1);
+        src.actor.list.User.Context.Variable.Set("obj", new Dictionary<string, object?> { ["a"] = 1 });
 
-        var snap = src.Snapshot(src.User.Context);
+        var snap = src.Snapshot(src.actor.list.User.Context);
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        await dst.Restore(snap, dst.User.Context);
+        await dst.Restore(snap, dst.actor.list.User.Context);
 
-        var x = await dst.User.Context.Variable.Get("x");
+        var x = await dst.actor.list.User.Context.Variable.Get("x");
         await Assert.That(x).IsNotNull();
         await Assert.That((await x!.Value())?.ToString()).IsEqualTo("1");
 
         // The dict round-trips as a native dict value — read its key the plang way,
         // not by casting to a raw CLR IDictionary.
-        var obj = await dst.User.Context.Variable.Get("obj");
+        var obj = await dst.actor.list.User.Context.Variable.Get("obj");
         await Assert.That(obj).IsNotNull();
         var dict = (await obj!.Value()) as global::app.type.item.dict.@this;
         await Assert.That(dict).IsNotNull();
@@ -34,11 +34,11 @@ public class VariablesSnapshotTests
         // Settings is now a navigable resolver (not in _variables) so it's absent
         // by construction — no special-case needed.
         var src = global::PLang.Tests.TestApp.Create("/src");
-        var vars = src.User.Context.Variable;
+        var vars = src.actor.list.User.Context.Variable;
         vars.Set("user", "alice");        // user var — survives
         vars.Set("!myInfra", "infra");    // !-prefixed — skipped
 
-        var snap = src.Snapshot(src.User.Context);
+        var snap = src.Snapshot(src.actor.list.User.Context);
         var captured = snap.Section("Variables").Entries.Entries(snap.Context).ToList();   // each captured variable is its own entry
 
         var names = captured.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);

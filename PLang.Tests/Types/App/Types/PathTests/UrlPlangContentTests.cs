@@ -18,7 +18,7 @@ public class UrlPlangContentTests
 
     private static async Task<global::app.data.@this> Read(global::app.@this app, string url)
     {
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         // the actor may read the url — the consent gate isn't what's under test
         var grant = new global::app.type.item.permission.@this("User", new global::app.type.item.path.http.@this(url).Absolute,
             global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.Exact);
@@ -35,7 +35,7 @@ public class UrlPlangContentTests
         var (app, root) = NewApp();
         try
         {
-            var ctx = app.User.Context;
+            var ctx = app.actor.list.User.Context;
             // the signed write's inner @schema:data record — the same content with its signature taken off
             var signed = (await ctx.Format("application/plang").Serialize(ctx.Ok("hello"), ctx).Value())!.Clr<string>()!;
             using var doc = System.Text.Json.JsonDocument.Parse(signed);
@@ -55,7 +55,7 @@ public class UrlPlangContentTests
         var (app, root) = NewApp();
         try
         {
-            var ctx = app.User.Context;
+            var ctx = app.actor.list.User.Context;
             var signed = (await ctx.Format("application/plang").Serialize(ctx.Ok("hello"), ctx).Value())!.Clr<string>()!;
             var read = await Read(app, server.MapStoredBody(System.Text.Encoding.UTF8.GetBytes(signed), "application/plang"));
             await read.IsSuccess();

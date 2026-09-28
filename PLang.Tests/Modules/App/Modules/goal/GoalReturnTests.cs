@@ -7,7 +7,7 @@ public class GoalReturnTests
     private (global::app.actor.context.@this context, global::app.type.item.variable.list.@this memory) CreateContext()
     {
         var app = TestApp.Create("/app");
-        return (app.User.Context, app.User.Context.Variable);
+        return (app.actor.list.User.Context, app.actor.list.User.Context.Variable);
     }
 
     [Test]

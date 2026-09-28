@@ -19,7 +19,7 @@ public class AppStartTests
         await using var writer = TestApp.Create(_root);
         var goal = Make.Goal("Entry",
             Make.Step("set x", Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", 1))));
-        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_root, ".build", "entry.pr"), await writer.User.Context.Pr(goal));
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_root, ".build", "entry.pr"), await writer.actor.list.User.Context.Pr(goal));
     }
 
     [After(Test)]
@@ -28,7 +28,7 @@ public class AppStartTests
     private async Task<global::app.@this> App()
     {
         var app = TestApp.Create(_root);
-        await app.System.Context.Variable.Set("goalFile", "/.build/entry.pr");
+        await app.actor.list.System.Context.Variable.Set("goalFile", "/.build/entry.pr");
         return app;
     }
 
@@ -38,7 +38,7 @@ public class AppStartTests
     [Test] public async Task TheApp_IsAnItem_AndNavigatesAsItDid()
     {
         await using var app = TestApp.Create("/test");
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
 
         await Assert.That(ReferenceEquals((await Read("%!app%", context)).Peek(), app)).IsTrue();
         await Assert.That(ReferenceEquals((await Read("%!app.variable%", context)).Peek(), app.variable)).IsTrue();
@@ -59,13 +59,13 @@ public class AppStartTests
         var own = app.Own();
         // bound by the System actor, for the app: it fires though the goal runs as the User
         own.Bind("start", When.before, (item, _, ctx) => { lock (ran) ran.Add($"before {(item as global::app.@this)?.Name}"); return Task.FromResult(ctx.Ok()); },
-            app.System, Scope.app);
+            app.actor.list.System, Scope.app);
         own.Bind("start", When.after, async (_, result, ctx) =>
         {
             var x = (await ctx.Variable.Get("x")).IsInitialized;
             lock (ran) ran.Add($"after x={x}");
             return ctx.Ok();
-        }, app.System, Scope.app);
+        }, app.actor.list.System, Scope.app);
 
         var result = await app.Start();
 
@@ -78,13 +78,13 @@ public class AppStartTests
     {
         await using var app = await App();
         app.Own().Bind("start", When.before,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))), app.User, Scope.app);
+            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))), app.actor.list.User, Scope.app);
 
         var result = await app.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Refused");
-        await Assert.That((await app.User.Context.Variable.Get("x")).IsInitialized).IsFalse();
+        await Assert.That((await app.actor.list.User.Context.Variable.Get("x")).IsInitialized).IsFalse();
     }
 
     [Test] public async Task ACancellingBefore_IsTheAnswer_AndTheGoalDoesntRun()
@@ -95,11 +95,11 @@ public class AppStartTests
             var instead = ctx.Ok("instead");
             instead.Handled = true;
             return Task.FromResult(instead);
-        }, app.User, Scope.app);
+        }, app.actor.list.User, Scope.app);
 
         var result = await app.Start();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("instead");
-        await Assert.That((await app.User.Context.Variable.Get("x")).IsInitialized).IsFalse();
+        await Assert.That((await app.actor.list.User.Context.Variable.Get("x")).IsInitialized).IsFalse();
     }
 }

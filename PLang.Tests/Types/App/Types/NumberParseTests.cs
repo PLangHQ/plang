@@ -57,7 +57,7 @@ public class NumberParseTests
         // populated after a Resolve.
         await using var app = new global::app.@this(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-num-resolve-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var n = number.Resolve("3.14", app.User.Context);
+        var n = number.Resolve("3.14", app.actor.list.User.Context);
         var fields = typeof(number).GetFields(System.Reflection.BindingFlags.Instance
                                           | System.Reflection.BindingFlags.NonPublic);
         foreach (var f in fields)

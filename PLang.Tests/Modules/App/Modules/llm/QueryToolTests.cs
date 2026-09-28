@@ -40,7 +40,7 @@ public class QueryToolTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.actor.context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.System.Context;
 
     #region Tool Call Loop
 

@@ -45,7 +45,7 @@ public class UploadActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.actor.context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.System.Context;
 
     private class MockHttpMessageHandler : System.Net.Http.HttpMessageHandler
     {

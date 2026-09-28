@@ -6,7 +6,7 @@ namespace app.goal.setup;
 /// <summary>
 /// Run-once setup execution system.
 /// Setup goals execute once-per-step at app startup. Steps are tracked
-/// persistently in the "setup" table of app.System.DataSource (system.sqlite),
+/// persistently in the "setup" table of app.actor.list.System.DataSource (system.sqlite),
 /// keyed by step.Hash. New steps run on next startup. Changed steps (different hash) re-run.
 /// </summary>
 public sealed class @this
@@ -35,7 +35,7 @@ public sealed class @this
     /// </summary>
     private async Task<data.@this> DiscoverAsync(app.@this app, CancellationToken ct = default)
     {
-        var context = app.System.Context!;
+        var context = app.actor.list.System.Context!;
         var candidates = new global::app.type.item.path.@this[]
         {
             global::app.type.item.path.@this.Resolve("/.build/setup.pr", context),
@@ -134,6 +134,6 @@ public sealed class @this
             ["error"] = error?.Message
         };
 
-        return await (await app.store).Set(Table, step.Hash, new data.@this(step.Hash, metadata, context: app.System.Context));
+        return await (await app.store).Set(Table, step.Hash, new data.@this(step.Hash, metadata, context: app.actor.list.System.Context));
     }
 }

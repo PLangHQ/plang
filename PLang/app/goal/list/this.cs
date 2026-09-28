@@ -135,7 +135,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     private async Task<goal.@this?> TryLoadPr(string dir, string file, CancellationToken ct)
     {
         var prFile = file.ToLowerInvariant() + ".pr";
-        var context = App.System.Context!;
+        var context = App.actor.list.System.Context!;
 
         // 1. The app root, through the path verbs (gated): "/" + dir + .build/<file>.pr.
         var rootCandidate = global::app.type.item.path.@this.Resolve("/", context);
@@ -156,7 +156,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     // The goal the .pr at `pr` holds, when it exists and reads — a setup goal never answers a call.
     private async Task<goal.@this?> Readable(global::app.type.item.path.@this pr, CancellationToken ct)
     {
-        var context = App.System.Context!;
+        var context = App.actor.list.System.Context!;
         var exists = await pr.ExistsAsync(context);
         if (!exists.Success || !await exists.ToBooleanAsync()) return null;
         var result = await global::app.goal.@this.Load(pr, App);
@@ -165,7 +165,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
 
     /// <summary>Every goal, with no asker: a C# lookup without a request is the app asking as itself,
     /// which is the system actor.</summary>
-    internal override IAsyncEnumerable<goal.@this> Walk() => Walk(null, App.System.Context);
+    internal override IAsyncEnumerable<goal.@this> Walk() => Walk(null, App.actor.list.System.Context);
 
     /// <summary>
     /// Every goal of the app — and of <c>/system/</c>, unless the setting says <c>os: false</c> — one per
@@ -192,7 +192,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             foreach (var one in wants.Of(goal)) yield return one;
 
         // the .pr files are the app's own: listed once, as the system
-        var system = App.System.Context!;
+        var system = App.actor.list.System.Context!;
         _app ??= await Listed(global::app.type.item.path.@this.Resolve("/", system));
         _system ??= await Listed(global::app.type.item.path.@this.Resolve(App.OsAbsolutePath + "/system", system));
 
@@ -214,7 +214,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     // The .pr files under `root`'s .build folders, in plang form.
     private async Task<IReadOnlyList<global::app.type.item.path.@this>> Listed(global::app.type.item.path.@this root)
     {
-        var context = App.System.Context!;
+        var context = App.actor.list.System.Context!;
         var exists = await root.ExistsAsync(context);
         if (!exists.Success || !await exists.ToBooleanAsync()) return [];
         var listed = await root.List("*.pr", recursive: true, context);

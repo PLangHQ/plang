@@ -38,10 +38,10 @@ public class StartTests
 
     private void Record(global::app.type.item.@this level, When when, List<string> ran, string name)
         => _bound.Add(level.Own().Bind("start", when, (_, _, ctx) => { ran.Add(name); return Task.FromResult(ctx.Ok()); },
-            _app.User, Scope.actor));
+            _app.actor.list.User, Scope.actor));
 
     private async Task<bool> IsSet(string name)
-        => await _app.User.Context.Variable.Get(name) is { IsInitialized: true };
+        => await _app.actor.list.User.Context.Variable.Get(name) is { IsInitialized: true };
 
     [Test] public async Task AnAction_StartsThroughItsTypeModuleCatalogActionAndOwn_GeneralWrappingSpecific()
     {
@@ -57,7 +57,7 @@ public class StartTests
             Record(level, When.after, ran, name + " after");
         }
 
-        await (await step.Start(_app.User.Context)).IsSuccess();
+        await (await step.Start(_app.actor.list.User.Context)).IsSuccess();
 
         await Assert.That(ran).IsEquivalentTo(new[]
         {
@@ -71,7 +71,7 @@ public class StartTests
         var (_, step, _) = Program();
         // an action on this app's own module: the shared app's module is bound on by the other tests here
         var set = new global::app.goal.step.action.@this { Module = _app.Module("variable"), Name = "set" };
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var result = context.Ok();
         // once first: the JIT and the statics
         await step.on.start.Before(step, context);
@@ -105,7 +105,7 @@ public class StartTests
         Record(goal, When.after, ran, "goal after");
         Record(_app.type.list["goal"], When.after, ran, "goal type after");
 
-        await (await goal.Start(_app.User.Context)).IsSuccess();
+        await (await goal.Start(_app.actor.list.User.Context)).IsSuccess();
 
         await Assert.That(ran).IsEquivalentTo(new[]
         {
@@ -124,15 +124,15 @@ public class StartTests
             var instead = ctx.Ok("instead");
             instead.Handled = true;
             return Task.FromResult(instead);
-        }, _app.User, Scope.actor));
+        }, _app.actor.list.User, Scope.actor));
         Record(set.Module[set.Name]!, When.before, ran, "catalog before");
         Record(set, When.before, ran, "own before");
         global::app.data.@this? seen = null;
         _bound.Add(_app.type.list["action"].Own().Bind("start", When.after, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); },
-            _app.User, Scope.actor));
+            _app.actor.list.User, Scope.actor));
         Record(set, When.after, ran, "own after");
 
-        var result = await step.Start(_app.User.Context);
+        var result = await step.Start(_app.actor.list.User.Context);
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("instead");
@@ -144,7 +144,7 @@ public class StartTests
     [Test] public async Task AMockedAction_StillReachesTheActionTypesAfterBindings()
     {
         var (_, step, _) = Program();
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         await (await new global::app.module.action.mock.intercept(context)
         {
             Pattern = (global::app.type.item.text.@this)"variable.set",
@@ -167,14 +167,14 @@ public class StartTests
     [Test] public async Task AFailingOwnAfter_IsTheResult_AndTheTypesAfterStillSeesTheAction()
     {
         var (_, step, set) = Program();
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         _bound.Add(set.Own().Bind("start", When.after,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Broke", 400))), _app.User, Scope.actor));
+            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Broke", 400))), _app.actor.list.User, Scope.actor));
         var coverage = new global::app.test.Coverage();
         coverage.Watch(context);
         global::app.data.@this? seen = null;
         _bound.Add(_app.type.list["action"].Own().Bind("start", When.after, (_, result, ctx) => { seen = result; return Task.FromResult(ctx.Ok()); },
-            _app.User, Scope.actor));
+            _app.actor.list.User, Scope.actor));
 
         var result = await step.Start(context);
 

@@ -15,7 +15,7 @@ public class SchemaTests
     public void Setup()
     {
         _app = TestApp.Create("/test");
-        _app.Build = new global::app.module.action.build.@this(_app.System.Context);
+        _app.Build = new global::app.module.action.build.@this(_app.actor.list.System.Context);
     }
 
     [After(Test)]

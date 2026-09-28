@@ -29,19 +29,19 @@ public class FailureMatrixTests : System.IAsyncDisposable
     {
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-fm-" + Guid.NewGuid().ToString("N")[..8]));
-        var plang = app.User.Context.Format("application/plang");
+        var plang = app.actor.list.User.Context.Format("application/plang");
 
-        var d = new global::app.data.@this("x", "untampered", context: app.User.Context);
-        var wire = (await plang.Serialize(d, app.User.Context).Value())!.Clr<string>()!;
+        var d = new global::app.data.@this("x", "untampered", context: app.actor.list.User.Context);
+        var wire = (await plang.Serialize(d, app.actor.list.User.Context).Value())!.Clr<string>()!;
         var tampered = wire.Replace("untampered", "TAMPERED!");
 
-        var back = plang.Deserialize(tampered, app.User.Context);
+        var back = plang.Deserialize(tampered, app.actor.list.User.Context);
         var verify = await app.Run<global::app.module.action.signing.verify>(
-            new global::app.module.action.signing.verify(app.User.Context)
+            new global::app.module.action.signing.verify(app.actor.list.User.Context)
             {
                 Data = back,
                 SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", true)
-            }, app.User.Context);
+            }, app.actor.list.User.Context);
         await verify.IsFailure();
         await Assert.That(verify.Error!.Key).IsEqualTo("DataHashMismatch");
     }
@@ -82,7 +82,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
     [Test] public async Task CryptoHash_WithUnsupportedAlgorithm_ReturnsDataWithUnsupportedAlgorithmError()
     {
         var crypto = new global::app.module.action.crypto.code.Default();
-        var action = new global::app.module.action.crypto.Hash(app.User.Context) { Data = app.Ok("x"),
+        var action = new global::app.module.action.crypto.Hash(app.actor.list.User.Context) { Data = app.Ok("x"),
             Algorithm = new global::app.data.@this<global::app.type.item.text.@this>("", "md5")
         };
         var result = await crypto.Hash(action);
@@ -111,7 +111,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
         // Empty MemoryStream — ReadLineAsync returns null (EOF).
         var ch = new global::app.channel.type.stream.@this("input", new MemoryStream(),
             global::app.channel.ChannelDirection.Bidirectional);
-        var action = new global::app.module.action.output.ask(app.User.Context)
+        var action = new global::app.module.action.output.ask(app.actor.list.User.Context)
         {
             Question = new global::app.data.@this<global::app.type.item.text.@this>("", "")
         };

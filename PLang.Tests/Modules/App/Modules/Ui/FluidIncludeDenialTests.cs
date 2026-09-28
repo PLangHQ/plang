@@ -40,23 +40,23 @@ public class FluidIncludeDenialTests
     [Test] public async Task FluidInclude_TemplateOutsideRoot_DeniedByAuthGate()
     {
         var app = NewApp(out var root);
-        app.User.Channel.Register(new CannedChannel("n"));
+        app.actor.list.User.Channel.Register(new CannedChannel("n"));
         // Anchor the goal under the App root so GetTemplateBaseDir picks
         // the goal's parent; the include path "../../foreign/secret.liquid"
         // walks out and AuthGate denies.
         var goal = new Goal
         {
             Name = "Host",
-            Path = global::app.type.item.path.@this.Resolve("/host.goal", app.User.Context)
+            Path = global::app.type.item.path.@this.Resolve("/host.goal", app.actor.list.User.Context)
         };
-        await using var inGoal = app.User.Context.CallStack.Push(goal);
+        await using var inGoal = app.actor.list.User.Context.CallStack.Push(goal);
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(outOfRoot);
         System.IO.File.WriteAllText(System.IO.Path.Combine(outOfRoot, "secret.liquid"), "SECRET_TOKEN");
 
         var fluid = new global::app.module.action.ui.code.Fluid();
-        var action = new global::app.module.action.ui.Render(app.User.Context) { Template = new global::app.data.@this<global::app.type.item.text.@this>("Template",
+        var action = new global::app.module.action.ui.Render(app.actor.list.User.Context) { Template = new global::app.data.@this<global::app.type.item.text.@this>("Template",
                 "{% include '" + outOfRoot + "/secret.liquid' %}"),
             IsFile = new global::app.data.@this<global::app.type.item.@bool.@this>("IsFile", false)
         };
@@ -71,7 +71,7 @@ public class FluidIncludeDenialTests
     {
         var app = NewApp(out var root);
         var ch = new CannedChannel("UNEXPECTED");
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         // In-root partial: goal at /host.goal, partial at /partials/footer.liquid.
         var partialsDir = System.IO.Path.Combine(root, "partials");
         System.IO.Directory.CreateDirectory(partialsDir);
@@ -80,12 +80,12 @@ public class FluidIncludeDenialTests
         var goal = new Goal
         {
             Name = "Host",
-            Path = global::app.type.item.path.@this.Resolve("/host.goal", app.User.Context)
+            Path = global::app.type.item.path.@this.Resolve("/host.goal", app.actor.list.User.Context)
         };
-        await using var inGoal = app.User.Context.CallStack.Push(goal);
+        await using var inGoal = app.actor.list.User.Context.CallStack.Push(goal);
 
         var fluid = new global::app.module.action.ui.code.Fluid();
-        var action = new global::app.module.action.ui.Render(app.User.Context) { Template = new global::app.data.@this<global::app.type.item.text.@this>("Template", "{% include 'partials/footer.liquid' %}"),
+        var action = new global::app.module.action.ui.Render(app.actor.list.User.Context) { Template = new global::app.data.@this<global::app.type.item.text.@this>("Template", "{% include 'partials/footer.liquid' %}"),
             IsFile = new global::app.data.@this<global::app.type.item.@bool.@this>("IsFile", false)
         };
         var result = await fluid.Render(action);

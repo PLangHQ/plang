@@ -19,7 +19,7 @@ public class LazyMaterialisationTests
     [Test] public async Task Value_MaterialisesViaReader_WhenValueNull_AndRawSet()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("5", ctx.App.type.list[new type("number", "int"), ctx], ctx, "n");
         await Assert.That(Lower<long>(await d.Value())).IsEqualTo(5L);
         await Assert.That(d.MaterializeCount()).IsEqualTo(1);
@@ -48,7 +48,7 @@ public class LazyMaterialisationTests
     [Test] public async Task Value_RawSurvivesMaterialisation()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("5", ctx.App.type.list[new type("number", "int"), ctx], ctx, "n");
         await Assert.That(d.HasRaw).IsTrue();   // untouched — source-backed
         var v = await d.Value();                // parse rebinds
@@ -64,7 +64,7 @@ public class LazyMaterialisationTests
     [Test] public async Task Navigation_ReadsValueWhichMaterialises()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg");
         await Assert.That((await d.Value())).IsTypeOf<app.type.item.dict.@this>();
         var dict = (app.type.item.dict.@this)(await d.Value())!;

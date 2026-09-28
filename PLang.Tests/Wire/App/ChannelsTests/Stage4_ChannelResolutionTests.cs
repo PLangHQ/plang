@@ -22,8 +22,8 @@ public class Stage4_ChannelResolutionTests
     public async Task ChannelsGet_Output_ReturnsChannelNamedOutput()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/s4a");
-        global::app.@this.WireDefaultConsoleChannels(app.User);
-        var ch = app.User.Channel.Get(global::app.channel.list.@this.Output);
+        global::app.@this.WireDefaultConsoleChannels(app.actor.list.User);
+        var ch = app.actor.list.User.Channel.Get(global::app.channel.list.@this.Output);
         await Assert.That(ch).IsNotNull();
         await Assert.That(ch!.Name).IsEqualTo("output");
     }
@@ -33,8 +33,8 @@ public class Stage4_ChannelResolutionTests
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/s4b");
         var logger = StreamChannel.Memory("logger");
-        app.User.Channel.Register(logger);
-        var ch = app.User.Channel.Get("logger");
+        app.actor.list.User.Channel.Register(logger);
+        var ch = app.actor.list.User.Channel.Get("logger");
         await Assert.That((Channel?)ch).IsEqualTo((Channel)logger);
     }
 
@@ -42,7 +42,7 @@ public class Stage4_ChannelResolutionTests
     public async Task ChannelsGet_UnknownName_ReturnsNull()
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/s4c");
-        var ch = app.User.Channel.Get("dbg");
+        var ch = app.actor.list.User.Channel.Get("dbg");
         await Assert.That(ch).IsNull();
     }
 
@@ -51,11 +51,11 @@ public class Stage4_ChannelResolutionTests
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/s4d");
         var captured = new MemoryStream();
-        app.User.Channel.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
+        app.actor.list.User.Channel.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
-        var write = new global::app.module.action.output.Write(app.User.Context) { Data = app.Ok("hello-default"),
-            Channel = app.User.Channel.Get(global::app.channel.list.@this.Output)
+        var write = new global::app.module.action.output.Write(app.actor.list.User.Context) { Data = app.Ok("hello-default"),
+            Channel = app.actor.list.User.Channel.Get(global::app.channel.list.@this.Output)
         };
         // Direct Start skips the dispatcher's reset of init backing fields.
         await write.Start();
@@ -69,11 +69,11 @@ public class Stage4_ChannelResolutionTests
     {
         var app = global::PLang.Tests.TestApp.Create("/tmp/s4e");
         var loggerCapture = new MemoryStream();
-        app.User.Channel.Register(new StreamChannel("logger", loggerCapture, ChannelDirection.Output, ownsStream: false)
+        app.actor.list.User.Channel.Register(new StreamChannel("logger", loggerCapture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
-        var write = new global::app.module.action.output.Write(app.User.Context) { Data = app.Ok("targetted"),
-            Channel = app.User.Channel.Get("logger")
+        var write = new global::app.module.action.output.Write(app.actor.list.User.Context) { Data = app.Ok("targetted"),
+            Channel = app.actor.list.User.Channel.Get("logger")
         };
         await write.Start();
 
@@ -87,12 +87,12 @@ public class Stage4_ChannelResolutionTests
         // Plan rule 7: relay don't repackage. Channel.WriteAsync receives full Data.
         var app = global::PLang.Tests.TestApp.Create("/tmp/s4f");
         var probe = new EnvelopeProbeChannel();
-        app.User.Channel.Register(probe);
+        app.actor.list.User.Channel.Register(probe);
 
         var data = app.Ok("payload");
         data.Properties.Set("custom-prop", "x");
 
-        var write = new global::app.module.action.output.Write(app.User.Context) { Data = data,
+        var write = new global::app.module.action.output.Write(app.actor.list.User.Context) { Data = data,
             Channel = probe
         };
         await write.Start();

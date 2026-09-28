@@ -32,11 +32,11 @@ public class AbsoluteDisciplineTests
     [Test] public async Task TakeOverApi_AuthorizeFirst_OutOfRootDenial_PreventsAbsoluteUse()
     {
         var app = NewApp(out _);
-        app.User.Channel.Register(new CannedChannel("n"));
+        app.actor.list.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "db.sqlite");
         var p = new FilePath(outOfRoot);
-        var auth = await p.Authorize(global::app.type.item.permission.Verb.Write, app.User.Context);
+        var auth = await p.Authorize(global::app.type.item.permission.Verb.Write, app.actor.list.User.Context);
         await auth.IsFailure();
     }
 
@@ -44,7 +44,7 @@ public class AbsoluteDisciplineTests
     {
         var app = NewApp(out var root);
         var p = new FilePath(System.IO.Path.Combine(root, "db.sqlite"));
-        var auth = await p.Authorize(global::app.type.item.permission.Verb.Write, app.User.Context);
+        var auth = await p.Authorize(global::app.type.item.permission.Verb.Write, app.actor.list.User.Context);
         await auth.IsSuccess();
         // .Absolute is now safe to read.
         await Assert.That(p.Absolute).IsNotNull();
@@ -56,12 +56,12 @@ public class AbsoluteDisciplineTests
         // removed, an out-of-root db path would open without permission. With
         // Authorize in place + a denied actor, it must throw.
         var app = NewApp(out _);
-        app.User.Channel.Register(new CannedChannel("n"));
+        app.actor.list.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "db.sqlite");
         var dbPath = new FilePath(outOfRoot);
         bool threw = false;
-        try { using var _ = await global::app.store.sqlite.@this.CreateAsync(dbPath, app.User.Context); }
+        try { using var _ = await global::app.store.sqlite.@this.CreateAsync(dbPath, app.actor.list.User.Context); }
         catch (System.InvalidOperationException) { threw = true; }
         await Assert.That(threw).IsTrue();
     }
@@ -72,8 +72,8 @@ public class AbsoluteDisciplineTests
         var p = new FilePath(System.IO.Path.Combine(root, "x.txt"));
         // Path verbs internally use .Absolute — confirm a verb call succeeds
         // on an in-root Path (the .Absolute reach inside the verb is allowed).
-        await p.WriteText("hi", app.User.Context);
-        var r = await p.Touch(app.User.Context);
+        await p.WriteText("hi", app.actor.list.User.Context);
+        var r = await p.Touch(app.actor.list.User.Context);
         await r.IsSuccess();
     }
 

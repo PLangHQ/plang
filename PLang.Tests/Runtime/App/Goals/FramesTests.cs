@@ -41,7 +41,7 @@ public class FramesTests
     public async Task AfterAStepThatCallsAGoal_TheStepInPlay_IsTheCallers()
     {
         var (caller, _) = await CallerAndCallee();
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
 
         // what the step type's after-binding sees, per step of the caller
         var seen = new List<(global::app.goal.step.@this ending, global::app.goal.step.@this? inPlay, global::app.goal.@this? goal)>();
@@ -50,7 +50,7 @@ public class FramesTests
             if (item is global::app.goal.step.@this step && ReferenceEquals(step.Goal, caller))
                 seen.Add((step, c.CallStack.Step, c.CallStack.Goal));
             return Task.FromResult(c.Ok());
-        }, _app.User, global::app.@event.binding.Scope.actor);
+        }, _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
         var result = await caller.Start(ctx);
 
@@ -69,7 +69,7 @@ public class FramesTests
     [Test]
     public async Task AStepsAfterBinding_ReadsItsTimeOffItsFrame()
     {
-        await _app.System.Setting.Set(new global::app.callstack.setting.@this().Path + ".timing", _app.System.Context.Ok(true));
+        await _app.actor.list.System.Setting.Set(new global::app.callstack.setting.@this().Path + ".timing", _app.actor.list.System.Context.Ok(true));
         var (caller, _) = await CallerAndCallee();
 
         var took = new List<TimeSpan?>();
@@ -78,9 +78,9 @@ public class FramesTests
             if (item is global::app.goal.step.@this step && ReferenceEquals(step.Goal, caller))
                 took.Add(c.CallStack.Current?.Duration);
             return Task.FromResult(c.Ok());
-        }, _app.User, global::app.@event.binding.Scope.actor);
+        }, _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
-        await (await caller.Start(_app.User.Context)).IsSuccess();
+        await (await caller.Start(_app.actor.list.User.Context)).IsSuccess();
 
         await Assert.That(took.Count).IsEqualTo(2);
         foreach (var t in took)
@@ -91,7 +91,7 @@ public class FramesTests
     public async Task ADebugStackLine_NamesTheGoalStepAndAction()
     {
         var (caller, _) = await CallerAndCallee();
-        var stack = _app.User.CallStack;
+        var stack = _app.actor.list.User.CallStack;
         var step = caller.Step[0];
 
         await using var goalFrame = stack.Push(caller);

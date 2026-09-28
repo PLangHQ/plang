@@ -37,7 +37,7 @@ public class GoalResumeTests
     public async Task StepRunFrom_Zero_RunsAllActions()
     {
         var app = NewApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var actionA = TestAction.Create("variable", "set", ("name", "%a%"), ("value", "A"));
         var actionB = TestAction.Create("variable", "set", ("name", "%b%"), ("value", "B"));
         var step = new Step { Index = 0, Text = "multi" };
@@ -54,7 +54,7 @@ public class GoalResumeTests
     public async Task StepRunFrom_MidStep_RunsRemainingActionsOnly()
     {
         var app = NewApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var actionA = TestAction.Create("variable", "set", ("name", "%a%"), ("value", "A"));
         var actionB = TestAction.Create("variable", "set", ("name", "%b%"), ("value", "B"));
         var step = new Step { Index = 0, Text = "multi" };
@@ -71,7 +71,7 @@ public class GoalResumeTests
     public async Task GoalRunFrom_ResumesActionThenRemainingStepsInGoal()
     {
         var app = NewApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var goal = Build("G");
         SetStep(goal, 0, "s0", "skip");
         SetStep(goal, 1, "s1", "from-here");
@@ -95,7 +95,7 @@ public class GoalResumeTests
         // The integration test in 2a.8 (StatelessCrossGoalResumes) pins the
         // end-to-end behavior.
         var app = NewApp();
-        var data = new global::app.data.@this<Ask>("", new Ask(), context: app.User.Context);
+        var data = new global::app.data.@this<Ask>("", new Ask(), context: app.actor.list.User.Context);
         await Assert.That(data.ShouldExit()).IsTrue();
     }
 
@@ -107,7 +107,7 @@ public class GoalResumeTests
         // GoalRunFrom_ResumesActionThenRemainingStepsInGoal above. This test
         // pins the contract that earlier steps are not re-run.
         var app = NewApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var goal = Build("G");
         SetStep(goal, 0, "first", "should-not-run");
         SetStep(goal, 1, "second", "runs");

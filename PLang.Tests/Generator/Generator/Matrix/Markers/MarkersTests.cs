@@ -19,9 +19,9 @@ public class IContextHandlerTests
     {
         await using var app = TestApp.Create("/app");
         var action = new PrAction { Module = app.Module("matrix.markers"), Name = "icontexthandler" };
-        var (h, err) = await new IContextHandler(app.User.Context).Resolve(action, app.User.Context);
+        var (h, err) = await new IContextHandler(app.actor.list.User.Context).Resolve(action, app.actor.list.User.Context);
         await Assert.That(err).IsNull();
-        await Assert.That(ReferenceEquals(((IContextHandler)h!).Context, app.User.Context)).IsTrue();
+        await Assert.That(ReferenceEquals(((IContextHandler)h!).Context, app.actor.list.User.Context)).IsTrue();
     }
 }
 
@@ -31,7 +31,7 @@ public class IChannelHandlerTests
     public async Task IChannelHandler_ChannelsAssigned_BeforeRun()
     {
         await using var app = TestApp.Create("/app");
-        global::app.@this.WireDefaultConsoleChannels(app.User);
+        global::app.@this.WireDefaultConsoleChannels(app.actor.list.User);
         var result = await MatrixRunner.RunAsync<IChannelHandler>(app);
         await Assert.That((await result.Data.Value())?.ToString()).IsEqualTo("true");
     }
@@ -79,7 +79,7 @@ public class MultiMarkerHandlerTests
     public async Task MultiMarker_AllSlotsAssigned_BeforeRun()
     {
         await using var app = TestApp.Create("/app");
-        global::app.@this.WireDefaultConsoleChannels(app.User);
+        global::app.@this.WireDefaultConsoleChannels(app.actor.list.User);
 
         var context = await MatrixRunner.RunAsync<IContextHandler>(app);
         var ch = await MatrixRunner.RunAsync<IChannelHandler>(app);

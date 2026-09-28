@@ -96,7 +96,7 @@ public class DiscoverActionTests
 
         // The build pass stamps the goal's build-birth facts (test.tag → goal.Tag), reading the goal
         // being built from %goal%, as the builder's build.validate does.
-        var buildContext = _app.User.Context;
+        var buildContext = _app.actor.list.User.Context;
         await buildContext.Variable.Set("goal", goal);
         foreach (var step in goal.Step.Items())
             await step.Code.Build(buildContext);
@@ -111,15 +111,15 @@ public class DiscoverActionTests
             goal.Hash = "0000000000000000000000000000000000000000000000000000000000000000";
 
         // The goal writes its OWN .pr — the Store view through the plang serializer, as goalsSave does.
-        System.IO.File.WriteAllText(prFile, await _app.User.Context.Pr(goal));
+        System.IO.File.WriteAllText(prFile, await _app.actor.list.User.Context.Pr(goal));
 
         return relativePath;
     }
 
     private async Task<List<global::app.test.@this>> Discover(string path = ".", bool recursive = true)
     {
-        var action = new global::app.module.action.test.discover(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
-                global::app.type.item.path.@this.Resolve(path, _app.User.Context)),
+        var action = new global::app.module.action.test.discover(_app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+                global::app.type.item.path.@this.Resolve(path, _app.actor.list.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", recursive)
         };
@@ -258,7 +258,7 @@ public class DiscoverActionTests
                         new PrAction
                         {
                             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("http"), Name = "request",
-                            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Url", "https://example.com", context: _app.User.Context) })
+                            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Url", "https://example.com", context: _app.actor.list.User.Context) })
                         }
                     }
                 }
@@ -272,7 +272,7 @@ public class DiscoverActionTests
             {
                 ("goal", "call", new List<Data>
                 {
-                    new("Name", "Helper", context: _app.User.Context)
+                    new("Name", "Helper", context: _app.actor.list.User.Context)
                 })
             });
 
@@ -288,7 +288,7 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_IncludeFilter_NonMatchingTests_MarkedSkipped()
     {
-        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "fast" } });
+        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "fast" } });
         await CreateTestFile("Foo.test.goal", "Start", new[] { "set %x% = 1" });  // no tags
 
         var files = await Discover();
@@ -302,7 +302,7 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_ExcludeFilter_MatchingTests_MarkedSkipped()
     {
-        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
         await CreateTestFile("Foo.test.goal", "Start",
             new[] { "set test tag 'slow'", "set %x% = 1" },
             new (string, string, (string, object?)[])[]
@@ -323,8 +323,8 @@ public class DiscoverActionTests
     [Test]
     public async Task Discover_IncludeAndExclude_ExcludeAppliedAfterInclude()
     {
-        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "http" } });
-        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "http" } });
+        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
         await CreateTestFile("Foo.test.goal", "Start",
             new[] { "set test tag 'http', 'slow'", "set %x% = 1" },
             new (string, string, (string, object?)[])[]

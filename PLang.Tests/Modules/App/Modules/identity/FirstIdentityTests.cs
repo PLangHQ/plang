@@ -12,10 +12,10 @@ public class FirstIdentityTests
         {
             // real signing and the real identity provider — the loop lives between them
             await using var app = new global::app.@this(root);
-            var ctx = app.User.Context;
+            var ctx = app.actor.list.User.Context;
 
             var gets = 0;
-            foreach (var who in new[] { app.User, app.System })
+            foreach (var who in new[] { app.actor.list.User, app.actor.list.System })
                 app.type.list["action"].Own().Bind("start", global::app.@event.When.before, (item, _, c) =>
                 {
                     if (item is global::app.goal.step.action.@this { Name: "get" } a && a.Module.Name == "identity")
@@ -28,7 +28,7 @@ public class FirstIdentityTests
 
             // the one ask, and the one its own save makes — never a chain down to the stack's limit
             await Assert.That(gets).IsLessThanOrEqualTo(4);
-            await Assert.That(app.System.Setting.Of<global::app.module.action.identity.setting.@this>().Identity.CountRaw).IsEqualTo(1);
+            await Assert.That(app.actor.list.System.Setting.Of<global::app.module.action.identity.setting.@this>().Identity.CountRaw).IsEqualTo(1);
         }
         finally { System.IO.Directory.Delete(root, recursive: true); }
     }

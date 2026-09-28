@@ -48,7 +48,7 @@ public class MissingVariableNameTests
     public async Task MissingVariableName_Returns_MissingRequiredProperty_Error(
         string module, string action, string slotName)
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         // Action constructed with the Variable-name slot omitted. list.any/group also
         // require [IsNotNull] Key (and Operator), so we provide those to ensure the
         // missing-listname slot is the failure cause — not a sibling [IsNotNull] check.

@@ -23,7 +23,7 @@ public class ConvertBuiltValueTests
     [Test] public async Task ConvertBuiltText_ToNumber_Succeeds()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var built = new global::app.type.item.text.@this("5");
         // Create re-types a built leaf directly (leaf branch) — eager, no Data wrapper.
         var result = ctx.App.type.list["number"].Make(built, ctx);
@@ -34,7 +34,7 @@ public class ConvertBuiltValueTests
     [Test] public async Task ConvertBuiltText_BadNumber_Throws_NotHeld()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var built = new global::app.type.item.text.@this("abc");
         // The build-time safety net: a bad literal must THROW (the throw boundary),
         // never be silently held as the original text (which would pass validation).
@@ -50,7 +50,7 @@ public class ConvertBuiltValueTests
         // (Stage 3's case 2a holds this without a re-convert; the engine must at
         // least not corrupt it).
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var built = ((global::app.type.item.number.@this)(5L));
         var result = ctx.App.type.list["number"].Make(built, ctx);
         await Assert.That(((global::app.type.item.number.@this)result).Clr<long>()).IsEqualTo(5L);

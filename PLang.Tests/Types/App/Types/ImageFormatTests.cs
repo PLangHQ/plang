@@ -12,7 +12,7 @@ public class ImageFormatTests
         try
         {
             await using var app = TestApp.Create(root);
-            var ctx = app.User.Context;
+            var ctx = app.actor.list.User.Context;
             var target = global::app.type.item.path.@this.Resolve(System.IO.Path.Combine(root, "photo.png"), ctx)!;
             var saved = await target.Save(ctx.Ok(new global::app.type.item.image.@this(Png, "image/png", "png")), ctx);
             await saved.IsSuccess();
@@ -26,9 +26,9 @@ public class ImageFormatTests
         await using var app = TestApp.Create("/test", autoWireConsoleChannels: false);
         var capture = new System.IO.MemoryStream();
         var channel = new StreamChannel("img", capture, ChannelDirection.Output, ownsStream: false) { Mime = "image/png" };
-        app.User.Channel.Register(channel);
+        app.actor.list.User.Channel.Register(channel);
 
-        var written = await channel.Write(app.User.Context.Ok(new global::app.type.item.image.@this(Png, "image/png", "png")));
+        var written = await channel.Write(app.actor.list.User.Context.Ok(new global::app.type.item.image.@this(Png, "image/png", "png")));
         await written.IsSuccess();
         await Assert.That(capture.ToArray()).IsEquivalentTo(Png);
     }
@@ -36,7 +36,7 @@ public class ImageFormatTests
     [Test] public async Task AnImageFormat_RefusesAValueThatIsNoImage()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var result = await app.type.list.Stamp("image/png", ctx).kind.Encode(new System.IO.MemoryStream(), ctx.Ok("not an image"), ctx);
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Key).IsEqualTo("NoEncoder");

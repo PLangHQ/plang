@@ -42,8 +42,8 @@ public class DataValueRawTests
     [Test]
     public async Task Value_StringWithVarPlaceholder_ReturnsRawNotSubstituted()
     {
-        _app.User.Context.Variable.Set("name", "world");
-        var data = new Data("greeting", "Hello %name%", context: _app.User.Context);
+        _app.actor.list.User.Context.Variable.Set("name", "world");
+        var data = new Data("greeting", "Hello %name%", context: _app.actor.list.User.Context);
 
         await Assert.That((await data.Value())?.ToString()).IsEqualTo("Hello %name%");
     }
@@ -52,9 +52,9 @@ public class DataValueRawTests
     [Test]
     public async Task Value_ListWithVarPlaceholders_ReturnsRawListUnchanged()
     {
-        _app.User.Context.Variable.Set("x", "actual");
+        _app.actor.list.User.Context.Variable.Set("x", "actual");
         var raw = new List<object?> { "%x%", "literal", "%x%" };
-        var data = new Data("list", raw, context: _app.User.Context);
+        var data = new Data("list", raw, context: _app.actor.list.User.Context);
 
         // The list rides as native; reading it does not resolve the unstamped
         // %x% placeholders — they stay literal.
@@ -67,9 +67,9 @@ public class DataValueRawTests
     [Test]
     public async Task Value_DictWithVarPlaceholders_ReturnsRawDictUnchanged()
     {
-        _app.User.Context.Variable.Set("user", "alice");
+        _app.actor.list.User.Context.Variable.Set("user", "alice");
         var raw = new Dictionary<string, object?> { ["name"] = "%user%", ["role"] = "admin" };
-        var data = new Data("dict", raw, context: _app.User.Context);
+        var data = new Data("dict", raw, context: _app.actor.list.User.Context);
 
         // The dict rides as native; reading it does not resolve the unstamped
         // %user% placeholder — it stays literal.

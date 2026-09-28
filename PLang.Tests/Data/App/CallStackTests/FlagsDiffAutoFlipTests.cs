@@ -12,11 +12,11 @@ public class FlagsDiffAutoFlipTests
     public async Task Diff_IsOn_InsideADiffScope()
     {
         var app = global::PLang.Tests.TestApp.Create("/test");
-        await Assert.That(app.User.CallStack.Diff.Value).IsFalse();
+        await Assert.That(app.actor.list.User.CallStack.Diff.Value).IsFalse();
 
-        using (app.User.CallStack.DiffScope(app.User.Context.Variable))
+        using (app.actor.list.User.CallStack.DiffScope(app.actor.list.User.Context.Variable))
         {
-            await Assert.That(app.User.CallStack.Diff.Value).IsTrue();
+            await Assert.That(app.actor.list.User.CallStack.Diff.Value).IsTrue();
         }
     }
 
@@ -25,14 +25,14 @@ public class FlagsDiffAutoFlipTests
     {
         var app = global::PLang.Tests.TestApp.Create("/test");
         // Off baseline.
-        await Assert.That(app.User.CallStack.Diff.Value).IsFalse();
+        await Assert.That(app.actor.list.User.CallStack.Diff.Value).IsFalse();
 
-        using (app.User.CallStack.DiffScope(app.User.Context.Variable)) { /* scoped */ }
-        await Assert.That(app.User.CallStack.Diff.Value).IsFalse();
+        using (app.actor.list.User.CallStack.DiffScope(app.actor.list.User.Context.Variable)) { /* scoped */ }
+        await Assert.That(app.actor.list.User.CallStack.Diff.Value).IsFalse();
 
         // Now with Diff already on — the scope must not turn it off afterwards.
-        app.User.CallStack.Setting.Diff = true;
-        using (app.User.CallStack.DiffScope(app.User.Context.Variable)) { /* scoped */ }
-        await Assert.That(app.User.CallStack.Diff.Value).IsTrue();
+        app.actor.list.User.CallStack.Setting.Diff = true;
+        using (app.actor.list.User.CallStack.DiffScope(app.actor.list.User.Context.Variable)) { /* scoped */ }
+        await Assert.That(app.actor.list.User.CallStack.Diff.Value).IsTrue();
     }
 }

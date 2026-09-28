@@ -24,7 +24,7 @@ public class ChannelSetTests
     [Test]
     public async Task Set_HeldCall_RegistersAChannelThatRunsIt()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         // the goal copies its argument and the message into variables that reach the caller
         _app.goal.list.Add(await RealGoalLoad.ViaChannel(_app, Make.Goal("SeeIt",
             Make.Step("set %seenLevel% = %level%, set %seenMessage% = %message%",
@@ -56,7 +56,7 @@ public class ChannelSetTests
     [Test]
     public async Task Set_WithNothingGiven_TheChannelKeepsItsOwnDefaults_AndItsNameDecidesTheDirection()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         await (await new global::app.module.action.channel.Set(ctx)
             { Name = new global::app.type.item.text.@this("output"), Goal = Make.Call("LogIt") }.Start()).IsSuccess();
         await (await new global::app.module.action.channel.Set(ctx)
@@ -77,7 +77,7 @@ public class ChannelSetTests
     [Test]
     public async Task Set_HeldCallToMissingGoal_FailsOnTheMessage()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var action = new global::app.module.action.channel.Set(ctx)
         {
             Name = new global::app.type.item.text.@this("logger"),

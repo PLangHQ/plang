@@ -46,7 +46,7 @@ public class ScalarAccessTests
     {
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-scalarvar-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         ctx.Variable.Set("cfg", global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg"));
 
         await Assert.That(await ctx.Rendered("%cfg%")).IsEqualTo("{\"port\":8080}");

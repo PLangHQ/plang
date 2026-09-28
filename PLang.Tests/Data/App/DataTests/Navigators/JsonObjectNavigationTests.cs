@@ -17,7 +17,7 @@ public class JsonObjectNavigationTests : System.IAsyncDisposable
 
     private Data MakeData(JsonObject value)
     {
-        var d = new Data("trace", context: _app.User.Context);
+        var d = new Data("trace", context: _app.actor.list.User.Context);
         d.SetValue(value);
         return d;
     }
@@ -78,11 +78,11 @@ public class JsonObjectNavigationTests : System.IAsyncDisposable
     {
         // Regression guard: the canonical IDictionary<string,object?> and non-generic
         // IDictionary (Hashtable) shapes also narrow at the boundary and navigate.
-        var d1 = new Data("", context: _app.User.Context);
+        var d1 = new Data("", context: _app.actor.list.User.Context);
         d1.SetValue(new Dictionary<string, object?> { ["k"] = "v" });
         await Assert.That((await (await d1.Get("k")).Value())?.ToString()).IsEqualTo("v");
 
-        var d2 = new Data("", context: _app.User.Context);
+        var d2 = new Data("", context: _app.actor.list.User.Context);
         d2.SetValue(new System.Collections.Hashtable { ["k"] = "v" });
         await Assert.That((await (await d2.Get("k")).Value())?.ToString()).IsEqualTo("v");
     }

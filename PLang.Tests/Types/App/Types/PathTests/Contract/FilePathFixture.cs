@@ -41,7 +41,7 @@ public sealed class FilePathFixture : IPathSchemeFixture, IDisposable
         return Task.CompletedTask;
     }
 
-    public global::app.actor.context.@this Context => _app.User.Context;
+    public global::app.actor.context.@this Context => _app.actor.list.User.Context;
 
     public bool CanPerform(VerbName verb) => true;
 

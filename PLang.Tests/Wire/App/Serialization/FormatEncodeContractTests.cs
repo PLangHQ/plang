@@ -10,7 +10,7 @@ public class FormatEncodeContractTests : System.IAsyncDisposable
     [Test]
     public async Task Encode_AcceptsData_ReturnsData()
     {
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         using var ms = new MemoryStream();
         var result = await ctx.Format("application/json").Encode(ms, app.Ok("hello"), ctx);
         await Assert.That(result).IsNotNull();
@@ -30,7 +30,7 @@ public class FormatEncodeContractTests : System.IAsyncDisposable
         {
             Mime = "application/x-probe",
         };
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
 
         var input = app.Ok("payload");
         await ch.WriteAsync(input);

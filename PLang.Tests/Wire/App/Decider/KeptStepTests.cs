@@ -33,7 +33,7 @@ public class KeptStepTests
     }
 
     private static async Task<string> Pr(global::app.goal.@this goal, global::app.@this app) =>
-        await app.User.Context.Pr(goal);
+        await app.actor.list.User.Context.Pr(goal);
 
     private static System.Text.Json.Nodes.JsonNode Code(string pr, int step) =>
         System.Text.Json.Nodes.JsonNode.Parse(pr)!["step"]![step]!["code"]!;
@@ -51,7 +51,7 @@ public class KeptStepTests
     public async Task ARebuild_AsksOnlyTheChangedStep_AndTheKeptCodeIsByteEqual()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
-        var context = os.User.Context;
+        var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
         Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
@@ -91,7 +91,7 @@ public class KeptStepTests
     public async Task AKeptStepWhoseCodeNoLongerHolds_IsOpenedAgain_WithAWarning()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
-        var context = os.User.Context;
+        var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
         Built(first, context, "output.write()", "output.write(Data=\"b\")", "output.write(Data=\"c\")");   // step 0 misses its Data
@@ -112,7 +112,7 @@ public class KeptStepTests
     public async Task TheSourceItsPrWasBuiltFrom_IsCached()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
-        var context = os.User.Context;
+        var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
         Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
@@ -137,7 +137,7 @@ public class KeptStepTests
     public async Task AStepDeleted_ItsStepsAreCached_TheGoalIsNot()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
-        var context = os.User.Context;
+        var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
         Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
@@ -154,7 +154,7 @@ public class KeptStepTests
     public async Task AStepChanged_NothingIsCached()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
-        var context = os.User.Context;
+        var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
         Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");

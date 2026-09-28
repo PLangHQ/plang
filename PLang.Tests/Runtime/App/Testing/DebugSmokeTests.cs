@@ -20,10 +20,10 @@ public class DebugSmokeTests
         // Debug.Write routes via System.Channels.Get("debug") ?? Resolve("error").
         // Register a memory channel as "error" on System so debug output lands in a
         // capture buffer instead of the real stderr stream the channel was wired to.
-        _app.System.Channel.Register(global::app.channel.type.stream.@this.Memory(
+        _app.actor.list.System.Channel.Register(global::app.channel.type.stream.@this.Memory(
             global::app.channel.list.@this.Error));
         _capture = (global::app.channel.type.stream.@this)
-            (_app.System.Channel.Get(global::app.channel.list.@this.Error))!;
+            (_app.actor.list.System.Channel.Get(global::app.channel.list.@this.Error))!;
     }
 
     [After(Test)]
@@ -47,8 +47,8 @@ public class DebugSmokeTests
     {
         // Fully-qualified: the `Debug` global alias is shadowed here by the sibling
         // PLang.Tests.App.Debug namespace (the App/Debug/ test folder). CLAUDE.md alias-clash trap.
-        _app.Debug = new global::app.module.action.debug.@this(_app.System.Context);
-        _app.System.Setting.Set("debug", new Dictionary<string, object?> { ["level"] = "action" });
+        _app.Debug = new global::app.module.action.debug.@this(_app.actor.list.System.Context);
+        _app.actor.list.System.Setting.Set("debug", new Dictionary<string, object?> { ["level"] = "action" });
         _app.Debug.Activate();
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("Dbg",
@@ -58,7 +58,7 @@ public class DebugSmokeTests
 
         // If the widened lambda mis-handles the (action, result) params (e.g. dereferences a
         // null), this call throws. If signatures are correct, it completes and emits to stderr.
-        await _app.Start(goal, _app.User.Context);
+        await _app.Start(goal, _app.actor.list.User.Context);
 
         var debugOut = ReadCapture();
         // Step-level markers come from the always-on handlers.
@@ -74,11 +74,11 @@ public class DebugSmokeTests
     [Test]
     public async Task Debug_Variables_BindAsNames()
     {
-        _app.Debug = new global::app.module.action.debug.@this(_app.System.Context);
-        var set = _app.System.Setting.Set("debug", new Dictionary<string, object?> { ["variables"] = new List<object?> { "trace", "%goal%" } });
+        _app.Debug = new global::app.module.action.debug.@this(_app.actor.list.System.Context);
+        var set = _app.actor.list.System.Setting.Set("debug", new Dictionary<string, object?> { ["variables"] = new List<object?> { "trace", "%goal%" } });
 
         await set.IsSuccess();
-        await Assert.That(_app.Debug.Setting.Variables.Items(_app.System.Context).Select(v => v.Peek()?.ToString()).ToList())
+        await Assert.That(_app.Debug.Setting.Variables.Items(_app.actor.list.System.Context).Select(v => v.Peek()?.ToString()).ToList())
             .IsEquivalentTo(new List<string> { "trace", "%goal%" });
     }
 
@@ -87,10 +87,10 @@ public class DebugSmokeTests
     [Test]
     public async Task Debug_WatchedVariable_LogsSetAndDeleted()
     {
-        _app.Debug = new global::app.module.action.debug.@this(_app.System.Context);
-        _app.System.Setting.Set("debug", new Dictionary<string, object?> { ["variables"] = new List<object?> { "%trace%" } });
+        _app.Debug = new global::app.module.action.debug.@this(_app.actor.list.System.Context);
+        _app.actor.list.System.Setting.Set("debug", new Dictionary<string, object?> { ["variables"] = new List<object?> { "%trace%" } });
         _app.Debug.Activate();
-        var store = _app.User.Context.Variable;
+        var store = _app.actor.list.User.Context.Variable;
 
         await store.Set("trace", 1);
         await store.Set("trace", "now text");

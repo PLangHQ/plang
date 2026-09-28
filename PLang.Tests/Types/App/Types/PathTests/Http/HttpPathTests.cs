@@ -16,7 +16,7 @@ public class HttpPathTests
         System.IO.Directory.CreateDirectory(dir);
         var app = TestApp.Create(dir);
         // Pre-grant http access so the Permission gate doesn't prompt during tests.
-        return (app, app.User.Context);
+        return (app, app.actor.list.User.Context);
     }
 
     /// <summary>Pre-authorize an http URL so the verb under test isn't blocked by the gate.</summary>

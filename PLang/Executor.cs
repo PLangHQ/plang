@@ -40,11 +40,11 @@ namespace PLang
 			// `output.ask` prompts read the user's keystrokes. Ad-hoc/test apps
 			// keep the EOF-sink input from auto-wire.
 			var app = new global::app.@this(startupDirectory, autoWireConsoleChannels: false);
-			global::app.@this.WireDefaultConsoleChannels(app.System);
-			global::app.@this.WireDefaultConsoleChannels(app.User);
+			global::app.@this.WireDefaultConsoleChannels(app.actor.list.System);
+			global::app.@this.WireDefaultConsoleChannels(app.actor.list.User);
 			app.OsDirectory = app.OsAbsolutePath;
 
-			var userVars = app.User.Context.Variable;
+			var userVars = app.actor.list.User.Context.Variable;
 
 			// Route CLI parameters to user Variables
 			foreach (var param in parameters)
@@ -60,7 +60,7 @@ namespace PLang
 			global::app.data.@this? Flag<TSetting>(string name) where TSetting : global::app.type.item.setting.@this, new()
 			{
 				if (!parameters.TryGetValue(name, out var value) || value is not IDictionary<string, object?> dict) return null;
-				var set = app.System.Setting.Set(new TSetting().Path, dict);
+				var set = app.actor.list.System.Setting.Set(new TSetting().Path, dict);
 				return set.Success ? null : set;
 			}
 
@@ -69,7 +69,7 @@ namespace PLang
 			if (parameters.TryGetValue("!debug", out var debugValue) && debugValue is not false)
 			{
 				if (Flag<global::app.module.action.debug.setting.@this>("!debug") is { } debugError) return (null, debugError);
-				app.Debug = new Debug(app.System.Context);
+				app.Debug = new Debug(app.actor.list.System.Context);
 				app.Debug.Activate();
 			}
 
@@ -88,7 +88,7 @@ namespace PLang
 			// A debug run shows each step's time: this run's call stacks time their frames. An explicit
 			// --callstack={"timing":false} below still has the last word.
 			if (app.Debug != null)
-				app.System.Setting.Set(new global::app.callstack.setting.@this().Path, new Dictionary<string, object?> { ["timing"] = true });
+				app.actor.list.System.Setting.Set(new global::app.callstack.setting.@this().Path, new Dictionary<string, object?> { ["timing"] = true });
 
 			// Each actor owns its own call tree; both read the one setting (the user's falls back to the
 			// system's). (Service actors are spawned later — carrying the flag to them is a separate concern.)
@@ -100,7 +100,7 @@ namespace PLang
 			parameters.TryGetValue("!build", out var buildValue);
 			if (buildValue is not (null or false))
 			{
-				app.Build = new global::app.module.action.build.@this(app.System.Context);
+				app.Build = new global::app.module.action.build.@this(app.actor.list.System.Context);
 				if (!parameters.ContainsKey("path"))
 					userVars.Set("path", startupDirectory);
 				if (Flag<global::app.module.action.build.setting.@this>("!build") is { } buildError) return (null, buildError);
@@ -110,8 +110,8 @@ namespace PLang
 				// (which resolves %!llm.query.cache% → %!llm.cache% → [Default]) instead of sniffing
 				// the build. The cache-off default reaches every llm.query without threading. The
 				// run's value is in memory, so the sync Configure sets it at once.
-				if (!app.System.Context.Setting.Of<global::app.module.action.build.setting.@this>().Cache.Value)
-					app.System.Setting.Set("llm.cache", app.System.Context.Ok(false))
+				if (!app.actor.list.System.Context.Setting.Of<global::app.module.action.build.setting.@this>().Cache.Value)
+					app.actor.list.System.Setting.Set("llm.cache", app.actor.list.System.Context.Ok(false))
 						.GetAwaiter().GetResult();
 			}
 
@@ -119,14 +119,14 @@ namespace PLang
 			// Tester mode routes to system test runner instead of Start.goal
 			if (app.Mode.Value == global::app.Mode.Test && goalFile == "Start.goal")
 			{
-				app.System.Context.Variable.Set("goalFile", "/system/.build/test.pr");
+				app.actor.list.System.Context.Variable.Set("goalFile", "/system/.build/test.pr");
 				return (app, null);
 			}
 
 			var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
 			if (!prPath.StartsWith(".build"))
 				prPath = ".build/" + prPath;
-			app.System.Context.Variable.Set("goalFile", "/" + prPath.ToLowerInvariant());
+			app.actor.list.System.Context.Variable.Set("goalFile", "/" + prPath.ToLowerInvariant());
 
 			return (app, null);
 		}

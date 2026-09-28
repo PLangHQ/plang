@@ -44,7 +44,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
     [Test] public async Task ActionSnapshotHelper_ReturnsNonNull()
     {
         var app = NewApp();
-        var handler = new ask(app.User.Context);
+        var handler = new ask(app.actor.list.User.Context);
         var snap = handler.Snapshot();
         await Assert.That(snap).IsNotNull();
     }
@@ -52,9 +52,9 @@ public class DataSnapshotTests : System.IAsyncDisposable
     [Test] public async Task ActionSnapshotHelper_MatchesContextAppSnapshot()
     {
         var app = NewApp();
-        var handler = new ask(app.User.Context);
+        var handler = new ask(app.actor.list.User.Context);
         var viaHandler = handler.Snapshot();
-        var viaApp = app.Snapshot(app.User.Context);
+        var viaApp = app.Snapshot(app.actor.list.User.Context);
         // Both factories build a fresh full snapshot — same shape (App tree),
         // distinct instances. The contract is "Snapshot() on a handler is the
         // same call as Context.App.Snapshot()" — proved by walking the same

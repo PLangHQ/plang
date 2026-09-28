@@ -29,7 +29,7 @@ public class KindCanonicalisationTests
     [Test] public async Task SpelledTypeKind_FindsTheFormat()
     {
         await using var app = TestApp.Create("/test");
-        var type = app.type.list[new global::app.type.@this("image", "jpeg"), app.User.Context];
+        var type = app.type.list[new global::app.type.@this("image", "jpeg"), app.actor.list.User.Context];
         await Assert.That(type.kind.Name).IsEqualTo("jpg");
     }
 

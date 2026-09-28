@@ -30,7 +30,7 @@ public class HttpPathRedirectTests
         System.IO.Directory.CreateDirectory(dir);
         var app = new AppEngine(dir);
         global::PLang.Tests.TestApp.UseTestSigning(app);
-        return (app, app.User.Context);
+        return (app, app.actor.list.User.Context);
     }
 
     private static async Task Grant(Ctx context, string url)

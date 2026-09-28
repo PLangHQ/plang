@@ -337,7 +337,7 @@ public sealed partial class @this
     /// </summary>
     public static async Task<data.@this> Load(global::app.type.item.path.@this pr, global::app.@this app)
     {
-        var context = app.System.Context;
+        var context = app.actor.list.System.Context;
         var loaded = app.goal.list[pr] is { } held ? context.Ok(held) : await Read(pr, app);
         if (loaded.Success && await loaded.Value() is @this { IsSetup: true })
             return context.Error(new global::app.error.Error($"{pr}: a setup goal runs only through setup.", "SetupGoal", 400));
@@ -347,7 +347,7 @@ public sealed partial class @this
     // One .pr read into a goal and held, through the goal's load.
     private static async Task<data.@this> Read(global::app.type.item.path.@this pr, global::app.@this app)
     {
-        var context = app.System.Context;
+        var context = app.actor.list.System.Context;
         var before = app.goal.on.load.before;
         if (before.Count > 0 && await before.Start(pr, context.Ok(), context) is { } answer
             && (!answer.Success || answer.Handled))

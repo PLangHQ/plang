@@ -41,7 +41,7 @@ public class IdentityErrorPathTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.actor.context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.System.Context;
 
     // --- GetOrCreateDefaultAsync: auto-create save failure (via Get action) ---
 
@@ -122,7 +122,7 @@ public class IdentityErrorPathTests
 
         // Access %MyIdentity% — the computed cell calls the provider, which
         // fails; the answer is the present-null VALUE (the singleton).
-        var data = await _app.User.Context.Variable.Get("MyIdentity");
+        var data = await _app.actor.list.User.Context.Variable.Get("MyIdentity");
         await Assert.That(data).IsNotNull();
         var v = await data!.Value();
         await Assert.That(v is null or global::app.type.item.@null.@this).IsTrue();

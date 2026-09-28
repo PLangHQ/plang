@@ -10,7 +10,7 @@ public class RenderStoreViewTests
 {
     private static async Task<(bool ok, string? err, string outp)> Render(app.@this app, string template)
     {
-        var ctx = app.System.Context;
+        var ctx = app.actor.list.System.Context;
         var goal = Make.Goal("MyGoal",
             Make.Step("write out \"Hello %name%\"",
                 Make.Action("output", "write", ("Data", "Hello %name%"))));

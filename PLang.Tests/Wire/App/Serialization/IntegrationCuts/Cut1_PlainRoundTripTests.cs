@@ -18,11 +18,11 @@ public class Cut1_PlainRoundTripTests
     private static async Task<(string wireJson, global::app.data.@this readBack, global::app.@this app)> WriteAndRead(string name, object? value)
     {
         var app = NewApp();
-        var plang = app.User.Context.Format("application/plang");
+        var plang = app.actor.list.User.Context.Format("application/plang");
 
-        var data = new global::app.data.@this(name, value, context: app.User.Context);
-        var wire = (await plang.Serialize(data, app.User.Context).Value())!.Clr<string>()!;
-        var back = plang.Deserialize(wire, app.User.Context);
+        var data = new global::app.data.@this(name, value, context: app.actor.list.User.Context);
+        var wire = (await plang.Serialize(data, app.actor.list.User.Context).Value())!.Clr<string>()!;
+        var back = plang.Deserialize(wire, app.actor.list.User.Context);
         return (wire, back, app);
     }
 
@@ -77,11 +77,11 @@ public class Cut1_PlainRoundTripTests
         await using (app)
         {
             var verify = await app.Run<global::app.module.action.signing.verify>(
-                new global::app.module.action.signing.verify(app.User.Context)
+                new global::app.module.action.signing.verify(app.actor.list.User.Context)
                 {
                     Data = back,
                     SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", true)
-                }, app.User.Context);
+                }, app.actor.list.User.Context);
             await verify.IsSuccess();
         }
     }

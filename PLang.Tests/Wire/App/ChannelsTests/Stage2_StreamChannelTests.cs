@@ -17,7 +17,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         var captureStream = new MemoryStream();
         var ch = new StreamChannel("c", captureStream, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" };
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
 
         var result = await ch.Write(app.Ok("hello"));
         await result.IsSuccess();
@@ -32,7 +32,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("hello"));
         var ch = new StreamChannel("c", ms, ChannelDirection.Input, ownsStream: false)
         { Mime = "text/plain" };
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         var result = await ch.Read();
         await result.IsSuccess();
         // Read yields lazy Data carrying the raw bytes, stamped from the channel's Mime
@@ -80,7 +80,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     {
         await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
         var ch = new StreamChannel("c", new ThrowingStream(throwOnWrite: true), ChannelDirection.Output, ownsStream: false);
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         var result = await ch.Write(app.Ok("x"));
         await result.IsFailure();
         // A text value on a text channel is written by the stream itself (no serializer), so the underlying
@@ -103,8 +103,8 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("answer\n"));
         var ch = new StreamChannel("i", ms, ChannelDirection.Bidirectional, ownsStream: false)
         { Mime = "text/plain" };
-        app.User.Channel.Register(ch);
-        var result = await ch.Ask(new global::app.module.action.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.User.Context) });
+        app.actor.list.User.Channel.Register(ch);
+        var result = await ch.Ask(new global::app.module.action.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) });
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("answer");
     }
@@ -123,8 +123,8 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
             Mime = "text/plain",
             Encoding = "iso-8859-1"
         };
-        app.User.Channel.Register(ch);
-        var result = await ch.Ask(new global::app.module.action.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.User.Context) });
+        app.actor.list.User.Channel.Register(ch);
+        var result = await ch.Ask(new global::app.module.action.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) });
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("é");
     }
@@ -138,8 +138,8 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
             Mime = "text/plain",
             Timeout = TimeSpan.FromMilliseconds(50)
         };
-        app.User.Channel.Register(ch);
-        var result = await ch.Ask(new global::app.module.action.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.User.Context) });
+        app.actor.list.User.Channel.Register(ch);
+        var result = await ch.Ask(new global::app.module.action.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "", context: app.actor.list.User.Context) });
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("late answer");
     }
@@ -149,8 +149,8 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     {
         // The run's cancellation (a timeout on the ask, a test's timeout, Ctrl-C) is what ends a waiting ask.
         await using var own = global::PLang.Tests.TestApp.Create("/tmp/s2c-" + System.Guid.NewGuid().ToString("N")[..6], autoWireConsoleChannels: false);
-        own.User.Channel.Register(new StreamChannel(global::app.channel.list.@this.Input, new BlockingStream(), ChannelDirection.Input, ownsStream: false) { Mime = "text/plain" });
-        var ctx = own.User.Context;
+        own.actor.list.User.Channel.Register(new StreamChannel(global::app.channel.list.@this.Input, new BlockingStream(), ChannelDirection.Input, ownsStream: false) { Mime = "text/plain" });
+        var ctx = own.actor.list.User.Context;
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
         ctx.PushCancellation(cts);
@@ -307,7 +307,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         var capture = new MemoryStream();
         var ch = new StreamChannel("c", capture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Encoding = "iso-8859-1" };
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
 
         // 'é' is one byte in latin-1 (0xE9) but two bytes in UTF-8.
         await ch.WriteText("é");
@@ -323,13 +323,13 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
     {
         await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
         var ch = StreamChannel.Memory("output");
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         string? seen = null;
         ch.Own().Bind("write", global::app.@event.When.before, async (_, data, ctx) =>
         {
             seen = (await data.Value())?.ToString();
             return ctx.Ok();
-        }, app.User, global::app.@event.binding.Scope.actor);
+        }, app.actor.list.User, global::app.@event.binding.Scope.actor);
 
         await ch.WriteText("  Saved Start");
 
@@ -354,7 +354,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         var capture = new MemoryStream();
         var ch = new StreamChannel("c", capture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain", Encoding = "totally-not-an-encoding" };
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
 
         // the stream's transport turns its own failure into the write's error result
         var result = await ch.WriteText("hi");

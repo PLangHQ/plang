@@ -26,9 +26,9 @@ public class ActorIdentityTests : System.IAsyncDisposable
     [Test]
     public async Task InALocalRun_TheUserActsAsTheSystem()
     {
-        var mine = (await (await _app.System.Context.Variable.Get("MyIdentity")).Value()) as Identity;
+        var mine = (await (await _app.actor.list.System.Context.Variable.Get("MyIdentity")).Value()) as Identity;
 
-        var identity = await _app.User.Context.Variable.Get("Identity");
+        var identity = await _app.actor.list.User.Context.Variable.Get("Identity");
 
         await Assert.That(mine).IsNotNull();
         await Assert.That((await identity.Value())?.ToString()).IsEqualTo(mine!.PublicKey);
@@ -38,9 +38,9 @@ public class ActorIdentityTests : System.IAsyncDisposable
     [Test]
     public async Task AnActorWithAnIdentity_ActsForIt_ItsKeyReadUrlSafe()
     {
-        _app.User.Identity = new Identity("caller") { PublicKey = "ab+c/d==" };
+        _app.actor.list.User.Identity = new Identity("caller") { PublicKey = "ab+c/d==" };
 
-        var identity = await _app.User.Context.Variable.Get("Identity");
+        var identity = await _app.actor.list.User.Context.Variable.Get("Identity");
 
         await Assert.That((await identity.Value())?.ToString()).IsEqualTo("ab-c_d");
     }

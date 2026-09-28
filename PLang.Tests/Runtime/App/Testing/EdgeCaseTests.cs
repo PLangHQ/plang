@@ -25,7 +25,7 @@ public class EdgeCaseTests
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = TestApp.Create(_tempDir);
         _captureStream = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, _captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -46,9 +46,9 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_TimeoutSeconds_NonPositive_AcceptedAsSentinel()
     {
-        var result = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["timeoutSeconds"] = -5 });
+        var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["timeoutSeconds"] = -5 });
         await result.IsSuccess();
-        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToInt32()).IsEqualTo(-5);
+        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToInt32()).IsEqualTo(-5);
     }
 
     // --test={"parallel":0} or {"parallel":-1} → accepted. Zero/negative is the "auto" sentinel:
@@ -56,11 +56,11 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Parallel_ZeroOrNegative_AcceptedAsSentinel()
     {
-        var zero = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["parallel"] = 0 });
+        var zero = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["parallel"] = 0 });
         await zero.IsSuccess();
-        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(0);
+        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(0);
 
-        var neg = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["parallel"] = -1 });
+        var neg = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["parallel"] = -1 });
         await neg.IsSuccess();
     }
 
@@ -78,7 +78,7 @@ public class EdgeCaseTests
         // inner grandchild-runs).
 
         var emptyList = new List<global::app.test.@this>();
-        var outerAction = new global::app.module.action.test.start(_app.User.Context) { Tests = emptyList.ToListData<global::app.test.@this>() };
+        var outerAction = new global::app.module.action.test.start(_app.actor.list.User.Context) { Tests = emptyList.ToListData<global::app.test.@this>() };
         var outerResult = await outerAction.Start();
 
         await outerResult.IsSuccess();
@@ -91,8 +91,8 @@ public class EdgeCaseTests
     [Test]
     public async Task Discover_PathTraversal_OutsideProjectRoot_Rejected()
     {
-        var action = new global::app.module.action.test.discover(_app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
-                global::app.type.item.path.@this.Resolve("../../../etc", _app.User.Context)),
+        var action = new global::app.module.action.test.discover(_app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
+                global::app.type.item.path.@this.Resolve("../../../etc", _app.actor.list.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
             Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", true)
         };
@@ -121,7 +121,7 @@ public class EdgeCaseTests
         run.Complete(global::app.test.Status.Fail, new global::app.error.AssertionError(1, 2));
         _app.test.list.Add(run);
 
-        var action = new global::app.module.action.test.report(_app.User.Context);
+        var action = new global::app.module.action.test.report(_app.actor.list.User.Context);
         await action.Start();
 
         var output = CapturedOutput();
@@ -139,7 +139,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Config_Format_InvalidValue_RejectedWithError()
     {
-        var result = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "csv" });
+        var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "csv" });
         await result.IsFailure();
     }
 }

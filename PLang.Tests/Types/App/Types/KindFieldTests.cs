@@ -21,7 +21,7 @@ public class KindFieldTests : System.IAsyncDisposable
     [Test]
     public async Task PrParameter_OmitsKindWhenAbsent()
     {
-        var data = new global::app.data.@this("x", "hello", new global::app.type.@this("text"), context: _app.User.Context);
+        var data = new global::app.data.@this("x", "hello", new global::app.type.@this("text"), context: _app.actor.list.User.Context);
         var json = ToJson(data);
         await Assert.That(json.Contains("\"type\":{\"name\":\"text\"}")).IsTrue();
         await Assert.That(json.Contains("\"kind\"")).IsFalse();
@@ -30,7 +30,7 @@ public class KindFieldTests : System.IAsyncDisposable
     [Test]
     public async Task PrParameter_TypeCarriesKindInsideTheStructuredEntity()
     {
-        var data = new global::app.data.@this("photo", "/srv/a.jpg", new global::app.type.@this("path", "file"), context: _app.User.Context);
+        var data = new global::app.data.@this("photo", "/srv/a.jpg", new global::app.type.@this("path", "file"), context: _app.actor.list.User.Context);
         var json = ToJson(data);
         await Assert.That(json.Contains("\"type\":{\"name\":\"path\",\"kind\":\"file\"}")).IsTrue();
     }
@@ -38,7 +38,7 @@ public class KindFieldTests : System.IAsyncDisposable
     [Test]
     public async Task PrParameter_NeverColonStringForTypeKind()
     {
-        var data = new global::app.data.@this("p", "http://x", new global::app.type.@this("path", "http"), context: _app.User.Context);
+        var data = new global::app.data.@this("p", "http://x", new global::app.type.@this("path", "http"), context: _app.actor.list.User.Context);
         var json = ToJson(data);
         await Assert.That(json.Contains("\"path:http\"")).IsFalse();
         await Assert.That(json.Contains("\"type\":\"path/http\"")).IsFalse();
@@ -47,7 +47,7 @@ public class KindFieldTests : System.IAsyncDisposable
     [Test]
     public async Task PrParameter_KindNull_OmittedFromWire()
     {
-        var data = new global::app.data.@this("x", 1, new global::app.type.@this("number"), context: _app.User.Context);
+        var data = new global::app.data.@this("x", 1, new global::app.type.@this("number"), context: _app.actor.list.User.Context);
         var json = ToJson(data);
         await Assert.That(json.Contains("\"kind\":null")).IsFalse();
     }
@@ -55,7 +55,7 @@ public class KindFieldTests : System.IAsyncDisposable
     [Test]
     public async Task PrParameter_RoundTrip_PreservesKindAcrossWriteAndRead()
     {
-        var original = new global::app.data.@this("photo", "/srv/a.jpg", new global::app.type.@this("path", "file"), context: _app.User.Context);
+        var original = new global::app.data.@this("photo", "/srv/a.jpg", new global::app.type.@this("path", "file"), context: _app.actor.list.User.Context);
         var json = ToJson(original);
         var read = FromJson(json);
         await Assert.That(read.Type?.Name).IsEqualTo("path");

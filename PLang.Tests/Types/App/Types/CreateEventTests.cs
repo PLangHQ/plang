@@ -9,12 +9,12 @@ public class CreateEventTests : System.IAsyncDisposable
         System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-create-event-" + System.Guid.NewGuid().ToString("N")[..8]));
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
-    private global::app.actor.context.@this Ctx => app.User.Context;
+    private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
 
     private global::app.@event.binding.@this On(string type, global::app.@event.When when,
         System.Func<global::app.data.@this, global::app.actor.context.@this, global::app.data.@this> handler)
         => app.type.list[type].Own().Bind("create", when,
-            (_, data, c) => System.Threading.Tasks.Task.FromResult(handler(data, c)), app.User, global::app.@event.binding.Scope.actor);
+            (_, data, c) => System.Threading.Tasks.Task.FromResult(handler(data, c)), app.actor.list.User, global::app.@event.binding.Scope.actor);
 
     [Test] public async Task ABeforeThatRefuses_IsTheResult_NothingIsMade()
     {

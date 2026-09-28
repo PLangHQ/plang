@@ -12,7 +12,7 @@ namespace PLang.Tests.App.CallbackTests;
 public class TypeExitTests
 {
     private global::app.@this _app = null!;
-    private global::app.actor.context.@this Ctx => _app.User.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
     [Before(Test)]
     public void Setup() => _app = global::PLang.Tests.TestApp.Create("/tmp/typeexit-" + System.Guid.NewGuid().ToString("N")[..6]);

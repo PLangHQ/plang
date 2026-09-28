@@ -16,8 +16,8 @@ public class PropertiesWireShapeTests
         SeedData(string name = "thing", object? value = null)
     {
         var app = NewApp();
-        var plang = app.User.Context.Format("application/plang");
-        var d = new global::app.data.@this(name, value ?? "v", context: app.User.Context);
+        var plang = app.actor.list.User.Context.Format("application/plang");
+        var d = new global::app.data.@this(name, value ?? "v", context: app.actor.list.User.Context);
         return (plang, d, () => app.DisposeAsync().GetAwaiter().GetResult());
     }
 
@@ -215,7 +215,7 @@ public class PropertiesWireShapeTests
         try
         {
             // EnsureSigned requires an Actor — bare context fixtures skip signing.
-            // Use SeedData's app.User.Context which carries an actor.
+            // Use SeedData's app.actor.list.User.Context which carries an actor.
             d.Properties["cost"] = 100L;
             var wire = (await plang.Serialize(d, d.Context).Value())!.Clr<string>()!;
             var tampered = wire.Replace("\"cost\":100", "\"cost\":999");
@@ -224,7 +224,7 @@ public class PropertiesWireShapeTests
             var back = plang.Deserialize(tampered, d.Context);
             var app = d.Context!.App;
             var verify = await app.Run<global::app.module.action.signing.verify>(
-                new global::app.module.action.signing.verify(app.User.Context)
+                new global::app.module.action.signing.verify(app.actor.list.User.Context)
                 {
                     Data = back,
                     SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", true)

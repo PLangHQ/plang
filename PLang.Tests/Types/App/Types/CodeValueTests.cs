@@ -19,11 +19,11 @@ public class CodeValueTests
     {
         await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-code-" + System.Guid.NewGuid().ToString("N")[..8]));
-        await Assert.That(code.Resolve("using System;", app.User.Context)!.Language).IsEqualTo("csharp");
-        await Assert.That(code.Resolve("def foo:\n  print(1)", app.User.Context)!.Language).IsEqualTo("python");
-        await Assert.That(code.Resolve("function x() {}", app.User.Context)!.Language).IsEqualTo("javascript");
-        await Assert.That(code.Resolve("plain text", app.User.Context)!.Language).IsEqualTo("text");
-        await Assert.That(code.Resolve("just some prose", app.User.Context)!.Language).IsEqualTo("text");
+        await Assert.That(code.Resolve("using System;", app.actor.list.User.Context)!.Language).IsEqualTo("csharp");
+        await Assert.That(code.Resolve("def foo:\n  print(1)", app.actor.list.User.Context)!.Language).IsEqualTo("python");
+        await Assert.That(code.Resolve("function x() {}", app.actor.list.User.Context)!.Language).IsEqualTo("javascript");
+        await Assert.That(code.Resolve("plain text", app.actor.list.User.Context)!.Language).IsEqualTo("text");
+        await Assert.That(code.Resolve("just some prose", app.actor.list.User.Context)!.Language).IsEqualTo("text");
     }
 
     [Test] public async Task Code_IBooleanResolvable_NonEmptySource_Truthy()

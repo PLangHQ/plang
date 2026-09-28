@@ -102,13 +102,13 @@ public class HandlerShapeTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-hs-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
         var app = TestApp.Create(root);
-        var fp = global::app.type.item.path.file.@this.Resolve("doc.txt", app.User.Context);
-        await fp.WriteText("delegated body", app.User.Context);
+        var fp = global::app.type.item.path.file.@this.Resolve("doc.txt", app.actor.list.User.Context);
+        await fp.WriteText("delegated body", app.actor.list.User.Context);
 
-        var handler = new global::app.module.action.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
+        var handler = new global::app.module.action.file.Read(app.actor.list.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
         };
         var viaHandler = await handler.Start();
-        var viaPath = await global::app.type.item.path.file.@this.Resolve("doc.txt", app.User.Context).Touch(app.User.Context);
+        var viaPath = await global::app.type.item.path.file.@this.Resolve("doc.txt", app.actor.list.User.Context).Touch(app.actor.list.User.Context);
 
         await Assert.That(viaHandler.Success).IsEqualTo(viaPath.Success);
         await Assert.That((await viaHandler.Value())?.ToString()).IsEqualTo((await viaPath.Value())?.ToString());
@@ -119,7 +119,7 @@ public class HandlerShapeTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-hs2-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
         var app = TestApp.Create(root);
-        app.User.Channel.Register(new CannedNoChannel());
+        app.actor.list.User.Channel.Register(new CannedNoChannel());
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-foreign-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(outOfRoot);
@@ -127,7 +127,7 @@ public class HandlerShapeTests
         System.IO.File.WriteAllText(target, "secret");
 
         var fp = new global::app.type.item.path.file.@this(target);
-        var handler = new global::app.module.action.file.Read(app.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
+        var handler = new global::app.module.action.file.Read(app.actor.list.User.Context) { Path = new global::app.data.@this<global::app.type.item.path.@this>("", fp),
         };
         var result = await handler.Start();
         await result.IsFailure();
@@ -141,7 +141,7 @@ public class HandlerShapeTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
         var app = TestApp.Create(root);
-        app.User.Channel.Register(new CannedNoChannel());
+        app.actor.list.User.Channel.Register(new CannedNoChannel());
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-n1-foreign-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(outOfRoot);
@@ -151,7 +151,7 @@ public class HandlerShapeTests
         var fp = new global::app.type.item.path.file.@this(target);
         // The file is really on disk — but permission is denied, so truthiness
         // is false. If the gate were skipped this would be true.
-        await Assert.That(await fp.AsBooleanAsync(app.User.Context)).IsFalse();
+        await Assert.That(await fp.AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
     }
 
     private sealed class CannedNoChannel : global::app.channel.@this

@@ -21,7 +21,7 @@ public class Stage1_DictNavigationAndWriterTests : System.IAsyncDisposable
         // A Data carrying raw json bytes for `{...}` (kind=json), on first navigation,
         // materializes Value as a dict — not a raw Dictionary<string,object?> (B+J).
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg");
         await Assert.That((await d.Value())).IsTypeOf<Dict>();
         await Assert.That(((app.type.item.@this)(await ((Dict)(await d.Value())!).Get("port", global::PLang.Tests.TestApp.SharedContext)!.Value())!).Clr<object>()).IsEqualTo(8080L);

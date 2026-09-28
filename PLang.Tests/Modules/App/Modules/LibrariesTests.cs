@@ -178,7 +178,7 @@ public class LibrariesTests
     {
         await using var engine = TestApp.Create("/app");
         var modules = engine.module.list;
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
 
         var (action, error) = (new PrAction { Module = engine.Module("variable"), Name = "set" }).Instance(global::PLang.Tests.TestApp.SharedContext);
 
@@ -193,7 +193,7 @@ public class LibrariesTests
         var modules = engine.module.list;
         var action = new MockCodeGenHandler();
         modules.Register("custom", "run", action);
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
 
         var (result, error) = (new PrAction { Module = engine.Module("custom"), Name = "run" }).Instance(global::PLang.Tests.TestApp.SharedContext);
 
@@ -207,7 +207,7 @@ public class LibrariesTests
         await using var engine = TestApp.Create("/app");
         var modules = engine.module.list;
         modules.Register("legacy", "do", new MockHandler());
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
 
         var (action, error) = (new PrAction { Module = engine.Module("legacy"), Name = "do" }).Instance(global::PLang.Tests.TestApp.SharedContext);
 
@@ -221,7 +221,7 @@ public class LibrariesTests
     {
         await using var engine = TestApp.Create("/app");
         var modules = engine.module.list;
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
 
         var (action, error) = (new PrAction { Module = engine.Module("variable"), Name = "nope" }).Instance(global::PLang.Tests.TestApp.SharedContext);
 
@@ -240,7 +240,7 @@ public class LibrariesTests
         modules.Register("custom", "run", handler1);
         modules.Register("custom", "run", handler2);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
 
         var (result, error) = (new PrAction { Module = engine.Module("custom"), Name = "run" }).Instance(global::PLang.Tests.TestApp.SharedContext);
 
@@ -253,7 +253,7 @@ public class LibrariesTests
     {
         await using var engine = TestApp.Create("/app");
         var modules = engine.module.list;
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
 
         // variable.set is type-registered (discovered via [Action] attribute)
         var (action1, _) = (new PrAction { Module = engine.Module("variable"), Name = "set" }).Instance(global::PLang.Tests.TestApp.SharedContext);

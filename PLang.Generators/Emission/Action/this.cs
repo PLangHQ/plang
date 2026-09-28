@@ -389,7 +389,7 @@ public static class @this
                             var __channelParam = action?["channel"]?.Data(context);
                             var __channelName = __channelParam == null ? null : (await __channelParam.Value())?.ToString();
                             // no channel named: the output channel
-                            Channel = (context.Actor ?? app.User).Channel.Get(string.IsNullOrEmpty(__channelName) ? global::app.channel.list.@this.Output : __channelName);
+                            Channel = (context.Actor ?? app.actor.list.User).Channel.Get(string.IsNullOrEmpty(__channelName) ? global::app.channel.list.@this.Output : __channelName);
                             if (Channel == null)
                                 return new global::app.error.ServiceError(
                                     $"Channel '{__channelName ?? "output"}' not found", __step, __callFrames, "ChannelNotFound", 404);

@@ -40,7 +40,7 @@ public class StepLoopShouldExitTests : System.IAsyncDisposable
     {
         var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-se-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var d = new global::app.data.@this<Ask>("", new Ask(), context: app.User.Context);
+        var d = new global::app.data.@this<Ask>("", new Ask(), context: app.actor.list.User.Context);
         await Assert.That(d.ShouldExit()).IsTrue();
     }
 
@@ -58,7 +58,7 @@ public class StepLoopShouldExitTests : System.IAsyncDisposable
         // Here we just pin the predicate contract used by the loop.
         var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-se-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var exitData = new global::app.data.@this<Ask>("", new Ask(), context: app.User.Context);
+        var exitData = new global::app.data.@this<Ask>("", new Ask(), context: app.actor.list.User.Context);
         await Assert.That(exitData.ShouldExit()).IsTrue();
     }
 }

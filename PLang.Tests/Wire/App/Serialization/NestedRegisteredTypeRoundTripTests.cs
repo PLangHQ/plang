@@ -20,7 +20,7 @@ public class NestedRegisteredTypeRoundTripTests
         // putting a registered-type value (path) at two nested positions: a Data
         // whose Value is a list containing two path-typed Datas.
         await using var app = NewApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var p1 = global::app.type.item.path.@this.Resolve("/srv/a.txt", context);
         var p2 = global::app.type.item.path.@this.Resolve("/srv/b.txt", context);
         var outer = new global::app.data.@this("outer", new[] {

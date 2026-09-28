@@ -20,7 +20,7 @@ public class FoldTests
     public async Task Fold_IndentedBlockUnderCondition_BecomesChild()
     {
         await using var app = TestApp.Create("/test");
-        var context = app.System.Context;
+        var context = app.actor.list.System.Context;
 
         var goal = Make.Goal("G",
             Make.Step("if %x% = 1", Make.Action("condition", "if", ("Left", "%x%"), ("Operator", "="), ("Right", 1))),
@@ -45,7 +45,7 @@ public class FoldTests
     public async Task Fold_NestedConditions_Recurse()
     {
         await using var app = TestApp.Create("/test");
-        var context = app.System.Context;
+        var context = app.actor.list.System.Context;
 
         var goal = Make.Goal("G",
             Make.Step("if %x% = 1", Make.Action("condition", "if", ("Left", "%x%"), ("Operator", "="), ("Right", 1))),
@@ -68,7 +68,7 @@ public class FoldTests
     public async Task Fold_IndentedUnderNonCondition_IsBuildError()
     {
         await using var app = TestApp.Create("/test");
-        var context = app.System.Context;
+        var context = app.actor.list.System.Context;
 
         var goal = Make.Goal("G",
             Make.Step("do a thing", Make.Action("output", "write", ("Content", "a"))),

@@ -261,7 +261,7 @@ public class StepErrorTests
     {
         var ex = new Exception("Step crashed");
         await using var engine = TestApp.Create("/app");
-        using var context = new global::app.actor.context.@this(engine, engine.User);
+        using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
         var step = new Step { Text = "test step" };
         await using var inStep = context.CallStack.Push(step);
 

@@ -50,7 +50,7 @@ public class Cut1_VerbatimPassthrough
     [Test] public async Task Cut1_NavigatedConfigJson_StillRoundTripsSemantically()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw(ConfigJson, ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg");
         await Assert.That((await (await d.Get("port")).Value())?.ToString()).IsEqualTo("8080"); // materializes
         await Assert.That(d.MaterializeCount()).IsEqualTo(1);

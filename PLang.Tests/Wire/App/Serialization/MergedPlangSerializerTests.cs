@@ -8,7 +8,7 @@ public class MergedPlangSerializerTests : System.IAsyncDisposable
     private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/MergedPlang-" + System.Guid.NewGuid().ToString("N")[..6]);
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
-    private global::app.actor.context.@this Ctx => app.User.Context;
+    private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
 
     [Test] public async Task Mime_ApplicationPlangData_IsNotPlangsFormat()
     {

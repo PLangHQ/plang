@@ -10,7 +10,7 @@ public class SettingCatalogTwinTests
     public async Task SettingsJson_IsTheClassesOfSettings()
     {
         await using var app = TestApp.Create("/test");
-        var context = app.System.Context;
+        var context = app.actor.list.System.Context;
         var classes = app.type.list["setting"].kind.list(context).Items()
             .Select(t => t.kind).OfType<global::app.type.item.setting.kind.@this>()
             .OrderBy(k => k.Name, StringComparer.Ordinal);

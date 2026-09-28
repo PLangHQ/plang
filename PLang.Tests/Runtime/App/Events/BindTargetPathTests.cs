@@ -13,7 +13,7 @@ public class BindTargetPathTests
 
     private async Task<object?> At(string path)
     {
-        var read = await new global::app.type.item.variable.@this(path).Start(_app.User.Context);
+        var read = await new global::app.type.item.variable.@this(path).Start(_app.actor.list.User.Context);
         return read.IsInitialized ? await read.Value() : null;
     }
 

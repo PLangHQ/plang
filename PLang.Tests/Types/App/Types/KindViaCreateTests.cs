@@ -14,7 +14,7 @@ public class KindViaCreateTests : System.IAsyncDisposable
 
     private string? KindOf(string typeName, object? raw)
     {
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: ctx);
         var built = ctx.App.type.list[typeName].Make(raw, carrier);
         // A decline says why — the carrier holds the reason.

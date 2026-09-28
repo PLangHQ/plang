@@ -35,7 +35,7 @@ public class MyIdentityResolverTests
     public async Task MyIdentity_ResolvesOnFirstAccess_AutoCreates()
     {
         // Access %MyIdentity% via Variables — should auto-create default identity
-        var data = await _app.System.Context.Variable.Get("MyIdentity");
+        var data = await _app.actor.list.System.Context.Variable.Get("MyIdentity");
         await Assert.That(data).IsNotNull();
 
         var identity = (await data!.Value()) as Identity;
@@ -48,7 +48,7 @@ public class MyIdentityResolverTests
     public async Task MyIdentity_DotNotation_Name()
     {
         // DynamicData auto-creates on access
-        var data = await _app.System.Context.Variable.Get("MyIdentity");
+        var data = await _app.actor.list.System.Context.Variable.Get("MyIdentity");
         await Assert.That(data).IsNotNull();
 
         var identity = (await data!.Value()) as Identity;
@@ -59,7 +59,7 @@ public class MyIdentityResolverTests
     [Test]
     public async Task MyIdentity_DotNotation_PublicKey()
     {
-        var data = await _app.System.Context.Variable.Get("MyIdentity");
+        var data = await _app.actor.list.System.Context.Variable.Get("MyIdentity");
         var child = await data!.Get("PublicKey");
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())?.ToString()).IsNotNull();
@@ -72,7 +72,7 @@ public class MyIdentityResolverTests
     [Test]
     public async Task MyIdentity_StringContext_ReturnsPublicKey()
     {
-        var data = await _app.System.Context.Variable.Get("MyIdentity");
+        var data = await _app.actor.list.System.Context.Variable.Get("MyIdentity");
         var identity = (await data!.Value()) as Identity;
 
         // ToString() should return the public key
@@ -82,7 +82,7 @@ public class MyIdentityResolverTests
     [Test]
     public async Task MyIdentity_UpdatedAfterSetDefault()
     {
-        var context = _app.System.Context;
+        var context = _app.actor.list.System.Context;
 
         // Create two identities
         var h1 = new Create(context) { Name = (global::app.type.item.text.@this)"first", SetAsDefault = (global::app.type.item.@bool.@this)true };
@@ -93,7 +93,7 @@ public class MyIdentityResolverTests
         await h2.Start();
 
         // Verify %MyIdentity% is "first" — DynamicData re-evaluates on each access
-        var data1 = await _app.System.Context.Variable.Get("MyIdentity");
+        var data1 = await _app.actor.list.System.Context.Variable.Get("MyIdentity");
         var id1 = (await data1!.Value()) as Identity;
         await Assert.That(id1!.Name).IsEqualTo("first");
 
@@ -103,7 +103,7 @@ public class MyIdentityResolverTests
         await setDefault.Start();
 
         // %MyIdentity% should now be "second" — DynamicData lambda calls provider again
-        var data2 = await _app.System.Context.Variable.Get("MyIdentity");
+        var data2 = await _app.actor.list.System.Context.Variable.Get("MyIdentity");
         var id2 = (await data2!.Value()) as Identity;
         await Assert.That(id2!.Name).IsEqualTo("second");
     }

@@ -30,30 +30,30 @@ public class FileHandlerTests : IDisposable
         System.IO.Path.Combine(_tempDir, relativePath);
 
     private global::app.data.@this<PLangPath> MakePath(string relativePath) =>
-        new("", new PLangFilePath(TempPath(relativePath)) {}, context: _app.User.Context);
+        new("", new PLangFilePath(TempPath(relativePath)) {}, context: _app.actor.list.User.Context);
 
     private global::app.data.@this<PLangPath> MakeAbsPath(string absolutePath) =>
-        new("", new PLangFilePath(absolutePath) {}, context: _app.User.Context);
+        new("", new PLangFilePath(absolutePath) {}, context: _app.actor.list.User.Context);
 
     // --- Save ---
 
     [Test]
     public async Task Save_ReturnsFileWithCorrectPaths()
     {
-        var action = new Save(_app.User.Context) { Path = MakePath("test.txt"), Value = _app.User.Context.Ok("hello") };
+        var action = new Save(_app.actor.list.User.Context) { Path = MakePath("test.txt"), Value = _app.actor.list.User.Context.Ok("hello") };
         var result = await action.Start();
 
         await result.IsSuccess();
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Absolute).IsEqualTo(TempPath("test.txt"));
-        await Assert.That(f.Relative(_app.User.Context)).IsEqualTo("/test.txt");
+        await Assert.That(f.Relative(_app.actor.list.User.Context)).IsEqualTo("/test.txt");
     }
 
     [Test]
     public async Task Save_FileExists_AfterSave()
     {
-        var action = new Save(_app.User.Context) { Path = MakePath("exists.txt"), Value = _app.User.Context.Ok("data") };
+        var action = new Save(_app.actor.list.User.Context) { Path = MakePath("exists.txt"), Value = _app.actor.list.User.Context.Ok("data") };
         await action.Start();
 
         await Assert.That(System.IO.File.Exists(TempPath("exists.txt"))).IsTrue();
@@ -66,7 +66,7 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("read.txt"), "content here");
 
-        var action = new Read(_app.User.Context) { Path = MakePath("read.txt") };
+        var action = new Read(_app.actor.list.User.Context) { Path = MakePath("read.txt") };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -79,12 +79,12 @@ public class FileHandlerTests : IDisposable
         // `.abcdata` is unknown until a format `abc` takes that extension; from then on the
         // extension answers to the registered kind, `abc`.
         System.IO.File.WriteAllText(TempPath("before.abcdata"), "x");
-        var before = await new Read(_app.User.Context) { Path = MakePath("before.abcdata") }.Start();
+        var before = await new Read(_app.actor.list.User.Context) { Path = MakePath("before.abcdata") }.Start();
 
         _app.type.list.Add(new global::app.type.kind.@this(
             new global::app.Attributes.FormatAttribute("abc", "application/abcdata", ".abc", ".abcdata"), "binary"));
         System.IO.File.WriteAllText(TempPath("after.abcdata"), "x");
-        var after = await new Read(_app.User.Context) { Path = MakePath("after.abcdata") }.Start();
+        var after = await new Read(_app.actor.list.User.Context) { Path = MakePath("after.abcdata") }.Start();
 
         await after.IsSuccess();
         await Assert.That(after.Type.Name).IsEqualTo("file");
@@ -97,7 +97,7 @@ public class FileHandlerTests : IDisposable
     public async Task Read_JpegExtension_FileKindIsCanonicalJpg()
     {
         System.IO.File.WriteAllBytes(TempPath("photo.jpeg"), new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 });
-        var result = await new Read(_app.User.Context) { Path = MakePath("photo.jpeg") }.Start();
+        var result = await new Read(_app.actor.list.User.Context) { Path = MakePath("photo.jpeg") }.Start();
 
         await result.IsSuccess();
         await Assert.That(result.Type.kind.Name).IsEqualTo("jpg");
@@ -109,7 +109,7 @@ public class FileHandlerTests : IDisposable
         // An unregistered scheme (s3://) fails path conversion. The pipeline
         // surfaces that typed error through the dispatch's parameter-resolution
         // guard: the read step fails cleanly with SchemeNotRegistered, no NRE.
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestUnregisteredScheme",
             Make.Step("read s3 file",
                 Make.Action("file", "read", ("path", "s3://bucket/key")))));
@@ -125,7 +125,7 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("lazy.txt"), "lazy content");
 
-        var action = new Read(_app.User.Context) { Path = MakePath("lazy.txt") };
+        var action = new Read(_app.actor.list.User.Context) { Path = MakePath("lazy.txt") };
         var result = await action.Start();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("lazy content");
@@ -134,7 +134,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Read_NonexistentFile_ReturnsError()
     {
-        var action = new Read(_app.User.Context) { Path = MakePath("nonexistent.txt") };
+        var action = new Read(_app.actor.list.User.Context) { Path = MakePath("nonexistent.txt") };
         var result = await action.Start();
 
         await result.IsFailure();
@@ -146,10 +146,10 @@ public class FileHandlerTests : IDisposable
     public async Task Read_ResolveVariablesTrue_ResolvesVariableInContent()
     {
         System.IO.File.WriteAllText(TempPath("template.txt"), "Hello %name%, welcome");
-        _app.User.Context.Variable.Set("name", "Ingi");
+        _app.actor.list.User.Context.Variable.Set("name", "Ingi");
 
-        var action = new Read(_app.User.Context) { Path = MakePath("template.txt"),
-            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", true, context: _app.User.Context)
+        var action = new Read(_app.actor.list.User.Context) { Path = MakePath("template.txt"),
+            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", true, context: _app.actor.list.User.Context)
         };
         var result = await action.Start();
 
@@ -163,10 +163,10 @@ public class FileHandlerTests : IDisposable
         // Default value of ResolveVariables is false (per [Default(false)]). Even
         // when %var% is set, the literal must come back unresolved.
         System.IO.File.WriteAllText(TempPath("literal.txt"), "Hello %name%, welcome");
-        _app.User.Context.Variable.Set("name", "Ingi");
+        _app.actor.list.User.Context.Variable.Set("name", "Ingi");
 
-        var action = new Read(_app.User.Context) { Path = MakePath("literal.txt"),
-            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", false, context: _app.User.Context)
+        var action = new Read(_app.actor.list.User.Context) { Path = MakePath("literal.txt"),
+            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", false, context: _app.actor.list.User.Context)
         };
         var result = await action.Start();
 
@@ -180,8 +180,8 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("marked.txt"), "Hello %name%");
 
-        var action = new Read(_app.User.Context) { Path = MakePath("marked.txt"),
-            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", true, context: _app.User.Context)
+        var action = new Read(_app.actor.list.User.Context) { Path = MakePath("marked.txt"),
+            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", true, context: _app.actor.list.User.Context)
         };
         var result = await action.Start();
 
@@ -199,13 +199,13 @@ public class FileHandlerTests : IDisposable
     public async Task Read_ResolveVariablesTrue_RendersAtUse()
     {
         System.IO.File.WriteAllText(TempPath("late.txt"), "Hello %name%");
-        _app.User.Context.Variable.Set("name", "before");
+        _app.actor.list.User.Context.Variable.Set("name", "before");
 
-        var action = new Read(_app.User.Context) { Path = MakePath("late.txt"),
-            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", true, context: _app.User.Context)
+        var action = new Read(_app.actor.list.User.Context) { Path = MakePath("late.txt"),
+            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", true, context: _app.actor.list.User.Context)
         };
         var result = await action.Start();
-        _app.User.Context.Variable.Set("name", "after");
+        _app.actor.list.User.Context.Variable.Set("name", "after");
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello after");
     }
@@ -217,19 +217,19 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("src.txt"), "source data");
 
-        var action = new Copy(_app.User.Context) { Source = MakePath("src.txt"), Destination = MakePath("dst.txt") };
+        var action = new Copy(_app.actor.list.User.Context) { Source = MakePath("src.txt"), Destination = MakePath("dst.txt") };
         var result = await action.Start();
 
         await result.IsSuccess();
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(f!.Relative(_app.User.Context)).IsEqualTo("/dst.txt");
+        await Assert.That(f!.Relative(_app.actor.list.User.Context)).IsEqualTo("/dst.txt");
     }
 
     [Test]
     public async Task Copy_NonexistentSource_ReturnsFileNotFound()
     {
-        var action = new Copy(_app.User.Context) { Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
+        var action = new Copy(_app.actor.list.User.Context) { Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
         var result = await action.Start();
 
         await result.IsFailure();
@@ -242,7 +242,7 @@ public class FileHandlerTests : IDisposable
         System.IO.Directory.CreateDirectory(srcDir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "a.txt"), "a");
 
-        var action = new Copy(_app.User.Context) { Source = MakeAbsPath(srcDir), Destination = MakePath("copy_dir_dst") };
+        var action = new Copy(_app.actor.list.User.Context) { Source = MakeAbsPath(srcDir), Destination = MakePath("copy_dir_dst") };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -256,19 +256,19 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("move_src.txt"), "move data");
 
-        var action = new Move(_app.User.Context) { Source = MakePath("move_src.txt"), Destination = MakePath("move_dst.txt") };
+        var action = new Move(_app.actor.list.User.Context) { Source = MakePath("move_src.txt"), Destination = MakePath("move_dst.txt") };
         var result = await action.Start();
 
         await result.IsSuccess();
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(f!.Relative(_app.User.Context)).IsEqualTo("/move_dst.txt");
+        await Assert.That(f!.Relative(_app.actor.list.User.Context)).IsEqualTo("/move_dst.txt");
     }
 
     [Test]
     public async Task Move_NonexistentSource_ReturnsFileNotFound()
     {
-        var action = new Move(_app.User.Context) { Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
+        var action = new Move(_app.actor.list.User.Context) { Source = MakePath("nope.txt"), Destination = MakePath("dst.txt") };
         var result = await action.Start();
 
         await result.IsFailure();
@@ -281,7 +281,7 @@ public class FileHandlerTests : IDisposable
         System.IO.Directory.CreateDirectory(srcDir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(srcDir, "a.txt"), "a");
 
-        var action = new Move(_app.User.Context) { Source = MakeAbsPath(srcDir), Destination = MakePath("move_dir_dst") };
+        var action = new Move(_app.actor.list.User.Context) { Source = MakeAbsPath(srcDir), Destination = MakePath("move_dir_dst") };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -296,19 +296,19 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("del.txt"), "delete me");
 
-        var action = new Delete(_app.User.Context) { Path = MakePath("del.txt") };
+        var action = new Delete(_app.actor.list.User.Context) { Path = MakePath("del.txt") };
         var result = await action.Start();
 
         await result.IsSuccess();
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(await f!.AsBooleanAsync(_app.User.Context)).IsFalse();
+        await Assert.That(await f!.AsBooleanAsync(_app.actor.list.User.Context)).IsFalse();
     }
 
     [Test]
     public async Task Delete_NonexistentFile_ReturnsError()
     {
-        var action = new Delete(_app.User.Context) { Path = MakePath("nope.txt") };
+        var action = new Delete(_app.actor.list.User.Context) { Path = MakePath("nope.txt") };
         var result = await action.Start();
 
         await result.IsFailure();
@@ -317,7 +317,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task Delete_NonexistentFile_IgnoreIfNotFound_ReturnsSuccess()
     {
-        var action = new Delete(_app.User.Context) { Path = MakePath("nope.txt"), IgnoreIfNotFound = (global::app.type.item.@bool.@this)true };
+        var action = new Delete(_app.actor.list.User.Context) { Path = MakePath("nope.txt"), IgnoreIfNotFound = (global::app.type.item.@bool.@this)true };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -330,7 +330,7 @@ public class FileHandlerTests : IDisposable
         System.IO.Directory.CreateDirectory(dir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "child.txt"), "data");
 
-        var action = new Delete(_app.User.Context) { Path = MakeAbsPath(dir), Recursive = (global::app.type.item.@bool.@this)true };
+        var action = new Delete(_app.actor.list.User.Context) { Path = MakeAbsPath(dir), Recursive = (global::app.type.item.@bool.@this)true };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -344,25 +344,25 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("check.txt"), "present");
 
-        var action = new Exists(_app.User.Context) { Path = MakePath("check.txt") };
+        var action = new Exists(_app.actor.list.User.Context) { Path = MakePath("check.txt") };
         var result = await action.Start();
 
         await result.IsSuccess();
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(await f!.AsBooleanAsync(_app.User.Context)).IsTrue();
+        await Assert.That(await f!.AsBooleanAsync(_app.actor.list.User.Context)).IsTrue();
     }
 
     [Test]
     public async Task Exists_NonexistentFile_ReturnsFalse()
     {
-        var action = new Exists(_app.User.Context) { Path = MakePath("missing.txt") };
+        var action = new Exists(_app.actor.list.User.Context) { Path = MakePath("missing.txt") };
         var result = await action.Start();
 
         await result.IsSuccess();
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(await f!.AsBooleanAsync(_app.User.Context)).IsFalse();
+        await Assert.That(await f!.AsBooleanAsync(_app.actor.list.User.Context)).IsFalse();
     }
 
     // --- List ---
@@ -375,7 +375,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "a.txt"), "a");
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "b.txt"), "b");
 
-        var action = new List(_app.User.Context) { Path = MakeAbsPath(subDir) };
+        var action = new List(_app.actor.list.User.Context) { Path = MakeAbsPath(subDir) };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -392,7 +392,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "a.txt"), "a");
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "b.md"), "b");
 
-        var action = new List(_app.User.Context) { Path = MakeAbsPath(subDir), Pattern = (global::app.type.item.text.@this)"*.txt" };
+        var action = new List(_app.actor.list.User.Context) { Path = MakeAbsPath(subDir), Pattern = (global::app.type.item.text.@this)"*.txt" };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -411,7 +411,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(System.IO.Path.Combine(subDir, "top.txt"), "top");
         System.IO.File.WriteAllText(System.IO.Path.Combine(nested, "deep.txt"), "deep");
 
-        var action = new List(_app.User.Context) { Path = MakeAbsPath(subDir), Recursive = (global::app.type.item.@bool.@this)true };
+        var action = new List(_app.actor.list.User.Context) { Path = MakeAbsPath(subDir), Recursive = (global::app.type.item.@bool.@this)true };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -423,7 +423,7 @@ public class FileHandlerTests : IDisposable
     [Test]
     public async Task List_NonexistentDirectory_ReturnsError()
     {
-        var action = new List(_app.User.Context) { Path = MakePath("nodir") };
+        var action = new List(_app.actor.list.User.Context) { Path = MakePath("nodir") };
         var result = await action.Start();
 
         await result.IsFailure();
@@ -436,7 +436,7 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("doc.md"), "# Hello");
 
-        var action = new Read(_app.User.Context) { Path = MakePath("doc.md") };
+        var action = new Read(_app.actor.list.User.Context) { Path = MakePath("doc.md") };
         var result = await action.Start();
 
         // Stage 3: a read is a `file` REFERENCE — name is the headline "file",
@@ -450,7 +450,7 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("sized.txt"), "12345");
 
-        var action = new Read(_app.User.Context) { Path = MakePath("sized.txt") };
+        var action = new Read(_app.actor.list.User.Context) { Path = MakePath("sized.txt") };
         var result = await action.Start();
         var content = (await result.Value())?.ToString();
 
@@ -462,7 +462,7 @@ public class FileHandlerTests : IDisposable
     {
         System.IO.File.WriteAllText(TempPath("tostring.txt"), "file-content");
 
-        var action = new Read(_app.User.Context) { Path = MakePath("tostring.txt") };
+        var action = new Read(_app.actor.list.User.Context) { Path = MakePath("tostring.txt") };
         var result = await action.Start();
 
         await Assert.That((await result.Value())!.ToString()).IsEqualTo("file-content");
@@ -476,12 +476,12 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(TempPath("real.txt"), "I exist");
 
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestFileExistsFlow",
             Make.Step("check if file exists",
                 Make.Action("file", "exists", Make.Param("path", TempPath("real.txt"), "path")),
@@ -498,7 +498,7 @@ public class FileHandlerTests : IDisposable
         await Assert.That(fileData).IsNotNull();
         var fileObj = (await fileData!.Value()) as PLangPath;
         await Assert.That(fileObj).IsNotNull();
-        await Assert.That(await fileObj!.AsBooleanAsync(_app.User.Context)).IsTrue();
+        await Assert.That(await fileObj!.AsBooleanAsync(_app.actor.list.User.Context)).IsTrue();
 
         var existsData = await new global::app.type.item.variable.@this("fileResult.Exists").Start(context);
         await Assert.That(existsData).IsNotNull();
@@ -513,12 +513,12 @@ public class FileHandlerTests : IDisposable
     public async Task Integration_FileNotExists_FlowsThroughVariables_ToOutput()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestFileNotExistsFlow",
             Make.Step("check if file exists",
                 Make.Action("file", "exists", Make.Param("path", TempPath("ghost.txt"), "path")),

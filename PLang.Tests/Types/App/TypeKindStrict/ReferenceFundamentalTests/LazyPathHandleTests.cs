@@ -40,7 +40,7 @@ public class LazyPathHandleTests
     {
         // The file does NOT exist. If `set` read it, this would error — it
         // doesn't, because a path-backed handle reads nothing at the set.
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%pic%"),
             ("value", "ghost.jpg"),
@@ -59,35 +59,35 @@ public class LazyPathHandleTests
 
     [Test] public async Task BytesAsync_FirstAccess_LoadsThroughPath()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         System.IO.File.WriteAllBytes(System.IO.Path.Combine(_app.AbsolutePath, "real.png"), PngHeader);
 
         var img = new image(global::app.type.item.path.@this.Resolve(
             System.IO.Path.Combine(_app.AbsolutePath, "real.png"), context), context);
         await Assert.That(img.Bytes.Length).IsEqualTo(0); // not loaded yet
 
-        await _app.User.Context.Ok(img).Value();   // the async pull, through the path
+        await _app.actor.list.User.Context.Ok(img).Value();   // the async pull, through the path
         // Cached — the sync view now reflects the loaded bytes.
         await Assert.That(img.Bytes).IsEquivalentTo(PngHeader);
     }
 
     [Test] public async Task Materialize_MissingFile_FailsOntoBinding_NotAtConstruction()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         // Construction performs no I/O even for a missing file.
         var img = new image(global::app.type.item.path.@this.Resolve(
             System.IO.Path.Combine(_app.AbsolutePath, "missing.png"), context), context);
         await Assert.That(img.Path).IsNotNull();
 
         // The read failure rides onto the binding at first content access — no throw.
-        var data = _app.User.Context.Ok(img);
+        var data = _app.actor.list.User.Context.Ok(img);
         await data.Value();
         await data.IsFailure();
     }
 
     [Test] public async Task Materialize_StrictKindMismatch_FailsOntoBinding_NotAtConstruction()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         System.IO.File.WriteAllBytes(System.IO.Path.Combine(_app.AbsolutePath, "shot.png"), Png1x1);
 
         // Path-backed handle declared `as image/gif strict`: nothing read at
@@ -97,7 +97,7 @@ public class LazyPathHandleTests
         img.RequireStrictKind("gif");
 
         // The mismatch (png content behind a strict gif) surfaces at byte-load, onto the binding.
-        var data = _app.User.Context.Ok(img);
+        var data = _app.actor.list.User.Context.Ok(img);
         await data.Value();
         await data.IsFailure();
         await Assert.That(data.Error!.Key).IsEqualTo("StrictKindMismatch");
@@ -108,7 +108,7 @@ public class LazyPathHandleTests
         // The bytes-backed path is untouched: content is already in hand.
         var img = new image(PngHeader, "image/png");
         await Assert.That(img.Path).IsNull();
-        await _app.User.Context.Ok(img).Value();
+        await _app.actor.list.User.Context.Ok(img).Value();
         await Assert.That(img.Bytes).IsEquivalentTo(PngHeader);
     }
 }

@@ -9,7 +9,7 @@ public class ListSetTests
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
         var app = TestApp.Create("/app");
-        return (app.User.Context, app.User.Context.Variable);
+        return (app.actor.list.User.Context, app.actor.list.User.Context.Variable);
     }
 
     [Test]

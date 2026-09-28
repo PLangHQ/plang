@@ -11,35 +11,35 @@ public class NumericInferenceTests : System.IAsyncDisposable
 
     [Test] public async Task MintTyped_FromInt_ProducesNumberIntName_NotInt()
     {
-        var d = new global::app.data.@this("x", 42, context: _app.User.Context);
+        var d = new global::app.data.@this("x", 42, context: _app.actor.list.User.Context);
         await Assert.That(d.Type.Name).IsEqualTo("number");
         await Assert.That(d.Type.kind.Name).IsEqualTo("int");
     }
 
     [Test] public async Task MintTyped_FromDouble_ProducesNumberDoubleKind()
     {
-        var d = new global::app.data.@this("x", 3.14, context: _app.User.Context);
+        var d = new global::app.data.@this("x", 3.14, context: _app.actor.list.User.Context);
         await Assert.That(d.Type.Name).IsEqualTo("number");
         await Assert.That(d.Type.kind.Name).IsEqualTo("double");
     }
 
     [Test] public async Task MintTyped_FromDecimal_ProducesNumberDecimalKind()
     {
-        var d = new global::app.data.@this("x", 3.14m, context: _app.User.Context);
+        var d = new global::app.data.@this("x", 3.14m, context: _app.actor.list.User.Context);
         await Assert.That(d.Type.Name).IsEqualTo("number");
         await Assert.That(d.Type.kind.Name).IsEqualTo("decimal");
     }
 
     [Test] public async Task DataTypeGetter_StringValue_ReturnsText_NotString()
     {
-        var d = new global::app.data.@this("x", "hi", context: _app.User.Context);
+        var d = new global::app.data.@this("x", "hi", context: _app.actor.list.User.Context);
         await Assert.That(d.Type.Name).IsEqualTo("text");
     }
 
     [Test] public async Task RuntimeMint_IntLiteral_StampsNumberInt()
     {
         // An int literal mints {number, int} — the kind is intrinsic to the value.
-        var runtime = new global::app.data.@this("x", 5, context: _app.User.Context);
+        var runtime = new global::app.data.@this("x", 5, context: _app.actor.list.User.Context);
         await Assert.That(runtime.Type.Name).IsEqualTo("number");
         await Assert.That(runtime.Type.kind.Name).IsEqualTo("int");
     }

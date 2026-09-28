@@ -17,7 +17,7 @@ public class PathAskerContextTests
     [Test] public async Task BangPlane_ContextMembers_AnswerWithTheDatasContext()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var p = global::app.type.item.path.@this.Resolve("/data/config.json", ctx);
         var d = new global::app.data.@this("p", p, context: ctx);
 
@@ -28,7 +28,7 @@ public class PathAskerContextTests
     [Test] public async Task OsLocation_ShowsItsPlangForm_NeverTheInstallRoot()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var inside = System.IO.Path.Combine(app.AbsolutePath, "data", "x.txt");
         var outside = "//tmp/plang-outside-" + System.Guid.NewGuid().ToString("N")[..6] + ".txt";
 
@@ -41,7 +41,7 @@ public class PathAskerContextTests
     [Test] public async Task ListingEntries_FromAnOsRoot_ShowTheirPlangForm()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var dir = System.IO.Path.Combine(app.AbsolutePath, "docs");
         System.IO.Directory.CreateDirectory(dir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "a.txt"), "a");
@@ -59,10 +59,10 @@ public class PathAskerContextTests
     {
         await using var app1 = NewApp();
         await using var app2 = NewApp();
-        var p = global::app.type.item.path.@this.Resolve("/data/x.txt", app1.User.Context);
+        var p = global::app.type.item.path.@this.Resolve("/data/x.txt", app1.actor.list.User.Context);
 
-        await Assert.That(p.Relative(app1.User.Context)).IsEqualTo("/data/x.txt");
+        await Assert.That(p.Relative(app1.actor.list.User.Context)).IsEqualTo("/data/x.txt");
         // Outside the asker's root the relative form is the location itself.
-        await Assert.That(p.Relative(app2.User.Context)).IsEqualTo(p.Absolute);
+        await Assert.That(p.Relative(app2.actor.list.User.Context)).IsEqualTo(p.Absolute);
     }
 }

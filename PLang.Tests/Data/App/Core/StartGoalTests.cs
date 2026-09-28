@@ -16,7 +16,7 @@ public class StartGoalTests
         // Capture the REAL output channel — the goal runs through the real output.write,
         // which writes the resolved value to this stream (no hand-rolled handler).
         var captureStream = new System.IO.MemoryStream();
-        engine.User.Channel.Register(new global::app.channel.type.stream.@this(
+        engine.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(
             global::app.channel.list.@this.Output, captureStream,
             global::app.channel.ChannelDirection.Output, ownsStream: true) { Mime = "text/plain" });
 
@@ -31,7 +31,7 @@ public class StartGoalTests
                 Make.Action("output", "write", Make.Template("Data", "NewVar: %newVarName%")))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
@@ -63,7 +63,7 @@ public class StartGoalTests
                 Make.Action("variable", "set", Make.Param("Name", "result", "variable"), Make.Param("Value", "%myVar%", "variable")))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
@@ -85,7 +85,7 @@ public class StartGoalTests
                 Make.Action("output", "write", Make.Template("Data", "Hello %user%!")))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
@@ -105,7 +105,7 @@ public class StartGoalTests
                 Make.Action("output", "write", ("Data", "no variables here")))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
@@ -128,7 +128,7 @@ public class StartGoalTests
                 Make.Action("output", "write", Make.Template("Data", "Value: %unknown%")))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         await result.IsFailure();
@@ -148,7 +148,7 @@ public class StartGoalTests
                 Make.Action("variable", "set", Make.Param("Name", "result", "variable"), Make.Param("Value", "%nonexistent%", "variable")))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         await result.IsFailure();
@@ -173,7 +173,7 @@ public class StartGoalTests
                     ("Type", new global::app.type.@this("text"))))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
@@ -199,7 +199,7 @@ public class StartGoalTests
                     ("Type", new global::app.type.@this("text"))))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         await result.IsSuccess();
@@ -219,7 +219,7 @@ public class StartGoalTests
                 Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", "y")))));
         engine.goal.list.Add(goal);
 
-        var context = engine.User.Context;
+        var context = engine.actor.list.User.Context;
         var result = await engine.Start(goal, context);
 
         await result.IsSuccess();

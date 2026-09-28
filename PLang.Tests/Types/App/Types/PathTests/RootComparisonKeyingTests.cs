@@ -41,8 +41,8 @@ public class RootComparisonKeyingTests
     {
         var app = NewApp(out _);
         var dict = new System.Collections.Generic.Dictionary<global::app.type.item.path.@this, string>();
-        var built = global::app.type.item.path.@this.Resolve("/Cache/Start.goal", app.User.Context);
-        var resolved = global::app.type.item.path.@this.Resolve("/Cache/Start.goal", app.User.Context);
+        var built = global::app.type.item.path.@this.Resolve("/Cache/Start.goal", app.actor.list.User.Context);
+        var resolved = global::app.type.item.path.@this.Resolve("/Cache/Start.goal", app.actor.list.User.Context);
         dict[built] = "value";
         await Assert.That(dict.ContainsKey(resolved)).IsTrue();
     }
@@ -50,7 +50,7 @@ public class RootComparisonKeyingTests
     [Test] public async Task CycleDetection_GoalPrPath_UsesPathEquality_NotStringInterpolation()
     {
         var app = NewApp(out _);
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var a = global::app.type.item.path.@this.Resolve("/Cache/Foo.goal", context);
         var b = global::app.type.item.path.@this.Resolve("/Cache/Foo.goal", context);
         // Same absolute path → Path equality returns true → cycle detection

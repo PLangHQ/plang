@@ -33,7 +33,7 @@ public class OpenAiImageDenialTests
     [Test] public async Task ImageAttachment_PathOutsideRoot_DeniedAnswer_NotIncludedInRequest()
     {
         var app = NewApp(out _);
-        app.User.Channel.Register(new CannedChannel("n"));
+        app.actor.list.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "img.png");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
@@ -44,7 +44,7 @@ public class OpenAiImageDenialTests
         // → ResolveImage falls through (no bytes shipped). PNG magic bytes
         // (89 50 4E 47) base64-encode to a string starting with "iVBOR" —
         // it MUST NOT appear in the wire content.
-        var content = await global::app.module.action.llm.code.OpenAi.ResolveImage(outOfRoot, app, app.User.Context);
+        var content = await global::app.module.action.llm.code.OpenAi.ResolveImage(outOfRoot, app, app.actor.list.User.Context);
         var serialized = System.Text.Json.JsonSerializer.Serialize(content);
         await Assert.That(serialized).DoesNotContain("iVBOR");
     }
@@ -59,7 +59,7 @@ public class OpenAiImageDenialTests
         // through the gated verb (mutating to plain System.IO would still
         // produce the same bytes; the proof of *routing* is in the in-root
         // pair with the out-of-root denial test above).
-        var content = await global::app.module.action.llm.code.OpenAi.ResolveImage(file, app, app.User.Context);
+        var content = await global::app.module.action.llm.code.OpenAi.ResolveImage(file, app, app.actor.list.User.Context);
         var serialized = System.Text.Json.JsonSerializer.Serialize(content);
         await Assert.That(serialized).Contains("iVBOR");
         await Assert.That(serialized).Contains("data:image/png;base64,");

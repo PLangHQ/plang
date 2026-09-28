@@ -62,14 +62,14 @@ public class ExecuteVerbTests
     {
         var app = NewApp(out _);
         var canned = new CannedChannel("n");
-        app.User.Channel.Register(canned);
+        app.actor.list.User.Channel.Register(canned);
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(outOfRoot);
         var dllPath = System.IO.Path.Combine(outOfRoot, "stub.dll");
         System.IO.File.WriteAllText(dllPath, "not-a-real-dll");
         var p = new FilePath(dllPath);
-        await p.LoadAssemblyAsync(app.User.Context);
+        await p.LoadAssemblyAsync(app.actor.list.User.Context);
         await Assert.That(canned.Prompts.Count).IsGreaterThanOrEqualTo(1);
         await Assert.That(canned.Prompts[0]).Contains("execute");
     }
@@ -81,14 +81,14 @@ public class ExecuteVerbTests
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "lib.dll"));
         // Grant Read only.
         var permission = new global::app.type.item.permission.@this(
-            Actor: app.User.Name,
+            Actor: app.actor.list.User.Name,
             Path: p.Absolute,
             Verbs: new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.Read },
             Match: global::app.type.item.permission.Match.Exact);
-        var grantData = new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: app.User.Context);
-        await app.User.Permission.Add(grantData, persist: true);
+        var grantData = new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: app.actor.list.User.Context);
+        await app.actor.list.User.Permission.Add(grantData, persist: true);
         // Execute should NOT be covered.
-        var executeMatch = await app.User.Permission.Find(p, global::app.type.item.permission.Verb.Execute);
+        var executeMatch = await app.actor.list.User.Permission.Find(p, global::app.type.item.permission.Verb.Execute);
         await Assert.That(executeMatch).IsNull();
     }
 
@@ -96,7 +96,7 @@ public class ExecuteVerbTests
     {
         var app = NewApp(out var root);
         var canned = new CannedChannel("UNEXPECTED");
-        app.User.Channel.Register(canned);
+        app.actor.list.User.Channel.Register(canned);
         // Pre-stage: an actually-loadable DLL inside the App root. We use this
         // very test assembly — it lives somewhere on disk and copying it here
         // produces a valid loadable target.
@@ -104,7 +104,7 @@ public class ExecuteVerbTests
         var copyAt = System.IO.Path.Combine(root, "test.dll");
         System.IO.File.Copy(srcAssembly, copyAt, overwrite: true);
         var p = new FilePath(copyAt);
-        var result = await p.LoadAssemblyAsync(app.User.Context);
+        var result = await p.LoadAssemblyAsync(app.actor.list.User.Context);
         await result.IsSuccess();
         await Assert.That(canned.Prompts.Count).IsEqualTo(0);
     }
@@ -112,13 +112,13 @@ public class ExecuteVerbTests
     [Test] public async Task LoadAssemblyAsync_OutOfRoot_StatelessChannel_ReturnsAsk()
     {
         var app = NewApp(out _);
-        app.User.Channel.Register(new StatelessChannel());
+        app.actor.list.User.Channel.Register(new StatelessChannel());
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "stub.dll");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllText(outOfRoot, "stub");
         var p = new FilePath(outOfRoot);
-        var result = await p.LoadAssemblyAsync(app.User.Context);
+        var result = await p.LoadAssemblyAsync(app.actor.list.User.Context);
         // Stateless channels surface "ask" as a Data type signal, not a stored grant.
         await Assert.That(result.Type?.Name == "ask" || !result.Success).IsTrue();
     }
@@ -126,13 +126,13 @@ public class ExecuteVerbTests
     [Test] public async Task LoadAssemblyAsync_OutOfRoot_DeniedAnswer_DoesNotLoadAssembly()
     {
         var app = NewApp(out _);
-        app.User.Channel.Register(new CannedChannel("n"));
+        app.actor.list.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "stub.dll");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllText(outOfRoot, "stub");
         var p = new FilePath(outOfRoot);
-        var result = await p.LoadAssemblyAsync(app.User.Context);
+        var result = await p.LoadAssemblyAsync(app.actor.list.User.Context);
         await result.IsFailure();
         // The fail must be a permission decision — not file-not-found or a
         // malformed-DLL throw. Differentiate via Error.Key.

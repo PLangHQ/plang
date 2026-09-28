@@ -10,7 +10,7 @@ namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 public class GoalAccessorTests
 {
     private static global::app.goal.@this Goal(PLangEngine app, string name, bool setup = false)
-        => new() { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", app.User.Context), IsSetup = setup };
+        => new() { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", app.actor.list.User.Context), IsSetup = setup };
 
     [Test] public async Task AppGoal_GetByAddress_ReturnsTheGoal()
     {
@@ -30,7 +30,7 @@ public class GoalAccessorTests
     {
         await using var app = TestApp.Create("/test");
         app.goal.list.Add(Goal(app, "Show"));
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
 
         var goal = await new global::app.type.item.variable.parser.@this("%!app.goal[\"/show\"]%").Variable.Single().Start(context);
         await goal.IsSuccess();
@@ -59,7 +59,7 @@ public class GoalAccessorTests
 
         var appOnly = new global::app.type.item.dict.@this();
         appOnly.Set("os", false);
-        var all = (global::app.type.item.list.@this<global::app.goal.@this>)await app.goal.list.all(app.System.Context!, appOnly);
+        var all = (global::app.type.item.list.@this<global::app.goal.@this>)await app.goal.list.all(app.actor.list.System.Context!, appOnly);
 
         await Assert.That(all.Items().Select(g => g.Name).ToList()).IsEquivalentTo(new[] { "Public" });
     }
@@ -67,7 +67,7 @@ public class GoalAccessorTests
     [Test] public async Task AppGoalCurrent_IsTheRunningGoal()
     {
         await using var app = TestApp.Create("/test");
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var goal = Goal(app, "Running");
         await using var running = context.CallStack.Push(goal);
 

@@ -41,7 +41,7 @@ public class SettingsDataTests
     [Test]
     public async Task Save_StoresTheSettingWhole_AsTheActorsRow()
     {
-        var ctx = _app.System.Context;
+        var ctx = _app.actor.list.System.Context;
         var llm = Llm(ctx);
         llm.Cache = false;
 
@@ -55,7 +55,7 @@ public class SettingsDataTests
     [Test]
     public async Task Remove_GoesBackToTheDefaults()
     {
-        var ctx = _app.System.Context;
+        var ctx = _app.actor.list.System.Context;
         var llm = Llm(ctx);
         llm.Cache = false;
         await (await new global::app.module.action.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start()).IsSuccess();
@@ -68,7 +68,7 @@ public class SettingsDataTests
     [Test]
     public async Task Save_ANodeThatIsNoClass_IsRefused()
     {
-        var ctx = _app.System.Context;
+        var ctx = _app.actor.list.System.Context;
         var node = new global::app.type.item.setting.module.@this("http");
 
         var result = await new global::app.module.action.setting.Save(ctx) { Setting = Given(node, ctx) }.Start();

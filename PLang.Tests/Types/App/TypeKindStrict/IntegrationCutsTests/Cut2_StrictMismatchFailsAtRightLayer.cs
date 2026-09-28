@@ -33,7 +33,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
     // The bound variable.set handler with a strict image/gif Type — as the build pass holds it.
     private global::app.module.action.variable.Set Handler(object value)
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         return new(ctx)
         {
             Value = new global::app.data.@this("Value", value, context: ctx),
@@ -50,7 +50,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
 
     [Test] public async Task VarAsImageGifStrict_BuildsClean_FailsAtRuntime()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("upload", PngBytes);
 
         // Validate defers — value is a %var% reference.
@@ -67,7 +67,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
 
     [Test] public async Task LiteralGifAsImageGifStrict_BuildsAndRunsClean()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
 
         await Assert.That(await Handler(GifBytes).Validate()).IsNull();
 
@@ -91,7 +91,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
     // byte[]-only probe used to miss.
     [Test] public async Task ReadLiftImagePngAsImageGifStrict_FailsAtSet()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var pngImage = new global::app.type.item.image.@this(PngBytes, "image/png");
         var action = TestAction.Create("variable", "set",
             ("name", "%img%"),
@@ -104,7 +104,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
 
     [Test] public async Task ReadLiftImageGifAsImageGifStrict_Succeeds()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var gifImage = new global::app.type.item.image.@this(GifBytes, "image/gif");
         var action = TestAction.Create("variable", "set",
             ("name", "%img%"),

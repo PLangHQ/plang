@@ -16,7 +16,7 @@ public class OnEventTests
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
-    private global::app.actor.context.@this Ctx => _app.User.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
     // A program's on.event step, run: the path resolves the way a .pr's does.
     private async Task<global::app.data.@this> On(string eventPath, string when, string goal, params (string, object?)[] args)
@@ -50,7 +50,7 @@ public class OnEventTests
         var before = _app.type.list["goal"].on.start.before;
         await Assert.That(before.Count).IsEqualTo(1);
         await Assert.That(before[0]).IsSameReferenceAs(binding);
-        await Assert.That(binding.Actor).IsSameReferenceAs(_app.User);
+        await Assert.That(binding.Actor).IsSameReferenceAs(_app.actor.list.User);
     }
 
     [Test]
@@ -72,7 +72,7 @@ public class OnEventTests
     public async Task APathThatReachesNothingAtBuild_IsAWarning_NamingTheHop(string path, string hop)
     {
         var builder = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel("builder", builder, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
+        _app.actor.list.User.Channel.Register(new StreamChannel("builder", builder, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         var action = Make.Action("on", "event", ("Event", path), ("When", "before"), ("Action", Make.Call("Log")));
         var (handler, error) = await action.Bind(Ctx);
         await Assert.That(error).IsNull();
@@ -89,7 +89,7 @@ public class OnEventTests
     public async Task APathThatReachesAnEventAtBuild_WarnsNothing()
     {
         var builder = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel("builder", builder, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
+        _app.actor.list.User.Channel.Register(new StreamChannel("builder", builder, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         var (handler, _) = await Make.Action("on", "event", ("Event", "%!app.type.goal.on.start%"), ("When", "before"),
             ("Action", Make.Call("Log"))).Bind(Ctx);
 
@@ -204,8 +204,8 @@ public class OnEventTests
         Goal("Target");
         await Bind("%!app.goal[\"/Target\"].on.start%", "before", "Watch", ("watched", true));
 
-        await Make.Call("Target").Start(_app.System.Context);
-        await Assert.That((await _app.System.Context.Variable.Get("seen")).IsInitialized).IsFalse();
+        await Make.Call("Target").Start(_app.actor.list.System.Context);
+        await Assert.That((await _app.actor.list.System.Context.Variable.Get("seen")).IsInitialized).IsFalse();
 
         // the same goal under the actor that bound it: it fires
         await Make.Call("Target").Start(Ctx);

@@ -33,7 +33,7 @@ public class HttpStaticFileDenialTests
     [Test] public async Task StaticFile_RequestWithDotDotTraversal_DeniedByAuthGate()
     {
         var app = NewApp(out _);
-        app.User.Channel.Register(new CannedChannel("n"));
+        app.actor.list.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "secret.txt");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
@@ -48,7 +48,7 @@ public class HttpStaticFileDenialTests
         bool denied = false;
         try
         {
-            var result = await global::app.module.action.http.code.Default.CreateFileContentAsync(app, app.User.Context, outOfRoot);
+            var result = await global::app.module.action.http.code.Default.CreateFileContentAsync(app, app.actor.list.User.Context, outOfRoot);
             denied = result.Error != null;
         }
         catch (System.IO.IOException) { denied = true; }
@@ -59,10 +59,10 @@ public class HttpStaticFileDenialTests
     {
         var app = NewApp(out var root);
         var ch = new CannedChannel("UNEXPECTED");
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         var file = System.IO.Path.Combine(root, "public.txt");
         System.IO.File.WriteAllText(file, "hello");
-        var result = await global::app.module.action.http.code.Default.CreateFileContentAsync(app, app.User.Context, file);
+        var result = await global::app.module.action.http.code.Default.CreateFileContentAsync(app, app.actor.list.User.Context, file);
         await Assert.That(result.Error).IsNull();
         var bytes = await result.Content!.ReadAsByteArrayAsync();
         await Assert.That(System.Text.Encoding.UTF8.GetString(bytes)).IsEqualTo("hello");

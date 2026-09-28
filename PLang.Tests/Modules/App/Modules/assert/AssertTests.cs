@@ -19,7 +19,7 @@ public class AssertTests
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
         var app = TestApp.Create("/app");
-        return (app.User.Context, app.User.Context.Variable);
+        return (app.actor.list.User.Context, app.actor.list.User.Context.Variable);
     }
 
     private static Data D(global::app.actor.context.@this ctx, object? value) => value == null ? new Data("", context: ctx) : ctx.Ok(value);
@@ -230,8 +230,8 @@ public class AssertTests
         var filePath = System.IO.Path.Combine(root, "exists.txt");
         System.IO.File.WriteAllText(filePath, "x");
         var fp = new global::app.type.item.path.file.@this(filePath);
-        var action = new AssertIsTrue(app.User.Context) { Value = D(app.User.Context, fp) };
-        await action.Attach(null, app.User.Context);
+        var action = new AssertIsTrue(app.actor.list.User.Context) { Value = D(app.actor.list.User.Context, fp) };
+        await action.Attach(null, app.actor.list.User.Context);
         var result = await action.Start();
         await result.IsSuccess();
         System.IO.Directory.Delete(root, true);
@@ -243,8 +243,8 @@ public class AssertTests
         var (app, root) = MakeAppRoot("istrue-no");
         var missing = System.IO.Path.Combine(root, "nope.txt");
         var fp = new global::app.type.item.path.file.@this(missing);
-        var action = new AssertIsTrue(app.User.Context) { Value = D(app.User.Context, fp) };
-        await action.Attach(null, app.User.Context);
+        var action = new AssertIsTrue(app.actor.list.User.Context) { Value = D(app.actor.list.User.Context, fp) };
+        await action.Attach(null, app.actor.list.User.Context);
         var result = await action.Start();
         await result.IsFailure();
         await Assert.That(result.Error is AssertionError).IsTrue();
@@ -257,8 +257,8 @@ public class AssertTests
         var (app, root) = MakeAppRoot("isfalse-yes");
         var missing = System.IO.Path.Combine(root, "still-nope.txt");
         var fp = new global::app.type.item.path.file.@this(missing);
-        var action = new AssertIsFalse(app.User.Context) { Value = D(app.User.Context, fp) };
-        await action.Attach(null, app.User.Context);
+        var action = new AssertIsFalse(app.actor.list.User.Context) { Value = D(app.actor.list.User.Context, fp) };
+        await action.Attach(null, app.actor.list.User.Context);
         var result = await action.Start();
         await result.IsSuccess();
         System.IO.Directory.Delete(root, true);
@@ -271,8 +271,8 @@ public class AssertTests
         var filePath = System.IO.Path.Combine(root, "really-here.txt");
         System.IO.File.WriteAllText(filePath, "x");
         var fp = new global::app.type.item.path.file.@this(filePath);
-        var action = new AssertIsFalse(app.User.Context) { Value = D(app.User.Context, fp) };
-        await action.Attach(null, app.User.Context);
+        var action = new AssertIsFalse(app.actor.list.User.Context) { Value = D(app.actor.list.User.Context, fp) };
+        await action.Attach(null, app.actor.list.User.Context);
         var result = await action.Start();
         await result.IsFailure();
         await Assert.That(result.Error is AssertionError).IsTrue();

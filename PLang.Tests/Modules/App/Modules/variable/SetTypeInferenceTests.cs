@@ -26,7 +26,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_StringValue_InfersTextType()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%s%"), ("value", "hello"));
         var result = await action.Start(context);
         await result.IsSuccess();
@@ -38,7 +38,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_IntValue_InfersNumberType()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42));
         var result = await action.Start(context);
         await result.IsSuccess();
@@ -51,7 +51,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_LongValue_InfersNumberType()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42L));
         var result = await action.Start(context);
         await result.IsSuccess();
@@ -63,7 +63,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_DoubleValue_InfersNumberType()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%d%"), ("value", 3.14));
         var result = await action.Start(context);
         await result.IsSuccess();
@@ -75,7 +75,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_BoolValue_InfersBoolType()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%b%"), ("value", true));
         var result = await action.Start(context);
         await result.IsSuccess();
@@ -87,7 +87,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_DateTimeValue_InfersDateTimeType()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var when = DateTime.UtcNow;
         var action = TestAction.Create("variable", "set", ("name", "%t%"), ("value", when));
         var result = await action.Start(context);
@@ -104,7 +104,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_ListValue_AliasesSourceInstance()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var src = new List<object?> { "a", "b" };
         var action = TestAction.Create("variable", "set", ("name", "%list%"), ("value", src));
         var result = await action.Start(context);
@@ -121,7 +121,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_ListValue_AliasNotCopied_SourceEditVisible()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var src = new List<object?> { "a", "b" };
         await (await TestAction.Create("variable", "set", ("name", "%list%"), ("value", src)).Start(context)).IsSuccess();
         src.Add("c");
@@ -136,7 +136,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_ListIndexWrite_ElevatesSlot_ClrRebuilds()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var src = new List<object?> { "a", "b", "c" };
         var lst = new global::app.type.item.list.@this(src);
 
@@ -151,7 +151,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_DictValue_AliasesSourceInstance()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var src = new Dictionary<string, object?> { ["k"] = "v" };
         var action = TestAction.Create("variable", "set", ("name", "%d%"), ("value", src));
         var result = await action.Start(context);
@@ -167,7 +167,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_ForcedType_String_ConvertsAndMintsDataOfString()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         // Source value is int 42; forced Type="string" should produce Data<global::app.type.item.text.@this> "42".
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42), ("type", "string"));
         var result = await action.Start(context);
@@ -181,7 +181,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_ForcedType_ConversionFailure_ReturnsError()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         // "abc" can't convert to int → handler returns Data with Error.
         var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", "abc"), ("type", "int"));
         var result = await action.Start(context);
@@ -191,7 +191,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_NullValue_MintsPlainDataNotGeneric()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%x%"), ("value", null));
         var result = await action.Start(context);
         await result.IsSuccess();
@@ -203,7 +203,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_AsDefault_ExistingInitialized_DoesNotReplace()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         await TestAction.Create("variable", "set", ("name", "%x%"), ("value", "first")).Start(context);
         var result = await TestAction.Create("variable", "set", ("name", "%x%"), ("value", "second"), ("asdefault", true)).Start(context);
         await result.IsSuccess();
@@ -215,7 +215,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_ListAlias_InPlaceAddVisibleThroughBothNames()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var x = new global::app.type.item.list.@this();
         x.Add(new Data("", 1L, context: context)); x.Add(new Data("", 2L, context: context));
         context.Variable.Set("x", x);
@@ -239,7 +239,7 @@ public class SetTypeInferenceTests
     [Test]
     public async Task Set_Alias_PropertyWrite_LandsOnAliasOnly()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("x", "payload");
 
         var alias = TestAction.Create("variable", "set", ("name", "%y%"), ("value", "%x%"));

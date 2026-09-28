@@ -40,7 +40,7 @@ public class VerifyActionTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.actor.context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.System.Context;
 
     private async Task<Data> SignHelper(object data, List<string>? contracts = null,
         TimeSpan? expires = null, Dictionary<string, object>? headers = null)

@@ -75,7 +75,7 @@ public sealed class @this<T, L> : @this
     /// <summary>The one <paramref name="location"/> holds (<c>app.goal.Load("/system/error/.build/show.pr")</c>),
     /// resolved and read as the app itself; the element says how it loads.</summary>
     public System.Threading.Tasks.Task<data.@this> Load(string location)
-        => T.Load(item.path.@this.Resolve(location, _app.System.Context), _app);
+        => T.Load(item.path.@this.Resolve(location, _app.actor.list.System.Context), _app);
 
     /// <summary>The one in play for the asker — the running goal, the acting actor; NotFound where
     /// nothing is inside one. Its Data is born with the asker's context.</summary>

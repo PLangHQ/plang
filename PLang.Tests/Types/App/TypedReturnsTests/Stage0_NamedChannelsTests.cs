@@ -17,7 +17,7 @@ public class Stage0_NamedChannelsTests
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
 
-    private global::app.channel.list.@this Channels => _app.User.Channel;
+    private global::app.channel.list.@this Channels => _app.actor.list.User.Channel;
 
     [Test]
     public async Task Channels_LookupByName_ReturnsRegisteredChannel()
@@ -61,7 +61,7 @@ public class Stage0_NamedChannelsTests
     public async Task BuildWarning_WriteToBuilderChannel_Succeeds()
     {
         Channels.CreateMemoryChannel("builder");
-        var writeResult = await Channels["builder"].WriteAsync(_app.User.Context.Ok(Warning("file.read", "missing file")));
+        var writeResult = await Channels["builder"].WriteAsync(_app.actor.list.User.Context.Ok(Warning("file.read", "missing file")));
         await writeResult.IsSuccess();
     }
 

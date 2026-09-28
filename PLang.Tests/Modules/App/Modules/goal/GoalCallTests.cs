@@ -39,7 +39,7 @@ public class GoalCallTests
     [Test]
     public async Task Call_ExistingGoal_RunsSuccessfully()
     {
-        var action = new Call(_app.User.Context) { Name = Text("TestGoal") };
+        var action = new Call(_app.actor.list.User.Context) { Name = Text("TestGoal") };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -48,7 +48,7 @@ public class GoalCallTests
     [Test]
     public async Task Call_MissingGoal_ReturnsError()
     {
-        var action = new Call(_app.User.Context) { Name = Text("NonExistent") };
+        var action = new Call(_app.actor.list.User.Context) { Name = Text("NonExistent") };
         var result = await action.Start();
 
         await result.IsFailure();
@@ -58,29 +58,29 @@ public class GoalCallTests
     [Test]
     public async Task Call_WithParameters_InjectsOnContext()
     {
-        var action = new Call(_app.User.Context)
+        var action = new Call(_app.actor.list.User.Context)
         {
             Name = Text(await Seer("myParam")),
             Parameter = new global::app.type.item.list.@this(
-                new List<Data> { new Data("myParam", "myValue", context: _app.User.Context) })
+                new List<Data> { new Data("myParam", "myValue", context: _app.actor.list.User.Context) })
         };
         var result = await action.Start();
 
         // the goal ran with %myParam%; the parameter ends with the call
         await result.IsSuccess();
         await Assert.That(await ValueOf("seen")).IsEqualTo("myValue");
-        await Assert.That((await _app.User.Context.Variable.Get("myParam")).IsInitialized).IsFalse();
+        await Assert.That((await _app.actor.list.User.Context.Variable.Get("myParam")).IsInitialized).IsFalse();
     }
 
     // --- a valued row is "this value unless the invocation supplied one" ---
 
     private async Task<string?> ValueOf(string name)
-        => (await (await _app.User.Context.Variable.Get(name))!.Value())?.RawText;
+        => (await (await _app.actor.list.User.Context.Variable.Get(name))!.Value())?.RawText;
 
     [Test]
     public async Task HeldCall_RunnerSuppliesName_SuppliedValueWins()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var tool = Make.Tool("TestGoal", parameter: new List<Data> { new Data("units", "metric", context: ctx) });
 
         await using (ctx.Variable.Calls.Push(new[] { new Data("units", "imperial", context: ctx) }, tool))
@@ -93,7 +93,7 @@ public class GoalCallTests
     [Test]
     public async Task HeldCall_RunnerSilent_ValuedRowIsTheDefault()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var tool = Make.Tool(await Seer("units"), parameter: new List<Data> { new Data("units", "metric", context: ctx) });
 
         await using (ctx.Variable.Calls.Push(System.Array.Empty<Data>(), tool))
@@ -106,7 +106,7 @@ public class GoalCallTests
     [Test]
     public async Task ParallelHeldCalls_EachSeesOnlyItsOwnSuppliedArguments()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var tool = Make.Tool("TestGoal", parameter: new List<Data> { new Data("city", null, context: ctx) });
 
         async Task<string?> Invoke(string city)
@@ -129,7 +129,7 @@ public class GoalCallTests
     [Test]
     public async Task Call_DeclarationRow_NeverBinds()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var tool = Make.Tool("TestGoal", parameter: new List<Data> { new Data("city", null, context: ctx) });
 
         await tool.Start(ctx);
@@ -140,7 +140,7 @@ public class GoalCallTests
     [Test]
     public async Task PlainCall_OverridesAValueSetEarlierInTheFlow()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         await ctx.Variable.Set("a", "five");
 
         await Make.Call(await Seer("a"), ("a", "one")).Start(ctx);
@@ -153,7 +153,7 @@ public class GoalCallTests
     [Test]
     public async Task FrameForAnotherCall_DoesNotSuppressThisCallsRows()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var other = Make.Call("TestGoal");
 
         await using (ctx.Variable.Calls.Push(new[] { new Data("a", "nine", context: ctx) }, other))
@@ -166,13 +166,13 @@ public class GoalCallTests
     [Test]
     public async Task Call_NullActor_UsesCurrentContext()
     {
-        _app.User.Context.Variable.Set("marker", "fromCaller");
-        var action = new Call(_app.User.Context) { Name = Text("TestGoal"), Actor = null };
+        _app.actor.list.User.Context.Variable.Set("marker", "fromCaller");
+        var action = new Call(_app.actor.list.User.Context) { Name = Text("TestGoal"), Actor = null };
         var result = await action.Start();
 
         await result.IsSuccess();
         // marker should still be visible on same context
-        var marker = await _app.User.Context.Variable.Get("marker");
+        var marker = await _app.actor.list.User.Context.Variable.Get("marker");
         await Assert.That(marker).IsNotNull();
     }
 }

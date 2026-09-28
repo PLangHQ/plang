@@ -15,8 +15,8 @@ public class Stage4_PerTypeCompareTests
     private static async Task<Comparison> Cmp(global::app.@this app, object? a, object? b,
         string? aType = null, string? bType = null)
     {
-        var da = new Data("a", a, aType == null ? null : global::PLang.Tests.TestApp.SharedContext.App.type.list[aType], context: app.User.Context);
-        var db = new Data("b", b, bType == null ? null : global::PLang.Tests.TestApp.SharedContext.App.type.list[bType], context: app.User.Context);
+        var da = new Data("a", a, aType == null ? null : global::PLang.Tests.TestApp.SharedContext.App.type.list[aType], context: app.actor.list.User.Context);
+        var db = new Data("b", b, bType == null ? null : global::PLang.Tests.TestApp.SharedContext.App.type.list[bType], context: app.actor.list.User.Context);
         return await da.Compare(db);
     }
 
@@ -106,7 +106,7 @@ public class Stage4_PerTypeCompareTests
     {
         // list ordering by element, lexicographic
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         static global::app.type.item.list.@this L(global::app.actor.context.@this c, params object[] items)
         {
             var l = new global::app.type.item.list.@this();
@@ -149,7 +149,7 @@ public class Stage4_PerTypeCompareTests
     {
         // dict is equality-only; same shape → Equal, different → NotEqual; ordering → NotEqual (errors at boundary)
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d1 = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
         var d2 = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
         var d3 = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 2 }, ctx);
@@ -164,7 +164,7 @@ public class Stage4_PerTypeCompareTests
         await using var app = NewApp();
         await Assert.That(await Cmp(app, null, null)).IsEqualTo(Comparison.Equal);
         await Assert.That(await Cmp(app, 5, null, "number", null)).IsEqualTo(Comparison.NotEqual);
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
         await Assert.That(await Cmp(app, d, null, "dict", null)).IsEqualTo(Comparison.NotEqual);  // even dict vs null
     }
@@ -174,7 +174,7 @@ public class Stage4_PerTypeCompareTests
     {
         // sort places null entries last
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var list = new global::app.type.item.list.@this();
         list.Add(new Data("", 3, context: ctx));
         list.Add(new Data("", null, context: ctx));
@@ -190,7 +190,7 @@ public class Stage4_PerTypeCompareTests
     {
         // driver can't coerce → Incomparable; symmetric (same in both directions)
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
         await Assert.That(await Cmp(app, d, 5, "dict", "number")).IsEqualTo(Comparison.Incomparable);
         await Assert.That(await Cmp(app, 5, d, "number", "dict")).IsEqualTo(Comparison.Incomparable); // symmetric

@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Modules.app;
 public class ActorChoiceTests
 {
     private global::app.@this _app = null!;
-    private global::app.actor.context.@this Ctx => _app.User.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
     [Before(Test)]
     public void Setup() => _app = TestApp.Create("/app");
@@ -34,7 +34,7 @@ public class ActorChoiceTests
     {
         var named = await slot!.Value();
         await Assert.That(named).IsNotNull();
-        await Assert.That(ReferenceEquals(await (await _app.actor.Get(named!.ToString()!)).Value(), _app.System)).IsTrue();
+        await Assert.That(ReferenceEquals(await (await _app.actor.Get(named!.ToString()!)).Value(), _app.actor.list.System)).IsTrue();
     }
 
     [Test] public async Task GoalCall_System_SelectsSystem()
@@ -66,8 +66,8 @@ public class ActorChoiceTests
 
         await (await action.Start()).IsSuccess();
 
-        await Assert.That((await _app.System.Context.Variable.Get("seen")).HasValue).IsTrue();
-        await Assert.That((await _app.User.Context.Variable.Get("seen")).HasValue).IsFalse();
+        await Assert.That((await _app.actor.list.System.Context.Variable.Get("seen")).HasValue).IsTrue();
+        await Assert.That((await _app.actor.list.User.Context.Variable.Get("seen")).HasValue).IsFalse();
     }
 
     [Test]
@@ -87,13 +87,13 @@ public class ActorChoiceTests
         var slot = (await ChannelSet("%who%")).Actor!;
 
         var named = await slot.Value();
-        await Assert.That(ReferenceEquals(await (await _app.actor.Get(named!.ToString()!)).Value(), _app.User)).IsTrue();
+        await Assert.That(ReferenceEquals(await (await _app.actor.Get(named!.ToString()!)).Value(), _app.actor.list.User)).IsTrue();
     }
 
     [Test]
     public async Task VariableHoldingAnActor_Declines()
     {
-        await Ctx.Variable.Set("who", _app.System);
+        await Ctx.Variable.Set("who", _app.actor.list.System);
         var slot = (await ChannelSet("%who%")).Actor!;
 
         await Assert.That(await slot.Value()).IsNull();

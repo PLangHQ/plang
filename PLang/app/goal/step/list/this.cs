@@ -239,7 +239,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
 
     // The walk's own store: a System-actor context with no parent — a fresh variable store nothing
     // watches and nothing inherits into, so what the walk binds never reaches the builder's variables.
-    private actor.context.@this Scratch(actor.context.@this context) => new(context.App, context.App.System);
+    private actor.context.@this Scratch(actor.context.@this context) => new(context.App, context.App.actor.list.System);
 
     /// <summary>Writes itself to the wire as the bare step array — each element writes its own step
     /// shape (NOT the base's Data-envelope value face). Holders say <c>Step.Output(...)</c>.</summary>

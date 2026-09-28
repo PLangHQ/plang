@@ -22,7 +22,7 @@ public class SaveGoalsTests
             "plang_test_builder_savegoals_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = TestApp.Create(_tempDir);
-        _app.Build = new global::app.module.action.build.@this(_app.System.Context);
+        _app.Build = new global::app.module.action.build.@this(_app.actor.list.System.Context);
     }
 
     [After(Test)]
@@ -44,17 +44,17 @@ public class SaveGoalsTests
         step.Code.Add(new PrAction
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "hello", context: _app.User.Context) })
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "hello", context: _app.actor.list.User.Context) })
         });
         var goal = new Goal
         {
             Name = "Start",
-            Path = global::app.type.item.path.@this.Resolve("/Start.goal", _app.User.Context),
+            Path = global::app.type.item.path.@this.Resolve("/Start.goal", _app.actor.list.User.Context),
             Step = new GoalSteps { step }
         };
 
-        var action = new goalsSave(_app.User.Context) { Goal = new("", goal) };
-        var result = await _app.Run(action, _app.User.Context);
+        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
+        var result = await _app.Run(action, _app.actor.list.User.Context);
 
         await result.IsSuccess();
 
@@ -62,7 +62,7 @@ public class SaveGoalsTests
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "start.pr");
         var json = System.IO.File.ReadAllText(prPath);
         var saved = JsonSerializer.Deserialize<Goal>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.type.format.json.Converter(_app.User.Context) } });
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.type.format.json.Converter(_app.actor.list.User.Context) } });
         await Assert.That(saved).IsNotNull();
         await Assert.That(saved!.Name).IsEqualTo("Start");
         await Assert.That(saved.Step.Count).IsEqualTo(1);
@@ -74,12 +74,12 @@ public class SaveGoalsTests
         var goal = new Goal
         {
             Name = "Test",
-            Path = global::app.type.item.path.@this.Resolve("/Test.goal", _app.User.Context),
+            Path = global::app.type.item.path.@this.Resolve("/Test.goal", _app.actor.list.User.Context),
             Comment = null
         };
 
-        var action = new goalsSave(_app.User.Context) { Goal = new("", goal) };
-        await _app.Run(action, _app.User.Context);
+        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
+        await _app.Run(action, _app.actor.list.User.Context);
 
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "test.pr");
         var json = System.IO.File.ReadAllText(prPath);
@@ -99,19 +99,19 @@ public class SaveGoalsTests
         var goal = new Goal
         {
             Name = "Public",
-            Path = global::app.type.item.path.@this.Resolve("/Multi.goal", _app.User.Context),
+            Path = global::app.type.item.path.@this.Resolve("/Multi.goal", _app.actor.list.User.Context),
         };
         goal.Child.Add(new Goal { Name = "Private" });
 
-        var action = new goalsSave(_app.User.Context) { Goal = new("", goal) };
-        var result = await _app.Run(action, _app.User.Context);
+        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
+        var result = await _app.Run(action, _app.actor.list.User.Context);
 
         await result.IsSuccess();
 
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "multi.pr");
         var json = System.IO.File.ReadAllText(prPath);
         var saved = JsonSerializer.Deserialize<Goal>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.type.format.json.Converter(_app.User.Context) } });
+            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.type.format.json.Converter(_app.actor.list.User.Context) } });
 
         await Assert.That(saved).IsNotNull();
         await Assert.That(saved!.Name).IsEqualTo("Public");
@@ -125,12 +125,12 @@ public class SaveGoalsTests
         var goal = new Goal
         {
             Name = "Start",
-            Path = global::app.type.item.path.@this.Resolve("/Empty.goal", _app.User.Context),
+            Path = global::app.type.item.path.@this.Resolve("/Empty.goal", _app.actor.list.User.Context),
             Step = new GoalSteps { new Step { Text = "write hello", Index = 0 } }
         };
 
-        var action = new goalsSave(_app.User.Context) { Goal = new("", goal) };
-        var result = await _app.Run(action, _app.User.Context);
+        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
+        var result = await _app.Run(action, _app.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("GoalInvalid");
@@ -144,8 +144,8 @@ public class SaveGoalsTests
     public async Task SaveGoal_NoPrPath_ReturnsError()
     {
         var goal = new Goal { Name = "Test" }; // No Path → no PrPath
-        var action = new goalsSave(_app.User.Context) { Goal = new("", goal) };
-        var result = await _app.Run(action, _app.User.Context);
+        var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
+        var result = await _app.Run(action, _app.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoPrPath");

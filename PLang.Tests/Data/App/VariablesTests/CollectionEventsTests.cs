@@ -16,7 +16,7 @@ public class CollectionEventsTests : System.IAsyncDisposable
     [Test]
     public async Task AfterSet_IsHandedTheVariable_AndTheStoredValue()
     {
-        var vars = new Variables(app.User.Context);
+        var vars = new Variables(app.actor.list.User.Context);
         await vars.Set("name", "old");
         string? name = null;
         string? stored = null;
@@ -25,7 +25,7 @@ public class CollectionEventsTests : System.IAsyncDisposable
             name = ((global::app.type.item.variable.@this)item).Name;
             stored = (await result.Value())?.ToString();
             return ctx.Ok();
-        }, app.User, Scope.app);
+        }, app.actor.list.User, Scope.app);
 
         await vars.Set("name", "new");
 
@@ -36,9 +36,9 @@ public class CollectionEventsTests : System.IAsyncDisposable
     [Test]
     public async Task AFirstSet_IsASet()
     {
-        var vars = new Variables(app.User.Context);
+        var vars = new Variables(app.actor.list.User.Context);
         var sets = 0;
-        On.Bind("set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.User, Scope.app);
+        On.Bind("set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app);
 
         await vars.Set("name", "first");
 
@@ -48,10 +48,10 @@ public class CollectionEventsTests : System.IAsyncDisposable
     [Test]
     public async Task TheSameDataSetAgain_FiresNothing()
     {
-        var vars = new Variables(app.User.Context);
+        var vars = new Variables(app.actor.list.User.Context);
         var held = await vars.Set("name", "first");
         var sets = 0;
-        On.Bind("set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.User, Scope.app);
+        On.Bind("set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app);
 
         await vars.Set("name", held);
 
@@ -61,14 +61,14 @@ public class CollectionEventsTests : System.IAsyncDisposable
     [Test]
     public async Task BeforeSet_IsHandedTheValue_AFailureIsTheAnswer_AndNothingIsWritten()
     {
-        var vars = new Variables(app.User.Context);
+        var vars = new Variables(app.actor.list.User.Context);
         await vars.Set("name", "old");
         string? about = null;
         On.Bind("set", When.before, async (_, result, ctx) =>
         {
             about = (await result.Value())?.ToString();
             return ctx.Error(new global::app.error.Error("no", "Refused", 400));
-        }, app.User, Scope.app);
+        }, app.actor.list.User, Scope.app);
 
         var answer = await vars.Set("name", "new");
 
@@ -81,13 +81,13 @@ public class CollectionEventsTests : System.IAsyncDisposable
     [Test]
     public async Task ACancellingBeforeSet_IsTheAnswer_AndNothingIsWritten()
     {
-        var vars = new Variables(app.User.Context);
+        var vars = new Variables(app.actor.list.User.Context);
         On.Bind("set", When.before, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
             instead.Handled = true;
             return Task.FromResult(instead);
-        }, app.User, Scope.app);
+        }, app.actor.list.User, Scope.app);
 
         var answer = await vars.Set("name", "new");
 
@@ -98,14 +98,14 @@ public class CollectionEventsTests : System.IAsyncDisposable
     [Test]
     public async Task AfterRemove_IsHandedTheRemovedValue()
     {
-        var vars = new Variables(app.User.Context);
+        var vars = new Variables(app.actor.list.User.Context);
         await vars.Set("name", "ingi");
         string? removed = null;
         On.Bind("remove", When.after, async (_, result, ctx) =>
         {
             removed = (await result.Value())?.ToString();
             return ctx.Ok();
-        }, app.User, Scope.app);
+        }, app.actor.list.User, Scope.app);
 
         var answer = await vars.Remove("name");
 
@@ -117,10 +117,10 @@ public class CollectionEventsTests : System.IAsyncDisposable
     [Test]
     public async Task ARefusingBeforeRemove_IsTheAnswer_AndTheVariableStays()
     {
-        var vars = new Variables(app.User.Context);
+        var vars = new Variables(app.actor.list.User.Context);
         await vars.Set("name", "ingi");
         On.Bind("remove", When.before,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))), app.User, Scope.app);
+            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))), app.actor.list.User, Scope.app);
 
         var answer = await vars.Remove("name");
 
@@ -131,9 +131,9 @@ public class CollectionEventsTests : System.IAsyncDisposable
     [Test]
     public async Task ABindingForAnotherActor_DoesNotFire()
     {
-        var vars = new Variables(app.User.Context);
+        var vars = new Variables(app.actor.list.User.Context);
         var sets = 0;
-        On.Bind("set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.System, Scope.actor);
+        On.Bind("set", When.after, (_, _, ctx) => { sets++; return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.actor);
 
         await vars.Set("name", "first");
 

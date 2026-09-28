@@ -20,7 +20,7 @@ public class ValueConversionHookTests
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-conv-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
         var app = TestApp.Create(dir);
-        return (app, app.User.Context);
+        return (app, app.actor.list.User.Context);
     }
 
     // ---- The locale guard: the divergent-twin bug ----

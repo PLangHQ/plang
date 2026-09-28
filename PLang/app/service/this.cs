@@ -28,7 +28,7 @@ public sealed class @this : IAsyncDisposable
     /// Always the System actor's identity. Outbound calls go under the app's
     /// name regardless of which Actor triggered them.
     /// </summary>
-    public Identity? Identity => Parent.App.System.Identity;
+    public Identity? Identity => Parent.App.actor.list.System.Identity;
 
     internal @this(app.service.list.@this collection, global::app.actor.@this parent)
     {

@@ -49,9 +49,9 @@ public class ScopeTests
     public async Task TheEmptyListOfAKind_AnswersItsKind()
     {
         await using var app = TestApp.Create("/test");
-        var type = app.System.Context.App.type.list[typeof(global::app.type.item.list.@this<Goal>)];
+        var type = app.actor.list.System.Context.App.type.list[typeof(global::app.type.item.list.@this<Goal>)];
 
-        var empty = new global::app.data.@this("goals", type.Empty(app.System.Context), context: app.System.Context);
+        var empty = new global::app.data.@this("goals", type.Empty(app.actor.list.System.Context), context: app.actor.list.System.Context);
 
         await Assert.That(empty.Type.ToString()).IsEqualTo("list<goal>");
         await Assert.That(await empty.IsEmpty()).IsTrue();
@@ -62,9 +62,9 @@ public class ScopeTests
     {
         await using var app = TestApp.Create("/test");
         var goal = Build();
-        await Picked(goal, app.System.Context, BuildPicks);
+        await Picked(goal, app.actor.list.System.Context, BuildPicks);
 
-        await goal.Step.Scope(app.System.Context);
+        await goal.Step.Scope(app.actor.list.System.Context);
 
         // step 0 reads only %path%, a parameter nobody set; %goals% is what it writes
         await Assert.That(Shown(goal.Step[0])).IsEqualTo("");
@@ -77,21 +77,21 @@ public class ScopeTests
     {
         await using var app = TestApp.Create("/test");
         var goal = Build();
-        await Picked(goal, app.System.Context, BuildPicks);
+        await Picked(goal, app.actor.list.System.Context, BuildPicks);
         var heard = new List<string>();
         // every set made in the builder's own stores (the actors' contexts): the variable type's after-set, for the app
         app.variable.Own().Bind("set", global::app.@event.When.after, (item, _, ctx) =>
         {
-            if (ReferenceEquals(ctx, app.System.Context) || ReferenceEquals(ctx, app.User.Context))
+            if (ReferenceEquals(ctx, app.actor.list.System.Context) || ReferenceEquals(ctx, app.actor.list.User.Context))
                 lock (heard) heard.Add(((global::app.type.item.variable.@this)item).Name);
             return Task.FromResult(ctx.Ok());
-        }, app.User, global::app.@event.binding.Scope.app);
+        }, app.actor.list.User, global::app.@event.binding.Scope.app);
 
-        await goal.Step.Scope(app.System.Context);
+        await goal.Step.Scope(app.actor.list.System.Context);
 
         await Assert.That(heard).IsEmpty();
-        await Assert.That((await app.System.Context.Variable.Get("goals")).IsInitialized).IsFalse();
-        await Assert.That((await app.User.Context.Variable.Get("item")).IsInitialized).IsFalse();
+        await Assert.That((await app.actor.list.System.Context.Variable.Get("goals")).IsInitialized).IsFalse();
+        await Assert.That((await app.actor.list.User.Context.Variable.Get("item")).IsInitialized).IsFalse();
     }
 
     [Test]
@@ -101,12 +101,12 @@ public class ScopeTests
         var goal = Make.Goal("Build",
             Make.Step("build.goals path=%path%, write to %goals%"),
             Make.Step("list.range from 1 to %goals%, write to %r%"));
-        await Picked(goal, app.System.Context, (0, "build.goals"), (0, "variable.set"), (1, "list.range"), (1, "variable.set"));
+        await Picked(goal, app.actor.list.System.Context, (0, "build.goals"), (0, "variable.set"), (1, "list.range"), (1, "variable.set"));
 
         var result = await Match(goal, """
             [0] build.goals(Path=%path%); variable.set(Name=%goals%, Value=%!data%)
             [1] list.range(From=1, To=%goals%); variable.set(Name=%r%, Value=%!data%)
-            """, app.System.Context);
+            """, app.actor.list.System.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("step 1 (\"list.range from 1 to %goals%, write to %r%\") — property 'To' is %goals% (list<goal>)");
@@ -120,11 +120,11 @@ public class ScopeTests
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("Properties",
             Make.Step("llm.query Message=%messages%, Model=\"gpt-5.4-nano\", write to %answer%"));
-        await Picked(goal, app.System.Context, (0, "llm.query"), (0, "variable.set"));
+        await Picked(goal, app.actor.list.System.Context, (0, "llm.query"), (0, "variable.set"));
 
         var result = await Match(goal, """
             [0] llm.query(Message=%messages%, Model="gpt-5.4-nano"); variable.set(Name=%answer%, Value=%!data%)
-            """, app.System.Context);
+            """, app.actor.list.System.Context);
 
         // no Schema: llm.query's Build answers no type, so the write-to adopts none — the formal text
         // answer reaches build.match as the text it is
@@ -140,12 +140,12 @@ public class ScopeTests
         var goal = Make.Goal("Build",
             Make.Step("set %goals% = \"a\""),
             Make.Step("foreach %goals%, call BuildGoal"));
-        await Picked(goal, app.System.Context, (0, "variable.set"), (1, "loop.foreach"), (1, "goal.call"));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"), (1, "loop.foreach"), (1, "goal.call"));
 
         var result = await Match(goal, """
             [0] variable.set(Name=%goals%, Value="a")
             [1] loop.foreach(Collection=%goals%); goal.call(Name="BuildGoal")
-            """, app.System.Context);
+            """, app.actor.list.System.Context);
 
         await result.IsSuccess();
         var loop = goal.Step[1].Code.Items().First();
@@ -161,15 +161,15 @@ public class ScopeTests
     {
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("Emit", Make.Step("write out \"hi\" channel: \"later\""));
-        await Picked(goal, app.System.Context, (0, "output.write"));
+        await Picked(goal, app.actor.list.System.Context, (0, "output.write"));
 
         var built = await Match(goal, """
             [0] output.write(Data="hi", Channel="later")
-            """, app.System.Context);
+            """, app.actor.list.System.Context);
 
         // the build looks up nothing live: the channel is the app's to register while it runs
         await built.IsSuccess();
-        var ran = await goal.Start(app.User.Context);
+        var ran = await goal.Start(app.actor.list.User.Context);
         await ran.IsFailure();
         await Assert.That(ran.Error!.Key).IsEqualTo("ChannelNotFound");
     }
@@ -181,17 +181,17 @@ public class ScopeTests
         var goal = Make.Goal("Properties",
             Make.Step("set %sys% = \"hello\""),
             Make.Step("set %messages% = [{\"Role\":\"system\", \"Content\":\"%sys%\"}]"));
-        await Picked(goal, app.System.Context, (0, "variable.set"), (1, "variable.set"));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"), (1, "variable.set"));
         var built = await Match(goal, """
             [0] variable.set(Name=%sys%, Value="hello")
             [1] variable.set(Name=%messages%, Value=[{Role:"system", Content:%sys%}])
-            """, app.System.Context);
+            """, app.actor.list.System.Context);
         await built.IsSuccess();
 
-        await (await goal.Start(app.User.Context)).IsSuccess();
+        await (await goal.Start(app.actor.list.User.Context)).IsSuccess();
 
         // as llm.query reads its Message: the typed view, then lowered — the %sys% rendered
-        var messages = (await app.User.Context.Variable.Get("messages"))
+        var messages = (await app.actor.list.User.Context.Variable.Get("messages"))
             .As<global::app.type.item.list.@this<global::app.module.action.llm.LlmMessage>>();
         var lowered = (await messages.Value()).Clr<List<global::app.module.action.llm.LlmMessage>>();
         await Assert.That(lowered![0].Content?.ToString()).IsEqualTo("hello");
@@ -202,11 +202,11 @@ public class ScopeTests
     {
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("AddItem", Make.Step("set %total% = %a% + %b%"));
-        await Picked(goal, app.System.Context, (0, "variable.set"), (0, "math.add"));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"), (0, "math.add"));
 
         var result = await Match(goal, """
             [0] variable.set(Name=%total%, Value=math.add(A=%a%, B=%b%))
-            """, app.System.Context);
+            """, app.actor.list.System.Context);
 
         // variable.set's Value takes a value: holding math.add there would store the action, not the sum
         await result.IsFailure();
@@ -219,11 +219,11 @@ public class ScopeTests
     {
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("AddItem", Make.Step("set %total% = %total% + %item%"));
-        await Picked(goal, app.System.Context, (0, "math.add"));
+        await Picked(goal, app.actor.list.System.Context, (0, "math.add"));
 
         var result = await Match(goal, """
             [0] math.add(A=%total%, B=%item%)
-            """, app.System.Context);
+            """, app.actor.list.System.Context);
 
         // the sum would be computed and never kept
         await result.IsFailure();
@@ -236,12 +236,12 @@ public class ScopeTests
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("Compile", Make.Step(
             "build.match Goal=%goal%, Answer=%answer%, on error key \"ElseWithoutIf\" call SourceError, on error call FixSteps first, then retry 1 times"));
-        await Picked(goal, app.System.Context, (0, "build.match"), (0, "on.error"));
+        await Picked(goal, app.actor.list.System.Context, (0, "build.match"), (0, "on.error"));
 
         // the whole `on error call FixSteps` clause is left out
         var result = await Match(goal, """
             [0] build.match(Goal=%goal%, Answer=%answer%); on.error(Key="ElseWithoutIf", Recovery=[goal.call(Name="SourceError")])
-            """, app.System.Context);
+            """, app.actor.list.System.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("step 0 calls FixSteps, but no action calls it");
@@ -253,24 +253,24 @@ public class ScopeTests
     {
         await using var app = TestApp.Create("/test");
         var invented = Make.Goal("Start", Make.Step("set %iso%(duration) = \"PT5M\""));
-        await Picked(invented, app.System.Context, (0, "variable.set"));
+        await Picked(invented, app.actor.list.System.Context, (0, "variable.set"));
 
         var refused = await Match(invented, """
             [0] variable.set(Name=%iso%, Value="PT5M", Type=%duration%)
-            """, app.System.Context);
+            """, app.actor.list.System.Context);
 
         await refused.IsFailure();
         await Assert.That(refused.Error!.Message).Contains("%duration% isn't in the step");
 
         var typed = Make.Goal("Start", Make.Step("set %iso%(duration) = \"PT5M\""));
-        await Picked(typed, app.System.Context, (0, "variable.set"));
+        await Picked(typed, app.actor.list.System.Context, (0, "variable.set"));
         var accepted = await Match(typed, """
             [0] variable.set(Name=%iso%, Value="PT5M", Type="duration")
-            """, app.System.Context);
+            """, app.actor.list.System.Context);
 
         await accepted.IsSuccess();
-        await (await typed.Start(app.User.Context)).IsSuccess();
-        await Assert.That((await app.User.Context.Variable.Get("iso")).Type.Name).IsEqualTo("duration");
+        await (await typed.Start(app.actor.list.User.Context)).IsSuccess();
+        await Assert.That((await app.actor.list.User.Context.Variable.Get("iso")).Type.Name).IsEqualTo("duration");
     }
 
     // A text the answer writes that the step doesn't hold is invented: the channel it didn't name.
@@ -279,11 +279,11 @@ public class ScopeTests
     {
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("Start", Make.Step("write out %message%"));
-        await Picked(goal, app.System.Context, (0, "output.write"));
+        await Picked(goal, app.actor.list.System.Context, (0, "output.write"));
 
         var refused = await Match(goal, """
             [0] output.write(Data=%message%, Channel="BuilderChannel")
-            """, app.System.Context);
+            """, app.actor.list.System.Context);
 
         await refused.IsFailure();
         await Assert.That(refused.Error!.Message).Contains("your answer writes \"BuilderChannel\"");
@@ -295,19 +295,19 @@ public class ScopeTests
     {
         await using var app = TestApp.Create("/test");
         var goal = Make.Goal("Start", Make.Step("write out 'hello' to builder"));
-        await Picked(goal, app.System.Context, (0, "output.write"));
+        await Picked(goal, app.actor.list.System.Context, (0, "output.write"));
 
         var accepted = await Match(goal, """
             [0] output.write(Data="hello", Channel="builder")
-            """, app.System.Context);
+            """, app.actor.list.System.Context);
 
         await accepted.IsSuccess();
 
         var read = Make.Goal("Start", Make.Step("read file.txt, write to %c%"));
-        await Picked(read, app.System.Context, (0, "file.read"), (0, "variable.set"));
+        await Picked(read, app.actor.list.System.Context, (0, "file.read"), (0, "variable.set"));
         var taken = await Match(read, """
             [0] file.read(Path="file.txt"); variable.set(Name=%c%, Value=%!data%)
-            """, app.System.Context);
+            """, app.actor.list.System.Context);
 
         await taken.IsSuccess();
     }
@@ -319,12 +319,12 @@ public class ScopeTests
         var goal = Make.Goal("Build",
             Make.Step("set %n% = 5"),
             Make.Step("list.range from 1 to %n%, write to %r%"));
-        await Picked(goal, app.System.Context, (0, "variable.set"), (1, "list.range"), (1, "variable.set"));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"), (1, "list.range"), (1, "variable.set"));
 
         var result = await Match(goal, """
             [0] variable.set(Name=%n%, Value=5)
             [1] list.range(From=1, To=%n%); variable.set(Name=%r%, Value=%!data%)
-            """, app.System.Context);
+            """, app.actor.list.System.Context);
 
         await result.IsSuccess();
         await Assert.That(Shown(goal.Step[1])).IsEqualTo("%n% number");

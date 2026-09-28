@@ -18,7 +18,7 @@ public class TypeOwnedReadParityTests
         // absolute and http inputs.
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang-pathread-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var r = new global::app.type.reader.@this();
         var rc = new global::app.type.reader.ReadContext(ctx);
 

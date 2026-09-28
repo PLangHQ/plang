@@ -100,7 +100,7 @@ public class DataWrappedActionListTests
             {
                 ["module"] = "variable",
                 ["action"] = "set",
-                ["parameters"] = new List<Data> { new Data("v", "%comment%", context: app.User.Context) }
+                ["parameters"] = new List<Data> { new Data("v", "%comment%", context: app.actor.list.User.Context) }
             }
         };
         var result = await MatrixRunner.RunAsync<DataWrappedActionList>(app,
@@ -111,7 +111,7 @@ public class DataWrappedActionListTests
         await Assert.That((await typed!.Value())).IsNotNull();
         // The sub-action's parameter Value is still raw "%comment%" — not resolved.
         var subParam = ((((await typed.Value())!.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).Peek()!) as global::app.type.clr.@this<PrAction>)!.Value).Property["v"];
-        await Assert.That((await subParam!.Data(app.User.Context).Value())?.ToString()).IsEqualTo("%comment%");
+        await Assert.That((await subParam!.Data(app.actor.list.User.Context).Value())?.ToString()).IsEqualTo("%comment%");
     }
 
     [Test]
@@ -126,7 +126,7 @@ public class DataWrappedActionListTests
             {
                 ["module"] = "variable",
                 ["action"] = "set",
-                ["parameters"] = new List<Data> { new Data("a", "%x%", context: app.User.Context) }
+                ["parameters"] = new List<Data> { new Data("a", "%x%", context: app.actor.list.User.Context) }
             }
         };
         var result = await MatrixRunner.RunAsync<DataWrappedActionList>(app,
@@ -135,7 +135,7 @@ public class DataWrappedActionListTests
 
         var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.type.clr.@this<PrAction>>>;
         var subParam = ((((await typed!.Value())!.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).Peek()!) as global::app.type.clr.@this<PrAction>)!.Value).Property["a"];
-        await Assert.That((await subParam!.Data(app.User.Context).Value())?.ToString()).IsEqualTo("%x%");
+        await Assert.That((await subParam!.Data(app.actor.list.User.Context).Value())?.ToString()).IsEqualTo("%x%");
     }
 }
 
@@ -153,8 +153,8 @@ public class DataWrappedStringUsesCycleTests
     public async Task DataWrappedStringUses_CyclicVarRef_NoLongerForms_HandlerReadsVerbatimBytes()
     {
         await using var app = TestApp.Create("/app");
-        app.User.Context.Variable.Set("a", "%b%");
-        app.User.Context.Variable.Set("b", "%a%");
+        app.actor.list.User.Context.Variable.Set("a", "%b%");
+        app.actor.list.User.Context.Variable.Set("b", "%a%");
 
         var result = await MatrixRunner.RunAsync<DataWrappedStringUses>(app,
             parameters: new[] { ("body", (object?)"%a%") });
@@ -168,8 +168,8 @@ public class DataWrappedStringUsesCycleTests
     public async Task DataWrappedStringUses_StoredVarRefWithText_HandlerReadsVerbatimBytes()
     {
         await using var app = TestApp.Create("/app");
-        app.User.Context.Variable.Set("a", "X-%b%");
-        app.User.Context.Variable.Set("b", "Y-%a%");
+        app.actor.list.User.Context.Variable.Set("a", "X-%b%");
+        app.actor.list.User.Context.Variable.Set("b", "Y-%a%");
 
         var result = await MatrixRunner.RunAsync<DataWrappedStringUses>(app,
             parameters: new[] { ("body", (object?)"%a%") });

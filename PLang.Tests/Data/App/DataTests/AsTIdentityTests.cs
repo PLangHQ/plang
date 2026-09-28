@@ -34,7 +34,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_SameType_ReturnsSourceInstance()
     {
-        var source = new global::app.data.@this<global::app.type.item.number.@this>("count", 42, context: _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.item.number.@this>("count", 42, context: _app.actor.list.User.Context);
         var result = await source.Value<global::app.type.item.number.@this>();
         await Assert.That(ReferenceEquals(source.Peek(), result)).IsTrue();
     }
@@ -46,7 +46,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_SameType_PreservesProperties()
     {
-        var source = new global::app.data.@this<global::app.type.item.number.@this>("count", 42, context: _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.item.number.@this>("count", 42, context: _app.actor.list.User.Context);
         source.Properties.Set("meta", "abc");
         var result = source.As<global::app.type.item.number.@this>(await source.Value<global::app.type.item.number.@this>());
         await Assert.That(ReferenceEquals(source.Properties, result.Properties)).IsTrue();
@@ -62,7 +62,7 @@ public class AsTIdentityTests
     public async Task AsT_Variance_ScalarToItem_ValueRefShared()
     {
         var inner = (global::app.type.item.number.@this)42;
-        var source = new global::app.data.@this<global::app.type.item.number.@this>("n", inner, context: _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.item.number.@this>("n", inner, context: _app.actor.list.User.Context);
         var wrapped = source.As<global::app.type.item.@this>(await source.Value<global::app.type.item.@this>());
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
         await Assert.That(ReferenceEquals((await wrapped.Value()), inner)).IsTrue();
@@ -75,7 +75,7 @@ public class AsTIdentityTests
     public async Task AsT_Variance_PropertiesAliased()
     {
         var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1), _app.Data("", 2) });
-        var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.actor.list.User.Context);
         var wrapped = source.As<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
         await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
         source.Properties.Set("annot", "via-source");
@@ -91,7 +91,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_CrossType_ConversionWraps_PropertiesAliased()
     {
-        var source = new global::app.data.@this<global::app.type.item.number.@this>("count", 42, context: _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.item.number.@this>("count", 42, context: _app.actor.list.User.Context);
         source.Properties.Set("note", "hello");
         var wrapped = source.As<global::app.type.item.text.@this>(await source.Value<global::app.type.item.text.@this>());
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
@@ -107,7 +107,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_CrossType_ConversionFailure_DeclinesOnSource()
     {
-        var source = new global::app.data.@this<global::app.type.item.text.@this>("messy", "not-a-number", context: _app.User.Context);
+        var source = new global::app.data.@this<global::app.type.item.text.@this>("messy", "not-a-number", context: _app.actor.list.User.Context);
         var result = await source.Value<global::app.type.item.number.@this>();
         await Assert.That(result).IsNull();
         await source.IsFailure();
@@ -118,7 +118,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_PlainDataTarget_LiteralParameter_ReturnsParameterDataAsIs()
     {
-        var paramData = new Data("Slot", "literal value", context: _app.User.Context);
+        var paramData = new Data("Slot", "literal value", context: _app.actor.list.User.Context);
         var canonical = await paramData.AsCanonical();
         await Assert.That(ReferenceEquals(paramData, canonical)).IsTrue();
     }
@@ -130,7 +130,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_PlainDataTarget_VarReference_ReturnsLiveVariableData()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var live = new global::app.data.@this("products", global::PLang.Tests.Shared.Make.List(new List<object?> { "a", "b" }, context), context: context);
         context.Variable.Set(live);
 
@@ -150,7 +150,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_PlainDataTarget_ListWithNestedVars_ResolvesAndReturnsFreshData()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("greeting", "hello");
         var raw = new List<object?> { "%greeting%", "literal" };
         var paramData = TemplateStamp.Container("Slot", raw, context);
@@ -169,7 +169,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_PlainDataTarget_DictWithNestedVars_ResolvesAndReturnsFreshData()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("prompt", "You are a compiler");
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
         var paramData = TemplateStamp.Container("Slot", raw, context);
@@ -188,7 +188,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_PlainDataTarget_ListOfDictsWithNestedVars_DeepResolves()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("prompt", "You are a compiler");
         context.Variable.Set("user", "build this goal");
         var raw = new List<object?>
@@ -216,7 +216,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_PlainDataTarget_LiteralList_NoNestedVars_PreservesValues()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var raw = new List<object?> { "a", "b", "c" };
         var paramData = new Data("items", raw, context: context);
 
@@ -240,7 +240,7 @@ public class AsTIdentityTests
     [Test]
     public async Task AsT_PlainDataTarget_DictWithInfraVar_ResolvesAtCanonicalWalk()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new global::app.data.DynamicData("!error", () => "boom", context));
         var raw = new Dictionary<string, object?> { ["message"] = "%!error%" };
         var paramData = TemplateStamp.Container("trace.buildError", raw, context);

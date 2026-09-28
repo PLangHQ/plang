@@ -20,7 +20,7 @@ public class PathSerializerMigrationTests
     public async Task PathFile_Wire_RendersAsRelativeString_ViaDefaultSerializer()
     {
         await using var app = NewApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var p = global::app.type.item.path.@this.Resolve("/some/file.json", context);
         var data = new global::app.data.@this("x", p, context: context);
 
@@ -39,7 +39,7 @@ public class PathSerializerMigrationTests
     public async Task PathHttp_Wire_RendersAsAbsoluteString_ViaDefaultSerializer()
     {
         await using var app = NewApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var p = global::app.type.item.path.@this.Resolve("https://example.test/a/b", context);
         var data = new global::app.data.@this("x", p, context: context);
 
@@ -54,7 +54,7 @@ public class PathSerializerMigrationTests
     // built value (KindHooks + path.Build deleted) — https→http, bare→file, unchanged.
     private static string? KindVia(global::app.@this app, string typeName, object? raw)
     {
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: ctx);
         var built = ctx.App.type.list[typeName].Make(raw, carrier);
         // A decline says why — the carrier holds the reason.
@@ -89,7 +89,7 @@ public class PathSerializerMigrationTests
         // (Relative ?? Raw ?? Absolute). Drive the same path through both
         // paths and compare the produced JSON string.
         await using var app = NewApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var p = global::app.type.item.path.@this.Resolve("/srv/myapp/r.json", context);
 
         using var ms = new System.IO.MemoryStream();

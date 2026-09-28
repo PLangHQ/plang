@@ -10,7 +10,7 @@ public class BuildTemplateStampTests
 {
     private static global::app.data.@this Row(global::app.@this app, string json)
         => new global::app.data.reader.@this().Read(System.Text.Encoding.UTF8.GetBytes(json),
-            new global::app.type.reader.ReadContext(app.User.Context));
+            new global::app.type.reader.ReadContext(app.actor.list.User.Context));
 
     [Test]
     public async Task MarkedRow_ReadsAsTemplatePlang()

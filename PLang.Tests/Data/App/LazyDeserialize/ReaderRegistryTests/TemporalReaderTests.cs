@@ -28,7 +28,7 @@ public class TemporalReaderTests
     [Test] public async Task DateRaw_Materializes_ToDateOnly()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("2026-01-01", ctx.App.type.list["date"], ctx, "d");
         var item = await d.Value();
         await Assert.That(item).IsTypeOf<global::app.type.item.date.@this>();
@@ -39,7 +39,7 @@ public class TemporalReaderTests
     [Test] public async Task DatetimeRaw_Materializes_ToDateTimeOffset()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("2026-01-01T12:30:00+00:00", ctx.App.type.list["datetime"], ctx, "dt");
         var item = await d.Value();
         await Assert.That(item).IsTypeOf<global::app.type.item.datetime.@this>();
@@ -51,7 +51,7 @@ public class TemporalReaderTests
     [Test] public async Task TimeRaw_Materializes_ToTimeOnly()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("12:30:00", ctx.App.type.list["time"], ctx, "t");
         var item = await d.Value();
         await Assert.That(item).IsTypeOf<global::app.type.item.time.@this>();
@@ -62,7 +62,7 @@ public class TemporalReaderTests
     [Test] public async Task BadDateRaw_Fails_AsMaterializeFailed()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("not-a-date", ctx.App.type.list["date"], ctx, "bad");
         await d.Value();
         await Assert.That(d.Success).IsFalse();

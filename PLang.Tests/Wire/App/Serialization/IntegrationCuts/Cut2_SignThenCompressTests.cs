@@ -10,7 +10,7 @@ public class Cut2_SignThenCompressTests
         "plang-cut2-" + Guid.NewGuid().ToString("N")[..8]));
 
     private static global::app.data.@this MakeCompressible(global::app.@this app, string payload)
-        => new global::app.data.@this("user", payload, app.type.list.Stamp("text/plain", app.User.Context), context: app.User.Context);
+        => new global::app.data.@this("user", payload, app.type.list.Stamp("text/plain", app.actor.list.User.Context), context: app.actor.list.User.Context);
 
     [Skip("Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.")]
     [Test] public async Task Cut2_OuterWireJson_HasArchivedTypeBytesValueAndSignature()
@@ -18,8 +18,8 @@ public class Cut2_SignThenCompressTests
         await using var app = NewApp();
         var d1 = MakeCompressible(app, "Ingi");
         var d2 = d1.Compress();
-        var plang = app.User.Context.Format("application/plang");
-        var wire = (await plang.Serialize(d2, app.User.Context).Value())!.Clr<string>()!;
+        var plang = app.actor.list.User.Context.Format("application/plang");
+        var wire = (await plang.Serialize(d2, app.actor.list.User.Context).Value())!.Clr<string>()!;
 
         using var doc = JsonDocument.Parse(wire);
         // `type` is the structured entity {name, kind?, strict?} on the wire.
@@ -63,8 +63,8 @@ public class Cut2_SignThenCompressTests
         await using var app = NewApp();
         var d1 = MakeCompressible(app, "Ingi");
         var d2 = d1.Compress();
-        var plang = app.User.Context.Format("application/plang");
-        var wire = (await plang.Serialize(d2, app.User.Context).Value())!.Clr<string>()!;
+        var plang = app.actor.list.User.Context.Format("application/plang");
+        var wire = (await plang.Serialize(d2, app.actor.list.User.Context).Value())!.Clr<string>()!;
 
         // Flip a byte in the base64-encoded value — read back, verify must fail.
         using var doc = JsonDocument.Parse(wire);
@@ -73,16 +73,16 @@ public class Cut2_SignThenCompressTests
         var tampered = wire.Replace("\"value\":\"" + b64 + "\"", "\"value\":\"" + flipped + "\"");
         await Assert.That(tampered).IsNotEqualTo(wire);
 
-        var back = plang.Deserialize(tampered, app.User.Context);
+        var back = plang.Deserialize(tampered, app.actor.list.User.Context);
         await back.IsSuccess();
         var restored = back;
 
         var verify = await app.Run<global::app.module.action.signing.verify>(
-            new global::app.module.action.signing.verify(app.User.Context)
+            new global::app.module.action.signing.verify(app.actor.list.User.Context)
             {
                 Data = restored,
                 SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", true)
-            }, app.User.Context);
+            }, app.actor.list.User.Context);
         await verify.IsFailure();
     }
 }

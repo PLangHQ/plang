@@ -91,7 +91,7 @@ public class PathDerivationVerbTests
     private static global::app.type.item.path.@this Typed(string raw)
     {
         var (app, _) = FileAt("unused");
-        return global::app.type.item.path.@this.Resolve(raw, app.User.Context);
+        return global::app.type.item.path.@this.Resolve(raw, app.actor.list.User.Context);
     }
 
     [Test] public async Task DerivedPath_ShowsTypedForm_FromSource_NeverAbsolute()

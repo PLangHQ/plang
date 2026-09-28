@@ -109,8 +109,8 @@ public sealed class @this : global::app.type.item.list.@this<global::app.module.
     /// ValidatePath redirects <c>/system/*</c> to <c>&lt;OsDirectory&gt;/system/*</c> when the path
     /// isn't present under the App root. Null only before the System context exists.</summary>
     public global::app.type.item.path.@this? Teaching
-        => App?.System?.Context == null ? null
-            : global::app.type.item.path.@this.Resolve("/system/modules", App.System.Context);
+        => App?.actor?.list.System?.Context == null ? null
+            : global::app.type.item.path.@this.Resolve("/system/modules", App.actor.list.System.Context);
 }
 
 /// <summary>

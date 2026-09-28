@@ -23,7 +23,7 @@ public class CallSnapshotTests
     public async Task Call_Capture_EmitsGoalStub_PrPathPlusHash_NotFullGoal()
     {
         var (app, action) = BuildLiveAction("StubGoal");
-        var stack = app.User.CallStack;
+        var stack = app.actor.list.User.CallStack;
         await using var call = stack.Push(action);
 
         var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
@@ -40,7 +40,7 @@ public class CallSnapshotTests
     public async Task Call_Capture_IncludesStepIndexAndActionIndex()
     {
         var (app, action) = BuildLiveAction("PosGoal");
-        var stack = app.User.CallStack;
+        var stack = app.actor.list.User.CallStack;
         await using var call = stack.Push(action);
 
         var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
@@ -54,9 +54,9 @@ public class CallSnapshotTests
     public async Task Call_Restore_ResolvesGoalStubAgainstLiveRegistry()
     {
         var (src, action) = BuildLiveAction("ResolveGoal");
-        await using (var call = src.User.CallStack.Push(action))
+        await using (var call = src.actor.list.User.CallStack.Push(action))
         {
-            var snap = src.Snapshot(src.User.Context);
+            var snap = src.Snapshot(src.actor.list.User.Context);
 
             // Build a fresh app with the *same* goal registered.
             var dst = global::PLang.Tests.TestApp.Create("/dst");
@@ -71,9 +71,9 @@ public class CallSnapshotTests
             dstGoal.Step.Add(dstStep);
             dst.goal.list.Add(dstGoal);
 
-            await dst.Restore(snap, dst.User.Context);
+            await dst.Restore(snap, dst.actor.list.User.Context);
 
-            var bottom = dst.User.CallStack.BottomFrame;
+            var bottom = dst.actor.list.User.CallStack.BottomFrame;
             await Assert.That(bottom).IsNotNull();
             await Assert.That(bottom!.Goal.PrPath).IsEqualTo(dstGoal.PrPath);
             await Assert.That(bottom.Action).IsSameReferenceAs(dstAction);
@@ -84,15 +84,15 @@ public class CallSnapshotTests
     public async Task Call_Restore_HardErrors_OnGoalNotFound()
     {
         var (src, action) = BuildLiveAction("DisappearingGoal");
-        await using (var call = src.User.CallStack.Push(action))
+        await using (var call = src.actor.list.User.CallStack.Push(action))
         {
-            var snap = src.Snapshot(src.User.Context);
+            var snap = src.Snapshot(src.actor.list.User.Context);
             // Restore on a fresh App that never had this goal registered.
             var dst = global::PLang.Tests.TestApp.Create("/dst");
 
             await Assert.ThrowsAsync<CallbackGoalNotFound>(async () =>
             {
-                await dst.Restore(snap, dst.User.Context);
+                await dst.Restore(snap, dst.actor.list.User.Context);
                 await Task.CompletedTask;
             });
         }
@@ -102,9 +102,9 @@ public class CallSnapshotTests
     public async Task Call_Restore_HardErrors_OnHashMismatch_RaisesCallbackGoalHashMismatch()
     {
         var (src, action) = BuildLiveAction("HashGoal", "original step text");
-        await using (var call = src.User.CallStack.Push(action))
+        await using (var call = src.actor.list.User.CallStack.Push(action))
         {
-            var snap = src.Snapshot(src.User.Context);
+            var snap = src.Snapshot(src.actor.list.User.Context);
 
             // Fresh App with the same path but different hash (different step prose).
             var dst = global::PLang.Tests.TestApp.Create("/dst");
@@ -117,7 +117,7 @@ public class CallSnapshotTests
 
             await Assert.ThrowsAsync<CallbackGoalHashMismatch>(async () =>
             {
-                await dst.Restore(snap, dst.User.Context);
+                await dst.Restore(snap, dst.actor.list.User.Context);
                 await Task.CompletedTask;
             });
         }
@@ -129,9 +129,9 @@ public class CallSnapshotTests
         // Same step text (so the goal hash matches) compiled to a different action: the position now
         // points at another action, which only the captured module/name can tell.
         var (src, action) = BuildLiveAction("RecompiledGoal", "same step text");
-        await using (var call = src.User.CallStack.Push(action))
+        await using (var call = src.actor.list.User.CallStack.Push(action))
         {
-            var snap = src.Snapshot(src.User.Context);
+            var snap = src.Snapshot(src.actor.list.User.Context);
 
             var dst = global::PLang.Tests.TestApp.Create("/dst");
             var dstGoal = new Goal { Name = "RecompiledGoal", Path = global::app.type.item.path.@this.Resolve("/RecompiledGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
@@ -143,7 +143,7 @@ public class CallSnapshotTests
 
             var thrown = await Assert.ThrowsAsync<CallbackActionMismatch>(async () =>
             {
-                await dst.Restore(snap, dst.User.Context);
+                await dst.Restore(snap, dst.actor.list.User.Context);
                 await Task.CompletedTask;
             });
             await Assert.That(thrown!.Message).Contains("test.test");
@@ -155,9 +155,9 @@ public class CallSnapshotTests
     public async Task Call_Restore_DoesNotMutateLiveGoal()
     {
         var (src, action) = BuildLiveAction("PureGoal");
-        await using (var call = src.User.CallStack.Push(action))
+        await using (var call = src.actor.list.User.CallStack.Push(action))
         {
-            var snap = src.Snapshot(src.User.Context);
+            var snap = src.Snapshot(src.actor.list.User.Context);
 
             var dst = global::PLang.Tests.TestApp.Create("/dst");
             var dstGoal = new Goal { Name = "PureGoal", Path = global::app.type.item.path.@this.Resolve("/PureGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
@@ -171,7 +171,7 @@ public class CallSnapshotTests
             var stepBefore = dstStep;
             var actionBefore = dstAction;
 
-            await dst.Restore(snap, dst.User.Context);
+            await dst.Restore(snap, dst.actor.list.User.Context);
 
             // Same instances — Restore is read-only on the registry.
             await Assert.That(await dst.goal.list.Find("PureGoal")).IsSameReferenceAs(goalBefore);
@@ -196,8 +196,8 @@ public class CallSnapshotTests
     public async Task Call_Capture_OmitsTimingTier_AndInFlightNetworkState()
     {
         var (app, action) = BuildLiveAction("DropGoal");
-        app.User.CallStack.Setting.Timing = true;
-        await using var call = app.User.CallStack.Push(action);
+        app.actor.list.User.CallStack.Setting.Timing = true;
+        await using var call = app.actor.list.User.CallStack.Push(action);
 
         var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
         call.Capture(snap);

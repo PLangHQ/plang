@@ -45,7 +45,7 @@ public class TableTypeTests
     [Test] public async Task TableXlsx_HasNoReaderYet_ThrowsUntilOneIsAdded()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         await Assert.That(ctx.App.type.list.Reader.Of("table", "xlsx")).IsNull();
 
         byte[] bytes = { 0x50, 0x4B, 0x03, 0x04 }; // PK.. zip header (xlsx is a zip)
@@ -70,7 +70,7 @@ public class TableTypeTests
     [Test] public async Task TableCsv_StampingDoesNotParse_RawStaysCsvString()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw(Csv, ctx.App.type.list[new type("table", "csv"), ctx], ctx, "t");
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         await Assert.That(d.Raw).IsEqualTo((object)Csv);

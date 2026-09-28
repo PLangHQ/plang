@@ -61,7 +61,7 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     public data.@this Verify()
     {
         // the result is born in the owning actor's context, or the system's for a Service's channels
-        var context = Actor?.Context ?? _app.System.Context;
+        var context = Actor?.Context ?? _app.actor.list.System.Context;
         foreach (var name in Defaults)
         {
             if (!_channels.ContainsKey(name))

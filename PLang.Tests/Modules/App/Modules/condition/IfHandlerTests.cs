@@ -26,7 +26,7 @@ public class IfHandlerTests : IDisposable
     private async Task<Data> RunStep(string text, params Action[] actions)
     {
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("G", Make.Step(text, actions)));
-        return await _app.Start(goal, _app.User.Context);
+        return await _app.Start(goal, _app.actor.list.User.Context);
     }
 
     public void Dispose()
@@ -39,8 +39,8 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_Truthy_InitializedNonBool_ReturnsTrue()
     {
-        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(42), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
-        await action.Attach(null, _app.User.Context);
+        var action = new If(_app.actor.list.User.Context) { Left = _app.actor.list.User.Context.Ok(42), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.actor.list.User.Context.Ok(true) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -50,8 +50,8 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_Truthy_UninitializedLeft_ReturnsFalse()
     {
-        var action = new If(_app.User.Context) { Left = new Data("", context: _app.User.Context), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
-        await action.Attach(null, _app.User.Context);
+        var action = new If(_app.actor.list.User.Context) { Left = new Data("", context: _app.actor.list.User.Context), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.actor.list.User.Context.Ok(true) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -61,8 +61,8 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_WithOperator_DelegatesToEvaluator()
     {
-        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(10), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
-        await action.Attach(null, _app.User.Context);
+        var action = new If(_app.actor.list.User.Context) { Left = _app.actor.list.User.Context.Ok(10), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.actor.list.User.Context.Ok(5) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -73,7 +73,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_ConditionTrue_OrchestrateThenBranch()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -94,7 +94,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_ConditionFalse_SkipsThenBranch()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -114,7 +114,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_IfElse_TrueRunsThen()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -137,7 +137,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_IfElse_FalseRunsElse()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -160,8 +160,8 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_ConditionTrue_NoGoalIfTrue_ReturnsTrueNoCall()
     {
-        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(10), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
-        await action.Attach(null, _app.User.Context);
+        var action = new If(_app.actor.list.User.Context) { Left = _app.actor.list.User.Context.Ok(10), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.actor.list.User.Context.Ok(5) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -171,8 +171,8 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_ConditionFalse_NoGoals_ReturnsFalse()
     {
-        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(3), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
-        await action.Attach(null, _app.User.Context);
+        var action = new If(_app.actor.list.User.Context) { Left = _app.actor.list.User.Context.Ok(3), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.actor.list.User.Context.Ok(5) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -182,8 +182,8 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_TrueCondition_ReturnsBoolTrue()
     {
-        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(10), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
-        await action.Attach(null, _app.User.Context);
+        var action = new If(_app.actor.list.User.Context) { Left = _app.actor.list.User.Context.Ok(10), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.actor.list.User.Context.Ok(5) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -194,8 +194,8 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_FalseCondition_ReturnsBoolFalse()
     {
-        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(3), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
-        await action.Attach(null, _app.User.Context);
+        var action = new If(_app.actor.list.User.Context) { Left = _app.actor.list.User.Context.Ok(3), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.actor.list.User.Context.Ok(5) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -205,7 +205,7 @@ public class IfHandlerTests : IDisposable
 
     private async Task<global::app.data.@this> Ask(object? left, string op, object? right)
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var action = new If(ctx)
         {
             Left = left == null ? null : ctx.Ok(left),
@@ -249,7 +249,7 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Ordering_AnUnsetVariable_IsAnError()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         var unset = new global::app.data.@this("Left", "%unset%",
             ctx.App.type.list[new global::app.type.@this("item", template: "plang"), ctx], context: ctx);
         var action = new If(ctx)
@@ -294,8 +294,8 @@ public class IfHandlerTests : IDisposable
     public async Task Run_EqualsTrueWithToBooleanTrue_ReturnsTrue()
     {
         var data = new TestData(true);
-        var action = new If(_app.User.Context) { Left = data, Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
-        await action.Attach(null, _app.User.Context);
+        var action = new If(_app.actor.list.User.Context) { Left = data, Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.actor.list.User.Context.Ok(true) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -306,8 +306,8 @@ public class IfHandlerTests : IDisposable
     public async Task Run_EqualsTrueWithToBooleanFalse_ReturnsFalse()
     {
         var data = new TestData(false);
-        var action = new If(_app.User.Context) { Left = data, Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(true) };
-        await action.Attach(null, _app.User.Context);
+        var action = new If(_app.actor.list.User.Context) { Left = data, Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.actor.list.User.Context.Ok(true) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -324,8 +324,8 @@ public class IfHandlerTests : IDisposable
     [Test]
     public async Task Run_IncompatibleComparisonTypes_ReturnsEvaluationError()
     {
-        var action = new If(_app.User.Context) { Left = _app.User.Context.Ok(new object()), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
-        await action.Attach(null, _app.User.Context);
+        var action = new If(_app.actor.list.User.Context) { Left = _app.actor.list.User.Context.Ok(new object()), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.actor.list.User.Context.Ok(5) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsFailure();
@@ -342,7 +342,7 @@ public class IfHandlerTests : IDisposable
     public async Task Run_InnerGoalCondition_OrchestatesIndependently()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -352,7 +352,7 @@ public class IfHandlerTests : IDisposable
         // SAME context (app.Start passes context by reference). With the buggy code
         // (Variables-based guard) the inner condition sees it and skips orchestration —
         // actions run sequentially instead of branched.
-        _app.User.Context.Variable.Set(new Data("__condition_orchestrating__", true, context: _app.User.Context));
+        _app.actor.list.User.Context.Variable.Set(new Data("__condition_orchestrating__", true, context: _app.actor.list.User.Context));
 
         var result = await RunStep("if true write inner-then, else write inner-else",
             Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),

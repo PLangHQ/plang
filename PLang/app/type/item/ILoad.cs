@@ -8,6 +8,6 @@ namespace app.type.item;
 public interface ILoad<TSelf> where TSelf : @this, ILoad<TSelf>
 {
     static virtual System.Threading.Tasks.Task<global::app.data.@this> Load(path.@this location, global::app.@this app)
-        => System.Threading.Tasks.Task.FromResult(app.System.Context.Error(new global::app.error.Error(
+        => System.Threading.Tasks.Task.FromResult(app.actor.list.System.Context.Error(new global::app.error.Error(
             $"a {@this.NameOf(typeof(TSelf))} isn't loaded from a location", "NotSupported", 400)));
 }

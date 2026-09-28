@@ -34,7 +34,7 @@ public class PlangRuntimeTests : IDisposable
     public async Task Kernel_Execute_RunsStepActions()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -55,7 +55,7 @@ public class PlangRuntimeTests : IDisposable
         };
 
         var steps = new GoalSteps { step };
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var result = await steps.Start(context);
 
         await result.IsSuccess();
@@ -79,7 +79,7 @@ public class PlangRuntimeTests : IDisposable
     [Test]
     public async Task OnEvent_BeforeEachStep_BindsOnTheStepTypesStart()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
 
         // a program's step: the event by its path
         await (await Make.Action("on", "event", ("Event", "%!app.type.step.on.start%"), ("When", "before"),
@@ -87,7 +87,7 @@ public class PlangRuntimeTests : IDisposable
 
         var before = _app.type.list["step"].on["start"]!.before;
         await Assert.That(before.Count).IsEqualTo(1);
-        await Assert.That(ReferenceEquals(before[0].Actor, _app.User)).IsTrue();
+        await Assert.That(ReferenceEquals(before[0].Actor, _app.actor.list.User)).IsTrue();
     }
 
     // --- Step 5: Full PLang runtime loop ---
@@ -96,7 +96,7 @@ public class PlangRuntimeTests : IDisposable
     public async Task PlangRuntime_SimpleGoal_ExecutesThroughRunGoal()
     {
         var captureStream = new System.IO.MemoryStream();
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
@@ -105,7 +105,7 @@ public class PlangRuntimeTests : IDisposable
             Make.Step("write hello",
                 Make.Action("output", "write", ("Data", "hello runtime")))));
 
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var result = await _app.Start(goal, context);
 
         await result.IsSuccess();

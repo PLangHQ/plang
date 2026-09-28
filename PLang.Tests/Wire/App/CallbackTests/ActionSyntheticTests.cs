@@ -32,7 +32,7 @@ public class ActionSyntheticTests
             "plang-cs-" + System.Guid.NewGuid().ToString("N")[..8]));
         var synthetic = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" };
 
-        await using var s1 = app.User.CallStack.Push(synthetic);
+        await using var s1 = app.actor.list.User.CallStack.Push(synthetic);
         await Assert.That(s1.Action!.Synthetic).IsTrue();
         await Assert.That(s1.IsResumable).IsFalse();
     }
@@ -45,7 +45,7 @@ public class ActionSyntheticTests
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs2-" + System.Guid.NewGuid().ToString("N")[..8]));
         var prLoaded = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" }; prLoaded.Synthetic = false;
-        await using var call = app.User.CallStack.Push(prLoaded);
+        await using var call = app.actor.list.User.CallStack.Push(prLoaded);
         await Assert.That(call.Action!.Synthetic).IsFalse();
     }
 
@@ -56,8 +56,8 @@ public class ActionSyntheticTests
         var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cs3-" + System.Guid.NewGuid().ToString("N")[..8]));
         var synthetic = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" };
-        await using var call = app.User.CallStack.Push(synthetic);
-        var snap = app.Snapshot(app.User.Context);
+        await using var call = app.actor.list.User.CallStack.Push(synthetic);
+        var snap = app.Snapshot(app.actor.list.User.Context);
         await Assert.That(snap).IsNotNull();
     }
 }

@@ -9,7 +9,7 @@ public class RealCatalogRenderTests
 {
     private static async Task<string> Render(global::app.@this app, string template)
     {
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         ctx.Variable.Set(new Data("modules", app.module.list, context: ctx));
         var action = new Render(ctx)
         {

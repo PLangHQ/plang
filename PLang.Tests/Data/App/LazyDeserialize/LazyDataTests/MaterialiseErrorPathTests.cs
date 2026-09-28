@@ -22,7 +22,7 @@ public class MaterialiseErrorPathTests
     {
         await using var app = NewApp();
         // Constructing the raw-backed Data does NOT throw (read-time is clean)…
-        var d = MalformedJson(app.User.Context, "cfg");
+        var d = MalformedJson(app.actor.list.User.Context, "cfg");
         await Assert.That(d.Error).IsNull();
         // …the error fires at first touch of .Value.
         _ = (await d.Value());
@@ -33,7 +33,7 @@ public class MaterialiseErrorPathTests
     [Test] public async Task MalformedJson_ErrorNamesTheSource()
     {
         await using var app = NewApp();
-        var d = MalformedJson(app.User.Context, "cfg");
+        var d = MalformedJson(app.actor.list.User.Context, "cfg");
         _ = (await d.Value());
         await Assert.That(d.Error!.Message.Contains("cfg")).IsTrue();
     }
@@ -43,7 +43,7 @@ public class MaterialiseErrorPathTests
     [Test] public async Task Materialise_Failure_SurfacedAs_DataError_NotThrown_ToCourier()
     {
         await using var app = NewApp();
-        var d = MalformedJson(app.User.Context, "cfg");
+        var d = MalformedJson(app.actor.list.User.Context, "cfg");
         object? v = (await d.Value()); // must not throw
         // A failed materialize answers the typed absence (Value is never C# null),
         // and the failure is cached on Error.
@@ -58,7 +58,7 @@ public class MaterialiseErrorPathTests
     [Test] public async Task Navigation_OnMalformedJson_SurfacesMaterializeFailed_NotNotFound()
     {
         await using var app = NewApp();
-        var d = MalformedJson(app.User.Context, "cfg");
+        var d = MalformedJson(app.actor.list.User.Context, "cfg");
         var child = await d.Get("host");
         await Assert.That(child.Error).IsNotNull();
         await Assert.That(child.Error!.Key).IsEqualTo("MaterializeFailed");
@@ -72,7 +72,7 @@ public class MaterialiseErrorPathTests
     [Test] public async Task SetPath_OnMalformedJson_SurfacesMaterializeFailed_NotNotFound()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         ctx.Variable.Set(MalformedJson(ctx, "cfg"));
 
         var result = new global::app.type.item.variable.@this("cfg.host").Set("value", ctx);
@@ -88,7 +88,7 @@ public class MaterialiseErrorPathTests
     [Test] public async Task SetPath_NestedOnMalformedJson_SurfacesMaterializeFailed_NotNotFound()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         ctx.Variable.Set(MalformedJson(ctx, "cfg"));
 
         var result = new global::app.type.item.variable.@this("cfg.a.host").Set("value", ctx);

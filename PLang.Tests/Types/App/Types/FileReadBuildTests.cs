@@ -17,14 +17,14 @@ public class FileReadBuildTests
     {
         // .png is image's png format.
         await using var app = NewApp();
-        var type = app.type.list.Extension(".png", app.User.Context);
+        var type = app.type.list.Extension(".png", app.actor.list.User.Context);
         await Assert.That(type.Name).IsEqualTo("image");
     }
 
     [Test] public async Task FileReadBuild_TxtExtension_ReturnsHighLevelType_Text()
     {
         await using var app = NewApp();
-        var type = app.type.list.Extension(".txt", app.User.Context);
+        var type = app.type.list.Extension(".txt", app.actor.list.User.Context);
         await Assert.That(type.Name).IsEqualTo("text");
     }
 
@@ -41,8 +41,8 @@ public class FileReadBuildTests
         System.IO.File.WriteAllBytes(abs, pngBytes);
         try
         {
-            var p = global::app.type.item.path.@this.Resolve(abs, app.User.Context);
-            var action = new global::app.module.action.file.Read(app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(p),
+            var p = global::app.type.item.path.@this.Resolve(abs, app.actor.list.User.Context);
+            var action = new global::app.module.action.file.Read(app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(p),
             };
             var result = await action.Start();
             await result.IsSuccess();
@@ -61,8 +61,8 @@ public class FileReadBuildTests
         System.IO.File.WriteAllText(abs, "hello");
         try
         {
-            var p = global::app.type.item.path.@this.Resolve(abs, app.User.Context);
-            var action = new global::app.module.action.file.Read(app.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(p),
+            var p = global::app.type.item.path.@this.Resolve(abs, app.actor.list.User.Context);
+            var action = new global::app.module.action.file.Read(app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(p),
             };
             var result = await action.Start();
             await result.IsSuccess();
@@ -75,7 +75,7 @@ public class FileReadBuildTests
     {
         // Unknown extension: no format has it — bytes of that kind.
         await using var app = NewApp();
-        var type = app.type.list.Extension(".xyz", app.User.Context);
+        var type = app.type.list.Extension(".xyz", app.actor.list.User.Context);
         await Assert.That(type.Name).IsEqualTo("binary");
         await Assert.That(type.kind.Name).IsEqualTo("xyz");
     }

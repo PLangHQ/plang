@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Core;
 public class ComputedAndClrStoreNoContextTests
 {
     private global::app.@this _app = null!;
-    private global::app.actor.context.@this Ctx => _app.User.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
     [Before(Test)]
     public void Setup() => _app = TestApp.Create("/tmp/computedclr-" + System.Guid.NewGuid().ToString("N")[..8]);

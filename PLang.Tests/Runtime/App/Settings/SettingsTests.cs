@@ -15,7 +15,7 @@ public class SettingsTests
     private global::app.actor.context.@this Ctx()
     {
         var engine = new EngineType("/app");
-        return new global::app.actor.context.@this(engine, engine.User, new Variables(engine.User.Context));
+        return new global::app.actor.context.@this(engine, engine.actor.list.User, new Variables(engine.actor.list.User.Context));
     }
 
     // The action an option is read for — the settings build its keys from the module's and the action's names.
@@ -43,11 +43,11 @@ public class SettingsTests
             ["files"] = new List<object?> { "a.goal", "b.goal" },
         };
 
-        var result = app.System.Setting.Set("build", settings);
+        var result = app.actor.list.System.Setting.Set("build", settings);
         await Assert.That(result.Success).IsTrue().Because(result.Error?.Message ?? "ok");
 
         // The consumer's read: each string row lifts to a REAL path (text→path via the lift door).
-        var files = app.System.Context.Setting.Of<global::app.module.action.build.setting.@this>().Files;
+        var files = app.actor.list.System.Context.Setting.Of<global::app.module.action.build.setting.@this>().Files;
         var paths = new List<global::app.type.item.path.@this>();
         foreach (var row in files.Items(global::PLang.Tests.TestApp.SharedContext))
             paths.Add((await row.Value<global::app.type.item.path.@this>())!);
@@ -109,9 +109,9 @@ public class SettingsTests
     public async Task UserContext_FallsBackTo_TheSystemsSetting()
     {
         var engine = new EngineType("/app");
-        await engine.System.Setting.Set("llm.cache", engine.System.Context.Ok(false));
+        await engine.actor.list.System.Setting.Set("llm.cache", engine.actor.list.System.Context.Ok(false));
 
-        var read = await engine.User.Context.Setting.Get(Query(engine), "cache");
+        var read = await engine.actor.list.User.Context.Setting.Get(Query(engine), "cache");
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
     }
 
@@ -120,9 +120,9 @@ public class SettingsTests
     public async Task SystemContext_DoesNotSee_TheUsersSetting()
     {
         var engine = new EngineType("/app");
-        await engine.User.Setting.Set("llm.cache", engine.User.Context.Ok(false));
+        await engine.actor.list.User.Setting.Set("llm.cache", engine.actor.list.User.Context.Ok(false));
 
-        var read = await engine.System.Context.Setting.Get(Query(engine), "cache");
+        var read = await engine.actor.list.System.Context.Setting.Get(Query(engine), "cache");
         await Assert.That(read.IsInitialized).IsFalse();
     }
 }

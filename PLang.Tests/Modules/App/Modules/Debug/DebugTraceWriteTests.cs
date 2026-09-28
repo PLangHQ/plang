@@ -28,7 +28,7 @@ public class DebugTraceWriteTests
     [Test] public async Task GenerateLlmFilePath_ProducedViaPathDerivationVerbs()
     {
         var app = NewApp(out var root);
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var resolved = app.Debug.ResolveLlmFilePath(context);
         // Typed channel: ResolveLlmFilePath must return a Path object (the
         // .Absolute reach is auth-gated). A future mutation reverting to
@@ -43,7 +43,7 @@ public class DebugTraceWriteTests
     [Test] public async Task TraceWrite_GoesThroughPathVerbs_NotFileWriteAllText()
     {
         var app = NewApp(out var root);
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         // Pre-stage the trace file path the way the LLM event subscriber does.
         app.Debug._currentLlmFilePath = app.Debug.ResolveLlmFilePath(context);
         // Drive a trace emit. Append routes through AuthGate(Write); in-root

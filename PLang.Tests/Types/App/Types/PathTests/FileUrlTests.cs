@@ -17,7 +17,7 @@ public class FileUrlTests : System.IAsyncDisposable
     [Test]
     public async Task FileUrl_OutOfRoot_IsItsLocalPath_ShownInPlangForm()
     {
-        var p = global::app.type.item.path.@this.Resolve("file:///var/plang-elsewhere/x.txt", _app.User.Context);
+        var p = global::app.type.item.path.@this.Resolve("file:///var/plang-elsewhere/x.txt", _app.actor.list.User.Context);
 
         await Assert.That(p).IsTypeOf<global::app.type.item.path.file.@this>();
         await Assert.That(p.Absolute).IsEqualTo("/var/plang-elsewhere/x.txt");
@@ -27,7 +27,7 @@ public class FileUrlTests : System.IAsyncDisposable
     [Test]
     public async Task FileUrl_UnderRoot_ShowsRootRelative()
     {
-        var p = global::app.type.item.path.@this.Resolve("file://" + _root + "/data/a.txt", _app.User.Context);
+        var p = global::app.type.item.path.@this.Resolve("file://" + _root + "/data/a.txt", _app.actor.list.User.Context);
 
         await Assert.That(p.Absolute).IsEqualTo(_root + "/data/a.txt");
         await Assert.That(p.Raw).IsEqualTo("/data/a.txt");
@@ -36,7 +36,7 @@ public class FileUrlTests : System.IAsyncDisposable
     [Test]
     public async Task PlangRootedPath_IsNotAFileUrl()
     {
-        var p = global::app.type.item.path.@this.Resolve("/data/a.txt", _app.User.Context);
+        var p = global::app.type.item.path.@this.Resolve("/data/a.txt", _app.actor.list.User.Context);
 
         await Assert.That(p.Absolute).IsEqualTo(_root + "/data/a.txt");
     }

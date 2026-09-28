@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Modules.modifier;
 public class TimeoutAfterTests
 {
     private global::app.@this _app = null!;
-    private global::app.actor.context.@this Ctx => _app.User.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
     [Before(Test)]
     public void Setup()

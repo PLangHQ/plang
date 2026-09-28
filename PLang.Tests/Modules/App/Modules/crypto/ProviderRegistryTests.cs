@@ -16,7 +16,7 @@ public class ProviderRegistryTests
     public void Setup()
     {
         _app = global::PLang.Tests.TestApp.Create("/tmp/provreg-" + System.Guid.NewGuid().ToString("N")[..6]);
-        _providers = new EngineProviders(_app.User.Context);
+        _providers = new EngineProviders(_app.actor.list.User.Context);
     }
 
     [After(Test)]

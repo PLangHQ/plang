@@ -16,10 +16,10 @@ public class SharedRowLoadTests
                 Make.Action("variable", "set", ("Name", "%x%"), ("Value", "hello")))));
 
         var property = goal.Step[0].Code[0]["Value"]!;
-        var run = property.Data(app.User.Context);
+        var run = property.Data(app.actor.list.User.Context);
 
         await Assert.That(property.Value).IsNotTypeOf<global::app.data.@this>();
-        await Assert.That(ReferenceEquals(run.Context, app.User.Context)).IsTrue();
+        await Assert.That(ReferenceEquals(run.Context, app.actor.list.User.Context)).IsTrue();
         await Assert.That((await run.Value())?.ToString()).IsEqualTo("hello");
     }
 }

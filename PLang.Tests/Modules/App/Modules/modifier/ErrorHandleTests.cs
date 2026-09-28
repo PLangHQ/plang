@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Modules.modifier;
 public class ErrorHandleTests
 {
     private global::app.@this _app = null!;
-    private global::app.actor.context.@this Ctx => _app.User.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
     [Before(Test)]
     public void Setup()
@@ -82,8 +82,8 @@ public class ErrorHandleTests
 
     private global::app.channel.type.stream.@this CaptureDebug()
     {
-        _app.System.Channel.Register(global::app.channel.type.stream.@this.Memory(global::app.channel.list.@this.Debug));
-        return (global::app.channel.type.stream.@this)_app.System.Channel.Get(global::app.channel.list.@this.Debug)!;
+        _app.actor.list.System.Channel.Register(global::app.channel.type.stream.@this.Memory(global::app.channel.list.@this.Debug));
+        return (global::app.channel.type.stream.@this)_app.actor.list.System.Channel.Get(global::app.channel.list.@this.Debug)!;
     }
 
     private static string Read(global::app.channel.type.stream.@this capture)
@@ -97,7 +97,7 @@ public class ErrorHandleTests
     public async Task Handle_IgnoreError_StaysInAudit_PrintedUnderDebug()
     {
         var capture = CaptureDebug();
-        _app.Debug = new global::app.module.action.debug.@this(_app.System.Context);
+        _app.Debug = new global::app.module.action.debug.@this(_app.actor.list.System.Context);
         var action = Throw("boom", key: "Oops",
             modifiers: new PrAction[] { ErrorHandler(("ignoreError", true)) });
 
@@ -236,7 +236,7 @@ public class ErrorHandleTests
             var answer = await attempt();
             if (answer.Success) answer.Handled = true;
             return answer;
-        }, _app.User, global::app.@event.binding.Scope.actor);
+        }, _app.actor.list.User, global::app.@event.binding.Scope.actor);
         return global::PLang.Tests.Shared.Make.With(action, clauses);
     }
 

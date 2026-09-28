@@ -14,7 +14,7 @@ public class VariableAccessorTests
     [Test] public async Task AppVariableList_IsTheAskersMemory()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("user", "ingi");
 
         var read = await Read("%!app.variable.list%", ctx);
@@ -26,7 +26,7 @@ public class VariableAccessorTests
     [Test] public async Task AppVariable_Key_IsThatVariable()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("user", "ingi");
 
         var read = await Read("%!app.variable.user%", ctx);
@@ -38,7 +38,7 @@ public class VariableAccessorTests
     [Test] public async Task AppVariable_Name_IsItsName()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("user", "ingi");
 
         var read = await Read("%!app.variable.user.name%", ctx);
@@ -50,7 +50,7 @@ public class VariableAccessorTests
     [Test] public async Task AppVariable_Type_IsItsValuesType()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("user", "ingi");
 
         var read = await Read("%!app.variable.user.type%", ctx);
@@ -61,7 +61,7 @@ public class VariableAccessorTests
     [Test] public async Task AppVariable_UnknownKey_IsNotFound()
     {
         await using var app = TestApp.Create("/test");
-        var read = await Read("%!app.variable.nobody%", app.User.Context);
+        var read = await Read("%!app.variable.nobody%", app.actor.list.User.Context);
         await Assert.That(read.Success).IsFalse();
         await Assert.That(read.Error!.Key).IsEqualTo("NotFound");
     }
@@ -69,7 +69,7 @@ public class VariableAccessorTests
     [Test] public async Task AppVariable_TheCallsOwnShadowsTheActors()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("user", "outer");
         await using (ctx.Variable.Calls.Push([new global::app.data.@this("place", "here", context: ctx)]))
         {

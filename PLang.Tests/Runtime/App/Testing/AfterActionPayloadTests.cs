@@ -22,7 +22,7 @@ public class AfterActionPayloadTests
     // Binds handler on the action type's start, before or after, for the User actor.
     private void Bind(global::app.@event.When when,
         Func<global::app.type.item.@this, Data, global::app.actor.context.@this, Task<Data>> handler)
-        => _app.type.list["action"].Own().Bind("start", when, handler, _app.User, global::app.@event.binding.Scope.actor);
+        => _app.type.list["action"].Own().Bind("start", when, handler, _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
     // Runs a simple goal with one action (variable.set) so a single action start fires.
     private async Task RunSimpleGoal(string varName = "x", int value = 42)
@@ -31,7 +31,7 @@ public class AfterActionPayloadTests
             Make.Step("set var",
                 Make.Action("variable", "set", Make.Param("Name", varName, "variable"), ("Value", value)))));
         _app.goal.list.Add(goal);
-        await _app.Start(goal, _app.User.Context);
+        await _app.Start(goal, _app.actor.list.User.Context);
     }
 
     // An after-binding is handed the Action that just ran — Action.Module, .Name, .Step, .Goal all accessible.
@@ -79,7 +79,7 @@ public class AfterActionPayloadTests
             return Task.FromResult(context.Ok());
         });
 
-        await _app.Start(goal, _app.User.Context);
+        await _app.Start(goal, _app.actor.list.User.Context);
 
         // Exact count — duplicate firings would corrupt coverage counts silently.
         await Assert.That(observed.Count).IsEqualTo(1);
@@ -117,7 +117,7 @@ public class AfterActionPayloadTests
         Data? captured = null;
         Bind(global::app.@event.When.after, (_, result, context) => { captured = result; return Task.FromResult(context.Ok()); });
 
-        await _app.Start(goal, _app.User.Context);
+        await _app.Start(goal, _app.actor.list.User.Context);
 
         await Assert.That(captured).IsNotNull();
         await captured!.IsFailure();

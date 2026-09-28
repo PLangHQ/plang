@@ -161,10 +161,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private global::app.type.item.file.@this? _description;
 
     /// <summary>The module's description — module.description.md.</summary>
-    public global::app.type.item.file.@this Description => _description ??= new(Folder.Combine("module.description.md"), App.System.Context!);
+    public global::app.type.item.file.@this Description => _description ??= new(Folder.Combine("module.description.md"), App.actor.list.System.Context!);
 
     private global::app.type.item.file.@this? _notes;
 
     /// <summary>The module's notes — module.notes.md; falsy when the module has none.</summary>
-    public global::app.type.item.file.@this Notes => _notes ??= new(Folder.Combine("module.notes.md"), App.System.Context!);
+    public global::app.type.item.file.@this Notes => _notes ??= new(Folder.Combine("module.notes.md"), App.actor.list.System.Context!);
 }

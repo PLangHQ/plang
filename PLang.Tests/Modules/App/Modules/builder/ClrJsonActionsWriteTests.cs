@@ -25,7 +25,7 @@ public class ClrJsonActionsWriteTests : System.IAsyncDisposable
     [Test]
     public async Task ClrJsonActionsArray_WritesOntoStepActionsSlot_AsActionHosts()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
 
         // A goal with one step whose Actions collection is empty (as right before the
         // builder writes the compiled actions in).

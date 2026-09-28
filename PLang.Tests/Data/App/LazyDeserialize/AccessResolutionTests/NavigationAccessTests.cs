@@ -18,7 +18,7 @@ public class NavigationAccessTests
     [Test] public async Task Navigation_KnownType_MaterialisesViaReader_AndNavigates()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg");
         await Assert.That((await (await d.Get("port")).Value())?.ToString()).IsEqualTo("8080");
         await Assert.That(d.MaterializeCount()).IsEqualTo(1); // navigation materialized via the reader
@@ -29,7 +29,7 @@ public class NavigationAccessTests
     [Test] public async Task Navigation_ObjectShape_NavigatesByKey()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("{\"host\":\"localhost\"}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg");
         await Assert.That((await (await d.Get("host")).Value())?.ToString()).IsEqualTo("localhost");
     }
@@ -38,7 +38,7 @@ public class NavigationAccessTests
     [Test] public async Task Navigation_TableShape_NavigatesByRowColumn()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("name,age\nAda,36\n", ctx.App.type.list[new type("table", "csv"), ctx], ctx, "t");
         var cell = (await (await (await d.Get("rows")).Get("0")).Get("name"));
         await Assert.That((await cell.Value())?.ToString()).IsEqualTo("Ada");

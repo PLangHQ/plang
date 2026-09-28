@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Serialization;
 public class WireStoresNoContextTests
 {
     private global::app.@this _app = null!;
-    private global::app.actor.context.@this Ctx => _app.User.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
     [Before(Test)]
     public void Setup() => _app = TestApp.Create("/tmp/wirectx-" + System.Guid.NewGuid().ToString("N")[..8]);

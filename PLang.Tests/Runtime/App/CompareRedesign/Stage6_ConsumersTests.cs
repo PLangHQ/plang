@@ -14,7 +14,7 @@ public class Stage6_ConsumersTests
         System.IO.Path.GetTempPath(), "plang-stage6-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     private static Data D(global::app.@this app, object? v, string typeName)
-        => new("x", v, global::PLang.Tests.TestApp.SharedContext.App.type.list[typeName], context: app.User.Context);
+        => new("x", v, global::PLang.Tests.TestApp.SharedContext.App.type.list[typeName], context: app.actor.list.User.Context);
 
     private static string RepoRoot()
     {
@@ -28,7 +28,7 @@ public class Stage6_ConsumersTests
 
     // The operator's plang answer under the app's context.
     private static Task<global::app.data.@this<global::app.type.item.@bool.@this>> Answer(
-        global::app.@this app, Operator op, Data left, Data right) => op.Evaluate(left, right, app.User.Context);
+        global::app.@this app, Operator op, Data left, Data right) => op.Evaluate(left, right, app.actor.list.User.Context);
 
     [Test]
     public async Task IfEquals_BoundaryMap_EqualTrue_NotEqualFalse_IncomparableError()
@@ -38,7 +38,7 @@ public class Stage6_ConsumersTests
         var eq = new Operator("==");
         await Assert.That((await Answer(app, eq, D(app, "5", "text"), D(app, 5, "number"))).ToBoolean()).IsTrue();      // Equal
         await Assert.That((await Answer(app, eq, D(app, true, "bool"), D(app, false, "bool"))).ToBoolean()).IsFalse();  // NotEqual
-        var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, app.User.Context);
+        var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, app.actor.list.User.Context);
         var incomparable = await Answer(app, eq, D(app, dict, "dict"), D(app, 5, "number"));
         await incomparable.IsFailure();
         await Assert.That(incomparable.Error!.Key).IsEqualTo("EvaluationError");
@@ -54,7 +54,7 @@ public class Stage6_ConsumersTests
         var notEqual = await Answer(app, lt, D(app, true, "bool"), D(app, false, "bool"));
         await notEqual.IsFailure();
         await Assert.That(notEqual.Error!.Key).IsEqualTo("EvaluationError");
-        var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, app.User.Context);
+        var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, app.actor.list.User.Context);
         var incomparable = await Answer(app, lt, D(app, dict, "dict"), D(app, 5, "number"));
         await incomparable.IsFailure();
         await Assert.That(incomparable.Error!.Message).Contains("cannot order 'dict'");
@@ -80,7 +80,7 @@ public class Stage6_ConsumersTests
         // sort %files% by size — keys (stat) materialise in async phase 1;
         // phase 2 orders the in-hand keys with a sync comparator
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-sortsize-" + System.Guid.NewGuid().ToString("N")[..8]);
         Directory.CreateDirectory(dir);
         try
@@ -120,7 +120,7 @@ public class Stage6_ConsumersTests
     {
         // [%dict%] contains %number% → false, no error (Incomparable element treated as no-match)
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
         var list = new global::app.type.item.list.@this();
         list.Add(new Data("", dict, context: ctx));
@@ -134,7 +134,7 @@ public class Stage6_ConsumersTests
     public async Task ListIndexOf_NotFound_Returns_MinusOne_NeverError()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
         var list = new global::app.type.item.list.@this();
         list.Add(new Data("", dict, context: ctx));
@@ -150,7 +150,7 @@ public class Stage6_ConsumersTests
     public async Task ListUnique_TreatsNotEqualAndIncomparableAsNoMatch()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         // a mixed list (dict + number) dedups without error — Incomparable pairs never match
         var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["a"] = 1 }, ctx);
         var list = new global::app.type.item.list.@this();

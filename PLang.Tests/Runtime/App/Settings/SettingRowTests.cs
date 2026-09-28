@@ -40,20 +40,20 @@ public class SettingRowTests
     [Test] public async Task Row_IsReadByTheNextApp()
     {
         await using (var app = new global::app.@this(_dir))
-            await Save(app.User, os: false);
+            await Save(app.actor.list.User, os: false);
 
         await using var again = new global::app.@this(_dir);
-        await Assert.That(await Os(again.User.Context)).IsEqualTo("false");
-        await Assert.That(await Os(again.System.Context)).IsEqualTo("true");
+        await Assert.That(await Os(again.actor.list.User.Context)).IsEqualTo("false");
+        await Assert.That(await Os(again.actor.list.System.Context)).IsEqualTo("true");
     }
 
     // The values a saved row's typed-list option holds, as the next App reads it back.
     private static async Task<List<string>> Listed<T>(global::app.@this app, System.Func<T, global::app.type.item.list.@this> option)
         where T : global::app.type.item.setting.@this, new()
     {
-        await app.User.Setting.Load();
+        await app.actor.list.User.Setting.Load();
         var values = new List<string>();
-        foreach (var row in option(app.User.Setting.Of<T>()).Items(app.User.Context))
+        foreach (var row in option(app.actor.list.User.Setting.Of<T>()).Items(app.actor.list.User.Context))
             values.Add((await row.Value())?.ToString() ?? "");
         return values;
     }
@@ -63,10 +63,10 @@ public class SettingRowTests
     {
         await using (var app = new global::app.@this(_dir))
         {
-            var setting = app.User.Setting.Of<global::app.goal.list.setting.@this>();
+            var setting = app.actor.list.User.Setting.Of<global::app.goal.list.setting.@this>();
             setting.Visibility = new global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.goal.Visibility>>(
                 new global::app.type.item.choice.@this<global::app.goal.Visibility>[] { global::app.goal.Visibility.Public, global::app.goal.Visibility.Private });
-            await (await app.User.Setting.Save(setting)).IsSuccess();
+            await (await app.actor.list.User.Setting.Save(setting)).IsSuccess();
         }
 
         await using var again = new global::app.@this(_dir);
@@ -79,10 +79,10 @@ public class SettingRowTests
     {
         await using (var app = new global::app.@this(_dir))
         {
-            var setting = app.User.Setting.Of<global::app.test.setting.@this>();
+            var setting = app.actor.list.User.Setting.Of<global::app.test.setting.@this>();
             setting.Include = new global::app.type.item.list.@this<global::app.type.item.text.@this>(
                 new global::app.type.item.text.@this[] { "smoke", "fast" });
-            await (await app.User.Setting.Save(setting)).IsSuccess();
+            await (await app.actor.list.User.Setting.Save(setting)).IsSuccess();
         }
 
         await using var again = new global::app.@this(_dir);
@@ -94,42 +94,42 @@ public class SettingRowTests
     [Test] public async Task UserFallsBackToSystem_OwnRowWins()
     {
         await using var app = TestApp.Create(_dir);
-        await Save(app.System, os: false);
-        await Assert.That(await Os(app.User.Context)).IsEqualTo("false");
+        await Save(app.actor.list.System, os: false);
+        await Assert.That(await Os(app.actor.list.User.Context)).IsEqualTo("false");
 
-        await Save(app.User, os: true);
-        await Assert.That(await Os(app.User.Context)).IsEqualTo("true");
-        await Assert.That(await Os(app.System.Context)).IsEqualTo("false");
+        await Save(app.actor.list.User, os: true);
+        await Assert.That(await Os(app.actor.list.User.Context)).IsEqualTo("true");
+        await Assert.That(await Os(app.actor.list.System.Context)).IsEqualTo("false");
     }
 
     // This run's value wins over the saved row.
     [Test] public async Task ThisRun_WinsOverTheRow()
     {
         await using var app = TestApp.Create(_dir);
-        await Save(app.User, os: false);
-        await app.User.Context.Setting.Set("app.goal.list.setting.os", app.User.Context.Ok(true));
-        await Assert.That(await Os(app.User.Context)).IsEqualTo("true");
+        await Save(app.actor.list.User, os: false);
+        await app.actor.list.User.Context.Setting.Set("app.goal.list.setting.os", app.actor.list.User.Context.Ok(true));
+        await Assert.That(await Os(app.actor.list.User.Context)).IsEqualTo("true");
     }
 
     // Removing the row goes back to the defaults.
     [Test] public async Task Remove_GoesBackToTheDefaults()
     {
         await using var app = TestApp.Create(_dir);
-        await Save(app.User, os: false);
-        await (await app.User.Setting.Remove(app.User.Setting.Of<global::app.goal.list.setting.@this>())).IsSuccess();
-        await Assert.That(await Os(app.User.Context)).IsEqualTo("true");
+        await Save(app.actor.list.User, os: false);
+        await (await app.actor.list.User.Setting.Remove(app.actor.list.User.Setting.Of<global::app.goal.list.setting.@this>())).IsSuccess();
+        await Assert.That(await Os(app.actor.list.User.Context)).IsEqualTo("true");
     }
 
     // A module's own setting saved as a row reaches the action-param seam (its module key).
     [Test] public async Task ModuleRow_ReachesTheSeam()
     {
         await using var app = TestApp.Create(_dir);
-        var llm = (global::app.module.action.llm.setting.@this)(await Read("%!llm%", app.User.Context)).Peek()!;
+        var llm = (global::app.module.action.llm.setting.@this)(await Read("%!llm%", app.actor.list.User.Context)).Peek()!;
         llm.Cache = false;
-        await (await app.User.Setting.Save(llm)).IsSuccess();
+        await (await app.actor.list.User.Setting.Save(llm)).IsSuccess();
 
-        var seam = await app.User.Context.Setting.Get(app.Module("llm")["query"]!, "cache");
+        var seam = await app.actor.list.User.Context.Setting.Get(app.Module("llm")["query"]!, "cache");
         await Assert.That((await seam.Value())?.ToString()).IsEqualTo("false");
-        await Assert.That((await (await Read("%!llm.query.cache%", app.User.Context)).Value())?.ToString()).IsEqualTo("false");
+        await Assert.That((await (await Read("%!llm.query.cache%", app.actor.list.User.Context)).Value())?.ToString()).IsEqualTo("false");
     }
 }

@@ -20,7 +20,7 @@ public class ActionParameterIndexTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("test"),
             Name = "fixture",
-            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList())
+            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.actor.list.User.Context)).ToList())
         };
     }
 
@@ -32,8 +32,8 @@ public class ActionParameterIndexTests
         {
             Module = global::PLang.Tests.TestApp.SharedContext.App.Module("test"),
             Name = "fixture",
-            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList()),
-            Default = global::PLang.Tests.Shared.Make.Properties(defaults.Select(d => new Data(d.name, d.value, context: _app.User.Context)).ToList())
+            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.actor.list.User.Context)).ToList()),
+            Default = global::PLang.Tests.Shared.Make.Properties(defaults.Select(d => new Data(d.name, d.value, context: _app.actor.list.User.Context)).ToList())
         };
     }
 

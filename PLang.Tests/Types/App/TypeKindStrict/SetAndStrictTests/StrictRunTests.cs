@@ -28,7 +28,7 @@ public class StrictRunTests
 
     [Test] public async Task Run_StrictImageGifWithRuntimeVarResolvingToPng_ThrowsTypedError()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("upload", PngBytes);
         var action = TestAction.Create("variable", "set",
             ("name", "%img%"),
@@ -41,7 +41,7 @@ public class StrictRunTests
 
     [Test] public async Task Run_StrictImageGifWithRuntimeVarResolvingToGif_Mints()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("upload", GifBytes);
         var action = TestAction.Create("variable", "set",
             ("name", "%img%"),
@@ -59,7 +59,7 @@ public class StrictRunTests
         // A reference fundamental (`as image`, no kind) parses its kind from the
         // path via the Build hook; non-strict means no content validation. (text
         // does not derive a kind from a literal — see SetMintCarriesKindTests.)
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%x%"),
             ("value", "photo.png"),

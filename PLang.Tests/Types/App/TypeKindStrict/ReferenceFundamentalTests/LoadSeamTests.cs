@@ -46,7 +46,7 @@ public class LoadSeamTests
     {
         System.IO.File.WriteAllBytes(System.IO.Path.Combine(_app.AbsolutePath, name), Png1x1);
         return new image(global::app.type.item.path.@this.Resolve(
-            System.IO.Path.Combine(_app.AbsolutePath, name), _app.User.Context), _app.User.Context);
+            System.IO.Path.Combine(_app.AbsolutePath, name), _app.actor.list.User.Context), _app.actor.list.User.Context);
     }
 
     [Test] public async Task Value_MaterializesPathBackedImage_SyncBytesThenReal()
@@ -54,7 +54,7 @@ public class LoadSeamTests
         var img = PathBackedPng("a.png");
         await Assert.That(img.Bytes.Length).IsEqualTo(0); // lazy — nothing read yet
 
-        var data = _app.User.Context.Ok(img);
+        var data = _app.actor.list.User.Context.Ok(img);
         await data.Value();                 // the async pull
 
         await data.IsSuccess();
@@ -69,7 +69,7 @@ public class LoadSeamTests
         var dict = new System.Collections.Generic.Dictionary<string, object?> { ["avatar"] = img };
         using var ms = new System.IO.MemoryStream();
 
-        var result = await Plang.Encode(ms, _app.User.Context.Ok(dict), Ctx);
+        var result = await Plang.Encode(ms, _app.actor.list.User.Context.Ok(dict), Ctx);
         await result.IsSuccess();
 
         var json = Encoding.UTF8.GetString(ms.ToArray());
@@ -81,7 +81,7 @@ public class LoadSeamTests
         var img = PathBackedPng("shot.png");
         img.RequireStrictKind("gif"); // png content behind strict gif
 
-        var data = _app.User.Context.Ok(img);
+        var data = _app.actor.list.User.Context.Ok(img);
         await data.Value();             // fails onto the binding, does not throw
 
         await data.IsFailure();
@@ -95,7 +95,7 @@ public class LoadSeamTests
         await bytesBacked.Value();
         await bytesBacked.IsSuccess();
 
-        var scalar = _app.User.Context.Ok(new System.Collections.Generic.Dictionary<string, object?> { ["n"] = 42L, ["s"] = "x" });
+        var scalar = _app.actor.list.User.Context.Ok(new System.Collections.Generic.Dictionary<string, object?> { ["n"] = 42L, ["s"] = "x" });
         await scalar.Value();
         await scalar.IsSuccess();
     }
@@ -107,7 +107,7 @@ public class LoadSeamTests
         var img = PathBackedPng("out.png");
         using var ms = new System.IO.MemoryStream();
 
-        var result = await Plang.Encode(ms, _app.User.Context.Ok(img), Ctx);
+        var result = await Plang.Encode(ms, _app.actor.list.User.Context.Ok(img), Ctx);
         await result.IsSuccess();
 
         var json = Encoding.UTF8.GetString(ms.ToArray());
@@ -121,7 +121,7 @@ public class LoadSeamTests
         img.RequireStrictKind("gif");
         using var ms = new System.IO.MemoryStream();
 
-        var result = await Plang.Encode(ms, _app.User.Context.Ok(img), Ctx);
+        var result = await Plang.Encode(ms, _app.actor.list.User.Context.Ok(img), Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("StrictKindMismatch");

@@ -26,15 +26,15 @@ public class Stage4_BuildMethodImplsTests
         {
             Module = _app.Module(module),
             Name = action,
-            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.User.Context)).ToList())
+            Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.actor.list.User.Context)).ToList())
         };
 
     private async Task<Data> Build(string module, string action, params (string name, object? value)[] parameters)
     {
         var a = Make(module, action, parameters);
-        var (shell, err) = a.Instance(_app.User.Context);
+        var (shell, err) = a.Instance(_app.actor.list.User.Context);
         await Assert.That(err).IsNull();
-        var (handler, resolveErr) = await shell!.Resolve(a, _app.User.Context);
+        var (handler, resolveErr) = await shell!.Resolve(a, _app.actor.list.User.Context);
         await Assert.That(resolveErr).IsNull();
         return await ((IClass)handler!).Build();
     }
@@ -89,7 +89,7 @@ public class Stage4_BuildMethodImplsTests
     public async Task FileRead_Build_LiteralMissingFile_WritesBuildWarning()
     {
         var channel = (global::app.channel.type.stream.@this)
-            _app.User.Channel.CreateMemoryChannel("builder");
+            _app.actor.list.User.Channel.CreateMemoryChannel("builder");
 
         const string missing = "definitely-missing-stage4.csv";
         var result = await Build("file", "read", ("Path", missing));

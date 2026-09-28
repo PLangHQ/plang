@@ -31,7 +31,7 @@ public class IdentityHandlerTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.actor.context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.System.Context;
 
     // --- the app's identities: the system actor's row ---
 
@@ -44,7 +44,7 @@ public class IdentityHandlerTests
         string key;
         await using (var first = new global::app.@this(root))
         {
-            var ctx = first.System.Context;
+            var ctx = first.actor.list.System.Context;
             var create = new Create(ctx) { Name = (global::app.type.item.text.@this)"keeper", SetAsDefault = (global::app.type.item.@bool.@this)true };
             await create.Attach(null, ctx);
             var made = await create.Start();
@@ -53,15 +53,15 @@ public class IdentityHandlerTests
         }
 
         await using var next = new global::app.@this(root);
-        var user = next.User.Context;
+        var user = next.actor.list.User.Context;
         var get = new Get(user);
         await get.Attach(null, user);
         var got = await get.Start();
         await got.IsSuccess();
         await Assert.That(((Identity)(await got.Value())!).PublicKey).IsEqualTo(key);
 
-        await next.User.Setting.Load();
-        await Assert.That(next.User.Setting.Of<global::app.module.action.identity.setting.@this>().Identity.CountRaw).IsEqualTo(0);
+        await next.actor.list.User.Setting.Load();
+        await Assert.That(next.actor.list.User.Setting.Of<global::app.module.action.identity.setting.@this>().Identity.CountRaw).IsEqualTo(0);
     }
 
     // --- create ---
@@ -73,7 +73,7 @@ public class IdentityHandlerTests
         // real signing provider — not the class fixture's test-signing. Own real app, own key.
         await using var realApp = new global::app.@this(System.IO.Path.Combine(
             System.IO.Path.GetTempPath(), "plang_id_real_" + Guid.NewGuid().ToString("N")[..8]));
-        var realCtx = realApp.System.Context;
+        var realCtx = realApp.actor.list.System.Context;
         var handler = new Create(realCtx) { Name = (global::app.type.item.text.@this)"test", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await handler.Attach(null, realCtx);
         var result = await handler.Start();
@@ -612,7 +612,7 @@ public class IdentityHandlerTests
         await handler.Start();
 
         // %MyIdentity% should reflect the new name
-        var myIdentity = _app.System.Identity;
+        var myIdentity = _app.actor.list.System.Identity;
         await Assert.That(myIdentity!.Name).IsEqualTo("renamed");
     }
 
@@ -693,7 +693,7 @@ public class IdentityHandlerTests
         await getOther.Start();
 
         // %MyIdentity% should still be the default, not "other"
-        var myIdentity = _app.System.Identity;
+        var myIdentity = _app.actor.list.System.Identity;
         await Assert.That(myIdentity!.Name).IsEqualTo("default");
     }
 

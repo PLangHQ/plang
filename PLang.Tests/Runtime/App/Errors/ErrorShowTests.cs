@@ -14,7 +14,7 @@ public class ErrorShowTests : System.IAsyncDisposable
 
     public ErrorShowTests()
     {
-        _app.User.Channel.Register(new StreamChannel(
+        _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Error, _errorOut, ChannelDirection.Output, ownsStream: true) { Mime = "text/plain" });
     }
 
@@ -31,7 +31,7 @@ public class ErrorShowTests : System.IAsyncDisposable
     // Show, as the app runs it after a failed run: the error handed in by name.
     private async Task<string> Show(global::app.error.Error error)
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var loaded = await _app.goal.Load("/system/error/.build/show.pr");
         await loaded.IsSuccess();
         var show = (await loaded.Value() as Goal)!;
@@ -124,7 +124,7 @@ public class ErrorShowTests : System.IAsyncDisposable
     {
         var goal = await Goal("recurse");
         var action = goal.Step[0].Code[0];
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         global::app.error.Error error;
         await using (context.CallStack.Push(action, context.Variable))
         await using (context.CallStack.Push(action, context.Variable))

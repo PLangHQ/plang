@@ -22,7 +22,7 @@ public class NowVariableTests
     public async Task Now_ResolvesToDateTimeOffset()
     {
         var before = System.DateTimeOffset.Now;
-        var value = await _app.User.Context.Variable.GetValue("Now");
+        var value = await _app.actor.list.User.Context.Variable.GetValue("Now");
         var after = System.DateTimeOffset.Now;
 
         await Assert.That(value).IsTypeOf<System.DateTimeOffset>();
@@ -36,7 +36,7 @@ public class NowVariableTests
     public async Task Now_NavigatesToTicks()
     {
         var before = System.DateTimeOffset.Now;
-        var ticks = await _app.User.Context.Variable.GetValue("Now.Ticks");
+        var ticks = await _app.actor.list.User.Context.Variable.GetValue("Now.Ticks");
         var after = System.DateTimeOffset.Now;
 
         await Assert.That(ticks).IsNotNull();
@@ -50,7 +50,7 @@ public class NowVariableTests
     public async Task Now_NavigatesToCalendarAndClockParts()
     {
         var before = System.DateTimeOffset.Now;
-        var vars = _app.User.Context.Variable;
+        var vars = _app.actor.list.User.Context.Variable;
 
         long year = System.Convert.ToInt64(await vars.GetValue("Now.Year"));
         long month = System.Convert.ToInt64(await vars.GetValue("Now.Month"));
@@ -73,7 +73,7 @@ public class NowVariableTests
     [Test]
     public async Task Now_CompoundParts_CarryTheirOwnPlangType()
     {
-        var vars = _app.User.Context.Variable;
+        var vars = _app.actor.list.User.Context.Variable;
 
         // GetValue coerces item types to their CLR backing for C# callers; the typed
         // plang value is the navigated Data's own value — read it via Peek.
@@ -91,7 +91,7 @@ public class NowVariableTests
     public async Task Now_CompoundParts_NavigateTheirOwnMembers()
     {
         var before = System.DateTimeOffset.Now;
-        var vars = _app.User.Context.Variable;
+        var vars = _app.actor.list.User.Context.Variable;
 
         long dateYear = System.Convert.ToInt64(await vars.GetValue("Now.Date.Year"));
         long timeHour = System.Convert.ToInt64(await vars.GetValue("Now.TimeOfDay.Hour"));

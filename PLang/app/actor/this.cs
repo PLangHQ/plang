@@ -75,9 +75,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public CancellationToken CancellationToken => _cts.Token;
 
     /// <summary>
-    /// Identity for this actor.
-    /// For System actor: resolved via Data.DynamicData %MyIdentity% on first access.
-    /// For User/Service: set externally by HTTP/signing layer.
+    /// This actor's own identity. The system's is held by the identity store as the app's default once it is
+    /// resolved (<c>%MyIdentity%</c>); a user's or a service's is set by the HTTP/signing layer.
     /// </summary>
     public Identity? Identity { get; set; }
 
@@ -85,7 +84,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private global::app.actor.setting.@this? _setting;
 
     /// <summary>This actor's settings — the root its contexts' layers chain to; the user's falls back
-    /// to the system's (<c>app.System.Setting</c>).</summary>
+    /// to the system's (<c>app.actor.list.System.Setting</c>).</summary>
     public global::app.actor.setting.@this Setting => _setting ??= new(this, _fallback?.Setting);
 
     /// <param name="fallback">The actor whose settings answer what this one's don't — the system, for the user.</param>
@@ -104,22 +103,27 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         // Register %!app% — navigates the App object graph (e.g., %!app.test.Verbose%)
         Context.Variable.Set("!app", new data.DynamicData("!app", () => app, Context));
 
-        // Register lazy %MyIdentity% — resolves to the System actor's default identity.
-        // Data.DynamicData re-evaluates on each access, so changes via setDefault/rename are reflected.
-        Context.Variable.Set("MyIdentity", new data.DynamicData("MyIdentity", () =>
+        // %MyIdentity% — the app's own identity; %Identity% — who this actor acts for: its identity's public key
+        // (a caller's, in a service), else, in a local run, the app's own. Both computed on each read, so a
+        // setDefault or rename is reflected.
+        Context.Variable.Set("MyIdentity", new data.DynamicData("MyIdentity", () => DefaultIdentity, Context));
+        Context.Variable.Set("Identity", new data.DynamicData("Identity", () => (Identity ?? DefaultIdentity)?.PublicKey, Context));
+    }
+
+    /// <summary>The app's default identity — the system actor's, made on first ask. Not <see cref="Identity"/>'s
+    /// fallback: the identity store reads the system's own slot while it makes the default.</summary>
+    private Identity? DefaultIdentity
+    {
+        get
         {
-            var (idProvider, _) = app.Code.Get<IIdentity>();
-            if (idProvider == null) return null;
-            var result = idProvider.GetOrCreateDefaultAsync(new global::app.module.action.identity.Get(app.System.Context)).GetAwaiter().GetResult();
+            var (provider, _) = App.Code.Get<IIdentity>();
+            if (provider == null) return null;
+            // sync over async: a computed value answers synchronously on read
+            var result = provider.GetOrCreateDefaultAsync(new global::app.module.action.identity.Get(App.actor.list.System.Context)).GetAwaiter().GetResult();
             return result.Success
                 ? (result.Peek() as global::app.type.item.@this)?.Clr<Identity>() ?? result.Peek() as Identity
                 : null;
-        }, Context));
-
-        // %Identity% — who this actor acts for: its identity's public key (a caller's, in a service), else, in a
-        // local run, the system's own (%MyIdentity%, through its cell).
-        Context.Variable.Set("Identity", new data.DynamicData("Identity", () =>
-            Identity?.PublicKey ?? (app.System.Context.Variable.Peek("MyIdentity")?.Peek() as Identity)?.PublicKey, Context));
+        }
     }
 
     /// <summary>

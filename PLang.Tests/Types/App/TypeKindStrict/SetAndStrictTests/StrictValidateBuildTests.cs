@@ -33,7 +33,7 @@ public class StrictValidateBuildTests
     // The bound handler, as the build pass holds it after Resolve: its own properties set.
     private global::app.module.action.variable.Set Handler(object value, global::app.type.@this typeEntity)
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
         return new(ctx)
         {
             Value = new global::app.data.@this("Value", value, context: ctx),

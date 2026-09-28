@@ -18,7 +18,7 @@ public class Stage2_SetRebindTests
         // must mint a new Data and replace the binding — the previously-bound Data instance
         // (e.g. one held by a list) must compare reference-unequal to the new binding (M).
         await using var app = NewApp();
-        var vars = app.User.Context.Variable;
+        var vars = app.actor.list.User.Context.Variable;
         await using var frame = vars.Calls.Push(null);
 
         vars.Set("x", "a");
@@ -38,7 +38,7 @@ public class Stage2_SetRebindTests
         // test, but exercising the alternate raw-branch arm so a future split doesn't leave
         // one mutating in place.
         await using var app = NewApp();
-        var vars = app.User.Context.Variable;
+        var vars = app.actor.list.User.Context.Variable;
 
         vars.Set("x", "a");
         var dataA = await vars.Get("x");

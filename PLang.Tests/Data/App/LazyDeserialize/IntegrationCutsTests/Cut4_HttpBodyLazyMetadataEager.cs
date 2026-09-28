@@ -32,8 +32,8 @@ public class Cut4_HttpBodyLazyMetadataEager
         };
         app.Code.Register<IHttp>(new Default(handler) { Name = "test" });
         app.Code.SetDefault<IHttp>("test");
-        var action = new request(app.User.Context) { Url = (global::app.type.item.text.@this)"https://x/y", Unsigned = (global::app.type.item.@bool.@this)true };
-        await action.Attach(null, app.User.Context);
+        var action = new request(app.actor.list.User.Context) { Url = (global::app.type.item.text.@this)"https://x/y", Unsigned = (global::app.type.item.@bool.@this)true };
+        await action.Attach(null, app.actor.list.User.Context);
         return (app, await action.Start());
     }
 

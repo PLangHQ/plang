@@ -17,7 +17,7 @@ internal static class TypeMapping
     /// <summary>The face of the entity the CLR type names — what a catalog prints.</summary>
     public static string GetTypeName(System.Type type) => _app.type.list[type].ToString();
 
-    public static void Register(string plangName, System.Type clrType) => _app.type.list.Add(clrType, _app.User.Context, plangName);
+    public static void Register(string plangName, System.Type clrType) => _app.type.list.Add(clrType, _app.actor.list.User.Context, plangName);
 
     /// <summary>The options of the closed set <paramref name="type"/> draws from, or null when it has none.</summary>
     /// A nullable, a <c>data&lt;T&gt;</c> or a <c>choice&lt;T&gt;</c> reads through to the set it holds.

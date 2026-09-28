@@ -36,8 +36,8 @@ public sealed partial class @this
     /// </summary>
     public async Task<data.@this> Start()
     {
-        var appPrPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", _context.App.System.Context!);
-        var appPrExists = await appPrPath.ExistsAsync(_context.App.System.Context!);
+        var appPrPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", _context.App.actor.list.System.Context!);
+        var appPrExists = await appPrPath.ExistsAsync(_context.App.actor.list.System.Context!);
         // No app marker on disk → confirm creation (or error when headless).
         // Was inverted (fired when the marker DID exist) — that forced every
         // build of an existing app to need --app={"create":true}.
@@ -49,7 +49,7 @@ public sealed partial class @this
 
             // The question goes through the User actor's ask door: its input channel asks, writing the
             // question on the actor's output channel and reading the answer — so on.ask fires as for any ask.
-            var userContext = _context.App.User.Context;
+            var userContext = _context.App.actor.list.User.Context;
             var ask = new global::app.module.action.output.ask(userContext)
             {
                 Question = userContext.Ok<global::app.type.item.text.@this>(
@@ -66,7 +66,7 @@ public sealed partial class @this
         // The builder runs under the User actor's context — user code output/channels resolve
         // through it; no global "current actor" switch needed. Its goal loads through the goal
         // collection, which registers what it loads.
-        var user = _context.App.User.Context;
+        var user = _context.App.actor.list.User.Context;
         var loaded = await _context.App.goal.Load("/system/builder/.build/build.pr");
         if (!loaded.Success) return loaded;
         return await ((await loaded.Value()) as global::app.goal.@this)!.Start(user);

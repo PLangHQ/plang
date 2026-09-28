@@ -79,7 +79,7 @@ public class RunActionTests
         // Write the .pr through the PLANG serializer (goal.Output, Store view) — the same path the
         // real build takes — NOT raw STJ. The reader reads the plang wire shape ({name,type,value}
         // per param); a raw-STJ dump of the Data C# surface no longer round-trips through it.
-        System.IO.File.WriteAllText(prFile, await _app.User.Context.Pr(goal));
+        System.IO.File.WriteAllText(prFile, await _app.actor.list.User.Context.Pr(goal));
 
         return new global::app.test.@this()
         {
@@ -94,8 +94,8 @@ public class RunActionTests
         var run = new Dictionary<string, object?>();
         if (parallel.HasValue) run["parallel"] = parallel.Value;
         if (timeoutSec.HasValue) run["timeoutSeconds"] = timeoutSec.Value;
-        if (run.Count > 0) await _app.User.Context.Setting.Set("app.test.setting", run).IsSuccess();
-        var action = new global::app.module.action.test.start(_app.User.Context) { Tests = tests.ToListData<global::app.test.@this>() };
+        if (run.Count > 0) await _app.actor.list.User.Context.Setting.Set("app.test.setting", run).IsSuccess();
+        var action = new global::app.module.action.test.start(_app.actor.list.User.Context) { Tests = tests.ToListData<global::app.test.@this>() };
         var result = await action.Start();
         // run returns list<test>; materialize the executed tests (each row's value is a test).
         var list = (global::app.type.item.list.@this)(await result.Value())!;
@@ -112,8 +112,8 @@ public class RunActionTests
         {
             ("variable", "set", new List<Data>
             {
-                new("Name", new global::app.type.item.variable.@this("shared"), context: _app.User.Context),
-                new("Value", 1, context: _app.User.Context)
+                new("Name", new global::app.type.item.variable.@this("shared"), context: _app.actor.list.User.Context),
+                new("Value", 1, context: _app.actor.list.User.Context)
             })
         });
 
@@ -122,7 +122,7 @@ public class RunActionTests
         {
             ("assert", "isNull", new List<Data>
             {
-                new("Value", "%shared%", new global::app.type.@this("variable"), context: _app.User.Context)
+                new("Value", "%shared%", new global::app.type.@this("variable"), context: _app.actor.list.User.Context)
             })
         });
 
@@ -161,7 +161,7 @@ public class RunActionTests
                     lock (depthLock) currentDepth--;
                     return context.Ok();
                 },
-                childApp.User, global::app.@event.binding.Scope.actor);
+                childApp.actor.list.User, global::app.@event.binding.Scope.actor);
         }
 
         _app.test.list.Made += Probe;
@@ -171,7 +171,7 @@ public class RunActionTests
             for (int i = 0; i < 4; i++)
                 tests.Add(await BuildFixture($"T{i}.test.goal", $"T{i}", new (string, string, List<Data>)[]
                 {
-                    ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x"), context: _app.User.Context), new("Value", i, context: _app.User.Context) })
+                    ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x"), context: _app.actor.list.User.Context), new("Value", i, context: _app.actor.list.User.Context) })
                 }));
 
             var results = await RunTests(tests, parallel: 2);
@@ -203,7 +203,7 @@ public class RunActionTests
         {
             ("timer", "sleep", new List<Data>
             {
-                new("Ms", 5000, context: _app.User.Context) // 5s
+                new("Ms", 5000, context: _app.actor.list.User.Context) // 5s
             })
         });
 
@@ -220,8 +220,8 @@ public class RunActionTests
     {
         var test = await BuildFixture("Cov.test.goal", "Cov", new (string, string, List<Data>)[]
         {
-            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) }),
-            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("y"), context: _app.User.Context), new("Value", 2, context: _app.User.Context) })
+            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x"), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) }),
+            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("y"), context: _app.actor.list.User.Context), new("Value", 2, context: _app.actor.list.User.Context) })
         });
 
         await RunTests(new List<global::app.test.@this> { test });
@@ -238,7 +238,7 @@ public class RunActionTests
     {
         var test = await BuildFixture("MergeA.test.goal", "M", new (string, string, List<Data>)[]
         {
-            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("a"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) })
+            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("a"), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) })
         });
 
         // Pre-populate parent's coverage with something distinct
@@ -270,7 +270,7 @@ public class RunActionTests
         {
             var test = await BuildFixture("OsDir.test.goal", "S", new (string, string, List<Data>)[]
             {
-                ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) })
+                ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x"), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) })
             });
 
             await RunTests(new List<global::app.test.@this> { test });
@@ -285,7 +285,7 @@ public class RunActionTests
         }
     }
 
-    // testApp.Test = new global::app.test.list.@this(testApp.System.Context) before the test starts. Subsystems that branch
+    // testApp.Test = new global::app.test.list.@this(testApp.actor.list.System.Context) before the test starts. Subsystems that branch
     // on test mode (in-memory DBs, stubbed identity, etc.) observe the flag.
     // Uses the test list's Made hook to snapshot IsEnabled directly on the child App.
     [Test]
@@ -302,7 +302,7 @@ public class RunActionTests
         {
             var test = await BuildFixture("IsEn.test.goal", "E", new (string, string, List<Data>)[]
             {
-                ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) })
+                ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x"), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) })
             });
 
             var results = await RunTests(new List<global::app.test.@this> { test });
@@ -336,7 +336,7 @@ public class RunActionTests
         {
             var ready = await BuildFixture("Ready.test.goal", "R", new (string, string, List<Data>)[]
             {
-                ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) })
+                ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x"), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) })
             });
             var stale = new global::app.test.@this() {
                 Goal = new Goal { Name = "Stale", Path = global::app.type.item.path.@this.Resolve("/Stale.test.goal", global::PLang.Tests.TestApp.SharedContext) },
@@ -372,11 +372,11 @@ public class RunActionTests
         // demonstrate it carried through test.start's failure path (end-to-end check).
         var test = await BuildFixture("Fail.test.goal", "F", new (string, string, List<Data>)[]
         {
-            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("score"), context: _app.User.Context), new("Value", 42, context: _app.User.Context) }),
+            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("score"), context: _app.actor.list.User.Context), new("Value", 42, context: _app.actor.list.User.Context) }),
             ("assert", "equals", new List<Data>
             {
-                new("Expected", 1, context: _app.User.Context),
-                new("Actual", 2, context: _app.User.Context)
+                new("Expected", 1, context: _app.actor.list.User.Context),
+                new("Actual", 2, context: _app.actor.list.User.Context)
             })
         });
 
@@ -423,9 +423,9 @@ public class RunActionTests
         {
             ("condition", "if", new List<Data>
             {
-                new("Left", 1, context: _app.User.Context),
-                new("Operator", "==", context: _app.User.Context),
-                new("Right", 1, context: _app.User.Context)
+                new("Left", 1, context: _app.actor.list.User.Context),
+                new("Operator", "==", context: _app.actor.list.User.Context),
+                new("Right", 1, context: _app.actor.list.User.Context)
             })
         });
 
@@ -468,7 +468,7 @@ public class RunActionTests
         void Probe(global::app.@this childApp)
         {
             if (!childApp.AbsolutePath.StartsWith(_tempDir)) return;
-            childApp.User.Channel.Register(new StreamChannel(
+            childApp.actor.list.User.Channel.Register(new StreamChannel(
                 global::app.channel.list.@this.Error, errStream,
                 ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
         }
@@ -478,12 +478,12 @@ public class RunActionTests
             var test = await BuildFixture("OutCap.test.goal", "OutCap", new (string, string, List<Data>)[]
             {
                 // No `channel` param → defaults to "output".
-                ("output", "write", new List<Data> { new("Data", "hello-output", context: _app.User.Context) }),
+                ("output", "write", new List<Data> { new("Data", "hello-output", context: _app.actor.list.User.Context) }),
                 // Explicit channel routing to "error".
                 ("output", "write", new List<Data>
                 {
-                    new("Data", "hello-error", context: _app.User.Context),
-                    new("channel", "error", context: _app.User.Context)
+                    new("Data", "hello-error", context: _app.actor.list.User.Context),
+                    new("channel", "error", context: _app.actor.list.User.Context)
                 })
             });
 
@@ -522,12 +522,12 @@ public class RunActionTests
                 new Step { Index = 0, Text = "h0", Code = new StepActions
                 {
                     new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
-                        Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Name", new global::app.type.item.variable.@this("h0"), context: _app.User.Context), new("Value", 0, context: _app.User.Context) }) }
+                        Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Name", new global::app.type.item.variable.@this("h0"), context: _app.actor.list.User.Context), new("Value", 0, context: _app.actor.list.User.Context) }) }
                 }},
                 new Step { Index = 1, Text = "h1", Code = new StepActions
                 {
                     new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
-                        Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Name", new global::app.type.item.variable.@this("h1"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) }) }
+                        Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Name", new global::app.type.item.variable.@this("h1"), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) }) }
                 }}
             }
         };
@@ -537,18 +537,18 @@ public class RunActionTests
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(helperPrAbs)!);
         // Write via the plang serializer (goal.Output, Store) — the real build path — not raw STJ,
         // so the reader can read it back (see BuildFixture).
-        System.IO.File.WriteAllText(helperPrAbs, await _app.User.Context.Pr(helperGoal));
+        System.IO.File.WriteAllText(helperPrAbs, await _app.actor.list.User.Context.Pr(helperGoal));
 
         // Entry goal: 3 top-level steps. Step 1 calls Helper (which has its own
         // 2 steps). Timings should record exactly steps 0, 1, 2 of the entry.
         var entry = await BuildFixture("Tim.test.goal", "Tim", new (string, string, List<Data>)[]
         {
-            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("a"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) }),
+            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("a"), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) }),
             ("goal", "call", new List<Data>
             {
-                new("Name", "Helper", context: _app.User.Context)
+                new("Name", "Helper", context: _app.actor.list.User.Context)
             }),
-            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("b"), context: _app.User.Context), new("Value", 2, context: _app.User.Context) })
+            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("b"), context: _app.actor.list.User.Context), new("Value", 2, context: _app.actor.list.User.Context) })
         });
 
         var results = await RunTests(new List<global::app.test.@this> { entry });
@@ -582,7 +582,7 @@ public class RunActionTests
         // fixture whose .pr is malformed JSON so goal loading throws.
         var throwing = await BuildFixture("Throw.test.goal", "T", new (string, string, List<Data>)[]
         {
-            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x"), context: _app.User.Context), new("Value", 1, context: _app.User.Context) })
+            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x"), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) })
         });
         // Corrupt the .pr so deserialization throws inside RunSingleAsync.
         // .pr lives at <_tempDir>/.build/<stem>.pr (BuildFixture recipe).
@@ -591,7 +591,7 @@ public class RunActionTests
 
         var healthy = await BuildFixture("Healthy.test.goal", "H", new (string, string, List<Data>)[]
         {
-            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("y"), context: _app.User.Context), new("Value", 2, context: _app.User.Context) })
+            ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("y"), context: _app.actor.list.User.Context), new("Value", 2, context: _app.actor.list.User.Context) })
         });
 
         var results = await RunTests(new List<global::app.test.@this> { throwing, healthy });

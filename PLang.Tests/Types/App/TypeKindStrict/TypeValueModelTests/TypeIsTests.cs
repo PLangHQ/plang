@@ -22,7 +22,7 @@ public class TypeIsTests
     [Test] public async Task Is_ImageBornFromPath_IsPath()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         // Composition is the VALUE's type history: an image born from a path carries a "path"
         // entry, so the value answers `is path`. (A bare type entity does NOT — no history.)
         var path = new global::app.type.item.path.file.@this("/test/photo.png");
@@ -47,7 +47,7 @@ public class TypeIsTests
     [Test] public async Task Set_ImageBoundToPathSlot_KeptAsImage_NotDowngraded()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var img = new image(PngHeader, "image/png");
 
         // Declared type=path, but the value is already an image (which has-a

@@ -18,7 +18,7 @@ public class VariablesCloneTests : System.IAsyncDisposable
     [Test]
     public async Task Clone_ListValue_IsIsolatedFromOriginal()
     {
-        var vars = new Variables(app.User.Context);
+        var vars = new Variables(app.actor.list.User.Context);
         vars.Set("items", new List<object?> { "a", "b" });
 
         var clone = vars.Clone();
@@ -31,7 +31,7 @@ public class VariablesCloneTests : System.IAsyncDisposable
     [Test]
     public async Task Clone_DictionaryValue_IsIsolatedFromOriginal()
     {
-        var vars = new Variables(app.User.Context);
+        var vars = new Variables(app.actor.list.User.Context);
         vars.Set("config", new Dictionary<string, object?> { ["key1"] = "val1" });
 
         var clone = vars.Clone();
@@ -44,7 +44,7 @@ public class VariablesCloneTests : System.IAsyncDisposable
     [Test]
     public async Task Clone_NestedListInDict_IsIsolatedFromOriginal()
     {
-        var vars = new Variables(app.User.Context);
+        var vars = new Variables(app.actor.list.User.Context);
         vars.Set("record", new Dictionary<string, object?>
         {
             ["tags"] = new List<string> { "alpha", "beta" }
@@ -64,7 +64,7 @@ public class VariablesCloneTests : System.IAsyncDisposable
     [Test]
     public async Task Clone_ScalarValue_RemainsIndependent()
     {
-        var vars = new Variables(app.User.Context);
+        var vars = new Variables(app.actor.list.User.Context);
         vars.Set("count", 42);
         vars.Set("name", "original");
 

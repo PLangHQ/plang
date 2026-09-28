@@ -47,7 +47,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     {
         get
         {
-            var named = _app.System.Context.Setting.Of<global::app.test.setting.@this>().Actor.ToString();
+            var named = _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Actor.ToString();
             return _app.actor.list.Items().First(a => string.Equals(a.Name, named, StringComparison.OrdinalIgnoreCase));
         }
     }

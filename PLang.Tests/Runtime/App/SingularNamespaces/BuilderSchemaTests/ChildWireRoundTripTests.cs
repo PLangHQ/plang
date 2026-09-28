@@ -16,7 +16,7 @@ public class ChildWireRoundTripTests
     public async Task ConditionChild_SurvivesOutputReadRoundTrip()
     {
         await using var app = TestApp.Create("/test");
-        var context = app.System.Context;
+        var context = app.actor.list.System.Context;
 
         // A condition step with an indented body, folded so the body lives on the gate action's Child.
         var goal = Make.Goal("G",

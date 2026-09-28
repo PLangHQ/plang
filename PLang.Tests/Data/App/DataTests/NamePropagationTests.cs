@@ -29,7 +29,7 @@ public class NamePropagationTests
     [Skip("Name propagation is owned by AsCanonical (via the old ShallowClone(Value<T>()) path); reworked by the pure-lazy source-gen refactor. See todos 2026-06-15.")]
     public async Task Name_FullVarMatch_PropagatesLiveVariableName()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new global::app.data.@this("products", global::PLang.Tests.Shared.Make.List(new List<object?> { "a" }, context), context: context));
 
         var paramData = new Data("List", "%products%", new global::app.type.@this("text", null, false, "plang"), context: context);
@@ -44,7 +44,7 @@ public class NamePropagationTests
     [Test]
     public async Task Name_LiteralValue_KeepsSlotName()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var paramData = new Data("Variable", "user", context: context);
         var result = paramData.As<global::app.type.item.text.@this>(await paramData.Value<global::app.type.item.text.@this>());
         await Assert.That(result.Name).IsEqualTo("Variable");
@@ -56,7 +56,7 @@ public class NamePropagationTests
     [Skip("Name propagation is owned by AsCanonical (via the old ShallowClone(Value<T>()) path); reworked by the pure-lazy source-gen refactor. See todos 2026-06-15.")]
     public async Task Name_PartialInterpolation_KeepsSlotName()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new global::app.data.@this<global::app.type.item.text.@this>("name", "world", context: context));
 
         var paramData = new Data("Greeting", "hello %name%!", new global::app.type.@this("text", null, false, "plang"), context: context);
@@ -71,7 +71,7 @@ public class NamePropagationTests
     [Skip("Name propagation is owned by AsCanonical (via the old ShallowClone(Value<T>()) path); reworked by the pure-lazy source-gen refactor. See todos 2026-06-15.")]
     public async Task Name_UnsetVariable_PropagatesVarName_NotInitialized()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var paramData = new Data("X", "%missing%", new global::app.type.@this("text", null, false, "plang"), context: context);
         var result = paramData.As<global::app.type.item.text.@this>(await paramData.Value<global::app.type.item.text.@this>());
         await Assert.That(result.Name).IsEqualTo("missing");
@@ -84,7 +84,7 @@ public class NamePropagationTests
     [Test]
     public async Task Name_NestedListResolution_PreservesSlotName()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new global::app.data.@this<global::app.type.item.text.@this>("b", "expanded", context: context));
 
         var paramData = TemplateStamp.Container("Items", new List<object?> { "a", "%b%", "c" }, context);
@@ -100,7 +100,7 @@ public class NamePropagationTests
     [Skip("Name propagation is owned by AsCanonical (via the old ShallowClone(Value<T>()) path); reworked by the pure-lazy source-gen refactor. See todos 2026-06-15.")]
     public async Task Name_FullMatch_StoredVarRef_PropagatesImmediateName_NoChain()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new global::app.data.@this<global::app.type.item.number.@this>("b", 42, context: context));
         context.Variable.Set(new global::app.data.@this<global::app.type.item.text.@this>("a", "%b%", context: context));
 

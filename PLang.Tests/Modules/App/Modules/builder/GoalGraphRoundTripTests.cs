@@ -53,7 +53,7 @@ public class GoalGraphRoundTripTests : System.IAsyncDisposable
     [Test]
     public async Task ReflectionRead_ReproducesTheGoalGraph_LikeStj()
     {
-        var ctx = _app.User.Context;
+        var ctx = _app.actor.list.User.Context;
 
         var utf8 = new System.Text.Json.Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(Pr));
         utf8.Read();

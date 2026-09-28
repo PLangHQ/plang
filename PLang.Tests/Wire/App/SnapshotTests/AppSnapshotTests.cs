@@ -7,7 +7,7 @@ public class AppSnapshotTests
     {
         // Every owner captures its own section; the App's section carries its Mode (no presence bits).
         var app = global::PLang.Tests.TestApp.Create("/test");
-        var snap = app.Snapshot(app.User.Context);
+        var snap = app.Snapshot(app.actor.list.User.Context);
 
         await Assert.That(snap.HasSection("Variables")).IsTrue();
         await Assert.That(snap.HasSection("Providers")).IsTrue();
@@ -22,15 +22,15 @@ public class AppSnapshotTests
     public async Task App_Restore_DispatchesEachSubtree_ToMatchingThisRestore()
     {
         var src = global::PLang.Tests.TestApp.Create("/src");
-        src.User.Context.Variable.Set("x", 1);
-        src.Build = new global::app.module.action.build.@this(src.System.Context);   // building — Mode is Build
+        src.actor.list.User.Context.Variable.Set("x", 1);
+        src.Build = new global::app.module.action.build.@this(src.actor.list.System.Context);   // building — Mode is Build
 
-        var snap = src.Snapshot(src.User.Context);
+        var snap = src.Snapshot(src.actor.list.User.Context);
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");   // testing — restore sets it from the captured Mode
-        await dst.Restore(snap, dst.User.Context);
+        await dst.Restore(snap, dst.actor.list.User.Context);
 
-        await Assert.That((await (await dst.User.Context.Variable.Get("x")).Value())?.ToString()).IsEqualTo("1");
+        await Assert.That((await (await dst.actor.list.User.Context.Variable.Get("x")).Value())?.ToString()).IsEqualTo("1");
         await Assert.That(dst.Build != null).IsTrue();
         await Assert.That(dst.test.list.Session == null).IsTrue();
     }
@@ -39,7 +39,7 @@ public class AppSnapshotTests
     public async Task App_Snapshot_OmitsReconstructOnBuildSubsystems()
     {
         var app = global::PLang.Tests.TestApp.Create("/test");
-        var snap = app.Snapshot(app.User.Context);
+        var snap = app.Snapshot(app.actor.list.User.Context);
 
         await Assert.That(snap.HasSection("Modules")).IsFalse();
         await Assert.That(snap.HasSection("Goals")).IsFalse();
@@ -57,10 +57,10 @@ public class AppSnapshotTests
     public async Task App_Cache_NotInSnapshot_FreshAppHasEmptyCache()
     {
         var src = global::PLang.Tests.TestApp.Create("/src");
-        var snap = src.Snapshot(src.User.Context);
+        var snap = src.Snapshot(src.actor.list.User.Context);
 
         var dst = global::PLang.Tests.TestApp.Create("/dst");
-        await dst.Restore(snap, dst.User.Context);
+        await dst.Restore(snap, dst.actor.list.User.Context);
 
         await Assert.That(dst.Cache).IsTypeOf<global::app.module.action.cache.Memory>();
         await Assert.That(snap.HasSection("Cache")).IsFalse();

@@ -51,7 +51,7 @@ public class PlangAssignabilityTests
     [Test]
     public async Task EnumerateItems_TextValue_YieldsOneWholeItem()
     {
-        var source = new Data("text", "hello", context: _app.User.Context);
+        var source = new Data("text", "hello", context: _app.actor.list.User.Context);
         var items = new List<global::app.data.@this>();
         foreach (var (_, item) in await source.EnumerateItems()) items.Add(item);
         await Assert.That(items.Count).IsEqualTo(1);
@@ -61,7 +61,7 @@ public class PlangAssignabilityTests
     [Test]
     public async Task EnumerateItems_NumberValue_YieldsOneWholeItem()
     {
-        var source = new Data("n", 42, context: _app.User.Context);
+        var source = new Data("n", 42, context: _app.actor.list.User.Context);
         var items = new List<global::app.data.@this>();
         foreach (var (_, item) in await source.EnumerateItems()) items.Add(item);
         await Assert.That(items.Count).IsEqualTo(1);

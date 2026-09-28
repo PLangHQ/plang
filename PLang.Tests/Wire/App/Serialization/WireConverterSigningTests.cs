@@ -13,14 +13,14 @@ public class WireConverterSigningTests
             "plang-wire-sig-" + Guid.NewGuid().ToString("N")[..8]));
 
     private static global::app.type.kind.@this Plang(global::app.@this app)
-        => app.User.Context.Format("application/plang");
+        => app.actor.list.User.Context.Format("application/plang");
 
     [Test] public async Task Serialize_WithinActorScope_WrapsInSignatureLayer()
     {
         await using var app = NewSignedApp();
-        var data = new global::app.data.@this("greeting", "hello", context: app.User.Context);
+        var data = new global::app.data.@this("greeting", "hello", context: app.actor.list.User.Context);
 
-        var json = (await Plang(app).Serialize(data, app.User.Context).Value())!.Clr<string>()!;
+        var json = (await Plang(app).Serialize(data, app.actor.list.User.Context).Value())!.Clr<string>()!;
 
         using var doc = System.Text.Json.JsonDocument.Parse(json);
         // Top-level object IS the signature layer (hoisted past the data envelope).
@@ -35,10 +35,10 @@ public class WireConverterSigningTests
     [Test] public async Task Serialize_ThenDeserialize_AutoVerifies_AndPeelsToInnerData()
     {
         await using var app = NewSignedApp();
-        var data = new global::app.data.@this("greeting", "hello", context: app.User.Context);
-        var json = (await Plang(app).Serialize(data, app.User.Context).Value())!.Clr<string>()!;
+        var data = new global::app.data.@this("greeting", "hello", context: app.actor.list.User.Context);
+        var json = (await Plang(app).Serialize(data, app.actor.list.User.Context).Value())!.Clr<string>()!;
 
-        var roundTripped = Plang(app).Deserialize(json, app.User.Context);
+        var roundTripped = Plang(app).Deserialize(json, app.actor.list.User.Context);
         await roundTripped.IsSuccess();
         // Read peeled the verified layer down to the inner data.
         await Assert.That((await roundTripped.Value())?.ToString()).IsEqualTo("hello");
@@ -47,14 +47,14 @@ public class WireConverterSigningTests
     [Test] public async Task Deserialize_TamperedInnerValue_FailsVerification()
     {
         await using var app = NewSignedApp();
-        var data = new global::app.data.@this("greeting", "hello", context: app.User.Context);
-        var json = (await Plang(app).Serialize(data, app.User.Context).Value())!.Clr<string>()!;
+        var data = new global::app.data.@this("greeting", "hello", context: app.actor.list.User.Context);
+        var json = (await Plang(app).Serialize(data, app.actor.list.User.Context).Value())!.Clr<string>()!;
 
         // Flip the signed inner value — the signature no longer covers the payload.
         var tampered = json.Replace("hello", "HELLO");
         await Assert.That(tampered).IsNotEqualTo(json);
 
-        var result = Plang(app).Deserialize(tampered, app.User.Context);
+        var result = Plang(app).Deserialize(tampered, app.actor.list.User.Context);
         await Assert.That(result.Success).IsFalse()
             .Because("Auto-verify on read must reject a payload whose inner value was tampered.");
     }
@@ -63,8 +63,8 @@ public class WireConverterSigningTests
     {
         await using var app = NewSignedApp();
         var bytes = new byte[] { 1, 2, 3, 4 };
-        var data = new global::app.data.@this("blob", bytes, context: app.User.Context);
-        var json = (await Plang(app).Serialize(data, app.User.Context).Value())!.Clr<string>()!;
+        var data = new global::app.data.@this("blob", bytes, context: app.actor.list.User.Context);
+        var json = (await Plang(app).Serialize(data, app.actor.list.User.Context).Value())!.Clr<string>()!;
 
         // The inner data's value is the base64 string, not a nested {name,type,value}.
         using var doc = System.Text.Json.JsonDocument.Parse(json);

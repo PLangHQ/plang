@@ -19,7 +19,7 @@ public class LoadTests
         await using var writer = TestApp.Create(_root);
         var goal = Make.Goal("FullPipeline",
             Make.Step("set x", Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", 1))));
-        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_root, ".build", "fullpipeline.pr"), await writer.User.Context.Pr(goal));
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_root, ".build", "fullpipeline.pr"), await writer.actor.list.User.Context.Pr(goal));
     }
 
     [After(Test)]
@@ -34,8 +34,8 @@ public class LoadTests
         await using var app = TestApp.Create(Fixtures());
         var handed = new List<global::app.type.item.@this>();
         var on = app.goal.Own();
-        on.Bind("load", When.before, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, app.System, Scope.app);
-        on.Bind("load", When.after, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, app.System, Scope.app);
+        on.Bind("load", When.before, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.app);
+        on.Bind("load", When.after, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.app);
 
         var loaded = await app.goal.Load(Pr);
 
@@ -50,7 +50,7 @@ public class LoadTests
     {
         await using var app = TestApp.Create(Fixtures());
         app.goal.Own().Bind("load", When.before,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))), app.System, Scope.app);
+            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))), app.actor.list.System, Scope.app);
 
         var loaded = await app.goal.Load(Pr);
 
@@ -67,7 +67,7 @@ public class LoadTests
             var instead = ctx.Ok("instead");
             instead.Handled = true;
             return Task.FromResult(instead);
-        }, app.System, Scope.app);
+        }, app.actor.list.System, Scope.app);
 
         var loaded = await app.goal.Load(Pr);
 
@@ -79,7 +79,7 @@ public class LoadTests
     {
         await using var app = TestApp.Create(Fixtures());
         app.goal.Own().Bind("load", When.after,
-            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Broke", 400))), app.System, Scope.app);
+            (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Broke", 400))), app.actor.list.System, Scope.app);
 
         var loaded = await app.goal.Load(Pr);
 
@@ -91,7 +91,7 @@ public class LoadTests
     {
         await using var app = TestApp.Create(Fixtures());
         var loads = 0;
-        app.goal.Own().Bind("load", When.after, (_, _, ctx) => { loads++; return Task.FromResult(ctx.Ok()); }, app.System, Scope.app);
+        app.goal.Own().Bind("load", When.after, (_, _, ctx) => { loads++; return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.app);
 
         await (await app.goal.Load(Pr)).IsSuccess();
         await (await app.goal.Load(Pr)).IsSuccess();

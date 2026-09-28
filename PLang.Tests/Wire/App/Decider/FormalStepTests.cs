@@ -14,7 +14,7 @@ public class FormalStepTests
     public async Task AFormalStep_IsTakenAsWritten_AndAskedNothing()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os"));
-        var context = os.User.Context;
+        var context = os.actor.list.User.Context;
         var goal = Parse("Start\n- output.write(Data=\"a\")\n- write out \"b\"\n", context);
 
         await Assert.That(goal.Step[0].IsFormal).IsTrue();
@@ -45,7 +45,7 @@ public class FormalStepTests
     public async Task AFormalStep_NamingAnUnknownAction_IsRefusedWithWhy()
     {
         await using var os = TestApp.Create(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os"));
-        var context = os.User.Context;
+        var context = os.actor.list.User.Context;
         var goal = Parse("Start\n- output.shout(Data=\"a\")\n", context);
 
         var refused = await Read(goal, "", context);

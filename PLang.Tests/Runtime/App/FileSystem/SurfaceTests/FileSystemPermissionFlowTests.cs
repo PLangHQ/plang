@@ -88,7 +88,7 @@ public class FileSystemPermissionFlowTests
     public async Task InRootPath_ReturnsOk_NoAskIssued(string method)
     {
         var app = NewApp(out var root);
-        app.User.Channel.Register(new CannedChannel("UNEXPECTED"));
+        app.actor.list.User.Channel.Register(new CannedChannel("UNEXPECTED"));
         PrepareForRead(root, method);
         var targetPath = method switch
         {
@@ -98,7 +98,7 @@ public class FileSystemPermissionFlowTests
         };
         var path = new Path(targetPath);
 
-        var result = await Dispatch(method, path, app.User.Context);
+        var result = await Dispatch(method, path, app.actor.list.User.Context);
         await result.IsSuccess();
         await Assert.That(result.Type?.Name).IsNotEqualTo("ask");
     }
@@ -108,7 +108,7 @@ public class FileSystemPermissionFlowTests
     public async Task OutOfRoot_StreamChannel_BlocksAndCompletes_GrantStored(string method)
     {
         var app = NewApp(out _);
-        app.User.Channel.Register(new CannedChannel("a"));
+        app.actor.list.User.Channel.Register(new CannedChannel("a"));
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);
@@ -122,7 +122,7 @@ public class FileSystemPermissionFlowTests
         };
         var path = new Path(targetPath);
 
-        var result = await Dispatch(method, path, app.User.Context);
+        var result = await Dispatch(method, path, app.actor.list.User.Context);
         await result.IsSuccess();
 
         var verb = method switch
@@ -131,7 +131,7 @@ public class FileSystemPermissionFlowTests
             "Delete" => global::app.type.item.permission.Verb.Delete,
             _ => global::app.type.item.permission.Verb.Read,
         };
-        await Assert.That(await app.User.Permission.Find(path, verb)).IsNotNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(path, verb)).IsNotNull();
     }
 
     [Test]
@@ -139,7 +139,7 @@ public class FileSystemPermissionFlowTests
     public async Task OutOfRoot_MessageChannel_ReturnsDataAsk_WithSnapshot(string method)
     {
         var app = NewApp(out _);
-        app.User.Channel.Register(new StatelessChannel());
+        app.actor.list.User.Channel.Register(new StatelessChannel());
 
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8]);
@@ -153,7 +153,7 @@ public class FileSystemPermissionFlowTests
         };
         var path = new Path(targetPath);
 
-        var result = await Dispatch(method, path, app.User.Context);
+        var result = await Dispatch(method, path, app.actor.list.User.Context);
         await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
     }

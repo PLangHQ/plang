@@ -19,7 +19,7 @@ public class Stage3_PathDemolitionTests
         var dir = Path.Combine(Path.GetTempPath(), "plang_st3pd_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
         var app = global::PLang.Tests.TestApp.Plain(dir);
-        return (app, app.User.Context, dir);
+        return (app, app.actor.list.User.Context, dir);
     }
 
     private static async Task Grant(global::app.actor.context.@this context, string url)
@@ -44,9 +44,9 @@ public class Stage3_PathDemolitionTests
     {
         // A Data writes itself via Data.Output through the serializer's async path —
         // NOT JsonSerializer.Serialize (the Wire converter is read-only and throws).
-        var plang = app.User.Context.Format("application/plang");
+        var plang = app.actor.list.User.Context.Format("application/plang");
         using var ms = new System.IO.MemoryStream();
-        await plang.Encode(ms, data, app.User.Context, global::app.View.Out);
+        await plang.Encode(ms, data, app.actor.list.User.Context, global::app.View.Out);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 

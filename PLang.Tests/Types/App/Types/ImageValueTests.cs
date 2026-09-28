@@ -38,8 +38,8 @@ public class ImageValueTests
         await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-img-" + System.Guid.NewGuid().ToString("N")[..8]));
         var raw = System.IO.Path.Combine(app.AbsolutePath, "photo.png");
-        var p = global::app.type.item.path.@this.Resolve(raw, app.User.Context);
-        var img = new image(PngHeader, p, app.User.Context);
+        var p = global::app.type.item.path.@this.Resolve(raw, app.actor.list.User.Context);
+        var img = new image(PngHeader, p, app.actor.list.User.Context);
         await Assert.That(img.Path).IsNotNull();
         await Assert.That(img.Path!.Raw).IsEqualTo(p.Raw);
     }
@@ -48,8 +48,8 @@ public class ImageValueTests
     {
         await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-img-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var p = global::app.type.item.path.@this.Resolve("photo.jpeg", app.User.Context);
-        var img = new image(p, app.User.Context);
+        var p = global::app.type.item.path.@this.Resolve("photo.jpeg", app.actor.list.User.Context);
+        var img = new image(p, app.actor.list.User.Context);
         await Assert.That(img.Mime).IsEqualTo("image/jpeg");
         await Assert.That(global::app.data.@this.Ok(img).Type.kind.Name).IsEqualTo("jpg");
     }

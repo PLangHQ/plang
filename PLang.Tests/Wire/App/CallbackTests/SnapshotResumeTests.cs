@@ -29,7 +29,7 @@ public class SnapshotResumeTests
     {
         var app = NewApp();
         var data = app.Ok("v"); // Snapshot = null
-        var handler = new start(app.User.Context) { Callback = data };
+        var handler = new start(app.actor.list.User.Context) { Callback = data };
         var result = await handler.Start();
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoSnapshot");
@@ -40,7 +40,7 @@ public class SnapshotResumeTests
         var app = NewApp();
         var data = app.Ok("v");
         data.Snapshot = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext); // empty snapshot
-        var handler = new start(app.User.Context) { Callback = data };
+        var handler = new start(app.actor.list.User.Context) { Callback = data };
         var result = await handler.Start();
         // Empty snapshot → no CallStack section → RestoredChain null → NoPosition.
         // Confirms delegation reached Resume (we don't get NoSnapshot).
@@ -51,7 +51,7 @@ public class SnapshotResumeTests
     {
         var app = NewApp();
         var snap = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext);
-        var result = await snap.Resume(app.User.Context);
+        var result = await snap.Resume(app.actor.list.User.Context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");
     }
@@ -61,7 +61,7 @@ public class SnapshotResumeTests
         // Capture a snapshot mid-flight: build a goal, push a Call frame for
         // one of its actions (synthesise suspension), snapshot, then Resume.
         var app = NewApp();
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
         SetStep(goal, 0, "s0", "first");
         var step1 = SetStep(goal, 1, "s1", "second");
@@ -70,7 +70,7 @@ public class SnapshotResumeTests
         // Push the action of step1 so the snapshot captures (stepIdx=1, actionIdx=0).
         await using (var call = context.CallStack.Push(step1.Code[0], context.Variable))
         {
-            var snap = app.Snapshot(app.User.Context);
+            var snap = app.Snapshot(app.actor.list.User.Context);
             // Pop the call frame before Resume so Restore doesn't conflict.
             await call.DisposeAsync();
 
@@ -90,7 +90,7 @@ public class SnapshotResumeTests
         // throwing on the recursive walk.
         var app = NewApp();
         var snap = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext);
-        var result = await snap.Resume(app.User.Context);
+        var result = await snap.Resume(app.actor.list.User.Context);
         // Empty chain → NoPosition; demonstrates recursion entry doesn't NRE.
         await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");
     }

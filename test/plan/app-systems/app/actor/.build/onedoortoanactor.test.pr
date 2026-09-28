@@ -1,0 +1,139 @@
+{
+  "name": "Start",
+  "comment": "Stage 11 (decision 129, Ingi yes): one door to an actor. %!app.system% and %!app.user% go; the actor is reached\nthrough the actor type.",
+  "step": [
+    {
+      "index": 0,
+      "text": "assert %!app.actor.system% is not null",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.actor.system%",
+              "variable": [
+                {
+                  "text": "%!app.actor.system%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "actor"
+                    },
+                    {
+                      "property": "system"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %!app.actor.user% is not null",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.actor.user%",
+              "variable": [
+                {
+                  "text": "%!app.actor.user%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "actor"
+                    },
+                    {
+                      "property": "user"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %!app.system% is null, \"the app doesn't hold its actors twice\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.system%",
+              "variable": [
+                {
+                  "text": "%!app.system%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "system"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the app doesn't hold its actors twice"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/app-systems/app/actor/OneDoorToAnActor.test.goal",
+  "prPath": "/plan/app-systems/app/actor/.build/onedoortoanactor.test.pr",
+  "hash": "0156fb291edd58d30b778b8505baa7a90fcfcfb44c46276d28ac44ea5e4567a5",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

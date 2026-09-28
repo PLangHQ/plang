@@ -30,7 +30,7 @@ public class VariableListTwinTests
     public async Task AnIndexedVariable_ReadsBackFromThePr_AndRuns()
     {
         await using var app = TestApp.Create("/app");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var goal = await RealGoalLoad.ViaChannel(app, Make.Goal("Indexed",
             Make.Step("set %first% = %users[0].name%",
                 Make.Action("variable", "set", Make.Param("Name", "first", "variable"), Make.Param("Value", "%users[0].name%", "variable"))),

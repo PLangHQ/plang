@@ -22,7 +22,7 @@ public class SecurityFixTests
     [Test]
     public async Task Binding_HandlerThrows_ExitEventStillCalled()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var step = new Step { Index = 0, Text = "s" };
 
         // A binding whose handler throws the first time it fires
@@ -32,7 +32,7 @@ public class SecurityFixTests
             callCount++;
             if (callCount == 1) throw new InvalidOperationException("first call fails");
             return Task.FromResult(result);
-        }, _app.User, global::app.@event.binding.Scope.actor);
+        }, _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
         try { await fragile.Start(step, context.Ok(), context); }
         catch (InvalidOperationException) { }
@@ -52,7 +52,7 @@ public class SecurityFixTests
     public async Task Template_UnsetBangVar_StaysAsWritten()
     {
         var input = "test=%!nonexistent%";
-        await Assert.That(await _app.User.Context.Rendered(input)).IsEqualTo(input);
+        await Assert.That(await _app.actor.list.User.Context.Rendered(input)).IsEqualTo(input);
     }
 
     #endregion

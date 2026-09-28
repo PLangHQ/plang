@@ -24,7 +24,7 @@ public class ErrorCallbackTests : System.IAsyncDisposable
     [Test]
     public async Task Callback_ErrorWithContext_AnswersASnapshot()
     {
-        var error = new global::app.error.Error("boom", _app.User.Context, "Boom");
+        var error = new global::app.error.Error("boom", _app.actor.list.User.Context, "Boom");
 
         var callback = error.Callback;
 
@@ -40,9 +40,9 @@ public class ErrorCallbackTests : System.IAsyncDisposable
     {
         var error = new global::app.error.ServiceError("boom", "Boom", 500);
 
-        var result = _app.User.Context.Error(error);
+        var result = _app.actor.list.User.Context.Error(error);
 
-        await Assert.That(ReferenceEquals(result.Error!.Context, _app.User.Context)).IsTrue();
+        await Assert.That(ReferenceEquals(result.Error!.Context, _app.actor.list.User.Context)).IsTrue();
         await error.Callback.IsSuccess();
         await Assert.That(error.Callback.Snapshot).IsNotNull();
     }
@@ -53,10 +53,10 @@ public class ErrorCallbackTests : System.IAsyncDisposable
     {
         var error = new global::app.error.ServiceError("boom", "Boom", 500);
 
-        _app.User.Context.Error(error);
-        _app.System.Context.Error(error);
+        _app.actor.list.User.Context.Error(error);
+        _app.actor.list.System.Context.Error(error);
 
-        await Assert.That(ReferenceEquals(error.Context, _app.User.Context)).IsTrue();
+        await Assert.That(ReferenceEquals(error.Context, _app.actor.list.User.Context)).IsTrue();
     }
 
     // A value's Fail stamps the Data's own context.
@@ -64,10 +64,10 @@ public class ErrorCallbackTests : System.IAsyncDisposable
     public async Task Fail_StampsTheDatasContext()
     {
         var error = new global::app.error.Error("declined", "Declined");
-        var data = new global::app.data.@this("x", context: _app.User.Context);
+        var data = new global::app.data.@this("x", context: _app.actor.list.User.Context);
 
         data.Fail(error);
 
-        await Assert.That(ReferenceEquals(error.Context, _app.User.Context)).IsTrue();
+        await Assert.That(ReferenceEquals(error.Context, _app.actor.list.User.Context)).IsTrue();
     }
 }

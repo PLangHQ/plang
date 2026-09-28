@@ -128,7 +128,7 @@ public class IWriterContractTests : System.IAsyncDisposable
     {
         var (jw, ms) = MakeWriter();
         var w = new global::app.type.format.json.Writer(jw);
-        var record = new global::app.data.@this("hello", "world", context: app.User.Context);
+        var record = new global::app.data.@this("hello", "world", context: app.actor.list.User.Context);
         w.BeginRecord(record);
         w.String("world");
         w.EndRecord(record);
@@ -152,7 +152,7 @@ public class IWriterContractTests : System.IAsyncDisposable
     {
         var (jw, ms) = MakeWriter();
         var w = new global::app.type.format.json.Writer(jw);
-        var record = new global::app.data.@this("nums", new List<int> { 1, 2 }, context: app.User.Context);
+        var record = new global::app.data.@this("nums", new List<int> { 1, 2 }, context: app.actor.list.User.Context);
         w.BeginRecord(record);
         w.BeginArray(2);
         w.Int(1); w.Int(2);

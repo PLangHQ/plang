@@ -10,7 +10,7 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
-    private global::app.actor.context.@this Ctx => app.User.Context;
+    private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
     private global::app.type.kind.@this Text => Ctx.Format("text/plain");
 
     [Test]

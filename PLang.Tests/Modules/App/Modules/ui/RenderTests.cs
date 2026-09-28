@@ -40,7 +40,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Template_ComparesAChoiceByItsName()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var subtract = _app.Module("math").Action.Items(global::PLang.Tests.TestApp.SharedContext)
             .First(row => (row.Peek() as global::app.goal.step.action.@this)?.Name == "subtract");
         await context.Variable.Set("a", subtract);
@@ -69,7 +69,7 @@ public class RenderTests : IDisposable
     public async Task Render_AReadJsonFile_IteratesItsDictAndList()
     {
         WriteTemplateFile("d.json", "{\"common\": {\"a.x\": {\"true\": \"yes-a\"}, \"b.y\": {\"true\": \"yes-b\"}}, \"popular\": [\"p1\", \"p2\"]}");
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var code = new global::app.goal.step.action.list.@this();
         code.Add(global::PLang.Tests.Shared.Make.Action("file", "read", ("Path", "/d.json")));
         code.Add(global::PLang.Tests.Shared.Make.Action("variable", "set",
@@ -93,7 +93,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_InlineTemplate_SubstitutesVariables()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new Data("name", "World", context: context));
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ name }}", IsFile = (global::app.type.item.@bool.@this)false };
 
@@ -107,7 +107,7 @@ public class RenderTests : IDisposable
     public async Task Render_FileTemplate_ReadsAndRenders()
     {
         WriteTemplateFile("greeting.html", "Hello {{ name }}!");
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new Data("name", "PLang", context: context));
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"greeting.html", IsFile = (global::app.type.item.@bool.@this)true };
 
@@ -120,7 +120,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_MissingFile_ReturnsError()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"nonexistent.html", IsFile = (global::app.type.item.@bool.@this)true };
 
         var result = await _provider.Render(action);
@@ -135,7 +135,7 @@ public class RenderTests : IDisposable
         // [IsNotNull] is enforced by the source generator before Run() is called.
         // At the provider level, null would cause issues — test that the provider
         // handles it gracefully if somehow invoked with null.
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new Render(context) { Template = null!, IsFile = (global::app.type.item.@bool.@this)false };
 
         var result = await _provider.Render(action);
@@ -147,7 +147,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_EmptyTemplate_ReturnsEmptyString()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"", IsFile = (global::app.type.item.@bool.@this)false };
 
         var result = await _provider.Render(action);
@@ -159,7 +159,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_LiquidSyntaxError_ReturnsErrorWithPosition()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ ", IsFile = (global::app.type.item.@bool.@this)false };
 
         var result = await _provider.Render(action);
@@ -173,7 +173,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_VariablesVariables_AccessibleInTemplate()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new Data("greeting", "Hello", context: context));
         context.Variable.Set(new Data("target", "World", context: context));
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"{{ greeting }} {{ target }}", IsFile = (global::app.type.item.@bool.@this)false };
@@ -187,7 +187,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_ExplicitParams_OverrideVariables()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new Data("name", "MemoryValue", context: context));
         var overrideParam = new Data("name", "ParamValue", context: context);
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ name }}",
@@ -204,7 +204,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_ExplicitParams_CreateAliases()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var aliasParam = new Data("title", "My Page", context: context);
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Title: {{ title }}",
             IsFile = (global::app.type.item.@bool.@this)false,
@@ -220,7 +220,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_ScopedVars_SkippedFromVariables()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new Data("visible", "yes", context: context));
         context.Variable.Set(new Data("!hidden", "secret", context: context));
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"visible={{ visible }} hidden={{ hidden }}",
@@ -253,7 +253,7 @@ public class RenderTests : IDisposable
         };
         _app.goal.list.Add(goal);
 
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Result: {% callGoal 'Greeter' %}",
             IsFile = (global::app.type.item.@bool.@this)false
         };
@@ -270,7 +270,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_CallGoal_GoalNotFound_IsTheRendersError()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Before {% callGoal 'Missing' %} After",
             IsFile = (global::app.type.item.@bool.@this)false
         };
@@ -286,7 +286,7 @@ public class RenderTests : IDisposable
     public async Task Render_Include_RendersPartialInline()
     {
         WriteTemplateFile("partial.html", "I am a partial");
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Before {% include 'partial.html' %} After",
             IsFile = (global::app.type.item.@bool.@this)false
         };
@@ -302,7 +302,7 @@ public class RenderTests : IDisposable
     public async Task Render_Include_InheritsVariables()
     {
         WriteTemplateFile("greet.html", "Hello {{ name }}");
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new Data("name", "World", context: context));
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"{% include 'greet.html' %}!",
             IsFile = (global::app.type.item.@bool.@this)false
@@ -321,7 +321,7 @@ public class RenderTests : IDisposable
     public async Task Render_CustomProvider_IsUsed()
     {
         var customProvider = new StubTemplateProvider();
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"anything", IsFile = (global::app.type.item.@bool.@this)false };
 
         var result = await customProvider.Render(action);
@@ -335,7 +335,7 @@ public class RenderTests : IDisposable
     {
         // Create a template in a subdirectory
         WriteTemplateFile("goals/templates/page.html", "Page content");
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         // Simulate a goal at goals/MyGoal.goal by setting Goal.Path
         // Path resolves relative to goal's directory
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"goals/templates/page.html", IsFile = (global::app.type.item.@bool.@this)true };
@@ -350,7 +350,7 @@ public class RenderTests : IDisposable
     public async Task Render_FilePathAbsolute_ResolvesFromRoot()
     {
         WriteTemplateFile("templates/abs.html", "Absolute content");
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"/templates/abs.html", IsFile = (global::app.type.item.@bool.@this)true };
 
         var result = await _provider.Render(action);
@@ -364,7 +364,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_DotNavigation_AccessesObjectProperties()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var user = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
         context.Variable.Set(new Data("user", user, context: context));
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"{{ user.name }} is {{ user.age }}",
@@ -380,7 +380,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_ListIteration_WorksInForLoop()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new Data("items", new List<string> { "a", "b", "c" }, context: context));
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"{% for item in items %}{{ item }}{% endfor %}",
             IsFile = (global::app.type.item.@bool.@this)false
@@ -395,7 +395,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_NullVariable_RendersEmpty()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new Data("name", null, context: context));
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ name }}!",
             IsFile = (global::app.type.item.@bool.@this)false
@@ -410,7 +410,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_UndefinedVariable_RendersEmpty()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ missing }}!",
             IsFile = (global::app.type.item.@bool.@this)false
         };
@@ -424,7 +424,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_DataObject_ExposesValueNotWrapper()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         // Data wraps a complex object — template should navigate the inner object, not Data properties
         var user = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
         context.Variable.Set(new Data("user", user, context: context));
@@ -443,7 +443,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_NullDotNavigation_NoException()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new Data("user", null, context: context));
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ user.name }}!",
             IsFile = (global::app.type.item.@bool.@this)false
@@ -465,7 +465,7 @@ public class RenderTests : IDisposable
         var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         _app.goal.list.Add(goal);
 
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Before{% callGoal 'EmptyGoal' %}After",
             IsFile = (global::app.type.item.@bool.@this)false
         };
@@ -485,7 +485,7 @@ public class RenderTests : IDisposable
         var goal = new Goal { Name = "DynamicGoal", Path = global::app.type.item.path.@this.Resolve("/DynamicGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
         _app.goal.list.Add(goal);
 
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new Data("goalName", "DynamicGoal", context: context));
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"{% callGoal goalName %}",
             IsFile = (global::app.type.item.@bool.@this)false
@@ -518,7 +518,7 @@ public class RenderTests : IDisposable
         };
         _app.goal.list.Add(goal);
 
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Number: {% callGoal 'GetNumber' %}",
             IsFile = (global::app.type.item.@bool.@this)false
         };
@@ -536,7 +536,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_Include_MissingPartial_ReturnsError()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"{% include 'nonexistent.html' %}",
             IsFile = (global::app.type.item.@bool.@this)false
         };
@@ -554,7 +554,7 @@ public class RenderTests : IDisposable
         // Fluid resolves includes from the FileProvider root, not relative to the partial
         WriteTemplateFile("sub/a.html", "A{% include 'sub/b.html' %}");
         WriteTemplateFile("sub/b.html", "B");
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"{% include 'sub/a.html' %}",
             IsFile = (global::app.type.item.@bool.@this)false
         };
@@ -572,7 +572,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_HtmlInVariable_IsNotEscaped()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new Data("name", "<script>alert(1)</script>", context: context));
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"{{ name }}",
             IsFile = (global::app.type.item.@bool.@this)false
@@ -591,7 +591,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_IsFileNull_InlineWithLiquidSyntax_TreatedAsInline()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new Data("name", "World", context: context));
         // IsFile=null + template contains {{ — auto-detect should treat as inline
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ name }}!"
@@ -608,7 +608,7 @@ public class RenderTests : IDisposable
     public async Task Render_IsFileNull_FilePathAutoDetected()
     {
         WriteTemplateFile("auto.html", "Auto-detected {{ greeting }}");
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set(new Data("greeting", "Hi", context: context));
         // IsFile=null + template looks like a file path (has extension, no Liquid syntax)
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"auto.html"
@@ -624,7 +624,7 @@ public class RenderTests : IDisposable
     [Test]
     public async Task Render_IsFileNull_NoExtension_TreatedAsInline()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         // IsFile=null + no file extension — auto-detect should treat as inline content
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"just plain text with no extension"
         };
@@ -642,7 +642,7 @@ public class RenderTests : IDisposable
     {
         // Create a goal in a subdirectory and a partial next to it
         WriteTemplateFile("goals/templates/footer.html", "Footer content");
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var goal = new Goal
         {
             Name = "SubGoal",

@@ -21,7 +21,7 @@ public class MutationInvalidatesRawTests
     [Test] public async Task SetValueDirect_InvalidatesRaw()
     {
         await using var app = NewApp();
-        var d = RawBacked(app.User.Context);
+        var d = RawBacked(app.actor.list.User.Context);
         await Assert.That(d.HasRaw).IsTrue();
         // SetValueDirect is the private mutation seam (RehydrateNestedData etc.);
         // invoke it directly to pin that it clears _raw.
@@ -33,7 +33,7 @@ public class MutationInvalidatesRawTests
     [Test] public async Task NavigationSet_InvalidatesRaw()
     {
         await using var app = NewApp();
-        var d = RawBacked(app.User.Context);
+        var d = RawBacked(app.actor.list.User.Context);
         await Assert.That(d.HasRaw).IsTrue();
         // The public mutation (assigning Value) is what a navigation-set lands on.
         d.SetValue(99);
@@ -46,7 +46,7 @@ public class MutationInvalidatesRawTests
     [Test] public async Task AfterMutation_SerializeUsesRenderer_NotRaw()
     {
         await using var app = NewApp();
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg");
         d.SetValue("mutated");   // mutation clears _raw — raw is no longer authoritative
 

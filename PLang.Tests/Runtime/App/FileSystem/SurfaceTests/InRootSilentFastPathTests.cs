@@ -36,11 +36,11 @@ public class InRootSilentFastPathTests
     {
         var app = NewApp(out var root);
         var ch = new AskCountingChannel();
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         var file = System.IO.Path.Combine(root, "f.txt");
         System.IO.File.WriteAllText(file, "hello");
         var p = new FilePath(file);
-        var r = await p.Touch(app.User.Context);
+        var r = await p.Touch(app.actor.list.User.Context);
         await r.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
@@ -49,10 +49,10 @@ public class InRootSilentFastPathTests
     {
         var app = NewApp(out var root);
         var ch = new AskCountingChannel();
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         var file = System.IO.Path.Combine(root, "w.txt");
         var p = new FilePath(file);
-        var r = await p.WriteText("hello", app.User.Context);
+        var r = await p.WriteText("hello", app.actor.list.User.Context);
         await r.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
@@ -61,14 +61,14 @@ public class InRootSilentFastPathTests
     {
         var app = NewApp(out var root);
         var ch = new AskCountingChannel();
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         for (int i = 0; i < 10; i++)
             System.IO.File.WriteAllText(System.IO.Path.Combine(root, $"f{i}.txt"), $"f{i}");
         var dir = new FilePath(root);
-        var listed = await dir.List("*.txt", recursive: false, app.User.Context);
+        var listed = await dir.List("*.txt", recursive: false, app.actor.list.User.Context);
         await listed.IsSuccess();
         foreach (var f in listed.GetValue<List<global::app.type.item.path.@this>>()!)
-            await f.Touch(app.User.Context);
+            await f.Touch(app.actor.list.User.Context);
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }
 
@@ -76,12 +76,12 @@ public class InRootSilentFastPathTests
     {
         var app = NewApp(out var root);
         var ch = new AskCountingChannel();
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         var srcAssembly = typeof(InRootSilentFastPathTests).Assembly.Location;
         var copyAt = System.IO.Path.Combine(root, "test.dll");
         System.IO.File.Copy(srcAssembly, copyAt, overwrite: true);
         var p = new FilePath(copyAt);
-        var r = await p.LoadAssemblyAsync(app.User.Context);
+        var r = await p.LoadAssemblyAsync(app.actor.list.User.Context);
         await r.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(0);
     }

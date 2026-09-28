@@ -19,9 +19,9 @@ public class NumberReadTests : System.IAsyncDisposable
     // wrapper; a decline lands its reason on the carrier. Eager, returns a Data like Convert did.
     private global::app.data.@this Read(string s, string kind)
     {
-        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("number", kind), context: _app.User.Context);
+        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("number", kind), context: _app.actor.list.User.Context);
         var n = number.Create(s, carrier);
-        return n != null ? _app.User.Context.Ok(n) : carrier;
+        return n != null ? _app.actor.list.User.Context.Ok(n) : carrier;
     }
 
     [Test] public async Task Read_NumberInt_FromString_PreservesInt()

@@ -11,7 +11,7 @@ public class ConceptSettingTests
     [Test] public async Task TestsSettings_AreReadThroughTheConceptType()
     {
         await using var app = TestApp.Create("/test");
-        var read = await Read("%!app.test.setting.timeoutSeconds%", app.User.Context);
+        var read = await Read("%!app.test.setting.timeoutSeconds%", app.actor.list.User.Context);
         await read.IsSuccess();
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("30");
     }
@@ -19,7 +19,7 @@ public class ConceptSettingTests
     [Test] public async Task AWriteThroughTheConceptType_IsThisRunsSetting()
     {
         await using var app = TestApp.Create("/test");
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var set = await global::PLang.Tests.TestAction.Create("variable", "set",
             ("name", "%!app.test.setting.parallel%"), ("value", 1)).Start(context);
         await set.IsSuccess();
@@ -32,7 +32,7 @@ public class ConceptSettingTests
     [Test] public async Task AChoiceOption_IsSetFromItsText()
     {
         await using var app = TestApp.Create("/test");
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var set = await global::PLang.Tests.TestAction.Create("variable", "set",
             ("name", "%!app.test.setting.format%"), ("value", "junit")).Start(context);
         await set.IsSuccess();
@@ -43,7 +43,7 @@ public class ConceptSettingTests
     [Test] public async Task AValueTheOptionCantTake_IsRefused()
     {
         await using var app = TestApp.Create("/test");
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var set = await global::PLang.Tests.TestAction.Create("variable", "set",
             ("name", "%!app.test.setting.format%"), ("value", "csv")).Start(context);
         await set.IsFailure();
@@ -53,7 +53,7 @@ public class ConceptSettingTests
     [Test] public async Task GoalsTypeNamesNoSettings_ItsListDoes()
     {
         await using var app = TestApp.Create("/test");
-        var context = app.User.Context;
+        var context = app.actor.list.User.Context;
         var none = await Read("%!app.goal.setting%", context);
         await none.IsFailure();
         await Assert.That(none.Error!.Key).IsEqualTo("NotFound");

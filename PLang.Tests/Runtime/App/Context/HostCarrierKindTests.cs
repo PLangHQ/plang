@@ -23,7 +23,7 @@ public class HostCarrierKindTests
     // lifted with, so it resolves its registry name (kind) on mint.
     private async Task<global::app.data.@this> Materialise(string name)
     {
-        var cell = await _app.User.Context.Variable.Get(name);
+        var cell = await _app.actor.list.User.Context.Variable.Get(name);
         await Assert.That(cell).IsNotNull();
         var carrier = await cell!.Value();
         var probe = new global::app.data.@this("probe");
@@ -70,9 +70,9 @@ public class HostCarrierKindTests
         // A user var bound to a live host handle, then the store is cloned (a
         // normal goal-call clone). The carrier must share the live app by
         // reference — deep-cloning it would walk the whole App graph and overflow.
-        var vars = _app.User.Context.Variable;
+        var vars = _app.actor.list.User.Context.Variable;
         var appData = await (await vars.Get("!app")).Value();   // materialised clr carrier
-        var holder = new global::app.data.@this("x", context: _app.User.Context);
+        var holder = new global::app.data.@this("x", context: _app.actor.list.User.Context);
         holder.SetValueDirect(appData);
 
         var clone = holder.Clone();   // must not overflow
@@ -86,7 +86,7 @@ public class HostCarrierKindTests
     public async Task Leaf_PeelsOffToRealItem_NotOpaqueItem()
     {
         // !app.Name is a string — it lands as the text family's item, never an item carrier.
-        var data = await new global::app.type.item.variable.@this("!app.Name").Start(_app.User.Context);
+        var data = await new global::app.type.item.variable.@this("!app.Name").Start(_app.actor.list.User.Context);
         await Assert.That(data).IsNotNull();
         await Assert.That(data!.Type.Name).IsEqualTo("text");
         await Assert.That((await data.Value())?.ToString()).IsEqualTo("test");

@@ -18,7 +18,7 @@ public class GraphCreateTests
     public async Task Goal_FromDict_IsDeclined()
     {
         await using var app = TestApp.Create("/t");
-        var slot = DictSlot(app.User.Context);
+        var slot = DictSlot(app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.@this>()).IsNull();
         await Assert.That(slot.Error?.Message).Contains("a goal is read from its .pr, never converted from a value");
         await Assert.That(slot.Error?.Key).IsEqualTo("CreateItemDeclined");
@@ -28,7 +28,7 @@ public class GraphCreateTests
     public async Task Step_FromDict_IsDeclined()
     {
         await using var app = TestApp.Create("/t");
-        var slot = DictSlot(app.User.Context);
+        var slot = DictSlot(app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.step.@this>()).IsNull();
         await Assert.That(slot.Error?.Message).Contains("a step is built by its goal, never converted from a value");
     }
@@ -37,7 +37,7 @@ public class GraphCreateTests
     public async Task Action_FromDict_IsDeclined()
     {
         await using var app = TestApp.Create("/t");
-        var slot = DictSlot(app.User.Context);
+        var slot = DictSlot(app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.step.action.@this>()).IsNull();
         await Assert.That(slot.Error?.Message).Contains("an action is built by its step, never converted from a value");
     }
@@ -47,7 +47,7 @@ public class GraphCreateTests
     {
         await using var app = TestApp.Create("/t");
         var goal = new global::app.goal.@this { Name = "Start" };
-        var slot = new global::app.data.@this("node", goal, context: app.User.Context);
+        var slot = new global::app.data.@this("node", goal, context: app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.@this>()).IsSameReferenceAs(goal);
     }
 
@@ -56,7 +56,7 @@ public class GraphCreateTests
     {
         await using var app = TestApp.Create("/t");
         var step = new global::app.goal.step.@this { Index = 0, Text = "write out 'hi'" };
-        var slot = new global::app.data.@this("node", step, context: app.User.Context);
+        var slot = new global::app.data.@this("node", step, context: app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.step.@this>()).IsSameReferenceAs(step);
     }
 
@@ -65,7 +65,7 @@ public class GraphCreateTests
     {
         await using var app = TestApp.Create("/t");
         var action = new global::app.goal.step.action.@this { Module = app.Module("output"), Name = "write" };
-        var slot = new global::app.data.@this("node", action, context: app.User.Context);
+        var slot = new global::app.data.@this("node", action, context: app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.step.action.@this>()).IsSameReferenceAs(action);
     }
 }

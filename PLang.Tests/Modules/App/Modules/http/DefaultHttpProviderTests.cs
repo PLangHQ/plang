@@ -35,7 +35,7 @@ public class DefaultHttpProviderTests
         catch { /* best effort cleanup */ }
     }
 
-    private global::app.actor.context.@this Ctx => _app.System.Context;
+    private global::app.actor.context.@this Ctx => _app.actor.list.System.Context;
 
     // (Removed Provider_Configure_* tests — the `configure` action dissolved; redirect/timeout/
     // baseurl are now per-request `[Default]` properties resolved by the setting cascade, and the

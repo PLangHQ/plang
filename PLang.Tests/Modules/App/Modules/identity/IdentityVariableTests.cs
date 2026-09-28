@@ -57,7 +57,7 @@ public class IdentityDataTests
     public async Task DotNavigation_PublicKey_ReturnsPublicKey()
     {
         var identity = CreateTestIdentity();
-        var data = new Data("test", identity, context: _app.System.Context);
+        var data = new Data("test", identity, context: _app.actor.list.System.Context);
         var child = await data.Get("PublicKey");
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())?.ToString()).IsEqualTo("dGVzdHB1YmxpY2tleQ");
@@ -74,7 +74,7 @@ public class IdentityDataTests
     public async Task DotNavigation_IsArchived_ReturnsIsArchived()
     {
         var identity = CreateTestIdentity();
-        var data = new Data("test", identity, context: _app.System.Context);
+        var data = new Data("test", identity, context: _app.actor.list.System.Context);
         var child = await data.Get("IsArchived");
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())?.ToString()).IsEqualTo("false");
@@ -84,7 +84,7 @@ public class IdentityDataTests
     public async Task DotNavigation_IsDefault_ReturnsIsDefault()
     {
         var identity = CreateTestIdentity();
-        var data = new Data("test", identity, context: _app.System.Context);
+        var data = new Data("test", identity, context: _app.actor.list.System.Context);
         var child = await data.Get("IsDefault");
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())?.ToString()).IsEqualTo("true");
@@ -95,7 +95,7 @@ public class IdentityDataTests
     {
         // [Sensitive] is serialization only, not access control — dot navigation works
         var identity = CreateTestIdentity();
-        var data = new Data("test", identity, context: _app.System.Context);
+        var data = new Data("test", identity, context: _app.actor.list.System.Context);
         var child = await data.Get("PrivateKey");
         await Assert.That(child).IsNotNull();
         await Assert.That((await child!.Value())?.ToString()).IsEqualTo("dGVzdHByaXZhdGVrZXk=");

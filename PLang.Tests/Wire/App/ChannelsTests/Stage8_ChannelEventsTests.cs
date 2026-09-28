@@ -19,13 +19,13 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     private global::app.channel.@this Registered(string name)
     {
         var ch = StreamChannel.Memory(name);
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         return ch;
     }
 
     private void Bind(global::app.type.item.@this on, string @event, When when,
         System.Func<global::app.type.item.@this, Data, global::app.actor.context.@this, Task<Data>> handler)
-        => on.Own().Bind(@event, when, handler, app.User, Scope.actor);
+        => on.Own().Bind(@event, when, handler, app.actor.list.User, Scope.actor);
 
     [Test]
     public async Task AChannel_IsAnItem_WithItsOwnEvents()
@@ -90,7 +90,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     public async Task ATransportFailure_IsAnErrorResult_AndAfterWriteSeesIt()
     {
         var ch = new ThrowOnWriteChannel("c");
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         Data? received = null;
         Bind(ch, "write", When.after, (_, result, ctx) => { received = result; return Task.FromResult(ctx.Ok()); });
 
@@ -172,11 +172,11 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     {
         var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("answer\n"));
         var ch = new StreamChannel("i", ms, ChannelDirection.Bidirectional, ownsStream: false) { Mime = "text/plain" };
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         Data? received = null;
         Bind(ch, "ask", When.after, (_, result, ctx) => { received = result; return Task.FromResult(ctx.Ok()); });
 
-        var result = await ch.AskAsync(new global::app.module.action.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") });
+        var result = await ch.AskAsync(new global::app.module.action.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") });
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("answer");
         await Assert.That((await received!.Value())?.ToString()).IsEqualTo("answer");
@@ -186,11 +186,11 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     public async Task AfterAsk_OnAMessageChannel_Fires()
     {
         var ch = new MessageProbeChannel("m");
-        app.User.Channel.Register(ch);
+        app.actor.list.User.Channel.Register(ch);
         var fired = false;
         Bind(ch, "ask", When.after, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); });
 
-        await ch.AskAsync(new global::app.module.action.output.ask(app.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?") });
+        await ch.AskAsync(new global::app.module.action.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?") });
 
         await Assert.That(fired).IsTrue();
     }
@@ -201,12 +201,12 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         await using var app = global::PLang.Tests.TestApp.Create("/tmp/s8-cross");
         var userLogger = StreamChannel.Memory("logger");
         var serviceLogger = StreamChannel.Memory("logger");
-        app.User.Channel.Register(userLogger);
-        await using var svc = app.Services.New(parent: app.User);
+        app.actor.list.User.Channel.Register(userLogger);
+        await using var svc = app.Services.New(parent: app.actor.list.User);
         svc.Channels.Register(serviceLogger);
         var hits = 0;
         app.type.list["channel"].Own().Bind("write", When.before,
-            (_, _, ctx) => { Interlocked.Increment(ref hits); return Task.FromResult(ctx.Ok()); }, app.User, Scope.app);
+            (_, _, ctx) => { Interlocked.Increment(ref hits); return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app);
 
         await userLogger.WriteAsync(app.Ok("a"));
         await serviceLogger.WriteAsync(app.Ok("b"));
@@ -219,7 +219,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     {
         var ch = Registered("c");
         var fired = false;
-        app.goal.Own().Bind("start", When.before, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, app.User, Scope.app);
+        app.goal.Own().Bind("start", When.before, (_, _, ctx) => { fired = true; return Task.FromResult(ctx.Ok()); }, app.actor.list.User, Scope.app);
 
         await ch.WriteAsync(app.Ok("x"));
 

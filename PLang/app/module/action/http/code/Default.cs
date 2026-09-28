@@ -692,7 +692,7 @@ public sealed class Default : IHttp
 
         var result = await held.Start(context);
         if (!result.Success)
-            await app.System.Channel[global::app.channel.list.@this.Error].WriteText(result.Error?.Message ?? "");
+            await app.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteText(result.Error?.Message ?? "");
     }
 
     private static StreamFormat DetectStreamFormat(string contentType)
@@ -748,7 +748,7 @@ public sealed class Default : IHttp
                         throw new InvalidOperationException(
                             $"SSE stream disconnected after {maxConsecutiveOverflows} consecutive buffer overflows — possible attack");
 
-                    await app.System.Channel[global::app.channel.list.@this.Error].WriteAsync(
+                    await app.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(
                         context.Error(new ServiceError(
                             $"SSE message exceeds maximum buffer size of {maxBufferSize / (1024 * 1024)}MB",
                             "SSEBufferOverflow", 413)));
@@ -799,7 +799,7 @@ public sealed class Default : IHttp
             var data = await context.App.type.list["wire"].kind["plang"]!.Decode(Encoding.UTF8.GetBytes(line), context, view: global::app.View.Store, ct: ct);
             if (!data.Success)
             {
-                await app.System.Channel[global::app.channel.list.@this.Error].WriteAsync(
+                await app.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(
                     context.Error(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
                 continue;
             }

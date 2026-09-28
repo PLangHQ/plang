@@ -22,17 +22,17 @@ public class StringPlainTests
     {
         // Direct ExecuteAsync — read the property twice through the handler instance.
         await using var app = TestApp.Create("/app");
-        var handler = new StringPlain(app.User.Context);
+        var handler = new StringPlain(app.actor.list.User.Context);
         var action = new PrAction
         {
             Module = app.Module("matrix.plain"),
             Name = "stringplain",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("path", "hello", context: app.User.Context) })
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("path", "hello", context: app.actor.list.User.Context) })
         };
 
         // Touch property twice via the resolved instance — Resolve populates the
         // backing field once; reading Path twice must return the same cached instance.
-        var (h, err) = await handler.Resolve(action, app.User.Context);
+        var (h, err) = await handler.Resolve(action, app.actor.list.User.Context);
         await Assert.That(err).IsNull();
         var resolved = (StringPlain)h!;
         var first = resolved.Path;

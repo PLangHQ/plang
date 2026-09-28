@@ -44,7 +44,7 @@ public class ContentShapeVerbTests
         var file = System.IO.Path.Combine(root, "data.bin");
         var bytes = new byte[] { 1, 2, 3, 4, 5 };
         System.IO.File.WriteAllBytes(file, bytes);
-        var result = await Content(new FilePath(file), app.User.Context);
+        var result = await Content(new FilePath(file), app.actor.list.User.Context);
         await result.IsSuccess();
         await Assert.That((result.Peek() as global::app.type.item.binary.@this)!.Value).IsEquivalentTo(bytes);
     }
@@ -52,12 +52,12 @@ public class ContentShapeVerbTests
     [Test] public async Task Content_OutOfRoot_DeniedAnswer_DoesNotReadFile()
     {
         var app = NewApp(out _);
-        app.User.Channel.Register(new CannedChannel("n"));
+        app.actor.list.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "secret.bin");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllBytes(outOfRoot, new byte[] { 42, 43 });
-        var result = await Content(new FilePath(outOfRoot), app.User.Context);
+        var result = await Content(new FilePath(outOfRoot), app.actor.list.User.Context);
         await result.IsFailure();
         // Differentiate denial from file-not-found / other IO errors.
         await Assert.That(result.Error!.Key).IsEqualTo("PermissionDenied");
@@ -67,12 +67,12 @@ public class ContentShapeVerbTests
     {
         var app = NewApp(out _);
         var canned = new CannedChannel("n");
-        app.User.Channel.Register(canned);
+        app.actor.list.User.Channel.Register(canned);
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "data.bin");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(outOfRoot)!);
         System.IO.File.WriteAllBytes(outOfRoot, new byte[] { 1 });
-        await Content(new FilePath(outOfRoot), app.User.Context);
+        await Content(new FilePath(outOfRoot), app.actor.list.User.Context);
         await Assert.That(canned.Prompts.Count).IsGreaterThanOrEqualTo(1);
         await Assert.That(canned.Prompts[0]).Contains("read");
     }
@@ -81,7 +81,7 @@ public class ContentShapeVerbTests
     {
         var app = NewApp(out var root);
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(root, "sub"));
-        var result = await Content(new FilePath(System.IO.Path.Combine(root, "sub")), app.User.Context);
+        var result = await Content(new FilePath(System.IO.Path.Combine(root, "sub")), app.actor.list.User.Context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotA");
         await Assert.That(result.Error!.Message).Contains("not a content");

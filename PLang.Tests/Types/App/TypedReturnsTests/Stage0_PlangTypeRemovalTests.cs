@@ -45,7 +45,7 @@ public class Stage0_PlangTypeRemovalTests
     [Test]
     public async Task AType_GoesByItsDeclaredWord_ElseItsNamespace()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         await Assert.That(_app.type.list["app.event"].Name).IsEqualTo("app.event");
         await Assert.That(_app.type.list["text"].Namespace).IsEqualTo("app.type.item.text");
         await Assert.That(_app.type.list["app.type.item.text"].Name).IsEqualTo("text");
@@ -61,7 +61,7 @@ public class Stage0_PlangTypeRemovalTests
         var clashes = new List<string>();
         for (var i = 0; i < _app.type.list.CountRaw; i++)
         {
-            var type = (global::app.type.@this)_app.type.list.At(i, _app.User.Context)!.Peek()!;
+            var type = (global::app.type.@this)_app.type.list.At(i, _app.actor.list.User.Context)!.Peek()!;
             foreach (var claim in new[] { type.Name, type.Namespace }.Concat(type.Alias).OfType<string>().Distinct(StringComparer.OrdinalIgnoreCase))
                 if (owners.TryGetValue(claim, out var owner) && owner != type.Namespace) clashes.Add($"{claim}: {owner} and {type.Namespace}");
                 else owners[claim] = type.Namespace ?? type.Name;

@@ -29,8 +29,8 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_GreaterThan_ReturnsDataWithTrue()
     {
-        var action = new Compare(_app.User.Context) { Left = _app.User.Context.Ok(10), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
-        await action.Attach(null, _app.User.Context);
+        var action = new Compare(_app.actor.list.User.Context) { Left = _app.actor.list.User.Context.Ok(10), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.actor.list.User.Context.Ok(5) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -40,8 +40,8 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_GreaterThan_Fails_ReturnsDataWithFalse()
     {
-        var action = new Compare(_app.User.Context) { Left = _app.User.Context.Ok(3), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
-        await action.Attach(null, _app.User.Context);
+        var action = new Compare(_app.actor.list.User.Context) { Left = _app.actor.list.User.Context.Ok(3), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.actor.list.User.Context.Ok(5) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -51,8 +51,8 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_ResultValueIsBool()
     {
-        var action = new Compare(_app.User.Context) { Left = _app.User.Context.Ok(5), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.User.Context.Ok(5) };
-        await action.Attach(null, _app.User.Context);
+        var action = new Compare(_app.actor.list.User.Context) { Left = _app.actor.list.User.Context.Ok(5), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator("==")), Right = _app.actor.list.User.Context.Ok(5) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await Assert.That((await result.Value()) is global::app.type.item.@bool.@this).IsTrue();
@@ -69,8 +69,8 @@ public class CompareHandlerTests : IDisposable
     [Test]
     public async Task Run_NonComparableType_ReturnsEvaluationError()
     {
-        var action = new Compare(_app.User.Context) { Left = _app.User.Context.Ok(new object()), Operator = _app.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.User.Context.Ok(5) };
-        await action.Attach(null, _app.User.Context);
+        var action = new Compare(_app.actor.list.User.Context) { Left = _app.actor.list.User.Context.Ok(new object()), Operator = _app.actor.list.User.Context.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")), Right = _app.actor.list.User.Context.Ok(5) };
+        await action.Attach(null, _app.actor.list.User.Context);
         var result = await action.Start();
 
         await result.IsFailure();

@@ -29,7 +29,7 @@ public class AssertionErrorVariablesTests
         _app = TestApp.Create("/test");
     }
 
-    private Data D(object? value) => value == null ? new Data("") : _app.User.Context.Ok(value);
+    private Data D(object? value) => value == null ? new Data("") : _app.actor.list.User.Context.Ok(value);
 
     // New AssertionError has Variables == null. Only handlers populate it; unrelated error
     // construction paths leave it null.
@@ -49,8 +49,8 @@ public class AssertionErrorVariablesTests
     public async Task AssertionError_Variables_PropertyRoundtrip()
     {
         var err = new AssertionError(1, 2);
-        await _app.User.Context.Variable.Set("x", 1);
-        var captured = _app.User.Context.Variable.Snapshot();
+        await _app.actor.list.User.Context.Variable.Set("x", 1);
+        var captured = _app.actor.list.User.Context.Variable.Snapshot();
         err.Variables = captured;
         await Assert.That(err.Variables).IsNotNull();
         await Assert.That(err.Variables!.Held("x")?.ToString()).IsEqualTo("1");
@@ -61,7 +61,7 @@ public class AssertionErrorVariablesTests
     [Test]
     public async Task EqualsHandler_OnFailure_PopulatesVariablesFromSnapshot()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("score", 42);
         context.Variable.Set("label", "foo");
 
@@ -82,7 +82,7 @@ public class AssertionErrorVariablesTests
     [Test]
     public async Task EqualsHandler_OnSuccess_VariablesNotPopulated()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("x", 1);
 
         var action = new AssertEquals(context) { Expected = D(5), Actual = D(5) };
@@ -101,7 +101,7 @@ public class AssertionErrorVariablesTests
     [Test]
     public async Task AllAssertHandlers_OnFailure_ConsistentlyPopulateVariables()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         context.Variable.Set("watched", "sentinel");
 
         // Attach binds each handler's [Code] provider (the construction half of the lifecycle)

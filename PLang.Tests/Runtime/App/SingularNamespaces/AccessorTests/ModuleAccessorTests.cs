@@ -54,7 +54,7 @@ public class ModuleAccessorTests
     [Test] public async Task AppModuleList_ReadsAsAVariable()
     {
         await using var app = TestApp.Create("/test");
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var variable = new global::app.type.item.variable.parser.@this("%!app.module.list%").Variable.Single();
         var read = await variable.Start(ctx);
         await read.IsSuccess();

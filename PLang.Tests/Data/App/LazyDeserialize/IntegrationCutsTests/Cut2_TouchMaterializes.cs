@@ -31,9 +31,9 @@ public class Cut2_TouchMaterializes
     {
         await using var app = NewApp(out var root);
         var p = new filepath(System.IO.Path.Combine(root, "config.json"));
-        await (await p.WriteText("{\"port\":8080}", app.User.Context)).IsSuccess();
+        await (await p.WriteText("{\"port\":8080}", app.actor.list.User.Context)).IsSuccess();
 
-        var d = await p.Decoded(app.User.Context);
+        var d = await p.Decoded(app.actor.list.User.Context);
         await Assert.That(d.Raw is byte[]).IsTrue(); // untouched = raw bytes (the flip; Peek is the source carrier)
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         await Assert.That((await (await d.Get("port")).Value())?.ToString()).IsEqualTo("8080"); // navigate materializes
@@ -44,9 +44,9 @@ public class Cut2_TouchMaterializes
     {
         await using var app = NewApp(out var root);
         var p = new filepath(System.IO.Path.Combine(root, "report.csv"));
-        await (await p.WriteText("name,age\nAda,36\n", app.User.Context)).IsSuccess();
+        await (await p.WriteText("name,age\nAda,36\n", app.actor.list.User.Context)).IsSuccess();
 
-        var d = await p.Decoded(app.User.Context);
+        var d = await p.Decoded(app.actor.list.User.Context);
         await Assert.That(d.Raw is byte[]).IsTrue(); // untouched = raw bytes (the flip; Peek is the source carrier)
         await Assert.That(d.MaterializeCount()).IsEqualTo(0);
         await Assert.That((await (await (await (await d.Get("rows")).Get("0")).Get("name")).Value())?.ToString()).IsEqualTo("Ada");
@@ -55,7 +55,7 @@ public class Cut2_TouchMaterializes
     [Test] public async Task Cut2_BigIntegerString_ReadsLossless_OnArithmetic()
     {
         await using var app = NewApp(out _);
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         const string big = "9999999999999999999999";
         var d = global::PLang.Tests.Shared.Make.FromRaw(big, ctx.App.type.list[new type("number", "biginteger"), ctx], ctx, "n");
         await Assert.That(((global::app.type.item.number.@this)(await d.Value())!).BoxedValue).IsTypeOf<BigInteger>();
@@ -67,7 +67,7 @@ public class Cut2_TouchMaterializes
     [Test] public async Task Cut2_ImagePng_MaterializesOnly_WhenWidthRead()
     {
         await using var app = NewApp(out _);
-        var ctx = app.User.Context;
+        var ctx = app.actor.list.User.Context;
         var bytes = System.Convert.FromBase64String(Png1x1);
         var d = global::PLang.Tests.Shared.Make.FromRaw(bytes, ctx.App.type.list[new type("image", "png"), ctx], ctx, "img");
 

@@ -9,12 +9,12 @@ public class OperatorTests : System.IAsyncDisposable
     private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/optests-" + System.Guid.NewGuid().ToString("N")[..6]);
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
-    private Data D(object? value) => value == null ? new Data("") : _app.User.Context.Ok(value);
+    private Data D(object? value) => value == null ? new Data("") : _app.actor.list.User.Context.Ok(value);
 
     // The operator's plang answer, read as its bool once it is known to be an answer, not an error.
     private async Task<bool> Is(Operator op, Data? left, Data? right)
     {
-        var answer = await op.Evaluate(left, right, _app.User.Context);
+        var answer = await op.Evaluate(left, right, _app.actor.list.User.Context);
         await answer.IsSuccess();
         return answer.ToBoolean();
     }

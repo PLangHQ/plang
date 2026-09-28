@@ -59,7 +59,7 @@ public class TestingClassTests
     [Test]
     public async Task NewInstance_CurrentTest_NullOutsideATest()
     {
-        await Assert.That(global::app.test.@this.Current(_app.User.Context)).IsNull();
+        await Assert.That(global::app.test.@this.Current(_app.actor.list.User.Context)).IsNull();
     }
 
     // A test's session makes its test the current one for the actor it is on, and takes its writes.
@@ -70,8 +70,8 @@ public class TestingClassTests
         var test = new global::app.test.@this { Goal = new global::app.goal.@this { Name = "Start" } };
         var session = plain.test.list.Open(test);
 
-        await Assert.That(global::app.test.@this.Current(plain.User.Context)).IsSameReferenceAs(test);
-        await plain.User.Channel[global::app.channel.list.@this.Output].WriteText("hello");
+        await Assert.That(global::app.test.@this.Current(plain.actor.list.User.Context)).IsSameReferenceAs(test);
+        await plain.actor.list.User.Channel[global::app.channel.list.@this.Output].WriteText("hello");
         await Assert.That(session.Text?.ToString()).IsEqualTo("hello\n");
     }
 
@@ -79,28 +79,28 @@ public class TestingClassTests
     [Test]
     public async Task NewInstance_TimeoutSeconds_DefaultIs30()
     {
-        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToInt32()).IsEqualTo(30);
+        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToInt32()).IsEqualTo(30);
     }
 
     // Parallel defaults to 0 — one per processor (the run reads <= 0 so) — the same value on every machine.
     [Test]
     public async Task NewInstance_Parallel_DefaultIsOnePerProcessor()
     {
-        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(0);
+        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(0);
     }
 
     // No tag filter by default — Include is empty, meaning every discovered test matches.
     [Test]
     public async Task NewInstance_Include_DefaultIsEmpty()
     {
-        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Count.ToInt32()).IsEqualTo(0);
+        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Count.ToInt32()).IsEqualTo(0);
     }
 
     // No tag filter by default — Exclude is empty, meaning nothing is excluded.
     [Test]
     public async Task NewInstance_Exclude_DefaultIsEmpty()
     {
-        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Count.ToInt32()).IsEqualTo(0);
+        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Count.ToInt32()).IsEqualTo(0);
     }
 
     // --test={"timeoutSeconds":60,"parallel":4,"include":["fast"],"exclude":["slow"]}
@@ -116,23 +116,23 @@ public class TestingClassTests
             ["exclude"] = new List<object?> { "slow" },
         };
 
-        var result = _app.System.Setting.Set("app.test.setting", config);
+        var result = _app.actor.list.System.Setting.Set("app.test.setting", config);
 
         await result.IsSuccess();
-        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToInt32()).IsEqualTo(60);
-        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(4);
-        await _app.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("fast", global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await _app.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("slow", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToInt32()).IsEqualTo(60);
+        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(4);
+        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("fast", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("slow", global::PLang.Tests.TestApp.SharedContext).IsTrue();
     }
 
     // A choice setting given as CLI text (--test={"format":"junit"}) is made by the choice itself.
     [Test]
     public async Task Configure_AChoiceFromItsText()
     {
-        var result = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
+        var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
 
         await result.IsSuccess();
-        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Format.Clr<global::app.test.Format>()).IsEqualTo(global::app.test.Format.JUnit);
+        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Format.Clr<global::app.test.Format>()).IsEqualTo(global::app.test.Format.JUnit);
     }
 
     // Include/Exclude are replace-semantics — the walk sets a fresh list<text>, so a second
@@ -140,22 +140,22 @@ public class TestingClassTests
     [Test]
     public async Task Configure_FromJson_IncludeAndExclude_ReplaceExisting()
     {
-        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "oldInclude" } });
-        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "oldExclude" } });
+        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["include"] = new List<object?> { "oldInclude" } });
+        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "oldExclude" } });
 
-        var result = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?>
+        var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?>
         {
             ["include"] = new List<object?> { "newInclude" },
             ["exclude"] = new List<object?> { "newExclude" }
         });
 
         await result.IsSuccess();
-        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Count.ToInt32()).IsEqualTo(1);
-        await _app.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("newInclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await _app.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("oldInclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
-        await Assert.That(_app.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Count.ToInt32()).IsEqualTo(1);
-        await _app.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("newExclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await _app.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("oldExclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
+        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Count.ToInt32()).IsEqualTo(1);
+        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("newInclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("oldInclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
+        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Count.ToInt32()).IsEqualTo(1);
+        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("newExclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("oldExclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
     }
 
     // Unknown config keys are rejected — the setting walk is strict (same as --app/--build/
@@ -163,7 +163,7 @@ public class TestingClassTests
     [Test]
     public async Task Configure_FromJson_UnknownKey_Rejected()
     {
-        var result = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?>
+        var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?>
         {
             ["timeoutSeconds"] = 10,
             ["futureOption"] = "not a valid key yet"
@@ -187,9 +187,9 @@ public class TestingClassTests
     [Test]
     public async Task From_ExcludedTest_ComesBackSkippedWithItsReason()
     {
-        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
 
-        var test = await global::app.test.@this.From(TaggedGoal("slow"), _app.User.Context);
+        var test = await global::app.test.@this.From(TaggedGoal("slow"), _app.actor.list.User.Context);
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Skipped);
         await Assert.That(test.StatusReason?.ToString()).IsEqualTo("excluded by tag");
@@ -199,10 +199,10 @@ public class TestingClassTests
     [Test]
     public async Task From_ExcludeSetThroughTheWalk_Filters()
     {
-        var set = _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        var set = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
         await set.IsSuccess();
 
-        var test = await global::app.test.@this.From(TaggedGoal("slow"), _app.User.Context);
+        var test = await global::app.test.@this.From(TaggedGoal("slow"), _app.actor.list.User.Context);
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Skipped);
         await Assert.That(test.StatusReason?.ToString()).IsEqualTo("excluded by tag");
@@ -211,9 +211,9 @@ public class TestingClassTests
     [Test]
     public async Task From_TakenTest_IsReady()
     {
-        _app.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
+        _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["exclude"] = new List<object?> { "slow" } });
 
-        var test = await global::app.test.@this.From(TaggedGoal("fast"), _app.User.Context);
+        var test = await global::app.test.@this.From(TaggedGoal("fast"), _app.actor.list.User.Context);
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Ready);
         await Assert.That(test.StatusReason).IsNull();
@@ -223,7 +223,7 @@ public class TestingClassTests
     [Test]
     public async Task TheSetting_AnswersWhyItLeavesATestOut()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var setting = new global::app.test.setting.@this();
         setting.Include.Add(new global::app.type.item.text.@this("fast"));
         var slow = new global::app.test.@this { Goal = TaggedGoal("slow") };
@@ -243,9 +243,9 @@ public class TestingClassTests
         var goal = Make.Goal("Covered",
             Make.Step("if %x% is 1", Make.Action("condition", "if", ("Left", "%x%"), ("Operator", "=="), ("Right", 1))));
         goal.Tag.Add(new global::app.type.item.tag.@this("skip"));
-        var test = await global::app.test.@this.From(goal, _app.User.Context);
+        var test = await global::app.test.@this.From(goal, _app.actor.list.User.Context);
 
-        await _app.test.list.Start(new global::app.type.item.list.@this<global::app.test.@this>(new[] { test }), _app.User.Context);
+        await _app.test.list.Start(new global::app.type.item.list.@this<global::app.test.@this>(new[] { test }), _app.actor.list.User.Context);
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Skipped);
         await Assert.That(_app.test.list.Report.Coverage.BranchChains.Keys.Any(site => site.Contains("Covered"))).IsTrue();

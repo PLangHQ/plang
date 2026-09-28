@@ -17,7 +17,7 @@ public class SetTests
     [Test]
     public async Task Set_SetsVariable()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%testVar%"), ("value", "testValue"));
         var result = await action.Start(context);
 
@@ -30,7 +30,7 @@ public class SetTests
     {
         // `set %!http.request.timeoutInSec% = 5` lands on context.Setting (where the generator seam
         // reads it) — the write side of the setting front door — not on the variable store.
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%!http.request.timeoutInSec%"), ("value", 5));
         var result = await action.Start(context);
 
@@ -44,8 +44,8 @@ public class SetTests
     [Test]
     public async Task SetDefault_OnASetting_KeepsItsValue()
     {
-        var context = _app.User.Context;
-        await _app.System.Setting.Set("build.cache", _app.System.Context.Ok(false));
+        var context = _app.actor.list.User.Context;
+        await _app.actor.list.System.Setting.Set("build.cache", _app.actor.list.System.Context.Ok(false));
 
         var action = TestAction.Create("variable", "set", ("name", "%!build.cache%"), ("value", true), ("asDefault", true));
         var result = await action.Start(context);
@@ -58,7 +58,7 @@ public class SetTests
     [Test]
     public async Task Set_WithType_SetsTypeInfo()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%count%"), ("value", 42), ("type", new global::app.type.@this("number", "int")));
         var result = await action.Start(context);
 
@@ -71,12 +71,12 @@ public class SetTests
     [Test]
     public async Task Set_AsAnotherType_IsABirth_SameTypeIsNot()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var births = new List<string>();
         foreach (var name in new[] { "path", "number" })
             _app.type.list[name].Own().Bind("create", global::app.@event.When.after,
                 (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); },
-                _app.User, global::app.@event.binding.Scope.actor);
+                _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
         var asPath = await TestAction.Create("variable", "set", ("name", "%p%"), ("value", "a.txt"), ("type", "path")).Start(context);
         var asNumber = await TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42), ("type", new global::app.type.@this("number", "int"))).Start(context);
@@ -89,7 +89,7 @@ public class SetTests
     [Test]
     public async Task Set_ReturnsOk()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%testVar%"), ("value", "testValue"));
         var result = await action.Start(context);
 
@@ -103,7 +103,7 @@ public class SetTests
     [Test]
     public async Task Set_WithType_SetsTypeOnStoredVariable()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%count%"), ("value", 42), ("type", "number"));
         var result = await action.Start(context);
 
@@ -114,7 +114,7 @@ public class SetTests
     [Test]
     public async Task Set_AsDefault_DoesNotOverwriteExisting()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
 
         // Set initial value
         var setAction = TestAction.Create("variable", "set", ("name", "%x%"), ("value", "original"));
@@ -134,7 +134,7 @@ public class SetTests
     [Test]
     public async Task Set_AsDefault_SetsWhenNotExists()
     {
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set", ("name", "%y%"), ("value", "default"), ("asdefault", true));
         var result = await action.Start(context);
 
@@ -153,7 +153,7 @@ public class SetTests
         // Invariant: after RunAsync, %!data% and the handler's own stored entry
         // must be the SAME reference, and the Data's Name must be whatever the
         // handler set it to — never overwritten to "!data".
-        var context = _app.User.Context;
+        var context = _app.actor.list.User.Context;
         var action = TestAction.Create("variable", "set",
             ("name", "%myVar%"), ("value", "hello"));
 
@@ -179,9 +179,9 @@ public class SetTests
     private static readonly global::app.type.@this NumberInt = new("number", "int");
 
     private global::app.module.action.variable.Set WithValue(object value, global::app.type.@this type)
-        => new(_app.User.Context)
+        => new(_app.actor.list.User.Context)
         {
-            Value = new Data("Value", value, global::PLang.Tests.TestApp.SharedContext.App.type.list[type, _app.User.Context], context: _app.User.Context)
+            Value = new Data("Value", value, global::PLang.Tests.TestApp.SharedContext.App.type.list[type, _app.actor.list.User.Context], context: _app.actor.list.User.Context)
         };
 
     [Test]

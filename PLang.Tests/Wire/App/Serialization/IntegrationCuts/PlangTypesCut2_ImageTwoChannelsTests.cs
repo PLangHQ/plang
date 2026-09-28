@@ -46,8 +46,8 @@ public class PlangTypesCut2_ImageTwoChannelsTests
     {
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2t-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var p = global::app.type.item.path.@this.Resolve("/srv/photo.png", app.User.Context);
-        var img = new image(PngBytes, p!, app.User.Context);
+        var p = global::app.type.item.path.@this.Resolve("/srv/photo.png", app.actor.list.User.Context);
+        var img = new image(PngBytes, p!, app.actor.list.User.Context);
 
         var w = new CaptureWriter("text");
         img.Write(w);
@@ -75,8 +75,8 @@ public class PlangTypesCut2_ImageTwoChannelsTests
     {
         await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2s-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var p = global::app.type.item.path.@this.Resolve("/srv/x.png", app.User.Context);
-        var img = new image(PngBytes, p!, app.User.Context);
+        var p = global::app.type.item.path.@this.Resolve("/srv/x.png", app.actor.list.User.Context);
+        var img = new image(PngBytes, p!, app.actor.list.User.Context);
         var beforeBytes = img.Bytes;
 
         img.Write(new CaptureWriter("text"));
@@ -92,7 +92,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
             "plang-cut2i-" + System.Guid.NewGuid().ToString("N")[..8]));
         var img = new image(PngBytes, "image/png");
         var data = new global::app.data.@this("photo", img,
-            new global::app.type.@this("image"), context: app.User.Context);
+            new global::app.type.@this("image"), context: app.actor.list.User.Context);
 
         await Assert.That(data.Type?.Name).IsEqualTo("image");
         img.Write(new CaptureWriter("text"));

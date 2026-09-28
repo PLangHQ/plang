@@ -15,7 +15,7 @@ public class PathDoubleSlashTests
             "plang-pds-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
         var app = TestApp.Create(root);
-        var path = Path.Resolve("//tmp/plang-ds-test.txt", app.User.Context);
+        var path = Path.Resolve("//tmp/plang-ds-test.txt", app.actor.list.User.Context);
         await Assert.That(path.Absolute).IsEqualTo("//tmp/plang-ds-test.txt");
     }
 

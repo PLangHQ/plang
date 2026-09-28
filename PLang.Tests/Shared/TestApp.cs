@@ -84,5 +84,5 @@ public static class TestApp
     /// materialize before it rides the wire. Born-with-context, never context-less.
     /// </summary>
     public static global::app.actor.context.@this SharedContext =>
-        (_shared ??= Create("/tmp/shared-" + System.Guid.NewGuid().ToString("N")[..6])).User.Context;
+        (_shared ??= Create("/tmp/shared-" + System.Guid.NewGuid().ToString("N")[..6])).actor.list.User.Context;
 }
