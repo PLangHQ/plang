@@ -1,58 +1,66 @@
 # coder — app-systems
 
-**Version:** v10 (stage 9: 9a closed, 9b under way)
+**Version:** v10 (stage 9: 9a, 9b and 9c closed through the 9b+9c gate; next 10a)
 
 ## What this is
 app-systems makes every `app.X` the type X, so the plang path, the C# path and the file path agree. The
 architect's plan is `.bot/app-systems/architect/plan.md` (13 stages); its running log of rulings is
 `.bot/app-systems/architect/summary.md`. The plan's readable face and its tests are `test/plan/app-systems/`
-(`start.md`, `start.goal`, `done.list`). Stage 9 moves every value's birth onto its type (`type.Create`, which
-fires `on.create`) and makes each module action a one-line door to the object that owns the work (worklist:
+(`start.md`, `start.goal`, `done.list`). Stage 9 moves every value's birth onto its type and makes each module
+action a one-line door to the object that owns the work (worklist:
 `.bot/app-systems/architect/plan/stage-9-worklist.md`).
 
 Working mode (Ingi): the architect hands intent; the coder proposes and starts in the same turn, stops only at
-a real design fork, and reports each pushed slice for review. Plan tests are intent: the coder writes them in
-plang that compiles, keeping what they prove; each must fail with its change reverted.
+a real design fork, and reports each pushed slice for review. Plan tests are intent: each must fail with its
+change reverted.
 
 ## What was done (v10, all pushed)
-- **9a — closed.** `data<T>.Use` (a carrier answers its own failure or hands its value whole);
-  `data.Use<TAs>` (what a carrier holds, taken as held); file.read as the template action; `path.Read` is
-  path's one read verb (a reference; content is the reference's own value; raw bytes via `IContent.Content`);
-  reads and `as <type>` conversions are births; a type declares what it is born `From`; Fluid includes and
-  OpenAi images read async; the file and http channels are gone; `data.Follow` (a reference answers the Data
-  it names, unread); a value already of the declared type is kept unread (the keep after a read no longer
-  re-makes the file from its content). Plan tests CreateFiresOnBirth, AsPathIsABirth green, red when reverted.
-- **9b.list** — `variable.Use<TAs>` / `variable.Change<TAs>`; all 19 list actions one line; `Replace`
-  answers a Data; `item.Where` (virtual) and `item.Holds` (the one predicate); `text.Split`,
-  `number.Range`; new lists born through Create; `Ensure` takes a birth.
-- **9b.llm** — a tool binds only its declared names (security); OnToolCall's and OnValidateResponse's state
-  in a frame; the model's answer decoded one way (live and replay) through its kind, a birth.
-- **9b.loop** — `action.list.After` is the loop body; the result dict born through its type.
-- **9b.code** — `app.Code.Load(path, ctx, then)` is the one door a DLL comes in by (code.load, module.add);
-  `app.Code.Register`; a missing DLL is the path's NotFound.
-- **9b.channel** — the goal channel owns its defaults and direction.
+- **9a** — births through types; `data<T>.Use` / `data.Use<TAs>` / `data.Follow`; `path.Read` the one read verb.
+- **9b** — every module action a one-line door: frames keep only the names they bind (`call.Keeper`); the where
+  rule (a field no item has is an error, an optional one filters); identity (one door to an actor); patterns
+  B/D/E/F; `module.remove`; mock deleted (mocking is an event); signing; http; `goal.return`.
+  Ruled leftovers: debug.tag (one `Tags: dict`, tags on the goal's frame, read `%!callStack.Scope.Tags.x%`,
+  the frame's tags a plang dict); code.* (`choice<code.kind>`, `[PlangType("provider")]`, carrying its
+  interface); output.ask (every input channel answers an `Ask`, born through `Ask.Create`); the list's
+  members take items and the handlers open carriers through `Use`; the LLM trace writes to the debug channel
+  (`TraceOutput` and per-call trace files gone); a program's error keeps its key through a channel write.
+- **9c** — handlers live at `app/module/<m>/<a>.cs` (no `action/`); the module registry dissolved:
+  `%!app.module%` is an empty module holding `list<module>`, the catalog action holds its `Class`,
+  `ActionEntry` and shared-instance registration gone.
+- **Eval round 25** (C + nano ×3): 64, 64, 63 of 64 — the one silent is `show` step 1, a known weak step
+  (silent in round 24 too). The eval tooling read handlers at the pre-9c path; fixed, with the provider kind's
+  options mirrored. Pick golden regenerated from round25-run1.
+- **dev.sh** — no-op build 9.8 s → 0.017 s (stamp), `full` in its own Gate configuration (analyzers now reach
+  PLang), suites in parallel (sweep 339 s → 87 s), the console in `All.proj`.
 
-## Open / waiting
-- **Frames (Ingi):** a `Calls` frame keeps every write made under it. Does a frame scope only the names it
-  binds? Until answered: foreach keeps save/restore; the callback frames stay.
-- **Ordering over a missing field (Ingi):** `where %x% age > 20` over an element without `age` is an error
-  (as a dict missing the key), not a skip.
-- **llm cache** — left unfixed on purpose (Ingi: the full sweep's learning specimen).
-- Logged in `Documentation/Runtime2/obp-cleanup.md`: list.Add/Flatten's extend fork, type.list.Full's flat
-  copy, JSON read by hand in Tool.Arguments, a provider's DLL kept as a string.
+## The 9b+9c gate (2026-09-28)
+- `./dev.sh full` (Gate, analyzers ON), 137 s: Modules 25/954, Types 16/670, Wire 17/466, Data 36/826,
+  Generator 10/189, Runtime 19/815 — every suite at or below the morning's counts (30/17/18/36/10/22); none
+  cut off. plang: 15 pass, 0 fail (329 stale = goals with no committed .pr).
+- Analyzers on PLang now report 257 PLNG003 (raw CLR returns) + 28 PLNG004 (direct System.Text.Json) warnings;
+  PLNG001/002 clean.
+- Revert checks (mutation, reverted, nothing committed): MisspelledFieldIsAnError, PartialFieldFilters,
+  RenderTakesNamedArguments each red on its own mutation (and nothing else); the four frame tests
+  (ParameterEndsWithTheCall, LoopItemEndsWithTheLoop, BodyWritesReachTheCaller, CallbackWriteReachesTheCaller)
+  red with `Keeper` reverted to "every write stays in its frame". IfReturnReturns was revert-checked at 220.
+  The two tag tests pass built fresh (their .pr not committed).
+- Fixture DLLs (TestProvider, NoCtorProvider) rebuilt from source; ProviderModuleTests 19/19.
+
+## Open / held for Ingi
+binding → on (names, hit/miss); decision 236 (variable.set type.Convert); key strictness stays (b); channel
+Timeout; `%!app` missing-node reads; environment.start (delete?); timer shape; return depth. The llm cache stays
+unfixed on purpose. Pile2_SqliteSettings reads a file gone before this branch.
 
 ## Next
-9b continues one module per commit (candidates: error.throw, test.discover, then the worklist's others), 9c.
-Cadence (Ingi's machine): builds and tests at `nice -n 19`; targeted suites each commit; plang tests each
-module; the full C# sweep every third module or on a shared-layer change; `dotnet build-server shutdown`
-between slices.
+10a → 10e, each with its gate. Cadence: `./dev.sh test <Class>` per change (the stamp skips unchanged
+builds); `./dev.sh full` once per gate.
 
 ## Code example
 ```csharp
-// an action is one line to the object that owns the work
-public Task<data.@this> Start() => Path.Use(path => path.Read(Context, ResolveVariables));
+// the owner takes items; the handler opens its carriers
+public Task<data.@this> Start() => ListName.Use(name => name.Use<list>(Context,
+    list => Index.Use(at => Task.FromResult(list.At(at, Context)))));
 
-// a list action: what the variable holds, as a list, handed on
-public async Task<data<bool>> Start() => data<bool>.From(await ListName.Use(name => name.Use<list>(Context,
-    async list => Context.Ok<bool>(await list.Contains(Value)))));
+// an input channel's answer is an Ask, born through its type
+return asked.As(await asked.Value<module.output.Ask>());
 ```
