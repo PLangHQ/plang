@@ -83,7 +83,7 @@ Types
 {%- capture face -%}{{ p.Type }}{%- endcapture -%}
 {%- if face == want -%}
 {%- assign found = true %}
-- {{ face }}{% if p.Type.Description %} — {{ p.Type.Description }}{% endif %}{% if p.Type.Values %} — one of: {% for v in p.Type.Values %}"{{ v }}"{% unless forloop.last %}, {% endunless %}{% endfor %}{% endif %}{% if p.Type.Example %} (e.g. {{ p.Type.Example }}){% endif %}
+- {{ face }}{% if p.Type.Description %} — {{ p.Type.Description }}{% endif %}{% if p.Type.Values %} — one of: {{ p.Type.Values | join: ", " }}{% endif %}{% if p.Type.Example %} (e.g. {{ p.Type.Example }}){% endif %}
 {%- endif -%}
 {%- endunless -%}
 {%- endfor -%}

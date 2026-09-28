@@ -1,0 +1,1 @@
+[6] condition.if(Left=%order.country%, Operator="==", Right="IS") { variable.set(Name=%vat%, Value=0.24) } ; condition.else() { variable.set(Name=%vat%, Value=0.25) }

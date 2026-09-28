@@ -98,7 +98,7 @@ def confirm(case, picks, parsed, errors, whole, pending, calls):
     """The builder's ConfirmNumbers: the decider is asked whether the step's words give each number; the answer
     is judged again with those answers (build.match Confirmed)."""
     resp, secs, _ = h.ask(c.confirm_state(pending), c.confirm_questions(pending))
-    calls.append({'seconds': secs, 'confirm': len(pending)})
+    calls.append({'seconds': secs, 'usage': {}, 'confirm': len(pending)})   # a decider call: no LLM tokens
     confirmed = resp.get('answers') or {}
     return judge_c(case, picks, parsed, errors, whole, confirmed) + (confirmed,)
 

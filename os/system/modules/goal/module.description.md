@@ -1,1 +1,1 @@
-Goals: call another goal (`call X`, on its own or as the body of an if/foreach/on-error clause) and return from the current goal (`return`, `return %result%` — on its own or as the body of an if: `if %done%, return`)
+Goals: call another goal (`call X`, on its own or as the body of an if/foreach/on-error clause) and return from the current goal

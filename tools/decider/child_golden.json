@@ -270,6 +270,27 @@
             "property": {"Recovery": [{"module": "goal", "name": "call", "property": {"Name": "LogFailure"}}]}}],
     "11": [{"module": "output", "name": "write", "property": {"Data": "Report sent", "channel": "log"}}]
    }
+  },
+  {
+   "id": "show",
+   "covers": "os/system/error/Show.goal: a render with a named argument that is a same-named variable (`error=%error%`), and one on error clause holding a status filter, a recovery call, the order (`call Fallback then retry` — fix first: GoalFirst) and a count in words (`retry once` — 1, confirmed by the decider), + write to; output to a named channel",
+   "goal": "Show",
+   "steps": [
+    {"text": "set %template% = \"/system/error/%error.StatusCode%.txt\"", "indent": 0,
+     "comment": "Shows an error: the template for its status code in this folder renders it, and it is written to\nthe error channel. The caller hands the error in by name — `call /system/error/Show error=%!error%`\ninside a handler; at the top level the app hands in the failed run's error."},
+    {"text": "render %template%, error=%error%, on error 404 call Fallback then retry once, write to %text%", "indent": 0},
+    {"text": "write %text% to error channel", "indent": 0}
+   ],
+   "expect": {
+    "0": [{"module": "variable", "name": "set", "property": {"Name": "%template%", "Value": "/system/error/%error.StatusCode%.txt"}}],
+    "1": [{"module": "ui", "name": "render", "property": {"Template": "%template%",
+             "Parameter": [{"name": "error", "value": "%error%"}]}},
+          {"module": "on", "name": "error",
+           "property": {"StatusCode": 404, "RetryCount": 1, "Order": "GoalFirst",
+                        "Recovery": [{"module": "goal", "name": "call", "property": {"Name": "Fallback"}}]}},
+          {"module": "variable", "name": "set", "property": {"Name": "%text%", "Value": "%!data%"}}],
+    "2": [{"module": "output", "name": "write", "property": {"Data": "%text%", "channel": "error"}}]
+   }
   }
  ]
 }
