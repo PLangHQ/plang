@@ -14,18 +14,18 @@ public class TestSigningProvider : ISigning
     public bool IsBuiltIn { get; set; }
     public string? Source { get; set; }
 
-    public (KeyPair? keys, app.error.IError? error) GenerateKeyPair()
+    public (KeyPair? keys, app.error.Error? error) GenerateKeyPair()
         => (new KeyPair("testPub", "testPriv"), null);
 
-    public global::app.type.binary.@this Sign(global::app.type.signature.@this unsigned, global::app.type.text.@this privateKey)
-        => new global::app.type.binary.@this(new byte[64]);
+    public global::app.type.item.binary.@this Sign(global::app.type.item.signature.@this unsigned, global::app.type.item.text.@this privateKey)
+        => new global::app.type.item.binary.@this(new byte[64]);
 
-    public global::app.type.@bool.@this Verify(global::app.type.signature.@this signature)
-        => new global::app.type.@bool.@this(true);
+    public global::app.type.item.@bool.@this Verify(global::app.type.item.signature.@this signature)
+        => new global::app.type.item.@bool.@this(true);
 
     public Task<app.data.@this> SignAsync(sign action)
-        => Task.FromResult(app.data.@this.Ok());
+        => Task.FromResult(action.Context.Ok());
 
-    public Task<app.data.@this<global::app.type.@bool.@this>> VerifyAsync(verify action)
-        => Task.FromResult(app.data.@this<global::app.type.@bool.@this>.Ok(true));
+    public Task<app.data.@this<global::app.type.item.@bool.@this>> VerifyAsync(verify action)
+        => Task.FromResult(action.Context.Ok<global::app.type.item.@bool.@this>(true));
 }
