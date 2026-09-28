@@ -70,7 +70,7 @@ Also pulled forward to stage 7's cleanup (decision 56), because this branch's ow
 - **The llm tool call (decision 185, a live security fault):**
   - `ParseToolArguments` (`llm/code/OpenAi.cs:603`) binds every name the model sends, not only the tool's `Declared` rows (`:1058`) that its schema showed. The argument frame is read before the caller's memory (`variable/call/list/this.cs:7`), so the model can shadow a caller variable such as `%userId%`. Bind only declared names, and refuse the rest back to the model.
   - `OnToolCall` sets `name`, `arguments`, `status` and `result` in the caller's memory (`:541-543`, `:589-592`). Bind them in a call frame, the way the tool's arguments are.
-  - Whether a valued row stops yielding to the model is waiting on Ingi (`plan/service-brief.md`).
+  - A valued row keeps yielding to the model (Ingi, decision 187: "this gives programming ability"). Declared-only still closes the fault: a caller variable that isn't one of the tool's rows can't be shadowed.
 - **Delete `app/service/`** (the per-call scope: no production callers; one test, `Stage8_ChannelEventsTests.cs:205`). Decision 185 reverses 129's "services stay".
 - **`condition.Operator` lives in a module's action folder** (`module/action/condition/Operator.cs`), and since 9b.list.1 the list type depends on it (`list.Any` takes `choice<Operator>`). A type must not reach up into a module. Operator is comparison (`data.Comparison` is in `app.data`), so it moves there when condition comes up in 9b.
 - **Console presentation still in C#:** the report's summary and per-test lines, `coverage.Text`'s tables, and `test.Failure`'s block are all built with a StringBuilder. Presentation is os templates.

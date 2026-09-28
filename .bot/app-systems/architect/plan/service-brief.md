@@ -32,19 +32,20 @@ An actor is who acts, and that decides what's allowed. The wire's code must not 
 - **Permission starts empty (b).** The door grants what it allows. The goal's code is trusted source; what came over the wire isn't.
 - **What the service's memory holds is defined specifically** (Ingi's lean: "defined specifically, yes").
 
-## Proposed (architect), waiting on Ingi
-
-- **The door's call is the grant.** A tool is already a held `goal.call` with rows:
+- **The door's call is the grant** (proposed by the architect; Ingi ruled the override). A tool is already a held `goal.call` with rows:
   - a **declaration row** (`orderId`) is supplied by the wire (wire origin, see the `.data` brief);
-  - a **valued row** (`userId=%userId%`) is sent by the caller, resolved in the caller's memory, and is **fixed**: the wire can't override it. Today it yields.
-  - The service's memory is exactly those rows. A name the model sends that isn't declared is refused back to the model, not bound.
-  - The same holds for a web route when servers come: the route declares what the request supplies and what the server sends.
+  - a **valued row** (`limit=10`, `userId=%userId%`) is sent by the caller, and **the model may override it** (Ingi: "it should be able to overwrite them, this gives programming ability");
+  - the service's memory is exactly those rows. A name the model sends that isn't one of them is refused back to the model, not bound.
+  
+  So a row is input the model may set. A value the model must not change doesn't ride as a row; the goal reads it from what the service can't be told (its identity, its settings, `%!…%`).
+- The same holds for a web route when servers come: the route declares what the request may supply.
+
+## Proposed (architect), waiting on Ingi
 - **One service per run the wire drives:** one tool call, one HTTP request, one socket connection. Parallel tool calls then can't race, and OpenAI tools are stateless (the state is the conversation). The cost is met by making the actor lighter (lazy channels, settings falling back to the parent), not by sharing.
 - **The identity:** a service's context carries the caller's identity (a signed request's signer; for an LLM, the provider). The `.data` brief's `/.data/identity/<id>/` is where its files go.
 
 ## Open
 
-- A default the model may override (`limit=10`): if valued rows are fixed, where does an overridable default live? Perhaps in the called goal's own declaration.
 - How a door writes permission grants (paths, hosts) in the step: taught syntax plus the builder.
 - The name of the actor member that answers `current` (`service` is taken by the list).
 - `actor/this.cs:12` is `sealed`; `actor.Name` (`{system, user}`) stays the closed set for `choice<actor>` slots, since a service isn't named by a slot.
@@ -52,4 +53,4 @@ An actor is who acts, and that decides what's allowed. The wire's code must not 
 ## On app-systems
 
 - Delete `app/service/` (the per-call scope: no production callers; one test, `Stage8_ChannelEventsTests.cs:205`). This reverses decision 129's "services stay", which was my extension, not Ingi's.
-- The two live faults, in the llm module's 9b turn: bind only `Declared` names, and bind OnToolCall's run-state in a call frame rather than setting it in the caller's memory. Whether valued rows stop yielding waits for Ingi.
+- The two live faults, in the llm module's 9b turn: bind only `Declared` names, and bind OnToolCall's run-state in a call frame rather than setting it in the caller's memory. Valued rows keep yielding to the model (Ingi, decision 187).
