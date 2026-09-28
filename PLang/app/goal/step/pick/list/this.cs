@@ -167,10 +167,6 @@ public sealed class @this
         => WriteTo.Match(_step.Text) is { Success: true } m
             ? new global::app.type.item.variable.parser.@this(_step.Text).Read(m.Index + m.Length)
             : null;
-    private static readonly System.Text.RegularExpressions.Regex OnErrorCall =
-        new(@"on error[^,;]*?\bcall\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-    private static readonly System.Text.RegularExpressions.Regex Arguments =
-        new(@"\bcall\b[^,]*?\s[A-Za-z_]\w*\s*=", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
     /// <summary>The top three of the popular choice (when the step was asked it), most probable first.</summary>
     public IReadOnlyList<(string Name, number? Score)> Top =>
@@ -307,7 +303,6 @@ public sealed class @this
 
     private string? Prefill(global::app.actor.context.@this context)
     {
-        var text = _step.Text;
         var known = Destination();
         // a certain condition chain leads, in chain order (if, elseif, else); the other certain actions
         // follow by score — a tie in the scores never puts a body's action before its if
@@ -320,7 +315,7 @@ public sealed class @this
         var below = _step.Goal is { } goal && _step.Index < goal.Step.CountRaw
                     && ReferenceEquals(goal.Step[_step.Index], _step) && goal.Step.Body(_step.Index).CountRaw > 0;
         var line = new line.@this(nests: certain.Count(a => a.Link == 0) == 1 && !chain && !below);
-        foreach (var action in certain) action.Prefill(line, Call(action, text));
+        foreach (var action in certain) action.Prefill(line, Call(action));
         if (known != null) line.Append($"variable.set(Name={known.Text}, Value=%!data%)");
         return line.ToString();
     }
@@ -359,17 +354,10 @@ public sealed class @this
         return new();
     }
 
-    // One action as the pre-fill starts it: its required properties as `?` — a goal.call whose step passes
-    // arguments, its Parameter; and a list of actions it holds (on.error's Recovery), a goal.call when the step
-    // says `on error … call`, else `?`.
-    private static string Call(global::app.goal.step.action.@this action, string text)
-    {
-        var required = action.Property.Where(p => p.Required).Select(p => $"{p.Name}=?").ToList();
-        if (action.Module.Name == "goal" && action.Name == "call" && Arguments.IsMatch(text)) required.Add("Parameter={?}");
-        foreach (var held in action.Property.Where(p => p.Type.Name == "list" && p.Type.kind.Name == "action"))
-            required.Add(OnErrorCall.IsMatch(text) ? $"{held.Name}=[goal.call(Name=?)]" : $"{held.Name}=?");
-        return $"{action.Module.Name}.{action.Name}({string.Join(", ", required)})";
-    }
+    // One action as the pre-fill starts it: its required properties as `?`. An optional property gets no hole —
+    // it is the LLM's to add when the step names it (a Recovery, a Parameter, a RetryCount), as the examples teach.
+    private static string Call(global::app.goal.step.action.@this action)
+        => $"{action.Module.Name}.{action.Name}({string.Join(", ", action.Property.Where(p => p.Required).Select(p => $"{p.Name}=?"))})";
 
     private global::app.goal.step.action.@this? Catalog(string name, global::app.actor.context.@this context)
     {

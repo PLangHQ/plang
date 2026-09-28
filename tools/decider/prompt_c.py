@@ -103,8 +103,6 @@ def is_unsure(picks_i, text=''):
     """The decider was unsure of the step: it asked the popular-action choice (harness.unsure)."""
     return bool(picks_i.get('@popular'))
 
-ON_ERROR_CALL = re.compile(r'on error[^,;]*?\bcall\b', re.I)
-ARGUMENTS = re.compile(r'\bcall\b[^,]*?\s[A-Za-z_]\w*\s*=', re.I)   # `call X name=value`: the step passes arguments
 
 def holds_actions(action):
     """Does this action take actions as a value — an action-typed property, or a list of them (on.error's Recovery)?"""
@@ -114,17 +112,13 @@ def holds_actions(action):
 
 def prefill(action, text):
     """One pick as the formal line pre-fills it: its required properties as `?`, what the step already
-    says filled — `write to %x%` → variable.set(Name=%x%, Value=%!data%)."""
+    says filled — `write to %x%` → variable.set(Name=%x%, Value=%!data%). An optional property gets no hole: it
+    is the LLM's to add when the step names it (a Recovery, a Parameter, a RetryCount), as the examples teach."""
     module, name = action.split('.', 1)
     props, _ = b.declared(module, name)
     if action == 'variable.set' and (d := destination(text)):
         return f'variable.set(Name={d}, Value=%!data%)'
     required = [f'{n}=?' for n, p in props.items() if not p['nullable'] and p['default'] is None]
-    if action == 'goal.call' and ARGUMENTS.search(text): required.append('Parameter={?}')
-    # a list of actions it holds (on.error's Recovery): `on error call X` names what it runs — a goal.call, its
-    # Name still to fill; otherwise `?` like any other value (a `?` left in is refused like any other)
-    required += [f'{n}=[goal.call(Name=?)]' if ON_ERROR_CALL.search(text) else f'{n}=?'
-                 for n, p in props.items() if p['type'] == 'list<action>']
     return f'{action}(' + ', '.join(required) + ')'
 
 # The known code's words (goal/step/pick/list Code): a step's first variable, a foreach's `as` name, and
