@@ -31,38 +31,18 @@ public partial class Call : IContext
     public partial data.@this<global::app.type.item.@bool.@this> Parallel { get; init; }
 
     /// <summary>
-    /// Build-time hook: drop a self-reference arg — one whose name equals the variable it
-    /// references (<c>path=%path%</c>). It is redundant: the callee already reads that variable
-    /// (shared scope, or reads cascade out of a fork), so passing it is the same as not passing
-    /// it. Detected by a build-time string check (never at runtime); the dropped arg is announced.
+    /// Build-time: the name becomes the goal's own address — one truth, a dictionary hit at run. A %variable%
+    /// name is only known at run and stays authored; a goal in the caller's own file stays bare
+    /// (<see cref="global::app.goal.@this.Reference"/>). A goal not found yet may be built later in the same
+    /// run, so the name is left as written. The arguments stay as written: <c>x=%x%</c> gives the callee its
+    /// own <c>%x%</c>, starting as the caller's.
     /// </summary>
     public async Task<data.@this> Build()
     {
-        // The name becomes the goal's own address — one truth, a dictionary hit at run. A %variable%
-        // name is only known at run and stays authored; a goal in the caller's own file (a child, or
-        // the file's root) stays bare — it wins by rule and cannot be shadowed. A goal not found yet
-        // may be built later in the same run, so the name is left as written.
         if (await Callee() is { } target && target.Reference(__action?.Step?.Goal) is { } address
             && !string.Equals(address, (await Name.Value())?.RawText, System.StringComparison.OrdinalIgnoreCase)
             && __action!["Name"] is { } name)
             __action.Property.Set(name.Holding(new global::app.type.item.text.@this(address)));
-
-        if (Parameter?.Peek() is not global::app.type.item.list.@this args) return Context.Ok();
-
-        var kept = new List<data.@this>();
-        foreach (var arg in args.Items(Context))
-        {
-            if (string.Equals(arg.Peek()?.ToString(), $"%{arg.Name}%", System.StringComparison.OrdinalIgnoreCase))
-            {
-                await (Context.App.Debug?.Write(
-                    $"build: dropped redundant self-reference '{arg.Name}=%{arg.Name}%' in call to {Name.Peek()}") ?? Task.CompletedTask);
-                continue;
-            }
-            kept.Add(arg);
-        }
-        // The argument list is the action's own property — replace it with the survivors.
-        if (kept.Count != args.CountRaw && __action?["Parameter"] is { } arguments)
-            __action.Property.Set(arguments.Holding(new global::app.type.item.list.@this(kept)));
         return Context.Ok();
     }
 

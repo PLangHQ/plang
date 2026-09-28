@@ -245,6 +245,26 @@ public class IfHandlerTests : IDisposable
         await Assert.That(await (await Ask("guest", "notin", list)).ToBooleanAsync()).IsTrue();
     }
 
+    // `if %unset% > 20`: ordering a variable that holds nothing is the developer's error, never a quiet false.
+    [Test]
+    public async Task Ordering_AnUnsetVariable_IsAnError()
+    {
+        var ctx = _app.User.Context;
+        var unset = new global::app.data.@this("Left", "%unset%",
+            ctx.App.type.list[new global::app.type.@this("item", template: "plang"), ctx], context: ctx);
+        var action = new If(ctx)
+        {
+            Left = unset,
+            Operator = ctx.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(">")),
+            Right = ctx.Ok(20L),
+        };
+        await action.Attach(null, ctx);
+
+        var result = await action.Start();
+
+        await result.IsFailure();
+    }
+
     [Test]
     public async Task NegativeOperator_KeepsThePositivesError()
     {

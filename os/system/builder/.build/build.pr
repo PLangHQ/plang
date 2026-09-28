@@ -97,6 +97,12 @@
           ]
         }
       ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 1 uses variable.set, which the decider was not sure of (0.58)"
+        }
+      ],
       "waitForExecution": true
     },
     {
@@ -222,7 +228,7 @@
               "type": {
                 "name": "list"
               },
-              "value": [{"name":"kind","type":{"name":"text"},"value":"build-path"}]
+              "value": [{"name":"kind","type":{"name":"text"},"value":"build-path"},{"name":"path","type":{"name":"item","template":"plang"},"value":"%path%","variable":[{"text":"%path%","code":[{"variable":"path"}]}]}]
             }
           ],
           "default": [
@@ -234,6 +240,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 4 uses goal.call, which the decider was not sure of (0.72)"
         }
       ],
       "waitForExecution": true
@@ -419,7 +431,7 @@
               "type": {
                 "name": "list"
               },
-              "value": [{"name":"kind","type":{"name":"text"},"value":"goals-found"}]
+              "value": [{"name":"kind","type":{"name":"text"},"value":"goals-found"},{"name":"goals","type":{"name":"item","template":"plang"},"value":"%goals%","variable":[{"text":"%goals%","code":[{"variable":"goals"}]}]}]
             }
           ],
           "default": [
@@ -431,6 +443,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 7 uses goal.call, which the decider was not sure of (0.74)"
         }
       ],
       "waitForExecution": true

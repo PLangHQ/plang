@@ -25,7 +25,7 @@
               "type": {
                 "name": "list"
               },
-              "value": []
+              "value": [{"name":"goal","type":{"name":"item","template":"plang"},"value":"%goal%","variable":[{"text":"%goal%","code":[{"variable":"goal"}]}]}]
             }
           ],
           "default": [

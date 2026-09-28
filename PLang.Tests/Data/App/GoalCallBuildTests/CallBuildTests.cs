@@ -4,23 +4,22 @@ using System.Collections.Generic;
 namespace PLang.Tests.App.GoalCallBuildTests;
 
 /// <summary>
-/// goal.call's Build() hook drops a self-reference arg — one whose name equals the variable it
-/// references (path=%path%) — at build time. A non-self-ref arg (different name, or a literal) is
-/// kept. Also asserts the drop persists on the action's own Parameter row (the .pr), not a copy.
+/// goal.call's Build() keeps the arguments as written: <c>path=%path%</c> gives the callee its own
+/// <c>%path%</c>, starting as the caller's — so a write to it inside the callee stays the callee's.
 /// </summary>
 public class CallBuildTests
 {
     [Test]
-    public async Task Build_DropsSelfRefArg_KeepsOthers()
+    public async Task Build_KeepsASelfReferenceArgument()
     {
         var app = global::PLang.Tests.TestApp.Create("/t");
         var ctx = app.User.Context;
 
         var args = new global::app.type.item.list.@this(new List<Data>
         {
-            new Data("path", "%path%", context: ctx),    // self-ref → dropped
-            new Data("kind", "build", context: ctx),      // literal → kept
-            new Data("target", "%path%", context: ctx),   // refs path but name != ref → kept
+            new Data("path", "%path%", context: ctx),
+            new Data("kind", "build", context: ctx),
+            new Data("target", "%path%", context: ctx),
         });
         var action = new PrAction
         {
@@ -39,8 +38,21 @@ public class CallBuildTests
 
         var arguments = action["Parameter"]!;
         var names = ((global::app.type.item.list.@this)arguments.Value!).Items(global::PLang.Tests.TestApp.SharedContext).Select(p => p.Name).ToList();
-        await Assert.That(names).DoesNotContain("path");   // self-ref dropped
-        await Assert.That(names).Contains("kind");
-        await Assert.That(names).Contains("target");        // %path% but name != ref → kept
+        await Assert.That(names).IsEquivalentTo(new[] { "path", "kind", "target" });
+    }
+
+    [Test]
+    public async Task ASelfPassedName_WrittenInTheCallee_StaysTheCallees()
+    {
+        await using var app = global::PLang.Tests.TestApp.Create("/t2");
+        var ctx = app.User.Context;
+        app.goal.list.Add(await RealGoalLoad.ViaChannel(app, Make.Goal("Rename",
+            Make.Step("set %path% = \"inner\"",
+                Make.Action("variable", "set", Make.Param("Name", "path", "variable"), ("Value", "inner"))))));
+        await ctx.Variable.Set("path", "outer");
+
+        await (await Make.Call("Rename", ("path", "%path%")).Start(ctx)).IsSuccess();
+
+        await Assert.That((await ctx.Variable.GetValue("path"))?.ToString()).IsEqualTo("outer");
     }
 }

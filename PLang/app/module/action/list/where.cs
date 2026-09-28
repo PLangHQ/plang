@@ -20,6 +20,13 @@ public partial class Where : IContext
     /// <summary>The right-hand comparison value of the predicate.</summary>
     public partial data.@this Value { get; init; }
 
-    public Task<data.@this> Start() => ListName.Use(name => name.Use<app.type.item.@this>(Context,
-        subject => subject.Where(Field, Operator, Value, Context)));
+    // The value compared to is what the step gave: a %variable% that holds nothing is the answer, never
+    // compared as its own text.
+    public async Task<data.@this> Start()
+    {
+        var value = await Value.Given() ?? Value;
+        if (!value.Success) return value;
+        return await ListName.Use(name => name.Use<app.type.item.@this>(Context,
+            subject => subject.Where(Field, Operator, value, Context)));
+    }
 }

@@ -310,7 +310,7 @@ public partial class @this
             return this;
         }
         return named.IsInitialized ? named
-            : Context.Error(new global::app.error.Error($"'{Name}' names a variable that holds nothing", "VariableNotFound", 404));
+            : Context.Error(new global::app.error.Error($"'{Name}' is {Peek()}, a variable that holds nothing", "VariableNotFound", 404));
     }
 
     /// <summary>What this carrier holds, handed to <paramref name="then"/> as a <typeparamref name="TAs"/> —

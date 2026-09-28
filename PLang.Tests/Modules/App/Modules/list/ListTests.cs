@@ -492,6 +492,29 @@ public class ListTests
         await Assert.That(await Names(await WhereOf(context, "users", "age", "==", null))).IsEquivalentTo(new[] { "b" });
     }
 
+    // Only an item's own missing field is no match; the value it's compared to is the developer's own variable,
+    // and ordering by one that holds nothing is an error — never a quietly empty list.
+    [Test]
+    public async Task Where_OrderedByAnUnsetVariable_IsAnError()
+    {
+        var (context, memory) = CreateContext();
+        memory.Set("users", new List<object?>
+        {
+            new Dictionary<string, object?> { ["name"] = "a", ["age"] = 30L },
+            new Dictionary<string, object?> { ["name"] = "b" },
+        });
+
+        var goal = await RealGoalLoad.ViaChannel(context.App, Make.Goal("WhereUnset",
+            Make.Step("list.where %users% where age > %limit%",
+                Make.Action("list", "where", Make.Param("ListName", "users", "variable"), ("Field", "age"),
+                    ("Operator", ">"), Make.Param("Value", "%limit%", "variable")))));
+        var result = await goal.Step[0].Start(context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
+        await Assert.That(result.Error.Message).Contains("limit");
+    }
+
     [Test]
     public async Task Where_OnAnEmptyList_KeepsNothing_AndOnADictWithoutTheField_IsAnError()
     {

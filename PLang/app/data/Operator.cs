@@ -59,14 +59,15 @@ public sealed class Operator
 
     // Ordering boundary: Less/Equal/Greater answer by operator; NotEqual and
     // Incomparable have no honest order — an error, never a silent false.
-    // A missing operand (an `if` on an unset variable) is refused; a filtered item's field it doesn't
-    // have (NotFound, from where/any) is simply no match — optional data isn't ordered.
+    // A missing operand (an `if` on an unset variable, a where compared to one) is refused; only a filtered
+    // item's own field it doesn't have (a NotFound Left, from where/any) is simply no match — optional data
+    // isn't ordered.
     private static async Task<Answer> Ordered(data.@this? l, data.@this? r, actor.context.@this context, string op,
         Func<global::app.data.Comparison, bool> map)
     {
-        if (l == null || r == null)
+        if (l == null || r is null or { IsInitialized: false })
             return Refused(context, $"cannot order a missing operand with '{op}'", "EvaluationError");
-        if (!l.IsInitialized || !r.IsInitialized) return Answer(context, false);
+        if (!l.IsInitialized) return Answer(context, false);
         var c = await l.Compare(r);
         if (c is global::app.data.Comparison.NotEqual or global::app.data.Comparison.Incomparable)
             return Refused(context, $"cannot order '{l.Type.Name}' and '{r.Type.Name}' values with '{op}'", "EvaluationError");

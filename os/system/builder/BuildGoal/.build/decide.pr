@@ -141,7 +141,10 @@
               "type": {
                 "name": "type"
               },
-              "value": {"name":"file","kind":"json"}
+              "value": {
+                "name": "file",
+                "kind": "json"
+              }
             }
           ],
           "default": [
@@ -938,7 +941,7 @@
               "type": {
                 "name": "list"
               },
-              "value": [{"name":"kind","type":{"name":"text"},"value":"goal-decided"}]
+              "value": [{"name":"kind","type":{"name":"text"},"value":"goal-decided"},{"name":"goal","type":{"name":"item","template":"plang"},"value":"%goal%","variable":[{"text":"%goal%","code":[{"variable":"goal"}]}]}]
             }
           ],
           "default": [
@@ -950,6 +953,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 12 uses goal.call, which the decider was not sure of (0.79)"
         }
       ],
       "waitForExecution": true
