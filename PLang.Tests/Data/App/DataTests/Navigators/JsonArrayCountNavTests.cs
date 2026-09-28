@@ -15,7 +15,7 @@ public class JsonArrayCountNavTests
     private static async Task<string?> Nav(app.@this app, string path)
     {
         var ctx = app.User.Context;
-        var plan = await ctx.Ok("{\"steps\":[10,20,30]}", ctx.App.type.list.Kind("json"));
+        var plan = await ctx.App.type.list.Kind("json").Decode(System.Text.Encoding.UTF8.GetBytes("{\"steps\":[10,20,30]}"), ctx);
         plan.Name = "plan";
         var hit = await plan.Get(path);
         return (await hit.Value())?.ToString();

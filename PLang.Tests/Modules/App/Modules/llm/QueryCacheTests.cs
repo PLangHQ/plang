@@ -87,6 +87,25 @@ public class QueryCacheTests
         await Assert.That((await fresh.Value())?.ToString()).IsEqualTo(answer);
     }
 
+    // The model's answer is content from outside: it is born through its type, so `after text create` sees it.
+    [Test]
+    public async Task Query_TheAnswer_IsABirthOfItsType()
+    {
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("born")));
+        var births = 0;
+        _app.type.list["text"].Own().Bind("create", global::app.@event.When.after,
+            (_, data, _) => { births++; return Task.FromResult(data); }, Ctx.Actor, global::app.@event.binding.Scope.actor);
+
+        var query = LlmTestHelper.MakeQuery(Ctx, userText: "a birth");
+        await query.Attach(null, Ctx);
+        var answer = await query.Start();
+
+        await answer.IsSuccess();
+        await Assert.That((await answer.Value())?.ToString()).IsEqualTo("born");
+        await Assert.That(births).IsGreaterThanOrEqualTo(1);
+    }
+
     [Test]
     public async Task Query_CacheTrue_DifferentMessages_CacheMiss()
     {

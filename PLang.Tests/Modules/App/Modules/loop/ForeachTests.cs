@@ -171,8 +171,8 @@ public class ForeachTests
         var context = _app.User.Context;
         const string planJson =
             "{\"description\":\"d\",\"steps\":[{\"index\":0,\"actions\":[\"a\"]},{\"index\":1,\"actions\":[\"b\"]}]}";
-        // Born the way llm.query's producer door does: context.Ok(json, "json") → clr(json).
-        var plan = await context.Ok(planJson, context.App.type.list.Kind("json"));
+        // Born the way llm.query's answer is: the json kind decodes it.
+        var plan = await context.App.type.list.Kind("json").Decode(System.Text.Encoding.UTF8.GetBytes(planJson), context);
         plan.Name = "plan";
         await context.Variable.Set(plan);
 

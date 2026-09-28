@@ -390,32 +390,23 @@ public sealed class OpenAi : ILlm
             // --- Format extraction ---
             var effectiveFormat = await FormatOf(action) ?? (schema != null ? "json" : null);
             var extracted = ExtractResponse(rawResponse, effectiveFormat);
+            var result = await Answer(rawResponse, effectiveFormat, context);
 
-            // --- JSON validation ---
+            // --- JSON validation --- a json answer is read now: one that isn't json is the query's error
             if (effectiveFormat == "json")
             {
-                var parsed = TryParseJson(extracted);
-                if (parsed == null)
-                {
-                    // Try extracting from code block
-                    var fromBlock = ExtractJsonFromCodeBlock(rawResponse);
-                    if (fromBlock != null)
-                        parsed = TryParseJson(fromBlock);
-
-                    if (parsed == null)
-                        return context.Error(new ActionError(
-                            "Response is not valid JSON", "JsonParseError", 400)
+                await result.Value();
+                if (!result.Success)
+                    return context.Error(new ActionError(
+                        "Response is not valid JSON", "JsonParseError", 400)
+                    {
+                        Details = new Dictionary<string, object?>
                         {
-                            Details = new Dictionary<string, object?>
-                            {
-                                ["RawResponse"] = rawResponse,
-                                ["Model"] = model,
-                                ["Schema"] = schema
-                            }
-                        });
-
-                    extracted = fromBlock!;
-                }
+                            ["RawResponse"] = rawResponse,
+                            ["Model"] = model,
+                            ["Schema"] = schema
+                        }
+                    });
             }
 
             // --- Custom validation ---
@@ -460,13 +451,6 @@ public sealed class OpenAi : ILlm
                 foreach (Func<string, Task> hook in after.GetInvocationList())
                     await hook(rawResponse);
 
-            // --- Build result ---
-            // The producer names the kind once; the kind loads the raw (json → clr(json),
-            // md/none → text). No per-format ladder, and fresh == cached (both hand raw+kind).
-            var result = effectiveFormat is { } format
-                ? await context.Ok(extracted, context.App.type.list.Kind(format))
-                : context.Ok(extracted);
-
             // --- Cache store ---
             // Properties are [JsonIgnore] on Data, so store metadata as the value itself
             if (cacheKey != null)
@@ -477,9 +461,9 @@ public sealed class OpenAi : ILlm
                     // JsonElement: a JsonElement does not survive the cache's disk
                     // serialization — Normalize reflects it to {"valuekind":"Object"},
                     // losing all content, so every cached JSON response would restore
-                    // empty. Data.Ok already materialized resultValue into a native
-                    // dict/list (or scalar) that serializes round-trip.
-                    ["Value"] = result.Peek(),
+                    // empty. The answer is read here (the cache keeps the value, not its unread bytes),
+                    // so it rides as a native dict/list (or scalar) that serializes round-trip.
+                    ["Value"] = await result.Value(),
                     ["RawResponse"] = rawResponse,
                     ["Model"] = model,
                     ["PromptTokens"] = totalPromptTokens,
@@ -730,9 +714,11 @@ public sealed class OpenAi : ILlm
         return $"You MUST respond in ```{effectiveFormat}``` code block";
     }
 
+    // The part of the model's answer its format asks for: the answer as it is when no format was asked; the
+    // content of a code block fenced as the format (or any code block) — a json answer fenced as ```json too.
     private static string ExtractResponse(string content, string? format)
     {
-        if (format == null || format == "json")
+        if (format == null)
             return content;
 
         // Try format-specific code block
@@ -750,46 +736,17 @@ public sealed class OpenAi : ILlm
     }
 
     /// <summary>
-    /// Reproduces the live path's "raw response → result value" parse: strips a
-    /// ```json/```fmt code fence when present and parses JSON to the element the
-    /// caller wraps via <c>Data.Ok</c> (which materializes it to a native value).
-    /// Shared by the live build and cache-restore so a restored result is
-    /// byte-identical to a fresh one — the cache round-trips the plain
-    /// <c>RawResponse</c> string, never a fragile parsed object.
+    /// The model's answer as a value: the part its <paramref name="format"/> asks for, decoded by that
+    /// format's kind (json → json, md → text/md; no format, or one no type reads, is text) — content from
+    /// outside, so a birth through its type, left unread until touched. The live answer and the cache replay
+    /// both read it here, so a replayed answer is the same value as a fresh one (the cache keeps the plain
+    /// response text, never a parsed object).
     /// </summary>
-    internal static object? ParseResultValue(string rawResponse, string? effectiveFormat)
+    private async Task<data.@this> Answer(string rawResponse, string? format, actor.context.@this context)
     {
-        var extracted = ExtractResponse(rawResponse, effectiveFormat);
-        if (effectiveFormat != "json")
-            return extracted;
-
-        var parsed = TryParseJson(extracted);
-        if (parsed == null)
-        {
-            var fromBlock = ExtractJsonFromCodeBlock(rawResponse);
-            if (fromBlock != null)
-                parsed = TryParseJson(fromBlock);
-        }
-        return parsed;
-    }
-
-    private static JsonElement? TryParseJson(string text)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(text);
-            return doc.RootElement.Clone();
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
-
-    private static string? ExtractJsonFromCodeBlock(string content)
-    {
-        var match = Regex.Match(content, "```(?:json)?\\n?(.*?)\\n?```", RegexOptions.Singleline);
-        return match.Success ? match.Groups[1].Value : null;
+        var types = context.App.type.list;
+        var kind = format != null && types.Kind(format) is { Owner: not null } read ? read : types.Mime("text/plain");
+        return await kind.Decode(Encoding.UTF8.GetBytes(ExtractResponse(rawResponse, format)), context);
     }
 
     // --- Parameter schema ---
@@ -934,7 +891,7 @@ public sealed class OpenAi : ILlm
     /// Restores a cached result from the app's store.
     /// The cache stores metadata as a dictionary since Data.Properties is [JsonIgnore].
     /// </summary>
-    private static async Task<data.@this> RestoreFromCache(data.@this cached)
+    private async Task<data.@this> RestoreFromCache(data.@this cached)
     {
         // Materialize the stored entry — a settings-stored dict round-trips as a lazy wire, so
         // Peek() alone would hand back the still-encoded slice (neither dict nor clr), and the
@@ -983,13 +940,9 @@ public sealed class OpenAi : ILlm
             _ => null,
         };
         string? rawResp = AsText(props.GetValueOrDefault("RawResponse"));
-        if (!string.IsNullOrEmpty(rawResp))
-        {
-            string? fmt = AsText(props.GetValueOrDefault("Format"));
-            resultValue = ParseResultValue(rawResp, fmt) ?? resultValue;
-        }
-
-        var result = cached.Context.Ok(resultValue);
+        var result = !string.IsNullOrEmpty(rawResp)
+            ? await Answer(rawResp, AsText(props.GetValueOrDefault("Format")), cached.Context)
+            : cached.Context.Ok(resultValue);
         SetProp(result, "Cached", true);
         foreach (var kvp in props)
             SetProp(result, kvp.Key, kvp.Value);
