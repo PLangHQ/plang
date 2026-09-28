@@ -383,7 +383,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this Insert(global::app.type.item.number.@this index, Data item) => Insert(index.ToInt32(), item);
     public void RemoveAt(global::app.type.item.number.@this index) => RemoveAt(index.ToInt32());
     public void SetAt(global::app.type.item.number.@this index, Data value) => SetAt(index.ToInt32(), value);
-    public Data? At(global::app.type.item.number.@this index, actor.context.@this context) => At(index.ToInt32(), context);
 
     /// <summary>Removes the leaf at the flattened <paramref name="index"/> (no-op when out of range).</summary>
     internal void RemoveAt(int index)
@@ -769,26 +768,24 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return -1;
     }
 
-    /// <summary>The element at <paramref name="index"/> — or, out of range, an error naming the range; an
-    /// index that didn't resolve is its own answer.</summary>
-    public System.Threading.Tasks.Task<Data> At(global::app.data.@this<global::app.type.item.number.@this> index, actor.context.@this context)
-        => index.Use(at => System.Threading.Tasks.Task.FromResult(At(at, context) ?? context.Error(
-            new global::app.error.ValidationError($"Index {at} out of range (0..{CountRaw - 1})", "IndexOutOfRange"))));
+    /// <summary>The element at <paramref name="index"/> — or, out of range, an error naming the range.</summary>
+    public Data At(global::app.type.item.number.@this index, actor.context.@this context)
+        => At(index.ToInt32(), context) ?? OutOfRange(index, context);
 
-    /// <summary>The elements' text, one after another with <paramref name="separator"/> between them; a
-    /// separator that didn't resolve is its own answer.</summary>
-    public System.Threading.Tasks.Task<Data> Join(global::app.data.@this<global::app.type.item.text.@this> separator,
-        actor.context.@this context)
-        => separator.Use(async between =>
-        {
-            var parts = new List<string>();
-            foreach (var element in Items(context)) parts.Add((await element.Value())?.ToString() ?? "");
-            return (Data)context.Ok<global::app.type.item.text.@this>(string.Join(between.ToString(), parts));
-        });
+    // An index this list has no element at.
+    private Data OutOfRange(global::app.type.item.number.@this index, actor.context.@this context)
+        => context.Error(new global::app.error.ValidationError($"Index {index} out of range (0..{CountRaw - 1})", "IndexOutOfRange"));
+
+    /// <summary>The elements' text, one after another with <paramref name="separator"/> between them.</summary>
+    public async System.Threading.Tasks.Task<Data> Join(global::app.type.item.text.@this separator, actor.context.@this context)
+    {
+        var parts = new List<string>();
+        foreach (var element in Items(context)) parts.Add((await element.Value())?.ToString() ?? "");
+        return context.Ok<global::app.type.item.text.@this>(string.Join(separator.ToString(), parts));
+    }
 
     /// <summary>Whether any element's field holds — whether <see cref="Where"/> keeps any; an error is the answer.</summary>
-    public async System.Threading.Tasks.Task<Data> Any(global::app.data.@this<global::app.type.item.text.@this> field,
-        global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
+    public async System.Threading.Tasks.Task<Data> Any(global::app.type.item.text.@this field, global::app.data.Operator op,
         Data value, actor.context.@this context)
     {
         var kept = await Where(field, op, value, context);
@@ -799,62 +796,48 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>Adds <paramref name="value"/> at <paramref name="at"/> when that is a position in this list,
     /// else at the end: a list's elements join this one (nothing copied), anything else is one element that
     /// points at the value's current instance. Answers this list.</summary>
-    public System.Threading.Tasks.Task<Data> Add(Data value, global::app.data.@this<global::app.type.item.number.@this> at,
-        actor.context.@this context)
-        => at.Use(async index =>
+    public async System.Threading.Tasks.Task<Data> Add(Data value, global::app.type.item.number.@this at, actor.context.@this context)
+    {
+        var positioned = at >= 0 && at <= Count;
+        if (await value.Value() is @this items)
         {
-            var positioned = index >= 0 && index <= Count;
-            if (await value.Value() is @this items)
-            {
-                if (positioned) Insert(index, items); else Add(items);
-            }
-            else
-            {
-                var element = new Data(value.Name, value.Peek(), value.Type, context: context);
-                if (positioned) Insert(index, element); else Add(element);
-            }
-            return (Data)context.Ok(this);
-        });
+            if (positioned) Insert(at, items); else Add(items);
+        }
+        else
+        {
+            var element = new Data(value.Name, value.Peek(), value.Type, context: context);
+            if (positioned) Insert(at, element); else Add(element);
+        }
+        return context.Ok(this);
+    }
 
     /// <summary>The element at <paramref name="index"/> becomes <paramref name="value"/> (pointing at its
     /// current instance) — an index outside the list is IndexOutOfRange. Answers this list.</summary>
-    public System.Threading.Tasks.Task<Data> SetAt(global::app.data.@this<global::app.type.item.number.@this> index, Data value,
+    public async System.Threading.Tasks.Task<Data> SetAt(global::app.type.item.number.@this index, Data value,
         actor.context.@this context)
-        => index.Use(async at =>
-        {
-            if (at < 0 || at >= Count)
-                return context.Error(new global::app.error.ValidationError($"Index {at} out of range (0..{CountRaw - 1})", "IndexOutOfRange"));
-            SetAt(at, new Data(value.Name, await value.Value(), value.Type, context: context));
-            return (Data)context.Ok(this);
-        });
+    {
+        if (index < 0 || index >= Count) return OutOfRange(index, context);
+        SetAt(index, new Data(value.Name, await value.Value(), value.Type, context: context));
+        return context.Ok(this);
+    }
 
     /// <summary>Removes the element at <paramref name="at"/> when one is given (-1 is none) — outside the
     /// list is IndexOutOfRange — else the first element equal to <paramref name="value"/>. Answers this list.</summary>
-    public System.Threading.Tasks.Task<Data> Remove(Data value, global::app.data.@this<global::app.type.item.number.@this> at,
+    public async System.Threading.Tasks.Task<Data> Remove(Data value, global::app.type.item.number.@this at,
         actor.context.@this context)
-        => at.Use(async index =>
-        {
-            if (index >= Count)
-                return context.Error(new global::app.error.ValidationError($"Index {index} out of range (0..{CountRaw - 1})", "IndexOutOfRange"));
-            if (index >= 0) RemoveAt(index);
-            else await Remove((object?)value, context);
-            return (Data)context.Ok(this);
-        });
-
-    /// <summary>Sorts this list (<see cref="Sort(string?, bool, actor.context.@this)"/>) by
-    /// <paramref name="by"/> when one is given — a field that didn't resolve is its own answer; elements that
-    /// have no order between them are an error, not a throw. Answers this list.</summary>
-    public System.Threading.Tasks.Task<Data> Sort(global::app.data.@this<global::app.type.item.text.@this>? by,
-        global::app.data.@this<global::app.type.item.@bool.@this> descending, actor.context.@this context)
-        => descending.Use(async down =>
-        {
-            var field = by == null ? null : await by.Given();
-            return field is { Success: false } ? field : await Sorted(field?.Peek().ToString(), down.Value, context);
-        });
-
-    private async System.Threading.Tasks.Task<Data> Sorted(string? by, bool descending, actor.context.@this context)
     {
-        try { await Sort(by, descending, context); }
+        if (at >= Count) return OutOfRange(at, context);
+        if (at >= 0) RemoveAt(at);
+        else await Remove((object?)value, context);
+        return context.Ok(this);
+    }
+
+    /// <summary>Sorts this list by <paramref name="by"/> when one is given (else by the elements themselves);
+    /// elements that have no order between them are an error, not a throw. Answers this list.</summary>
+    public async System.Threading.Tasks.Task<Data> Sort(global::app.type.item.text.@this? by,
+        global::app.type.item.@bool.@this descending, actor.context.@this context)
+    {
+        try { await Sort(by?.ToString(), descending.Value, context); }
         catch (global::app.data.IncomparableException ex)
         {
             return context.Error(new global::app.error.ValidationError(ex.Message));
@@ -896,26 +879,24 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The elements grouped by their <paramref name="key"/> field, in first-seen order: a list of
     /// <c>{key, items}</c>, each <c>items</c> a list of its elements (navigable in turn). A key that didn't
     /// resolve is its own answer. A new list, born through its type.</summary>
-    public System.Threading.Tasks.Task<Data> Group(global::app.data.@this<global::app.type.item.text.@this> key,
-        actor.context.@this context)
-        => key.Use(async field =>
+    public async System.Threading.Tasks.Task<Data> Group(global::app.type.item.text.@this key, actor.context.@this context)
+    {
+        var buckets = new Dictionary<string, @this>();
+        var order = new List<string>();
+        foreach (var element in Items(context))
         {
-            var buckets = new Dictionary<string, @this>();
-            var order = new List<string>();
-            foreach (var element in Items(context))
+            var held = await element.Get(key.ToString());
+            var name = held.IsInitialized ? (await held.Value())?.ToString() ?? "" : "";
+            if (!buckets.TryGetValue(name, out var bucket))
             {
-                var held = await element.Get(field.ToString());
-                var name = held.IsInitialized ? (await held.Value())?.ToString() ?? "" : "";
-                if (!buckets.TryGetValue(name, out var bucket))
-                {
-                    buckets[name] = bucket = new @this();
-                    order.Add(name);
-                }
-                bucket.Add(element);
+                buckets[name] = bucket = new @this();
+                order.Add(name);
             }
-            var groups = order.Select(name => new Dictionary<string, object?> { ["key"] = name, ["items"] = buckets[name] }).ToList();
-            return await context.App.type.list["list"].Create(groups, context);
-        });
+            bucket.Add(element);
+        }
+        var groups = order.Select(name => new Dictionary<string, object?> { ["key"] = name, ["items"] = buckets[name] }).ToList();
+        return await context.App.type.list["list"].Create(groups, context);
+    }
 
     /// <summary>A list has no field of its own (navigating it by a name reaches its elements').</summary>
     public override System.Threading.Tasks.Task<Data?> Field(string name, actor.context.@this context)
@@ -924,29 +905,28 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The elements whose field holds under the operator — an element without the field is handed over
     /// as NotFound, and what that means is the operator's. A field no element has is a misspelling, an error
     /// naming it; an empty list keeps nothing. An error is the answer. A new list, born through its type.</summary>
-    public override System.Threading.Tasks.Task<Data> Where(global::app.data.@this<global::app.type.item.text.@this> field,
-        global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
-        Data value, actor.context.@this context)
-        => field.Use(name => op.Use(async compare =>
+    public override async System.Threading.Tasks.Task<Data> Where(global::app.type.item.text.@this field,
+        global::app.data.Operator op, Data value, actor.context.@this context)
+    {
+        var name = field.ToString();
+        var held = new List<(Data element, global::app.type.item.@this? item, Data? field)>();
+        foreach (var element in Items(context))
         {
-            var held = new List<(Data element, global::app.type.item.@this? item, Data? field)>();
-            foreach (var element in Items(context))
-            {
-                var item = await element.Value();
-                held.Add((element, item, item == null ? null : await item.Field(name.ToString(), context)));
-            }
-            if (held.Count > 0 && held.All(h => h.field == null))
-                return NoField(name.ToString(), held.SelectMany(h => h.item?.Fields ?? []), context);
+            var item = await element.Value();
+            held.Add((element, item, item == null ? null : await item.Field(name, context)));
+        }
+        if (held.Count > 0 && held.All(h => h.field == null))
+            return NoField(name, held.SelectMany(h => h.item?.Fields ?? []), context);
 
-            var kept = new @this();
-            foreach (var (element, _, at) in held)
-            {
-                var holds = await ((global::app.data.Operator)compare).Evaluate(at ?? Data.NotFound(name.ToString(), context), value, context);
-                if (!holds.Success) return holds;
-                if (holds.ToBoolean()) kept.Add(element);
-            }
-            return await context.App.type.list["list"].Create(kept, context);
-        }));
+        var kept = new @this();
+        foreach (var (element, _, at) in held)
+        {
+            var holds = await op.Evaluate(at ?? Data.NotFound(name, context), value, context);
+            if (!holds.Success) return holds;
+            if (holds.ToBoolean()) kept.Add(element);
+        }
+        return await context.App.type.list["list"].Create(kept, context);
+    }
 
     /// <summary>The item emptiness hook — no elements (an empty chunk holds none).</summary>
     public override System.Threading.Tasks.ValueTask<bool> IsEmpty()

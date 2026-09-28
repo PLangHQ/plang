@@ -436,16 +436,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>This dict is the subject, its own only item: kept when its field holds under the operator,
     /// else nothing is. A field it doesn't have is a misspelling, an error naming it. A field, an operator or
     /// a comparison that fails is the answer.</summary>
-    public override System.Threading.Tasks.Task<Data> Where(global::app.data.@this<global::app.type.item.text.@this> field,
-        global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
-        Data value, actor.context.@this context)
-        => field.Use(name => op.Use(async compare =>
-        {
-            if (await Field(name.ToString(), context) is not { } held) return NoField(name.ToString(), Fields, context);
-            var holds = await ((global::app.data.Operator)compare).Evaluate(held, value, context);
-            if (!holds.Success) return holds;
-            return holds.ToBoolean() ? context.Ok(this) : context.Ok(null, context.App.type.list["dict"]);
-        }));
+    public override async System.Threading.Tasks.Task<Data> Where(global::app.type.item.text.@this field,
+        global::app.data.Operator op, Data value, actor.context.@this context)
+    {
+        if (await Field(field.ToString(), context) is not { } held) return NoField(field.ToString(), Fields, context);
+        var holds = await op.Evaluate(held, value, context);
+        if (!holds.Success) return holds;
+        return holds.ToBoolean() ? context.Ok(this) : context.Ok(null, context.App.type.list["dict"]);
+    }
 
     // ---- Comparison — the value's own behavior (see app.data.Comparison) ----
 

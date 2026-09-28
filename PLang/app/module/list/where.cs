@@ -23,5 +23,5 @@ public partial class Where : IContext
     // The value compared to is what the step gave: a %variable% that holds nothing is the answer, never
     // compared as its own text.
     public Task<data.@this> Start() => Value.Given(value => ListName.Use(name => name.Use<app.type.item.@this>(Context,
-        subject => subject.Where(Field, Operator, value, Context))));
+        subject => Field.Use(field => Operator.Use(op => subject.Where(field, op, value, Context))))));
 }

@@ -16,5 +16,5 @@ public partial class Any : IContext
 
     // The value compared to is what the step gave: a %variable% that holds nothing is the answer.
     public async Task<data.@this<global::app.type.item.@bool.@this>> Start() => data.@this<global::app.type.item.@bool.@this>.From(
-        await Value.Given(value => ListName.Use(name => name.Use<app.type.item.list.@this>(Context, list => list.Any(Key, Operator, value, Context)))));
+        await Value.Given(value => ListName.Use(name => name.Use<app.type.item.list.@this>(Context, list => Key.Use(key => Operator.Use(op => list.Any(key, op, value, Context)))))));
 }

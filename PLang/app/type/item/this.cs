@@ -469,11 +469,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// to scope into.
     /// </summary>
     public virtual System.Threading.Tasks.Task<global::app.data.@this> Where(
-        global::app.data.@this<global::app.type.item.text.@this> field,
-        global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
+        global::app.type.item.text.@this field, global::app.data.Operator op,
         global::app.data.@this value, global::app.actor.context.@this context)
         => System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.ValidationError(
-            $"'where {field.Peek()} …' needs a list or dict to scope into — a {Type.Name} has no fields.", "WhereOnApex")));
+            $"'where {field} …' needs a list or dict to scope into — a {Type.Name} has no fields.", "WhereOnApex")));
 
     /// <summary>
     /// Emptiness — each type owns its own answer: text → whitespace-only,
