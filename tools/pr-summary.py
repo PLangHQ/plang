@@ -18,8 +18,8 @@ Usage:
     python3 tools/pr-summary.py <...> --params             # also show each action's parameters
 
 Examples:
-    python3 tools/pr-summary.py Tests/App/CallStack/.build/handledflagsetwhenrecoverysucceeds.test.pr
-    python3 tools/pr-summary.py Tests/ScalarsAsNative/Stage1            # every .pr beneath it
+    python3 tools/pr-summary.py test/App/CallStack/.build/handledflagsetwhenrecoverysucceeds.test.pr
+    python3 tools/pr-summary.py test/ScalarsAsNative/Stage1            # every .pr beneath it
 
 For LLM build *traces* (what the planner/compiler saw and returned), use
 Documentation/v0.2/inspect-trace.py instead — that's the trace tool; this is the .pr tool.

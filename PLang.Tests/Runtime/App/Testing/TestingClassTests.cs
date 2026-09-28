@@ -177,7 +177,7 @@ public class TestingClassTests
         var goal = new global::app.goal.@this
         {
             Name = "T",
-            Path = global::app.type.item.path.@this.Resolve("/Tests/T.test.goal", global::PLang.Tests.TestApp.SharedContext)
+            Path = global::app.type.item.path.@this.Resolve("/test/T.test.goal", global::PLang.Tests.TestApp.SharedContext)
         };
         goal.Tag.Add(new global::app.type.item.tag.@this(tag));
         return goal;

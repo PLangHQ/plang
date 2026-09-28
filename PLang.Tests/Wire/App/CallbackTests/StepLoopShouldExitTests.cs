@@ -51,10 +51,10 @@ public class StepLoopShouldExitTests : System.IAsyncDisposable
     }
 
     // Step-loop integration: covered by the 2a.2 commit (Steps.RunAsync wires
-    // ShouldExit) — exercised by the end-to-end Tests/Callback PLang fixtures.
+    // ShouldExit) — exercised by the end-to-end test/Callback PLang fixtures.
     [Test] public async Task StepLoop_ShortCircuits_OnShouldExitTrue()
     {
-        // Pinned by Tests/Callback/StatelessCrossGoalResumes end-to-end in 2a.8.
+        // Pinned by test/Callback/StatelessCrossGoalResumes end-to-end in 2a.8.
         // Here we just pin the predicate contract used by the loop.
         var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-se-" + System.Guid.NewGuid().ToString("N")[..8]));

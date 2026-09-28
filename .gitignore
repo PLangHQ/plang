@@ -26,7 +26,7 @@ coverage.cobertura.xml
 characters/
 
 # PLang test runtime workspace directories
-Tests/**/workspace/
+test/**/workspace/
 **/.build/traces/
 
 # Test runner output
@@ -36,5 +36,5 @@ Tests/**/workspace/
 **/junit_sensitive_masked.xml
 
 # Cache test artifacts created when %var% directories aren't substituted at runtime
-Tests/Modules/Cache/**/%*%/
+test/module/cache/**/%*%/
 

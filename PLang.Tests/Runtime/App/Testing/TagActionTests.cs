@@ -22,7 +22,7 @@ public class TagActionTests
     public async Task Teardown() => await _app.DisposeAsync();
 
     private global::app.goal.@this Goal() =>
-        global::PLang.Tests.Shared.Make.Goal("Start", "/Tests/T.test.goal",
+        global::PLang.Tests.Shared.Make.Goal("Start", "/test/T.test.goal",
             global::PLang.Tests.Shared.Make.Step("set %x% = 1",
                 global::PLang.Tests.Shared.Make.Action("variable", "set", new (string, object?)[] { ("Name", "x"), ("Value", 1) })));
 

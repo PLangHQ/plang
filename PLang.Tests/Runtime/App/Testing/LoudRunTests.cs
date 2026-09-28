@@ -35,7 +35,7 @@ public class LoudRunTests
     {
         var test = new global::app.test.@this
         {
-            Goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/Tests/{name}.test.goal", TestApp.SharedContext) },
+            Goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", TestApp.SharedContext) },
         };
         if (status is Status.Stale or Status.Skipped)
         {

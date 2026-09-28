@@ -32,7 +32,7 @@ VIEWER_DIR = os.path.abspath(os.path.dirname(__file__))
 STATIC_ROOT = os.path.abspath(os.path.join(VIEWER_DIR, '..', '..', '..'))
 # REPO_ROOT is the actual repo top — one level above os/. Used for the default
 # trace-discovery roots so both system traces (under os/) and user-app traces
-# (under Tests/) are picked up without --root flags.
+# (under test/) are picked up without --root flags.
 REPO_ROOT = os.path.abspath(os.path.join(VIEWER_DIR, '..', '..', '..', '..'))
 PLANG_ROOT = STATIC_ROOT  # back-compat alias
 
@@ -77,11 +77,11 @@ def _parse_args():
 
     if not roots:
         # Default: the actual repo root (parent of os/) so both system traces
-        # under os/system/builder/ and user-app traces under Tests/ are picked
-        # up without --root flags. Tests/ is added explicitly because some OSes
+        # under os/system/builder/ and user-app traces under test/ are picked
+        # up without --root flags. test/ is added explicitly because some OSes
         # are case-sensitive and a generic repo-walk should still find it
         # quickly when it's the deepest scan target.
-        roots = [REPO_ROOT, os.path.join(REPO_ROOT, 'Tests')]
+        roots = [REPO_ROOT, os.path.join(REPO_ROOT, 'test')]
 
     # Dedupe while preserving order.
     seen, unique = set(), []
@@ -422,7 +422,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         Client looks up `byBucket[file.bucket]` and finds the run whose `path`
         matches `file.path`. Tiny files (~50KB for 200 tests); no caching yet."""
         out = {}
-        # Walk REPO_ROOT (repo top), not PLANG_ROOT (os/) — Tests/.test/ lives
+        # Walk REPO_ROOT (repo top), not PLANG_ROOT (os/) — test/.test/ lives
         # at the repo top alongside os/, so the os/-rooted walk misses it.
         for dirpath, dirnames, filenames in os.walk(REPO_ROOT):
             dirnames[:] = [d for d in dirnames if d not in ('.git', 'node_modules', 'bin', 'obj', '.build')]

@@ -85,7 +85,7 @@ public class SnapshotResumeTests
     [Test] public async Task SnapshotResume_NestedChain_UnwindsToParentAfterSubGoalCompletes()
     {
         // Cross-goal end-to-end is pinned by 2a.8's
-        // Tests/Callback/StatelessCrossGoalResumes .test.goal fixture. Here we
+        // test/Callback/StatelessCrossGoalResumes .test.goal fixture. Here we
         // just pin the API contract: ResumeChain handles >1 frame without
         // throwing on the recursive walk.
         var app = NewApp();

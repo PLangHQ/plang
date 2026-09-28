@@ -1,0 +1,21 @@
+app-systems: what is done (stages 1–8g; 8h's code parts). The summary says only "done 1–8g, see done.list".
+
+1  Run → Start: the entry verb of every executable object
+3  One set of types: each type owns its name, aliases and kinds; kinds live on their types
+4  The collected type: type<T> with list, Get(key), current
+5  Faces: a type's Out view is a summary; detail by navigating to one
+6  The reference: one parser for %x%
+7  Every concept is its type: %!app.goal/actor/module/test/variable/type%; settings are C# classes per owner (set/save/remove, per actor)
+8  on on every object: one event class per verb; on.event binds by the event's path; %!event% (and !item, !result) on the frame; mocks are bindings; on.cancel, on.unbind; value birth fires on.create (async type.Create, internal Make)
+8  call-stack frames for goal, step and action; --debug prints each step's time; test step timings read the frames
+8  asks wait for their answer; the run's cancellation (timeout, Ctrl-C) ends the wait
+10 (pulled forward) formats are kinds of the types that read them; bytes become values through their format (kind.Decode/Encode); the serializer list and the renderer table are gone
+8g modifiers are clauses: on.error, on.cache, on.timeout bound on the action before them at read, never started as steps; a retry is a fresh attempt; the error outcome after after-start
+8h (code) the builder: the decider's common questions render (never worked since decider v5); a lone if gets its body in the prefill; no hole for optional properties; choices quoted; on.cache/on.timeout asked in stage 1; unwritten numbers confirmed by the decider as a builder step (ConfirmNumbers)
+
+fixed on the way: the 5-second first signature (500 identities made in a loop); a failed signature is an error, not a silent unsigned write; one default provider per interface
+
+validated by (built when Ingi says):
+  test/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline
+  test/plan/app-systems/module/on/cache/RecoveryIsNeverCached
+  test/plan/app-systems/module/on/DataIsLeftAloneAfterAClause

@@ -20,7 +20,7 @@ public class ResultsTests
     private static global::app.test.@this NewTest(string name = "T") =>
         new()
         {
-            Goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/Tests/{name}.test.goal", global::PLang.Tests.TestApp.SharedContext) }
+            Goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", global::PLang.Tests.TestApp.SharedContext) }
         };
 
     // Fresh session starts empty — Count == 0, no tests.

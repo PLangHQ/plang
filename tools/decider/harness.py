@@ -1,5 +1,5 @@
-"""Decider harness — measures the two-stage typesafe pipeline against the labels: the Tests/**/.pr
-files, kept at tools/decider/labels/<same path under Tests/>.
+"""Decider harness — measures the two-stage typesafe pipeline against the labels: the test/**/.pr
+files, kept at tools/decider/labels/<same path under test/>.
 
 stage 1  noul per (step, module)           -> module set per step      vs .pr modules
 stage 2  choice per (step, module-in-set)  -> action per (step,module) vs .pr action

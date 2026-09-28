@@ -4,7 +4,7 @@ namespace app.test.list;
 
 /// <summary>
 /// The run's tests — a list of them, reached at <c>app.test.list</c>; one is picked by its goal's address
-/// through the type (<c>app.test.Get("/Tests/x/Start")</c>). Holds what a run comes to (<see cref="Report"/>)
+/// through the type (<c>app.test.Get("/test/x/Start")</c>). Holds what a run comes to (<see cref="Report"/>)
 /// and whether one is running: the app is testing while a <see cref="Session"/> is open. How a run runs is
 /// test's setting (<c>%!app.test.setting%</c>), read where it's needed.
 /// </summary>

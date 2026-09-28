@@ -10,7 +10,7 @@ namespace PLang.Tests.App.FileSystem;
 
 /// End-to-end Messages flow. Six scenarios from the architect's
 /// stage-5 doc, exercised via the Stage 4 v2 surface (Path.Operations.cs).
-/// PLang `.test.goal` versions under Tests/Permission/ are intent-only until
+/// PLang `.test.goal` versions under test/Permission/ are intent-only until
 /// the file action handlers (modules/file/read.cs etc.) migrate to call
 /// Path.Authorize as their first step (follow-up work — those handlers are
 /// sync today and the migration needs an async refactor).

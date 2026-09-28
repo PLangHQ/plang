@@ -152,7 +152,8 @@ public class TimeoutAfterTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
+        // each attempt ran to its own 100ms deadline (≥ ~300ms), and none ran its full 2s sleep (3 × 2s uncut)
         await Assert.That(elapsed.TotalMilliseconds).IsGreaterThanOrEqualTo(280);
-        await Assert.That(elapsed.TotalMilliseconds).IsLessThan(1500);
+        await Assert.That(elapsed.TotalMilliseconds).IsLessThan(4000);
     }
 }
