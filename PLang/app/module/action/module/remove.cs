@@ -14,8 +14,6 @@ public partial class Remove : IContext
         await (await Context.App.module.Get(name.ToString())).Use<global::app.module.@this>(async module =>
         {
             await Context.App.module.list.Remove(module, Context);
-            // authoritative: anyone still holding the module finds it empty
-            module.Clear();
             return Context.Ok();
         }));
 }

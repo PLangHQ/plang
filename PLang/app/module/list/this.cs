@@ -26,6 +26,14 @@ public sealed class @this : global::app.type.item.list.@this<global::app.module.
         Discover(typeof(@this).Assembly, "app.module.action");
     }
 
+    /// <summary>A module removed from the app is emptied too — anyone still holding it finds no actions.</summary>
+    public override async ValueTask<bool> Remove(object? value, actor.context.@this context)
+    {
+        if (!await base.Remove(value, context)) return false;
+        (value as global::app.module.@this)?.Clear();
+        return true;
+    }
+
     /// <summary>
     /// Disposes every registered handler instance the modules hold (IAsyncDisposable preferred,
     /// IDisposable fallback).

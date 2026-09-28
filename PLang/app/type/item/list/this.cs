@@ -403,7 +403,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>Removes the first leaf whose value equals <paramref name="value"/> through
     /// the one compare path (structural for dict/list, case-insensitive text).</summary>
-    public async System.Threading.Tasks.ValueTask<bool> Remove(object? value, actor.context.@this context)
+    public virtual async System.Threading.Tasks.ValueTask<bool> Remove(object? value, actor.context.@this context)
     {
         // Scan the elements once to find the leaf, then a single RemoveAt — avoid the O(n²) of
         // At(i) per iteration. Membership matches only on Equal; each element compares through its
