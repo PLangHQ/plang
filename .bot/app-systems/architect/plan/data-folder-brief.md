@@ -1,38 +1,48 @@
-# Parked brief: `.data/`, the app's state on disk, per owner and per user (after app-systems)
+# Parked brief: `.data/`, what the app keeps, per owner and per identity (after app-systems)
 
-Ingi, 2026-09-28: "that .db folder should be named .data folder and in there is db, file, setting, etc.", then "settings/data.sqlite … we can put setting down to user, we could even have .data/%user.id%/setting/ (|file|cache|trace) so down to the user, but then default [is] what is above".
+Ingi, 2026-09-28 (a curious-architect conversation):
+- "that .db folder should be named .data folder and in there is db, file, setting, etc.";
+- "settings/data.sqlite … put setting down to user … .data/%user.id%/setting/ (|file|cache|trace) … default what is above";
+- "developer needs to say /.data/file/admin/my/…; you mostly program now, so it needs to be a rule, now it often end in .db folder";
+- "taught, yes and like runtime";
+- "if input it coming from wire, it is per identity? … user has list of identities and then we can reach into each to get the files from each identity".
 
-## The idea
+## Settled so far
+
+- **Everything the running app keeps lives under `/.data/<kind>/…`:** `setting/data.sqlite`, `file/`, `cache/`, `trace/`, perhaps `db/`. `.db/` disappears (its sqlite becomes `.data/setting/data.sqlite`; the rest moves to its own folder). The app folder is what ships (goals, `.build/`, templates).
+- **No magic mapping.** The developer writes the real path: `save %report% to "/.data/file/admin/my/report.pdf"`.
+- **A rule that is taught *and* kept by the runtime.**
+  - Taught in the plang docs, the skill and CLAUDE.md, where bots learn plang; the file module's examples use `/.data/file/…`.
+  - Kept by the runtime: path authorisation lets a program running as the User actor write only under `/.data/`, so writing its own goals or `.build/` is refused or prompted like an out-of-root write. The System actor (builder, setup) writes where it must.
+  - A program can't rewrite its own code. Deploying means replacing the app folder and keeping `.data/`; a backup is a copy of `.data/`.
+- **Per identity, for input from the wire:** a request's caller is the identity in its signature (plang content between actors is signed). Each identity has its own folder with the same shape, and the app level above is its default:
 
 ```
 .data/
-  setting/data.sqlite        the app's defaults (today's system level)
-  file/  cache/  trace/
-  user/
-    <user.id>/
-      setting/data.sqlite    this user's own; a read falls back to .data/setting/
-      file/  cache/  trace/  e.g. a report the user saves: .data/user/<user.id>/file/report.pdf
+  setting/data.sqlite  file/  cache/  trace/        the app level (defaults)
+  user/<id>/
+    setting/data.sqlite  file/  cache/  trace/      one identity's own; reads fall back to the app level
 ```
 
-- **Each part owns its storage,** instead of one `.db/system.sqlite` holding every table (settings rows, setup's steps, the LLM cache, identities).
-- **Per user, with the level above as the default.** It's the settings chain (user → system → defaults) made physical.
-- **The tree on disk:** the plang path, the C# path, the file path and the storage path name the same thing (`%!app.setting%` ↔ `.data/setting/`). Prior art: Android's per-app `databases/`, `files/`, `shared_prefs/`, `cache/`.
+```
+%!app.actor.user.identity.list%                     the identities that have reached this app
+%!app.actor.user.identity["<id>"].file%            ↔ .data/user/<id>/file/
+%!identity%                                         the identity of the request running now
+- save %report% to %!identity.file%/report.pdf      → .data/user/<caller id>/file/report.pdf
+```
 
-## What it gives
+## Open
 
-- Isolation between users.
-- Permission scoped to a user's folder (path authorisation already does in-root).
-- The identity's private key living in its own user's folder.
-
-## Open, for when it's picked up
-
-1. **What is `%user.id%`?** The caller's identity (lean), which ties this to the parked "variable storage by identity". Today there's one `User` actor per app.
-2. Is `cache/` per user or shared at the top (the LLM cache shared saves cost)?
-3. Is a user folder made on first write only?
-4. `trace/` moves out of `.build/traces/` (traces are data, not build output).
-5. Setup's executed steps: whose are they (the app's)? Where does `store` go once each part owns its storage?
+1. **Is a request from identity X kept inside `.data/user/X/`,** with only the System actor (admin goals running as System) reaching across identities? (Asked; this decides the security.)
+2. **The id on disk:** a short fingerprint of the key as the folder name, with the full key in the identity (lean).
+3. **Callers without an identity** (an unsigned browser request): no folder, the app level only, or refused?
+4. **Naming:** `actor.Identity` today means the actor's own signing keys, while "the user's identities" means the callers. That's one word for "who I am" and "who came to me"; name them apart.
+5. Is `cache/` per identity or shared at the app level (the LLM cache shared saves cost)? Does `trace/` move out of `.build/traces/`?
+6. Setup's executed steps belong to the app level. Once each part owns its storage, what's left of `store`?
 
 ## Today (2026-09-28)
 
 - `app/this.cs:605-618`: the one store, `/.db/system.sqlite` (in memory while testing).
-- `BuildGoal/Start.goal:21`: traces saved under `/.build/traces/`.
+- `BuildGoal/Start.goal:21`: traces under `/.build/traces/`.
+- Plang content between actors is signed, and unsigned content is refused (formats (e), decision 130).
+- The parked "variable storage by identity" work is the same axis.
