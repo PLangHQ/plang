@@ -921,9 +921,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public override System.Threading.Tasks.Task<Data?> Field(string name, actor.context.@this context)
         => System.Threading.Tasks.Task.FromResult<Data?>(null);
 
-    /// <summary>The elements whose field holds under the operator (<see cref="global::app.data.Operator.Holds"/>:
-    /// what an element without the field means is the operator's). A field no element has is a misspelling, an
-    /// error naming it; an empty list keeps nothing. An error is the answer. A new list, born through its type.</summary>
+    /// <summary>The elements whose field holds under the operator — an element without the field is handed over
+    /// as NotFound, and what that means is the operator's. A field no element has is a misspelling, an error
+    /// naming it; an empty list keeps nothing. An error is the answer. A new list, born through its type.</summary>
     public override System.Threading.Tasks.Task<Data> Where(global::app.data.@this<global::app.type.item.text.@this> field,
         global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>> op,
         Data value, actor.context.@this context)
@@ -941,7 +941,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             var kept = new @this();
             foreach (var (element, _, at) in held)
             {
-                var holds = await ((global::app.data.Operator)compare).Holds(at, value, context);
+                var holds = await ((global::app.data.Operator)compare).Evaluate(at ?? Data.NotFound(name.ToString(), context), value, context);
                 if (!holds.Success) return holds;
                 if (holds.ToBoolean()) kept.Add(element);
             }

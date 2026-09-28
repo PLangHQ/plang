@@ -442,7 +442,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         => field.Use(name => op.Use(async compare =>
         {
             if (await Field(name.ToString(), context) is not { } held) return NoField(name.ToString(), Fields, context);
-            var holds = await ((global::app.data.Operator)compare).Holds(held, value, context);
+            var holds = await ((global::app.data.Operator)compare).Evaluate(held, value, context);
             if (!holds.Success) return holds;
             return holds.ToBoolean() ? context.Ok(this) : context.Ok(null, context.App.type.list["dict"]);
         }));
