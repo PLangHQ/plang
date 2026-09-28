@@ -1,0 +1,5 @@
+/ Stage 8h: a render's arguments are named (one dict), as /system/error/show.goal writes them: "render …, error=%error%".
+Start
+- set %message% = "boom"
+- render template "Failed: {{ error }}", error=%message%, write to %html%
+- assert %html% equals "Failed: boom", "the named argument reaches the template"

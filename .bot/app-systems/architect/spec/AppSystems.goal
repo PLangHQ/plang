@@ -1,0 +1,44 @@
+/ app-systems: every %!app.X% is the type X, and the plang path, the C# path and the file path say the same thing.
+/ This goal is the branch's summary: each stage is a sub-goal, and its steps are the behaviour we want.
+/ Each behaviour is a test in spec/<Stage>/ (the coder places them in Tests/AppSystems/<Stage>/). Checks that can't be a
+/ .test.goal are in spec/checks.md. A stage is done when its tests pass, its checks hold, and its OBP review is clean.
+AppSystems
+- call Stage8g          / done: validation that the modifiers-as-clauses logic works
+- call Stage8h          / in progress: the builder builds itself, and words compile to what they mean
+- call Stage9           / shape: each handler is one line to its owner (worklist + OBP review); one visible payoff
+- call Stage10          / %!app holds its types; the app's facts are plang values
+- call Stage11          / shape: C# tests reach the app through its own doors; one door to an actor
+- call Stage12          / a programmer's mistake is an error result with its own key, never a crash
+
+Stage8g
+- each retry of an action gets a fresh deadline                          / Stage8g/RetryGetsAFreshDeadline
+- a recovery's result is never served from the cache                     / Stage8g/RecoveryIsNeverCached
+- %!data% after an action with a clause is the action's result           / Stage8g/DataIsLeftAloneAfterAClause
+
+Stage8h
+- "retry once" is one retry                                               / Stage8h/RetryOnceMeansOneRetry
+- "if %done%, return %x%" returns from inside the if                      / Stage8h/IfReturnReturns
+- render takes its arguments by name                                      / Stage8h/RenderTakesNamedArguments
+- the builder rebuilds its own goals with no reader for the old format    / checks.md
+- the decider asks stage 1's common questions, and the eval measures it  / checks.md
+
+Stage9
+- a value is born through its type, so "after file create" fires          / Stage9/CreateFiresOnBirth
+- every existing test passes; each handler hands over in one line          / checks.md
+
+Stage10
+- the app lists its types                                                 / Stage10/AppListsItsTypes
+- a plugin's type joins the app                                           / Stage10/PluginTypeJoinsTheApp
+- one name, one type: a plugin can't take a built-in's name               / Stage10/OneNameOneType
+- the app's facts are plang values                                        / Stage10/AppFactsArePlangValues
+- a typed list holds its type                                             / Stage10/TypedListHoldsItsType
+- the app's name is its setting                                           / Stage10/AppNameIsItsSetting
+
+Stage11
+- one door to an actor: %!app.actor.system%, not %!app.system%           / Stage11/OneDoorToAnActor
+- the builder warns about a goal nothing reaches                           / checks.md
+- every C# test passes with TestApp and TestAction deleted                 / checks.md
+
+Stage12
+- a value that takes no child is an error result                          / Stage12/SetChildOnAValueIsAnError
+- an unknown setting is an error result                                   / Stage12/UnknownSettingIsAnError

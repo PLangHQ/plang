@@ -1,0 +1,6 @@
+/ Stage 11 (decision 129, Ingi yes): one door to an actor. %!app.system% and %!app.user% go; the actor is reached
+/ through the actor type.
+Start
+- assert %!app.actor.system% is not null
+- assert %!app.actor.user% is not null
+- assert %!app.system% is null, "the app doesn't hold its actors twice"

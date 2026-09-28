@@ -1,0 +1,6 @@
+/ Stage 10 (plan row 10): one name, one type. A plugin declaring a built-in's name fails loudly, as an error result.
+/ IdentityShadow.dll declares "identity" (TestFixtures/IdentityShadow/Shadow.cs); the coder copies it next to this test.
+Start
+- code.load Path=IdentityShadow.dll, on error set %clash% = %!error.key%
+- assert %clash% equals "TypeLoadCollision", "a second 'identity' is refused"
+- assert %!app.identity% is not null, "the built-in identity still stands"

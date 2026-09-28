@@ -1,0 +1,6 @@
+/ Stage 10 (plan row 10): a plugin loaded with code.load registers its own types, reached like a built-in
+/ (%!app.stripe% in the plan). TypeProvider.dll declares "money" (TestFixtures/TypeProvider/Money.cs).
+Start
+- code.load Path=TypeProvider.dll
+- assert %!app.list% contains "money", "the plugin's type joined the app's list"
+- assert %!app.money% is not null, "and is reached like a built-in"
