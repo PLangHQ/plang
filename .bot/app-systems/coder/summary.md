@@ -52,30 +52,24 @@ is reported to the architect (plang-cd session) and reviewed before the next.
   `pick.line` opens a lone if's `{ }` (chain flat), twin `Line` in prompt_c, `LineTwinTests`. Teaching for
   `if …, return` and render's dict arguments.
 
-## Known reds (deliberate)
-- 5 `PickListTests` (decider golden fixtures: `event.on` left the catalog, on.error's signature changed) —
-  regenerate with 8h's eval.
-- plang: `EventAfterStep`, `EventAfterAction` compile to wrong event paths — teaching/eval, 8h's (decision 149).
-- Pre-existing: the 2 Masks plang tests; `LoadAction_*` (stale fixture sources). The fresh container adds ~130
-  environmental C# reds that are in the baseline too (sqlite dirs, playwright, etc.).
+- **8h steps 4–5** (7601957da, 84ec8e070; decisions 160–170) — the eval reached round 21 at 61/61 ×3 with
+  0 silent steps. A loop leads its step. The goldens and bootstrap were regenerated, and the TRANSITIONAL reader is gone.
+- **8h close** (ad7b306d4; decision 171):
+  - `variable.set` is a keep (`IKeep` → `goal.step.action.keep`). On the pick line it goes after the step's value-producing actions (Return not `item`, conditions excluded) and keeps `%!data%`.
+  - Formal reads a bare ISO duration (`PT5S`) in a duration slot, and the formal writer writes durations as ISO.
+  - All 6 8g+8h plan tests (`test/plan/app-systems/`) are green, and every one goes red under its revert mutation.
+  - For builder changes, the deterministic pins (LineTwin, FormalReader) are the revert check (start.md).
 
-## Open — the TRANSITIONAL reader (8g's last item)
-`action/serializer/Reader.cs` (`Trailing`, `"modifier"`/`"recovery"` cases) + `step/serializer/Reader.cs` drain
-still load the two `.pr` files with nested modifiers: `os/system/builder/BuildGoal/.build/start.pr` (the builder's
-own program) and `os/system/error/.build/show.pr`. They can't be rebuilt today: the decider never asks its common
-yes/no questions (`%decider%` from `read decider.json` stays a lazy `file` item; `decider1.template`'s
-`for c in decider.common` renders nothing), so `on.error` is never listed and the check refuses the LLM's clause.
-Pre-existing — the pre-8g build (446833981) fails Show too. Asked the architect: keep TRANSITIONAL until 8h's
-bootstrap, or fix the file-read→template issue in 8g. How to rebuild once unblocked: point
-`PlangConsole/bin/Debug/net10.0/os` at a scratch copy of `os/`, move the two targets aside, run from `os/`
-`TYPESAFE_API_KEY="$(cat /shared/hopkaup/secrets/typesafe.txt)" plang '--build={"files":[…]}'`, restore the link.
+## Known reds
+- The full C# sweep has 133 failures: 131 are in the v1 baseline (environmental: sqlite dirs, playwright, etc.).
+  `TimeoutAfterTests.After_EachRetry…` flakes under full-sweep load and passes alone.
+- `plang --test` from `test/` shows 6 pass and 332 stale. That's expected: only the plan's tests are built.
+- A failing plang assertion prints its template (`Actual: %a%`), not the value. Reported, not fixed.
 
 ## Next
-PAUSED before 8h step 4 (architect, decision 159): Ingi is reviewing a plang-spec summary; the architect then
-starts 8h as a spec conversation. Open: step 1 (invented numbers — decision 157 withdrew the word table; the
-architect proposes the LLM cites the words it read, Ingi to answer), step 4 (rebuild BuildGoal/start.pr +
-error/show.pr with the recipe above, delete TRANSITIONAL), step 5 (the eval; pick_golden regenerates). Then 9–12. Dead files for Ingi:
-`os/system/events/*.goal`, `os/system/.build/run.pr`, `os/system/modules/event/Modules.goal`.
+Stage 9 (plan spec, conversation mode with the architect).
+- Watch item: if BuildGoal's call drops its argument again, restore a Parameter hole triggered by plang's markers (`name=%var%`, `name="…"`).
+- Dead files for Ingi: `os/system/events/*.goal`, `os/system/.build/run.pr`, `os/system/modules/event/Modules.goal`.
 
 ## Code example
 ```csharp
@@ -89,5 +83,8 @@ var took = context.CallStack.Current?.Duration;   // live inside the frame
 
 // 8g — clauses are the action's siblings, bound when the code is read
 // - read %path%, timeout after 5 seconds, on error call Fallback
-file.read(Path=%path%); on.timeout(After="PT5S"); on.error(Recovery=[goal.call(Name="Fallback")])
+file.read(Path=%path%); on.timeout(After=PT5S); on.error(Recovery=[goal.call(Name="Fallback")])
+
+// 8h — a keep follows the value produced: `- read a.txt, write to %x%` prefills
+file.read(Path=?); variable.set(Name="x", Value=%!data%)
 ```
