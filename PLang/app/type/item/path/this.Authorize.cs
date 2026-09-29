@@ -72,7 +72,6 @@ public partial class @this
         for (int depth = 0; app != null && depth < MaxDepth; depth++)
         {
             if (IsUnder(app.AbsolutePath, RootComparison)
-                || IsUnder(app.OsDirectory, RootComparison)
                 || IsUnder(app.OsAbsolutePath, RootComparison))
                 return true;
             app = app.Parent;

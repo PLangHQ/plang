@@ -251,19 +251,17 @@ public class RunActionTests
         await Assert.That(observed.Any(x => x == ("variable", "set"))).IsTrue();
     }
 
-    // Child App.OsDirectory is set from context.App.OsDirectory so shared
-    // os/ goals (e.g. setup helpers) resolve identically in every test.
-    // Uses the test list's Made hook to snapshot the child's OsDirectory.
+    // The os root is the executable's: every app — a test's child app too — resolves shared os/ goals
+    // (e.g. setup helpers) from the same folder, derived, never set or copied.
+    // Uses the test list's Made hook to snapshot the child's os root.
     [Test]
-    public async Task Run_OsDirectory_InheritedFromParentApp()
+    public async Task Run_TheOsRoot_IsTheExecutables()
     {
-        _app.OsDirectory = "/some/os/dir";
-
         string? observedChildOsDir = null;
         void Probe(global::app.@this childApp)
         {
             if (childApp.AbsolutePath.StartsWith(_tempDir))
-                observedChildOsDir = childApp.OsDirectory;
+                observedChildOsDir = childApp.OsAbsolutePath;
         }
         _app.test.list.Made += Probe;
         try
@@ -275,9 +273,9 @@ public class RunActionTests
 
             await RunTests(new List<global::app.test.@this> { test });
 
-            await Assert.That(observedChildOsDir).IsEqualTo("/some/os/dir");
-            // Parent unchanged — the propagation is one-way (parent → child).
-            await Assert.That(_app.OsDirectory).IsEqualTo("/some/os/dir");
+            var executables = System.IO.Path.GetFullPath(System.IO.Path.Combine(System.AppContext.BaseDirectory, "os"));
+            await Assert.That(observedChildOsDir).IsEqualTo(executables);
+            await Assert.That(_app.OsAbsolutePath).IsEqualTo(executables);
         }
         finally
         {

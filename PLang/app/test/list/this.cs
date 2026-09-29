@@ -49,7 +49,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     /// <summary>The App this run belongs to — reporters read its version for drift.</summary>
     internal global::app.@this App => _app;
 
-    /// <summary>Fires once per test's App after it is made and configured (its OsDirectory, its session
+    /// <summary>Fires once per test's App after it is made and configured (its session
     /// open), before the test's goal runs — a probe snapshots the test's App here. Parallel tests fire it
     /// concurrently.</summary>
     internal event System.Action<global::app.@this>? Made;

@@ -129,7 +129,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
 
     /// <summary>
     /// Tries to load a .pr file from {root}/{dir}/.build/{file}.pr first,
-    /// then from {OsDirectory}/system/{stripped}/.build/{file}.pr for system goals.
+    /// then from {OsAbsolutePath}/system/{stripped}/.build/{file}.pr for system goals.
     /// A user can override a specific system goal by placing the file at {root}/system/...
     /// </summary>
     private async Task<goal.@this?> TryLoadPr(string dir, string file, CancellationToken ct)
@@ -143,7 +143,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         rootCandidate = rootCandidate.Combine(".build").Combine(prFile);
         if (await Readable(rootCandidate, ct) is { } found) return found;
 
-        // 2. /system/*: path.Resolve redirects /system/* to <OsDirectory>/system/* when not present under
+        // 2. /system/*: path.Resolve redirects /system/* to <OsAbsolutePath>/system/* when not present under
         // the app root, so one Resolve covers both rings of the look-up.
         var normalized = dir.Replace('\\', '/');
         if (normalized.StartsWith("system/", StringComparison.OrdinalIgnoreCase)

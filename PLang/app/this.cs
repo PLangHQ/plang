@@ -75,13 +75,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public string AbsolutePath { get; }
 
     /// <summary>
-    /// The OS absolute path to the os/ folder (next to the plang executable).
-    /// System goals (builder, events, etc.) are resolved from os/system/... here.
-    /// Null when no os directory is configured.
-    /// </summary>
-    public string? OsDirectory { get; internal set; }
-
-    /// <summary>
     /// Parent app, when this app was constructed as a child of another.
     /// A child inherits its parent's filesystem scope: <c>path.@this.IsInRoot</c>
     /// walks the Parent chain, so a child app rooted at a narrower
@@ -256,7 +249,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public @this(@this parent) : this(parent.AbsolutePath)
     {
         Parent = parent;
-        OsDirectory = parent.OsDirectory;
     }
 
     public @this(string absolutePath,

@@ -42,7 +42,6 @@ namespace PLang
 			var app = new global::app.@this(startupDirectory, autoWireConsoleChannels: false);
 			global::app.@this.WireDefaultConsoleChannels(app.actor.list.System);
 			global::app.@this.WireDefaultConsoleChannels(app.actor.list.User);
-			app.OsDirectory = app.OsAbsolutePath;
 
 			var userVars = app.actor.list.User.Context.Variable;
 

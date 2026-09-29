@@ -233,10 +233,10 @@ public class PathAuthorizeTests
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
     }
 
-    /// IsInRoot's second clause: OsDirectory (system-built-in goals like
+    /// IsInRoot's second clause: the os root (system-built-in goals like
     /// test, build) auto-grants without a prompt, even though it sits outside
     /// the actor's RootDirectory. Verifies the runtime-owned-files carve-out.
-    [Test] public async Task IsInRoot_PathUnderOsDirectory_AutoGrants_NoChannelAsk()
+    [Test] public async Task IsInRoot_PathUnderTheOsRoot_AutoGrants_NoChannelAsk()
     {
         var app = NewApp();
         // No channel registered — if Authorize tried to prompt, it would
