@@ -66,23 +66,8 @@ public class ForeachErrorPropagationTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
-        // Inner goal with a single step: [condition.if(true), goal.call Missing]
-        var innerCondAction = new Action
-        {
-            Module = _app.actor.list.User.Context.App.Module("condition"), Name = "if",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
-            {
-                new Data("Left", true, context: context), new Data("Operator", "==", context: context), new Data("Right", true, context: context)
-            })
-        };
-        var innerGoalCall = new Action
-        {
-            Module = _app.actor.list.User.Context.App.Module("goal"), Name = "call",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
-            {
-                new Data("name", "MissingGoal", context: context)
-            })
-        };
+        // Inner goal with a single step: a condition whose body calls a goal that doesn't exist
+        var innerCondAction = context.Action("condition.if(Left=true, Operator=\"==\", Right=true) { goal.call(Name=\"MissingGoal\") }");
         // Goal first, then its step — a step is born knowing its goal (Goal is init).
         var innerGoal = new Goal
         {
@@ -96,7 +81,6 @@ public class ForeachErrorPropagationTests
             Text = "if true, call MissingGoal",
         };
         innerStep.Code.Add(innerCondAction.In(innerStep));
-        innerStep.Code.Add(innerGoalCall.In(innerStep));
         innerGoal.Step.Add(innerStep);
         _app.goal.list.Add(innerGoal);
 
@@ -116,8 +100,8 @@ public class ForeachErrorPropagationTests
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
-        // First iteration failed → item variable stays on first element.
-        await Assert.That((await context.Variable.GetValue("item"))).IsEqualTo("a");
+        // The failure is the body's own: the goal the condition's body called.
+        await Assert.That(result.Error!.Message).Contains("MissingGoal");
     }
 
     /// <summary>

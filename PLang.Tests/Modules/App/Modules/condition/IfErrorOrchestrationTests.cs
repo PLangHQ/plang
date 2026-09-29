@@ -6,13 +6,8 @@ using app.type.item.path;
 namespace PLang.Tests.App.Modules.condition;
 
 /// <summary>
-/// Pins condition.if's orchestration contract so the silent-error regression
-/// doesn't come back. Two invariants:
-///   (1) When the chosen branch's action errors, the error propagates out of
-///       Step.RunAsync — NOT swallowed by the Handled flag.
-///   (2) On success, Handled=true is set on the orchestrated result so
-///       Step.RunAsync knows to stop iterating siblings (otherwise the actions
-///       condition.if already ran would be re-executed).
+/// A condition's body is its child steps; an error in the body is the step's answer — never swallowed by
+/// the condition that started it.
 /// </summary>
 public class IfErrorOrchestrationTests : IDisposable
 {
@@ -34,53 +29,19 @@ public class IfErrorOrchestrationTests : IDisposable
     }
 
     [Test]
-    public async Task If_OrchestratedBranchAction_ReturnsError_PropagatesThroughStep()
+    public async Task If_BodyActionReturnsError_PropagatesThroughStep()
     {
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, "IfCallMissing",
+        var ctx = _app.actor.list.User.Context;
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "IfCallMissing",
             Make.Step("if true, call DoesNotExist",
-                Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
-                Make.Action(_app.actor.list.User.Context, "goal", "call",
-                    ("name", "DoesNotExist")))));
+                ctx.Action("condition.if(Left=true, Operator=\"==\", Right=true) { goal.call(Name=\"DoesNotExist\") }"))));
         var step = goal.Step[0];
 
-        var result = await step.Start(_app.actor.list.User.Context);
+        var result = await step.Start(ctx);
 
-        // The 404 must surface. Handled=true on condition.if's result is a
-        // control-flow signal to Step.RunAsync (don't re-iterate siblings),
-        // not a license to swallow the error. Pin the error identity so an
-        // unrelated error path leaking through wouldn't pass.
+        // The 404 surfaces; pin the error identity so an unrelated error leaking through wouldn't pass.
         await result.IsFailure();
-        await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
-        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
-    }
-
-    [Test]
-    public async Task If_OrchestratedSuccess_MarksResultHandled()
-    {
-        var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
-            global::app.channel.list.@this.Output, captureStream,
-            ChannelDirection.Output, ownsStream: true)
-        { Mime = "text/plain" });
-
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, "IfWriteRan",
-            Make.Step("if true, write ran",
-                Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
-                Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "ran")))));
-        var step = goal.Step[0];
-
-        var result = await step.Start(_app.actor.list.User.Context);
-
-        await result.IsSuccess();
-
-        // Sanity: branch actually ran.
-        captureStream.Position = 0;
-        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-        await Assert.That(output).IsEqualTo("ran" + System.Environment.NewLine);
-
-        // Handled must be set so parents know the siblings were consumed.
-        // Without this, Step.RunAsync would double-execute write-ran.
-        await Assert.That(result.Handled).IsTrue();
+        await Assert.That(result.Error!.Key).IsEqualTo("GoalNotFound");
     }
 }

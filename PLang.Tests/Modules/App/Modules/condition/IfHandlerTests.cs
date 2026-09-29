@@ -69,91 +69,57 @@ public class IfHandlerTests : IDisposable
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("true");
     }
 
-    [Test]
-    public async Task Run_ConditionTrue_OrchestrateThenBranch()
+    // A step run through the real read path; answers what it wrote to the output channel. A condition
+    // holds its body as its child steps (`condition.if(…) { … }`, read as the builder writes it).
+    private async Task<string> Written(string text, params Action[] actions)
     {
         var captureStream = new System.IO.MemoryStream();
         _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
-            ChannelDirection.Output, ownsStream: true)
+            ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
-        // A step with: condition.if, then output.write
-        var result = await RunStep("if true, write true-branch",
-            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
-            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "true-branch")));
-
+        var result = await RunStep(text, actions);
         await result.IsSuccess();
 
-        captureStream.Position = 0;
-        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+        return System.Text.Encoding.UTF8.GetString(captureStream.ToArray());
+    }
+
+    [Test]
+    public async Task Run_ConditionTrue_RunsItsBody()
+    {
+        var ctx = _app.actor.list.User.Context;
+        var output = await Written("if true, write true-branch",
+            ctx.Action("condition.if(Left=true, Operator=\"==\", Right=true) { output.write(Data=\"true-branch\") }"));
         await Assert.That(output).IsEqualTo("true-branch" + System.Environment.NewLine);
     }
 
     [Test]
-    public async Task Run_ConditionFalse_SkipsThenBranch()
+    public async Task Run_ConditionFalse_SkipsItsBody()
     {
-        var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
-            global::app.channel.list.@this.Output, captureStream,
-            ChannelDirection.Output, ownsStream: true)
-        { Mime = "text/plain" });
-
-        var result = await RunStep("if false, write (should skip)",
-            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", false), ("Operator", "=="), ("Right", true)),
-            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "should-not-appear")));
-
-        await result.IsSuccess();
-
-        captureStream.Position = 0;
-        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+        var ctx = _app.actor.list.User.Context;
+        var output = await Written("if false, write should-not-appear",
+            ctx.Action("condition.if(Left=false, Operator=\"==\", Right=true) { output.write(Data=\"should-not-appear\") }"));
         await Assert.That(output).IsEqualTo("");
     }
 
     [Test]
     public async Task Run_IfElse_TrueRunsThen()
     {
-        var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
-            global::app.channel.list.@this.Output, captureStream,
-            ChannelDirection.Output, ownsStream: true)
-        { Mime = "text/plain" });
-
-        // if true → write "then", else → write "else"
-        var result = await RunStep("if x > 5 write then, else write else",
-            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", 10), ("Operator", ">"), ("Right", 5)),
-            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "then-branch")),
-            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
-            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "else-branch")));
-
-        await result.IsSuccess();
-
-        captureStream.Position = 0;
-        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+        var ctx = _app.actor.list.User.Context;
+        var output = await Written("if 10 > 5 write then-branch, else write else-branch",
+            ctx.Action("condition.if(Left=10, Operator=\">\", Right=5) { output.write(Data=\"then-branch\") }"),
+            ctx.Action("condition.else() { output.write(Data=\"else-branch\") }"));
         await Assert.That(output).IsEqualTo("then-branch" + System.Environment.NewLine);
     }
 
     [Test]
     public async Task Run_IfElse_FalseRunsElse()
     {
-        var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
-            global::app.channel.list.@this.Output, captureStream,
-            ChannelDirection.Output, ownsStream: true)
-        { Mime = "text/plain" });
-
-        // if false → skip then, else always true → write "else"
-        var result = await RunStep("if x > 5 write then, else write else",
-            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", 3), ("Operator", ">"), ("Right", 5)),
-            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "then-branch")),
-            // "else" is a condition that's always true
-            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
-            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "else-branch")));
-
-        await result.IsSuccess();
-
-        captureStream.Position = 0;
-        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+        var ctx = _app.actor.list.User.Context;
+        var output = await Written("if 3 > 5 write then-branch, else write else-branch",
+            ctx.Action("condition.if(Left=3, Operator=\">\", Right=5) { output.write(Data=\"then-branch\") }"),
+            ctx.Action("condition.else() { output.write(Data=\"else-branch\") }"));
         await Assert.That(output).IsEqualTo("else-branch" + System.Environment.NewLine);
     }
 
@@ -331,46 +297,6 @@ public class IfHandlerTests : IDisposable
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("EvaluationError");
         await Assert.That(result.Error!.Message).Contains("cannot order");
-    }
-
-    /// <summary>
-    /// Simulates: outer goal has if/else → then-branch calls inner goal →
-    /// inner goal also has if/else. The inner condition must orchestrate independently.
-    /// Bug: shared guard variable on Context.Variable blocks inner orchestration.
-    /// </summary>
-    [Test]
-    public async Task Run_InnerGoalCondition_OrchestatesIndependently()
-    {
-        var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
-            global::app.channel.list.@this.Output, captureStream,
-            ChannelDirection.Output, ownsStream: true)
-        { Mime = "text/plain" });
-
-        // --- Inner goal: if true → write "inner-then", else → write "inner-else" ---
-        // Simulate the bug: the outer goal's condition has already set the guard on the
-        // SAME context (app.Start passes context by reference). With the buggy code
-        // (Variables-based guard) the inner condition sees it and skips orchestration —
-        // actions run sequentially instead of branched.
-        _app.actor.list.User.Context.Variable.Set(new Data("__condition_orchestrating__", true, context: _app.actor.list.User.Context));
-
-        var result = await RunStep("if true write inner-then, else write inner-else",
-            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
-            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "inner-then")),
-            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
-            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "inner-else")));
-
-        await result.IsSuccess();
-
-        captureStream.Position = 0;
-        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
-
-        // The inner if is true, so "inner-then" should appear.
-        // With the bug: orchestration is skipped, step runs actions sequentially,
-        // condition returns true (Handled=false), then output.write runs "inner-then",
-        // BUT the else condition also runs and writes "inner-else" too.
-        // With the fix: orchestration works, only "inner-then" is written.
-        await Assert.That(output).IsEqualTo("inner-then" + System.Environment.NewLine);
     }
 }
 

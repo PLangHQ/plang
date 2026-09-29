@@ -51,92 +51,43 @@ public class ConditionHandlerTests : IDisposable
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("false");
     }
 
-    // --- Orchestration tests: condition + actions in same step ---
+    // --- A condition's body is its child steps: the step runs the body only when the condition holds ---
 
-    [Test]
-    public async Task IfTrue_Orchestrate_RunsThenBranch()
+    // A step run through its own door; answers what it wrote to the output channel. A condition holds its
+    // body as its child steps (`condition.if(…) { … }`, read as the builder writes it).
+    private async Task<string> Written(string text, params Action[] actions)
     {
         var captureStream = new System.IO.MemoryStream();
         _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
-            ChannelDirection.Output, ownsStream: true)
+            ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
 
-        var condAction = new Action
-        {
-            Module = _app.actor.list.User.Context.App.Module("condition"), Name = "if",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
-            {
-                new Data("Left", true, context: _app.actor.list.User.Context), new Data("Operator", "==", context: _app.actor.list.User.Context), new Data("Right", true, context: _app.actor.list.User.Context)
-            })
-        };
-        var thenAction = new Action
-        {
-            Module = _app.actor.list.User.Context.App.Module("output"), Name = "write",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "true-branch", context: _app.actor.list.User.Context) })
-        };
-
-        var step = new Step { Index = 0, Text = "if true, write true-branch" };
-        step.Code.Add(condAction.In(step));
-        step.Code.Add(thenAction);
+        var step = new Step { Index = 0, Text = text };
+        foreach (var action in actions) step.Code.Add(action.In(step));
 
         var result = await step.Start(_app.actor.list.User.Context);
-
         await result.IsSuccess();
 
-        captureStream.Position = 0;
-        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+        return System.Text.Encoding.UTF8.GetString(captureStream.ToArray());
+    }
+
+    [Test]
+    public async Task IfTrue_RunsItsBody()
+    {
+        var ctx = _app.actor.list.User.Context;
+        var output = await Written("if true, write true-branch",
+            ctx.Action("condition.if(Left=true, Operator=\"==\", Right=true) { output.write(Data=\"true-branch\") }"));
         await Assert.That(output).IsEqualTo("true-branch" + System.Environment.NewLine);
     }
 
     [Test]
-    public async Task IfFalse_Orchestrate_RunsElseBranch()
+    public async Task IfFalse_RunsTheElseBody()
     {
-        var captureStream = new System.IO.MemoryStream();
-        _app.actor.list.User.Channel.Register(new StreamChannel(
-            global::app.channel.list.@this.Output, captureStream,
-            ChannelDirection.Output, ownsStream: true)
-        { Mime = "text/plain" });
-
-        var condAction = new Action
-        {
-            Module = _app.actor.list.User.Context.App.Module("condition"), Name = "if",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
-            {
-                new Data("Left", false, context: _app.actor.list.User.Context), new Data("Operator", "==", context: _app.actor.list.User.Context), new Data("Right", true, context: _app.actor.list.User.Context)
-            })
-        };
-        var thenAction = new Action
-        {
-            Module = _app.actor.list.User.Context.App.Module("output"), Name = "write",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "then-branch", context: _app.actor.list.User.Context) })
-        };
-        var elseCondAction = new Action
-        {
-            Module = _app.actor.list.User.Context.App.Module("condition"), Name = "if",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
-            {
-                new Data("Left", true, context: _app.actor.list.User.Context), new Data("Operator", "==", context: _app.actor.list.User.Context), new Data("Right", true, context: _app.actor.list.User.Context)
-            })
-        };
-        var elseAction = new Action
-        {
-            Module = _app.actor.list.User.Context.App.Module("output"), Name = "write",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "else-branch", context: _app.actor.list.User.Context) })
-        };
-
-        var step = new Step { Index = 0, Text = "if false then, else write else" };
-        step.Code.Add(condAction.In(step));
-        step.Code.Add(thenAction);
-        step.Code.Add(elseCondAction);
-        step.Code.Add(elseAction);
-
-        var result = await step.Start(_app.actor.list.User.Context);
-
-        await result.IsSuccess();
-
-        captureStream.Position = 0;
-        var output = new System.IO.StreamReader(captureStream).ReadToEnd();
+        var ctx = _app.actor.list.User.Context;
+        var output = await Written("if false write then-branch, else write else-branch",
+            ctx.Action("condition.if(Left=false, Operator=\"==\", Right=true) { output.write(Data=\"then-branch\") }"),
+            ctx.Action("condition.else() { output.write(Data=\"else-branch\") }"));
         await Assert.That(output).IsEqualTo("else-branch" + System.Environment.NewLine);
     }
 }
