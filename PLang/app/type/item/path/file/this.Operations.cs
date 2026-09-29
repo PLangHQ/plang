@@ -64,7 +64,10 @@ public sealed partial class @this
         // The reference is born through its type, so a program's `after file create` sees it.
         if (info.IsFile == false)
             return await context.App.type.list["directory"].Create(this, context, "directory");
-        return await context.App.type.list[new global::app.type.@this("file", (string?)null, template: Marked(template)), context].Create(this, context, FileName);
+        // born with its template: the reference is made whole, then born through its type
+        var marked = Marked(template);
+        return await context.App.type.list[new global::app.type.@this("file", (string?)null, template: marked), context]
+            .Create(new global::app.type.item.file.@this(this, context, marked), context, FileName);
     }
 
     /// <summary>The <c>file</c> reference's type; a location with no known format expects nothing.</summary>

@@ -16,6 +16,24 @@ public class HttpReadTemplateTests
         await Assert.That(read.Peek()!.Template).IsEqualTo("plang");
     }
 
+    // Its text content renders at use: the url's variables are filled from the reader's.
+    [Test] public async Task AUrlRead_AsATemplate_RendersItsContent()
+    {
+        using var server = new HttpTestServer();
+        await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "urltpl-" + System.Guid.NewGuid().ToString("N")[..6]));
+        var ctx = app.actor.list.User.Context;
+        var address = server.MapStoredBody(System.Text.Encoding.UTF8.GetBytes("Hello %name%!"), "text/plain");
+        var grant = new global::app.type.item.permission.@this("User", new global::app.type.item.path.http.@this(address).Absolute,
+            global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.Exact);
+        await ctx.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: ctx), persist: false);
+        await ctx.Variable.Set("name", "World");
+
+        var read = await global::app.type.item.path.@this.Resolve(address, ctx).Read(ctx, true);
+
+        await read.IsSuccess();
+        await Assert.That((await read.Value())?.ToString()).IsEqualTo("Hello World!");
+    }
+
     [Test] public async Task AUrlRead_Plain_IsNoTemplate()
     {
         await using var app = TestApp.Create("/app");

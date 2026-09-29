@@ -29,11 +29,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private readonly global::app.type.kind.@this? _kind;
 
     /// <summary>A url reference at <paramref name="path"/>; <paramref name="context"/> is the
-    /// creator's, used once to name the kind and not kept.</summary>
-    public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context)
+    /// creator's, used once to name the kind and not kept. <paramref name="template"/> is a birth fact, as a
+    /// file's: its text content is born a template and renders itself at use.</summary>
+    public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context, string? template = null)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
         _kind = path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null;
+        Template = template;
         // Born from a path — inject its type into this value's history (`is path` from the chain).
         history.Add(path);
     }
@@ -47,16 +49,29 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _ => null,
     };
 
+    /// <summary>A url made from its path as a declaration says (<paramref name="data"/>'s type) — born with the
+    /// declaration's template.</summary>
+    public static @this? Create(object? raw, global::app.data.@this data) => raw switch
+    {
+        @this self => self,
+        global::app.type.item.path.@this path => new @this(path, data.Context, data.Type.Template),
+        _ => null,
+    };
+
     /// <summary>The remote host — location surface, never fetches.</summary>
     public string Host =>
         System.Uri.TryCreate(Path.Absolute, System.UriKind.Absolute, out var u) ? u.Host : "";
 
     public bool IsLoaded => _bytes != null;
 
+    /// <summary>A url marked a template answers a render, which depends on the variables at each use —
+    /// never kept (the url stays the reference; its bytes are fetched once).</summary>
+    public override bool Cacheable => Template == null && base.Cacheable;
+
     /// <summary>A url's entity: name "url", kind = the canonical kind named at
     /// creation — location metadata, never fetches.</summary>
     protected internal override global::app.type.@this Type =>
-        new global::app.type.@this("url", typeof(@this)) { kind = _kind };
+        new global::app.type.@this("url", typeof(@this)) { kind = _kind, Template = Template };
 
     /// <summary>
     /// The value door — the <see cref="Content"/> sample decoded by its format (the response's
@@ -85,6 +100,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
         var answer = read.Item;
         if (answer == null || ReferenceEquals(answer, this)) return this;
+        // a url born a template: its text content is born one, and the door answers it ready — rendered at
+        // this use (a render is never kept: see Cacheable)
+        if (Template != null && answer is global::app.type.item.text.@this content)
+            return await new global::app.type.item.text.@this(content.ToString(), Template) { Kind = content.Kind }.Value(data);
         answer.history.Add(this);
         return answer;
     }

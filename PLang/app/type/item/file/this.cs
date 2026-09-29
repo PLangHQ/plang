@@ -61,6 +61,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _ => null,
     };
 
+    /// <summary>A file made from its path as a declaration says (<paramref name="data"/>'s type) — born with the
+    /// declaration's template.</summary>
+    public static @this? Create(object? raw, global::app.data.@this data) => raw switch
+    {
+        @this self => self,
+        global::app.type.item.path.@this path => new @this(path, data.Context, data.Type.Template),
+        _ => null,
+    };
+
     /// <summary>True once the content is in memory (the reference was examined).</summary>
     public bool IsLoaded => _bytes != null;
 

@@ -307,15 +307,17 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
         // A container / domain value is already native (dict, list, path, image, …) — hold it; a value of a
         // type this type is born from (its From: a path declared a file) is made into this type by its own
-        // lift. A template=plang declaration stamps the container so its .Value() resolves nested %var%
-        // leaves (mirrors how a text carries the template) — the source path below already carries it.
+        // lift. A template is the value's birth fact (a reference read as one is born with it), never stamped here.
         if (raw is item.@this { IsLeaf: false } native)
         {
-            if (!native.Is(this) && From.Any(native.Type.Is) && _byContext(raw, context) is { } made) native = made;
+            // (the lift is handed this declaration — a typed absence of this type — so what it makes is born
+            // with the declaration's facts: a file declared a template is born one)
+            if (!native.Is(this) && From.Any(native.Type.Is)
+                && Make(raw, new global::app.data.@this("", new global::app.type.item.@null.@this(this), context: context)) is { } made)
+                native = made;
             // this type's class closes over its kind (list<path>): the value is taken as that class by its lift
             else if (ClrType is { IsGenericType: true } closed && !closed.IsInstanceOfType(native)
                      && _byContext(raw, context) is { } retagged) native = retagged;
-            if (Template != null && native.Template == null) native.Template = Template;
             return native;
         }
 
