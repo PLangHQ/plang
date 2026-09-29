@@ -131,6 +131,11 @@ public sealed partial class @this
             {
                 result = await Code.Start(context);   // action.list owns the chain loop + fire
             }
+            catch (global::app.error.AppException ex)
+            {
+                // a program's mistake carries its own key and status — that is the step's error
+                result = context.Error(new global::app.error.ServiceError(ex.Message, ex.Key, ex.StatusCode) { Exception = ex });
+            }
             catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
             {
                 // Preserve the exception's class identity as the error Key so on-error

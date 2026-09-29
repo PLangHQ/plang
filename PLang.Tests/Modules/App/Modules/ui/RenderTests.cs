@@ -280,6 +280,8 @@ public class RenderTests : IDisposable
         // A failed call fails the render — never "[Error: …]" printed into a successful output.
         await Assert.That(result.Success).IsFalse();
         await Assert.That(result.Error!.Message).Contains("Missing");
+        // the program's mistake keeps its own key through the render
+        await Assert.That(result.Error.Key).IsEqualTo("GoalNotFound");
     }
 
     [Test]

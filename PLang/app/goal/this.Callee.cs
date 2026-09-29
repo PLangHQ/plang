@@ -42,18 +42,9 @@ public sealed partial class @this
 
         var reached = await Callee(context);
         var dead = Child.Items().Where(sub => !reached.Any(goal => ReferenceEquals(goal, sub))).ToList();
-        var unreached = new System.Collections.Generic.List<(@this Goal, @this? From)>();
-        foreach (var goal in dead)
-        {
-            @this? from = null;
-            foreach (var other in dead)
-                if (!ReferenceEquals(other, goal) && (await other.Callee(context)).Any(g => ReferenceEquals(g, goal)))
-                {
-                    from = other;
-                    break;
-                }
-            unreached.Add((goal, from));
-        }
-        return unreached;
+        var calls = new System.Collections.Generic.List<(@this Goal, System.Collections.Generic.IReadOnlyList<@this> Callee)>();
+        foreach (var goal in dead) calls.Add((goal, await goal.Callee(context)));
+        return dead.Select(goal => (goal, calls.FirstOrDefault(other => !ReferenceEquals(other.Goal, goal)
+                && other.Callee.Any(g => ReferenceEquals(g, goal))).Goal)).ToList();
     }
 }

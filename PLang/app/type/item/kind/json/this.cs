@@ -44,7 +44,13 @@ public sealed class @this : global::app.type.kind.@this
         }
         catch (System.Exception ex) when (ex is JsonException or System.NotSupportedException)
         {
-            return context.Error(new global::app.error.ServiceError($"JSON serialize failed: {ex.Message}", "JsonSerializeError", 400) { Exception = ex });
+            var key = ex switch
+            {
+                global::app.data.OutputException output => output.Key,
+                global::app.data.NormalizeException normalize => normalize.Key,
+                _ => "JsonSerializeError",
+            };
+            return context.Error(new global::app.error.ServiceError($"JSON serialize failed: {ex.Message}", key, 400) { Exception = ex });
         }
     }
 

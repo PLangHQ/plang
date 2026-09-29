@@ -58,8 +58,14 @@ public sealed class @this : global::app.type.kind.@this
         }
         catch (System.Exception ex) when (ex is JsonException or System.NotSupportedException)
         {
+            var key = ex switch
+            {
+                global::app.data.OutputException output => output.Key,
+                global::app.data.NormalizeException normalize => normalize.Key,
+                _ => "PlangSerializeError",
+            };
             return context.Error(new global::app.error.ServiceError(
-                $"Plang serialize failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
+                $"Plang serialize failed: {ex.Message}", key, 400) { Exception = ex });
         }
     }
 

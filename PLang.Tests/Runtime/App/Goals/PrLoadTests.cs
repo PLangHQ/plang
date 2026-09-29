@@ -44,6 +44,16 @@ public class PrLoadTests : System.IAsyncDisposable
         await Assert.That(loaded.Error!.Message).Contains("step key 'ModuleType' isn't in this .pr format");
     }
 
+    // A .pr whose content doesn't read as a goal is refused under a key of its own, never a bare exception.
+    [Test]
+    public async Task AnUntypedProperty_IsRefusedUnderAKey()
+    {
+        var loaded = await Load("start.pr",
+            "{\"name\":\"Start\",\"step\":[{\"index\":0,\"text\":\"a\",\"code\":[{\"module\":\"file\",\"name\":\"read\",\"property\":[{\"name\":\"Path\",\"value\":\"a.txt\"}]}]}]}");
+
+        await Assert.That(loaded.Error?.Key).IsEqualTo("MaterializeFailed");
+    }
+
     // A step's actions are its `code`; a .pr that holds them under `action` was built by an older builder.
     [Test]
     public async Task AnActionKeyPr_IsRefused_NamingAction()

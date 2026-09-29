@@ -1,6 +1,6 @@
 # coder — app-systems
 
-**Version:** v10 (stage 9: 9a, 9b and 9c closed through the 9b+9c gate; next 10a)
+**Version:** v14 (stages 10 and 11 closed; 12a — the exception pass — in progress)
 
 ## What this is
 app-systems makes every `app.X` the type X, so the plang path, the C# path and the file path agree. The
@@ -59,24 +59,39 @@ change reverted.
   path + `IAddressed.Target()`; one consent door `actor.permission.Ask` (empty and EOF denied); `NoAnswer`.
 - Regressions of mine found by name-diffing against `baseline-failures.txt` and fixed: the actor-by-name
   door (CrossActorGoalCall), the path shape test. Gate rule now: diff failing **names**, never counts.
-- Next: batch 2 item 6 (`From` → `Takes`, one Create door — shape question open), item 8 (one reference
-  base for file/url), then the eval batch (`list<path>`, `code.load`, `BaseUrl`).
+- Item 6: one birth door `ICreate.Create(raw, declared?, data)` + `Takes(type)`; `From` gone. Item 8: one
+  reference base (`type/item/reference`, "content") for file/url. Eval round 26: 63/64/63.
+- **10c** the app's facts as plang values (datetime/duration; identity read in one reflection pass; the store
+  an item; `app.setting` Name/Environment). **10d** formats with their owners (json kind, text writer,
+  formal Reader/Writer, `kind.Report`, junit, `item.Debug(ctx)`). **10e** one computed form
+  (`DynamicData(name, Func<context,data?>, context, declared?)`). OsDirectory deleted.
+- **11b** tests through the app's doors: `PLang.Tests/Shared/Testing.cs` (`app.Testing()`, `context.Action(formal)`);
+  every Shared factory takes the test's context first (`Make.Action(ctx, …)`); `TestApp`/`TestAction` deleted;
+  ~65 sites that leaned on a helper's implicit `variable` typing now say `Make.Param(ctx, "Name", …, "variable")`.
+  A composed action runs through its own door: `new action(seed, ctx).Start(ctx)` (module/name from `module[Type]`).
+- **11c** `app.Run<TAction>` deleted. `build.unreached` (after Build.goal's foreach) warns `GoalUnreached` on the
+  builder channel for a private goal its file's public goal doesn't reach (`goal.Unreached(ctx)` answers
+  (Goal, From) pairs; a file with a `%var%` call — `IClass.IsDynamic` — is silent; public goals never warn).
+  The test report gains "Goals reached". Eval round 27: 64, 63, 60 (show variance), rerun 63.
 
 ## Open / held for Ingi
 binding → on (names, hit/miss); decision 236 (variable.set type.Convert); key strictness stays (b); channel
-Timeout; `%!app` missing-node reads; environment.start (delete?); timer shape; return depth. The llm cache stays
-unfixed on purpose. Pile2_SqliteSettings reads a file gone before this branch.
+Timeout; `%!app` missing-node reads; environment.start (delete?); timer shape; return depth; 10b(C) eager vs
+lazy typed-list element births; the os/ write rule (IsInRoot auto-grants all verbs under os/; the builder runs
+as the User actor, so "Write only for system" would block its self-rebuild); where variable memory belongs
+(`actor/memory` vs `actor/context/variable`) plus `Context {internal set}` and the `%!variables%` second door.
+The llm cache stays unfixed on purpose. Pile2_SqliteSettings reads a file gone before this branch.
 
 ## Next
-10a → 10e, each with its gate. Cadence: `./dev.sh test <Class>` per change (the stamp skips unchanged
-builds); `./dev.sh full` once per gate.
+12a: every `throw` this branch added is either plang itself broken (kept) or becomes a result error with a key.
+Then 12b (born knowing: a goal knows where it was loaded from at birth). Gate rule: diff failing **names**
+against `baseline-failures.txt`; rebuild (`dev.sh build`) after reverting any mutation before a plang run.
 
 ## Code example
 ```csharp
-// the owner takes items; the handler opens its carriers
-public Task<data.@this> Start() => ListName.Use(name => name.Use<list>(Context,
-    list => Index.Use(at => Task.FromResult(list.At(at, Context)))));
+// a composed action runs through its own door; the catalog names its module and action
+var verify = await new global::app.goal.step.action.@this(new signing.verify(ctx) { Data = back }, ctx).Start(ctx);
 
-// an input channel's answer is an Ask, born through its type
-return asked.As(await asked.Value<module.output.Ask>());
+// a test factory takes the test's own context first
+var set = Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "%x%", "variable"), ("Value", 1));
 ```

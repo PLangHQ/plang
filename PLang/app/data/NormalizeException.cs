@@ -8,9 +8,8 @@ namespace app.data;
 /// <c>NormalizeGetterThrew</c>, …) so callers can map to a typed channel error.
 ///
 /// <para>Subclass of <see cref="JsonException"/> so the serializer's existing
-/// <c>catch (Exception ex) when (ex is JsonException …)</c> picks it up and
-/// converts it to a <c>PlangSerializeError</c> automatically — same path
-/// every other serialize-time failure already takes.</para>
+/// <c>catch (Exception ex) when (ex is JsonException …)</c> picks it up — the same path every
+/// other serialize-time failure takes — and the error it answers keeps this <see cref="Key"/>.</para>
 /// </summary>
 public sealed class NormalizeException : JsonException
 {

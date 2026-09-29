@@ -133,8 +133,11 @@ public class Fluid : ITemplate
             var root = ex;
             while (root.InnerException != null) root = root.InnerException;
             var detail = ReferenceEquals(root, ex) ? ex.Message : $"{root.GetType().Name}: {root.Message}";
+            // a program's mistake inside the template (an unknown goal, a failed include) keeps its own key
+            var (key, status) = root is AppException app ? (app.Key, app.StatusCode)
+                : ex is AppException outer ? (outer.Key, outer.StatusCode) : ("RenderError", 500);
             return action.Context.Error<global::app.type.item.text.@this>(new ServiceError(
-                $"Template render error{location}: {detail}", "RenderError", 500) { Exception = ex });
+                $"Template render error{location}: {detail}", key, status) { Exception = ex });
         }
     }
 
