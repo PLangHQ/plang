@@ -1,0 +1,9 @@
+/ Stage 10e (decisions 148, 274): a value computed on each read is read fresh, and a copy of it holds the moment
+/ it was taken — %Now% - %start% measures time only if %start% stays still.
+Start
+- set %start% = %Now%
+- sleep 20 ms
+- assert %Now% is greater than %start%, "two reads of Now differ"
+- set %held% = %start%
+- sleep 20 ms
+- assert %start% equals %held%, "a copy of Now holds still"

@@ -72,6 +72,8 @@ Stage10d
 
 Stage10e
 / one form of computed value: %Now% and %!event% are computed on each read, one way
+/ two reads of %Now% differ, and a copy of it holds still
+- call /plan/app-systems/app/variable/NowIsReadFresh
 
 Stage11a
 / the actor is reached one way: %!app.actor.system% and %!app.actor.user%, no second app.System/app.User

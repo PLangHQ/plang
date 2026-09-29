@@ -1,0 +1,299 @@
+{
+  "name": "Start",
+  "comment": "Stage 10e (decisions 148, 274): a value computed on each read is read fresh, and a copy of it holds the moment\nit was taken — %Now% - %start% measures time only if %start% stays still.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %start% = %Now%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%start%",
+              "variable": [
+                {
+                  "text": "%start%",
+                  "code": [
+                    {
+                      "variable": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%Now%",
+              "variable": [
+                {
+                  "text": "%Now%",
+                  "code": [
+                    {
+                      "variable": "Now"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "sleep 20 ms",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "timer",
+          "name": "sleep",
+          "property": [
+            {
+              "name": "Ms",
+              "type": {
+                "name": "number"
+              },
+              "value": 20
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %Now% is greater than %start%, \"two reads of Now differ\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "greaterThan",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%Now%",
+              "variable": [
+                {
+                  "text": "%Now%",
+                  "code": [
+                    {
+                      "variable": "Now"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%start%",
+              "variable": [
+                {
+                  "text": "%start%",
+                  "code": [
+                    {
+                      "variable": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "two reads of Now differ"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "set %held% = %start%",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%held%",
+              "variable": [
+                {
+                  "text": "%held%",
+                  "code": [
+                    {
+                      "variable": "held"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%start%",
+              "variable": [
+                {
+                  "text": "%start%",
+                  "code": [
+                    {
+                      "variable": "start"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "sleep 20 ms",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "timer",
+          "name": "sleep",
+          "property": [
+            {
+              "name": "Ms",
+              "type": {
+                "name": "number"
+              },
+              "value": 20
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %start% equals %held%, \"a copy of Now holds still\"",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%start%",
+              "variable": [
+                {
+                  "text": "%start%",
+                  "code": [
+                    {
+                      "variable": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%held%",
+              "variable": [
+                {
+                  "text": "%held%",
+                  "code": [
+                    {
+                      "variable": "held"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a copy of Now holds still"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/app-systems/app/variable/NowIsReadFresh.test.goal",
+  "prPath": "/plan/app-systems/app/variable/.build/nowisreadfresh.test.pr",
+  "hash": "930866d0aae82649feaf4e80de7aaeff91a43b9f27bfd42ca257d81d522da487",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}
