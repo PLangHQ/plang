@@ -174,11 +174,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// NAMES a thing — it is born from its text at the wire boundary, never converted from a value.
     /// Anything but a variable is a decline.
     /// </summary>
-    public static @this? Create(global::app.type.item.@this value, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
-        if (value is @this v) return v;
+        if (raw is @this v) return v;
         data.Fail(new global::app.error.Error(
-            $"%{data.Name}% holds a {value.Type.Name} — a variable names a thing; it is born typed (declare 'type:variable'), never created from a value.",
+            $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name} — a variable names a thing; it is born typed (declare 'type:variable'), never created from a value.",
             "CreateVariableDeclined", 400));
         return null;
     }

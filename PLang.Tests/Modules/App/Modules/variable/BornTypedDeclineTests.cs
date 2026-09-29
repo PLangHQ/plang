@@ -18,7 +18,7 @@ public class BornTypedDeclineTests
         global::app.type.item.@this textValue = new global::app.type.item.text.@this("some value");
         var asking = new Data("Name", "Name", context: ctx);
 
-        var result = global::app.type.item.variable.@this.Create(textValue, asking);
+        var result = global::app.type.item.variable.@this.Create(textValue, null, asking);
 
         // cast to object: Variable has an implicit string operator that NREs on null
         await Assert.That((object?)result).IsNull();
@@ -33,7 +33,7 @@ public class BornTypedDeclineTests
         var v = global::app.type.item.variable.@this.Resolve("%x%", ctx);
         var asking = new Data("Name", "x", context: ctx);
 
-        var result = global::app.type.item.variable.@this.Create(v, asking);
+        var result = global::app.type.item.variable.@this.Create(v, null, asking);
 
         await Assert.That(result).IsNotNull();
         await Assert.That(asking.Error).IsNull();
