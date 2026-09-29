@@ -6,10 +6,13 @@ namespace PLang.Tests.App.LazyDeserialize.OneBoundaryTests;
 
 // app.type.list.Mime / app.type.list.Extension — the type content off I/O arrives as: the format, a
 // kind of the type that reads it. The value stays unread until touched.
-public class FormatRemapTests
+public class FormatRemapTests : System.IAsyncDisposable
 {
-    private static global::app.type.list.@this Types => global::PLang.Tests.TestApp.SharedContext.App.type.list;
-    private static global::app.actor.context.@this Ctx => global::PLang.Tests.TestApp.SharedContext;
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private global::app.type.list.@this Types => app.actor.list.User.Context.App.type.list;
+    private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
 
     // json is item's kind: `{item, json}` — what a json value reports.
     [Test] public async Task Mime_ApplicationJson_ReturnsItemJson()

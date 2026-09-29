@@ -10,16 +10,19 @@ namespace PLang.Tests.App.LazyDeserialize.IntegrationCutsTests;
 // a courier without any navigation/As<T>, and serialized back out: the
 // value slot is the original raw verbatim (no parse-then-reserialize).
 // `_value` was never materialized.
-public class Cut1_VerbatimPassthrough
+public class Cut1_VerbatimPassthrough : System.IAsyncDisposable
 {
-    private static global::app.@this NewApp()
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private global::app.@this NewApp()
         => new(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut1-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     private const string ConfigJson = "{\"port\":8080}";
 
-    private static global::app.actor.context.@this Ctx => global::PLang.Tests.TestApp.SharedContext;
-    private static global::app.type.kind.@this Plang => Ctx.Format("application/plang");
+    private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
+    private global::app.type.kind.@this Plang => Ctx.Format("application/plang");
 
     // An untouched {object, json} Data serializes its raw json straight into the
     // value slot — byte-identical, no re-encode — and never materializes.

@@ -9,8 +9,8 @@ using Variables = global::app.type.item.variable.list.@this;
 /// </summary>
 public class JsonRebindPinTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create(
-        "/tmp/json-rebind-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this(
+        "/tmp/json-rebind-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test]

@@ -7,7 +7,7 @@ namespace PLang.Tests.App.DataTests;
 
 public class DataTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/DataTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this("/tmp/DataTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test]
@@ -329,7 +329,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task GetChild_NullValue_ReturnsNotInitialized()
     {
-        var ov = new Data("test", context: global::PLang.Tests.TestApp.SharedContext);
+        var ov = new Data("test", context: _app.actor.list.User.Context);
 
         var child = await ov.Get("anything");
 
@@ -442,7 +442,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Context_WhenSet_PropagesToType()
     {
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         // Context propagation: setting Data.Context stamps the embedded Type
@@ -457,7 +457,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Type_LazyDerivation_WithContext()
     {
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var ov = new Data("test", "hello", context: context);
@@ -496,7 +496,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Type_ExplicitType_NotOverridden()
     {
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         // A declared {image, jpg} (bytes off I/O, unread) survives the ctor — the value isn't
@@ -511,7 +511,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Type_Setter_StampsContext()
     {
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var newType = new Type("text", "plain");
@@ -524,7 +524,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Type_Kind_WithContext()
     {
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var data = new Data("img", new byte[] { 1, 2 }, engine.type.list.Stamp("image/jpeg", context), context: context);
@@ -549,7 +549,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Type_Compressible_TextKind()
     {
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var data = new Data("txt", "hello", engine.type.list.Stamp("text/plain", context), context: context);
@@ -561,7 +561,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task GetChild_InheritsContext()
     {
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var data = new Dictionary<string, object?> { { "name", "test" } };
@@ -604,7 +604,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Compress_CompressibleType_CreatesArchivedEnvelope()
     {
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         // text/plain is compressible (kind "text").
@@ -620,7 +620,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Compress_NonCompressible_ReturnsSelf()
     {
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         // Bytes off I/O are binary; the kind (jpg) resolves to the image
@@ -635,7 +635,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Decompress_ArchivedData_ReturnsOriginal()
     {
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         // Compress a plain Data, then decompress — the value round-trips.
@@ -651,7 +651,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Decompress_NonArchived_ReturnsSelf()
     {
-        var data = _app.Data("", "Hello", global::PLang.Tests.TestApp.SharedContext.App.type.list["text"]);
+        var data = _app.Data("", "Hello", _app.actor.list.User.Context.App.type.list["text"]);
 
         var result = data.Decompress();
 
@@ -661,7 +661,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task CompressDecompress_RoundTrip_PreservesData()
     {
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var content = new Data("", "The quick brown fox jumps over the lazy dog", engine.type.list.Stamp("text/plain", context), context: context);
@@ -676,7 +676,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Encrypt_ReturnsSelf_NoCryptoYet()
     {
-        var data = _app.Data("", "secret", global::PLang.Tests.TestApp.SharedContext.App.type.list["text"]);
+        var data = _app.Data("", "secret", _app.actor.list.User.Context.App.type.list["text"]);
 
         var result = data.Encrypt();
 
@@ -686,7 +686,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Decrypt_NonEncrypted_ReturnsSelf()
     {
-        var data = _app.Data("", "Hello", global::PLang.Tests.TestApp.SharedContext.App.type.list["text"]);
+        var data = _app.Data("", "Hello", _app.actor.list.User.Context.App.type.list["text"]);
 
         var result = data.Decrypt();
 
@@ -709,7 +709,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task CompressChain_TextData()
     {
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var data = new Data("msg", "Hello, PLang!", engine.type.list.Stamp("text/plain", context), context: context);
@@ -750,7 +750,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task Decompress_CorruptData_ReturnsError()
     {
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
         // Random bytes — not valid GZip
         var archived = new Data("", new global::app.type.item.archive.@this(new byte[] { 0xFF, 0xFE, 0x00, 0x42 }), context: context);
@@ -777,7 +777,7 @@ public class DataTests : System.IAsyncDisposable
             gzipped = vars.ToArray();
         }
 
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
         var archived = new Data("", new global::app.type.item.archive.@this(gzipped), context: context);
 
@@ -794,7 +794,7 @@ public class DataTests : System.IAsyncDisposable
     [Test]
     public async Task CompressDecompress_PropertiesNotPreserved()
     {
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var content = new Data("", "Hello", engine.type.list.Stamp("text/plain", context), context: context);
@@ -824,7 +824,7 @@ public class DataTests : System.IAsyncDisposable
         var options = new System.Text.Json.JsonDocumentOptions { MaxDepth = 300 };
         using var doc = System.Text.Json.JsonDocument.Parse(json, options);
 
-        var ex = Assert.Throws<InvalidOperationException>(() => new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement));
+        var ex = Assert.Throws<InvalidOperationException>(() => new global::app.type.item.serializer.json(_app.actor.list.User.Context).Parse(doc.RootElement));
         await Assert.That(ex.Message).Contains("maximum depth");
     }
 
@@ -835,12 +835,12 @@ public class DataTests : System.IAsyncDisposable
         // convention); decimal is opt-in via `as number/decimal`.
         var json = "{\"price\":19.99}";
         using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var result = new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement) as app.type.item.dict.@this;
+        var result = new global::app.type.item.serializer.json(_app.actor.list.User.Context).Parse(doc.RootElement) as app.type.item.dict.@this;
 
         await Assert.That(result).IsNotNull();
         // Born-native: a JSON number is a number.@this wrapper; its backing
         // (via ToRaw) is double for a bare decimal-point literal.
-        var price = await result!.Get("price", global::PLang.Tests.TestApp.SharedContext)!.Value();
+        var price = await result!.Get("price", _app.actor.list.User.Context)!.Value();
         await Assert.That(price).IsTypeOf<app.type.item.number.@this>();
         await Assert.That(((app.type.item.number.@this)price!).Clr<object>()).IsEqualTo(19.99d);
     }
@@ -850,11 +850,11 @@ public class DataTests : System.IAsyncDisposable
     {
         var json = "{\"count\":42}";
         using var doc = System.Text.Json.JsonDocument.Parse(json);
-        var result = new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement) as app.type.item.dict.@this;
+        var result = new global::app.type.item.serializer.json(_app.actor.list.User.Context).Parse(doc.RootElement) as app.type.item.dict.@this;
 
         await Assert.That(result).IsNotNull();
         // Born-native: a whole JSON number is a number.@this wrapper backed by long.
-        var count = await result!.Get("count", global::PLang.Tests.TestApp.SharedContext)!.Value();
+        var count = await result!.Get("count", _app.actor.list.User.Context)!.Value();
         await Assert.That(count).IsTypeOf<app.type.item.number.@this>();
         await Assert.That(((app.type.item.number.@this)count!).Clr<object>()).IsEqualTo(42L);
     }
@@ -880,7 +880,7 @@ public class DataTests : System.IAsyncDisposable
         }
 
         // Stage 3: archived.Value is the gzip byte[] directly (no inner gzip Data).
-        await using var engine = global::PLang.Tests.TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
         var archived = new Data("", new global::app.type.item.archive.@this(compressed), context: context);
 
@@ -942,7 +942,7 @@ public class DataTests : System.IAsyncDisposable
 
 public class DynamicDataTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/DynamicDataTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this("/tmp/DynamicDataTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test]

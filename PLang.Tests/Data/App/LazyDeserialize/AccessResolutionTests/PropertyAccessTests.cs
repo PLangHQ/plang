@@ -11,8 +11,8 @@ namespace PLang.Tests.App.LazyDeserialize.AccessResolutionTests;
 // not materialise the body.
 public class PropertyAccessTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create(
-        "/tmp/PropertyAccessTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this(
+        "/tmp/PropertyAccessTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test] public async Task PropertyRead_ReadsFromProperties_NotValue()

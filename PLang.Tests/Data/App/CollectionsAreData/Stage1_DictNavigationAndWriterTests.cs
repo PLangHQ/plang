@@ -8,12 +8,12 @@ namespace PLang.Tests.App.CollectionsAreData;
 // json objects to dict (not raw Dictionary<string,object?>).
 public class Stage1_DictNavigationAndWriterTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/Stage1DictNav-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this("/tmp/Stage1DictNav-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static global::app.@this NewApp()
-        => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-dictnav-" + System.Guid.NewGuid().ToString("N")[..8]));
+        => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-dictnav-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     [Test]
     public async Task Materialize_JsonObjectRoot_NarrowsToDict()
@@ -24,7 +24,7 @@ public class Stage1_DictNavigationAndWriterTests : System.IAsyncDisposable
         var ctx = app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg");
         await Assert.That((await d.Value())).IsTypeOf<Dict>();
-        await Assert.That(((app.type.item.@this)(await ((Dict)(await d.Value())!).Get("port", global::PLang.Tests.TestApp.SharedContext)!.Value())!).Clr<object>()).IsEqualTo(8080L);
+        await Assert.That(((app.type.item.@this)(await ((Dict)(await d.Value())!).Get("port", app.actor.list.User.Context)!.Value())!).Clr<object>()).IsEqualTo(8080L);
     }
 
     [Test]

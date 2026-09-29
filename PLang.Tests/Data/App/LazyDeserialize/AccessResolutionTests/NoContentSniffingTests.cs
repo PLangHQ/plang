@@ -11,8 +11,8 @@ namespace PLang.Tests.App.LazyDeserialize.AccessResolutionTests;
 // stays a string — the value is only parsed when a type names how.
 public class NoContentSniffingTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create(
-        "/tmp/NoContentSniffingTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this(
+        "/tmp/NoContentSniffingTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     // A `{` prefix is not enough to auto-pick json. Without `as json`,

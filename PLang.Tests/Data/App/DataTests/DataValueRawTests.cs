@@ -10,7 +10,7 @@ public class DataValueRawTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = global::PLang.Tests.TestApp.Create("/app");
+    public void Setup() => _app = new global::app.@this("/app").Testing();
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -112,7 +112,7 @@ public class DataValueRawTests
         var stored = _app.Data("greeting", "Hello %name%");
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("test"),
+            Module = _app.actor.list.User.Context.App.Module("test"),
             Name = "fixture",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { stored })
         };

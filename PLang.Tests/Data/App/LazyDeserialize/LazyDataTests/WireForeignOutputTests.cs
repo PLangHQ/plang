@@ -29,14 +29,14 @@ public class WireForeignOutputTests
 
     [Test] public async Task WireLeafString_ForeignText_Works()   // control — leaves are fine today
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var text = await TextOut(app, "\"hello\"", "text");
         await Assert.That(text).Contains("hello");
     }
 
     [Test] public async Task WireDict_ForeignText_RendersJson_NotThrows()
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var text = await TextOut(app, "{\"a\":1}", "dict");
         await Assert.That(text).Contains("\"a\"");
         await Assert.That(text).Contains("1");
@@ -44,7 +44,7 @@ public class WireForeignOutputTests
 
     [Test] public async Task WireList_ForeignText_RendersJson_NotThrows()
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var text = await TextOut(app, "[1,2,3]", "list");
         await Assert.That(text).Contains("1");
         await Assert.That(text).Contains("3");
@@ -52,7 +52,7 @@ public class WireForeignOutputTests
 
     [Test] public async Task WireObject_ForeignText_RendersJson_NotThrows()
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var text = await TextOut(app, "{\"name\":\"x\"}", "item");
         await Assert.That(text).Contains("name");
     }

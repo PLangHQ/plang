@@ -6,10 +6,10 @@ public class EventsSinceTests
 {
     private static (global::app.@this app, ActionEntity action) BuildLive(string name)
     {
-        var app = global::PLang.Tests.TestApp.Create("/test");
-        var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var app = new global::app.@this("/test").Testing();
+        var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", app.actor.list.User.Context) };
         var step = new Step { Index = 0, Text = "step", Goal = goal };
-        var action = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("test"), Name = "test", Step = step };
+        var action = new ActionEntity { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = step };
         step.Code.Add(action); goal.Step.Add(step);
         app.goal.list.Add(goal);
         return (app, action);

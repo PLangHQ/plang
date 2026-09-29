@@ -8,7 +8,7 @@ namespace PLang.Tests.App.VariablesTests;
 // the stored value. A name's first set is a set; the same Data set again changes nothing and fires nothing.
 public class CollectionEventsTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/CollectionEventsTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this("/tmp/CollectionEventsTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.@event.on.own On => app.variable.Own();

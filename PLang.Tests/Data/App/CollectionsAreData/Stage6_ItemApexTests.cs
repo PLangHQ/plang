@@ -6,7 +6,7 @@ namespace PLang.Tests.App.CollectionsAreData;
 // from a type name without minting a comparison type.
 public class Stage6_ItemApexTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/Stage6ItemApex-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this("/tmp/Stage6ItemApex-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test]

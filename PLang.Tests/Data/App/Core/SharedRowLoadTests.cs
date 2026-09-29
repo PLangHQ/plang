@@ -10,7 +10,7 @@ public class SharedRowLoadTests
     [Test]
     public async Task ProgramProperty_ValueIsReadOnlyThroughARunsData()
     {
-        await using var app = TestApp.Create("/tmp/sharedrow-" + System.Guid.NewGuid().ToString("N")[..8]);
+        await using var app = new global::app.@this("/tmp/sharedrow-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
         var goal = await RealGoalLoad.ViaChannel(app, Make.Goal("Start",
             Make.Step("set %x% = hello",
                 Make.Action("variable", "set", ("Name", "%x%"), ("Value", "hello")))));

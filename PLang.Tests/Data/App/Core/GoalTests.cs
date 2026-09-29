@@ -5,7 +5,7 @@ namespace PLang.Tests.App.Core;
 
 public class GoalTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/GoalTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this("/tmp/GoalTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test]
@@ -15,8 +15,8 @@ public class GoalTests : System.IAsyncDisposable
         {
             Name = "TestGoal",
             Comment = "This is a comment",
-            Path = global::app.type.item.path.@this.Resolve("/path/to/goal.goal", global::PLang.Tests.TestApp.SharedContext),
-            PrPath = global::app.type.item.path.@this.Resolve("/path/to/goal.pr.json", global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve("/path/to/goal.goal", _app.actor.list.User.Context),
+            PrPath = global::app.type.item.path.@this.Resolve("/path/to/goal.pr.json", _app.actor.list.User.Context),
             Hash = "abc123",
             IsSetup = true,
             IsEvent = false,

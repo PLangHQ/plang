@@ -61,7 +61,7 @@ public class CycleDetectionTests
     [Test]
     public async Task EnteringAGoalAlreadyOnTheChain_Runs_RecursionIsAllowed()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         // A → B → A: a goal may call itself through others; only the depth limit stops it
         await using var a = context.CallStack.Push(MakeAction("A"));
@@ -76,7 +76,7 @@ public class CycleDetectionTests
     [Test]
     public async Task EnteringASubGoalOfTheSameFile_IsNoCycle()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         // Start calls Compile: the file's sub-goals share its .pr — a goal is its .pr and its name
         await using var start = context.CallStack.Push(MakeAction("Start"));

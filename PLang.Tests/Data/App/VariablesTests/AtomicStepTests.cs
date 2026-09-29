@@ -9,8 +9,8 @@ namespace PLang.Tests.App.VariablesTests;
 /// </summary>
 public class AtomicStepTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create(
-        "/tmp/atomic-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this(
+        "/tmp/atomic-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test]

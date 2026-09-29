@@ -4,8 +4,11 @@ using app.module;
 
 namespace PLang.Tests.App.Core;
 
-public class ActionsTests
+public class ActionsTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task Constructor_Default_CreatesEmptyList()
     {
@@ -19,8 +22,8 @@ public class ActionsTests
     {
         var list = new List<global::app.goal.step.action.@this>
         {
-            new() { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" },
-            new() { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("file"), Name = "save" }
+            new() { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" },
+            new() { Module = app.actor.list.User.Context.App.Module("file"), Name = "save" }
         };
 
         var actions = new StepActions(list);
@@ -116,8 +119,8 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" },
-            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("file"), Name = "save" }
+            new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" },
+            new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("file"), Name = "save" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -131,7 +134,7 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("bogus"), Name = "nope" }
+            new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("bogus"), Name = "nope" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -146,9 +149,9 @@ public class ActionsTests
     {
         var actions = new StepActions
         {
-            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" },
-            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("bogus"), Name = "nope" },
-            new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("fake"), Name = "missing" }
+            new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" },
+            new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("bogus"), Name = "nope" },
+            new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("fake"), Name = "missing" }
         };
 
         var (isValid, error) = ValidateActions(actions);
@@ -194,7 +197,7 @@ public class ActionsTests
         {
             Code = new StepActions
             {
-                new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" }
+                new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" }
             }
         };
 
@@ -215,7 +218,7 @@ public class ActionsTests
         {
             Code = new StepActions
             {
-                new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write" }
+                new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("output"), Name = "write" }
             }
         };
 
@@ -253,7 +256,7 @@ public class ActionsTests
             Text = "test",
             Code = new StepActions
             {
-                new global::app.goal.step.action.@this { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("old"), Name = "action" }
+                new global::app.goal.step.action.@this { Module = app.actor.list.User.Context.App.Module("old"), Name = "action" }
             }
         };
         var stepFromLlm = new Step { Code = new StepActions() };
@@ -267,7 +270,7 @@ public class ActionsTests
     /// <summary>
     /// Mirrors PlangModule.MergeStep logic for unit testing without DI.
     /// </summary>
-    private static (Step? step, global::app.error.Error? error) MergeStep(Step step, Step stepFromLlm)
+    private (Step? step, global::app.error.Error? error) MergeStep(Step step, Step stepFromLlm)
     {
         if (step == null)
             return (null, new global::app.error.ProgramError("Step cannot be null", key: "MergeError"));
@@ -288,12 +291,12 @@ public class ActionsTests
     /// <summary>
     /// Mirrors PlangModule.ValidateActions logic for unit testing without DI.
     /// </summary>
-    private static (bool isValid, global::app.error.Error? error) ValidateActions(StepActions actions)
+    private (bool isValid, global::app.error.Error? error) ValidateActions(StepActions actions)
     {
         if (actions == null || actions.Count == 0)
             return (false, new global::app.error.ProgramError("No actions provided", key: "NoActionsProvided"));
 
-        var app = TestApp.Create("/app");
+        var app = new global::app.@this("/app").Testing();
 
         var notFound = new List<string>();
         foreach (var action in actions)
@@ -312,9 +315,9 @@ public class ActionsTests
     /// <summary>
     /// Mimics what GetActions() in PlangModule does — uses the app's module to discover handlers.
     /// </summary>
-    private static StepActions DiscoverActions()
+    private StepActions DiscoverActions()
     {
-        var modules = TestApp.Create("/app").module.list;
+        var modules = new global::app.@this("/app").Testing().module.list;
 
         var actions = new StepActions();
 

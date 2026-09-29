@@ -7,9 +7,12 @@ namespace PLang.Tests.App.LazyDeserialize.ReaderRegistryTests;
 // The central conversion door is gone — a value lowers ITSELF to a CLR target via its
 // own `Clr`, a list walks its elements through theirs. These rows pin that self-lowering
 // (scalar → numeric target, sequence → typed list) after the door was removed.
-public class ResidualTryConvertTests
+public class ResidualTryConvertTests : System.IAsyncDisposable
 {
-    private static readonly global::app.actor.context.@this Ctx = global::PLang.Tests.TestApp.SharedContext;
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
 
     [Test] public async Task Scalar_LowersToNumericTarget()
     {

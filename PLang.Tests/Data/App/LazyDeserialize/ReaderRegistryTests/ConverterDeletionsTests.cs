@@ -15,8 +15,8 @@ public class ConverterDeletionsTests
     private static Assembly PLangAssembly => typeof(global::app.@this).Assembly;
 
     private static global::app.@this NewApp()
-        => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-conv-del-" + System.Guid.NewGuid().ToString("N")[..8]));
+        => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-conv-del-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     public sealed class InnerFixture { public global::app.type.item.path.@this? File { get; set; } }
     public sealed class MidFixture { public InnerFixture? Inner { get; set; } }

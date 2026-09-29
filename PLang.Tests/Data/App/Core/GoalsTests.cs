@@ -6,12 +6,15 @@ namespace PLang.Tests.App.Core;
 
 // The goals: app.goal is the type over the goals read so far (goal.list, a list<goal>). A goal is picked
 // by its address through the type; a call's name is found by the list, from where it is called.
-public class GoalsTests
+public class GoalsTests : System.IAsyncDisposable
 {
-    private static global::app.goal.list.@this Goals() => new(global::PLang.Tests.TestApp.SharedContext.App);
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
-    private static Goal Named(string name, string path, bool setup = false, string? comment = null)
-        => new() { Name = name, Path = global::app.type.item.path.@this.Resolve(path, global::PLang.Tests.TestApp.SharedContext), IsSetup = setup, Comment = comment };
+    private global::app.goal.list.@this Goals() => new(app.actor.list.User.Context.App);
+
+    private Goal Named(string name, string path, bool setup = false, string? comment = null)
+        => new() { Name = name, Path = global::app.type.item.path.@this.Resolve(path, app.actor.list.User.Context), IsSetup = setup, Comment = comment };
 
     private static string TempApp()
     {
@@ -145,7 +148,7 @@ public class GoalsTests
         var dir = TempApp();
         try
         {
-            await using var engine = global::PLang.Tests.TestApp.Create(dir);
+            await using var engine = new global::app.@this(dir).Testing();
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "normalgoal.pr"),
                 """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","step":[]}""");
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "setupdb.pr"),
@@ -165,7 +168,7 @@ public class GoalsTests
         var dir = TempApp();
         try
         {
-            await using var engine = global::PLang.Tests.TestApp.Create(dir);
+            await using var engine = new global::app.@this(dir).Testing();
             var pr = System.IO.Path.Combine(dir, ".build", "setupdb.pr");
             System.IO.File.WriteAllText(pr, """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","step":[]}""");
 
@@ -180,7 +183,7 @@ public class GoalsTests
     public async Task Load_RefusesAHeldSetupGoal()
     {
         // rooted where Named's paths resolve, so the held goal's .pr is the one loaded
-        await using var app = TestApp.Create(global::PLang.Tests.TestApp.SharedContext.App.AbsolutePath);
+        await using var app = new global::app.@this(this.app.AbsolutePath).Testing();
         app.goal.list.Add(Named("SetupDb", "/SetupDb.goal", setup: true));
 
         var result = await app.goal.Load("/.build/setupdb.pr");
@@ -193,7 +196,7 @@ public class GoalsTests
     [Test]
     public async Task SubGoal_KnowsItsParent_ItsAddressAndItsVisibility()
     {
-        var context = global::PLang.Tests.TestApp.SharedContext;
+        var context = app.actor.list.User.Context;
         var path = global::app.type.item.path.@this.Resolve("/Start.goal", context);
         var start = Goal.Parse("Start\n- write out 'a'\n\nShow\n- write out 'b'\n", path, context)!;
 
@@ -209,7 +212,7 @@ public class GoalsTests
     [Test]
     public async Task Match_TheGoalOrOneOfItsSubGoals_ByAddress()
     {
-        var context = global::PLang.Tests.TestApp.SharedContext;
+        var context = app.actor.list.User.Context;
         var start = Goal.Parse("Start\n- write out 'a'\n\nShow\n- write out 'b'\n",
             global::app.type.item.path.@this.Resolve("/Start.goal", context), context)!;
 
@@ -226,7 +229,7 @@ public class GoalsTests
         var dir = TempApp();
         try
         {
-            await using var engine = global::PLang.Tests.TestApp.Create(dir);
+            await using var engine = new global::app.@this(dir).Testing();
             var goal = Named("Helper", "/a/Helper.goal");
             engine.goal.list.Add(goal);
 
@@ -245,7 +248,7 @@ public class GoalsTests
         var dir = TempApp();
         try
         {
-            await using var engine = global::PLang.Tests.TestApp.Create(dir);
+            await using var engine = new global::app.@this(dir).Testing();
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "start.pr"),
                 """{"name":"Start","path":"/Start.goal","step":[],"child":[{"name":"Show","path":"/Start.goal","step":[]}]}""");
             var context = engine.actor.list.User.Context;
@@ -274,7 +277,7 @@ public class GoalsTests
     [Test]
     public async Task AllWord_OnAList_IsEveryItem_EvenOnAnEmptyList()
     {
-        var context = global::PLang.Tests.TestApp.SharedContext;
+        var context = app.actor.list.User.Context;
         var empty = new global::app.data.@this("l", new global::app.type.item.list.@this(), context: context);
 
         var all = await empty.Get("all");

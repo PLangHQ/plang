@@ -11,7 +11,7 @@ namespace PLang.Tests.App.LazyDeserialize.NumberTowerTests;
 // narrowing. (Context is unused for parsing; passed null.)
 public class NumberReadTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/numreadtests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this("/tmp/numreadtests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     // number.Convert (the deleted hook) → the number Create courier: a carrier declares

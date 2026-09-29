@@ -9,12 +9,15 @@ namespace PLang.Tests.App.LazyDeserialize.ReaderRegistryTests;
 // numeric CLR types it owns, text declares string, path is reached by identity (its
 // subclasses all resolve to the path entity). The central `if u == typeof(int) …`
 // ladder is gone; routing composes from the family declarations and the entity index.
-public class DistributedOwnerOfTests
+public class DistributedOwnerOfTests : System.IAsyncDisposable
 {
-    private static System.Type[] Clrs(System.Collections.Generic.IReadOnlyList<global::app.type.convert.OwnedClr> d)
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private System.Type[] Clrs(System.Collections.Generic.IReadOnlyList<global::app.type.convert.OwnedClr> d)
         => d.Select(o => o.Clr).ToArray();
 
-    private static global::app.type.list.@this Types => global::PLang.Tests.TestApp.SharedContext.App.type.list;
+    private global::app.type.list.@this Types => app.actor.list.User.Context.App.type.list;
 
     // The central switch is gone; routing composes from declarations. Pinned by
     // behaviour: the ownership door's answer for a CLR type is the owning family's

@@ -9,7 +9,7 @@ namespace PLang.Tests.App.CollectionsAreData;
 // repointing in Stage1_DictNavigationAndWriterTests.
 public class Stage1_DictValueTypeTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/Stage1DictVT-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this("/tmp/Stage1DictVT-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test]
@@ -18,7 +18,7 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
         // dict.Get("name") on a dict holding {name:Data("a")} returns that element Data.
         var d = new Dict();
         d.Set(app.Data("name", "a"));
-        var entry = d.Get("name", global::PLang.Tests.TestApp.SharedContext);
+        var entry = d.Get("name", app.actor.list.User.Context);
         await Assert.That(entry).IsNotNull();
         await Assert.That((await entry!.Value())?.ToString()).IsEqualTo("a");
     }
@@ -29,7 +29,7 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
         // dict.Get on an unknown key returns null (not throws) — caller decides what missing means.
         var d = new Dict();
         d.Set(app.Data("name", "a"));
-        await Assert.That(d.Get("nope", global::PLang.Tests.TestApp.SharedContext)).IsNull();
+        await Assert.That(d.Get("nope", app.actor.list.User.Context)).IsNull();
         await Task.CompletedTask;
     }
 
@@ -42,7 +42,7 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
         d.Set(app.Data("age", 30L));
         d.Set(app.Data("city", "Reyk"));
         // Keys is the typed list<text> surface; assert over the text values.
-        await Assert.That(d.Keys.Items(global::PLang.Tests.TestApp.SharedContext).Select(k => k.Peek()?.ToString()).ToList())
+        await Assert.That(d.Keys.Items(app.actor.list.User.Context).Select(k => k.Peek()?.ToString()).ToList())
             .IsEquivalentTo(new[] { "name", "age", "city" });
     }
 
@@ -70,7 +70,7 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
     {
         // IBooleanResolvable: empty dict is falsy — matches falsiness of empty list/string/null.
         var d = new Dict();
-        await Assert.That(await d.AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
+        await Assert.That(await d.AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
     }
 
     [Test]
@@ -79,14 +79,14 @@ public class Stage1_DictValueTypeTests : System.IAsyncDisposable
         // IBooleanResolvable: a dict with any entry is truthy.
         var d = new Dict();
         d.Set(app.Data("name", "a"));
-        await Assert.That(await d.AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
+        await Assert.That(await d.AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
     }
 
     [Test]
     public async Task PrimitiveMap_DictRegistered_RawDictionaryEntryRetired()
     {
         // "dict" and its aliases name the dict value type, not a raw Dictionary.
-        var types = global::PLang.Tests.TestApp.SharedContext.App.type.list;
+        var types = app.actor.list.User.Context.App.type.list;
         await Assert.That(types.Clr("dict")).IsEqualTo(typeof(Dict));
         await Assert.That(types.Clr("dictionary")).IsEqualTo(typeof(Dict));
         await Assert.That(types.Clr("map")).IsEqualTo(typeof(Dict));

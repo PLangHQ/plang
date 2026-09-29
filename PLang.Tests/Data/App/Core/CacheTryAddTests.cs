@@ -10,7 +10,7 @@ namespace PLang.Tests.App.Core;
 /// </summary>
 public class CacheTryAddTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/CacheTryAddTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this("/tmp/CacheTryAddTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static CacheSettings MakeSettings(long durationMs = 300_000)

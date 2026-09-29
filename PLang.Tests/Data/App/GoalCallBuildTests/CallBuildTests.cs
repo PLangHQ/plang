@@ -12,7 +12,7 @@ public class CallBuildTests
     [Test]
     public async Task Build_KeepsASelfReferenceArgument()
     {
-        var app = global::PLang.Tests.TestApp.Create("/t");
+        var app = new global::app.@this("/t").Testing();
         var ctx = app.actor.list.User.Context;
 
         var args = new global::app.type.item.list.@this(new List<Data>
@@ -23,7 +23,7 @@ public class CallBuildTests
         });
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("goal"),
+            Module = app.actor.list.User.Context.App.Module("goal"),
             Name = "call",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
@@ -37,14 +37,14 @@ public class CallBuildTests
         await ((global::app.module.IClass)handler!).Build();
 
         var arguments = action["Parameter"]!;
-        var names = ((global::app.type.item.list.@this)arguments.Value!).Items(global::PLang.Tests.TestApp.SharedContext).Select(p => p.Name).ToList();
+        var names = ((global::app.type.item.list.@this)arguments.Value!).Items(app.actor.list.User.Context).Select(p => p.Name).ToList();
         await Assert.That(names).IsEquivalentTo(new[] { "path", "kind", "target" });
     }
 
     [Test]
     public async Task ASelfPassedName_WrittenInTheCallee_StaysTheCallees()
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/t2");
+        await using var app = new global::app.@this("/t2").Testing();
         var ctx = app.actor.list.User.Context;
         app.goal.list.Add(await RealGoalLoad.ViaChannel(app, Make.Goal("Rename",
             Make.Step("set %path% = \"inner\"",

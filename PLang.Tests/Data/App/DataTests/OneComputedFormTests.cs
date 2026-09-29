@@ -9,7 +9,7 @@ public class OneComputedFormTests
     // What it finds answers its value and its properties alike — a value site as the event does.
     [Test] public async Task AFoundData_AnswersItsValueAndItsProperties()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var found = ctx.Ok("hello");
         found.Properties.Set("origin", "test");
@@ -23,7 +23,7 @@ public class OneComputedFormTests
     // Nothing found is the null value and an empty bag.
     [Test] public async Task NothingFound_IsTheNullValue()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
 
         var dynamic = new global::app.data.DynamicData("x", _ => null, ctx);
@@ -35,7 +35,7 @@ public class OneComputedFormTests
     // %Now% is found fresh at each read, built with the asker's context.
     [Test] public async Task Now_IsFoundAtEachRead()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var now = ctx.Variable.Peek("Now")!;
 

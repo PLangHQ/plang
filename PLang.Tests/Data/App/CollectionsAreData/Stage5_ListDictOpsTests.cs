@@ -16,7 +16,7 @@ namespace PLang.Tests.App.CollectionsAreData;
 public class Stage5_ListDictOpsTests
 {
     private global::app.@this _app = null!;
-    [Before(Test)] public void Setup() => _app = global::PLang.Tests.TestApp.Create("/app");
+    [Before(Test)] public void Setup() => _app = new global::app.@this("/app").Testing();
     [After(Test)] public async Task TearDown() { await _app.DisposeAsync(); }
     private (global::app.actor.context.@this ctx, Variables vars) Ctx() => (_app.actor.list.User.Context, _app.actor.list.User.Context.Variable);
     private Data D(object? v) => _app.Data("", v);
@@ -40,7 +40,7 @@ public class Stage5_ListDictOpsTests
         await result.IsSuccess();
         var filtered = (ListV)(await result.Value())!;
         await Assert.That(filtered.Count).IsEqualTo(2);
-        await Assert.That(((global::app.type.item.number.@this)(await (await filtered.At(0, global::PLang.Tests.TestApp.SharedContext)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(25L);
+        await Assert.That(((global::app.type.item.number.@this)(await (await filtered.At(0, _app.actor.list.User.Context)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(25L);
     }
 
     [Test]
@@ -81,8 +81,8 @@ public class Stage5_ListDictOpsTests
         var action = new Sort(ctx) { ListName = new app.type.item.variable.@this("people"), By = new global::app.data.@this<global::app.type.item.text.@this>("", "age", context: ctx) };
         await (await action.Start()).IsSuccess();
         var sorted = (ListV)(await (await vars.Get("people")).Value())!;
-        await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(0, global::PLang.Tests.TestApp.SharedContext)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(10L);
-        await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(2, global::PLang.Tests.TestApp.SharedContext)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(30L);
+        await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(0, _app.actor.list.User.Context)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(10L);
+        await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(2, _app.actor.list.User.Context)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(30L);
     }
 
     [Test]
@@ -132,8 +132,8 @@ public class Stage5_ListDictOpsTests
         await result.IsSuccess();
         var groups = (ListV)(await result.Value())!;
         await Assert.That(groups.Count).IsEqualTo(2);
-        var reyk = (DictV)(await groups.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())!;
-        await Assert.That((await (reyk.Get("key", global::PLang.Tests.TestApp.SharedContext))!.Value())?.ToString()).IsEqualTo("Reyk");
-        await Assert.That(((ListV)(await (reyk.Get("items", global::PLang.Tests.TestApp.SharedContext))!.Value())!).Count).IsEqualTo(2); // navigable bucket
+        var reyk = (DictV)(await groups.At(0, _app.actor.list.User.Context)!.Value())!;
+        await Assert.That((await (reyk.Get("key", _app.actor.list.User.Context))!.Value())?.ToString()).IsEqualTo("Reyk");
+        await Assert.That(((ListV)(await (reyk.Get("items", _app.actor.list.User.Context))!.Value())!).Count).IsEqualTo(2); // navigable bucket
     }
 }

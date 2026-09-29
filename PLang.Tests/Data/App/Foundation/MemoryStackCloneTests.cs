@@ -10,8 +10,8 @@ namespace PLang.Tests.App.Foundation;
 /// </summary>
 public class VariablesCloneTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create(
-        "/tmp/VariablesCloneTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this(
+        "/tmp/VariablesCloneTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
@@ -25,7 +25,7 @@ public class VariablesCloneTests : System.IAsyncDisposable
         clone.Set("items", new List<object?> { "a", "b", "c" });
 
         var originalList = (await vars.GetValue("items")) as global::app.type.item.list.@this;
-        await Assert.That(originalList!.Items(global::PLang.Tests.TestApp.SharedContext).Count()).IsEqualTo(2);
+        await Assert.That(originalList!.Items(app.actor.list.User.Context).Count()).IsEqualTo(2);
     }
 
     [Test]
@@ -57,8 +57,8 @@ public class VariablesCloneTests : System.IAsyncDisposable
         });
 
         var originalDict = (await vars.GetValue("record")) as global::app.type.item.dict.@this;
-        var originalTags = originalDict!.Get("tags", global::PLang.Tests.TestApp.SharedContext)!.Peek() as global::app.type.item.list.@this;
-        await Assert.That(originalTags!.Items(global::PLang.Tests.TestApp.SharedContext).Count()).IsEqualTo(2);
+        var originalTags = originalDict!.Get("tags", app.actor.list.User.Context)!.Peek() as global::app.type.item.list.@this;
+        await Assert.That(originalTags!.Items(app.actor.list.User.Context).Count()).IsEqualTo(2);
     }
 
     [Test]

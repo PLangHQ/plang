@@ -8,7 +8,7 @@ namespace PLang.Tests.App.CollectionsAreData;
 // rows and descend into list rows only; sort/reverse collapse to a flat list.
 public class RowModelTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/RowModelTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this("/tmp/RowModelTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private Data D(object? v) => app.Data("", v);
@@ -30,11 +30,11 @@ public class RowModelTests : System.IAsyncDisposable
         a.Add(Of(50, 60));                      // extend: a chunk, weight 2 — merges on read
 
         await Assert.That(a.Count).IsEqualTo(6);            // flattened, not row count
-        await Assert.That((await a.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("10");
-        await Assert.That((await a.At(3, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("40");
-        await Assert.That((await a.At(4, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("50");   // into the nested row
-        await Assert.That((await a.At(5, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("60");
-        await Assert.That((await a.Last(global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("60");
+        await Assert.That((await a.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("10");
+        await Assert.That((await a.At(3, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("40");
+        await Assert.That((await a.At(4, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("50");   // into the nested row
+        await Assert.That((await a.At(5, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("60");
+        await Assert.That((await a.Last(app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("60");
     }
 
     [Test]
@@ -52,8 +52,8 @@ public class RowModelTests : System.IAsyncDisposable
 
         // write-through: set the leaf inside the shared row → visible via b too.
         a.SetAt(2, D(99L));
-        await Assert.That((await a.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("99");
-        await Assert.That((await b.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("99");
+        await Assert.That((await a.At(2, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("99");
+        await Assert.That((await b.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("99");
 
         // read-view: mutate b → a flattens through the shared row and tracks it.
         b.Add(D(70L));
@@ -69,7 +69,7 @@ public class RowModelTests : System.IAsyncDisposable
 
         a.RemoveAt(2);                          // removes 50 (inside the nested row)
         await Assert.That(a.Count).IsEqualTo(3);
-        await Assert.That((await a.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("60");
+        await Assert.That((await a.At(2, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("60");
     }
 
     [Test]
@@ -81,7 +81,7 @@ public class RowModelTests : System.IAsyncDisposable
         a.Add(D(d1)); a.Add(D(d2));             // [{x:1}, {x:2}]
 
         await Assert.That(a.Count).IsEqualTo(2);            // dicts are whole items
-        await Assert.That((await a.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value()) is DictV).IsTrue();
+        await Assert.That((await a.At(0, app.actor.list.User.Context)!.Value()) is DictV).IsTrue();
     }
 
     [Test]
@@ -89,10 +89,10 @@ public class RowModelTests : System.IAsyncDisposable
     {
         var a = Of(30, 10);
         a.Add(Of(20, 5));                       // extend → [30, 10, 20, 5]
-        a.Sort(null, descending: false, global::PLang.Tests.TestApp.SharedContext);       // → [5, 10, 20, 30]
+        a.Sort(null, descending: false, app.actor.list.User.Context);       // → [5, 10, 20, 30]
 
         await Assert.That(a.Count).IsEqualTo(4);
-        await Assert.That((await a.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("5");
-        await Assert.That((await a.At(3, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("30");
+        await Assert.That((await a.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("5");
+        await Assert.That((await a.At(3, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("30");
     }
 }

@@ -11,20 +11,23 @@ namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 // LEAN — envelope-recognition stays (a leaf serializer recognizing its own
 // canonical shape, not banned format-sniffing), only the GetRawText double-
 // parse is dropped. Signing recanonicalizes (no "verify on raw").
-public class WireReadLazyTests
+public class WireReadLazyTests : System.IAsyncDisposable
 {
-    private static data RoundTrip(data d)
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private data RoundTrip(data d)
         => Plang.Deserialize(Plang.Serialize(d, Ctx).Peek()!.ToString()!, Ctx);   // Deserialize returns the reconstruction itself
 
-    private static global::app.actor.context.@this Ctx => global::PLang.Tests.TestApp.SharedContext;
-    private static global::app.type.kind.@this Plang => Ctx.Format("application/plang");
+    private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
+    private global::app.type.kind.@this Plang => Ctx.Format("application/plang");
 
     // Typed value-slot deferral: a shape-typed (object/table) value rides as raw
     // and materializes only on touch. Scoped to object/table so scalars/domain/
     // dict<…> values keep their eager path.
     [Test] public async Task WireRead_CapturesValueSlotRaw_DefersMaterialisation()
     {
-        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"a\":1}", new global::app.type.@this("item", "json"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"a\":1}", new global::app.type.@this("item", "json"), app.actor.list.User.Context);
         d.Name = "cfg";
         var back = RoundTrip(d);
         await Assert.That(back.HasRaw).IsTrue();
@@ -52,7 +55,7 @@ public class WireReadLazyTests
         // The wire carries {number, kind:int}; the read honors a value's kind when
         // a Context is present (the realistic runtime path — the context-less
         // fallback can't resolve a kind and lifts the bare JSON number as long).
-        await using var app = global::PLang.Tests.TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
         var d = app.Ok(5);                 // number / int derived

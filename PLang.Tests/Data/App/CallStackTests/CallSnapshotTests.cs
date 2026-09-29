@@ -3,16 +3,19 @@ using ActionEntity = app.goal.step.action.@this;
 
 namespace PLang.Tests.App.CallStackTests;
 
-public class CallSnapshotTests
+public class CallSnapshotTests : System.IAsyncDisposable
 {
-    private static (global::app.@this app, ActionEntity action) BuildLiveAction(
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private (global::app.@this app, ActionEntity action) BuildLiveAction(
         string goalName = "TestGoal", string stepText = "test step",
         string module = "test", string actionName = "test")
     {
-        var app = global::PLang.Tests.TestApp.Create("/test");
-        var goal = new Goal { Name = goalName, Path = global::app.type.item.path.@this.Resolve($"/{goalName}.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var app = new global::app.@this("/test").Testing();
+        var goal = new Goal { Name = goalName, Path = global::app.type.item.path.@this.Resolve($"/{goalName}.goal", app.actor.list.User.Context) };
         var step = new Step { Index = 0, Text = stepText, Goal = goal };
-        var action = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module(module), Name = actionName, Step = step };
+        var action = new ActionEntity { Module = app.actor.list.User.Context.App.Module(module), Name = actionName, Step = step };
         step.Code.Add(action);
         goal.Step.Add(step);
         app.goal.list.Add(goal);
@@ -26,7 +29,7 @@ public class CallSnapshotTests
         var stack = app.actor.list.User.CallStack;
         await using var call = stack.Push(action);
 
-        var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
+        var snap = new Snapshot(app.actor.list.User.Context);
         call.Capture(snap);
 
         await Assert.That(await snap.Text("goalPrPath")).IsEqualTo(action.Step!.Goal!.PrPath?.ToString());
@@ -43,7 +46,7 @@ public class CallSnapshotTests
         var stack = app.actor.list.User.CallStack;
         await using var call = stack.Push(action);
 
-        var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
+        var snap = new Snapshot(app.actor.list.User.Context);
         call.Capture(snap);
 
         await Assert.That(await snap.Int("stepIndex")).IsEqualTo(0);
@@ -59,14 +62,14 @@ public class CallSnapshotTests
             var snap = src.Snapshot(src.actor.list.User.Context);
 
             // Build a fresh app with the *same* goal registered.
-            var dst = global::PLang.Tests.TestApp.Create("/dst");
+            var dst = new global::app.@this("/dst").Testing();
             var dstGoal = new Goal
             {
                 Name = "ResolveGoal",
-                Path = global::app.type.item.path.@this.Resolve("/ResolveGoal.goal", global::PLang.Tests.TestApp.SharedContext)
+                Path = global::app.type.item.path.@this.Resolve("/ResolveGoal.goal", app.actor.list.User.Context)
             };
             var dstStep = new Step { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
-            var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("test"), Name = "test", Step = dstStep };
+            var dstAction = new ActionEntity { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = dstStep };
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
             dst.goal.list.Add(dstGoal);
@@ -88,7 +91,7 @@ public class CallSnapshotTests
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
             // Restore on a fresh App that never had this goal registered.
-            var dst = global::PLang.Tests.TestApp.Create("/dst");
+            var dst = new global::app.@this("/dst").Testing();
 
             await Assert.ThrowsAsync<CallbackGoalNotFound>(async () =>
             {
@@ -107,10 +110,10 @@ public class CallSnapshotTests
             var snap = src.Snapshot(src.actor.list.User.Context);
 
             // Fresh App with the same path but different hash (different step prose).
-            var dst = global::PLang.Tests.TestApp.Create("/dst");
-            var dstGoal = new Goal { Name = "HashGoal", Path = global::app.type.item.path.@this.Resolve("/HashGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+            var dst = new global::app.@this("/dst").Testing();
+            var dstGoal = new Goal { Name = "HashGoal", Path = global::app.type.item.path.@this.Resolve("/HashGoal.goal", app.actor.list.User.Context) };
             var dstStep = new Step { Index = 0, Text = "DIFFERENT step text", Goal = dstGoal };
-            var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("test"), Name = "test", Step = dstStep };
+            var dstAction = new ActionEntity { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = dstStep };
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
             dst.goal.list.Add(dstGoal);
@@ -133,10 +136,10 @@ public class CallSnapshotTests
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
 
-            var dst = global::PLang.Tests.TestApp.Create("/dst");
-            var dstGoal = new Goal { Name = "RecompiledGoal", Path = global::app.type.item.path.@this.Resolve("/RecompiledGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+            var dst = new global::app.@this("/dst").Testing();
+            var dstGoal = new Goal { Name = "RecompiledGoal", Path = global::app.type.item.path.@this.Resolve("/RecompiledGoal.goal", app.actor.list.User.Context) };
             var dstStep = new Step { Index = 0, Text = "same step text", Goal = dstGoal };
-            var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set", Step = dstStep };
+            var dstAction = new ActionEntity { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set", Step = dstStep };
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
             dst.goal.list.Add(dstGoal);
@@ -159,10 +162,10 @@ public class CallSnapshotTests
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
 
-            var dst = global::PLang.Tests.TestApp.Create("/dst");
-            var dstGoal = new Goal { Name = "PureGoal", Path = global::app.type.item.path.@this.Resolve("/PureGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+            var dst = new global::app.@this("/dst").Testing();
+            var dstGoal = new Goal { Name = "PureGoal", Path = global::app.type.item.path.@this.Resolve("/PureGoal.goal", app.actor.list.User.Context) };
             var dstStep = new Step { Index = 0, Text = action.Step!.Text, Goal = dstGoal };
-            var dstAction = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("test"), Name = "test", Step = dstStep };
+            var dstAction = new ActionEntity { Module = app.actor.list.User.Context.App.Module("test"), Name = "test", Step = dstStep };
             dstStep.Code.Add(dstAction);
             dstGoal.Step.Add(dstStep);
             dst.goal.list.Add(dstGoal);
@@ -199,7 +202,7 @@ public class CallSnapshotTests
         app.actor.list.User.CallStack.Setting.Timing = true;
         await using var call = app.actor.list.User.CallStack.Push(action);
 
-        var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
+        var snap = new Snapshot(app.actor.list.User.Context);
         call.Capture(snap);
 
         // Drop bucket: timing tier and any in-flight network state never reach the snapshot.

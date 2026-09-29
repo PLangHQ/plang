@@ -11,7 +11,7 @@ public class StartGoalTests
     [Test]
     public async Task StartGoal_Programmatic_SetsVariablesAndWritesOutput()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
 
         // Capture the REAL output channel — the goal runs through the real output.write,
         // which writes the resolved value to this stream (no hand-rolled handler).
@@ -54,7 +54,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_FullVariableReference_ReturnsTypedValue()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
 
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("set myVar",
@@ -73,7 +73,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_StringInterpolation_ReturnsInterpolatedString()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
 
         var capture = new CapturedOutput(engine);
 
@@ -94,7 +94,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_LiteralString_RemainsUnchanged()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
 
         var capture = new CapturedOutput(engine);
 
@@ -116,7 +116,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_EmbeddedMissingVariable_FailsVariableNotFound()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
 
         _ = new CapturedOutput(engine);
 
@@ -138,7 +138,7 @@ public class StartGoalTests
     [Test]
     public async Task ResolveValue_FullMissingVariable_FailsVariableNotFound()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
 
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
             Make.Step("set result = %nonexistent%",
@@ -159,7 +159,7 @@ public class StartGoalTests
     [Test]
     public async Task Defaults_ResolvedWhenParameterMissing()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
 
         // "Type" is NOT in parameters — developer didn't set it
         // "Type" IS in defaults — builder captured it at build time
@@ -184,7 +184,7 @@ public class StartGoalTests
     [Test]
     public async Task Defaults_ParameterOverridesDefault()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
 
         // "Type" is in BOTH parameters and defaults — parameter wins
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
@@ -208,7 +208,7 @@ public class StartGoalTests
     [Test]
     public async Task Defaults_NullDefaultsStillWorksWithAttributeFallback()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
 
         // No defaults at all — falls through to [Default] attribute on the action
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",

@@ -21,9 +21,9 @@ public class JsonArrayCountNavTests
         return (await hit.Value())?.ToString();
     }
 
-    [Test] public async Task JsonArray_Count()  { await using var app = global::PLang.Tests.TestApp.Create("/test"); await Assert.That(await Nav(app, "steps.Count")).IsEqualTo("3"); }
-    [Test] public async Task JsonArray_Length() { await using var app = global::PLang.Tests.TestApp.Create("/test"); await Assert.That(await Nav(app, "steps.length")).IsEqualTo("3"); }
-    [Test] public async Task JsonArray_Size()   { await using var app = global::PLang.Tests.TestApp.Create("/test"); await Assert.That(await Nav(app, "steps.size")).IsEqualTo("3"); }
-    [Test] public async Task JsonArray_First()  { await using var app = global::PLang.Tests.TestApp.Create("/test"); await Assert.That(await Nav(app, "steps.first")).IsEqualTo("10"); }
-    [Test] public async Task JsonArray_Last()   { await using var app = global::PLang.Tests.TestApp.Create("/test"); await Assert.That(await Nav(app, "steps.last")).IsEqualTo("30"); }
+    [Test] public async Task JsonArray_Count()  { await using var app = new global::app.@this("/test").Testing(); await Assert.That(await Nav(app, "steps.Count")).IsEqualTo("3"); }
+    [Test] public async Task JsonArray_Length() { await using var app = new global::app.@this("/test").Testing(); await Assert.That(await Nav(app, "steps.length")).IsEqualTo("3"); }
+    [Test] public async Task JsonArray_Size()   { await using var app = new global::app.@this("/test").Testing(); await Assert.That(await Nav(app, "steps.size")).IsEqualTo("3"); }
+    [Test] public async Task JsonArray_First()  { await using var app = new global::app.@this("/test").Testing(); await Assert.That(await Nav(app, "steps.first")).IsEqualTo("10"); }
+    [Test] public async Task JsonArray_Last()   { await using var app = new global::app.@this("/test").Testing(); await Assert.That(await Nav(app, "steps.last")).IsEqualTo("30"); }
 }

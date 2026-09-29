@@ -4,20 +4,23 @@ namespace PLang.Tests.App.CollectionsAreData;
 /// A list element that is itself a list stays ONE element. Only an extend (`add` of a list's items)
 /// joins another list's items into this one — a parsed nested array is never flattened.
 /// </summary>
-public class ListNestingTests
+public class ListNestingTests : System.IAsyncDisposable
 {
-    private static global::app.type.item.list.@this Parsed(string json)
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private global::app.type.item.list.@this Parsed(string json)
     {
         using var doc = System.Text.Json.JsonDocument.Parse(json);
-        return (global::app.type.item.list.@this)new global::app.type.item.serializer.json(TestApp.SharedContext)
+        return (global::app.type.item.list.@this)new global::app.type.item.serializer.json(app.actor.list.User.Context)
             .Parse(doc.RootElement.Clone())!;
     }
 
     // The action's parameter array as the goal's own .pr writer emits it.
-    private static async Task<System.Text.Json.JsonElement> WrittenParameters(global::app.goal.step.action.@this action)
+    private async Task<System.Text.Json.JsonElement> WrittenParameters(global::app.goal.step.action.@this action)
     {
         var goal = global::PLang.Tests.Shared.Make.Goal("Start", "/Start.goal", global::PLang.Tests.Shared.Make.Step("a step", action));
-        using var doc = System.Text.Json.JsonDocument.Parse(await TestApp.SharedContext.App.actor.list.User.Context.Pr(goal));
+        using var doc = System.Text.Json.JsonDocument.Parse(await app.actor.list.User.Context.App.actor.list.User.Context.Pr(goal));
         return doc.RootElement.GetProperty("step")[0].GetProperty("code")[0].GetProperty("property").Clone();
     }
 
@@ -38,7 +41,7 @@ public class ListNestingTests
     [Test]
     public async Task GoalCallListArgument_IsWrittenAsOneRow()
     {
-        var args = new List<object?> { new Data("to", "x@y.z", context: TestApp.SharedContext) };
+        var args = new List<object?> { new Data("to", "x@y.z", context: app.actor.list.User.Context) };
         var action = global::PLang.Tests.Shared.Make.Action("goal", "call",
             new (string, object?)[] { ("Name", "SendMail"), ("Parameter", args) });
 
@@ -59,14 +62,14 @@ public class ListNestingTests
         await Assert.That(target.CountRaw).IsEqualTo(5);
 
         // The extend reads the added list's elements in place — a later change to it shows through.
-        more.Add(new Data("", 60L, context: TestApp.SharedContext));
+        more.Add(new Data("", 60L, context: app.actor.list.User.Context));
         await Assert.That(target.CountRaw).IsEqualTo(6);
     }
 
     [Test]
     public async Task Flatten_LiftsANestedElement()
     {
-        var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "listnest-" + System.Guid.NewGuid().ToString("N")[..6]));
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "listnest-" + System.Guid.NewGuid().ToString("N")[..6])).Testing();
         var ctx = app.actor.list.User.Context;
         ctx.Variable.Set("l", Parsed("[[1,2],3]"));
 
@@ -84,7 +87,7 @@ public class ListNestingTests
     [Test]
     public async Task Flatten_LiftsNestedListsAtAnyDepth()
     {
-        var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "listnest-" + System.Guid.NewGuid().ToString("N")[..6]));
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "listnest-" + System.Guid.NewGuid().ToString("N")[..6])).Testing();
         var ctx = app.actor.list.User.Context;
         ctx.Variable.Set("l", Parsed("[[1,[2,[3]]],4]"));
 
@@ -104,7 +107,7 @@ public class ListNestingTests
         var list = Parsed("[[1,2],[3,4]]");
 
         await Assert.That(list.CountRaw).IsEqualTo(2);
-        var first = await list.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).Value();
+        var first = await list.Items(app.actor.list.User.Context).ElementAt(0).Value();
         await Assert.That(first).IsTypeOf<global::app.type.item.list.@this>();
         await Assert.That(((global::app.type.item.list.@this)first!).CountRaw).IsEqualTo(2);
     }

@@ -20,7 +20,7 @@ public class AsTIdentityTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = global::PLang.Tests.TestApp.Create("/app");
+    public void Setup() => _app = new global::app.@this("/app").Testing();
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -203,10 +203,10 @@ public class AsTIdentityTests
         // Read the way a real consumer does: enumerate the list, resolve each row, read
         // its field through the door — not a whole-list Lower into raw CLR dictionaries.
         var rows = new List<global::app.type.item.dict.@this>();
-        foreach (var r in ((global::app.type.item.list.@this)(await canonical.Value())).Items(global::PLang.Tests.TestApp.SharedContext))
+        foreach (var r in ((global::app.type.item.list.@this)(await canonical.Value())).Items(_app.actor.list.User.Context))
             rows.Add((global::app.type.item.dict.@this)(await r.Value()));
-        await Assert.That((await rows[0].Get("Content", global::PLang.Tests.TestApp.SharedContext)!.Value()).ToString()).IsEqualTo("You are a compiler");
-        await Assert.That((await rows[1].Get("Content", global::PLang.Tests.TestApp.SharedContext)!.Value()).ToString()).IsEqualTo("build this goal");
+        await Assert.That((await rows[0].Get("Content", _app.actor.list.User.Context)!.Value()).ToString()).IsEqualTo("You are a compiler");
+        await Assert.That((await rows[1].Get("Content", _app.actor.list.User.Context)!.Value()).ToString()).IsEqualTo("build this goal");
     }
 
     // Rule 4f — literal list (no %vars% anywhere) still walks. Symmetric with the typed

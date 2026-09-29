@@ -9,8 +9,11 @@ namespace PLang.Tests.App.LazyDeserialize.NumberTowerTests;
 
 // The distributed-ownership payoff, scoped to number. Adding uint/ulong/Int128/
 // BigInteger touches only number's declaration — never a central table.
-public class NumberDeclaresClrTypesTests
+public class NumberDeclaresClrTypesTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test] public async Task Number_DeclaresFullTowerCrlTypes()
     {
         var clrs = number.OwnedClrTypes.Select(o => o.Clr).ToArray();
@@ -30,7 +33,7 @@ public class NumberDeclaresClrTypesTests
     // is in number's own declaration — so the kind was added by editing number alone.
     [Test] public async Task Number_AddingNewCrlType_RequiresOnlyNumberEdit()
     {
-        await Assert.That(global::PLang.Tests.TestApp.SharedContext.App.type.list[typeof(uint)]?.Name).IsEqualTo("number");
+        await Assert.That(app.actor.list.User.Context.App.type.list[typeof(uint)]?.Name).IsEqualTo("number");
         await Assert.That(number.OwnedClrTypes.Any(o => o.Clr == typeof(uint))).IsTrue();
     }
 }

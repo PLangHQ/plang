@@ -8,11 +8,14 @@ namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 
 // Decision 3 — raw is `bytes` only where the source is genuinely bytes.
 // Text stays text; no utf-8 encode/decode tax on the common path.
-public class RawTypeShapeTests
+public class RawTypeShapeTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test] public async Task Raw_ForTextSource_StoredAsString_NotUtf8Encoded()
     {
-        var d = global::PLang.Tests.Shared.Make.FromRaw("hello world", new type("text"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw("hello world", new type("text"), app.actor.list.User.Context);
         await Assert.That(d.Raw).IsTypeOf<string>();
         await Assert.That((string)d.Raw!).IsEqualTo("hello world");
     }
@@ -20,7 +23,7 @@ public class RawTypeShapeTests
     [Test] public async Task Raw_ForBinarySource_StoredAsByteArray()
     {
         var bytes = new byte[] { 1, 2, 3, 4 };
-        var d = global::PLang.Tests.Shared.Make.FromRaw(bytes, new type("image", "png"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw(bytes, new type("image", "png"), app.actor.list.User.Context);
         await Assert.That(d.Raw).IsTypeOf<byte[]>();
     }
 
@@ -29,7 +32,7 @@ public class RawTypeShapeTests
     [Test] public async Task Raw_NoUtf8EncodeTax_OnTextRoundTrip()
     {
         const string json = "{\"a\":1}";
-        var d = global::PLang.Tests.Shared.Make.FromRaw(json, new type("item", "json"), global::PLang.Tests.TestApp.SharedContext);
+        var d = global::PLang.Tests.Shared.Make.FromRaw(json, new type("item", "json"), app.actor.list.User.Context);
         await Assert.That(object.ReferenceEquals(d.Raw, json)).IsTrue();
     }
 }

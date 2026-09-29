@@ -5,7 +5,7 @@ namespace PLang.Tests.App.Core;
 
 public class StepTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/StepTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this("/tmp/StepTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test]
@@ -21,7 +21,7 @@ public class StepTests : System.IAsyncDisposable
             {
                 new global::app.goal.step.action.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module("http"),
+                    Module = app.actor.list.User.Context.App.Module("http"),
                     Name = "get",
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { app.Data("url", "https://api.example.com") }),
                 }

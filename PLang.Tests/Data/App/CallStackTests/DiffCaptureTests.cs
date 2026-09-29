@@ -4,7 +4,7 @@ namespace PLang.Tests.App.CallStackTests;
 
 public class DiffCaptureTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/DiffCaptureTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this("/tmp/DiffCaptureTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     // The User actor's call stack with this setting — the stack a store of the User's context records its changes on.

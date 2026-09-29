@@ -9,15 +9,18 @@ namespace PLang.Tests.App.LazyDeserialize.ReaderRegistryTests;
 // floor: Stage 1 is a refactor, not a behaviour change, so the parity must
 // hold byte/value-identically for the canonical inputs each old converter
 // handled.
-public class TypeOwnedReadParityTests
+public class TypeOwnedReadParityTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test] public async Task PathRead_MatchesPriorJsonConverterRead()
     {
         // The old JsonConverter.Read resolved via path.@this.Resolve(raw, ctx);
         // path.Read re-houses exactly that. Same subclass + same wire form for
         // absolute and http inputs.
-        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-pathread-" + System.Guid.NewGuid().ToString("N")[..8]));
+        await using var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-pathread-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var ctx = app.actor.list.User.Context;
         var r = new global::app.type.reader.@this();
         var rc = new global::app.type.reader.ReadContext(ctx);
@@ -38,7 +41,7 @@ public class TypeOwnedReadParityTests
         // The reader re-houses number.Convert: Read == Convert, value-identical
         // across int/long/decimal/double/float.
         var r = new global::app.type.reader.@this();
-        var ctx = new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext);
+        var ctx = new global::app.type.reader.ReadContext(app.actor.list.User.Context);
         var read = r.Of("number", "int")!; // Default wildcard covers every kind
         await Assert.That(read("42", "int", ctx)).IsEqualTo((object)42);
         await Assert.That(read("42", "long", ctx)).IsEqualTo((object)42L);
@@ -54,7 +57,7 @@ public class TypeOwnedReadParityTests
         var bytes = new byte[] { 1, 2, 3, 4, 250, 99 };
         var b64 = System.Convert.ToBase64String(bytes);
         var r = new global::app.type.reader.@this();
-        var rc = new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext);
+        var rc = new global::app.type.reader.ReadContext(app.actor.list.User.Context);
         var via = r.Of("hash", null)!(b64, "keccak256", rc) as global::app.module.crypto.type.hash.@this;
         await Assert.That(via).IsNotNull();
         await Assert.That(via!.ToBase64()).IsEqualTo(b64);
@@ -66,7 +69,7 @@ public class TypeOwnedReadParityTests
         // duration's Read parses ISO-8601 to the same TimeSpan the format-layer
         // TimeSpanIso8601 converter produced (XmlConvert.ToTimeSpan).
         var r = new global::app.type.reader.@this();
-        var rc = new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext);
+        var rc = new global::app.type.reader.ReadContext(app.actor.list.User.Context);
         var via = r.Of("duration", "iso8601")!("PT30S", "iso8601", rc);
         await Assert.That(((global::app.type.item.@this)via!).Clr<System.TimeSpan>()).IsEqualTo(System.Xml.XmlConvert.ToTimeSpan("PT30S"));
     }
@@ -77,7 +80,7 @@ public class TypeOwnedReadParityTests
         // type, so the (object,json) reader is gone; the json kind owns the decode, navigated
         // lazily. The same values are reachable; nothing builds a parallel tree.
         const string json = "{\"a\":1,\"b\":[1,2],\"c\":{\"d\":true}}";
-        var actor = global::PLang.Tests.TestApp.SharedContext;
+        var actor = app.actor.list.User.Context;
         var d = (await actor.App.type.list.Kind("json").Load(json, actor))!;
         await Assert.That(await d.Value()).IsTypeOf<global::app.type.clr.@this>();
 

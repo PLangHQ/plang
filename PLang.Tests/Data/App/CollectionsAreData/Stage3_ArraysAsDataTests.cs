@@ -13,12 +13,12 @@ namespace PLang.Tests.App.CollectionsAreData;
 // disambiguates by wrapper type (dict→{}, list→[]).
 public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/Stage3Arrays-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this("/tmp/Stage3Arrays-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static global::app.@this NewApp()
-        => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-arrays-" + System.Guid.NewGuid().ToString("N")[..8]));
+        => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-arrays-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     [Test]
     public async Task UnwrapJsonArray_ProducesListOfData_NotRaw()
@@ -26,13 +26,13 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         // UnwrapJsonElement on a json array returns the native list value type whose
         // elements are Data — not a raw List<object?>. F1 closes (A).
         using var doc = JsonDocument.Parse("[1,\"two\"]");
-        var result = new global::app.type.item.serializer.json(global::PLang.Tests.TestApp.SharedContext).Parse(doc.RootElement);
+        var result = new global::app.type.item.serializer.json(app.actor.list.User.Context).Parse(doc.RootElement);
         await Assert.That(result).IsTypeOf<ListV>();
         var list = (ListV)result!;
         await Assert.That(list.Count).IsEqualTo(2);
         // Born-native: elements are scalar wrappers; ToRaw yields the backing.
-        await Assert.That(((app.type.item.@this)(await list.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())!).Clr<object>()).IsEqualTo((object)1L);
-        await Assert.That((string?)((app.type.item.@this)(await list.At(1, global::PLang.Tests.TestApp.SharedContext)!.Value())!).Clr<object>()).IsEqualTo("two");
+        await Assert.That(((app.type.item.@this)(await list.At(0, app.actor.list.User.Context)!.Value())!).Clr<object>()).IsEqualTo((object)1L);
+        await Assert.That((string?)((app.type.item.@this)(await list.At(1, app.actor.list.User.Context)!.Value())!).Clr<object>()).IsEqualTo("two");
     }
 
     [Test]
@@ -63,8 +63,8 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
         list.Add(app.Data("", 1L));
         list.Add(app.Data("", "x"));
         await Assert.That(list.Count).IsEqualTo(2);
-        await Assert.That(list.At(0, global::PLang.Tests.TestApp.SharedContext)).IsTypeOf<Data>();
-        await Assert.That((await list.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("1");
+        await Assert.That(list.At(0, app.actor.list.User.Context)).IsTypeOf<Data>();
+        await Assert.That((await list.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("1");
     }
 
     [Test]
@@ -122,7 +122,7 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
     public async Task PrimitiveMap_ListRegistered_RawListEntryRetired()
     {
         // "list"/"array" name the list value type, not a raw List<object>.
-        var types = global::PLang.Tests.TestApp.SharedContext.App.type.list;
+        var types = app.actor.list.User.Context.App.type.list;
         await Assert.That(types.Clr("list")).IsEqualTo(typeof(ListV));
         await Assert.That(types.Clr("array")).IsEqualTo(typeof(ListV));
         await Assert.That(types.Clr("list")).IsNotEqualTo(typeof(List<object>));

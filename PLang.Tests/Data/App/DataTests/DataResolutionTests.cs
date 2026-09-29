@@ -12,7 +12,7 @@ public class DataResolutionTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = global::PLang.Tests.TestApp.Create("/app");
+    public void Setup() => _app = new global::app.@this("/app").Testing();
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -59,7 +59,7 @@ public class DataResolutionTests
         _app.actor.list.User.Context.Variable.Set("scope", "parent");
         var parentView = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
-        await using var subApp = global::PLang.Tests.TestApp.Create("/sub");
+        await using var subApp = new global::app.@this("/sub").Testing();
         subApp.actor.list.User.Context.Variable.Set("scope", "sub");
         // A Data resolves its template against its own Context — the sub scope reads a copy
         // born in it, the way a goal call hands the value to the sub-goal.

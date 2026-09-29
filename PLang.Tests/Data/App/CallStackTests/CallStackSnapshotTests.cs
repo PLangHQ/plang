@@ -2,22 +2,25 @@ using ActionEntity = app.goal.step.action.@this;
 
 namespace PLang.Tests.App.CallStackTests;
 
-public class CallStackSnapshotTests
+public class CallStackSnapshotTests : System.IAsyncDisposable
 {
-    private static (Goal goal, Step step, ActionEntity action) MakeFrame(
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private (Goal goal, Step step, ActionEntity action) MakeFrame(
         string goalName, string stepText = "step", string module = "test", string actionName = "test")
     {
-        var goal = new Goal { Name = goalName, Path = global::app.type.item.path.@this.Resolve($"/{goalName}.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = goalName, Path = global::app.type.item.path.@this.Resolve($"/{goalName}.goal", app.actor.list.User.Context) };
         var step = new Step { Index = 0, Text = stepText, Goal = goal };
-        var action = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module(module), Name = actionName, Step = step };
+        var action = new ActionEntity { Module = app.actor.list.User.Context.App.Module(module), Name = actionName, Step = step };
         step.Code.Add(action);
         goal.Step.Add(step);
         return (goal, step, action);
     }
 
-    private static global::app.@this BuildAppWithGoals(params Goal[] goals)
+    private global::app.@this BuildAppWithGoals(params Goal[] goals)
     {
-        var app = global::PLang.Tests.TestApp.Create("/test");
+        var app = new global::app.@this("/test").Testing();
         foreach (var g in goals) app.goal.list.Add(g);
         return app;
     }
@@ -33,7 +36,7 @@ public class CallStackSnapshotTests
         await using var outer = stack.Push(a1);
         await using var inner = stack.Push(a2);
 
-        var section = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
+        var section = new Snapshot(app.actor.list.User.Context);
         stack.Capture(section);
 
         var frames = await section.Frames("frames")!;
@@ -57,7 +60,7 @@ public class CallStackSnapshotTests
         await using (var parent = stack.Push(a1))
         {
             await using (var child = stack.Push(a2)) { /* completes here */ }
-            var section = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
+            var section = new Snapshot(app.actor.list.User.Context);
             stack.Capture(section);
             var frames = await section.Frames("frames")!;
             await Assert.That(frames.Count).IsEqualTo(1);

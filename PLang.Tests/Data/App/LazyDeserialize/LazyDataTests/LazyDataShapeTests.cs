@@ -11,8 +11,8 @@ namespace PLang.Tests.App.LazyDeserialize.LazyDataTests;
 // reader registry on first touch.
 public class LazyDataShapeTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create(
-        "/tmp/LazyDataShapeTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this(
+        "/tmp/LazyDataShapeTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     // Independent #4 companion — a serialized Data has no `raw` key; the wire
@@ -21,7 +21,7 @@ public class LazyDataShapeTests : System.IAsyncDisposable
     {
         var d = _app.Ok("hello");
         d.Name = "greeting";
-        var json = (await global::PLang.Tests.TestApp.SharedContext.Format("application/plang").Serialize(d, global::PLang.Tests.TestApp.SharedContext).Value())!.Clr<string>()!;
+        var json = (await _app.actor.list.User.Context.Format("application/plang").Serialize(d, _app.actor.list.User.Context).Value())!.Clr<string>()!;
         await Assert.That(json.Contains("\"raw\"")).IsFalse();
         await Assert.That(json.Contains("\"_raw\"")).IsFalse();
     }

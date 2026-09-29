@@ -17,7 +17,7 @@ public class PrPipelineTests
     public async Task FullPipeline_LoadAndExecute_VariablesOutputDefaults()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = TestApp.Create(fixturesDir);
+        await using var engine = new global::app.@this(fixturesDir).Testing();
 
         var capture = new CapturedOutput(engine);
 
@@ -48,7 +48,7 @@ public class PrPipelineTests
     {
         // Engine rooted at the fixtures dir (contains testdata.txt and ReadFile.pr).
         var fixturesDir = FindFixturesDir();
-        await using var engine = TestApp.Create(fixturesDir);
+        await using var engine = new global::app.@this(fixturesDir).Testing();
 
         // Capture output
         var capture = new CapturedOutput(engine);
@@ -78,7 +78,7 @@ public class PrPipelineTests
     public async Task FilePaths_FromRoot_RelativeAbsoluteSubfolderDotSlash()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = TestApp.Create(fixturesDir);
+        await using var engine = new global::app.@this(fixturesDir).Testing();
 
         var loadResult = await engine.goal.Load("FilePathsFromRoot.pr");
         await loadResult.IsSuccess();
@@ -104,7 +104,7 @@ public class PrPipelineTests
     public async Task FilePaths_FromSubfolder_AbsoluteRootWorks()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = TestApp.Create(fixturesDir);
+        await using var engine = new global::app.@this(fixturesDir).Testing();
 
         var loadResult = await engine.goal.Load(System.IO.Path.Combine("sub", "FilePathsFromSub.pr"));
         await loadResult.IsSuccess();
@@ -123,7 +123,7 @@ public class PrPipelineTests
     public async Task FilePaths_RelativeResolvesAgainstGoalFolder()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = TestApp.Create(fixturesDir);
+        await using var engine = new global::app.@this(fixturesDir).Testing();
 
         // A goal in /sub/ reads "subdata.txt" (relative)
         // This resolves to {root}/sub/subdata.txt — relative to goal folder
@@ -144,7 +144,7 @@ public class PrPipelineTests
     public async Task FilePaths_ParentTraversal_FromSubfolderToRoot()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = TestApp.Create(fixturesDir);
+        await using var engine = new global::app.@this(fixturesDir).Testing();
 
         // #3: Goal in /sub/ reads ../testdata.txt — should resolve to {root}/testdata.txt
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ParentTraversal", "/sub/ParentTraversal.goal",
@@ -163,7 +163,7 @@ public class PrPipelineTests
     public async Task FilePaths_ParentTraversal_BackAndDown()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = TestApp.Create(fixturesDir);
+        await using var engine = new global::app.@this(fixturesDir).Testing();
 
         // #8: Goal in /sub/ reads ../sub/subdata.txt — parent then back down
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ParentAndDown", "/sub/ParentAndDown.goal",
@@ -182,7 +182,7 @@ public class PrPipelineTests
     public async Task FilePaths_NonexistentFile_ReturnsError()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = TestApp.Create(fixturesDir);
+        await using var engine = new global::app.@this(fixturesDir).Testing();
 
         // Hand-build a goal that reads a nonexistent file
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ReadMissing", "/ReadMissing.goal",
@@ -202,7 +202,7 @@ public class PrPipelineTests
     public async Task FilePaths_EscapeAttempt_Blocked()
     {
         var fixturesDir = FindFixturesDir();
-        await using var engine = TestApp.Create(fixturesDir);
+        await using var engine = new global::app.@this(fixturesDir).Testing();
 
         // Try to read ../../ — should be blocked by PLangFileSystem
         var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ReadEscape", "/ReadEscape.goal",
