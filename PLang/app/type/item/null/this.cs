@@ -88,6 +88,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Bare <c>null</c> — the serializer renders this.</summary>
     public override string ToString() => "null";
 
+    /// <summary>A diagnostic shows the absence plainly, apart from the text "null".</summary>
+    public override System.Threading.Tasks.ValueTask<string> Debug(global::app.actor.context.@this context) => new("(null)");
+
     /// <summary><c>null == null</c> only — a C# null reference or the singleton; nothing else.</summary>
     public bool AreEqual(object? other) => other is null || other is @this;
 

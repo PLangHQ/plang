@@ -333,6 +333,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public override string ToString() => _value;
 
+    /// <summary>A diagnostic shows text quoted, apart from a number or a name.</summary>
+    public override System.Threading.Tasks.ValueTask<string> Debug(global::app.actor.context.@this context) => new($"\"{_value}\"");
+
     /// <summary>The CLR exit door — text hands its own backing string; the
     /// shared converter (strict, loud on junk) carries it to the target.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(_value, target);

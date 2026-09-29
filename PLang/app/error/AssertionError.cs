@@ -13,25 +13,14 @@ public class AssertionError : Error
     public AssertionError(string message, string key = "AssertionFailed", int statusCode = 400)
         : base(message, key, statusCode) { }
 
-    private AssertionError(object? expected, object? actual, string? userMessage, string message)
+    /// <summary>A failed assertion of <paramref name="actual"/> against <paramref name="expected"/>, its
+    /// <paramref name="message"/> formed by the assertion that compared them.</summary>
+    public AssertionError(string message, object? expected, object? actual, string? userMessage)
         : base(message, "AssertionFailed", 400)
     {
         Expected = expected;
         Actual = actual;
         UserMessage = userMessage;
-    }
-
-    /// <summary>The failure of <paramref name="actual"/> against <paramref name="expected"/>: its message shows
-    /// both as a diagnostic does (a secret masked), after <paramref name="userMessage"/> when there is one.</summary>
-    public static async System.Threading.Tasks.Task<AssertionError> Of(object? expected, object? actual, string? userMessage,
-        actor.context.@this context)
-    {
-        var shownExpected = await global::app.Diagnostics.Format.Value(expected, context);
-        var shownActual = await global::app.Diagnostics.Format.Value(actual, context);
-        var message = $"Expected: {shownExpected}, Actual: {shownActual}";
-        if (!string.IsNullOrEmpty(userMessage))
-            message = $"{userMessage} — {message}";
-        return new AssertionError(expected, actual, userMessage, message);
     }
 
     /// <summary>An assertion always keeps the variables it failed among — for the failure's report.</summary>

@@ -376,7 +376,7 @@ public sealed class @this
     // happens at WriteFiltered via maxLength; a raw collection says how many it holds.
     private static async System.Threading.Tasks.ValueTask<string> FormatValue(object? value, actor.context.@this context)
     {
-        var shown = await global::app.Diagnostics.Format.Value(value, context);
+        var shown = await global::app.type.item.@this.Create(value, context).Debug(context);
         return value switch
         {
             System.Collections.IDictionary d => $"{shown} ({d.Count} keys)",

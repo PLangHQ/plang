@@ -17,7 +17,7 @@ public class Default : IAssert
 
         // Error display keeps the materialised form (the masked/rendered path);
         // only the comparison uses the scalar form.
-        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(action.Expected?.Peek(), action.Actual?.Peek(), action.Message?.Peek()?.ToString(), action.Context));
+        return action.Context.Error<global::app.type.item.@bool.@this>(await Failure(action.Expected?.Peek(), action.Actual?.Peek(), action.Message?.Peek()?.ToString(), action.Context));
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> NotEquals(NotEquals action)
@@ -25,7 +25,7 @@ public class Default : IAssert
         if (!await IsEqual(action.Expected, action.Actual))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(action.Expected?.Peek(), action.Actual?.Peek(),
+        return action.Context.Error<global::app.type.item.@bool.@this>(await Failure(action.Expected?.Peek(), action.Actual?.Peek(),
             action.Message?.Peek()?.ToString() ?? "Values should not be equal", action.Context));
     }
 
@@ -44,7 +44,7 @@ public class Default : IAssert
         if (await ResolveTruthy(action.Value))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(true, (action.Value == null ? null : await action.Value.Value()),
+        return action.Context.Error<global::app.type.item.@bool.@this>(await Failure(true, (action.Value == null ? null : await action.Value.Value()),
             (action.Message == null ? null : await action.Message.Value())?.ToString() ?? "Expected truthy value", action.Context));
     }
 
@@ -53,7 +53,7 @@ public class Default : IAssert
         if (!await ResolveTruthy(action.Value))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(false, (action.Value == null ? null : await action.Value.Value()),
+        return action.Context.Error<global::app.type.item.@bool.@this>(await Failure(false, (action.Value == null ? null : await action.Value.Value()),
             (action.Message == null ? null : await action.Message.Value())?.ToString() ?? "Expected falsy value", action.Context));
     }
 
@@ -66,7 +66,7 @@ public class Default : IAssert
         if (global::app.type.item.@null.@this.IsNullValue(value))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(null, value,
+        return action.Context.Error<global::app.type.item.@bool.@this>(await Failure(null, value,
             action.Message?.Peek()?.ToString() ?? "Expected null", action.Context));
     }
 
@@ -76,7 +76,7 @@ public class Default : IAssert
         if (!global::app.type.item.@null.@this.IsNullValue(value))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of("(not null)", null,
+        return action.Context.Error<global::app.type.item.@bool.@this>(await Failure("(not null)", null,
             action.Message?.Peek()?.ToString() ?? "Expected non-null value", action.Context));
     }
 
@@ -108,8 +108,8 @@ public class Default : IAssert
             && (await vItem.Contains(action.Container!) || await cItem.Contains(action.Value!)))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(
-            await global::app.Diagnostics.Format.Value(cItem, action.Context), vItem,
+        return action.Context.Error<global::app.type.item.@bool.@this>(await Failure(
+            await Shown(cItem, action.Context), vItem,
             action.Message?.Peek()?.ToString() ?? "Container does not contain value", action.Context));
     }
 
@@ -126,8 +126,8 @@ public class Default : IAssert
             || (!await vItem.Contains(action.Container!) && !await cItem.Contains(action.Value!)))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        var container = await global::app.Diagnostics.Format.Value(cItem, action.Context);
-        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(
+        var container = await Shown(cItem, action.Context);
+        return action.Context.Error<global::app.type.item.@bool.@this>(await Failure(
             $"absent: {container}", vItem,
             action.Message?.Peek()?.ToString() ?? "Container contains value but should not", action.Context));
     }
@@ -137,9 +137,9 @@ public class Default : IAssert
         if (await Ordered(action.A, action.B) == global::app.data.Comparison.Greater)
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        var a = await global::app.Diagnostics.Format.Value(action.A?.Peek(), action.Context);
-        var b = await global::app.Diagnostics.Format.Value(action.B?.Peek(), action.Context);
-        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(
+        var a = await Shown(action.A?.Peek(), action.Context);
+        var b = await Shown(action.B?.Peek(), action.Context);
+        return action.Context.Error<global::app.type.item.@bool.@this>(await Failure(
             $"> {b}", action.A?.Peek(), action.Message?.Peek()?.ToString() ?? $"Expected {a} > {b}", action.Context));
     }
 
@@ -148,9 +148,9 @@ public class Default : IAssert
         if (await Ordered(action.A, action.B) == global::app.data.Comparison.Less)
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        var a = await global::app.Diagnostics.Format.Value(action.A?.Peek(), action.Context);
-        var b = await global::app.Diagnostics.Format.Value(action.B?.Peek(), action.Context);
-        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(
+        var a = await Shown(action.A?.Peek(), action.Context);
+        var b = await Shown(action.B?.Peek(), action.Context);
+        return action.Context.Error<global::app.type.item.@bool.@this>(await Failure(
             $"< {b}", action.A?.Peek(), action.Message?.Peek()?.ToString() ?? $"Expected {a} < {b}", action.Context));
     }
 
@@ -171,4 +171,16 @@ public class Default : IAssert
     /// </summary>
     private static async Task<bool> ResolveTruthy(data.@this? data)
         => data != null && await data.ToBooleanAsync();
+
+    // The failure of an assertion: what it expected and what it got, each shown as a diagnostic shows it (a
+    // secret masked), after the step's own message when there is one.
+    private async Task<AssertionError> Failure(object? expected, object? actual, string? message, actor.context.@this context)
+    {
+        var shown = $"Expected: {await Shown(expected, context)}, Actual: {await Shown(actual, context)}";
+        return new AssertionError(string.IsNullOrEmpty(message) ? shown : $"{message} — {shown}", expected, actual, message);
+    }
+
+    // A compared value as a diagnostic shows it — its own debug face (a raw value taken as its plang value).
+    private ValueTask<string> Shown(object? value, actor.context.@this context)
+        => global::app.type.item.@this.Create(value, context).Debug(context);
 }

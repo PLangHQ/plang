@@ -194,8 +194,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         sb.AppendLine("    FAIL: " + Goal.Path);
         if (Error is AssertionError assert)
         {
-            var expected = await global::app.Diagnostics.Format.Value(assert.Expected, context);
-            var actual = await global::app.Diagnostics.Format.Value(assert.Actual, context);
+            var expected = await global::app.type.item.@this.Create(assert.Expected, context).Debug(context);
+            var actual = await global::app.type.item.@this.Create(assert.Actual, context).Debug(context);
             sb.AppendLine($"      Expected: {expected}");
             sb.AppendLine($"      Actual:   {actual}");
             if (assert.Variables is { CountRaw: > 0 } variables)
@@ -203,7 +203,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 sb.AppendLine("      Variables:");
                 foreach (var variable in variables.Entries(context))
                 {
-                    var shown = await global::app.Diagnostics.Format.Value(variable.HasValue ? variable.Peek() : null, context);
+                    var shown = await global::app.type.item.@this.Create(variable.HasValue ? variable.Peek() : null, context).Debug(context);
                     sb.AppendLine($"        %{variable.Name}% = {shown}");
                 }
             }

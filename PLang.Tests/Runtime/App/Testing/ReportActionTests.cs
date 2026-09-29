@@ -212,7 +212,7 @@ public class ReportActionTests
     public async Task Report_Junit_FailStatus_EmitsFailureElement()
     {
         _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
-        var err = await AssertionError.Of(1, 2, "mismatch", _app.actor.list.User.Context);
+        var err = new AssertionError("Expected: 1, Actual: 2", 1, 2, "mismatch");
         _app.test.list.Add(NewTest("Failing", global::app.test.Status.Fail, err));
 
         await Report();
@@ -293,7 +293,7 @@ public class ReportActionTests
         await vars.Set("idx", 1);
         await vars.Set("items", new List<int> { 1, 2, 3 });
         await vars.Set("maybe", null);
-        var err = await AssertionError.Of(1, 2, null, _app.actor.list.User.Context);
+        var err = new AssertionError("Expected: 1, Actual: 2", 1, 2, null);
         err.Variables = vars.Snapshot();
         _app.test.list.Add(NewTest("Failing", global::app.test.Status.Fail, err));
 

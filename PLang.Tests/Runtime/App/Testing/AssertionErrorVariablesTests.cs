@@ -39,7 +39,7 @@ public class AssertionErrorVariablesTests
         var err = new AssertionError("expected x, got y");
         await Assert.That(err.Variables).IsNull();
 
-        var err2 = await AssertionError.Of(42, 99, "msg", _app.actor.list.User.Context);
+        var err2 = new AssertionError("Expected: 42, Actual: 99", 42, 99, "msg");
         await Assert.That(err2.Variables).IsNull();
     }
 
@@ -48,7 +48,7 @@ public class AssertionErrorVariablesTests
     [Test]
     public async Task AssertionError_Variables_PropertyRoundtrip()
     {
-        var err = await AssertionError.Of(1, 2, null, _app.actor.list.User.Context);
+        var err = new AssertionError("Expected: 1, Actual: 2", 1, 2, null);
         await _app.actor.list.User.Context.Variable.Set("x", 1);
         var captured = _app.actor.list.User.Context.Variable.Snapshot();
         err.Variables = captured;
@@ -86,7 +86,7 @@ public class AssertionErrorVariablesTests
 
         var plain = new global::app.error.Error("boom", "Boom", 500);
         frame.Record(plain, context);
-        var assertion = await AssertionError.Of(1, 2, null, context);
+        var assertion = new AssertionError("Expected: 1, Actual: 2", 1, 2, null);
         frame.Record(assertion, context);
 
         await Assert.That(plain.Variables).IsNull();

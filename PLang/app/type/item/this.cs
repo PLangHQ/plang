@@ -668,6 +668,25 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             $"{GetType().Name} has no bare wire form — it is not a leaf value.");
 
     /// <summary>
+    /// This value as a diagnostic shows it — an assertion message, a test report line, a debug dump. A leaf
+    /// answers its text; a structure writes itself through the json writer in the Debug view, where a
+    /// <c>[Sensitive]</c> member shows masked: a reader tells "not set" from "set but hidden", and never sees
+    /// the secret. Never a host's own ToString — a record's prints every field.
+    /// </summary>
+    public virtual async System.Threading.Tasks.ValueTask<string> Debug(global::app.actor.context.@this context)
+    {
+        if (IsLeaf) return ToString() ?? GetType().Name;
+        using var stream = new System.IO.MemoryStream();
+        await using (var utf8 = new System.Text.Json.Utf8JsonWriter(stream, new System.Text.Json.JsonWriterOptions
+                     {
+                         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                     }))
+            await Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Debug, emitsSchema: false),
+                global::app.View.Debug, context);
+        return System.Text.Encoding.UTF8.GetString(stream.ToArray());
+    }
+
+    /// <summary>
     /// The item writes ITSELF to the wire — one async pass that merges flatten
     /// (the old Normalize) and render (Write), resolving lazily as it reaches each
     /// node. The default is the leaf path: emit my bare wire form via <see cref="Write"/>

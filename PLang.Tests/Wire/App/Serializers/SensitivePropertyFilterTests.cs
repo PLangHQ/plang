@@ -113,7 +113,7 @@ public class SensitivePropertyFilterTests
             IsDefault = true
         };
 
-        var json = await global::app.Diagnostics.Format.Value(identity, _app.actor.list.User.Context);
+        var json = await global::app.type.item.@this.Create(identity, _app.actor.list.User.Context).Debug(_app.actor.list.User.Context);
 
         await Assert.That(json).Contains("pubkey123");
         await Assert.That(json).DoesNotContain("secret456");
@@ -130,7 +130,7 @@ public class SensitivePropertyFilterTests
             ["id"] = new Identity { Name = "test", PublicKey = "pubkey123", PrivateKey = "secret456" },
         };
 
-        var json = await global::app.Diagnostics.Format.Value(held, _app.actor.list.User.Context);
+        var json = await global::app.type.item.@this.Create(held, _app.actor.list.User.Context).Debug(_app.actor.list.User.Context);
 
         await Assert.That(json).DoesNotContain("secret456");
         await Assert.That(json).Contains("privateKey");
@@ -164,7 +164,9 @@ public class SensitivePropertyFilterTests
     public async Task AssertionError_Message_MasksSensitiveViaDiagnosticOutput()
     {
         var actual = new LeakySecretRecord("alice", "topsecret-PLAINTEXT-777");
-        var error = await AssertionError.Of("nope", actual, null, _app.actor.list.User.Context);
+        var ctx = _app.actor.list.User.Context;
+        var failed = await _app.Run(new global::app.module.assert.Equals(ctx) { Expected = ctx.Ok("nope"), Actual = ctx.Ok(actual) }, ctx);
+        var error = failed.Error!;
 
         await Assert.That(error.Message).DoesNotContain("topsecret-PLAINTEXT-777");
         await Assert.That(error.Message).Contains("****");
@@ -181,7 +183,7 @@ public class SensitivePropertyFilterTests
     {
         var obj = new NonStringSecretCarrier { Name = "ed25519", Key = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF } };
 
-        var json = await global::app.Diagnostics.Format.Value(obj, _app.actor.list.User.Context);
+        var json = await global::app.type.item.@this.Create(obj, _app.actor.list.User.Context).Debug(_app.actor.list.User.Context);
 
         await Assert.That(json).Contains("key");
         await Assert.That(json).Contains("****");
