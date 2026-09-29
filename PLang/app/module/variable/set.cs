@@ -311,7 +311,7 @@ public partial class Set : IContext, IScope, IKeep
         }
 
         // No forced type — just set the data. Data flows: bind the Value's Data under the target
-        // name as-is, without inspecting or computing it (no AsCanonical, no .Value). A reference
+        // name as-is, without inspecting or computing it (no .Value). A reference
         // or template resolves/renders on its own door at read; a literal is itself. A self-write
         // (`set %a%=%a%`) is dropped at build, never handled here. The variable writes itself: a
         // bare name rebinds, `%x.a%` sets a member, `%x!cost%` the binding's Properties, `%!llm.cache%` a

@@ -113,19 +113,16 @@ public class AsTIdentityTests
         await source.IsFailure();
     }
 
-    // Rule 4a — plain Data target with literal parameter. AsCanonical on a Data
-    // whose Value is a literal (no %) returns `this` — no wrap, no clone.
+    // A literal (no %) is its own Data: following it answers itself.
     [Test]
     public async Task AsT_PlainDataTarget_LiteralParameter_ReturnsParameterDataAsIs()
     {
         var paramData = new Data("Slot", "literal value", context: _app.actor.list.User.Context);
-        var canonical = await paramData.AsCanonical();
+        var canonical = await paramData.Follow(_app.actor.list.User.Context);
         await Assert.That(ReferenceEquals(paramData, canonical)).IsTrue();
     }
 
-    // Rule 4b — plain Data target with %var% reference. AsCanonical on a Data
-    // whose Value is "%products%" returns the LIVE variable Data from
-    // (await Variables.Get("products")). Mutations via the returned Data are visible
+    // A full-match %var% follows to the LIVE variable Data: mutations through it are visible
     // through Variables.Get.
     [Test]
     public async Task AsT_PlainDataTarget_VarReference_ReturnsLiveVariableData()
@@ -135,7 +132,7 @@ public class AsTIdentityTests
         context.Variable.Set(live);
 
         var paramData = new Data("Slot", "%products%", new global::app.type.@this("text", null, false, "plang"), context: context);
-        var canonical = await paramData.AsCanonical();
+        var canonical = await paramData.Follow(context);
 
         await Assert.That(ReferenceEquals(canonical, live)).IsTrue();
         // Mutation propagates: appending via live's value is visible through Variables.Get.
@@ -144,47 +141,39 @@ public class AsTIdentityTests
         await Assert.That(stored.Count).IsEqualTo(3);
     }
 
-    // Rule 4c — plain Data target with a list whose elements contain %var% references.
-    // AsCanonical must walk the list and substitute nested vars, returning a fresh Data
-    // (not `this`, since the container is rewritten with resolved values).
+    // A template list's value door resolves the %var% references its elements hold.
     [Test]
-    public async Task AsT_PlainDataTarget_ListWithNestedVars_ResolvesAndReturnsFreshData()
+    public async Task AsT_PlainDataTarget_ListWithNestedVars_Resolves()
     {
         var context = _app.actor.list.User.Context;
         context.Variable.Set("greeting", "hello");
         var raw = new List<object?> { "%greeting%", "literal" };
         var paramData = TemplateStamp.Container("Slot", raw, context);
 
-        var canonical = await paramData.AsCanonical();
+        var canonical = paramData;
 
-        await Assert.That(ReferenceEquals(canonical, paramData)).IsFalse();
         var resolved = Lower<List<object?>>(await canonical.Value())!;
         await Assert.That((resolved[0])?.ToString()).IsEqualTo("hello");
         await Assert.That((resolved[1])?.ToString()).IsEqualTo("literal");
     }
 
-    // Rule 4d — plain Data target with a dict whose values contain %var% references.
-    // The same uniformity rule applies: nested vars resolve regardless of whether the
-    // handler property is plain Data or Data<T>.
+    // A template dict's value door resolves the %var% references its values hold.
     [Test]
-    public async Task AsT_PlainDataTarget_DictWithNestedVars_ResolvesAndReturnsFreshData()
+    public async Task AsT_PlainDataTarget_DictWithNestedVars_Resolves()
     {
         var context = _app.actor.list.User.Context;
         context.Variable.Set("prompt", "You are a compiler");
         var raw = new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%prompt%" };
         var paramData = TemplateStamp.Container("Slot", raw, context);
 
-        var canonical = await paramData.AsCanonical();
+        var canonical = paramData;
 
-        await Assert.That(ReferenceEquals(canonical, paramData)).IsFalse();
         var resolved = Lower<Dictionary<string, object?>>(await canonical.Value())!;
         await Assert.That((resolved["role"])?.ToString()).IsEqualTo("system");
         await Assert.That((resolved["content"])?.ToString()).IsEqualTo("You are a compiler");
     }
 
-    // Rule 4e — list-of-dicts with nested vars (the BuildGoalCore pattern). Verifies that
-    // SubstitutePrimitive recurses into nested dicts on the AsCanonical path, matching the
-    // typed AsT path. Without this fix the Content field stayed literal "%buildGoalPrompt%".
+    // A template list of dicts (an llm message list) resolves the %var% references inside each dict.
     [Test]
     public async Task AsT_PlainDataTarget_ListOfDictsWithNestedVars_DeepResolves()
     {
@@ -198,7 +187,7 @@ public class AsTIdentityTests
         };
         var paramData = TemplateStamp.Container("messages", raw, context);
 
-        var canonical = await paramData.AsCanonical();
+        var canonical = paramData;
 
         // Read the way a real consumer does: enumerate the list, resolve each row, read
         // its field through the door — not a whole-list Lower into raw CLR dictionaries.
@@ -209,10 +198,7 @@ public class AsTIdentityTests
         await Assert.That((await rows[1].Get("Content", _app.actor.list.User.Context)!.Value()).ToString()).IsEqualTo("build this goal");
     }
 
-    // Rule 4f — literal list (no %vars% anywhere) still walks. Symmetric with the typed
-    // path: `As<T>` on a List<object?> always allocates via WalkList, and AsCanonical
-    // mirrors that. Asserting on values (not ref-equality) keeps the contract focused on
-    // resolution semantics, not allocation count.
+    // A literal list (no %vars%) reads back its values unchanged.
     [Test]
     public async Task AsT_PlainDataTarget_LiteralList_NoNestedVars_PreservesValues()
     {
@@ -220,7 +206,7 @@ public class AsTIdentityTests
         var raw = new List<object?> { "a", "b", "c" };
         var paramData = new Data("items", raw, context: context);
 
-        var canonical = await paramData.AsCanonical();
+        var canonical = paramData;
 
         var resolved = Lower<List<object?>>(await canonical.Value())!;
         await Assert.That(resolved.Count).IsEqualTo(3);
@@ -229,23 +215,17 @@ public class AsTIdentityTests
         await Assert.That((resolved[2])?.ToString()).IsEqualTo("c");
     }
 
-    // Rule 4g — infrastructure %!var% references inside container leaves resolve at the
-    // AsCanonical walk, same as plain %var%. Earlier dd7bf37e unconditionally skipped %!*%
-    // here to keep builder runs from baking their own infra state into LLM-response .pr —
-    // but the 959cdd36 fix ("stored values are values, no recursion") covers that case via
-    // the As<T>/AsT_Convert short-circuit. The skip here was over-broad: it left
-    // developer-authored infra refs literal at runtime. Concrete repro: HandleBuildGoalFailure
-    // wrote `set %trace.buildError% = {"message": "%!error.Message%"}` and the trace JSON
-    // captured the literal `"%!error.Message%"` instead of the actual error.
+    // A %!var% inside a template container resolves like any %var%:
+    // `set %trace.buildError% = {"message": "%!error.Message%"}` records the error, not the literal.
     [Test]
-    public async Task AsT_PlainDataTarget_DictWithInfraVar_ResolvesAtCanonicalWalk()
+    public async Task AsT_PlainDataTarget_DictWithInfraVar_Resolves()
     {
         var context = _app.actor.list.User.Context;
         context.Variable.Set(new global::app.data.DynamicData("!error", asker => asker.Ok("boom"), context));
         var raw = new Dictionary<string, object?> { ["message"] = "%!error%" };
         var paramData = TemplateStamp.Container("trace.buildError", raw, context);
 
-        var canonical = await paramData.AsCanonical();
+        var canonical = paramData;
 
         var resolved = Lower<Dictionary<string, object?>>(await canonical.Value())!;
         await Assert.That((resolved["message"])?.ToString()).IsEqualTo("boom");

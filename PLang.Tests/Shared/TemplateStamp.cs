@@ -100,8 +100,7 @@ public static class TemplateStamp
     /// Builds a Data whose CONTAINER value carries the authored-template flag
     /// explicitly — the shape a %ref%-bearing container has once it rides the wire:
     /// <c>Template = "plang"</c> on the container AND on each %ref% text leaf, so
-    /// both the render door (<c>Value</c>) and the canonical door (<c>AsCanonical</c>,
-    /// which reads the container's own Template) resolve the nested refs. Scalar
+    /// the render door (<c>Value</c>) resolves the nested refs. Scalar
     /// %ref% values carry the flag via a flagged <c>text</c> type at the call site;
     /// this helper is for list/dict values only.
     /// </summary>

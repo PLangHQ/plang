@@ -516,48 +516,6 @@ public partial class @this
     }
 
     /// <summary>
-    /// Resolves this Data as the canonical Data — used by the generator's plain `Data` property
-    /// emission to bypass As&lt;T&gt; wrapping entirely (architect/v1/plan.md §Phase 2 Rule 4).
-    /// Returns:
-    ///  - For full-match `%var%`: the LIVE variable Data from Variables.Get (mutations to .Value
-    ///    on the returned Data are visible through Variables.Get(name)).
-    ///  - For literal value (no `%`): `this` (the parameter Data) — same ref.
-    ///  - For partial interpolation `"hello %x%!"`: a transient Data with the interpolated value
-    ///    and `this`'s Name (slot name preserved; Properties and event lists aliased).
-    ///  - For unset `%var%`: a not-initialized Data with the variable's name.
-    /// </summary>
-    public async System.Threading.Tasks.ValueTask<@this> AsCanonical()
-    {
-        // A variable reference → the canonical IS the variable's own current Data (mutations stay
-        // visible through Variables.Get). _context is never null (born-with-context) — a null here
-        // is a violated invariant, so let it crash rather than nurse it with `?.`.
-        if (_item is global::app.type.item.variable.@this v)
-        {
-            var resolved = await v.Start(_context);
-            if (resolved == null || !resolved.IsInitialized)
-            {
-                var notFound = new @this(v.Name, null, null, Parent, context: _context);
-                notFound.IsInitialized = false;
-                return notFound;
-            }
-            return resolved;
-        }
-
-        // Any other stamped template (text/dict/list with %ref% holes) — the door renders (the
-        // TYPE fills its own holes; never cached); a transient Data carries the answer.
-        if (_item is { Template: not null })
-        {
-            var rendered = await Value();
-            var transient = new @this(Name, rendered, null, Parent, context: _context);
-            transient.Properties = Properties;
-            return transient;
-        }
-
-        // Literal value — `this` is the canonical, return as-is.
-        return this;
-    }
-
-    /// <summary>
     /// THE comparison entry — the thin async door. Both operands are awaited through
     /// their door (a source parses to its real shape, a scalar/template renders, a
     /// container returns itself with elements still lazy), then the VALUE reconciles

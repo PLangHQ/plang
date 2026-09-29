@@ -74,8 +74,8 @@ public class ListAddIdentityTests
         await Assert.That(ReferenceEquals(await result.Value(), live)).IsTrue();
     }
 
-    // The Item parameter is plain Data; for value="%item%" the AsCanonical resolution
-    // returns the LIVE %item% Data on full match, so list.add appends the *current*
+    // The Item parameter is plain Data; value="%item%" follows to the LIVE %item% Data on a
+    // full match, so list.add appends the *current*
     // value of %item% — not the value at the time the action was constructed.
     [Test]
     public async Task ListAdd_ItemAsLiveVarRef_AppendsCurrentValue()
@@ -84,7 +84,7 @@ public class ListAddIdentityTests
         vars.Set("products", new global::app.type.item.list.@this());
 
         // C# direct-composition path bypasses the .pr resolver, so we wrap "hello"
-        // explicitly the same way Data emit would after AsCanonical resolves %item%.
+        // explicitly the same way the variable %item% follows to its Data.
         vars.Set("item", "hello");
         var liveItem = await vars.Get("item");
 
