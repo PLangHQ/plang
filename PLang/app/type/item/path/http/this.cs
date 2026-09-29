@@ -460,7 +460,7 @@ public sealed partial class @this : global::app.type.item.path.@this
             {
                 Data = new data.@this("", canonical, context: context),
             };
-            var signResult = await context.App.Run<module.signing.sign>(sign, context);
+            var signResult = await new global::app.goal.step.action.@this(sign, context).Start(context);
             // a request asked to be signed and not signed doesn't go out unsigned: the signing failure is the request's
             if (!signResult.Success)
                 throw new InvalidOperationException($"the request to {_uri} couldn't be signed: {signResult.Error?.Message}");

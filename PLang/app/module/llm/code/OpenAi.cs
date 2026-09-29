@@ -234,7 +234,7 @@ public sealed class OpenAi : ILlm
                 StreamAs = (action.OnStream == null ? null : await action.OnStream.Value()) != null ? new data.@this<global::app.type.item.choice.@this<StreamFormat>>("", StreamFormat.SSE) : default
             };
 
-            data.@this httpResult = await app.Run(httpAction, context);
+            data.@this httpResult = await new global::app.goal.step.action.@this(httpAction, context).Start(context);
             if ((action.OnStream == null ? null : await action.OnStream.Value()) != null)
             {
                 // TODO: streaming tool call accumulation needs work

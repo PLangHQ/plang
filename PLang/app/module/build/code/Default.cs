@@ -45,13 +45,7 @@ public class Default : IBuilder
             // System.IO.Path arithmetic needed.
             rootRelative = global::app.type.item.path.@this.Resolve(searchPath, context).Absolute;
 
-        var listAction = new file.List(context)
-        {
-            Path = context.Ok<path>(path.Resolve(rootRelative, context)),
-            Pattern = new data.@this<global::app.type.item.text.@this>("", "*.goal", context: context),
-            Recursive = new data.@this<global::app.type.item.@bool.@this>("", true, context: context)
-        };
-        var listResult = await app.Run(listAction, context);
+        var listResult = await path.Resolve(rootRelative, context).List("*.goal", true, context);
         if (!listResult.Success)
             return listResult;
 
@@ -103,8 +97,7 @@ public class Default : IBuilder
 
         foreach (var file in files)
         {
-            var readAction = new file.Read(context) { Path = context.Ok<path>(file) };
-            var readResult = await app.Run(readAction, context);
+            var readResult = await file.Read(context);
             if (!readResult.Success)
             {
                 unreadable.Add((file, readResult.Error ?? new global::app.error.Error($"Failed to read {file.Raw}", "FileReadError", 400)));
@@ -117,7 +110,7 @@ public class Default : IBuilder
             var goal = Goal.Parse(text, file, context);
             if (goal == null) continue;
 
-            await MergePrData(goal, app, context);
+            await MergePrData(goal, context);
             allGoals.Add(goal);
         }
 
@@ -211,12 +204,7 @@ public class Default : IBuilder
 
         // The goal is saved to its .pr; the file's format (goal's own) writes it — symmetric with the goal
         // reader's bare read.
-        var saveAction = new file.Save(context)
-        {
-            Path = context.Ok<path>(prPath),
-            Value = context.Ok(goal)
-        };
-        var saveResult = await app.Run(saveAction, context);
+        var saveResult = await prPath.Save(context.Ok(goal), context);
 
         var elapsed = _buildTimer.Elapsed;
         await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(
@@ -280,17 +268,12 @@ public class Default : IBuilder
     /// Merges existing .pr data into a goal. A corrupt .pr is a build diagnostic about the goal —
     /// it rebuilds from its source, and the warning hangs on the goal.
     /// </summary>
-    private static async Task MergePrData(Goal goal, app.@this app,
-        actor.context.@this context)
+    private static async Task MergePrData(Goal goal, actor.context.@this context)
     {
         var prPath = goal.PrPath;
         if (prPath == null) return;
 
-        var readAction = new file.Read(context)
-        {
-            Path = context.Ok<path>(prPath)
-        };
-        var readResult = await app.Run(readAction, context);
+        var readResult = await prPath.Read(context);
         if (!readResult.Success) return;
 
         // File provider auto-deserializes .pr files into a single Goal. A .pr left

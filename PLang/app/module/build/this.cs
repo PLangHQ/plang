@@ -47,20 +47,14 @@ public sealed partial class @this
                 return Context.Error(new global::app.error.ServiceError(
                     $"No app found at {_context.App.AbsolutePath}. Run plang build from your app's root directory, or use --app={{\"create\":true}}.", "NoAppFound", 400));
 
-            // The question goes through the User actor's ask door: its input channel asks, writing the
-            // question on the actor's output channel and reading the answer — so on.ask fires as for any ask.
+            // Creating the app writes it at its root: the User actor's consent, asked through the one consent door
+            // (its ask runs as an action, so on.ask fires as for any ask); a no, or no answer, is the denial.
             var userContext = _context.App.actor.list.User.Context;
-            var ask = new global::app.module.output.ask(userContext)
-            {
-                Question = userContext.Ok<global::app.type.item.text.@this>(
-                    $"No app found at {_context.App.AbsolutePath}. Create new app? (y/n): ")
-            };
-            var asked = await _context.App.Run(ask, userContext);
-            if (!asked.Success) return asked;
-            var answer = ((await asked.Value()) as global::app.module.output.Ask)?.Answer?.Trim().ToLowerInvariant();
-            if (answer != "y" && answer != "yes")
-                return Context.Error(new global::app.error.ServiceError(
-                    "Build cancelled. Run plang build from your app's root directory.", "BuildCancelled", 400));
+            var asker = userContext.Actor!;
+            var consent = await asker.Permission.Ask($"No app found at {_context.App.AbsolutePath}. Create new app? (y/n)",
+                global::app.type.item.permission.@this.Request(asker.Name, _context.App.AbsolutePath, global::app.type.item.permission.Verb.Write),
+                userContext, _ => System.Threading.Tasks.Task.FromResult(userContext.Ok()));
+            if (!consent.Success) return consent;
         }
 
         // The builder runs under the User actor's context — user code output/channels resolve

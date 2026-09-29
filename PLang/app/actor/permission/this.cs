@@ -41,10 +41,11 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         var prefix = "";
         while (true)
         {
-            var asked = await context.App.Run(new global::app.module.output.ask(context)
+            // asked as an action, so on.ask fires as for any ask
+            var asked = await new global::app.goal.step.action.@this(new global::app.module.output.ask(context)
             {
                 Question = new global::app.data.@this<global::app.type.item.text.@this>("", prefix + question, context: context),
-            }, context);
+            }, context).Start(context);
             // decided before the exit check, which would otherwise hand the failed ask back as itself
             if (!asked.Success && asked.Error!.Unanswered)
                 return context.Error(new global::app.error.PermissionDenied(request) { list = [asked.Error] });

@@ -37,12 +37,12 @@ public sealed class @this : global::app.type.kind.@this
             // layer; skipped with no actor (an internal write) or when it already is one.
             if (context.Actor != null && data.Peek() is not global::app.type.item.signature.@this)
             {
-                var signed = await context.App.Run(
+                var signed = await new global::app.goal.step.action.@this(
                     new global::app.module.signing.sign(context) { Data = data,
                         // Hash in the view being written, so the verifier (re-hashing the wire-reconstructed bag in
                         // the same view) gets matching bytes.
                         StoreView = new global::app.data.@this<global::app.type.item.@bool.@this>("", view == global::app.View.Store, context: context) },
-                    context);
+                    context).Start(context);
                 // A Data that should cross signed and couldn't be is the write's failure — never sent unsigned.
                 if (!signed.Success) return signed;
                 data = signed;
@@ -82,11 +82,11 @@ public sealed class @this : global::app.type.kind.@this
             if (read.PendingVerification is { } layer)
             {
                 read.PendingVerification = null;
-                var verified = await context.App.Run(new global::app.module.signing.verify(context)
+                var verified = await new global::app.goal.step.action.@this(new global::app.module.signing.verify(context)
                 {
                     Data = context.Ok(layer),
                     SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", view == global::app.View.Store),
-                }, context);
+                }, context).Start(context);
                 if (!verified.Success)
                     return context.Error(verified.Error ?? new global::app.error.ServiceError(
                         "Signature verification failed", "SignatureInvalid", 400));

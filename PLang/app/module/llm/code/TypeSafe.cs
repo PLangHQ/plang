@@ -53,7 +53,7 @@ public sealed class TypeSafe : IDecider
             TimeoutInSec = new data.@this<global::app.type.item.number.@this>("", 120),
         };
 
-        var result = await app.Run(http, context);
+        var result = await new global::app.goal.step.action.@this(http, context).Start(context);
         if (!result.Success) return data.@this<global::app.type.item.dict.@this>.From(result);
 
         // The service answers {answers: {id: …}, usage: …}. The caller asked the questions, so the
