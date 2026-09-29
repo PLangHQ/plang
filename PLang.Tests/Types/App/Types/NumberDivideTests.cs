@@ -45,18 +45,18 @@ public class NumberDivideTests
     [Test] public async Task Divide_ByZero_Integer_DataFailDivideByZero()
     {
         var ex = await Assert.That(() => NumberOps.Divide(((number)(7)), ((number)(0)), P)).Throws<global::app.error.AppException>();
-        await Assert.That(ex!.Key).IsEqualTo("DivideByZero");
+        await Assert.That(ex!.Error.Key).IsEqualTo("DivideByZero");
     }
 
     [Test] public async Task Divide_ByZero_Decimal_DataFailDivideByZero()
     {
         var ex = await Assert.That(() => NumberOps.Divide(((number)(7m)), ((number)(0m)), P)).Throws<global::app.error.AppException>();
-        await Assert.That(ex!.Key).IsEqualTo("DivideByZero");
+        await Assert.That(ex!.Error.Key).IsEqualTo("DivideByZero");
     }
 
     [Test] public async Task IntDiv_ByZero_DataFailDivideByZero()
     {
         var ex = await Assert.That(() => NumberOps.IntDivide(((number)(7)), ((number)(0)), P)).Throws<global::app.error.AppException>();
-        await Assert.That(ex!.Key).IsEqualTo("DivideByZero");
+        await Assert.That(ex!.Error.Key).IsEqualTo("DivideByZero");
     }
 }

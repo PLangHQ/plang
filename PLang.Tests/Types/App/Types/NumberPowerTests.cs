@@ -42,7 +42,7 @@ public class NumberPowerTests
     {
         var ex = await Assert.That(() => NumberOps.Power(((number)(int.MaxValue)), ((number)(10)),
             (number.Overflow.Throw, number.Precision.Double))).Throws<global::app.error.AppException>();
-        await Assert.That(ex!.Key).IsEqualTo("MathOverflow");
+        await Assert.That(ex!.Error.Key).IsEqualTo("MathOverflow");
     }
 
     [Test] public async Task Power_ExponentAtCap_SmallBase_StillSucceeds()
@@ -58,7 +58,7 @@ public class NumberPowerTests
         // Data.Fail instead of spinning the actor's core.
         var ex = await Assert.That(() => NumberOps.Power(((number)(2)), ((number)(number.MaxPowerExponent + 1)),
             NumberOps.Lenient)).Throws<global::app.error.AppException>();
-        await Assert.That(ex!.Key).IsEqualTo("PowerExponentTooLarge");
+        await Assert.That(ex!.Error.Key).IsEqualTo("PowerExponentTooLarge");
     }
 
     [Test] public async Task Power_NegativeExponentBeyondCap_DecimalPrecision_TypedFailure()
@@ -70,7 +70,7 @@ public class NumberPowerTests
         // and skips the cap.
         var ex = await Assert.That(() => NumberOps.Power(((number)(2)), ((number)(-number.MaxPowerExponent - 1)),
             (number.Overflow.Promote, number.Precision.Decimal))).Throws<global::app.error.AppException>();
-        await Assert.That(ex!.Key).IsEqualTo("PowerExponentTooLarge");
+        await Assert.That(ex!.Error.Key).IsEqualTo("PowerExponentTooLarge");
     }
 
     [Test] public async Task Power_DoubleBase_LargeExponent_SkipsCap_UsesMathPow()

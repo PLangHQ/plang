@@ -209,7 +209,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Head, _uri);
-            await SignRequest(req, null, "HEAD", context);
+            if (await Sign(req, null, "HEAD", context) is { } unsigned) return context.Error<global::app.type.item.@bool.@this>(unsigned);
             using var resp = await _client.SendAsync(req);
             // Exists answers a question — 2xx → true, 4xx → false, both Success.
             if ((int)resp.StatusCode >= 200 && (int)resp.StatusCode < 300)
@@ -253,7 +253,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Head, _uri);
-            await SignRequest(req, null, "HEAD", context);
+            if (await Sign(req, null, "HEAD", context) is { } unsigned) return context.Error<global::app.type.item.path.@this.StatInfo>(unsigned);
             using var resp = await _client.SendAsync(req);
             if (!resp.IsSuccessStatusCode)
             {
@@ -361,7 +361,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         {
             using var req = new HttpRequestMessage(method, _uri) { Content = content };
             string? bodyForSign = content is StringContent sc ? await sc.ReadAsStringAsync() : null;
-            await SignRequest(req, bodyForSign, method.Method, context);
+            if (await Sign(req, bodyForSign, method.Method, context) is { } unsigned) return context.Error(unsigned);
 
             using var resp = await _client.SendAsync(req);
 
@@ -445,28 +445,27 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// Signs the request with PLang's built-in identity via the
     /// <c>signing.sign</c> action — same mechanism the http module uses — as the
     /// caller. Adds the <c>X-Signature</c> header. A request that can't be signed doesn't go out: the
-    /// signing failure is its error.
+    /// signing failure is answered, and is the request's error.
     /// </summary>
-    private async Task SignRequest(HttpRequestMessage request, string? body, string method, actor.context.@this context)
+    private async Task<Error?> Sign(HttpRequestMessage request, string? body, string method, actor.context.@this context)
     {
+        // Sign over a canonical request line — method, path, then the body. This
+        // binds WHAT the request does (method + path) into the signed value, so it
+        // is never empty (a bodyless GET still signs) and a redirect to a different
+        // path produces a fresh, destination-specific signature. Path only by
+        // design — the recipient validates the host against itself.
+        var canonical = $"{method}\n{_uri.PathAndQuery}\n{body ?? ""}";
+        var sign = new module.signing.sign(context)
         {
-            // Sign over a canonical request line — method, path, then the body. This
-            // binds WHAT the request does (method + path) into the signed value, so it
-            // is never empty (a bodyless GET still signs) and a redirect to a different
-            // path produces a fresh, destination-specific signature. Path only by
-            // design — the recipient validates the host against itself.
-            var canonical = $"{method}\n{_uri.PathAndQuery}\n{body ?? ""}";
-            var sign = new module.signing.sign(context)
-            {
-                Data = new data.@this("", canonical, context: context),
-            };
-            var signResult = await new global::app.goal.step.action.@this(sign, context).Start(context);
-            // a request asked to be signed and not signed doesn't go out unsigned: the signing failure is the request's
-            if (!signResult.Success)
-                throw new InvalidOperationException($"the request to {_uri} couldn't be signed: {signResult.Error?.Message}");
-            var json = JsonSerializer.Serialize(signResult);
-            request.Headers.TryAddWithoutValidation("X-Signature", json);
-        }
+            Data = new data.@this("", canonical, context: context),
+        };
+        var signResult = await new global::app.goal.step.action.@this(sign, context).Start(context);
+        if (!signResult.Success)
+            return new Error($"the request to {_uri} couldn't be signed: {signResult.Error?.Message}",
+                signResult.Error?.Key ?? "SigningFailed", signResult.Error?.StatusCode ?? 400);
+        var json = JsonSerializer.Serialize(signResult);
+        request.Headers.TryAddWithoutValidation("X-Signature", json);
+        return null;
     }
 
     /// <summary>Maps an HTTP status code to a typed Error (status preserved).</summary>

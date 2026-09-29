@@ -226,6 +226,7 @@ public sealed partial class @this : IAsyncDisposable
     public void Record(global::app.error.Error error, actor.context.@this context)
     {
         if (error.CallFrames.Count == 0) error.CallFrames = SnapshotChain();
+        error.Step ??= Step;
         error.Context ??= context;
         if (error.Variables == null && error.Keeps(context)) error.Variables = context.Variable.Snapshot();
         if (Errors.Any(x => ReferenceEquals(x, error))) return;

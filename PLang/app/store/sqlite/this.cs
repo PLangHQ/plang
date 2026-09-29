@@ -78,9 +78,7 @@ public sealed class @this : global::app.store.@this
         // Take-over API: authorize before passing .Absolute. Out-of-root paths the actor hasn't granted
         // fail the open — sqlite never sees them.
         var auth = await _file.Authorize(global::app.type.item.permission.Verb.Write, Context);
-        if (!auth.Success)
-            throw new InvalidOperationException(
-                $"Sqlite path '{_file}' is not authorized for write: {auth.Error?.Message}");
+        if (!auth.Success) throw new global::app.error.AppException(auth.Error!);
         if (_file.Parent is { } parent)
             await parent.Mkdir(Context);
 
@@ -130,6 +128,7 @@ public sealed class @this : global::app.store.@this
                 return Context.Ok<T>(default!);
             return await Hydrate<T>(result.ToString()!);
         }
+        catch (global::app.error.AppException ex) { return Context.Error<T>(ex.Error); }
         catch (Exception ex)
         {
             return Context.Error<T>(SettingsError.FromException(ex, table, key));
@@ -161,6 +160,7 @@ public sealed class @this : global::app.store.@this
             }
             return Context.Ok<global::app.type.item.list.@this>(list);
         }
+        catch (global::app.error.AppException ex) { return Context.Error<global::app.type.item.list.@this>(ex.Error); }
         catch (Exception ex)
         {
             return Context.Error<global::app.type.item.list.@this>(
@@ -192,6 +192,7 @@ public sealed class @this : global::app.store.@this
 
             return Context.Ok();
         }
+        catch (global::app.error.AppException ex) { return Context.Error(ex.Error); }
         catch (Exception ex)
         {
             return Context.Error(
@@ -214,6 +215,7 @@ public sealed class @this : global::app.store.@this
 
             return Context.Ok();
         }
+        catch (global::app.error.AppException ex) { return Context.Error(ex.Error); }
         catch (Exception ex)
         {
             return Context.Error(
@@ -236,6 +238,7 @@ public sealed class @this : global::app.store.@this
             var count = Convert.ToInt64(cmd.ExecuteScalar());
             return Context.Ok<global::app.type.item.@bool.@this>(count > 0);
         }
+        catch (global::app.error.AppException ex) { return Context.Error<global::app.type.item.@bool.@this>(ex.Error); }
         catch (Exception ex)
         {
             return Context.Error<global::app.type.item.@bool.@this>(
@@ -260,6 +263,7 @@ public sealed class @this : global::app.store.@this
 
             return Context.Ok<global::app.type.item.list.@this>(tables);
         }
+        catch (global::app.error.AppException ex) { return Context.Error<global::app.type.item.list.@this>(ex.Error); }
         catch (Exception ex)
         {
             return Context.Error<global::app.type.item.list.@this>(

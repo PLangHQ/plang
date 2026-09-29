@@ -131,25 +131,12 @@ public sealed partial class @this
             {
                 result = await Code.Start(context);   // action.list owns the chain loop + fire
             }
-            catch (global::app.error.AppException ex)
-            {
-                // a program's mistake carries its own key and status — that is the step's error
-                result = context.Error(new global::app.error.ServiceError(ex.Message, ex.Key, ex.StatusCode) { Exception = ex });
-            }
+            // a program's error that travelled as an exception is the step's answer, whole
+            catch (global::app.error.AppException ex) { result = context.Error(ex.Error); }
             catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
             {
-                // Preserve the exception's class identity as the error Key so on-error
-                // handlers keyed on a typed exception (e.g. ChannelNotFoundException →
-                // "ChannelNotFound") still match. Falls back to "StepError" only when
-                // the exception is the bare base type. Trims trailing "Exception".
-                var typeName = ex.GetType().Name;
-                var key = typeName == nameof(Exception)
-                    ? "StepError"
-                    : (typeName.EndsWith("Exception", StringComparison.Ordinal)
-                        ? typeName[..^"Exception".Length]
-                        : typeName);
-                result = context.Error(new global::app.error.ServiceError(
-                    ex.Message, key, 400) { Exception = ex });
+                // an exception plang didn't raise has no program key: the same one the action's catch gives it
+                result = context.Error(new global::app.error.ServiceError(ex.Message, "ServiceError", 500) { Exception = ex });
             }
         }
         result = await on.start.After(this, result, context);

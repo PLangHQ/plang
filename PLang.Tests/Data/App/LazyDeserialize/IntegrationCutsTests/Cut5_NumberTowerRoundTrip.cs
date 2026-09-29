@@ -52,6 +52,6 @@ public class Cut5_NumberTowerRoundTrip
     [Test] public async Task Cut5_DoubleDecimal_RaisesExplicitCastError()
     {
         var ex = await Assert.That(() => NumberOps.Add(((number)(1.5d)), ((number)(0.1m)), NumberOps.Lenient)).Throws<global::app.error.AppException>();
-        await Assert.That(ex!.Key).IsEqualTo("PrecisionMixRequiresChoice");
+        await Assert.That(ex!.Error.Key).IsEqualTo("PrecisionMixRequiresChoice");
     }
 }

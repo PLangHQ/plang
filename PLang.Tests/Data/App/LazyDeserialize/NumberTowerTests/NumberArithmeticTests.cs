@@ -44,7 +44,7 @@ public class NumberArithmeticTests
     [Test] public async Task DoublePlusDecimal_RaisesExplicitCastError()
     {
         var ex = await Assert.That(() => NumberOps.Add(((number)(1.5d)), ((number)(0.1m)), Lenient)).Throws<global::app.error.AppException>();
-        await Assert.That(ex!.Key).IsEqualTo("PrecisionMixRequiresChoice");
+        await Assert.That(ex!.Error.Key).IsEqualTo("PrecisionMixRequiresChoice");
     }
 
     [Test] public async Task DivisionProducingFraction_LandsOnDecimalOrDouble_PerOperandKinds()

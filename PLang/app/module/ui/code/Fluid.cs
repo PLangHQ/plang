@@ -126,18 +126,19 @@ public class Fluid : ITemplate
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
+            // Fluid wraps what the template's code threw (a TargetInvocationException): a program's error
+            // inside the template — an unknown goal, a failed include — is the render's answer, whole.
+            for (var inner = ex; inner != null; inner = inner.InnerException)
+                if (inner is AppException carried) return action.Context.Error<global::app.type.item.text.@this>(carried.Error);
+
             var location = sourceFile != null ? $" in '{sourceFile}'" : "";
-            // Fluid wraps a member/converter fault as TargetInvocationException whose Message is the
-            // useless "Exception has been thrown by the target of an invocation" — dig to the real
-            // inner fault (and its type) so a bad navigation/coercion in the template is named.
+            // Its Message is the useless "Exception has been thrown by the target of an invocation" — dig to
+            // the real inner fault (and its type) so a bad navigation/coercion in the template is named.
             var root = ex;
             while (root.InnerException != null) root = root.InnerException;
             var detail = ReferenceEquals(root, ex) ? ex.Message : $"{root.GetType().Name}: {root.Message}";
-            // a program's mistake inside the template (an unknown goal, a failed include) keeps its own key
-            var (key, status) = root is AppException app ? (app.Key, app.StatusCode)
-                : ex is AppException outer ? (outer.Key, outer.StatusCode) : ("RenderError", 500);
             return action.Context.Error<global::app.type.item.text.@this>(new ServiceError(
-                $"Template render error{location}: {detail}", key, status) { Exception = ex });
+                $"Template render error{location}: {detail}", "RenderError", 500) { Exception = ex });
         }
     }
 

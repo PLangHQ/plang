@@ -199,18 +199,15 @@ public sealed class @this : IDisposable
 
     /// <summary>
     /// Borns the Data result of a value computation: <c>Ok</c> on success, or — when the compute
-    /// throws a keyed <see cref="app.error.AppException"/> (a value op with no context of its own,
-    /// e.g. arithmetic overflow) — an <c>Error</c> carrying that same key. The third born-a-Data
+    /// throws an <see cref="app.error.AppException"/> (a value op with no context of its own,
+    /// e.g. arithmetic overflow) — the Error it carries. The third born-a-Data
     /// door beside <see cref="Ok{T}"/> / <see cref="Error{T}"/>.
     /// </summary>
     public data.@this<T> Data<T>(System.Func<T> compute)
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
         try { return Ok<T>(compute()); }
-        catch (global::app.error.AppException ex)
-        {
-            return Error<T>(new global::app.error.Error(ex.Message, ex.Key, ex.StatusCode) { Exception = ex });
-        }
+        catch (global::app.error.AppException ex) { return Error<T>(ex.Error); }
     }
 
     /// <summary>A not-found Data (present reference, <c>IsInitialized == false</c>), born with this context.</summary>

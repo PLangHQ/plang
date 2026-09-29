@@ -157,7 +157,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (resolving.Value++ > 50)
         {
             resolving.Value = 0;
-            throw new global::app.error.AppException($"variable resolve cycle on '{Text}'", "VarResolveCycle", 500);
+            throw new global::app.error.AppException($"variable resolve cycle on '{Text}'", "VarResolveCycle", 400);
         }
         try
         {

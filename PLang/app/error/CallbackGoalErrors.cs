@@ -7,14 +7,15 @@ namespace app.error;
 /// between callback issue and resume — the bind point is no longer the same code.
 /// No silent fallback.
 /// </summary>
-public sealed class CallbackGoalHashMismatch : System.Exception
+public sealed class CallbackGoalHashMismatch : AppException
 {
     public string GoalPrPath { get; }
     public string CapturedHash { get; }
     public string LiveHash { get; }
 
     public CallbackGoalHashMismatch(string goalPrPath, string capturedHash, string liveHash)
-        : base($"Callback frame's goal hash mismatch at '{goalPrPath}': captured={capturedHash}, live={liveHash}.")
+        : base($"Callback frame's goal hash mismatch at '{goalPrPath}': captured={capturedHash}, live={liveHash}.",
+            "CallbackGoalHashMismatch", 409)
     {
         GoalPrPath = goalPrPath;
         CapturedHash = capturedHash;
@@ -28,11 +29,11 @@ public sealed class CallbackGoalHashMismatch : System.Exception
 /// between callback issue and resume). Sibling of <see cref="CallbackGoalHashMismatch"/>;
 /// the difference is "goal not found" vs "found but different content."
 /// </summary>
-public sealed class CallbackGoalNotFound : System.Exception
+public sealed class CallbackGoalNotFound : AppException
 {
     public string GoalPrPath { get; }
     public CallbackGoalNotFound(string goalPrPath)
-        : base($"Callback frame's goal not found in live registry: '{goalPrPath}'.")
+        : base($"Callback frame's goal not found in live registry: '{goalPrPath}'.", "CallbackGoalNotFound", 404)
     {
         GoalPrPath = goalPrPath;
     }
@@ -45,10 +46,11 @@ public sealed class CallbackGoalNotFound : System.Exception
 /// so the position lands on another action with the same hash. The captured module/name is the check
 /// the hash can't make.
 /// </summary>
-public sealed class CallbackActionMismatch : System.Exception
+public sealed class CallbackActionMismatch : AppException
 {
     public CallbackActionMismatch(string goal, int stepIndex, int actionIndex, string captured, string live)
-        : base($"Callback frame at '{goal}' step {stepIndex} action {actionIndex}: captured action '{captured}', live action '{live}'.")
+        : base($"Callback frame at '{goal}' step {stepIndex} action {actionIndex}: captured action '{captured}', live action '{live}'.",
+            "CallbackActionMismatch", 409)
     { }
 }
 
@@ -56,9 +58,9 @@ public sealed class CallbackActionMismatch : System.Exception
 /// Hard referent-integrity error raised when a captured frame lacks an entry its restore needs — the
 /// snapshot is not one this runtime wrote, or it was cut.
 /// </summary>
-public sealed class CallbackFrameIncomplete : System.Exception
+public sealed class CallbackFrameIncomplete : AppException
 {
     public CallbackFrameIncomplete(string key)
-        : base($"Callback frame is missing '{key}' — the snapshot cannot place it.")
+        : base($"Callback frame is missing '{key}' — the snapshot cannot place it.", "CallbackFrameIncomplete", 400)
     { }
 }

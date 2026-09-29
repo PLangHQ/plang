@@ -10,8 +10,8 @@ public class ExceptionsTests
         var ex = new AppException("Test error");
 
         await Assert.That(ex.Message).IsEqualTo("Test error");
-        await Assert.That(ex.Key).IsEqualTo("AppError");
-        await Assert.That(ex.StatusCode).IsEqualTo(500);
+        await Assert.That(ex.Error.Key).IsEqualTo("AppError");
+        await Assert.That(ex.Error.StatusCode).IsEqualTo(500);
     }
 
     [Test]
@@ -20,8 +20,8 @@ public class ExceptionsTests
         var ex = new AppException("Custom error", "CustomKey", 400);
 
         await Assert.That(ex.Message).IsEqualTo("Custom error");
-        await Assert.That(ex.Key).IsEqualTo("CustomKey");
-        await Assert.That(ex.StatusCode).IsEqualTo(400);
+        await Assert.That(ex.Error.Key).IsEqualTo("CustomKey");
+        await Assert.That(ex.Error.StatusCode).IsEqualTo(400);
     }
 
     [Test]
@@ -44,8 +44,8 @@ public class ExceptionsTests
 
         await Assert.That(ex.Message).IsEqualTo("Outer");
         await Assert.That(ex.InnerException).IsEqualTo(inner);
-        await Assert.That(ex.Key).IsEqualTo("CustomKey");
-        await Assert.That(ex.StatusCode).IsEqualTo(503);
+        await Assert.That(ex.Error.Key).IsEqualTo("CustomKey");
+        await Assert.That(ex.Error.StatusCode).IsEqualTo(503);
     }
 
     [Test]
@@ -55,8 +55,8 @@ public class ExceptionsTests
 
         await Assert.That(ex.GoalName).IsEqualTo("StartGoal");
         await Assert.That(ex.Message).IsEqualTo("Goal 'StartGoal' not found");
-        await Assert.That(ex.Key).IsEqualTo("GoalNotFound");
-        await Assert.That(ex.StatusCode).IsEqualTo(404);
+        await Assert.That(ex.Error.Key).IsEqualTo("GoalNotFound");
+        await Assert.That(ex.Error.StatusCode).IsEqualTo(404);
     }
 
     [Test]
@@ -74,8 +74,8 @@ public class ExceptionsTests
 
         await Assert.That(ex.Message).IsEqualTo("Step failed");
         await Assert.That(ex.StepIndex).IsEqualTo(5);
-        await Assert.That(ex.Key).IsEqualTo("StepExecutionFailed");
-        await Assert.That(ex.StatusCode).IsEqualTo(500);
+        await Assert.That(ex.Error.Key).IsEqualTo("StepExecutionFailed");
+        await Assert.That(ex.Error.StatusCode).IsEqualTo(500);
     }
 
     [Test]
@@ -105,8 +105,8 @@ public class ExceptionsTests
 
         await Assert.That(ex.ModuleName).IsEqualTo("HttpModule");
         await Assert.That(ex.Message).IsEqualTo("Module 'HttpModule' not found");
-        await Assert.That(ex.Key).IsEqualTo("ModuleNotFound");
-        await Assert.That(ex.StatusCode).IsEqualTo(404);
+        await Assert.That(ex.Error.Key).IsEqualTo("ModuleNotFound");
+        await Assert.That(ex.Error.StatusCode).IsEqualTo(404);
     }
 
     [Test]
@@ -126,8 +126,8 @@ public class ExceptionsTests
         // The message names the variable and points at the unresolved-variable cause.
         await Assert.That(ex.Message).Contains("%userName%");
         await Assert.That(ex.Message).Contains("not set");
-        await Assert.That(ex.Key).IsEqualTo("VariableNotFound");
-        await Assert.That(ex.StatusCode).IsEqualTo(404);
+        await Assert.That(ex.Error.Key).IsEqualTo("VariableNotFound");
+        await Assert.That(ex.Error.StatusCode).IsEqualTo(404);
     }
 
     [Test]
@@ -145,8 +145,8 @@ public class ExceptionsTests
 
         await Assert.That(ex.MaxDepth).IsEqualTo(1000);
         await Assert.That(ex.Message).IsEqualTo("Call stack overflow: exceeded 1000 frames");
-        await Assert.That(ex.Key).IsEqualTo("CallStackOverflow");
-        await Assert.That(ex.StatusCode).IsEqualTo(500);
+        await Assert.That(ex.Error.Key).IsEqualTo("CallStackOverflow");
+        await Assert.That(ex.Error.StatusCode).IsEqualTo(500);
     }
 
     [Test]
@@ -164,8 +164,8 @@ public class ExceptionsTests
 
         await Assert.That(ex.Message).IsEqualTo("Failed to serialize");
         await Assert.That(ex.TargetType).IsNull();
-        await Assert.That(ex.Key).IsEqualTo("SerializationFailed");
-        await Assert.That(ex.StatusCode).IsEqualTo(500);
+        await Assert.That(ex.Error.Key).IsEqualTo("SerializationFailed");
+        await Assert.That(ex.Error.StatusCode).IsEqualTo(500);
     }
 
     [Test]

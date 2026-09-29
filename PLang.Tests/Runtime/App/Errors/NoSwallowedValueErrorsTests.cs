@@ -11,14 +11,14 @@ public class NoSwallowedValueErrorsTests
         var text = app.actor.list.User.Context.Ok("a(b\nc");
         var thrown = await Assert.That(() => { new global::app.data.code.Default().Grep(text, "a(b"); return Task.CompletedTask; })
             .Throws<global::app.error.AppException>();
-        await Assert.That(thrown!.Key).IsEqualTo("InvalidPattern");
+        await Assert.That(thrown!.Error.Key).IsEqualTo("InvalidPattern");
     }
 
     [Test] public async Task ARegexGrantThatIsNotARegex_FailsWhereItIsMade()
     {
         var thrown = await Assert.That(() => { _ = new permission.@this("me", "a(b", permission.@this.AllVerbs, permission.Match.Regex); return Task.CompletedTask; })
             .Throws<global::app.error.AppException>();
-        await Assert.That(thrown!.Key).IsEqualTo("InvalidPermissionPattern");
+        await Assert.That(thrown!.Error.Key).IsEqualTo("InvalidPermissionPattern");
     }
 
     [Test] public async Task AGlobGrantWithRegexCharacters_MatchesThemLiterally()

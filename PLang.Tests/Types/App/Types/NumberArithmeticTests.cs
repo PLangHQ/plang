@@ -58,7 +58,7 @@ public class NumberArithmeticTests
     [Test] public async Task Overflow_Throw_IntPlusInt_SurfacesDataFailMathOverflow()
     {
         var ex = await Assert.That(() => NumberOps.Add(((number)(int.MaxValue)), ((number)(int.MaxValue)), Strict)).Throws<global::app.error.AppException>();
-        await Assert.That(ex!.Key).IsEqualTo("MathOverflow");
+        await Assert.That(ex!.Error.Key).IsEqualTo("MathOverflow");
     }
 
     [Test] public async Task Overflow_Throw_HandlerPathReturnsDataError_NotException()
@@ -66,7 +66,7 @@ public class NumberArithmeticTests
         await Assert.That(() => { var _ = ((number)(decimal.MaxValue)) + ((number)(decimal.MaxValue)); })
             .Throws<System.OverflowException>();
         var ex = await Assert.That(() => NumberOps.Add(((number)(decimal.MaxValue)), ((number)(decimal.MaxValue)), Strict)).Throws<global::app.error.AppException>();
-        await Assert.That(ex!.Key).IsEqualTo("MathOverflow");
+        await Assert.That(ex!.Error.Key).IsEqualTo("MathOverflow");
     }
 
     [Test] public async Task Sub_IntInt_ReturnsInt()

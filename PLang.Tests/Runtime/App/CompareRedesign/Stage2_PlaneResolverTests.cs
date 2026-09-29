@@ -74,10 +74,10 @@ public class Stage2_PlaneResolverTests : System.IAsyncDisposable
     [Test]
     public async Task AtSchemaBlocked_AsDictKey_WireMarkerOnly()
     {
-        // @schema is the wire marker — the dict write seam rejects it as a key
+        // @schema is the wire marker — the dict write seam rejects it as a key, under ReservedKey
         var d = new global::app.type.item.dict.@this();
-        await Assert.That(() => d.Set("@schema", "data")).Throws<ArgumentException>();
-        await Assert.That(() => d.Set(new Data("@schema", "data"))).Throws<ArgumentException>();
+        await Assert.That(() => d.Set("@schema", "data")).Throws<global::app.error.AppException>();
+        await Assert.That(() => d.Set(new Data("@schema", "data"))).Throws<global::app.error.AppException>();
         // ordinary keys unaffected; envelope recognition reads the marker off
         // the JsonElement (IsDataMarked), never through a dict key
         d.Set("schema", "fine");

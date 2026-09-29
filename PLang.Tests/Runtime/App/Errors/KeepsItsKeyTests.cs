@@ -43,6 +43,53 @@ public class KeepsItsKeyTests : System.IAsyncDisposable
         await Assert.That(born.Error!.Key).IsEqualTo("NumberConversionFailed");
     }
 
+    // An input channel that is a goal asking again from its own body has no input to ask on: NoInputChannel,
+    // answered — not thrown.
+    [Test] public async Task AnAskWithNoInputToAskOn_IsNoInputChannel()
+    {
+        app.goal.list.Add(await RealGoalLoad.ViaChannel(app, Make.Goal(Ctx, "AskAgain", "/AskAgain.goal",
+            Make.Step("ask \"again?\"", Make.Action(Ctx, "output", "ask", ("Question", "again?"))))));
+        await (await new global::app.module.channel.Set(Ctx)
+            { Name = new global::app.type.item.text.@this("input"), Goal = Make.Call(Ctx, "AskAgain") }.Start()).IsSuccess();
+
+        var asked = await Make.Action(Ctx, "output", "ask", ("Question", "hi?")).Start(Ctx);
+
+        await asked.IsFailure();
+        await Assert.That(asked.Error!.Key).IsEqualTo("NoInputChannel");
+    }
+
+    private sealed class Refusing : System.Text.Json.Serialization.JsonConverter<string>
+    {
+        public override string Read(ref System.Text.Json.Utf8JsonReader reader, System.Type type, System.Text.Json.JsonSerializerOptions options) => "";
+        public override void Write(System.Text.Json.Utf8JsonWriter writer, string value, System.Text.Json.JsonSerializerOptions options)
+            => throw new global::app.data.OutputException("refused", "OutputGetterThrew");
+    }
+
+    // A program error thrown inside a System.Text.Json converter reaches its catcher as itself — STJ doesn't
+    // wrap it — so a catch answering AppException sees its Error.
+    [Test] public async Task AnAppExceptionThrownInAConverter_PassesThroughUnwrapped()
+    {
+        var options = new System.Text.Json.JsonSerializerOptions { Converters = { new Refusing() } };
+
+        var thrown = await Assert.ThrowsAsync<global::app.data.OutputException>(async () =>
+        {
+            System.Text.Json.JsonSerializer.Serialize("x", options);
+            await Task.CompletedTask;
+        });
+
+        await Assert.That(thrown!.Error.Key).IsEqualTo("OutputGetterThrew");
+    }
+
+    // The wire marker can't be a dict key: the write answers ReservedKey.
+    [Test] public async Task TheWireMarkerAsADictKey_IsReservedKey()
+    {
+        var d = new global::app.data.@this("d", new global::app.type.item.dict.@this(), context: Ctx);
+
+        var written = await d.Set("@schema", false, 1);
+
+        await Assert.That(written.Error?.Key).IsEqualTo("ReservedKey");
+    }
+
     // An option given a value it can't take is refused with the reason the option gives.
     [Test] public async Task AnOptionsRefusedValue_KeepsTheOptionsKey()
     {

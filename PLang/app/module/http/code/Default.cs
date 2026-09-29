@@ -716,8 +716,9 @@ public sealed class Default : IHttp
                 {
                     consecutiveOverflows++;
                     if (consecutiveOverflows >= maxConsecutiveOverflows)
-                        throw new InvalidOperationException(
-                            $"SSE stream disconnected after {maxConsecutiveOverflows} consecutive buffer overflows — possible attack");
+                        throw new global::app.error.AppException(
+                            $"SSE stream disconnected after {maxConsecutiveOverflows} consecutive buffer overflows — possible attack",
+                            "SSEBufferOverflow", 413);
 
                     await app.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(
                         context.Error(new ServiceError(
@@ -818,8 +819,8 @@ public sealed class Default : IHttp
 
             // F1: size limit on file downloads
             if (bytesTransferred > maxBytes)
-                throw new InvalidOperationException(
-                    $"Download exceeds maximum size of {FormatBytes(maxBytes)}");
+                throw new global::app.error.AppException(
+                    $"Download exceeds maximum size of {FormatBytes(maxBytes)}", "ResponseTooLarge", 413);
 
             await destination.WriteAsync(buffer, 0, bytesRead, ct);
 
@@ -830,8 +831,8 @@ public sealed class Default : IHttp
             {
                 var bytesPerSec = throughputBytes / elapsed;
                 if (bytesPerSec < 1024) // < 1KB/sec for 30s
-                    throw new InvalidOperationException(
-                        $"Transfer too slow ({bytesPerSec:F0} bytes/sec) — possible slow-loris attack");
+                    throw new global::app.error.AppException(
+                        $"Transfer too slow ({bytesPerSec:F0} bytes/sec) — possible slow-loris attack", "SlowResponse", 408);
                 throughputStart = DateTimeOffset.UtcNow;
                 throughputBytes = 0;
             }

@@ -21,7 +21,7 @@ public class SqliteAuthorizeDenialTests
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
         {
             System.Threading.Interlocked.Increment(ref AskCount);
-            return Task.FromResult(global::app.data.@this.Ok(_answer));
+            return Task.FromResult(action.Context.Ok(_answer));
         }
     }
 
@@ -44,6 +44,7 @@ public class SqliteAuthorizeDenialTests
         // the first verb opens the store: an out-of-root path the actor denies fails it, and sqlite never sees it
         var read = await store.Get<global::app.type.item.@this>("t", "k");
         await Assert.That(read.Success).IsFalse();
+        await Assert.That(read.Error!.Key).IsEqualTo("PermissionDenied");
         await Assert.That(System.IO.File.Exists(outOfRoot)).IsFalse();
     }
 

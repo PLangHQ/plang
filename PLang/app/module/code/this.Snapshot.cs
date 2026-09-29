@@ -187,8 +187,8 @@ public sealed partial class @this : ISnapshot
 /// captured registration (missing source DLL, missing impl type, unresolvable
 /// default-selection name). Always a hard fail — no silent fallback to system defaults.
 /// </summary>
-public sealed class ProviderRestoreException : Exception
+public sealed class ProviderRestoreException : global::app.error.AppException
 {
-    public ProviderRestoreException(string message) : base(message) { }
-    public ProviderRestoreException(string message, Exception inner) : base(message, inner) { }
+    public ProviderRestoreException(string message) : base(message, "ProviderRestore", 500) { }
+    public ProviderRestoreException(string message, Exception inner) : base(message, inner, "ProviderRestore", 500) { }
 }

@@ -233,7 +233,7 @@ public sealed class @this
             // is another setting's
             var own = Under(path).Where(kv => instance.Option(kv.Key) != null).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
             var applied = instance.Apply(own, _context);
-            if (!applied.Success) throw new InvalidOperationException(applied.Error!.Message);
+            if (!applied.Success) throw new global::app.error.AppException(applied.Error!);
             return instance;
         }
     }
@@ -267,7 +267,7 @@ public sealed class @this
     private data.@this Instance(string path)
     {
         try { return new data.@this(path, this[path], context: _context); }
-        catch (InvalidOperationException ex) { return _context.Error(new global::app.error.Error(ex.Message, "TypeConversionFailed", 400)); }
+        catch (global::app.error.AppException ex) { return _context.Error(ex.Error); }
     }
 
     /// <summary>

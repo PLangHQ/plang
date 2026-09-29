@@ -1,20 +1,12 @@
-using System.Text.Json;
-
 namespace app.data;
 
 /// <summary>
-/// Hard failure during <see cref="@this.Normalize"/>. <see cref="Key"/> names
-/// the failure mode (<c>NormalizeCycleDetected</c>, <c>NormalizeMaxDepthExceeded</c>,
-/// <c>NormalizeGetterThrew</c>, …) so callers can map to a typed channel error.
-///
-/// <para>Subclass of <see cref="JsonException"/> so the serializer's existing
-/// <c>catch (Exception ex) when (ex is JsonException …)</c> picks it up — the same path every
-/// other serialize-time failure takes — and the error it answers keeps this <see cref="Key"/>.</para>
+/// Hard failure during <see cref="@this.Normalize"/>. Its <see cref="global::app.error.AppException.Error"/>
+/// names the failure mode by key (<c>NormalizeCycleDetected</c>, <c>NormalizeMaxDepthExceeded</c>,
+/// <c>NormalizeGetterThrew</c>, …); the write that catches it answers that Error.
 /// </summary>
-public sealed class NormalizeException : JsonException
+public sealed class NormalizeException : global::app.error.AppException
 {
-    public string Key { get; }
-
     public NormalizeException(string message, string key, System.Exception? inner = null)
-        : base(message, inner) { Key = key; }
+        : base(new global::app.error.Error(message, key, 400), inner) { }
 }

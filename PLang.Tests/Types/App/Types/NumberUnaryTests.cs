@@ -76,7 +76,7 @@ public class NumberUnaryTests
         // key. math.sqrt handler relies on this — no pre-check, one canonical
         // error key for negative-sqrt across both call paths.
         var ex = await Assert.That(() => ((number)(-1)).Sqrt()).Throws<global::app.error.AppException>();
-        await Assert.That(ex!.Key).IsEqualTo("ArithmeticError");
+        await Assert.That(ex!.Error.Key).IsEqualTo("ArithmeticError");
     }
 
     [Test] public async Task Round_DecimalToTwoPlaces_AwayFromZero()

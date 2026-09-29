@@ -76,8 +76,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         // take is refused before this run holds it
         var raw = value is global::app.data.@this held ? await held.Value() : value;
         var applied = Apply(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { [key] = raw }, context);
-        if (!applied.Success)
-            throw new global::app.error.AppException(applied.Error!.Message, applied.Error.Key, applied.Error.StatusCode);
+        if (!applied.Success) throw new global::app.error.AppException(applied.Error!);
         await Write(key, value, context);
         return this;
     }

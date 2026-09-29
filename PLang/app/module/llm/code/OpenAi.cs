@@ -684,8 +684,9 @@ public sealed class OpenAi : ILlm
                     }
                 };
             }
-            if (!content.Success && content.Error?.StatusCode != 404)
-                throw new InvalidOperationException($"the image '{imgPath}' couldn't be read: {content.Error?.Message}");
+            if (!content.Success && content.Error is { StatusCode: not 404 } unread)
+                throw new global::app.error.AppException($"the image '{imgPath}' couldn't be read: {unread.Message}",
+                    unread.Key, unread.StatusCode);
         }
 
         // Assume base64

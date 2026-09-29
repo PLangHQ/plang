@@ -416,6 +416,8 @@ public static class @this
                     // what exists only at run — the channel — is found now
                     if (await __Live() is { } __missing) return global::app.data.@this.FromError(__missing);
                     try { return await Start(); }
+                    // a program's error that travelled as an exception is the action's answer, whole
+                    catch (global::app.error.AppException ex) { return global::app.data.@this.FromError(ex.Error); }
                     catch (System.Exception ex) when (ex is not (System.OperationCanceledException or System.OutOfMemoryException or System.StackOverflowException))
                     {
                         // Bare exceptions from Start() (NRE, InvalidCast, etc.) reach the user
@@ -423,14 +425,8 @@ public static class @this
                         // here so the message tells the reader which action's Start() threw.
                         var __mod = __action?.Module.Name ?? "?";
                         var __act = __action?.Name ?? "?";
-                        var __step = __action?.Step;
-                        var __callFrames = Context?.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::app.callstack.call.@this>)System.Array.Empty<global::app.callstack.call.@this>();
-                        // A typed AppException carries a domain Key (VariableNotFound, …) — preserve
-                        // it; a bare exception falls back to its type name.
-                        var __ap = ex as global::app.error.AppException;
                         return global::app.data.@this.FromError(new global::app.error.ServiceError(
-                            $"{__mod}.{__act}: {ex.GetType().Name}: {ex.Message}",
-                            __step!, __callFrames, __ap?.Key ?? ex.GetType().Name, __ap?.StatusCode ?? 500)
+                            $"{__mod}.{__act}: {ex.GetType().Name}: {ex.Message}", "ServiceError", 500)
                         { Exception = ex });
                     }
                 }

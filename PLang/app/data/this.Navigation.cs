@@ -52,11 +52,8 @@ public partial class @this
         {
             return _context?.Error(new global::app.error.Error(ex.Message, "CannotSetChild", 400)) ?? this;
         }
-        catch (global::app.error.AppException ex)
-        {
-            // a value the child refuses (an option's value out of its range) says why, under its own key
-            return _context?.Error(new global::app.error.Error(ex.Message, ex.Key, ex.StatusCode)) ?? this;
-        }
+        // a value the child refuses (an option's value out of its range, a reserved key) says why
+        catch (global::app.error.AppException ex) { return _context?.Error(ex.Error) ?? this; }
         if (!ReferenceEquals(written, Peek())) SetValue(written);
         return this;
     }

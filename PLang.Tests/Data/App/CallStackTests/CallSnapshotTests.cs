@@ -118,11 +118,13 @@ public class CallSnapshotTests : System.IAsyncDisposable
             dstGoal.Step.Add(dstStep);
             dst.goal.list.Add(dstGoal);
 
-            await Assert.ThrowsAsync<CallbackGoalHashMismatch>(async () =>
+            var mismatch = await Assert.ThrowsAsync<CallbackGoalHashMismatch>(async () =>
             {
                 await dst.Restore(snap, dst.actor.list.User.Context);
                 await Task.CompletedTask;
             });
+            // a keyed program error: the resume's result carries CallbackGoalHashMismatch, not ServiceError
+            await Assert.That(mismatch!.Error.Key).IsEqualTo("CallbackGoalHashMismatch");
         }
     }
 

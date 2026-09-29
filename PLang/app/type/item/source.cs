@@ -173,6 +173,12 @@ public class source : @this
             // "give me the value" returns the value, not an intermediate unrendered template.
             return await item.Value(data);
         }
+        // the declared type declined the value: the read answers the reason the type gave
+        catch (global::app.error.DeclinedException declined)
+        {
+            data.Fail(declined.Error);
+            return Absent;
+        }
         catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.FormatException or System.InvalidOperationException or System.NotSupportedException)
         {
             // SOURCE authors its own failure story — the declared form did not parse
@@ -184,10 +190,9 @@ public class source : @this
             var where = ex is System.Text.Json.JsonException je && (je.Path != null || je.LineNumber != null)
                 ? $" [at {je.Path ?? "?"}, line {je.LineNumber?.ToString() ?? "?"}]"
                 : "";
-            // a type that declined says why under its own key; any other failure to parse is MaterializeFailed
             data.Fail(new global::app.error.Error(
                 $"failed to read %{data.Name}% as {_type.Name}{(_type.kind.IsEmpty ? "" : $"/{_type.kind.Name}")}: {ex.Message}{where}",
-                ex is global::app.error.DeclinedException declined ? declined.Error.Key : "MaterializeFailed", 400) { Exception = ex });
+                "MaterializeFailed", 400) { Exception = ex });
             return Absent;
         }
     }

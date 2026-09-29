@@ -61,7 +61,7 @@ public class AbsoluteDisciplineTests
         var dbPath = new FilePath(outOfRoot);
         using var store = new global::app.store.sqlite.@this(dbPath, () => null, app.actor.list.User.Context);
         var read = await store.Get<global::app.type.item.@this>("t", "k");
-        await Assert.That(read.Success).IsFalse();
+        await Assert.That(read.Error?.Key).IsEqualTo("PermissionDenied");
         await Assert.That(System.IO.File.Exists(outOfRoot)).IsFalse();
     }
 

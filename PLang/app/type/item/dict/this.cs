@@ -311,8 +311,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // carrying it as a data key would be indistinguishable from an envelope
         // on read-back. Blocked at the one write seam (both Set overloads route here).
         if (string.Equals(key, "@schema", System.StringComparison.OrdinalIgnoreCase))
-            throw new System.ArgumentException(
-                "'@schema' is the wire marker and cannot be a dict key.", nameof(key));
+            throw new global::app.error.AppException(
+                "'@schema' is the wire marker and cannot be a dict key.", "ReservedKey", 400);
         // A wrapped slot diverges the dict — the CLR exit door must peel. A raw scalar
         // leaves it clean (the .Clr fast path still hands the backing back).
         if (IsWrapped(slot)) _hasWrapped = true;

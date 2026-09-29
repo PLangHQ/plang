@@ -374,7 +374,7 @@ public sealed partial class @this
         // The reader doesn't know its file; the load does — a refused .pr names itself.
         catch (global::app.error.PrFormatOutdatedException outdated)
         {
-            return context.Error(new global::app.error.Error($"{pr}: {outdated.Message}", outdated.Key, outdated.StatusCode)
+            return context.Error(new global::app.error.Error($"{pr}: {outdated.Message}", outdated.Error.Key, outdated.Error.StatusCode)
                 { Exception = outdated });
         }
         catch (Exception ex)

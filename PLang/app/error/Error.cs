@@ -224,8 +224,8 @@ public class Error : global::app.type.item.@this
     /// </summary>
     public static Error FromException(Exception ex, string key = "Exception", int statusCode = 500)
     {
-        // A keyed exception names its own error — "PrFormatOutdated", not a generic "Exception".
-        if (ex is AppException keyed) (key, statusCode) = (keyed.Key, keyed.StatusCode);
+        // A program's error that travelled as an exception is its own Error — "PrFormatOutdated", not "Exception".
+        if (ex is AppException carried) return carried.Error;
         return new Error(ex.Message, key, statusCode)
         {
             Exception = ex

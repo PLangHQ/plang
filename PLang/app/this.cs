@@ -438,6 +438,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             new global::app.type.item.kind.reflection.@this().Read(identity, this, context);
             return context.Ok();
         }
+        // an identity value its type declines (text that isn't a datetime) is an app.pr that isn't the identity
+        catch (global::app.error.DeclinedException declined) { return Unreadable(declined.Error.Message); }
         catch (Exception ex) when (ex is JsonException or FormatException or InvalidCastException or InvalidOperationException)
         {
             return Unreadable(ex.Message);

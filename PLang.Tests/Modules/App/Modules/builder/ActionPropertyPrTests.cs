@@ -54,7 +54,7 @@ public class ActionPropertyPrTests
         try { read = await Read(old); if (read.Success) await read.Value(); }
         catch (global::app.error.AppException ex) { thrown = ex; }
 
-        var key = thrown?.Key ?? read?.Error?.Key ?? read?.Error?.list?.FirstOrDefault()?.Key;
+        var key = thrown?.Error.Key ?? read?.Error?.Key ?? read?.Error?.list?.FirstOrDefault()?.Key;
         await Assert.That(key).IsEqualTo("PrFormatOutdated");
     }
 

@@ -1,26 +1,22 @@
 namespace app.error;
 
 /// <summary>
-/// Base exception for App errors.
+/// A program's error that has to travel as an exception — from a place that can't answer a result (a
+/// constructor, a stream callback, a member with no Data return). It carries its <see cref="Error"/> whole;
+/// every catch answers that Error.
 /// </summary>
 public class AppException : Exception
 {
-    public string Key { get; }
-    public int StatusCode { get; }
+    public Error Error { get; }
+
+    public AppException(Error error, Exception? inner = null)
+        : base(error.Message, inner) => Error = error;
 
     public AppException(string message, string key = "AppError", int statusCode = 500)
-        : base(message)
-    {
-        Key = key;
-        StatusCode = statusCode;
-    }
+        : this(new Error(message, key, statusCode)) { }
 
     public AppException(string message, Exception innerException, string key = "AppError", int statusCode = 500)
-        : base(message, innerException)
-    {
-        Key = key;
-        StatusCode = statusCode;
-    }
+        : this(new Error(message, key, statusCode), innerException) { }
 }
 
 /// <summary>
@@ -144,12 +140,9 @@ public class SerializationException : AppException
 
 /// <summary>
 /// A type declined to make a value from what it was handed (text that isn't a number, a dict that isn't a
-/// whole goal channel), with the reason the type gave — its <see cref="Error"/> keeps that reason's key. An
-/// <see cref="InvalidOperationException"/>, so a lazy value's read answers it as its own failure.
+/// whole goal channel), with the reason the type gave — its <see cref="AppException.Error"/>.
 /// </summary>
-public sealed class DeclinedException : InvalidOperationException
+public sealed class DeclinedException : AppException
 {
-    public Error Error { get; }
-
-    public DeclinedException(Error error) : base(error.Message) => Error = error;
+    public DeclinedException(Error error) : base(error) { }
 }

@@ -56,16 +56,12 @@ public sealed class @this : global::app.type.kind.@this
             await utf8.FlushAsync(ct);
             return context.Ok();
         }
+        // a write that refused itself (a getter that threw, a type with no wire contract) is the encode's answer
+        catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
         catch (System.Exception ex) when (ex is JsonException or System.NotSupportedException)
         {
-            var key = ex switch
-            {
-                global::app.data.OutputException output => output.Key,
-                global::app.data.NormalizeException normalize => normalize.Key,
-                _ => "PlangSerializeError",
-            };
             return context.Error(new global::app.error.ServiceError(
-                $"Plang serialize failed: {ex.Message}", key, 400) { Exception = ex });
+                $"Plang serialize failed: {ex.Message}", "PlangSerializeError", 400) { Exception = ex });
         }
     }
 

@@ -300,6 +300,7 @@ public partial class @this
         // `code` is the throwaway registry shell; Resolve builds the fresh, populated instance
         // that runs. `real` is kept for the catch path's parameter snapshot.
         module.ICodeGenerated? real = null;
+        global::app.data.@this result;
         try
         {
             var (resolved, resolveErr) = await code!.Resolve(this, context);
@@ -309,26 +310,21 @@ public partial class @this
                 return context.Error(resolveErr);
             }
             real = resolved;
-            var result = await real!.Start();
-            // The handler's parameters ride on its error, snapshotted here, not in the handler.
-            if (!result.Success && result.Error is { } err)
-            {
-                err.Params ??= real.SnapshotParams();
-                call.Record(err, context);
-            }
-            return result;
+            result = await real!.Start();
         }
+        // a program's error that travelled as an exception is the action's answer, whole
+        catch (global::app.error.AppException ex) { result = context.Error(ex.Error); }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            // A typed AppException carries a domain Key (VariableNotFound, GoalNotFound, …) —
-            // kept; a bare exception defaults to ServiceError.
-            var appEx = ex as global::app.error.AppException;
-            var serviceErr = new global::app.error.ServiceError(
-                ex.Message, Step!, call.SnapshotChain(), appEx?.Key ?? "ServiceError", appEx?.StatusCode ?? 400) { Exception = ex };
-            serviceErr.Params = real?.SnapshotParams();
-            call.Record(serviceErr, context);
-            return context.Error(serviceErr);
+            result = context.Error(new global::app.error.ServiceError(ex.Message, "ServiceError", 500) { Exception = ex });
         }
+        // A failure — returned or thrown — carries the handler's parameters and is recorded on the frame.
+        if (!result.Success && result.Error is { } err)
+        {
+            err.Params ??= real?.SnapshotParams();
+            call.Record(err, context);
+        }
+        return result;
     }
 
     /// <summary>This action, instantiated — the live object carrying its typed parameters and
