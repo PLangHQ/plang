@@ -324,14 +324,16 @@ public partial class @this
 
     /// <summary>What this carrier holds, handed to <paramref name="then"/> as a <typeparamref name="TAs"/> —
     /// or, when it failed or exits the goal (an ask the gate suspends on), this carrier itself; when what it
-    /// holds isn't one, a NotA error. Taken as held, never materialized: a reference hands itself, not its
-    /// content.</summary>
+    /// holds isn't one, a NotA error. A reference (<c>%x%</c>) is followed to what it names first (as the typed
+    /// Use resolves it); the value is taken as held, never materialized.</summary>
     public async System.Threading.Tasks.Task<@this> Use<TAs>(System.Func<TAs, System.Threading.Tasks.Task<@this>> then)
     {
         if (!Success || Exits) return this;
-        if (Peek() is not TAs held)
+        var carrier = await Follow(Context);
+        if (!carrier.Success || carrier.Exits) return carrier;
+        if (carrier.Peek() is not TAs held)
             return Context.Error(new global::app.error.Error(
-                $"'{Name}' is a {Type.Name}, not a {(global::app.type.item.@this.NameOf(typeof(TAs)))}", "NotA", 400));
+                $"'{Name}' is a {carrier.Type.Name}, not a {(global::app.type.item.@this.NameOf(typeof(TAs)))}", "NotA", 400));
         return await then(held);
     }
 

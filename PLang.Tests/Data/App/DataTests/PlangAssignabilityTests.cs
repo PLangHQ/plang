@@ -78,6 +78,24 @@ public class PlangAssignabilityTests
         await Assert.That(source.Peek()).IsTypeOf<global::app.type.item.variable.@this>();
     }
 
+    // Use<TAs> on a carrier naming a variable hands what the name holds — both Use doors agree on what a
+    // carrier is.
+    [Test]
+    public async Task UseAs_OfAReference_HandsWhatItNames()
+    {
+        var ctx = _app.actor.list.User.Context;
+        var list = new global::app.type.item.list.@this();
+        list.Add((global::app.type.item.text.@this)"a");
+        await ctx.Variable.Set("items", list);
+        var source = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items"), context: ctx);
+
+        global::app.type.item.list.@this? handed = null;
+        var answer = await ((global::app.data.@this)source).Use<global::app.type.item.list.@this>(held => { handed = held; return Task.FromResult(ctx.Ok()); });
+
+        await answer.IsSuccess();
+        await Assert.That(handed).IsSameReferenceAs(list);
+    }
+
     [Test]
     public async Task EnumerateItems_NumberValue_YieldsOneWholeItem()
     {
