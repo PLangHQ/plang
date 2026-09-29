@@ -34,4 +34,8 @@ public sealed record ReadContext(
     // The variables the row being read holds, as its .pr "variable" list says — each template
     // born under this read takes the ones written in it, so loading never parses. Null outside a
     // .pr row: a template born at build or at run parses itself.
-    IReadOnlyList<global::app.type.item.variable.@this>? Variable = null);
+    IReadOnlyList<global::app.type.item.variable.@this>? Variable = null,
+    // Where the content being read came from — the file its bytes were read off. A value born under
+    // this read (a goal from its .pr) is born holding it, and a refusal names it. Null for content
+    // with no location (a channel read, an http body).
+    global::app.type.item.path.@this? Origin = null);

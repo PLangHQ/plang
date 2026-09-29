@@ -86,18 +86,16 @@ public sealed partial class @this : global::app.type.item.path.@this
 
         var resolved = rawPath;
 
-        // Relative paths resolve against the goal's folder. Prefer the runtime
-        // directory derived from the .pr's on-disk location — Goal.Path is the
-        // build-time identity (parent-perspective in child Apps) and would
-        // mis-resolve. Fall back to Goal.Path's directory for in-memory goals
-        // that have no LoadedFromPrPath.
+        // Relative paths resolve against the goal's folder. Prefer the folder its .pr
+        // was read from — Goal.Path is the build-time identity (parent-perspective in
+        // child Apps) and would mis-resolve. Fall back to Goal.Path's directory for
+        // in-memory goals, which were read from no file.
         if (!rawPath.StartsWith('/') && !rawPath.StartsWith('\\') && !rawPath.Contains("://"))
         {
             var goal = context.CallStack.Goal;
-            var runtimeDir = goal?.GetRuntimeDirectory();
-            if (runtimeDir != null)
+            if (goal?.Folder is { } folder)
             {
-                resolved = PathHelper.Combine(runtimeDir.Absolute, rawPath);
+                resolved = PathHelper.Combine(folder.Absolute, rawPath);
             }
             else
             {

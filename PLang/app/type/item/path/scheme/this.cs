@@ -51,7 +51,7 @@ public sealed class SchemeNotRegistered : global::app.error.AppException
     public string Scheme { get; }
     public SchemeNotRegistered(string scheme)
         : base(new global::app.error.Error($"No path scheme registered for '{scheme}'.", "SchemeNotRegistered", 400)
-            { FixSuggestion = $"Add a path kind for scheme '{scheme}' (app.Type.Kind.Add(new path.scheme.@this(…))), or use a bare/file:// path." })
+            { FixSuggestion = "Use a path plang reads: a bare path (/folder/file.txt), a file:// path, or an http(s):// url." })
     {
         Scheme = scheme;
     }

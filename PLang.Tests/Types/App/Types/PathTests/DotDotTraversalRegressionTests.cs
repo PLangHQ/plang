@@ -53,14 +53,14 @@ public class DotDotTraversalRegressionTests
     public async Task FilePath_Resolve_RelativeWithDotDot_FromGoalRuntimeDir_LeavesRoot()
     {
         var (app, context, root) = MakeApp();
-        // Stage a goal whose LoadedFromPrPath points inside root, so
-        // GetRuntimeDirectory returns <root>/subdir/.
+        // Stage a goal whose Origin points inside root, so
+        // its Folder is <root>/subdir/.
         var prPath = Path.Resolve(System.IO.Path.Combine(root, "subdir", ".build", "probe.pr"), context);
         var goal = new Goal
         {
             Name = "Probe",
             Path = Path.Resolve(System.IO.Path.Combine(root, "subdir", "probe.goal"), context),
-            LoadedFromPrPath = prPath
+            Origin = prPath
         };
         await using var inGoal = context.CallStack.Push(goal);
 
@@ -99,7 +99,7 @@ public class DotDotTraversalRegressionTests
             {
                 Name = "Probe",
                 Path = Path.Resolve(System.IO.Path.Combine(root, "subdir", "probe.goal"), context),
-                LoadedFromPrPath = prPath
+                Origin = prPath
             });
 
             var relative = "../../" + System.IO.Path.GetFileName(secretPath);

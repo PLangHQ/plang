@@ -70,7 +70,7 @@ public abstract class @this : global::app.type.item.@this
     {
         var sample = await Content(data.Context);
         if (!sample.Success) { data.Fail(sample.Error!); return Absent; }
-        var read = await _format!.Decode(Bytes, data.Context, template: Template);
+        var read = await _format!.Decode(Bytes, data.Context, template: Template, origin: Path);
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
         // what the decode answers — a template's render at this use, which its Data never keeps
         var answer = await read.Value();

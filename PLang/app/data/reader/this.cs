@@ -93,7 +93,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
             // An authored row marked a template names its variables; one without the list is an older
             // .pr (rebuild), never parsed on load.
             if (ctx.Template != null && typeRef!.Template != null && variables == null)
-                throw new global::app.error.PrFormatOutdatedException($"'{name}' is a template without its variable list");
+                throw new global::app.error.PrFormatOutdatedException($"'{name}' is a template without its variable list", ctx.Origin);
             var utf8 = new System.Text.Json.Utf8JsonReader(raw);
             utf8.Read();
             var held = new global::app.type.item.kind.json.Reader(utf8, raw);

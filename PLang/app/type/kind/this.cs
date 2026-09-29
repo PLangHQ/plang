@@ -200,15 +200,16 @@ public class @this
     /// url's content, an http body). By default the bytes are a value of this kind's type, left unread until
     /// touched (<c>{image, png}</c>, <c>{text}</c>); a kind whose content is a whole Data (plang's own
     /// format) overrides it. Born with the caller's context; with a <paramref name="template"/> the content is
-    /// born a template (a file read with its variables resolved).
+    /// born a template (a file read with its variables resolved). Content read off a file is born knowing it
+    /// (<paramref name="origin"/>); null for content with no location.
     /// </summary>
     public virtual async global::System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
         global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,
-        System.Threading.CancellationToken ct = default, string? template = null)
+        System.Threading.CancellationToken ct = default, string? template = null, global::app.type.item.path.@this? origin = null)
     {
         // content decoded into a new value is a birth: it comes through its type's on.create
         var type = context.App.type.list[new global::app.type.@this(Owner ?? "binary", IsEmpty ? null : Name, template: template), context];
-        return await type.Create(raw, context, name);
+        return await type.Create(raw, context, name, origin);
     }
 
     /// <summary>

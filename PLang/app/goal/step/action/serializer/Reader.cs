@@ -42,7 +42,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.goal.step.action.@this? action = null;
         global::app.goal.step.action.@this Made()
             => action ??= module == null || actionName == null
-                ? throw new global::app.error.PrFormatOutdatedException("an action's module and name come first")
+                ? throw new global::app.error.PrFormatOutdatedException("an action's module and name come first", ctx.Origin)
                 // Provenance at birth: an action READ is authored, not injected — so it is non-synthetic. A name
                 // the module doesn't carry still reads (validation names it), as a plain action.
                 : module[actionName]?.Program(_step)
@@ -80,7 +80,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 // The old key: skipping it would load the action with no properties, silently.
                 case "parameter":
                 case "parameters":
-                    throw new global::app.error.PrFormatOutdatedException($"action key '{name}' is now 'property'");
+                    throw new global::app.error.PrFormatOutdatedException($"action key '{name}' is now 'property'", ctx.Origin);
                 case "child":
                     // chain self-feeds: a child step's goal is this action's step's goal
                     var childSteps = new global::app.goal.step.list.@this();
@@ -94,7 +94,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     break;
                 // a key this format doesn't write is an older builder's: skipping it would load a
                 // different action, silently
-                default: throw new global::app.error.PrFormatOutdatedException($"action key '{name}' isn't in this .pr format");
+                default: throw new global::app.error.PrFormatOutdatedException($"action key '{name}' isn't in this .pr format", ctx.Origin);
             }
         }
         reader.EndObject();
@@ -136,7 +136,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     break;
                 case "variable": variables = new global::app.type.item.variable.serializer.Entry().Read(ref row, ctx); break;
                 case "properties": properties = global::app.data.Properties.Read(ref row.Inner); break;
-                default: throw new global::app.error.PrFormatOutdatedException($"property key '{key}' isn't in this .pr format");
+                default: throw new global::app.error.PrFormatOutdatedException($"property key '{key}' isn't in this .pr format", ctx.Origin);
             }
         }
         row.EndObject();
@@ -145,7 +145,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             // A row marked a template names its variables; one without the list is an older .pr
             // (rebuild), never parsed on load.
             if (type!.Template != null && variables == null)
-                throw new global::app.error.PrFormatOutdatedException($"property '{name}' is a template without its variable list");
+                throw new global::app.error.PrFormatOutdatedException($"property '{name}' is a template without its variable list", ctx.Origin);
             var bytes = new System.Text.Json.Utf8JsonReader(held);
             bytes.Read();
             var slot = new global::app.type.item.kind.json.Reader(bytes, held);

@@ -46,7 +46,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                         {
                             case "number": number = (int)reader.Long(); break;
                             case "indent": indent = (int)reader.Long(); break;
-                            default: throw new global::app.error.PrFormatOutdatedException($"line key '{field}' isn't in this .pr format");
+                            default: throw new global::app.error.PrFormatOutdatedException($"line key '{field}' isn't in this .pr format", ctx.Origin);
                         }
                     reader.EndObject();
                     step.Line = new global::app.goal.step.line.@this { Number = number, Indent = indent };
@@ -75,7 +75,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                             {
                                 case "key": key = reader.String(); break;
                                 case "message": message = reader.String(); break;
-                                default: throw new global::app.error.PrFormatOutdatedException($"warning key '{field}' isn't in this .pr format");
+                                default: throw new global::app.error.PrFormatOutdatedException($"warning key '{field}' isn't in this .pr format", ctx.Origin);
                             }
                         reader.EndObject();
                         step.Warning.Add(new global::app.warning.@this { Key = key, Message = message });
@@ -83,7 +83,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     reader.EndArray();
                     break;
                 // Every key the step writes is read above; an unknown one means another builder wrote it.
-                default: throw new global::app.error.PrFormatOutdatedException($"step key '{name}' isn't in this .pr format");
+                default: throw new global::app.error.PrFormatOutdatedException($"step key '{name}' isn't in this .pr format", ctx.Origin);
             }
         }
         reader.EndObject();

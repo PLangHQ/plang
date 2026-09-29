@@ -253,32 +253,34 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public new System.Threading.Tasks.ValueTask<global::app.data.@this> Create(object? raw, global::app.actor.context.@this context)
         => Create(raw, context, "");
 
-    /// <summary>The birth (<see cref="Create(object?, actor.context.@this)"/>) of a value named <paramref name="name"/>.</summary>
+    /// <summary>The birth (<see cref="Create(object?, actor.context.@this)"/>) of a value named <paramref name="name"/>
+    /// — content read off <paramref name="origin"/> (a file) is born knowing it.</summary>
     public System.Threading.Tasks.ValueTask<global::app.data.@this> Create(object? raw,
-        global::app.actor.context.@this context, string name)
+        global::app.actor.context.@this context, string name, global::app.type.item.path.@this? origin = null)
     {
         // nothing bound: the value, made — nothing awaited, nothing else allocated
         var events = on.create;
         return events.IsBound(this, context)
-            ? Born(events, raw, context, name)
-            : new(Made(raw, context, name));
+            ? Born(events, raw, context, name, origin)
+            : new(Made(raw, context, name, origin));
     }
 
     // The birth with something bound: before is handed the raw, after the value.
     private async System.Threading.Tasks.ValueTask<global::app.data.@this> Born(global::app.@event.on.create events,
-        object? raw, global::app.actor.context.@this context, string name)
+        object? raw, global::app.actor.context.@this context, string name, global::app.type.item.path.@this? origin)
     {
         if (await events.Before(this, context, new global::app.data.@this(name, raw, context: context)) is { } answer
             && (!answer.Success || answer.Handled))
             return answer;
-        var made = Made(raw, context, name);
+        var made = Made(raw, context, name, origin);
         return made.Success ? await events.After(this, made, context) : made;
     }
 
     // The value a birth makes, or the reason this type declined to make it.
-    private global::app.data.@this Made(object? raw, global::app.actor.context.@this context, string name)
+    private global::app.data.@this Made(object? raw, global::app.actor.context.@this context, string name,
+        global::app.type.item.path.@this? origin)
     {
-        try { return new global::app.data.@this(name, Make(raw, context), context: context); }
+        try { return new global::app.data.@this(name, Make(raw, context, origin), context: context); }
         catch (global::app.error.DeclinedException declined) { return context.Error(declined.Error); }
     }
 
@@ -289,7 +291,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // scalar → born through the family lift, then refined. ALWAYS returns a value (never null); a
     // bad conversion throws (the throw boundary — rides MaterializeFailed like a reader parse).
     // Fires nothing: it is the build a birth runs, and every re-type inside the type system.
-    internal item.@this Make(object? raw, global::app.actor.context.@this? context)
+    internal item.@this Make(object? raw, global::app.actor.context.@this? context, global::app.type.item.path.@this? origin = null)
     {
         // context-never-null: a value is born WITH context. A null here is a construction site that
         // forgot to pass one — fail with a pointer, not an NRE deep in materialization.
@@ -305,9 +307,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             return app.type.item.variable.@this.Resolve(rawName, context);
 
         // Wire-raw (string / byte[]) → defer through a source declared as THIS type, parsed lazily on
-        // first use. The source carries the type's Name/Kind/Strict/template and reads its own raw.
+        // first use. The source carries the type's Name/Kind/Strict/template and reads its own raw —
+        // knowing where the raw came from, when it was read off a file.
         if (raw is string or byte[])
-            return new item.source(raw, this);
+            return new item.source(raw, this, origin: origin);
 
         // A container / domain value is already native (dict, list, path, image, …) — hold it; a value of a
         // type this type takes (a path declared a file, a list declared list<path>) is made into this type by

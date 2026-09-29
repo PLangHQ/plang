@@ -56,13 +56,12 @@ public class GoalPathTypingTests
         await Assert.That(rel).IsEqualTo("/.build/start.pr");
     }
 
-    [Test] public async Task GoalGetRuntimeDirectory_DerivesFromLoadedFromPrPath()
+    [Test] public async Task GoalFolder_IsTheFolderAboveItsOrigin()
     {
         var (app, root) = MakeApp();
         var context = app.actor.list.User.Context;
-        var goal = new Goal { Name = "Test" };
-        goal.LoadedFromPrPath = global::app.type.item.path.@this.Resolve("/Cache/.build/test.pr", context);
-        var dir = goal.GetRuntimeDirectory();
+        var goal = new Goal { Name = "Test", Origin = global::app.type.item.path.@this.Resolve("/Cache/.build/test.pr", context) };
+        var dir = goal.Folder;
         await Assert.That(dir).IsNotNull();
         await Assert.That(dir!.Relative(context).Replace('\\', '/').TrimStart('/').TrimStart('.').TrimStart('/'))
             .Contains("Cache");

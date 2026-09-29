@@ -41,7 +41,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     private global::app.goal.@this Walk(ref global::app.type.item.kind.json.Reader reader,
         global::app.type.reader.ReadContext ctx, global::app.goal.@this? parent = null)
     {
-        var goal = new global::app.goal.@this { Parent = parent };
+        var goal = new global::app.goal.@this { Parent = parent, Origin = ctx.Origin };
         var step = new global::app.goal.step.serializer.Reader(goal);   // born holding this goal
 
         var named = false;
@@ -87,11 +87,11 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     break;
                 // Every key the goal writes is read above. A key it doesn't know means another builder
                 // wrote this .pr — skipping it would load a goal missing what that key held, silently.
-                default: throw new global::app.error.PrFormatOutdatedException($"key '{field}' isn't in this .pr format");
+                default: throw new global::app.error.PrFormatOutdatedException($"key '{field}' isn't in this .pr format", ctx.Origin);
             }
         }
         reader.EndObject();
-        if (!named) throw new global::app.error.PrFormatOutdatedException("it has no 'name'");
+        if (!named) throw new global::app.error.PrFormatOutdatedException("it has no 'name'", ctx.Origin);
         return goal;
     }
 }

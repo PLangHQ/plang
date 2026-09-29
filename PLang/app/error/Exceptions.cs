@@ -24,8 +24,10 @@ public class AppException : Exception
 /// </summary>
 public class PrFormatOutdatedException : AppException
 {
-    public PrFormatOutdatedException(string reason)
-        : base($"{reason} — it was built by an older builder. Rebuild the goal.", "PrFormatOutdated", 400) { }
+    /// <summary>Why <paramref name="origin"/> — the .pr being read, when the read knows it — isn't this format.</summary>
+    public PrFormatOutdatedException(string reason, global::app.type.item.path.@this? origin)
+        : base($"{(origin != null ? $"{origin}: " : "")}{reason} — it was built by an older builder. Rebuild the goal.",
+            "PrFormatOutdated", 400) { }
 }
 
 /// <summary>

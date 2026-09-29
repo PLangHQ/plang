@@ -87,10 +87,19 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     {
         if (slot is not global::app.type.@this type)
             throw new InvalidOperationException($"the types hold types, not {slot?.GetType().Name ?? "null"}.");
+        if (Clash(type) is { } clash) throw new InvalidOperationException(clash.Message);
+    }
+
+    // One name, one class: the first name <paramref name="type"/> answers to — its word, its namespace, its
+    // aliases — that another class already owns; null when every one is its own.
+    private error.Error? Clash(global::app.type.@this type)
+    {
         foreach (var claim in type.Claims)
             if (Items().FirstOrDefault(t => t.Names(claim)) is { } owner && owner.ClrType != type.ClrType)
-                throw new InvalidOperationException(
-                    $"type name '{claim}' is claimed by both {owner.ClrType?.FullName} and {type.ClrType?.FullName} — one name, one class.");
+                return new error.Error(
+                    $"type name '{claim}' is claimed by both {owner.ClrType?.FullName} and {type.ClrType?.FullName} — one name, one class.",
+                    "TypeLoadCollision", 400);
+        return null;
     }
 
     protected override void Admit(global::app.type.item.list.@this other)
@@ -123,13 +132,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             Load();
             if (Items().FirstOrDefault(t => t.Names(claimed)) is { } owner && owner.ClrType == clr)
                 return context.Ok(owner);
-            // every name it answers to — its word, its namespace, its aliases — is one another class may own
             var named = new global::app.type.@this(claimed, clr, null);
-            foreach (var claim in named.Claims)
-                if (Items().FirstOrDefault(t => t.Names(claim)) is { } other && other.ClrType != clr)
-                    return context.Error(new error.Error(
-                        $"type name '{claim}' is claimed by both {other.ClrType?.FullName} and {clr.FullName} — one name, one class.",
-                        "TypeLoadCollision", 400));
+            if (Clash(named) is { } clash) return context.Error(clash);
             // Its own name first, so its facts can name a property of its own type.
             base.Add(named);
             var added = new global::app.type.@this(claimed, clr, this);

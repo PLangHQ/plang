@@ -28,6 +28,9 @@ public class source : @this
     /// <inheritdoc/>
     public override IReadOnlyList<global::app.type.item.variable.@this> Variable => _variable;
 
+    // Where the raw came from — the file it was read off; null for raw with no location. Its read hands it down.
+    private readonly global::app.type.item.path.@this? _origin;
+
     // A full-match %ref% (`%!data%`, `%messages%`) is a REFERENCE, not content — decided ONCE
     // at birth: the raw form and the authored-template flag are immutable, so reading it back is
     // a bool check (references re-resolve every read — Cacheable=false).
@@ -42,10 +45,12 @@ public class source : @this
     /// all live on it) and reads its own raw through the (type, kind) reader — no format name. It
     /// stores no context: the load uses the asking Data's. A template source takes the
     /// <paramref name="variable"/>s its row's list says it holds; without one it parses its raw.</summary>
-    public source(object value, global::app.type.@this type, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
+    public source(object value, global::app.type.@this type, IReadOnlyList<global::app.type.item.variable.@this>? variable = null,
+        global::app.type.item.path.@this? origin = null)
     {
         _value = value ?? throw new System.ArgumentNullException(nameof(value));
         _type = type ?? throw new System.ArgumentNullException(nameof(type));
+        _origin = origin;
         // Trust the builder's template flag (on the declaration), not the content: a structural
         // string the builder did not mark stays literal content. A BUILD-TIME security gate —
         // content that merely looks like "%x%" must NOT auto-resolve to a variable; only a
@@ -209,13 +214,13 @@ public class source : @this
         var typeReader = context.App.type.list.Reader.Reader(_type.Name, kind, context);
         var reader = new global::app.type.format.value.Reader(_value);
         return typeReader.Read(ref reader, kind,
-            new global::app.type.reader.ReadContext(context, _type.Template, Variable: _variable));
+            new global::app.type.reader.ReadContext(context, _type.Template, Variable: _variable, Origin: _origin));
     }
 
     /// <summary>Re-birth under a new declaration — the source owns its own re-typing (kills the
     /// type entity reaching into a source's raw/format). The wire override carries its captured
     /// serializer across, so a re-declared wire still decodes through its capturer.</summary>
-    internal virtual source Declared(global::app.type.@this type) => new source(_value, type, _variable);
+    internal virtual source Declared(global::app.type.@this type) => new source(_value, type, _variable, _origin);
 
     /// <summary>
     /// Navigation is first-touch: a source is still its raw form (bytes / json text),

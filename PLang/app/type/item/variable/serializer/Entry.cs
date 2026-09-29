@@ -40,12 +40,12 @@ public sealed class Entry
                 {
                     case "text": text = reader.String(); break;
                     case "code": hops = Code(ref reader, ctx); break;
-                    default: throw new global::app.error.PrFormatOutdatedException($"variable key '{key}' isn't in this .pr format");
+                    default: throw new global::app.error.PrFormatOutdatedException($"variable key '{key}' isn't in this .pr format", ctx.Origin);
                 }
             }
             reader.EndObject();
             if (text == null || hops is not { Count: > 0 } || hops[0] is not code.Variable)
-                throw new global::app.error.PrFormatOutdatedException("a variable in the .pr is its text and its code, the root first");
+                throw new global::app.error.PrFormatOutdatedException("a variable in the .pr is its text and its code, the root first", ctx.Origin);
             read.Add(new variable.@this(text, new code.@this(hops)));
         }
         reader.EndArray();
@@ -60,7 +60,7 @@ public sealed class Entry
         {
             reader.BeginObject();
             if (!reader.NextName(out var kind))
-                throw new global::app.error.PrFormatOutdatedException("a hop in the .pr names its kind");
+                throw new global::app.error.PrFormatOutdatedException("a hop in the .pr names its kind", ctx.Origin);
             string? name = null;
             code.Hop hop;
             switch (kind)
@@ -80,7 +80,7 @@ public sealed class Entry
                     name = reader.String();
                     var values = new List<global::app.type.item.@this>();
                     if (!reader.NextName(out var parameter) || parameter != "parameter")
-                        throw new global::app.error.PrFormatOutdatedException("a method in the .pr lists its parameter");
+                        throw new global::app.error.PrFormatOutdatedException("a method in the .pr lists its parameter", ctx.Origin);
                     reader.BeginArray();
                     var rows = new global::app.data.reader.@this();
                     while (reader.NextElement()) values.Add(rows.Read(ref reader, ctx).Peek());
@@ -88,10 +88,10 @@ public sealed class Entry
                     hop = new code.Method($".{name}(…)", name, new global::app.type.item.list.@this(values));
                     break;
                 default:
-                    throw new global::app.error.PrFormatOutdatedException($"hop kind '{kind}' isn't in this .pr format");
+                    throw new global::app.error.PrFormatOutdatedException($"hop kind '{kind}' isn't in this .pr format", ctx.Origin);
             }
             if (reader.NextName(out var extra))
-                throw new global::app.error.PrFormatOutdatedException($"hop key '{extra}' isn't in this .pr format");
+                throw new global::app.error.PrFormatOutdatedException($"hop key '{extra}' isn't in this .pr format", ctx.Origin);
             reader.EndObject();
             hops.Add(hop);
         }
@@ -104,16 +104,16 @@ public sealed class Entry
     {
         reader.BeginObject();
         if (!reader.NextName(out var kind))
-            throw new global::app.error.PrFormatOutdatedException("an index in the .pr names its key");
+            throw new global::app.error.PrFormatOutdatedException("an index in the .pr names its key", ctx.Origin);
         global::app.type.item.@this key = kind switch
         {
             "number" => global::app.type.item.number.@this.Create(reader.Number())!,
             "text" => new global::app.type.item.text.@this(reader.String()),
             "variable" => Read(ref reader, ctx).Single(),
-            _ => throw new global::app.error.PrFormatOutdatedException($"index key '{kind}' isn't in this .pr format"),
+            _ => throw new global::app.error.PrFormatOutdatedException($"index key '{kind}' isn't in this .pr format", ctx.Origin),
         };
         if (reader.NextName(out var extra))
-            throw new global::app.error.PrFormatOutdatedException($"index key '{extra}' isn't in this .pr format");
+            throw new global::app.error.PrFormatOutdatedException($"index key '{extra}' isn't in this .pr format", ctx.Origin);
         reader.EndObject();
         return key;
     }

@@ -75,31 +75,28 @@ public sealed partial class @this
     public global::app.type.item.path.@this? Path { get; set; }
 
     /// <summary>
-    /// On-disk .pr path the goal was loaded from. Set by the goal collection's Load.
-    /// Used by GetRuntimeDirectory to derive the goal's actual directory in the
-    /// current App's filesystem — distinct from Path (which is the build-time
-    /// identity, parent-perspective for goals run inside a child App).
+    /// The .pr this goal was read from — a birth fact: the read that made it (and every sub-goal of its file)
+    /// carried it. Distinct from Path (the build-time identity, parent-perspective for goals run inside a child
+    /// App). Null for a goal that wasn't read from a file (built in memory by tests / fixtures).
     /// </summary>
     [JsonIgnore, LlmIgnore]
-    public global::app.type.item.path.@this? LoadedFromPrPath { get; set; }
+    public global::app.type.item.path.@this? Origin { get; init; }
 
     /// <summary>
-    /// Returns the on-disk directory that contains this goal's source
-    /// .goal file in the current App's filesystem — derived from LoadedFromPrPath
-    /// (a `<dir>/.build/<name>.pr`-shaped path) so it remains correct in child
-    /// Apps where Path was baked from a different root. Returns null when the
-    /// goal wasn't loaded from a file (in-memory goals built by tests / fixtures).
+    /// The folder holding this goal's source .goal file in the current App's filesystem — the folder above
+    /// its <see cref="Origin"/> (a <c>&lt;dir&gt;/.build/&lt;name&gt;.pr</c>), so it stays right in a child App
+    /// where Path was baked from a different root. Null when the goal wasn't read from a file.
     /// </summary>
-    public global::app.type.item.path.@this? GetRuntimeDirectory()
+    public global::app.type.item.path.@this? Folder
     {
-        var pr = LoadedFromPrPath;
-        if (pr == null) return null;
-        var prParent = pr.Parent;
-        if (prParent == null) return null;
-        // The .build parent's own parent is the goal folder. Validate the .build
-        // segment so naive in-memory paths don't quietly return the wrong dir.
-        if (!string.Equals(prParent.FileName, ".build", StringComparison.OrdinalIgnoreCase)) return null;
-        return prParent.Parent;
+        get
+        {
+            // The .build parent's own parent is the goal folder. Validate the .build
+            // segment so naive in-memory paths don't quietly return the wrong dir.
+            if (Origin?.Parent is not { } build) return null;
+            if (!string.Equals(build.FileName, ".build", StringComparison.OrdinalIgnoreCase)) return null;
+            return build.Parent;
+        }
     }
 
     [Store, Debug]
@@ -363,20 +360,10 @@ public sealed partial class @this
                 return context.Error(read.Error ?? new global::app.error.Error(
                     $"Failed to parse goal file: {pr} — read produced {content.GetType().Name}, not a goal"));
 
-            // Where the .pr was loaded from — the goal's runtime directory derives from it, so a
-            // relative file.read resolves against the goal's actual on-disk folder.
-            goal.LoadedFromPrPath = pr;
-            foreach (var child in goal.Child.Items()) child.LoadedFromPrPath = pr;
-
             app.goal.list.Add(goal);
             return await goal.on.load.After(goal, read, context);
         }
-        // The reader doesn't know its file; the load does — a refused .pr names itself.
-        catch (global::app.error.PrFormatOutdatedException outdated)
-        {
-            return context.Error(new global::app.error.Error($"{pr}: {outdated.Message}", outdated.Error.Key, outdated.Error.StatusCode)
-                { Exception = outdated });
-        }
+        // a refused .pr names itself — its reader was born knowing the file
         catch (Exception ex)
         {
             return context.Error(global::app.error.Error.FromException(ex));
