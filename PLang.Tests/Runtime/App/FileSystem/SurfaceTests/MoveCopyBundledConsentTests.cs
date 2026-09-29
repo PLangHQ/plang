@@ -161,7 +161,7 @@ public class MoveCopyBundledConsentTests
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
-            => Task.FromResult(action.Context.Error(new global::app.error.ServiceError("no interactive answerer", "ChannelEof", 400)));
+            => Task.FromResult(action.Context.Error(new global::app.error.NoAnswer("no interactive answerer")));
     }
 
     // No answer is no consent: denied at once, never asked again (a channel that can't answer would loop).

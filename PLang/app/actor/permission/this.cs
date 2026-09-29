@@ -46,11 +46,12 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
                 Question = new global::app.data.@this<global::app.type.item.text.@this>("", prefix + question, context: context),
             }, context);
             // decided before the exit check, which would otherwise hand the failed ask back as itself
-            if (!asked.Success && asked.Error!.Key == "ChannelEof")
+            if (!asked.Success && asked.Error!.Unanswered)
                 return context.Error(new global::app.error.PermissionDenied(request) { list = [asked.Error] });
             if (asked.ShouldExit() || !asked.Success) return asked;
 
-            var answer = (await asked.Value() as global::app.module.output.Ask)?.Answer?.Trim();
+            // an ask answers as an Ask (every input channel's answer is one) — opened through its typed door
+            var answer = (await global::app.data.@this<global::app.module.output.Ask>.From(asked).Value())?.Answer?.Trim();
             switch (answer)
             {
                 case "a": return await granted(true);

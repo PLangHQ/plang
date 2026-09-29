@@ -135,9 +135,8 @@ public sealed class @this : global::app.channel.type.session.@this
             // answerer (closed pipe, redirected stdin, non-interactive runner).
             // Fail-fast instead of letting the caller loop on "" forever.
             if (line == null)
-                return action.Context.Error(new ServiceError(
-                    $"Channel '{Name}' has no interactive answerer (stream EOF)",
-                    "ChannelEof", 400));
+                return action.Context.Error(new global::app.error.NoAnswer(
+                    $"Channel '{Name}' has no interactive answerer (stream EOF)"));
             return action.Context.Ok<module.output.Ask>(new module.output.Ask(line));
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException

@@ -134,6 +134,10 @@ public class Error : global::app.type.item.@this
     /// error keeps them (<see cref="Keeps"/>); null otherwise (variables can hold secrets).</summary>
     public global::app.type.item.dict.@this? Variables { get; set; }
 
+    /// <summary>True when this error is that nobody could answer an ask (a closed input) — a consent asked of no one
+    /// is refused, not failed.</summary>
+    public virtual bool Unanswered => false;
+
     /// <summary>Whether this error keeps the variables as they are when it is recorded — an error keeps them
     /// under <c>--debug</c> only; an assertion always does (its report shows them).</summary>
     protected internal virtual bool Keeps(actor.context.@this context) => context.App.Debug != null;

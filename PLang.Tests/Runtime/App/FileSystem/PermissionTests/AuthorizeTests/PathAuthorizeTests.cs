@@ -117,25 +117,24 @@ public class PathAuthorizeTests
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
     }
 
-    /// Stub channel whose Ask fails with the given key — the stream's EOF answer ("ChannelEof") or any other.
-    private sealed class FailingAskChannel(string key) : global::app.channel.@this
+    /// Stub channel whose Ask fails with the given error — nobody able to answer (NoAnswer, the stream's end) or
+    /// any other failure.
+    private sealed class FailingAskChannel(global::app.error.Error failure) : global::app.channel.@this
     {
-        public FailingAskChannel() : this("ChannelEof") { }
-        private readonly string _key = key;
+        public FailingAskChannel(string key) : this(new global::app.error.ServiceError($"Channel 'input' failed ({key})", key, 400)) { }
         public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok());
         public override Task<global::app.data.@this> Read(CancellationToken ct = default)
             => Task.FromResult(global::app.data.@this.Ok((object?)null));
         public override Task<global::app.data.@this> Ask(
             global::app.module.output.ask action, CancellationToken ct = default)
-            => Task.FromResult(action.Context.Error(new global::app.error.ServiceError(
-                $"Channel 'input' failed ({_key})", _key, 400)));
+            => Task.FromResult(action.Context.Error(failure));
     }
 
     [Test] public async Task Authorize_NobodyCanAnswer_IsPermissionDenied_WithTheChannelFailureAsCause()
     {
         var app = NewApp();
-        app.actor.list.User.Channel.Register(new FailingAskChannel("ChannelEof") { Name = "input", Direction = global::app.channel.ChannelDirection.Bidirectional });
+        app.actor.list.User.Channel.Register(new FailingAskChannel(new global::app.error.NoAnswer("Channel 'input' has no interactive answerer")) { Name = "input", Direction = global::app.channel.ChannelDirection.Bidirectional });
         var path = new Path("/p");
 
         var result = await path.Authorize(global::app.type.item.permission.Verb.Read, app.actor.list.User.Context);
