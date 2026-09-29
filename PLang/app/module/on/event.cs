@@ -42,10 +42,7 @@ public partial class OnEvent : IContext
         {
             reached = await hop.Start(reached, Context);
             if (reached.IsInitialized && reached.Success) continue;
-            var warning = new global::app.type.item.dict.@this()
-                .Set("action", $"{__action.Module}.{__action.Name}")
-                .Set("message", $"on.event: '{path.Text}' reaches nothing at '{hop.Text}' at build time — it binds only if that exists when the step runs");
-            if (Context.Actor.Channel.Get("builder") is { } builder) await builder.WriteAsync(Context.Ok(warning));
+            await __action.Warn($"on.event: '{path.Text}' reaches nothing at '{hop.Text}' at build time — it binds only if that exists when the step runs", Context);
             break;
         }
         return Context.Ok();

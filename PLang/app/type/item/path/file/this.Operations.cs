@@ -68,20 +68,26 @@ public sealed partial class @this
         return await context.App.type.list[new global::app.type.@this("file", (string?)null, template: marked), context].Create(this, context, FileName);
     }
 
-    /// <summary>The <c>file</c> reference's type; a location with no known format expects nothing. A file
-    /// missing now (or one the build may not stat) is a warning on the build's "builder" channel, never a
-    /// failure — the read at run asks again under its own grant.</summary>
-    public override async Task<data.@this> Expect(actor.context.@this context)
+    /// <summary>The <c>file</c> reference's type; a location with no known format expects nothing.</summary>
+    public override Task<data.@this> Expect(actor.context.@this context)
+        => Task.FromResult(Known(context)
+            ? context.Ok(context.App.type.list[new global::app.type.item.file.@this(this, context).Type, context])
+            : context.Ok());
+
+    /// <summary>Why a file of a known format isn't there at build (missing, or one the build may not stat) —
+    /// for a warning, never a failure: the read at run asks again under its own grant. Null when it is there,
+    /// or its format is unknown.</summary>
+    public override async Task<string?> Absence(actor.context.@this context)
     {
-        if (string.IsNullOrEmpty(Extension) || MimeType(context) == "application/octet-stream") return context.Ok();
+        if (!Known(context)) return null;
         var exists = await ExistsAsync(context);
-        string? message = !exists.Success
+        return !exists.Success
             ? $"could not check '{this}': {exists.Error?.Message} ({exists.Error?.Key})"
             : !await exists.ToBooleanAsync() ? $"'{this}' does not exist on disk" : null;
-        if (message != null && context.Actor.Channel.Get("builder") is { } builder)
-            await builder.WriteAsync(context.Ok(new global::app.type.item.dict.@this().Set("message", message)));
-        return context.Ok(context.App.type.list[new global::app.type.item.file.@this(this, context).Type, context]);
     }
+
+    // A location whose extension names a format — its kind carries extensions ({binary, xyz} for an unknown one carries none).
+    private bool Known(actor.context.@this context) => Kind(context).kind.Extension.Count > 0;
 
     internal override async Task<data.@this<global::app.type.item.binary.@this>> Bytes(actor.context.@this context)
     {

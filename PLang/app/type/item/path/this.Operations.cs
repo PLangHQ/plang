@@ -67,6 +67,10 @@ public abstract partial class @this
     /// what a later step captures.</summary>
     public abstract Task<data.@this> Expect(actor.context.@this context);
 
+    /// <summary>Why this location isn't there at build, for a warning — null when the build doesn't ask (a url
+    /// is not fetched at build) or it is there.</summary>
+    public virtual Task<string?> Absence(actor.context.@this context) => Task.FromResult<string?>(null);
+
     /// <summary>The raw bytes at this location, through the gate — what a reference this path lands samples
     /// when its content is first touched. Content is the reference's (<see cref="Read"/>), not the path's.</summary>
     internal abstract Task<data.@this<global::app.type.item.binary.@this>> Bytes(actor.context.@this context);
