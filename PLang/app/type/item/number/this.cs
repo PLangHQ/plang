@@ -132,11 +132,26 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // Pass-through — a number already of the declared kind (or with none declared) rides out as it is.
         if (raw is @this same && (named is null || string.Equals(same.Kind.Name, named, System.StringComparison.OrdinalIgnoreCase)))
             return same;
-        if (named is not null && raw is global::app.type.item.@this value)
+        if (named is not null)
         {
             if (!Kinds.TryGetValue(named, out var kind))
             {
                 data.Fail(new global::app.error.Error($"Unknown number kind '{named}'.", "UnknownKind", 400));
+                return null;
+            }
+            // The declared kind builds from the value as it is — an item itself, a raw string as the text
+            // it is (so "3000000000" as uint is read as a uint, never through a long), a raw C# number as
+            // the number it is.
+            var value = raw switch
+            {
+                global::app.type.item.@this item => item,
+                string s => (global::app.type.item.text.@this)s,
+                _ => Create(raw),
+            };
+            if (value is null)
+            {
+                data.Fail(new global::app.error.Error(
+                    $"Cannot convert {raw?.GetType().Name} to number.", "NumberConversionFailed", 400));
                 return null;
             }
             try { return kind.Create(value); }
