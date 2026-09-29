@@ -1,16 +1,17 @@
 ## Now
 
-Done: 1–8h, 9a and 11a (see `test/plan/app-systems/done.list`). Now: 9c, then 9b's ruled leftovers, then the 9b+9c gate, then 10a → 10e.
+Done: 1–8h, 9a, 9b, 9c, 11a, 10a, and 10b's (A) and (B) (see `test/plan/app-systems/done.list`). Now: 10c (slices 1–3 done, 4 then 5), then 10d, then 10e.
 
-## 2026-09-28 night: Ingi asleep ("let him do what he can … you guys continue as much as you can")
+## 2026-09-29 early morning: status for Ingi
 
-~~The coder does ruled work only (decision 237)~~ **The coder is paused (decision 238).** Just before the night plan reached it, Ingi answered its 9c question in its own session with "STOP what you are doing and wait for the user to tell you how to proceed". A relayed "continue" doesn't override that, and I agreed it waits for Ingi directly. Nothing is uncommitted (last push 88aec49db). When Ingi says go, the night plan (237) is the queue.
-
-**Also waiting for Ingi (from the coder's 9c question):**
-9. **9c's collision:** `module/<m>/action/` puts the `list` module's actions inside `app/module/list/`, which is already the module registry (`app.module.list`); `module/module/action/` is the same for the `module` module. 9c needs a rule before any file moves.
-10. **9c's 370 files versus the no-sed rule:** one visible Edit per file, or one scripted replace with the diff shown?
+- **9c is done** (Ingi's rulings 239–241): handlers live at `app/module/<m>/<a>.cs`; the module registry dissolved into `list<module>` on the module type; `%!app.module%` is an empty module carrying `.list`.
+- **Ingi's review order is in force (247):** every coder commit is read in full, with its call path walked upstream. Two review batches (248, 249) produced about 20 fixes, all landed (250–262). The findings included a security bug in the consent prompt (an empty answer looped forever) and a url template bug. Gates now diff failing test *names* against the baseline file, and a count had hidden a regression.
+- **Eval round 26:** 63/64/63; the one silent is the known lone-`if` drift (221).
+- **Reversal to check (268):** `%!app.name%` is the asker's view of the app's name (settings are layered per actor), which reverses my own 264(4b). Making app-level settings global would let a user program or a remote caller rename the app for everyone.
 
 **Waiting for Ingi (don't touch):**
+0. **10b: a typed list's element births,** eager at the set or lazy on first read? (I lean lazy.) 10b's plan test waits on it.
+0b. **The LLM trace belongs to llm, not debug** (247): debug type-checks `OpenAi`, subscribes to its private C# events, filters llm's messages by role string, and holds llm's trace flags. Send the move to the coder?
 1. **Binding:** no `binding` (agreed). Open: what runs on an event (a goal, or also built-in behaviours like cache/timeout/retry?), where the C# handlers go (an interface such as `IEvent`, or actions), the name of one entry, and hit/miss as the cache's events.
 2. **variable.set:** `as <type>` as `type.Convert` (decision 236, held).
 3. **Keys:** (c) convert the stored key on read (decision 222; (b) is committed meanwhile).
@@ -18,7 +19,9 @@ Done: 1–8h, 9a and 11a (see `test/plan/app-systems/done.list`). Now: 9c, then 
 5. **`%!app…` reads:** is a node that doesn't exist an error (decision 226)?
 6. **environment.start:** delete it (decision 228)?
 7. **Timer:** a value the program holds (decision 229)?
-8. **Return depth:** move it onto the frames, or leave it as is? The plan is `test/plan/app-systems/start.md` (the why, each stage's developer payoff and decisions, how it's proven, the checks tests can't show), with `start.goal` beside it (each behaviour as a comment with the step that runs its test). The architect can't write outside `.bot/`, so edits to these go through the coder.
+8. **Return depth:** move it onto the frames, or leave it as is?
+
+The plan is `test/plan/app-systems/start.md` (the why, each stage's developer payoff and decisions, how it's proven, the checks tests can't show), with `start.goal` beside it (each behaviour as a comment with the step that runs its test). The architect can't write outside `.bot/`, so edits to these go through the coder.
 
 - A plan's tests live in its own folder, lowercase and singular: `test/plan/app-systems/`, each at the path of what it tests (`module/on/cache/…`). They're built only when Ingi says so; the coder may ask.
 - Hand-over: the spec goals plus the OBP rules; the implementation is a conversation between the coder and the architect.
