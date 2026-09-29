@@ -20,7 +20,7 @@ public class SetLeavesProgramTypeTests
     private (global::app.goal.step.action.@this Action, global::app.type.@this RowType) SetComposed(object? value, global::app.type.@this type)
     {
         var ctx = _app.actor.list.User.Context;
-        var action = global::PLang.Tests.Shared.Make.Action("variable", "set",
+        var action = global::PLang.Tests.Shared.Make.Action(ctx, "variable", "set",
             ("Name", new Data("Name", "x", new global::app.type.@this("variable"), context: ctx)),
             ("Value", value),
             ("Type", type));

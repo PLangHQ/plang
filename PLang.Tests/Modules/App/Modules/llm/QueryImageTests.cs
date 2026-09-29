@@ -57,7 +57,7 @@ public class QueryImageTests
                     Content = "What's in this image?",
                     Images = new List<string> { "https://example.com/photo.jpg" }
                 }
-            }.ToListData<LlmMessage>()
+            }.ToListData<LlmMessage>(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -88,7 +88,7 @@ public class QueryImageTests
                     Content = "Describe this",
                     Images = new List<string> { imagePath }
                 }
-            }.ToListData<LlmMessage>()
+            }.ToListData<LlmMessage>(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -118,7 +118,7 @@ public class QueryImageTests
                     Content = "What is this?",
                     Images = new List<string> { imagePath }
                 }
-            }.ToListData<LlmMessage>()
+            }.ToListData<LlmMessage>(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -145,7 +145,7 @@ public class QueryImageTests
                     Content = "Describe",
                     Images = new List<string> { base64Image }
                 }
-            }.ToListData<LlmMessage>()
+            }.ToListData<LlmMessage>(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -174,7 +174,7 @@ public class QueryImageTests
                         "https://example.com/image2.jpg"
                     }
                 }
-            }.ToListData<LlmMessage>()
+            }.ToListData<LlmMessage>(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();

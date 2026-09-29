@@ -1,7 +1,7 @@
 namespace PLang.Tests;
 
 /// <summary>
-/// A test-made action (<see cref="PLang.Tests.Shared.Make.Action"/>, <see cref="TestAction.Create"/>) born again in
+/// A test-made action (<see cref="PLang.Tests.Shared.Make.Action"/>) born again in
 /// <paramref name="step"/> — an action's step is a birth fact (init-only), so a test that makes the action
 /// before its step hands it over this way: the same kind of action (a clause, a loop, a keep stays one), the
 /// same program rows held by the new action.

@@ -18,7 +18,7 @@ public class SetTests
     public async Task Set_SetsVariable()
     {
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set", ("name", "%testVar%"), ("value", "testValue"));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%testVar%", "variable"), ("value", "testValue"));
         var result = await action.Start(context);
 
         await result.IsSuccess();
@@ -31,7 +31,7 @@ public class SetTests
         // `set %!http.request.timeoutInSec% = 5` lands on context.Setting (where the generator seam
         // reads it) — the write side of the setting front door — not on the variable store.
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set", ("name", "%!http.request.timeoutInSec%"), ("value", 5));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%!http.request.timeoutInSec%", "variable"), ("value", 5));
         var result = await action.Start(context);
 
         await result.IsSuccess();
@@ -47,7 +47,7 @@ public class SetTests
         var context = _app.actor.list.User.Context;
         await _app.actor.list.System.Setting.Set("build.cache", _app.actor.list.System.Context.Ok(false));
 
-        var action = context.Action("variable", "set", ("name", "%!build.cache%"), ("value", true), ("asDefault", true));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%!build.cache%", "variable"), ("value", true), ("asDefault", true));
         var result = await action.Start(context);
 
         await result.IsSuccess();
@@ -59,7 +59,7 @@ public class SetTests
     public async Task Set_WithType_SetsTypeInfo()
     {
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set", ("name", "%count%"), ("value", 42), ("type", new global::app.type.@this("number", "int")));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%count%", "variable"), ("value", 42), ("type", new global::app.type.@this("number", "int")));
         var result = await action.Start(context);
 
         await result.IsSuccess();
@@ -78,8 +78,8 @@ public class SetTests
                 (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); },
                 _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
-        var asPath = await context.Action("variable", "set", ("name", "%p%"), ("value", "a.txt"), ("type", "path")).Start(context);
-        var asNumber = await context.Action("variable", "set", ("name", "%n%"), ("value", 42), ("type", new global::app.type.@this("number", "int"))).Start(context);
+        var asPath = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%p%", "variable"), ("value", "a.txt"), ("type", "path")).Start(context);
+        var asNumber = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%n%", "variable"), ("value", 42), ("type", new global::app.type.@this("number", "int"))).Start(context);
 
         await asPath.IsSuccess();
         await asNumber.IsSuccess();
@@ -90,7 +90,7 @@ public class SetTests
     public async Task Set_ReturnsOk()
     {
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set", ("name", "%testVar%"), ("value", "testValue"));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%testVar%", "variable"), ("value", "testValue"));
         var result = await action.Start(context);
 
         await result.IsSuccess();
@@ -104,7 +104,7 @@ public class SetTests
     public async Task Set_WithType_SetsTypeOnStoredVariable()
     {
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set", ("name", "%count%"), ("value", 42), ("type", "number"));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%count%", "variable"), ("value", 42), ("type", "number"));
         var result = await action.Start(context);
 
         await result.IsSuccess();
@@ -117,11 +117,11 @@ public class SetTests
         var context = _app.actor.list.User.Context;
 
         // Set initial value
-        var setAction = context.Action("variable", "set", ("name", "%x%"), ("value", "original"));
+        var setAction = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%x%", "variable"), ("value", "original"));
         await setAction.Start(context);
 
         // Try to set default — should not overwrite
-        var defaultAction = context.Action("variable", "set", ("name", "%x%"), ("value", "default"), ("asdefault", true));
+        var defaultAction = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%x%", "variable"), ("value", "default"), ("asdefault", true));
         var result = await defaultAction.Start(context);
 
         await result.IsSuccess();
@@ -135,7 +135,7 @@ public class SetTests
     public async Task Set_AsDefault_SetsWhenNotExists()
     {
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set", ("name", "%y%"), ("value", "default"), ("asdefault", true));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%y%", "variable"), ("value", "default"), ("asdefault", true));
         var result = await action.Start(context);
 
         await result.IsSuccess();
@@ -154,8 +154,8 @@ public class SetTests
         // must be the SAME reference, and the Data's Name must be whatever the
         // handler set it to — never overwritten to "!data".
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set",
-            ("name", "%myVar%"), ("value", "hello"));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%myVar%", "variable"), ("value", "hello"));
 
         var result = await action.Start(context);
 

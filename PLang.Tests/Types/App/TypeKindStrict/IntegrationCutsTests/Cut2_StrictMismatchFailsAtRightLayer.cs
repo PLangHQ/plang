@@ -56,8 +56,8 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         // Validate defers — value is a %var% reference.
         await Assert.That(await Handler("%upload%").Validate()).IsNull();
 
-        var action = context.Action("variable", "set",
-            ("name", "%img%"),
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%img%", "variable"),
             ("value", "%upload%"),
             ("type", Type("image", "gif", true)));
         var result = await action.Start(context);
@@ -71,8 +71,8 @@ public class Cut2_StrictMismatchFailsAtRightLayer
 
         await Assert.That(await Handler(GifBytes).Validate()).IsNull();
 
-        var action = context.Action("variable", "set",
-            ("name", "%img%"),
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%img%", "variable"),
             ("value", GifBytes),
             ("type", Type("image", "gif", true)));
         var result = await action.Start(context);
@@ -93,8 +93,8 @@ public class Cut2_StrictMismatchFailsAtRightLayer
     {
         var context = _app.actor.list.User.Context;
         var pngImage = new global::app.type.item.image.@this(PngBytes, "image/png");
-        var action = context.Action("variable", "set",
-            ("name", "%img%"),
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%img%", "variable"),
             ("value", pngImage),
             ("type", Type("image", "gif", true)));
         var result = await action.Start(context);
@@ -106,8 +106,8 @@ public class Cut2_StrictMismatchFailsAtRightLayer
     {
         var context = _app.actor.list.User.Context;
         var gifImage = new global::app.type.item.image.@this(GifBytes, "image/gif");
-        var action = context.Action("variable", "set",
-            ("name", "%img%"),
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%img%", "variable"),
             ("value", gifImage),
             ("type", Type("image", "gif", true)));
         var result = await action.Start(context);

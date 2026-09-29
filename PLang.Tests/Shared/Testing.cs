@@ -42,24 +42,6 @@ public static class AppTesting
         return ((global::app.goal.step.action.list.@this)read.Peek())[0];
     }
 
-    /// <summary>
-    /// The action <paramref name="module"/>.<paramref name="action"/> with <paramref name="parameters"/>, as a
-    /// <c>.pr</c> row holds it — for values a formal line can't spell (a type entity, a kind, a strict flag). Its module
-    /// is this app's catalog selection; a slot that names a variable is typed one, and the template seam a
-    /// <c>.pr</c> load applies is applied, so a <c>%ref%</c> parameter resolves live when it runs.
-    /// </summary>
-    public static global::app.goal.step.action.@this Action(this global::app.actor.context.@this context,
-        string module, string action, params (string name, object? value)[] parameters)
-    {
-        var act = new global::app.goal.step.action.@this { Module = context.App.Module(module), Name = action };
-        foreach (var p in parameters)
-            act.Property.Add(global::PLang.Tests.Shared.Make.Property(new global::app.data.@this(p.name, p.value,
-                PrParam.IsVarNameSlot(module, action, p.name) ? context.App.type.list["variable"] : null,
-                context: context)));
-        TemplateStamp.Apply(act, context);
-        return act;
-    }
-
     /// <summary>The in-memory <see cref="global::PLang.Tests.Shared.TestIdentity"/>, through the code door — for
     /// real-signing fixtures that need an identity to sign with but don't test the identity provider.</summary>
     public static global::app.@this TestIdentity(this global::app.@this app)

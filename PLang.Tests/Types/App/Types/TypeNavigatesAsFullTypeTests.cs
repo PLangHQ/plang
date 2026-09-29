@@ -44,7 +44,7 @@ public class TypeNavigatesAsFullTypeTests
     [Test]
     public async Task Goal_TypeDescription_IsFilled()
     {
-        var x = new Data("x", global::PLang.Tests.Shared.Make.Goal("Start"), context: Ctx);
+        var x = new Data("x", global::PLang.Tests.Shared.Make.Goal(Ctx, "Start"), context: Ctx);
         await Assert.That(await Read(x, "!type.Description")).IsNotNull().And.IsNotEmpty();
     }
 

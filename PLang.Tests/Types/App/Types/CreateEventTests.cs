@@ -101,7 +101,7 @@ public class CreateEventTests : System.IAsyncDisposable
 
         var landed = await global::app.type.item.path.@this.Resolve("once.txt", Ctx).Read(Ctx);
         await Ctx.Variable.Set("!data", landed);
-        var kept = await Ctx.Action("variable", "set", ("name", "%file%"), ("value", "%!data%"),
+        var kept = await global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set", global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "%file%", "variable"), ("value", "%!data%"),
             ("type", new global::app.type.@this("file", (string?)null))).Start(Ctx);
 
         await kept.IsSuccess();
@@ -115,7 +115,7 @@ public class CreateEventTests : System.IAsyncDisposable
 
         var landed = await global::app.type.item.path.@this.Resolve("lazy.txt", Ctx).Read(Ctx);
         await Ctx.Variable.Set("!data", landed);
-        await (await Ctx.Action("variable", "set", ("name", "%file%"), ("value", "%!data%"),
+        await (await global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set", global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "%file%", "variable"), ("value", "%!data%"),
             ("type", new global::app.type.@this("file", (string?)null))).Start(Ctx)).IsSuccess();
 
         var kept = (await Ctx.Variable.Get("file")).Peek() as global::app.type.item.file.@this;
@@ -131,7 +131,7 @@ public class CreateEventTests : System.IAsyncDisposable
         await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.AbsolutePath, "given.txt"), "x");
         await Ctx.Variable.Set("doc", await global::app.type.item.path.@this.Resolve("given.txt", Ctx).Read(Ctx));
 
-        var (handler, _) = await Ctx.Action("variable", "set", ("name", "%y%"), ("value", "%doc%")).Bind(Ctx);
+        var (handler, _) = await global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set", global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "%y%", "variable"), ("value", "%doc%")).Bind(Ctx);
         var given = await ((global::app.module.variable.Set)handler!).Given();
 
         await given.IsSuccess();

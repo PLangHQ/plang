@@ -19,7 +19,7 @@ public class ActorChoiceTests
     // The handler bound from an action holding Actor=<raw> — the typed views the run reads.
     private async Task<T> Bound<T>(string module, string action, object? actor, params (string, object?)[] required) where T : class
     {
-        var node = global::PLang.Tests.Shared.Make.Action(module, action,
+        var node = global::PLang.Tests.Shared.Make.Action(Ctx, module, action,
             required.Prepend(("Actor", actor)).ToArray());
         var (handler, error) = await node.Bind(Ctx);
         await Assert.That(error).IsNull();
@@ -28,7 +28,7 @@ public class ActorChoiceTests
 
     // channel.set requires its Name and Goal — the actor choice is read beside them
     private Task<global::app.module.channel.Set> ChannelSet(object? actor)
-        => Bound<global::app.module.channel.Set>("channel", "set", actor, ("Name", "c"), ("Goal", global::PLang.Tests.Shared.Make.Call("G")));
+        => Bound<global::app.module.channel.Set>("channel", "set", actor, ("Name", "c"), ("Goal", global::PLang.Tests.Shared.Make.Call(Ctx, "G")));
 
     private async Task SelectsSystem(global::app.data.@this<global::app.type.item.choice.@this<global::app.actor.Name>>? slot)
     {
@@ -53,9 +53,9 @@ public class ActorChoiceTests
     public async Task GoalCall_SystemActor_RunsOnSystemContext()
     {
         // the goal copies its parameter into %seen% — a write that reaches the actor it ran for
-        _app.goal.list.Add(await RealGoalLoad.ViaChannel(_app, Make.Goal("TestGoal",
+        _app.goal.list.Add(await RealGoalLoad.ViaChannel(_app, Make.Goal(Ctx, "TestGoal",
             Make.Step("set %seen% = %onSystem%",
-                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%onSystem%", "variable"))))));
+                Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "seen", "variable"), Make.Param(Ctx, "Value", "%onSystem%", "variable"))))));
         var action = new global::app.module.goal.Call(Ctx)
         {
             Name = new global::app.type.item.text.@this("TestGoal"),

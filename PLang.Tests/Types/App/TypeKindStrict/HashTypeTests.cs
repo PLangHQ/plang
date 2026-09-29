@@ -31,7 +31,7 @@ public class HashTypeTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        var action = ctx.Action("crypto", "hash",
+        var action = global::PLang.Tests.Shared.Make.Action(ctx, "crypto", "hash",
             ("data", "hello"), ("algorithm", "sha256"));
         var result = await action.Start(ctx);
         await result.IsSuccess();

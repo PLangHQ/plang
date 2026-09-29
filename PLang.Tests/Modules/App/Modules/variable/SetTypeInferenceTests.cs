@@ -27,7 +27,7 @@ public class SetTypeInferenceTests
     public async Task Set_StringValue_InfersTextType()
     {
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set", ("name", "%s%"), ("value", "hello"));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%s%", "variable"), ("value", "hello"));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("s");
@@ -39,7 +39,7 @@ public class SetTypeInferenceTests
     public async Task Set_IntValue_InfersNumberType()
     {
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set", ("name", "%n%"), ("value", 42));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%n%", "variable"), ("value", 42));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("n");
@@ -52,7 +52,7 @@ public class SetTypeInferenceTests
     public async Task Set_LongValue_InfersNumberType()
     {
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set", ("name", "%n%"), ("value", 42L));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%n%", "variable"), ("value", 42L));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("n");
@@ -64,7 +64,7 @@ public class SetTypeInferenceTests
     public async Task Set_DoubleValue_InfersNumberType()
     {
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set", ("name", "%d%"), ("value", 3.14));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%d%", "variable"), ("value", 3.14));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("d");
@@ -76,7 +76,7 @@ public class SetTypeInferenceTests
     public async Task Set_BoolValue_InfersBoolType()
     {
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set", ("name", "%b%"), ("value", true));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%b%", "variable"), ("value", true));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("b");
@@ -89,7 +89,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         var when = DateTime.UtcNow;
-        var action = context.Action("variable", "set", ("name", "%t%"), ("value", when));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%t%", "variable"), ("value", when));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("t");
@@ -106,7 +106,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         var src = new List<object?> { "a", "b" };
-        var action = context.Action("variable", "set", ("name", "%list%"), ("value", src));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%list%", "variable"), ("value", src));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("list");
@@ -123,7 +123,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         var src = new List<object?> { "a", "b" };
-        await (await context.Action("variable", "set", ("name", "%list%"), ("value", src)).Start(context)).IsSuccess();
+        await (await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%list%", "variable"), ("value", src)).Start(context)).IsSuccess();
         src.Add("c");
         var lst = (await (await context.Variable.Get("list")).Value()) as global::app.type.item.list.@this;
         await Assert.That(lst!.CountRaw).IsEqualTo(3);
@@ -153,7 +153,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         var src = new Dictionary<string, object?> { ["k"] = "v" };
-        var action = context.Action("variable", "set", ("name", "%d%"), ("value", src));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%d%", "variable"), ("value", src));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("d");
@@ -169,7 +169,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         // Source value is int 42; forced Type="string" should produce Data<global::app.type.item.text.@this> "42".
-        var action = context.Action("variable", "set", ("name", "%n%"), ("value", 42), ("type", "string"));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%n%", "variable"), ("value", 42), ("type", "string"));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("n");
@@ -183,7 +183,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         // "abc" can't convert to int → handler returns Data with Error.
-        var action = context.Action("variable", "set", ("name", "%n%"), ("value", "abc"), ("type", "int"));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%n%", "variable"), ("value", "abc"), ("type", "int"));
         var result = await action.Start(context);
         await result.IsFailure();
     }
@@ -192,7 +192,7 @@ public class SetTypeInferenceTests
     public async Task Set_NullValue_MintsPlainDataNotGeneric()
     {
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set", ("name", "%x%"), ("value", null));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%x%", "variable"), ("value", null));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("x");
@@ -204,8 +204,8 @@ public class SetTypeInferenceTests
     public async Task Set_AsDefault_ExistingInitialized_DoesNotReplace()
     {
         var context = _app.actor.list.User.Context;
-        await context.Action("variable", "set", ("name", "%x%"), ("value", "first")).Start(context);
-        var result = await context.Action("variable", "set", ("name", "%x%"), ("value", "second"), ("asdefault", true)).Start(context);
+        await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%x%", "variable"), ("value", "first")).Start(context);
+        var result = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%x%", "variable"), ("value", "second"), ("asdefault", true)).Start(context);
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("x"))).IsEqualTo("first");
     }
@@ -220,10 +220,10 @@ public class SetTypeInferenceTests
         x.Add(new Data("", 1L, context: context)); x.Add(new Data("", 2L, context: context));
         context.Variable.Set("x", x);
 
-        var alias = context.Action("variable", "set", ("name", "%y%"), ("value", "%x%"));
+        var alias = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%y%", "variable"), ("value", "%x%"));
         await (await alias.Start(context)).IsSuccess();
 
-        var add = context.Action("list", "add", ("listname", "%x%"), ("value", 3));
+        var add = global::PLang.Tests.Shared.Make.Action(context, "list", "add", global::PLang.Tests.Shared.Make.Param(context, "ListName", "%x%", "variable"), ("value", 3));
         await (await add.Start(context)).IsSuccess();
 
         var y = await context.Variable.Get("y");
@@ -242,7 +242,7 @@ public class SetTypeInferenceTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("x", "payload");
 
-        var alias = context.Action("variable", "set", ("name", "%y%"), ("value", "%x%"));
+        var alias = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%y%", "variable"), ("value", "%x%"));
         await (await alias.Start(context)).IsSuccess();
 
         var y = await context.Variable.Get("y");

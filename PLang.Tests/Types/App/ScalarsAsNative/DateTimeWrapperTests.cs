@@ -21,10 +21,11 @@ public class DateTimeWrapperTests
     [Test]
     public async Task DateTime_Order_ChronologicalUnderItem()
     {
+        await using var app = new global::app.@this("/app").Testing();
         var earlier = new DateTimeT(System.DateTimeOffset.Parse("2024-01-01T00:00:00Z"));
         var later = new DateTimeT(System.DateTimeOffset.Parse("2024-06-01T00:00:00Z"));
         await Assert.That(CompareTestOps.OrdD(new Data("", earlier), new Data("", later))).IsLessThan(0);
-        await Assert.That(CompareTestOps.Ord(earlier, later)).IsLessThan(0);
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, earlier, later)).IsLessThan(0);
     }
 
     [Test]

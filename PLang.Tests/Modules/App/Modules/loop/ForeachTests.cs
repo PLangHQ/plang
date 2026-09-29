@@ -23,13 +23,13 @@ public class ForeachTests
 
         _app.goal.list.Add(new Goal { Name = "ProcessItem", Path = global::app.type.item.path.@this.Resolve("/ProcessItem.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
 
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("ForeachRunner",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "ForeachRunner",
             Make.Step("foreach %items%, call ProcessItem item=%item%",
-                Make.Action("loop", "foreach",
-                    Make.Template("collection", "%items%"), Make.Param("item", "%item%", "variable")),
-                Make.Action("goal", "call",
+                Make.Action(context, "loop", "foreach",
+                    Make.Template(context, "collection", "%items%"), Make.Param(context, "item", "%item%", "variable")),
+                Make.Action(context, "goal", "call",
                     ("name", "ProcessItem")),
-                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%item%", "variable")))));
+                Make.Action(context, "variable", "set", Make.Param(context, "Name", "seen", "variable"), Make.Param(context, "Value", "%item%", "variable")))));
         var step = goal.Step[0];
 
         var result = await step.Start(context);
@@ -46,8 +46,8 @@ public class ForeachTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("items", new List<object?>());
 
-        var action = context.Action("loop", "foreach",
-            ("collection", "%items%"), ("item", "%item%"));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "loop", "foreach",
+            ("collection", "%items%"), global::PLang.Tests.Shared.Make.Param(context, "Item", "%item%", "variable"));
         var result = await action.Start(context);
 
         await result.IsSuccess();
@@ -64,13 +64,13 @@ public class ForeachTests
 
         _app.goal.list.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
 
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("SetsItemRunner",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "SetsItemRunner",
             Make.Step("foreach %items%, call DoNothing item=%myItem%",
-                Make.Action("loop", "foreach",
-                    Make.Template("collection", "%items%"), Make.Param("item", "%myItem%", "variable")),
-                Make.Action("goal", "call",
+                Make.Action(context, "loop", "foreach",
+                    Make.Template(context, "collection", "%items%"), Make.Param(context, "item", "%myItem%", "variable")),
+                Make.Action(context, "goal", "call",
                     ("name", "DoNothing")),
-                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%myItem%", "variable")))));
+                Make.Action(context, "variable", "set", Make.Param(context, "Name", "seen", "variable"), Make.Param(context, "Value", "%myItem%", "variable")))));
         var step = goal.Step[0];
 
         var result = await step.Start(context);
@@ -90,11 +90,11 @@ public class ForeachTests
 
         _app.goal.list.Add(new Goal { Name = "DictGoal", Path = global::app.type.item.path.@this.Resolve("/DictGoal.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
 
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("DictRunner",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "DictRunner",
             Make.Step("foreach %dict%, call DictGoal item=%val%",
-                Make.Action("loop", "foreach",
-                    Make.Template("collection", "%dict%"), Make.Param("item", "%val%", "variable"), Make.Param("key", "%key%", "variable")),
-                Make.Action("goal", "call",
+                Make.Action(context, "loop", "foreach",
+                    Make.Template(context, "collection", "%dict%"), Make.Param(context, "item", "%val%", "variable"), Make.Param(context, "key", "%key%", "variable")),
+                Make.Action(context, "goal", "call",
                     ("name", "DictGoal")))));
         var step = goal.Step[0];
 
@@ -113,14 +113,14 @@ public class ForeachTests
 
         _app.goal.list.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
 
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("DictKeyRunner",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "DictKeyRunner",
             Make.Step("foreach %dict%, call Noop",
-                Make.Action("loop", "foreach",
-                    Make.Template("collection", "%dict%"), Make.Param("item", "%val%", "variable"), Make.Param("key", "%key%", "variable")),
-                Make.Action("goal", "call",
+                Make.Action(context, "loop", "foreach",
+                    Make.Template(context, "collection", "%dict%"), Make.Param(context, "item", "%val%", "variable"), Make.Param(context, "key", "%key%", "variable")),
+                Make.Action(context, "goal", "call",
                     ("name", "Noop")),
-                Make.Action("variable", "set", Make.Param("Name", "seenKey", "variable"), Make.Param("Value", "%key%", "variable")),
-                Make.Action("variable", "set", Make.Param("Name", "seenVal", "variable"), Make.Param("Value", "%val%", "variable")))));
+                Make.Action(context, "variable", "set", Make.Param(context, "Name", "seenKey", "variable"), Make.Param(context, "Value", "%key%", "variable")),
+                Make.Action(context, "variable", "set", Make.Param(context, "Name", "seenVal", "variable"), Make.Param(context, "Value", "%val%", "variable")))));
         var step = goal.Step[0];
 
         var result = await step.Start(context);
@@ -137,8 +137,8 @@ public class ForeachTests
     {
         var context = _app.actor.list.User.Context;
 
-        var action = context.Action("loop", "foreach",
-            ("collection", null), ("item", "%item%"));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "loop", "foreach",
+            ("collection", null), global::PLang.Tests.Shared.Make.Param(context, "Item", "%item%", "variable"));
         var result = await action.Start(context);
 
         await result.IsSuccess();
@@ -157,8 +157,8 @@ public class ForeachTests
         context.PushCancellation(cts);
         cts.Cancel();
 
-        var action = context.Action("loop", "foreach",
-            ("collection", "%items%"), ("item", "%item%"));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "loop", "foreach",
+            ("collection", "%items%"), global::PLang.Tests.Shared.Make.Param(context, "Item", "%item%", "variable"));
         var result = await action.Start(context);
 
         await result.IsSuccess();
@@ -184,15 +184,15 @@ public class ForeachTests
 
         // The builder writes child keys onto %plan% between llm.query and the foreach
         // (set %plan.system% = ..., etc.). Replicate one such write onto the clr(json).
-        var setChild = context.Action("variable", "set",
-            ("name", "%plan.system%"), ("value", "sys-prompt"));
+        var setChild = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%plan.system%", "variable"), ("value", "sys-prompt"));
         await (await setChild.Start(context)).IsSuccess();
 
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("PlanStepRunner",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "PlanStepRunner",
             Make.Step("foreach %plan.steps% item=%planStep%, set %seen% = %planStep%",
-                Make.Action("loop", "foreach",
-                    Make.Template("collection", "%plan.steps%"), Make.Param("item", "%planStep%", "variable")),
-                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%planStep%", "variable")))));
+                Make.Action(context, "loop", "foreach",
+                    Make.Template(context, "collection", "%plan.steps%"), Make.Param(context, "item", "%planStep%", "variable")),
+                Make.Action(context, "variable", "set", Make.Param(context, "Name", "seen", "variable"), Make.Param(context, "Value", "%planStep%", "variable")))));
         var result = await goal.Step[0].Start(context);
 
         await result.IsSuccess();

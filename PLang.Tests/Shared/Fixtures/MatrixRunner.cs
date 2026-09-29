@@ -50,7 +50,7 @@ public static class MatrixRunner
             action.Default.Add(global::PLang.Tests.Shared.Make.Property(new Data(d.name, d.value, context: app.actor.list.User.Context)));
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.
-        TemplateStamp.Apply(action);
+        TemplateStamp.Apply(action, app.actor.list.User.Context);
 
         var context = app.actor.list.User.Context;
         if (variables != null)
@@ -90,7 +90,7 @@ public static class MatrixRunner
             action.Default.Add(global::PLang.Tests.Shared.Make.Property(new Data(d.name, d.value, context: app.actor.list.User.Context)));
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.
-        TemplateStamp.Apply(action);
+        TemplateStamp.Apply(action, app.actor.list.User.Context);
 
         var context = app.actor.list.User.Context;
         if (variables != null)

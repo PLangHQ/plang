@@ -32,13 +32,13 @@ public class ForeachStringNotIterableTests
         // Body goal runs once per iteration.
         _app.goal.list.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
 
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("StringRunner",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "StringRunner",
             Make.Step("foreach %s%, call DoNothing",
-                Make.Action("loop", "foreach",
-                    ("collection", "%s%"), Make.Param("item", "%item%", "variable")),
-                Make.Action("goal", "call",
+                Make.Action(context, "loop", "foreach",
+                    ("collection", "%s%"), Make.Param(context, "item", "%item%", "variable")),
+                Make.Action(context, "goal", "call",
                     ("name", "DoNothing")),
-                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%item%", "variable")))));
+                Make.Action(context, "variable", "set", Make.Param(context, "Name", "seen", "variable"), Make.Param(context, "Value", "%item%", "variable")))));
         var step = goal.Step[0];
 
         var result = await step.Start(context);
@@ -57,13 +57,13 @@ public class ForeachStringNotIterableTests
 
         _app.goal.list.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
 
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("WholeStringRunner",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "WholeStringRunner",
             Make.Step("foreach %s%, call DoNothing",
-                Make.Action("loop", "foreach",
-                    ("collection", "%s%"), Make.Param("item", "%item%", "variable")),
-                Make.Action("goal", "call",
+                Make.Action(context, "loop", "foreach",
+                    ("collection", "%s%"), Make.Param(context, "item", "%item%", "variable")),
+                Make.Action(context, "goal", "call",
                     ("name", "DoNothing")),
-                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%item%", "variable")))));
+                Make.Action(context, "variable", "set", Make.Param(context, "Name", "seen", "variable"), Make.Param(context, "Value", "%item%", "variable")))));
         var step = goal.Step[0];
 
         await step.Start(context);
@@ -80,13 +80,13 @@ public class ForeachStringNotIterableTests
 
         _app.goal.list.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
 
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("NumberRunner",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "NumberRunner",
             Make.Step("foreach %n%, call DoNothing",
-                Make.Action("loop", "foreach",
-                    ("collection", "%n%"), Make.Param("item", "%item%", "variable")),
-                Make.Action("goal", "call",
+                Make.Action(context, "loop", "foreach",
+                    ("collection", "%n%"), Make.Param(context, "item", "%item%", "variable")),
+                Make.Action(context, "goal", "call",
                     ("name", "DoNothing")),
-                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%item%", "variable")))));
+                Make.Action(context, "variable", "set", Make.Param(context, "Name", "seen", "variable"), Make.Param(context, "Value", "%item%", "variable")))));
         var step = goal.Step[0];
 
         var result = await step.Start(context);

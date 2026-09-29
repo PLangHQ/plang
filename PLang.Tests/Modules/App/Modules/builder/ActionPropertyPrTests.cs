@@ -28,9 +28,9 @@ public class ActionPropertyPrTests
         return await channel.Read();
     }
 
-    private static global::app.goal.@this Sample() => Make.Goal("Start",
+    private global::app.goal.@this Sample() => Make.Goal(_app.actor.list.User.Context, "Start",
         Make.Step("read a file",
-            Make.WithDefaults(Make.Action("file", "read", ("Path", "notes.txt")), ("ResolveVariables", false))));
+            Make.WithDefaults(_app.actor.list.User.Context, Make.Action(_app.actor.list.User.Context, "file", "read", ("Path", "notes.txt")), ("ResolveVariables", false))));
 
     [Test] public async Task WrittenPr_ReadsBackAndWritesAgain_ByteIdentical()
     {
@@ -71,7 +71,7 @@ public class ActionPropertyPrTests
 
     [Test] public async Task Validate_APropertyTheClassDoesNotDeclare_Fails()
     {
-        var action = Make.Action("file", "read", ("Path", "notes.txt"), ("Bogus", 1));
+        var action = Make.Action(_app.actor.list.User.Context, "file", "read", ("Path", "notes.txt"), ("Bogus", 1));
 
         var verdict = await action.Validate(_app.actor.list.User.Context);
 
@@ -81,7 +81,7 @@ public class ActionPropertyPrTests
 
     [Test] public async Task Validate_AMissingRequiredProperty_Fails()
     {
-        var action = Make.Action("file", "read");
+        var action = Make.Action(_app.actor.list.User.Context, "file", "read");
 
         var verdict = await action.Validate(_app.actor.list.User.Context);
 

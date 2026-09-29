@@ -27,7 +27,7 @@ public class PrPipelineTests
 
         // Execute
         var context = engine.actor.list.User.Context;
-        var result = await Make.Call("FullPipeline").Start(context);
+        var result = await Make.Call(context, "FullPipeline").Start(context);
         await result.IsSuccess();
 
         // Variables set correctly
@@ -58,7 +58,7 @@ public class PrPipelineTests
         await loadResult.IsSuccess();
 
         var context = engine.actor.list.User.Context;
-        var result = await Make.Call("ReadFile").Start(context);
+        var result = await Make.Call(context, "ReadFile").Start(context);
         await result.IsSuccess();
 
         // Return mapping: file/read returns Data.Ok(file), return: [{ name: "content" }] maps it to %content%
@@ -84,7 +84,7 @@ public class PrPipelineTests
         await loadResult.IsSuccess();
 
         var context = engine.actor.list.User.Context;
-        var result = await Make.Call("FilePathsFromRoot").Start(context);
+        var result = await Make.Call(context, "FilePathsFromRoot").Start(context);
         await result.IsSuccess();
 
         // #1: testdata.txt — relative, same folder
@@ -110,7 +110,7 @@ public class PrPipelineTests
         await loadResult.IsSuccess();
 
         var context = engine.actor.list.User.Context;
-        var result = await Make.Call("FilePathsFromSub").Start(context);
+        var result = await Make.Call(context, "FilePathsFromSub").Start(context);
 
         // Step 0 (/testdata.txt) succeeds — absolute paths work from any goal location
         // Step 1 (subdata.txt) fails — relative paths resolve against engine root, not goal folder
@@ -127,9 +127,9 @@ public class PrPipelineTests
 
         // A goal in /sub/ reads "subdata.txt" (relative)
         // This resolves to {root}/sub/subdata.txt — relative to goal folder
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("SubRelative", "/sub/SubRelative.goal",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(engine.actor.list.User.Context, "SubRelative", "/sub/SubRelative.goal",
             Make.Step("read subdata.txt, write to %content%",
-                Make.Action("file", "read", ("path", "subdata.txt")))));
+                Make.Action(engine.actor.list.User.Context, "file", "read", ("path", "subdata.txt")))));
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
@@ -147,9 +147,9 @@ public class PrPipelineTests
         await using var engine = new global::app.@this(fixturesDir).Testing();
 
         // #3: Goal in /sub/ reads ../testdata.txt — should resolve to {root}/testdata.txt
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ParentTraversal", "/sub/ParentTraversal.goal",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(engine.actor.list.User.Context, "ParentTraversal", "/sub/ParentTraversal.goal",
             Make.Step("read ../testdata.txt, write to %fromParent%",
-                Make.Action("file", "read", ("path", "../testdata.txt")))));
+                Make.Action(engine.actor.list.User.Context, "file", "read", ("path", "../testdata.txt")))));
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
@@ -166,9 +166,9 @@ public class PrPipelineTests
         await using var engine = new global::app.@this(fixturesDir).Testing();
 
         // #8: Goal in /sub/ reads ../sub/subdata.txt — parent then back down
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ParentAndDown", "/sub/ParentAndDown.goal",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(engine.actor.list.User.Context, "ParentAndDown", "/sub/ParentAndDown.goal",
             Make.Step("read ../sub/subdata.txt, write to %backAndDown%",
-                Make.Action("file", "read", ("path", "../sub/subdata.txt")))));
+                Make.Action(engine.actor.list.User.Context, "file", "read", ("path", "../sub/subdata.txt")))));
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
@@ -185,9 +185,9 @@ public class PrPipelineTests
         await using var engine = new global::app.@this(fixturesDir).Testing();
 
         // Hand-build a goal that reads a nonexistent file
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ReadMissing", "/ReadMissing.goal",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(engine.actor.list.User.Context, "ReadMissing", "/ReadMissing.goal",
             Make.Step("read nonexistent.txt, write to %content%",
-                Make.Action("file", "read", ("path", "nonexistent.txt")))));
+                Make.Action(engine.actor.list.User.Context, "file", "read", ("path", "nonexistent.txt")))));
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
@@ -205,9 +205,9 @@ public class PrPipelineTests
         await using var engine = new global::app.@this(fixturesDir).Testing();
 
         // Try to read ../../ — should be blocked by PLangFileSystem
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("ReadEscape", "/ReadEscape.goal",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(engine.actor.list.User.Context, "ReadEscape", "/ReadEscape.goal",
             Make.Step("read ../../etc/passwd, write to %content%",
-                Make.Action("file", "read", ("path", "../../etc/passwd")))));
+                Make.Action(engine.actor.list.User.Context, "file", "read", ("path", "../../etc/passwd")))));
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;

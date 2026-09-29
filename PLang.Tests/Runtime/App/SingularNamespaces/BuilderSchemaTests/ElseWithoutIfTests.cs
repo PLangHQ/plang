@@ -7,19 +7,21 @@ namespace PLang.Tests.App.SingularNamespaces.BuilderSchemaTests;
 /// <summary>An <c>elseif</c>/<c>else</c> belongs to the <c>if</c> right before it in the same action
 /// list. One that isn't — a standalone <c>- else</c> step, or an else after an ordinary action — is
 /// refused by the action list's <c>Validate</c> with <c>ElseWithoutIf</c>.</summary>
-public class ElseWithoutIfTests
+public class ElseWithoutIfTests : System.IAsyncDisposable
 {
-    private static global::app.goal.step.action.@this If() =>
-        Make.Action("condition", "if", ("Left", "%x%"), ("Operator", "=="), ("Right", 1));
-    private static global::app.goal.step.action.@this ElseIf() =>
-        Make.Action("condition", "elseif", ("Left", "%x%"), ("Operator", "=="), ("Right", 2));
-    private static global::app.goal.step.action.@this Else() => Make.Action("condition", "else");
-    private static global::app.goal.step.action.@this Write(string text) =>
-        Make.Action("output", "write", ("Data", text));
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
-    private static async Task<global::app.error.Error?> Validate(params global::app.goal.step.action.@this[] actions)
+    private global::app.goal.step.action.@this If() =>
+        Make.Action(app.actor.list.User.Context, "condition", "if", ("Left", "%x%"), ("Operator", "=="), ("Right", 1));
+    private global::app.goal.step.action.@this ElseIf() =>
+        Make.Action(app.actor.list.User.Context, "condition", "elseif", ("Left", "%x%"), ("Operator", "=="), ("Right", 2));
+    private global::app.goal.step.action.@this Else() => Make.Action(app.actor.list.User.Context, "condition", "else");
+    private global::app.goal.step.action.@this Write(string text) =>
+        Make.Action(app.actor.list.User.Context, "output", "write", ("Data", text));
+
+    private async Task<global::app.error.Error?> Validate(params global::app.goal.step.action.@this[] actions)
     {
-        await using var app = new global::app.@this("/test").Testing();
         var list = new global::app.goal.step.action.list.@this();
         foreach (var a in actions) list.Add(a);
         return await list.Validate(app.actor.list.System.Context);
@@ -57,7 +59,7 @@ public class ElseWithoutIfTests
         await Assert.That(error!.Key).IsEqualTo("ElseWithoutIf");
     }
 
-    private static global::app.goal.step.action.@this WithBody(global::app.goal.step.action.@this condition, string text,
+    private global::app.goal.step.action.@this WithBody(global::app.goal.step.action.@this condition, string text,
         params global::app.goal.step.action.@this[] body)
     {
         var step = new Step { Text = text };
@@ -71,8 +73,8 @@ public class ElseWithoutIfTests
     public async Task BodyBesideTheCondition_IsRefused()
     {
         var error = await Validate(
-            Make.Action("condition", "if", ("Left", "%n%"), ("Operator", ">"), ("Right", 5)),
-            Make.Action("goal", "call", ("Name", "Big")));
+            Make.Action(app.actor.list.User.Context, "condition", "if", ("Left", "%n%"), ("Operator", ">"), ("Right", 5)),
+            Make.Action(app.actor.list.User.Context, "goal", "call", ("Name", "Big")));
         await Assert.That(error!.Key).IsEqualTo("BodyBesideCondition");
         await Assert.That(error.Message).Contains("`goal.call` is after the if — a branch's body goes in its child");
     }
@@ -82,10 +84,10 @@ public class ElseWithoutIfTests
     public async Task SetupThenBodyBesideTheCondition_IsRefused()
     {
         var error = await Validate(
-            Make.Action("list", "count", ("ListName", "%items%")),
-            Make.Action("variable", "set", Make.Param("Name", "%n%", "variable"), ("Value", "%!data%")),
-            Make.Action("condition", "if", ("Left", "%n%"), ("Operator", ">"), ("Right", 10)),
-            Make.Action("goal", "call", ("Name", "Paginate")));
+            Make.Action(app.actor.list.User.Context, "list", "count", ("ListName", "%items%")),
+            Make.Action(app.actor.list.User.Context, "variable", "set", Make.Param(app.actor.list.User.Context, "Name", "%n%", "variable"), ("Value", "%!data%")),
+            Make.Action(app.actor.list.User.Context, "condition", "if", ("Left", "%n%"), ("Operator", ">"), ("Right", 10)),
+            Make.Action(app.actor.list.User.Context, "goal", "call", ("Name", "Paginate")));
         await Assert.That(error!.Key).IsEqualTo("BodyBesideCondition");
     }
 
@@ -95,8 +97,8 @@ public class ElseWithoutIfTests
     public async Task ConditionWithoutItsBody_IsRefused()
     {
         var error = await Validate(
-            Make.Action("condition", "if", ("Left", "%ok%"), ("Operator", "=="), ("Right", true)),
-            WithBody(Else(), "return", Make.Action("goal", "return")));
+            Make.Action(app.actor.list.User.Context, "condition", "if", ("Left", "%ok%"), ("Operator", "=="), ("Right", true)),
+            WithBody(Else(), "return", Make.Action(app.actor.list.User.Context, "goal", "return")));
         await Assert.That(error!.Key).IsEqualTo("BodyMissing");
     }
 
@@ -140,8 +142,8 @@ public class ElseWithoutIfTests
         var elseStep = goal.Step[0];
         elseStep.Code.Add(Else().In(elseStep));
         var ifStep = goal.Step[1];
-        foreach (var a in new[] { Make.Action("condition", "if", ("Left", "%n%"), ("Operator", ">"), ("Right", 5)),
-                                  Make.Action("goal", "call", ("Name", "Big")) })
+        foreach (var a in new[] { Make.Action(ctx, "condition", "if", ("Left", "%n%"), ("Operator", ">"), ("Right", 5)),
+                                  Make.Action(ctx, "goal", "call", ("Name", "Big")) })
             ifStep.Code.Add(a.In(ifStep));
         var elseVerdict = await elseStep.Validate(ctx);
         var besideVerdict = await ifStep.Validate(ctx);
@@ -169,21 +171,21 @@ public class ElseWithoutIfTests
         var shared = app.actor.list.User.Context;
         const string fix = "- if %x% == 1, write out \"one\", else write out \"other\"";
 
-        app.goal.list.Add(Make.Goal("SourceError",
+        app.goal.list.Add(Make.Goal(ctx, "SourceError",
             Make.Step("the fix the LLM writes, then re-raise with it",
-                Make.Action("variable", "set", Make.Param("Name", "%sourceFix%", "variable"), Make.Param("Value", fix, "text")),
+                Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "%sourceFix%", "variable"), Make.Param(ctx, "Value", fix, "text")),
                 // `throw %!error%, fix suggestion %sourceFix%` as the builder writes it: the error rides
                 // the Message slot as a template (see HandleBuildFailure's throw in the builder's .pr).
-                Make.Action("error", "throw", Make.Template("Message", "%!error%"), ("FixSuggestion", "%sourceFix%")))));
-        app.goal.list.Add(Make.Goal("FixProperties",
+                Make.Action(ctx, "error", "throw", Make.Template(ctx, "Message", "%!error%"), ("FixSuggestion", "%sourceFix%")))));
+        app.goal.list.Add(Make.Goal(ctx, "FixProperties",
             Make.Step("mark",
-                Make.Action("variable", "set", Make.Param("Name", "%fixPropertiesRan%", "variable"), ("Value", "yes")))));
+                Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "%fixPropertiesRan%", "variable"), ("Value", "yes")))));
 
-        var keyed = Make.Action("on", "error", ("Key", "ElseWithoutIf"), Make.Recovery(Make.Call("SourceError")));
-        var retry = Make.Action("on", "error", ("Order", "GoalFirst"), ("RetryCount", 2), Make.Recovery(Make.Call("FixProperties")));
+        var keyed = Make.Action(ctx, "on", "error", ("Key", "ElseWithoutIf"), Make.Recovery(ctx, Make.Call(ctx, "SourceError")));
+        var retry = Make.Action(ctx, "on", "error", ("Order", "GoalFirst"), ("RetryCount", 2), Make.Recovery(ctx, Make.Call(ctx, "FixProperties")));
 
         // Apply, failing the way build.validate does on a standalone `- else` — its two on.error clauses after it.
-        var apply = Make.With(Make.Action("error", "throw",
+        var apply = Make.With(Make.Action(ctx, "error", "throw",
             ("Message", "step 2 \"else\" — an else must be in the same step as its if."), ("Key", "ElseWithoutIf")), keyed, retry);
 
         var result = await apply.Start(ctx);
@@ -198,7 +200,7 @@ public class ElseWithoutIfTests
     public async Task ElseWithoutIf_NamesItsStep_WhenTheActionHoldsOne()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = Make.Goal("G", Make.Step("if %x% == 1, write out \"one\"", If()), Make.Step("else"));
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("if %x% == 1, write out \"one\"", If()), Make.Step("else"));
         var elseStep = goal.Step[1];
         elseStep.Code.Add(Else().In(elseStep));
 

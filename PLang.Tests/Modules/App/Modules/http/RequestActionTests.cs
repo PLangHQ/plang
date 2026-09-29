@@ -159,7 +159,7 @@ public class RequestActionTests
     public async Task Get_CustomHeaders_AppliedToRequest()
     {
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/data",
-            Header = new Dictionary<string, object> { ["X-Custom"] = "test-value" }.ToDictData(),
+            Header = new Dictionary<string, object> { ["X-Custom"] = "test-value" }.ToDictData(Ctx),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -305,7 +305,7 @@ public class RequestActionTests
     {
         await _app.actor.list.System.Setting.Set("http.BaseUrl", Ctx.Ok("https://api.example.com/v1"));
         // the build walk: the program action binds its handler (its settings read) and publishes Build's answer
-        var program = Make.Action("http", "request", ("Url", "/api/x.json"), ("Unsigned", true));
+        var program = Make.Action(Ctx, "http", "request", ("Url", "/api/x.json"), ("Unsigned", true));
         await Assert.That(await program.Build(Ctx)).IsNull();
         var built = await Ctx.Variable.Get("!buildData");
         var result = await _app.Run(new request(Ctx) { Url = (global::app.type.item.text.@this)"/api/x.json", Unsigned = (global::app.type.item.@bool.@this)true }, Ctx);
@@ -407,7 +407,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/stream",
-            OnStream = Make.Call("ProcessChunk"),
+            OnStream = Make.Call(Ctx, "ProcessChunk"),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
 
@@ -519,7 +519,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/stream",
-            OnStream = Make.Call("HandleLine"),
+            OnStream = Make.Call(Ctx, "HandleLine"),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -542,7 +542,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/sse",
-            OnStream = Make.Call("HandleSSE"),
+            OnStream = Make.Call(Ctx, "HandleSSE"),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -563,7 +563,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/sse-multi",
-            OnStream = Make.Call("HandleSSE"),
+            OnStream = Make.Call(Ctx, "HandleSSE"),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -586,7 +586,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/bytes",
-            OnStream = Make.Call("HandleBytes"),
+            OnStream = Make.Call(Ctx, "HandleBytes"),
             StreamAs = (global::app.type.item.choice.@this<global::app.module.http.StreamFormat>)StreamFormat.Bytes,
             Unsigned = (global::app.type.item.@bool.@this)true
         };
@@ -610,7 +610,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/stream-err",
-            OnStream = Make.Call("HandleLine"),
+            OnStream = Make.Call(Ctx, "HandleLine"),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -630,11 +630,11 @@ public class RequestActionTests
 
         // `on stream call KeepChunk myChunk=%chunk%` — the chunk binds as %chunk%, then the held
         // call binds its authored argument over it; the goal keeps what it was handed in %seen%.
-        _app.goal.list.Add(await RealGoalLoad.ViaChannel(_app, Make.Goal("KeepChunk",
+        _app.goal.list.Add(await RealGoalLoad.ViaChannel(_app, Make.Goal(Ctx, "KeepChunk",
             Make.Step("set %seen% = %myChunk%",
-                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%myChunk%", "variable"))))));
+                Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "seen", "variable"), Make.Param(Ctx, "Value", "%myChunk%", "variable"))))));
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/stream",
-            OnStream = Make.Call("KeepChunk", ("myChunk", "%chunk%")),
+            OnStream = Make.Call(Ctx, "KeepChunk", ("myChunk", "%chunk%")),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -654,7 +654,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/plang-stream",
-            OnStream = Make.Call("HandlePlang"),
+            OnStream = Make.Call(Ctx, "HandlePlang"),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -670,7 +670,7 @@ public class RequestActionTests
         await _app.actor.list.System.Setting.Set("http.DefaultHeaders", Ctx.Ok(defaults));
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/merged",
-            Header = new Dictionary<string, object> { ["X-Custom"] = "step-value", ["X-Shared"] = "overridden" }.ToDictData(),
+            Header = new Dictionary<string, object> { ["X-Custom"] = "step-value", ["X-Shared"] = "overridden" }.ToDictData(Ctx),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -690,7 +690,7 @@ public class RequestActionTests
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/content",
             Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
             Body = new global::app.data.@this("", "test body", context: Ctx),
-            Header = new Dictionary<string, object> { ["Content-Encoding"] = "gzip", ["X-Custom"] = "req-header" }.ToDictData(),
+            Header = new Dictionary<string, object> { ["Content-Encoding"] = "gzip", ["X-Custom"] = "req-header" }.ToDictData(Ctx),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);
@@ -776,7 +776,7 @@ public class RequestActionTests
         });
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/sse-overflow",
-            OnStream = Make.Call("HandleSSE"),
+            OnStream = Make.Call(Ctx, "HandleSSE"),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await _app.Run(action, Ctx);

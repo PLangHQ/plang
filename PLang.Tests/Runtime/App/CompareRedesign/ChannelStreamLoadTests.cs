@@ -6,16 +6,16 @@ namespace PLang.Tests.App.CompareRedesign;
 // bypasses the read. (Make / RealGoalLoad come from PLang.Tests.Shared via a global using.)
 public class ChannelStreamLoadTests
 {
-    private static Goal SampleGoal() => Make.Goal("G",
+    private static Goal SampleGoal(global::app.actor.context.@this context) => Make.Goal(context, "G",
         Make.Step("write out",
-            Make.Action("output", "write", ("Content", "Hi %name%"))));
+            Make.Action(context, "output", "write", ("Content", "Hi %name%"))));
 
     [Test]
     public async Task ViaChannel_AssemblesActions_AndKeepsParamType()
     {
         await using var app = new global::app.@this("/test").Testing();
 
-        var loaded = await RealGoalLoad.ViaChannel(app, SampleGoal());
+        var loaded = await RealGoalLoad.ViaChannel(app, SampleGoal(app.actor.list.User.Context));
 
         var action = loaded.Step[0].Code[0];
         await Assert.That(action.Module.Name).IsEqualTo("output");
@@ -35,10 +35,10 @@ public class ChannelStreamLoadTests
         await using var app = new global::app.@this("/test").Testing();
 
         // number from the value (5 → number); variable declared explicitly.
-        var goal = Make.Goal("G",
+        var goal = Make.Goal(app.actor.list.User.Context, "G",
             Make.Step("set it",
-                Make.Action("variable", "set",
-                    Make.Param("Name", "target", "variable"),
+                Make.Action(app.actor.list.User.Context, "variable", "set",
+                    Make.Param(app.actor.list.User.Context, "Name", "target", "variable"),
                     ("Count", 5))));
 
         var loaded = await RealGoalLoad.ViaChannel(app, goal);

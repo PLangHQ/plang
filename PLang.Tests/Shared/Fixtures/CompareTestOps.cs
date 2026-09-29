@@ -8,10 +8,10 @@ namespace PLang.Tests.App.Fixtures;
 /// </summary>
 public static class CompareTestOps
 {
-    public static int Ord(object a, object b)
+    public static int Ord(global::app.actor.context.@this context, object a, object b)
     {
-        var da = new Data("", a, context: global::PLang.Tests.TestApp.SharedContext);
-        var db = new Data("", b, context: global::PLang.Tests.TestApp.SharedContext);
+        var da = new Data("", a, context: context);
+        var db = new Data("", b, context: context);
         return Map(da.Compare(db).GetAwaiter().GetResult());
     }
 
@@ -26,11 +26,11 @@ public static class CompareTestOps
         return Map(a.Compare(b).GetAwaiter().GetResult());
     }
 
-    public static bool Eq(object? a, object? b)
+    public static bool Eq(global::app.actor.context.@this context, object? a, object? b)
     {
         if (a == null || b == null) return a == null && b == null;
-        var da = new Data("", a, context: global::PLang.Tests.TestApp.SharedContext);
-        var db = new Data("", b, context: global::PLang.Tests.TestApp.SharedContext);
+        var da = new Data("", a, context: context);
+        var db = new Data("", b, context: context);
         return da.Compare(db).GetAwaiter().GetResult() == global::app.data.Comparison.Equal;
     }
 

@@ -52,8 +52,8 @@ public class TypeIsTests
 
         // Declared type=path, but the value is already an image (which has-a
         // path). It must stay an image — not be converted/downgraded to path.
-        var action = ctx.Action("variable", "set",
-            ("name", "%p%"),
+        var action = global::PLang.Tests.Shared.Make.Action(ctx, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(ctx, "Name", "%p%", "variable"),
             ("value", img),
             ("type", new global::app.type.@this("path")));
         var result = await action.Start(ctx);

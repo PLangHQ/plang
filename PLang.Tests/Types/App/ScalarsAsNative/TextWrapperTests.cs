@@ -56,9 +56,9 @@ public class TextWrapperTests : System.IAsyncDisposable
     public async Task Text_Order_OrdinalCompare()
     {
         // text orders ordinally through its Compare hook; "a" < "b".
-        await Assert.That(CompareTestOps.Ord(new Text("a"), new Text("b"))).IsLessThan(0);
-        await Assert.That(CompareTestOps.Ord(new Text("b"), new Text("a"))).IsGreaterThan(0);
-        await Assert.That(CompareTestOps.Ord(new Text("a"), new Text("A"))).IsEqualTo(0); // case-insensitive
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, new Text("a"), new Text("b"))).IsLessThan(0);
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, new Text("b"), new Text("a"))).IsGreaterThan(0);
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, new Text("a"), new Text("A"))).IsEqualTo(0); // case-insensitive
     }
 
     [Test]

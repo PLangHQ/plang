@@ -2,30 +2,25 @@ namespace PLang.Tests;
 
 /// <summary>
 /// Test ergonomics for the born-native collections cascade: a typed List/Dictionary
-/// literal wraps into the Data&lt;list&gt;/Data&lt;dict&gt; a handler param now expects.
-/// Context-free (null) — test literals carry no %var% references to resolve.
+/// literal wraps into the Data&lt;list&gt;/Data&lt;dict&gt; a handler param now expects,
+/// built with the test's own context.
 /// </summary>
 public static class CollectionTestExtensions
 {
-    public static global::app.data.@this<global::app.type.item.list.@this> ToListData(this System.Collections.IEnumerable raw, global::app.actor.context.@this? context = null)
-    {
-        context ??= global::PLang.Tests.TestApp.SharedContext;
-        return new("", global::PLang.Tests.Shared.Make.List(raw, context)!, context: context);
-    }
+    public static global::app.data.@this<global::app.type.item.list.@this> ToListData(this System.Collections.IEnumerable raw, global::app.actor.context.@this context)
+        => new("", global::PLang.Tests.Shared.Make.List(raw, context)!, context: context);
 
-    public static global::app.data.@this<global::app.type.item.list.@this<T>> ToListData<T>(this System.Collections.IEnumerable raw, global::app.actor.context.@this? context = null)
+    public static global::app.data.@this<global::app.type.item.list.@this<T>> ToListData<T>(this System.Collections.IEnumerable raw, global::app.actor.context.@this context)
         where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
     {
-        context ??= global::PLang.Tests.TestApp.SharedContext;
         var l = new global::app.type.item.list.@this<T>();
         foreach (var i in raw)
             l.Add(i is global::app.data.@this d ? d : new global::app.data.@this("", i, context: context));
         return new("", l, context: context);
     }
 
-    public static global::app.data.@this<global::app.type.item.dict.@this> ToDictData(this System.Collections.IDictionary raw, global::app.actor.context.@this? context = null)
+    public static global::app.data.@this<global::app.type.item.dict.@this> ToDictData(this System.Collections.IDictionary raw, global::app.actor.context.@this context)
     {
-        context ??= global::PLang.Tests.TestApp.SharedContext;
         var d = new global::app.type.item.dict.@this();
         foreach (System.Collections.DictionaryEntry e in raw)
             d.Set(e.Key.ToString()!, e.Value);

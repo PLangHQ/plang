@@ -1,4 +1,3 @@
-using static PLang.Tests.TestAction;
 
 namespace PLang.Tests.App.Modules.timer;
 
@@ -19,7 +18,7 @@ public class SleepTests
     [Test]
     public async Task Sleep_CompletesNormally_ReturnsOk()
     {
-        var action = Create("timer", "sleep", ("ms", 1));
+        var action = Make.Action(Ctx, "timer", "sleep", ("ms", 1));
 
         var result = await action.Start(Ctx);
 

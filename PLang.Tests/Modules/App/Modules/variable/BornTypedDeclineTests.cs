@@ -42,7 +42,7 @@ public class BornTypedDeclineTests
 
     // Handler-level: a variable.set Name param typed as text (the stale .pr shape,
     // NOT type:variable) declines at dispatch. Built by hand to bypass
-    // TestAction/PrParam's auto-stamp of type:variable.
+    // Make.Action/PrParam's auto-stamp of type:variable.
     [Test]
     public async Task Set_NameTypedAsText_DeclinesAtDispatch()
     {

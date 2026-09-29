@@ -26,8 +26,8 @@ public class ConditionIfBranchIndexTests
     public async Task Cleanup() => await _app.DisposeAsync();
 
     // Builds an `if <left> <op> <right>` action with no body (so simple path is taken).
-    private static PrAction IfAction(object? left, string op, object? right)
-        => Make.Action("condition", "if", ("Left", left), ("Operator", op), ("Right", right));
+    private PrAction IfAction(object? left, string op, object? right)
+        => Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", left), ("Operator", op), ("Right", right));
 
     // Runs a single-step goal whose action is the given condition.if action — loaded
     // through the real read path, so the action assembles and its params type/stamp
@@ -35,7 +35,7 @@ public class ConditionIfBranchIndexTests
     private async Task<Data> RunSingleStep(PrAction ifAction)
     {
         var goal = await RealGoalLoad.ViaChannel(_app,
-            Make.Goal("CondGoal", Make.Step("if test", ifAction)));
+            Make.Goal(_app.actor.list.User.Context, "CondGoal", Make.Step("if test", ifAction)));
         _app.goal.list.Add(goal);
 
         Data? captured = null;
@@ -83,16 +83,16 @@ public class ConditionIfBranchIndexTests
         foreach (var br in branches)
         {
             if (br.op != null)
-                actions.Add(Make.Action("condition", "if",
+                actions.Add(Make.Action(_app.actor.list.User.Context, "condition", "if",
                     ("Left", "%x%"), ("Operator", br.op), ("Right", br.right)));
             // The var-name slot (Name) is declared type:variable — the way the builder
             // emits it; a bare string Name would decline at run.
-            actions.Add(Make.Action("variable", "set",
-                Make.Param("Name", br.bodyVar, "variable"), ("Value", br.bodyVal)));
+            actions.Add(Make.Action(_app.actor.list.User.Context, "variable", "set",
+                Make.Param(_app.actor.list.User.Context, "Name", br.bodyVar, "variable"), ("Value", br.bodyVal)));
         }
 
         var goal = await RealGoalLoad.ViaChannel(_app,
-            Make.Goal("Multi", Make.Step("multi", actions.ToArray())));
+            Make.Goal(_app.actor.list.User.Context, "Multi", Make.Step("multi", actions.ToArray())));
         _app.goal.list.Add(goal);
 
         Data? captured = null;

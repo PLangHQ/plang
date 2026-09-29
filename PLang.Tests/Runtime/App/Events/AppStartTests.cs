@@ -17,8 +17,8 @@ public class AppStartTests
         _root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-appstart-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(_root, ".build"));
         await using var writer = new global::app.@this(_root).Testing();
-        var goal = Make.Goal("Entry",
-            Make.Step("set x", Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", 1))));
+        var goal = Make.Goal(writer.actor.list.User.Context, "Entry",
+            Make.Step("set x", Make.Action(writer.actor.list.User.Context, "variable", "set", Make.Param(writer.actor.list.User.Context, "Name", "x", "variable"), ("Value", 1))));
         await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_root, ".build", "entry.pr"), await writer.actor.list.User.Context.Pr(goal));
     }
 

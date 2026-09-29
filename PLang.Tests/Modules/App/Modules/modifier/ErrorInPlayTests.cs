@@ -31,13 +31,13 @@ public class ErrorInPlayTests
         }, modifiers ?? []);
 
     // An on.error clause with these properties.
-    private static PrAction ErrorHandler(params (string name, object? value)[] parameters)
-        => global::PLang.Tests.Shared.Make.Action("on", "error", parameters);
+    private PrAction ErrorHandler(params (string name, object? value)[] parameters)
+        => global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error", parameters);
 
     /// <summary>An on.error clause whose Recovery calls <paramref name="goalName"/>.</summary>
-    private static PrAction ErrorHandlerCalling(string goalName, params (string name, object? value)[] parameters)
-        => global::PLang.Tests.Shared.Make.Action("on", "error",
-            [.. parameters, global::PLang.Tests.Shared.Make.Recovery(global::PLang.Tests.Shared.Make.Call(goalName))]);
+    private PrAction ErrorHandlerCalling(string goalName, params (string name, object? value)[] parameters)
+        => global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error",
+            [.. parameters, global::PLang.Tests.Shared.Make.Recovery(Ctx, global::PLang.Tests.Shared.Make.Call(Ctx, goalName))]);
 
     /// <summary>Registers a goal whose single step runs the given actions.</summary>
     private Goal RegisterGoal(string name, params PrAction[] actions)
@@ -49,7 +49,7 @@ public class ErrorInPlayTests
         };
         var step = new Step { Goal = goal, Text = $"step of {name}" };
         // The .pr load applies the template seam; without it a %var% parameter never resolves.
-        foreach (var a in actions) { TemplateStamp.Apply(a); step.Code.Add(a.In(step)); }
+        foreach (var a in actions) { TemplateStamp.Apply(a, _app.actor.list.User.Context); step.Code.Add(a.In(step)); }
         goal.Step.Add(step);
         _app.goal.list.Add(goal);
         return goal;
@@ -81,7 +81,7 @@ public class ErrorInPlayTests
     [Test]
     public async Task ErrorInPlay_LiveFrameHoldsError_AnswersThatError()
     {
-        var action = Ctx.Action("variable", "set", ("name", "%x%"), ("value", "v"));
+        var action = global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set", global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "%x%", "variable"), ("value", "v"));
         var error = new global::app.error.Error("frame failed");
 
         await using var call = Ctx.CallStack.Push(action, Ctx.Variable);
@@ -95,8 +95,8 @@ public class ErrorInPlayTests
     [Test]
     public async Task ErrorInPlay_InnerFrame_ShadowsCallerThenUnshadows()
     {
-        var outerAction = Ctx.Action("variable", "set", ("name", "%a%"), ("value", "1"));
-        var innerAction = Ctx.Action("variable", "set", ("name", "%b%"), ("value", "2"));
+        var outerAction = global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set", global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "%a%", "variable"), ("value", "1"));
+        var innerAction = global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set", global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "%b%", "variable"), ("value", "2"));
         var outerError = new global::app.error.Error("outer failed");
         var innerError = new global::app.error.Error("inner failed");
 
@@ -118,7 +118,7 @@ public class ErrorInPlayTests
     [Test]
     public async Task ErrorInPlay_FrameHandled_StopsAnswering()
     {
-        var action = Ctx.Action("variable", "set", ("name", "%x%"), ("value", "v"));
+        var action = global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set", global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "%x%", "variable"), ("value", "v"));
 
         await using var call = Ctx.CallStack.Push(action, Ctx.Variable);
         call.Errors.Add(new global::app.error.Error("recovered later"));
@@ -137,7 +137,7 @@ public class ErrorInPlayTests
     [Test]
     public async Task ErrorInPlay_PoppedFrame_NoLongerInPlay()
     {
-        var action = Ctx.Action("error", "throw", ("message", "already finished"));
+        var action = global::PLang.Tests.Shared.Make.Action(Ctx, "error", "throw", ("message", "already finished"));
 
         await using (var call = Ctx.CallStack.Push(action, Ctx.Variable))
         {
@@ -202,7 +202,7 @@ public class ErrorInPlayTests
             Module = ctx.App.Module("timer"), Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 3000L, context: ctx) })
         }, ErrorHandlerCalling("Recover", ("order", "GoalFirst")),
-           global::PLang.Tests.Shared.Make.Action("on", "timeout", ("After", System.TimeSpan.FromMilliseconds(1))));
+           global::PLang.Tests.Shared.Make.Action(ctx, "on", "timeout", ("After", System.TimeSpan.FromMilliseconds(1))));
 
         var result = await sleep.Start(Ctx);
 

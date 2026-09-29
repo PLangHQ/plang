@@ -17,8 +17,8 @@ public class Cut1_TypedSetRoundTripsKind
     [Test] public async Task SetAsTextMd_DocTypeIsTextWithKindMd()
     {
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set",
-            ("name", "%doc%"),
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%doc%", "variable"),
             ("value", "readme.md"),
             ("type", new global::app.type.@this("text", "md")));
         var result = await action.Start(context);
@@ -33,8 +33,8 @@ public class Cut1_TypedSetRoundTripsKind
     [Test] public async Task SetAsTextMd_NavigationResolvesKindFromVariableExpression()
     {
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set",
-            ("name", "%doc%"),
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%doc%", "variable"),
             ("value", "readme.md"),
             ("type", new global::app.type.@this("text", "md")));
         await action.Start(context);

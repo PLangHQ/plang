@@ -1,4 +1,3 @@
-using static PLang.Tests.TestAction;
 
 namespace PLang.Tests.App.Modules.modifier;
 
@@ -20,8 +19,8 @@ public class TimeoutAfterTests
     public async Task Cleanup() => await _app.DisposeAsync();
 
     // An on.timeout clause: a deadline of ms per attempt.
-    private static PrAction TimeoutModifier(int ms)
-        => global::PLang.Tests.Shared.Make.Action("on", "timeout", ("After", System.TimeSpan.FromMilliseconds(ms)));
+    private PrAction TimeoutModifier(int ms)
+        => global::PLang.Tests.Shared.Make.Action(Ctx, "on", "timeout", ("After", System.TimeSpan.FromMilliseconds(ms)));
 
     [Test]
     public async Task After_ActionCompletesBefore_PassesThroughResult()
@@ -126,7 +125,7 @@ public class TimeoutAfterTests
             Module = _app.actor.list.User.Context.App.Module("timer"),
             Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: Ctx) })
-        }, global::PLang.Tests.Shared.Make.Action("on", "error", ("IgnoreError", true)),
+        }, global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error", ("IgnoreError", true)),
                 TimeoutModifier(50));
 
         var result = await action.Start(Ctx);
@@ -144,7 +143,7 @@ public class TimeoutAfterTests
             Module = _app.actor.list.User.Context.App.Module("timer"),
             Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 2000, context: Ctx) })
-        }, TimeoutModifier(100), global::PLang.Tests.Shared.Make.Action("on", "error", ("RetryCount", 2)));
+        }, TimeoutModifier(100), global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error", ("RetryCount", 2)));
 
         var start = DateTimeOffset.UtcNow;
         var result = await action.Start(Ctx);

@@ -65,11 +65,11 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "What's the weather?" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Tool("GetWeather", parameter: new List<Data> { new Data("city", null, Ctx.App.type.list["text"], context: Ctx) })
-            }.ToListData()
+                Make.Tool(Ctx, "GetWeather", parameter: new List<Data> { new Data("city", null, Ctx.App.type.list["text"], context: Ctx) })
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -102,12 +102,12 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "do both" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Tool("ToolA", parallel: false),
-                Make.Tool("ToolB", parallel: false)
-            }.ToListData()
+                Make.Tool(Ctx, "ToolA", parallel: false),
+                Make.Tool(Ctx, "ToolB", parallel: false)
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -137,12 +137,12 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "do both parallel" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Tool("ToolA", parallel: true),
-                Make.Tool("ToolB", parallel: true)
-            }.ToListData()
+                Make.Tool(Ctx, "ToolA", parallel: true),
+                Make.Tool(Ctx, "ToolB", parallel: true)
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -172,12 +172,12 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "mixed" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Tool("ToolA", parallel: true),
-                Make.Tool("ToolB", parallel: false)
-            }.ToListData()
+                Make.Tool(Ctx, "ToolA", parallel: true),
+                Make.Tool(Ctx, "ToolB", parallel: false)
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -208,11 +208,11 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "call failing tool" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Call("FailTool")
-            }.ToListData()
+                Make.Call(Ctx, "FailTool")
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -242,11 +242,11 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "call unknown" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Call("KnownTool")
-            }.ToListData()
+                Make.Call(Ctx, "KnownTool")
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -270,11 +270,11 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "loop forever" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Call("InfiniteTool")
-            }.ToListData(),
+                Make.Call(Ctx, "InfiniteTool")
+            }.ToListData(Ctx),
             MaxToolCalls = (global::app.type.item.number.@this)3
         };
         await action.Attach(null, Ctx);
@@ -308,15 +308,15 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Tool("TestTool", parameter: new List<Data>
+                Make.Tool(Ctx, "TestTool", parameter: new List<Data>
                     {
                         new Data("city", null, Ctx.App.type.list["text"], context: Ctx),     // required (no default)
                         new Data("units", "metric", Ctx.App.type.list["text"], context: Ctx) // optional (has default)
                     })
-            }.ToListData()
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -336,14 +336,14 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Tool("TestTool", parameter: new List<Data>
+                Make.Tool(Ctx, "TestTool", parameter: new List<Data>
                     {
                         new Data("query", null, Ctx.App.type.list["text"], context: Ctx)
                     })
-            }.ToListData()
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         await action.Start();
@@ -362,11 +362,11 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Tool("NoParamTool", parameter: new List<Data>())
-            }.ToListData()
+                Make.Tool(Ctx, "NoParamTool", parameter: new List<Data>())
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         await action.Start();
@@ -400,15 +400,15 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "Weather in London?" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Tool("GetWeather", parameter: new List<Data>
+                Make.Tool(Ctx, "GetWeather", parameter: new List<Data>
                     {
                         new Data("city", null, Ctx.App.type.list["text"], context: Ctx),       // required
                         new Data("units", "metric", Ctx.App.type.list["text"], context: Ctx)   // optional, default "metric"
                     })
-            }.ToListData()
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -435,10 +435,10 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Tool("TypedTool", parameter: new List<Data>
+                Make.Tool(Ctx, "TypedTool", parameter: new List<Data>
                     {
                         new Data("name", null, Ctx.App.type.list["text"], context: Ctx),
                         new Data("count", null, new global::app.type.@this("int"), context: Ctx),
@@ -446,7 +446,7 @@ public class QueryToolTests
                         new Data("items", null, new global::app.type.@this("list"), context: Ctx),
                         new Data("config", null, new global::app.type.@this("object"), context: Ctx)
                     })
-            }.ToListData()
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         await action.Start();
@@ -485,10 +485,10 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "mixed types" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Tool("MixedTool", parameter: new List<Data>
+                Make.Tool(Ctx, "MixedTool", parameter: new List<Data>
                 {
                     new Data("flag", null, Ctx.App.type.list["bool"], context: Ctx),
                     new Data("disabled", null, Ctx.App.type.list["bool"], context: Ctx),
@@ -496,7 +496,7 @@ public class QueryToolTests
                     new Data("label", null, Ctx.App.type.list["text"], context: Ctx),
                     new Data("nested", null, Ctx.App.type.list["dict"], context: Ctx),
                 })
-            }.ToListData()
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -527,11 +527,11 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "weather" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Tool("GetWeather", parameter: new List<Data> { new Data("city", null, Ctx.App.type.list["text"], context: Ctx) })
-            }.ToListData()
+                Make.Tool(Ctx, "GetWeather", parameter: new List<Data> { new Data("city", null, Ctx.App.type.list["text"], context: Ctx) })
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -566,12 +566,12 @@ public class QueryToolTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "parallel" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Tool("ToolA", parallel: true),
-                Make.Tool("ToolB", parallel: true)
-            }.ToListData()
+                Make.Tool(Ctx, "ToolA", parallel: true),
+                Make.Tool(Ctx, "ToolB", parallel: true)
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();

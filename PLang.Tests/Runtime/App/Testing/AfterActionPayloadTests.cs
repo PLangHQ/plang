@@ -27,9 +27,9 @@ public class AfterActionPayloadTests
     // Runs a simple goal with one action (variable.set) so a single action start fires.
     private async Task RunSimpleGoal(string varName = "x", int value = 42)
     {
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestGoal",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, "TestGoal",
             Make.Step("set var",
-                Make.Action("variable", "set", Make.Param("Name", varName, "variable"), ("Value", value)))));
+                Make.Action(_app.actor.list.User.Context, "variable", "set", Make.Param(_app.actor.list.User.Context, "Name", varName, "variable"), ("Value", value)))));
         _app.goal.list.Add(goal);
         await _app.Start(goal, _app.actor.list.User.Context);
     }
@@ -66,10 +66,10 @@ public class AfterActionPayloadTests
     [Test]
     public async Task AfterAction_AClause_IsNeverStarted_OnlyItsActionFires()
     {
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("ModifierGoal",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, "ModifierGoal",
             Make.Step("mod set",
-                Make.Action("variable", "set", Make.Param("Name", "y", "variable"), ("Value", 7)),
-                Make.Action("on", "timeout", ("After", System.TimeSpan.FromSeconds(5))))));
+                Make.Action(_app.actor.list.User.Context, "variable", "set", Make.Param(_app.actor.list.User.Context, "Name", "y", "variable"), ("Value", 7)),
+                Make.Action(_app.actor.list.User.Context, "on", "timeout", ("After", System.TimeSpan.FromSeconds(5))))));
         _app.goal.list.Add(goal);
 
         var observed = new List<(string Module, string Name)>();
@@ -109,9 +109,9 @@ public class AfterActionPayloadTests
     [Test]
     public async Task AfterAction_OnActionFailure_FiresWithErrorData()
     {
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("FailGoal",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, "FailGoal",
             Make.Step("bad assert",
-                Make.Action("assert", "equals", ("Expected", 1), ("Actual", 2)))));
+                Make.Action(_app.actor.list.User.Context, "assert", "equals", ("Expected", 1), ("Actual", 2)))));
         _app.goal.list.Add(goal);
 
         Data? captured = null;

@@ -41,8 +41,8 @@ public class LazyPathHandleTests
         // The file does NOT exist. If `set` read it, this would error — it
         // doesn't, because a path-backed handle reads nothing at the set.
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set",
-            ("name", "%pic%"),
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%pic%", "variable"),
             ("value", "ghost.jpg"),
             ("type", new global::app.type.@this("image")));
         var result = await action.Start(context);

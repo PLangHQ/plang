@@ -3,13 +3,16 @@ using static PLang.Tests.App.CallStackTests.CallStackTestHelpers;
 
 namespace PLang.Tests.App.Errors;
 
-public class ServiceErrorChainTests
+public class ServiceErrorChainTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task ServiceError_CallFrames_TypedAsReadOnlyListOfCall()
     {
         var stack = new CallStack();
-        await using var call = stack.Push(MakeAction("A"));
+        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         var chain = call.SnapshotChain();
         var sv = new ServiceError("crash", call.Action.Step!, chain);
         IReadOnlyList<global::app.callstack.call.@this> typed = sv.CallFrames;
@@ -20,8 +23,8 @@ public class ServiceErrorChainTests
     public async Task ServiceError_ChainIndexZero_IsFailingCall()
     {
         var stack = new CallStack();
-        await using var outer = stack.Push(MakeAction("Outer"));
-        await using var failing = stack.Push(MakeAction("Failing"));
+        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
+        await using var failing = stack.Push(MakeAction(app.actor.list.User.Context, "Failing"));
         var chain = failing.SnapshotChain();
         var sv = new ServiceError("crash", failing.Action.Step!, chain);
         await Assert.That(sv.CallFrames[0]).IsEqualTo(failing);
@@ -31,9 +34,9 @@ public class ServiceErrorChainTests
     public async Task ServiceError_ChainWalksCallerToRoot()
     {
         var stack = new CallStack();
-        await using var root = stack.Push(MakeAction("Root"));
-        await using var middle = stack.Push(MakeAction("Middle"));
-        await using var leaf = stack.Push(MakeAction("Leaf"));
+        await using var root = stack.Push(MakeAction(app.actor.list.User.Context, "Root"));
+        await using var middle = stack.Push(MakeAction(app.actor.list.User.Context, "Middle"));
+        await using var leaf = stack.Push(MakeAction(app.actor.list.User.Context, "Leaf"));
         var chain = leaf.SnapshotChain();
         var sv = new ServiceError("crash", leaf.Action.Step!, chain);
         await Assert.That(sv.CallFrames.Count).IsEqualTo(3);

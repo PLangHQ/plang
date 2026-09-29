@@ -240,8 +240,8 @@ public class TestingClassTests
     [Test]
     public async Task TheRun_TakesInTheGoalsATestReaches()
     {
-        var goal = Make.Goal("Covered",
-            Make.Step("if %x% is 1", Make.Action("condition", "if", ("Left", "%x%"), ("Operator", "=="), ("Right", 1))));
+        var goal = Make.Goal(_app.actor.list.User.Context, "Covered",
+            Make.Step("if %x% is 1", Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", "%x%"), ("Operator", "=="), ("Right", 1))));
         goal.Tag.Add(new global::app.type.item.tag.@this("skip"));
         var test = await global::app.test.@this.From(goal, _app.actor.list.User.Context);
 

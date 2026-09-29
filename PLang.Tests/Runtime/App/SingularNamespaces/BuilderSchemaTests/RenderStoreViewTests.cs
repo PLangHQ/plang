@@ -11,9 +11,9 @@ public class RenderStoreViewTests
     private static async Task<(bool ok, string? err, string outp)> Render(app.@this app, string template)
     {
         var ctx = app.actor.list.System.Context;
-        var goal = Make.Goal("MyGoal",
+        var goal = Make.Goal(ctx, "MyGoal",
             Make.Step("write out \"Hello %name%\"",
-                Make.Action("output", "write", ("Data", "Hello %name%"))));
+                Make.Action(ctx, "output", "write", ("Data", "Hello %name%"))));
         ctx.Variable.Set(new global::app.data.@this("goal", goal, context: ctx));
         var action = new Render(ctx)
         {

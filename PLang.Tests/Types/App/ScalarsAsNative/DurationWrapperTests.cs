@@ -12,11 +12,12 @@ public class DurationWrapperTests
     [Test]
     public async Task Duration_Order_ByLength()
     {
+        await using var app = new global::app.@this("/app").Testing();
         var s = new Duration(System.TimeSpan.FromSeconds(1));
         var m = new Duration(System.TimeSpan.FromMinutes(1));
         var h = new Duration(System.TimeSpan.FromHours(1));
-        await Assert.That(CompareTestOps.Ord(s, m)).IsLessThan(0);
-        await Assert.That(CompareTestOps.Ord(m, h)).IsLessThan(0);
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, s, m)).IsLessThan(0);
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, m, h)).IsLessThan(0);
         await Assert.That(CompareTestOps.OrdD(new Data("", s), new Data("", h))).IsLessThan(0);
     }
 

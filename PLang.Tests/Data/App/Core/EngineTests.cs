@@ -22,7 +22,7 @@ public class EngineTests : System.IAsyncDisposable
                     Module = app.actor.list.User.Context.App.Module(actionClass),
                     Name = method,
                     Property = global::PLang.Tests.Shared.Make.Properties(parameters is IDictionary<string, object?> dict
-                        ? PrParam.List(actionClass, method, dict)
+                        ? PrParam.List(app.actor.list.User.Context, actionClass, method, dict)
                         : new List<Data>())
                 }
             }
@@ -42,7 +42,7 @@ public class EngineTests : System.IAsyncDisposable
                     Module = app.actor.list.User.Context.App.Module(actionClass),
                     Name = method,
                     Property = global::PLang.Tests.Shared.Make.Properties(parameters is IDictionary<string, object?> dict
-                        ? PrParam.List(actionClass, method, dict)
+                        ? PrParam.List(app.actor.list.User.Context, actionClass, method, dict)
                         : new List<Data>()),
                 },
                 new global::app.goal.step.action.@this
@@ -247,7 +247,7 @@ public class EngineTests : System.IAsyncDisposable
     {
         await using var engine = new global::app.@this("/app").Testing();
 
-        var result = await Make.Call("NonexistentGoal").Start(engine.actor.list.User.Context);
+        var result = await Make.Call(app.actor.list.User.Context, "NonexistentGoal").Start(engine.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("GoalNotFound");
@@ -260,7 +260,7 @@ public class EngineTests : System.IAsyncDisposable
         var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", app.actor.list.User.Context) };
         engine.goal.list.Add(goal);
 
-        var result = await Make.Call("EmptyGoal").Start(engine.actor.list.User.Context);
+        var result = await Make.Call(app.actor.list.User.Context, "EmptyGoal").Start(engine.actor.list.User.Context);
 
         await result.IsSuccess();
     }
@@ -285,7 +285,7 @@ public class EngineTests : System.IAsyncDisposable
         // Cancel via the engine's shutdown — Goal.RunAsync checks context.CancellationToken
         engine.RequestShutdown();
 
-        var result = await Make.Call("TestGoal").Start(engine.actor.list.User.Context);
+        var result = await Make.Call(app.actor.list.User.Context, "TestGoal").Start(engine.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Cancelled");
@@ -325,9 +325,9 @@ public class EngineTests : System.IAsyncDisposable
     {
         await using var engine = new global::app.@this("/app").Testing();
 
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(app.actor.list.User.Context, "TestGoal",
             Make.Step("set variable",
-                Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "hello")))));
+                Make.Action(app.actor.list.User.Context, "variable", "set", Make.Param(app.actor.list.User.Context, "Name", "test", "variable"), ("Value", "hello")))));
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
@@ -354,7 +354,7 @@ public class EngineTests : System.IAsyncDisposable
         };
         engine.goal.list.Add(goal);
 
-        var result = await Make.Call("TestGoal").Start(engine.actor.list.User.Context);
+        var result = await Make.Call(app.actor.list.User.Context, "TestGoal").Start(engine.actor.list.User.Context);
 
         await result.IsFailure();
     }
@@ -473,9 +473,9 @@ public class EngineTests : System.IAsyncDisposable
     {
         await using var engine = new global::app.@this("/app").Testing();
 
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(app.actor.list.User.Context, "TestGoal",
             Make.Step("set variable",
-                Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "hello")))));
+                Make.Action(app.actor.list.User.Context, "variable", "set", Make.Param(app.actor.list.User.Context, "Name", "test", "variable"), ("Value", "hello")))));
         engine.goal.list.Add(goal);
 
         var result = await engine.Start(goal, engine.actor.list.System.Context);
@@ -491,12 +491,12 @@ public class EngineTests : System.IAsyncDisposable
     {
         await using var engine = new global::app.@this("/app").Testing();
 
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("TestGoal",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(app.actor.list.User.Context, "TestGoal",
             Make.Step("set variable",
-                Make.Action("variable", "set", Make.Param("Name", "test", "variable"), ("Value", "system-value")))));
+                Make.Action(app.actor.list.User.Context, "variable", "set", Make.Param(app.actor.list.User.Context, "Name", "test", "variable"), ("Value", "system-value")))));
         engine.goal.list.Add(goal);
 
-        var result = await Make.Call("TestGoal").Start(engine.actor.list.System.Context);
+        var result = await Make.Call(app.actor.list.User.Context, "TestGoal").Start(engine.actor.list.System.Context);
 
         await result.IsSuccess();
         await Assert.That((await engine.actor.list.System.Context.Variable.GetValue("test"))).IsEqualTo("system-value");

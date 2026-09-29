@@ -6,13 +6,14 @@ namespace PLang.Tests.Shared;
 /// new PrAction { Property = ... } } } } }</c>, write:
 ///
 /// <code>
-/// var goal = Make.Goal("MyGoal",
+/// var goal = Make.Goal(ctx, "MyGoal",
 ///     Make.Step("write out %name%",
-///         Make.Action("output", "write", ("Content", "Hi %name%"))),
+///         Make.Action(ctx, "output", "write", ("Content", "Hi %name%"))),
 ///     Make.Step("if it matches",
-///         Make.Action("condition", "if", ("Left", "%x%"), ("Operator", "="), ("Right", 1))));
+///         Make.Action(ctx, "condition", "if", ("Left", "%x%"), ("Operator", "="), ("Right", 1))));
 /// </code>
 ///
+/// Every value is built with the test's own context <c>ctx</c> — its app's modules and types.
 /// Step <c>Index</c> is assigned by position; <c>Path</c> defaults to
 /// <c>/{name}.goal</c>. Pair it with <see cref="RealGoalLoad.ViaChannel"/> to load
 /// the goal through the real read path.
@@ -39,11 +40,11 @@ public static class Make
     /// written as a string, etc. — use <see cref="Param"/>: <c>Make.Param("Name",
     /// "relative", "variable")</c>.
     /// </summary>
-    public static global::app.goal.step.action.@this Action(
+    public static global::app.goal.step.action.@this Action(global::app.actor.context.@this context,
         string module, string actionName, params (string name, object? value)[] parameters)
     {
         // made by its catalog element, as the reader makes it: an on.error / on.cache / on.timeout is a clause
-        var owner = global::PLang.Tests.TestApp.SharedContext.App.Module(module);
+        var owner = context.App.Module(module);
         var action = owner[actionName]?.Program(null)
             ?? new global::app.goal.step.action.@this { Module = owner, Name = actionName };
         foreach (var (name, value) in parameters)
@@ -55,12 +56,12 @@ public static class Make
             action.Property.Add(Property(value is global::app.data.@this typed
                 ? typed
                 : value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[^%]+%")   // text.HasVariable's detector (%!data% too)
-                    ? new global::app.data.@this(name, s, global::PLang.Tests.TestApp.SharedContext.App.type.list[new global::app.type.@this("text", template: "plang"), global::PLang.Tests.TestApp.SharedContext], context: global::PLang.Tests.TestApp.SharedContext)
+                    ? new global::app.data.@this(name, s, context.App.type.list[new global::app.type.@this("text", template: "plang"), context], context: context)
                     // a list/dict the programmer wrote holding a %variable% is marked too, as the builder marks it
                     : value is System.Collections.IEnumerable and not string && System.Text.RegularExpressions.Regex.IsMatch(
                             System.Text.Json.JsonSerializer.Serialize(value), "%[^%]+%")
-                        ? TemplateStamp.Container(name, value, global::PLang.Tests.TestApp.SharedContext)
-                        : new global::app.data.@this(name, value, context: global::PLang.Tests.TestApp.SharedContext)));
+                        ? TemplateStamp.Container(name, value, context)
+                        : new global::app.data.@this(name, value, context: context)));
         return action;
     }
 
@@ -89,26 +90,24 @@ public static class Make
 
     /// <summary>A <c>goal.call</c> action: <c>Name</c> is the goal, each argument one row of its
     /// <c>Parameter</c> list — the shape a callback slot holds.</summary>
-    public static global::app.goal.step.action.@this Call(string goal, params (string name, object? value)[] arguments)
+    public static global::app.goal.step.action.@this Call(global::app.actor.context.@this ctx, string goal, params (string name, object? value)[] arguments)
     {
-        var ctx = global::PLang.Tests.TestApp.SharedContext;
-        if (arguments.Length == 0) return Action("goal", "call", ("Name", goal));
+        if (arguments.Length == 0) return Action(ctx, "goal", "call", ("Name", goal));
         // A %ref% argument is an authored template, as the builder stamps it — it renders against
         // live variables when the callee reads it.
         var rows = arguments.Select(a => a.value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[A-Za-z_]")
             ? new global::app.data.@this(a.name, s, ctx.App.type.list[new global::app.type.@this("text", template: "plang"), ctx], context: ctx)
             : new global::app.data.@this(a.name, a.value, context: ctx)).ToList();
-        return Action("goal", "call", ("Name", goal),
+        return Action(ctx, "goal", "call", ("Name", goal),
             ("Parameter", new global::app.type.item.list.@this(rows)));
     }
 
     /// <summary>An llm.query tool: a <c>goal.call</c> action whose <c>Parameter</c> rows declare what
     /// the model supplies (a row with no value is required), optionally safe to run in parallel.</summary>
-    public static global::app.goal.step.action.@this Tool(string goal, bool parallel = false,
+    public static global::app.goal.step.action.@this Tool(global::app.actor.context.@this ctx, string goal, bool parallel = false,
         List<global::app.data.@this>? parameter = null)
     {
-        var ctx = global::PLang.Tests.TestApp.SharedContext;
-        var tool = Action("goal", "call", ("Name", goal));
+        var tool = Action(ctx, "goal", "call", ("Name", goal));
         if (parameter is { Count: > 0 })
             tool.Property.Add(Property(new global::app.data.@this("Parameter", new global::app.type.item.list.@this(parameter), context: ctx)));
         if (parallel)
@@ -123,8 +122,8 @@ public static class Make
     /// the common case where the value's own type is right, a plain
     /// <c>(name, value)</c> tuple is enough.
     /// </summary>
-    public static (string name, object? value) Param(string name, object? value, string type)
-        => Param(name, value, new global::app.type.@this(type));
+    public static (string name, object? value) Param(global::app.actor.context.@this context, string name, object? value, string type)
+        => Param(context, name, value, new global::app.type.@this(type));
 
     /// <summary>
     /// A parameter carrying an explicit <paramref name="kind"/> (and optionally
@@ -133,22 +132,21 @@ public static class Make
     /// "md")</c> mirrors <c>as text/md</c>; <c>(…, "image", "gif", strict: true)</c>
     /// mirrors <c>as image/gif strict</c>. Round-trips through the read like any param.
     /// </summary>
-    public static (string name, object? value) Param(
+    public static (string name, object? value) Param(global::app.actor.context.@this context,
         string name, object? value, string type, string kind, bool strict = false)
-        => Param(name, value, new global::app.type.@this(type, kind, strict));
+        => Param(context, name, value, new global::app.type.@this(type, kind, strict));
 
     /// <summary>A parameter with a fully-built type entity — for cases that construct
     /// <see cref="global::app.type.@this"/> directly.</summary>
-    public static (string name, object? value) Param(
+    public static (string name, object? value) Param(global::app.actor.context.@this context,
         string name, object? value, global::app.type.@this type)
-        => (name, new global::app.data.@this(name, value, global::PLang.Tests.TestApp.SharedContext.App.type.list[type, global::PLang.Tests.TestApp.SharedContext],
-            context: global::PLang.Tests.TestApp.SharedContext));
+        => (name, new global::app.data.@this(name, value, context.App.type.list[type, context], context: context));
 
     /// <summary>A text parameter carrying an interpolation template (an embedded or full
     /// <c>%ref%</c>) — models the builder stamping <c>type.template="plang"</c> on a value
     /// that contains a <c>%var%</c>. The read fills the holes against live variables.</summary>
-    public static (string name, object? value) Template(string name, string value)
-        => Param(name, value, new global::app.type.@this("text", template: "plang"));
+    public static (string name, object? value) Template(global::app.actor.context.@this context, string name, string value)
+        => Param(context, name, value, new global::app.type.@this("text", template: "plang"));
 
     /// <summary>
     /// An action with its clauses after it (<c>on.error</c>, <c>on.cache</c>, <c>on.timeout</c>, made with
@@ -165,11 +163,11 @@ public static class Make
     }
 
     /// <summary>on.error's Recovery row — the actions that run to recover.</summary>
-    public static (string name, object? value) Recovery(params global::app.goal.step.action.@this[] actions)
+    public static (string name, object? value) Recovery(global::app.actor.context.@this context, params global::app.goal.step.action.@this[] actions)
     {
         var list = new global::app.goal.step.action.list.@this();
         foreach (var a in actions) list.Add(a);
-        return ("Recovery", new global::app.data.@this("Recovery", list, context: global::PLang.Tests.TestApp.SharedContext));
+        return ("Recovery", new global::app.data.@this("Recovery", list, context: context));
     }
 
     /// <summary>
@@ -179,31 +177,31 @@ public static class Make
     /// an explicit parameter wins. Born-typed like any param. Returns the same action
     /// for nesting inside <see cref="Step"/>.
     /// </summary>
-    public static global::app.goal.step.action.@this WithDefaults(
+    public static global::app.goal.step.action.@this WithDefaults(global::app.actor.context.@this context,
         global::app.goal.step.action.@this action,
         params (string name, object? value)[] defaults)
     {
         foreach (var (name, value) in defaults)
             action.Default.Add(Property(value is global::app.data.@this typed
                 ? typed
-                : new global::app.data.@this(name, value, context: global::PLang.Tests.TestApp.SharedContext)));
+                : new global::app.data.@this(name, value, context: context)));
         return action;
     }
 
-    public static global::app.goal.@this Goal(string name, params StepDef[] steps)
-        => Goal(name, $"/{name}.goal", steps);
+    public static global::app.goal.@this Goal(global::app.actor.context.@this context, string name, params StepDef[] steps)
+        => Goal(context, name, $"/{name}.goal", steps);
 
     /// <summary>
     /// A goal at an explicit <paramref name="path"/> — for tests where the goal's
     /// folder matters (relative file-path resolution, parent traversal). The path
     /// rides the wire and is restored by the read, exactly like a <c>.pr</c> off disk.
     /// </summary>
-    public static global::app.goal.@this Goal(string name, string path, params StepDef[] steps)
+    public static global::app.goal.@this Goal(global::app.actor.context.@this context, string name, string path, params StepDef[] steps)
     {
         var goal = new global::app.goal.@this
         {
             Name = name,
-            Path = global::app.type.item.path.@this.Resolve(path, global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve(path, context),
         };
 
         var stepNode = new global::app.goal.step.list.@this();

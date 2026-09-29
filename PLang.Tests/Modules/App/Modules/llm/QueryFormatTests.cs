@@ -58,7 +58,7 @@ public class QueryFormatTests
             {
                 new LlmMessage { Role = "system", Content = "analyze" },
                 new LlmMessage { Role = "user", Content = "I love this" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Schema = Ctx.Ok("{sentiment: string}")
         };
         await action.Attach(null, Ctx);
@@ -104,7 +104,7 @@ public class QueryFormatTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Schema = Ctx.Ok("{sentiment: string, score: number}")
         };
         await action.Attach(null, Ctx);
@@ -128,7 +128,7 @@ public class QueryFormatTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Schema = Ctx.Ok("{result: string}")
         };
         await action.Attach(null, Ctx);
@@ -148,7 +148,7 @@ public class QueryFormatTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Schema = Ctx.Ok("{answer: int}")
         };
         await action.Attach(null, Ctx);
@@ -171,7 +171,7 @@ public class QueryFormatTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "write hello world" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Format = (global::app.type.item.text.@this)"python"
         };
         await action.Attach(null, Ctx);
@@ -191,7 +191,7 @@ public class QueryFormatTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "write markdown" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Format = (global::app.type.item.text.@this)"md"
         };
         await action.Attach(null, Ctx);
@@ -210,7 +210,7 @@ public class QueryFormatTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Format = (global::app.type.item.text.@this)"python"
         };
         await action.Attach(null, Ctx);
@@ -238,7 +238,7 @@ public class QueryFormatTests
             {
                 new LlmMessage { Role = "system", Content = "You are a helpful assistant" },
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Schema = Ctx.Ok("{ok: bool}")
         };
         await action.Attach(null, Ctx);

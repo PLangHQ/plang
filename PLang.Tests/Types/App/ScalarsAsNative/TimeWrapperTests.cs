@@ -26,12 +26,13 @@ public class TimeWrapperTests
     [Test]
     public async Task Time_Order_WithinTimeOnly()
     {
+        await using var app = new global::app.@this("/app").Testing();
         var morning = new TimeT(new System.TimeOnly(9, 0));
         var afternoon = new TimeT(new System.TimeOnly(14, 30));
         var night = new TimeT(new System.TimeOnly(23, 59));
-        await Assert.That(CompareTestOps.Ord(morning, afternoon)).IsLessThan(0);
-        await Assert.That(CompareTestOps.Ord(afternoon, night)).IsLessThan(0);
-        await Assert.That(CompareTestOps.Ord(morning, new TimeT(new System.TimeOnly(9, 0)))).IsEqualTo(0);
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, morning, afternoon)).IsLessThan(0);
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, afternoon, night)).IsLessThan(0);
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, morning, new TimeT(new System.TimeOnly(9, 0)))).IsEqualTo(0);
     }
 
     [Test]

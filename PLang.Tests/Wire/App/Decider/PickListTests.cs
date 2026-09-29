@@ -32,12 +32,12 @@ public class PickListTests
 
     // The golden goal; a kept step (already built, its text unchanged) holds its saved code and its
     // prior text, as goal.Merge leaves it.
-    private static global::app.goal.@this Goal(System.Text.Json.JsonElement entry)
+    private static global::app.goal.@this Goal(System.Text.Json.JsonElement entry, global::app.actor.context.@this context)
     {
         var steps = entry.GetProperty("step").EnumerateArray().ToList();
-        var goal = Make.Goal(entry.GetProperty("name").GetString()!, "/" + entry.GetProperty("name").GetString() + ".goal",
+        var goal = Make.Goal(context, entry.GetProperty("name").GetString()!, "/" + entry.GetProperty("name").GetString() + ".goal",
             steps.Select(s => s.GetProperty("kept").GetBoolean()
-                ? Make.Step(s.GetProperty("text").GetString()!, s.GetProperty("indent").GetInt32(), Make.Action("file", "read", ("Path", "saved.json")))
+                ? Make.Step(s.GetProperty("text").GetString()!, s.GetProperty("indent").GetInt32(), Make.Action(context, "file", "read", ("Path", "saved.json")))
                 : Make.Step(s.GetProperty("text").GetString()!, s.GetProperty("indent").GetInt32())).ToArray());
         foreach (var s in steps.Where(s => s.GetProperty("kept").GetBoolean()))
             goal.Step[s.GetProperty("index").GetInt32()].PriorText = s.GetProperty("text").GetString();
@@ -110,7 +110,7 @@ public class PickListTests
         var differ = new List<string>();
         foreach (var entry in Golden())
         {
-            var goal = Goal(entry);
+            var goal = Goal(entry, os.actor.list.User.Context);
             var at = entry.GetProperty("goal").GetString()!;
             differ.AddRange(Differ(at, await Rendered("decider1.template", goal, context), entry.GetProperty("question1")));
             differ.AddRange(Differ(at, await Rendered("decider.state.template", goal, context, stage: 1), entry.GetProperty("state1").GetString()!));
@@ -128,7 +128,7 @@ public class PickListTests
         var differ = new List<string>();
         foreach (var entry in Golden())
         {
-            var goal = Goal(entry);
+            var goal = Goal(entry, os.actor.list.User.Context);
             foreach (var s in entry.GetProperty("step").EnumerateArray())
                 if (s.GetProperty("comment").GetString() is { } comment) goal.Step[s.GetProperty("index").GetInt32()].Comment = comment;
             var first = Answer(entry.GetProperty("answer1"), context);
@@ -160,7 +160,7 @@ public class PickListTests
         foreach (var entry in cases)
         {
             var name = entry.GetProperty("goal").GetString()!;
-            var goal = Make.Goal(name, "/" + name + ".goal",
+            var goal = Make.Goal(context, name, "/" + name + ".goal",
                 entry.GetProperty("steps").EnumerateArray().Select(t => Make.Step(t.GetString()!, 0)).ToArray());
             await goal.Step.Scope(context);
             // the message ends in one newline (python: out + "\n"); the block is what comes before it
@@ -190,7 +190,7 @@ public class PickListTests
         var differ = new List<string>();
         foreach (var entry in Golden())
         {
-            var goal = Goal(entry);
+            var goal = Goal(entry, context);
             var first = Answer(entry.GetProperty("answer1"), context);
             foreach (var step in goal.Step.Items()) await step.Pick.Take(first, Popular(), context);
             differ.AddRange(Differ(entry.GetProperty("goal").GetString()!,
@@ -209,7 +209,7 @@ public class PickListTests
         var differ = new List<string>();
         foreach (var entry in Golden())
         {
-            var goal = Goal(entry);
+            var goal = Goal(entry, context);
             var first = Answer(entry.GetProperty("answer1"), context);
             foreach (var step in goal.Step.Items()) await step.Pick.Take(first, Popular(), context);
             differ.AddRange(Differ(entry.GetProperty("goal").GetString()!,
@@ -226,7 +226,7 @@ public class PickListTests
         var differ = new List<string>();
         foreach (var entry in Golden())
         {
-            var goal = Goal(entry);
+            var goal = Goal(entry, context);
             var first = Answer(entry.GetProperty("answer1"), context);
             var second = Answer(entry.GetProperty("answer2"), context);
             foreach (var step in goal.Step.Items())

@@ -29,7 +29,7 @@ public class ComposedActionsAreObservableTests
 
         var query = new query(ctx)
         {
-            Message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = "composed " + Guid.NewGuid() } }.ToListData<LlmMessage>(),
+            Message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = "composed " + Guid.NewGuid() } }.ToListData<LlmMessage>(ctx),
         };
         _ = await new global::app.goal.step.action.@this(query, ctx).Start(ctx);
 

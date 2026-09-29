@@ -23,8 +23,8 @@ public class ConceptSettingTests : System.IAsyncDisposable
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
-        var set = await context.Action("variable", "set",
-            ("name", "%!app.test.setting.parallel%"), ("value", 1)).Start(context);
+        var set = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%!app.test.setting.parallel%", "variable"), ("value", 1)).Start(context);
         await set.IsSuccess();
 
         await Assert.That(context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(1);
@@ -36,8 +36,8 @@ public class ConceptSettingTests : System.IAsyncDisposable
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
-        var set = await context.Action("variable", "set",
-            ("name", "%!app.test.setting.format%"), ("value", "junit")).Start(context);
+        var set = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%!app.test.setting.format%", "variable"), ("value", "junit")).Start(context);
         await set.IsSuccess();
         await Assert.That(context.Setting.Of<global::app.test.setting.@this>().Format.Value.ToString()).IsEqualTo("junit");
     }
@@ -47,8 +47,8 @@ public class ConceptSettingTests : System.IAsyncDisposable
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
-        var set = await context.Action("variable", "set",
-            ("name", "%!app.test.setting.format%"), ("value", "csv")).Start(context);
+        var set = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%!app.test.setting.format%", "variable"), ("value", "csv")).Start(context);
         await set.IsFailure();
         await Assert.That(context.Setting.Of<global::app.test.setting.@this>().Format.Value.ToString()).IsEqualTo("json");
     }

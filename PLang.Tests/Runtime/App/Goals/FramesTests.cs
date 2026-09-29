@@ -17,11 +17,11 @@ public class FramesTests
 
     private async Task<global::app.goal.@this> Load(string name, params global::PLang.Tests.Shared.Make.StepDef[] steps)
         => await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(_app,
-            global::PLang.Tests.Shared.Make.Goal(name, "/" + name + ".goal", steps));
+            global::PLang.Tests.Shared.Make.Goal(_app.actor.list.User.Context, name, "/" + name + ".goal", steps));
 
     private global::app.goal.step.action.@this Set(string name, object? value)
-        => global::PLang.Tests.Shared.Make.Action("variable", "set",
-            global::PLang.Tests.Shared.Make.Param("Name", name, "variable"), ("Value", value));
+        => global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(_app.actor.list.User.Context, "Name", name, "variable"), ("Value", value));
 
     // Caller's step 0 calls Callee; Callee runs its own steps; caller's step 0 then ends.
     private async Task<(global::app.goal.@this caller, global::app.goal.@this callee)> CallerAndCallee()
@@ -30,7 +30,7 @@ public class FramesTests
             global::PLang.Tests.Shared.Make.Step("set a", Set("a", 1)),
             global::PLang.Tests.Shared.Make.Step("set b", Set("b", 2)));
         var caller = await Load("Caller",
-            global::PLang.Tests.Shared.Make.Step("call Callee", global::PLang.Tests.Shared.Make.Action("goal", "call", ("Name", "Callee"))),
+            global::PLang.Tests.Shared.Make.Step("call Callee", global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "goal", "call", ("Name", "Callee"))),
             global::PLang.Tests.Shared.Make.Step("set c", Set("c", 3)));
         _app.goal.list.Add(callee);
         _app.goal.list.Add(caller);

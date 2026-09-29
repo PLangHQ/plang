@@ -59,9 +59,9 @@ public class PrLoadTests : System.IAsyncDisposable
     [Test]
     public async Task ASmallGoal_SavedAndLoaded_Runs()
     {
-        var built = Make.Goal("Start", "/Start.goal",
-            Make.Step("set %n% = 5", Make.Action("variable", "set", Make.Param("Name", "n", "variable"), ("Value", 5))),
-            Make.Step("write out \"n is %n%\"", Make.Action("output", "write", ("Data", "n is %n%"))));
+        var built = Make.Goal(_app.actor.list.User.Context, "Start", "/Start.goal",
+            Make.Step("set %n% = 5", Make.Action(_app.actor.list.User.Context, "variable", "set", Make.Param(_app.actor.list.User.Context, "Name", "n", "variable"), ("Value", 5))),
+            Make.Step("write out \"n is %n%\"", Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "n is %n%"))));
         built.Step[1].Line = new() { Indent = 1 };
         built.Step[1].Warning.Add(new global::app.warning.@this { Key = "Unsure", Message = "step 1 uses output.write" });
         var output = new System.IO.MemoryStream();

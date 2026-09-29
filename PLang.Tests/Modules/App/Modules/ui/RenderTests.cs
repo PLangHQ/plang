@@ -71,9 +71,9 @@ public class RenderTests : IDisposable
         WriteTemplateFile("d.json", "{\"common\": {\"a.x\": {\"true\": \"yes-a\"}, \"b.y\": {\"true\": \"yes-b\"}}, \"popular\": [\"p1\", \"p2\"]}");
         var context = _app.actor.list.User.Context;
         var code = new global::app.goal.step.action.list.@this();
-        code.Add(global::PLang.Tests.Shared.Make.Action("file", "read", ("Path", "/d.json")));
-        code.Add(global::PLang.Tests.Shared.Make.Action("variable", "set",
-            global::PLang.Tests.Shared.Make.Param("Name", "d", "variable"), ("Value", "%!data%")));
+        code.Add(global::PLang.Tests.Shared.Make.Action(context, "file", "read", ("Path", "/d.json")));
+        code.Add(global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "d", "variable"), ("Value", "%!data%")));
         await (await code.Start(context)).IsSuccess();
 
         var action = new Render(context)
@@ -192,7 +192,7 @@ public class RenderTests : IDisposable
         var overrideParam = new Data("name", "ParamValue", context: context);
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Hello {{ name }}",
             IsFile = (global::app.type.item.@bool.@this)false,
-            Parameter = new List<Data> { overrideParam }.ToListData()
+            Parameter = new List<Data> { overrideParam }.ToListData(context)
         };
 
         var result = await _provider.Render(action);
@@ -208,7 +208,7 @@ public class RenderTests : IDisposable
         var aliasParam = new Data("title", "My Page", context: context);
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"Title: {{ title }}",
             IsFile = (global::app.type.item.@bool.@this)false,
-            Parameter = new List<Data> { aliasParam }.ToListData()
+            Parameter = new List<Data> { aliasParam }.ToListData(context)
         };
 
         var result = await _provider.Render(action);
@@ -671,12 +671,12 @@ public class RenderTests : IDisposable
             Module = _app.actor.list.User.Context.App.Module(actionClass),
             Name = method,
             Property = global::PLang.Tests.Shared.Make.Properties(parameters is IDictionary<string, object?> dict
-                ? PrParam.List(actionClass, method, dict)
+                ? PrParam.List(_app.actor.list.User.Context, actionClass, method, dict)
                 : new List<Data>())
         };
         // Tests author actions the way the builder does — same template seam
         // the .pr load applies, so %ref% parameters resolve live at dispatch.
-        TemplateStamp.Apply(action);
+        TemplateStamp.Apply(action, _app.actor.list.User.Context);
         return new Step
         {
             Index = index,

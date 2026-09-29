@@ -612,7 +612,7 @@ public class ListTests : System.IAsyncDisposable
         memory.Set("myList", new List<object?> { 2L, 1L });
 
         // `sort %myList% by %field%` with %field% never set: the given `by` fails to resolve
-        var result = await context.Action("list", "sort", ("listName", "%myList%"), ("by", "%field%")).Start(context);
+        var result = await global::PLang.Tests.Shared.Make.Action(context, "list", "sort", global::PLang.Tests.Shared.Make.Param(context, "ListName", "%myList%", "variable"), ("by", "%field%")).Start(context);
 
         await result.IsFailure();
     }

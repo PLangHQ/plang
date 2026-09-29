@@ -18,7 +18,7 @@ public class CacheWrapTests
     public async Task Cleanup() => await _app.DisposeAsync();
 
     // An on.cache clause keeping a result for durationMs.
-    private static PrAction CacheModifier(long durationMs, string? key = null, bool sliding = false)
+    private PrAction CacheModifier(long durationMs, string? key = null, bool sliding = false)
     {
         var parameters = new List<(string, object?)>
         {
@@ -26,7 +26,7 @@ public class CacheWrapTests
             ("Sliding", sliding),
         };
         if (key != null) parameters.Add(("Key", key));
-        return global::PLang.Tests.Shared.Make.Action("on", "cache", [.. parameters]);
+        return global::PLang.Tests.Shared.Make.Action(Ctx, "on", "cache", [.. parameters]);
     }
 
     [Test]
@@ -188,10 +188,10 @@ public class CacheWrapTests
         // error.throw; on.error(Recovery=[set %r%]); on.cache: recovery answers on the error outcome, after the
         // attempt's after-start — the store sees only the failed work.
         var action = global::PLang.Tests.Shared.Make.With(
-            global::PLang.Tests.Shared.Make.Action("error", "throw", ("Message", "boom")),
-            global::PLang.Tests.Shared.Make.Action("on", "error", global::PLang.Tests.Shared.Make.Recovery(
-                global::PLang.Tests.Shared.Make.Action("variable", "set",
-                    global::PLang.Tests.Shared.Make.Param("Name", "r", "variable"), ("Value", "recovered")))),
+            global::PLang.Tests.Shared.Make.Action(Ctx, "error", "throw", ("Message", "boom")),
+            global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error", global::PLang.Tests.Shared.Make.Recovery(Ctx, 
+                global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set",
+                    global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "r", "variable"), ("Value", "recovered")))),
             CacheModifier(60_000, "recovery-key"));
 
         var result = await action.Start(Ctx);
@@ -207,10 +207,10 @@ public class CacheWrapTests
         // math.add(1, 2); on.cache(…); variable.set(%sum%, %!data%) — the clause was bound at read and never
         // starts, so %!data% is still the add's result when the set reads it.
         var code = new global::app.goal.step.action.list.@this();
-        code.Add(global::PLang.Tests.Shared.Make.Action("math", "add", ("A", 1), ("B", 2)));
+        code.Add(global::PLang.Tests.Shared.Make.Action(Ctx, "math", "add", ("A", 1), ("B", 2)));
         code.Add(CacheModifier(60_000, "sum-key"));
-        code.Add(global::PLang.Tests.Shared.Make.Action("variable", "set",
-            global::PLang.Tests.Shared.Make.Param("Name", "sum", "variable"), ("Value", "%!data%")));
+        code.Add(global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "sum", "variable"), ("Value", "%!data%")));
         code.Attach();
 
         var result = await code.Start(Ctx);

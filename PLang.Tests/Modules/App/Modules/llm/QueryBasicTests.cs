@@ -92,7 +92,7 @@ public class QueryBasicTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Temperature = (global::app.type.item.number.@this)0.7,
             MaxTokens = (global::app.type.item.number.@this)2000
         };
@@ -181,7 +181,7 @@ public class QueryBasicTests
             {
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "Hello" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Model = new global::app.data.@this<global::app.type.item.text.@this>("Model", "claude-99-future")
         };
         await action.Attach(null, Ctx);
@@ -234,7 +234,7 @@ public class QueryBasicTests
             {
                 new LlmMessage { Role = "system", Content = "You are helpful" },
                 new LlmMessage { Role = "user", Content = "Hello" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Model = new global::app.data.@this<global::app.type.item.text.@this>("Model", "gpt-5.4-mini-2026-03-17")
         };
         await action.Attach(null, Ctx);
@@ -269,11 +269,11 @@ public class QueryBasicTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "go" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Call("Echo")
-            }.ToListData()
+                Make.Call(Ctx, "Echo")
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();

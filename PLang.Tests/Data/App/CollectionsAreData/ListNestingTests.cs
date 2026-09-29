@@ -19,7 +19,7 @@ public class ListNestingTests : System.IAsyncDisposable
     // The action's parameter array as the goal's own .pr writer emits it.
     private async Task<System.Text.Json.JsonElement> WrittenParameters(global::app.goal.step.action.@this action)
     {
-        var goal = global::PLang.Tests.Shared.Make.Goal("Start", "/Start.goal", global::PLang.Tests.Shared.Make.Step("a step", action));
+        var goal = global::PLang.Tests.Shared.Make.Goal(app.actor.list.User.Context, "Start", "/Start.goal", global::PLang.Tests.Shared.Make.Step("a step", action));
         using var doc = System.Text.Json.JsonDocument.Parse(await app.actor.list.User.Context.App.actor.list.User.Context.Pr(goal));
         return doc.RootElement.GetProperty("step")[0].GetProperty("code")[0].GetProperty("property").Clone();
     }
@@ -27,7 +27,7 @@ public class ListNestingTests : System.IAsyncDisposable
     [Test]
     public async Task ListValuedParameter_IsWrittenAsOneRow()
     {
-        var action = global::PLang.Tests.Shared.Make.Action("test", "tag",
+        var action = global::PLang.Tests.Shared.Make.Action(app.actor.list.User.Context, "test", "tag",
             new (string, object?)[] { ("Tags", new List<object?> { "http", "fast" }) });
 
         var parameters = await WrittenParameters(action);
@@ -42,7 +42,7 @@ public class ListNestingTests : System.IAsyncDisposable
     public async Task GoalCallListArgument_IsWrittenAsOneRow()
     {
         var args = new List<object?> { new Data("to", "x@y.z", context: app.actor.list.User.Context) };
-        var action = global::PLang.Tests.Shared.Make.Action("goal", "call",
+        var action = global::PLang.Tests.Shared.Make.Action(app.actor.list.User.Context, "goal", "call",
             new (string, object?)[] { ("Name", "SendMail"), ("Parameter", args) });
 
         var parameters = await WrittenParameters(action);

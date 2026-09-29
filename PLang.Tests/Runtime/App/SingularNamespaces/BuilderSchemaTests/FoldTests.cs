@@ -22,10 +22,10 @@ public class FoldTests
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.System.Context;
 
-        var goal = Make.Goal("G",
-            Make.Step("if %x% = 1", Make.Action("condition", "if", ("Left", "%x%"), ("Operator", "="), ("Right", 1))),
-            Make.Step("write out inside", 1, Make.Action("output", "write", ("Content", "inside"))),
-            Make.Step("write out after", Make.Action("output", "write", ("Content", "after"))));
+        var goal = Make.Goal(context, "G",
+            Make.Step("if %x% = 1", Make.Action(context, "condition", "if", ("Left", "%x%"), ("Operator", "="), ("Right", 1))),
+            Make.Step("write out inside", 1, Make.Action(context, "output", "write", ("Content", "inside"))),
+            Make.Step("write out after", Make.Action(context, "output", "write", ("Content", "after"))));
 
         var result = await Fold(goal, context);
         await Assert.That(result.Success).IsTrue();
@@ -47,10 +47,10 @@ public class FoldTests
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.System.Context;
 
-        var goal = Make.Goal("G",
-            Make.Step("if %x% = 1", Make.Action("condition", "if", ("Left", "%x%"), ("Operator", "="), ("Right", 1))),
-            Make.Step("if %y% = 2", 1, Make.Action("condition", "if", ("Left", "%y%"), ("Operator", "="), ("Right", 2))),
-            Make.Step("write out deep", 2, Make.Action("output", "write", ("Content", "deep"))));
+        var goal = Make.Goal(context, "G",
+            Make.Step("if %x% = 1", Make.Action(context, "condition", "if", ("Left", "%x%"), ("Operator", "="), ("Right", 1))),
+            Make.Step("if %y% = 2", 1, Make.Action(context, "condition", "if", ("Left", "%y%"), ("Operator", "="), ("Right", 2))),
+            Make.Step("write out deep", 2, Make.Action(context, "output", "write", ("Content", "deep"))));
 
         var result = await Fold(goal, context);
         await Assert.That(result.Success).IsTrue();
@@ -70,9 +70,9 @@ public class FoldTests
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.System.Context;
 
-        var goal = Make.Goal("G",
-            Make.Step("do a thing", Make.Action("output", "write", ("Content", "a"))),
-            Make.Step("nested but no condition", 1, Make.Action("output", "write", ("Content", "b"))));
+        var goal = Make.Goal(context, "G",
+            Make.Step("do a thing", Make.Action(context, "output", "write", ("Content", "a"))),
+            Make.Step("nested but no condition", 1, Make.Action(context, "output", "write", ("Content", "b"))));
 
         // No condition gate under the indented block → an authoring error, not a silent flat sibling.
         var result = await Fold(goal, context);

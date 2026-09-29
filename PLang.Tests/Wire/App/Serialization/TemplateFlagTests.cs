@@ -18,11 +18,11 @@ public class TemplateFlagTests
         var flaggedType = new global::app.type.@this("text", template: "plang");
         var plainType = new global::app.type.@this("text");
 
-        var goal = Make.Goal("G", "/g.goal",
+        var goal = Make.Goal(app.actor.list.User.Context, "G", "/g.goal",
             Make.Step("s",
-                Make.Action("output", "write",
-                    Make.Param("flagged", "Hello %name%", flaggedType),
-                    Make.Param("plain", "Hello %name%", plainType))));
+                Make.Action(app.actor.list.User.Context, "output", "write",
+                    Make.Param(app.actor.list.User.Context, "flagged", "Hello %name%", flaggedType),
+                    Make.Param(app.actor.list.User.Context, "plain", "Hello %name%", plainType))));
 
         var loaded = await RealGoalLoad.ViaChannel(app, goal);
         var properties = loaded.Step[0].Code[0].Property;
@@ -42,10 +42,10 @@ public class TemplateFlagTests
         var context = app.actor.list.User.Context;
         await context.Variable.Set("answer", context.Ok("[1] output.write(Data=\"hello %name%\")"));
 
-        var goal = Make.Goal("G", "/g.goal",
+        var goal = Make.Goal(context, "G", "/g.goal",
             Make.Step("s",
-                Make.Action("output", "write",
-                    Make.Template("Data", "%answer%"))));
+                Make.Action(context, "output", "write",
+                    Make.Template(context, "Data", "%answer%"))));
         var loaded = await RealGoalLoad.ViaChannel(app, goal);
         var relay = loaded.Step[0].Code[0].Property["Data"]!.Data(context);
 
@@ -61,10 +61,10 @@ public class TemplateFlagTests
         var context = app.actor.list.User.Context;
         await context.Variable.Set("reply", context.Ok("[1] output.write(Data=\"hello %name%\")"));
 
-        var goal = Make.Goal("G", "/g.goal",
+        var goal = Make.Goal(context, "G", "/g.goal",
             Make.Step("set %answer% = %reply%",
-                Make.Action("variable", "set", Make.Param("Name", "answer", "variable"),
-                    Make.Template("Value", "%reply%"))));
+                Make.Action(context, "variable", "set", Make.Param(context, "Name", "answer", "variable"),
+                    Make.Template(context, "Value", "%reply%"))));
         var loaded = await RealGoalLoad.ViaChannel(app, goal);
         await (await loaded.Start(context)).IsSuccess();
 
@@ -83,10 +83,10 @@ public class TemplateFlagTests
         var unopened = new global::app.type.item.source("[1] output.write(Data=\"hello %name%\")", context.App.type.list["text"]);
         await context.Variable.Set("reply", new global::app.data.@this("reply", unopened, context: context));
 
-        var goal = Make.Goal("G", "/g.goal",
+        var goal = Make.Goal(context, "G", "/g.goal",
             Make.Step("set %answer% = %reply%",
-                Make.Action("variable", "set", Make.Param("Name", "answer", "variable"),
-                    Make.Template("Value", "%reply%"))));
+                Make.Action(context, "variable", "set", Make.Param(context, "Name", "answer", "variable"),
+                    Make.Template(context, "Value", "%reply%"))));
         var loaded = await RealGoalLoad.ViaChannel(app, goal);
         await (await loaded.Start(context)).IsSuccess();
 

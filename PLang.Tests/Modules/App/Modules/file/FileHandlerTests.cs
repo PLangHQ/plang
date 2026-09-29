@@ -110,9 +110,9 @@ public class FileHandlerTests : IDisposable
         // surfaces that typed error through the dispatch's parameter-resolution
         // guard: the read step fails cleanly with SchemeNotRegistered, no NRE.
         var context = _app.actor.list.User.Context;
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestUnregisteredScheme",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "TestUnregisteredScheme",
             Make.Step("read s3 file",
-                Make.Action("file", "read", ("path", "s3://bucket/key")))));
+                Make.Action(context, "file", "read", ("path", "s3://bucket/key")))));
 
         var result = await _app.Start(goal, context);
 
@@ -482,13 +482,13 @@ public class FileHandlerTests : IDisposable
         { Mime = "text/plain" });
 
         var context = _app.actor.list.User.Context;
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestFileExistsFlow",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "TestFileExistsFlow",
             Make.Step("check if file exists",
-                Make.Action("file", "exists", Make.Param("path", TempPath("real.txt"), "path")),
-                Make.Action("variable", "set",
-                    Make.Param("Name", "fileResult", "variable"), ("Value", "%!data%"))),
+                Make.Action(context, "file", "exists", Make.Param(context, "path", TempPath("real.txt"), "path")),
+                Make.Action(context, "variable", "set",
+                    Make.Param(context, "Name", "fileResult", "variable"), ("Value", "%!data%"))),
             Make.Step("write exists result",
-                Make.Action("output", "write", ("Data", "%fileResult.Exists%")))));
+                Make.Action(context, "output", "write", ("Data", "%fileResult.Exists%")))));
 
         var goalResult = await _app.Start(goal, context);
 
@@ -519,13 +519,13 @@ public class FileHandlerTests : IDisposable
         { Mime = "text/plain" });
 
         var context = _app.actor.list.User.Context;
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestFileNotExistsFlow",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "TestFileNotExistsFlow",
             Make.Step("check if file exists",
-                Make.Action("file", "exists", Make.Param("path", TempPath("ghost.txt"), "path")),
-                Make.Action("variable", "set",
-                    Make.Param("Name", "fileResult", "variable"), ("Value", "%!data%"))),
+                Make.Action(context, "file", "exists", Make.Param(context, "path", TempPath("ghost.txt"), "path")),
+                Make.Action(context, "variable", "set",
+                    Make.Param(context, "Name", "fileResult", "variable"), ("Value", "%!data%"))),
             Make.Step("write exists result",
-                Make.Action("output", "write", ("Data", "%fileResult.Exists%")))));
+                Make.Action(context, "output", "write", ("Data", "%fileResult.Exists%")))));
 
         var goalResult = await _app.Start(goal, context);
 

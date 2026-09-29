@@ -82,8 +82,8 @@ public class PlangRuntimeTests : IDisposable
         var context = _app.actor.list.User.Context;
 
         // a program's step: the event by its path
-        await (await Make.Action("on", "event", ("Event", "%!app.type.step.on.start%"), ("When", "before"),
-            ("Action", Make.Call("LogBefore"))).Start(context)).IsSuccess();
+        await (await Make.Action(context, "on", "event", ("Event", "%!app.type.step.on.start%"), ("When", "before"),
+            ("Action", Make.Call(context, "LogBefore"))).Start(context)).IsSuccess();
 
         var before = _app.type.list["step"].on["start"]!.before;
         await Assert.That(before.Count).IsEqualTo(1);
@@ -101,9 +101,9 @@ public class PlangRuntimeTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("TestGoal",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, "TestGoal",
             Make.Step("write hello",
-                Make.Action("output", "write", ("Data", "hello runtime")))));
+                Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "hello runtime")))));
 
         var context = _app.actor.list.User.Context;
         var result = await _app.Start(goal, context);

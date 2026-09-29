@@ -13,7 +13,7 @@ public class GoalStepCountNavTests : System.IAsyncDisposable
     [Test]
     public async Task GoalStepCount_navigates_to_step_node_count()
     {
-        var goal = Make.Goal("G",
+        var goal = Make.Goal(_app.actor.list.User.Context, "G",
             Make.Step("write out %x%"),
             Make.Step("write out %y%"));
 

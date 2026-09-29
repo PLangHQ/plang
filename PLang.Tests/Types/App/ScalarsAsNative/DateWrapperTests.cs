@@ -30,11 +30,12 @@ public class DateWrapperTests
     [Test]
     public async Task Date_Order_ChronologicalWithinDateOnly()
     {
+        await using var app = new global::app.@this("/app").Testing();
         var d1 = new DateT(new System.DateOnly(2024, 1, 1));
         var d2 = new DateT(new System.DateOnly(2024, 1, 2));
-        await Assert.That(CompareTestOps.Ord(d1, d2)).IsLessThan(0);
-        await Assert.That(CompareTestOps.Ord(d2, d1)).IsGreaterThan(0);
-        await Assert.That(CompareTestOps.Ord(d1, new DateT(new System.DateOnly(2024, 1, 1)))).IsEqualTo(0);
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, d1, d2)).IsLessThan(0);
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, d2, d1)).IsGreaterThan(0);
+        await Assert.That(CompareTestOps.Ord(app.actor.list.User.Context, d1, new DateT(new System.DateOnly(2024, 1, 1)))).IsEqualTo(0);
     }
 
     [Test]

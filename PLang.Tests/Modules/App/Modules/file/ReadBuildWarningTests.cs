@@ -20,7 +20,7 @@ public class ReadBuildWarningTests
         var (app, warnings) = App();
         await using var _ = app;
         var ctx = app.actor.list.User.Context;
-        var read = Make.Action("file", "read", ("Path", "missing.json"));
+        var read = Make.Action(ctx, "file", "read", ("Path", "missing.json"));
 
         var failed = await read.Build(ctx);
 
@@ -36,7 +36,7 @@ public class ReadBuildWarningTests
         var (app, warnings) = App();
         await using var _ = app;
         var ctx = app.actor.list.User.Context;
-        var read = Make.Action("file", "read", ("Path", "missing.xyz"));
+        var read = Make.Action(ctx, "file", "read", ("Path", "missing.xyz"));
 
         await Assert.That(await read.Build(ctx)).IsNull();
         await Assert.That(warnings.Length).IsEqualTo(0);

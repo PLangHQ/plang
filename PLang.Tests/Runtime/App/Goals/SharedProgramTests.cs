@@ -19,11 +19,11 @@ public class SharedProgramTests
     // A goal as a real .pr gives it: written by the goal's own writer, read back by its reader.
     private async Task<global::app.goal.@this> ReadFromPr(string name, params global::PLang.Tests.Shared.Make.StepDef[] steps)
         => await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(_app,
-            global::PLang.Tests.Shared.Make.Goal(name, "/" + name + ".goal", steps));
+            global::PLang.Tests.Shared.Make.Goal(_app.actor.list.User.Context, name, "/" + name + ".goal", steps));
 
     private async Task<global::app.goal.step.action.@this> ActionFromPr(string module, string action, params (string, object?)[] parameters)
         => (await ReadFromPr("Start", global::PLang.Tests.Shared.Make.Step("a step",
-            global::PLang.Tests.Shared.Make.Action(module, action, parameters)))).Step[0].Code[0];
+            global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, module, action, parameters)))).Step[0].Code[0];
 
     // A variable-naming row, typed `variable` as the builder writes it into the .pr.
     private Data Var(string slot, string name) => new(slot, name, new global::app.type.@this("variable"), context: _app.actor.list.User.Context);
@@ -115,7 +115,7 @@ public class SharedProgramTests
         await _app.actor.list.System.Context.Variable.Set("x", "system");
         await _app.actor.list.User.Context.Variable.Set("x", "user");
         var goal = await ReadFromPr("Start", global::PLang.Tests.Shared.Make.Step("add x",
-            global::PLang.Tests.Shared.Make.Action("list", "add", ("ListName", Var("ListName", "l")), ("Value", "%x%"))));
+            global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "list", "add", ("ListName", Var("ListName", "l")), ("Value", "%x%"))));
 
         // Each round, System and User run the same goal at the same time (within an actor, runs are serial).
         for (int i = 0; i < 25; i++)
@@ -147,7 +147,7 @@ public class SharedProgramTests
         await _app.actor.list.User.Context.Variable.Set("x", "user");
         if (listExists) await _app.actor.list.User.Context.Variable.Set("l", new global::app.type.item.list.@this());
         var goal = await ReadFromPr("Start", global::PLang.Tests.Shared.Make.Step("add x",
-            global::PLang.Tests.Shared.Make.Action("list", "add", ("ListName", Var("ListName", "l")), ("Value", "%x%"))));
+            global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "list", "add", ("ListName", Var("ListName", "l")), ("Value", "%x%"))));
 
         var runs = await Task.WhenAll(Enumerable.Range(0, n).Select(_ => Task.Run(() => goal.Start(_app.actor.list.User.Context))));
         foreach (var run in runs)
@@ -201,7 +201,7 @@ public class SharedProgramTests
         await _app.actor.list.User.Context.Variable.Set("city", "Reykjavik");
         await _app.actor.list.System.Context.Variable.Set("city", "Nowhere");
         var callee = await ReadFromPr("Weather", global::PLang.Tests.Shared.Make.Step("remember the city",
-            global::PLang.Tests.Shared.Make.Action("variable", "set",
+            global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "variable", "set",
                 ("Name", Var("Name", "seen")),
                 ("Value", "%place%"))));
         _app.goal.list.Add(callee);

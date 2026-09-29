@@ -44,7 +44,7 @@ public class QueryEdgeCaseTests
     [Test]
     public async Task Query_EmptyMessages_ReturnsError()
     {
-        var action = new query(Ctx) { Message = new List<LlmMessage>().ToListData<LlmMessage>()
+        var action = new query(Ctx) { Message = new List<LlmMessage>().ToListData<LlmMessage>(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -75,13 +75,13 @@ public class QueryEdgeCaseTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "multi tools" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Call("ToolA"),
-                Make.Call("ToolB"),
-                Make.Call("ToolC")
-            }.ToListData(),
+                Make.Call(Ctx, "ToolA"),
+                Make.Call(Ctx, "ToolB"),
+                Make.Call(Ctx, "ToolC")
+            }.ToListData(Ctx),
             MaxToolCalls = (global::app.type.item.number.@this)5
         };
         await action.Attach(null, Ctx);
@@ -118,11 +118,11 @@ public class QueryEdgeCaseTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "null args" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Call("NoArgTool")
-            }.ToListData()
+                Make.Call(Ctx, "NoArgTool")
+            }.ToListData(Ctx)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();

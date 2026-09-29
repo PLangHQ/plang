@@ -31,11 +31,11 @@ public class VariableListTwinTests
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        var goal = await RealGoalLoad.ViaChannel(app, Make.Goal("Indexed",
+        var goal = await RealGoalLoad.ViaChannel(app, Make.Goal(ctx, "Indexed",
             Make.Step("set %first% = %users[0].name%",
-                Make.Action("variable", "set", Make.Param("Name", "first", "variable"), Make.Param("Value", "%users[0].name%", "variable"))),
+                Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "first", "variable"), Make.Param(ctx, "Value", "%users[0].name%", "variable"))),
             Make.Step("set %picked% = %users[%i%].name%",
-                Make.Action("variable", "set", Make.Param("Name", "picked", "variable"), Make.Param("Value", "%users[%i%].name%", "variable")))));
+                Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "picked", "variable"), Make.Param(ctx, "Value", "%users[%i%].name%", "variable")))));
         await ctx.Variable.Set("users", new List<object?>
         {
             new Dictionary<string, object?> { ["name"] = "a" },

@@ -12,12 +12,12 @@ namespace PLang.Tests;
 /// </summary>
 public static class PrParam
 {
-    public static List<global::app.data.@this> List(
+    public static List<global::app.data.@this> List(global::app.actor.context.@this context,
         string module, string action, System.Collections.Generic.IDictionary<string, object?> parameters)
         => parameters.Select(kv => new global::app.data.@this(
                 kv.Key, kv.Value,
-                IsVarNameSlot(module, action, kv.Key) ? global::PLang.Tests.TestApp.SharedContext.App.type.list["variable"] : null,
-                context: global::PLang.Tests.TestApp.SharedContext))
+                IsVarNameSlot(module, action, kv.Key) ? context.App.type.list["variable"] : null,
+                context: context))
             .ToList();
 
     /// <summary>

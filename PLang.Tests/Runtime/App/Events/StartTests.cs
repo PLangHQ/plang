@@ -29,7 +29,7 @@ public class StartTests
         var goal = new global::app.goal.@this { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", _app.actor.list.User.Context) };
         var step = new global::app.goal.step.@this { Goal = goal, Index = 0, Text = "set %x% = one" };
         goal.Step.Add(step);
-        var set = Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", "one"));
+        var set = Make.Action(_app.actor.list.User.Context, "variable", "set", Make.Param(_app.actor.list.User.Context, "Name", "x", "variable"), ("Value", "one"));
         set.Module = _app.Module("variable");   // this app's program: its module and catalog action are this app's
         set = set.In(step);
         step.Code.Add(set);

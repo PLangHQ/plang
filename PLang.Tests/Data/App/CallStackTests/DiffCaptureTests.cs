@@ -20,7 +20,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     {
         var stack = new CallStack();
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
-        await using var call = stack.Push(MakeAction("A"), vars);
+        await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
         await Assert.That(call.Diffs).IsNull();
     }
 
@@ -31,7 +31,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         vars.Set("name", "old");
 
-        await using var call = stack.Push(MakeAction("A"), vars);
+        await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
         vars.Set("name", "new");
 
         await Assert.That(call.Diffs).IsNotNull();
@@ -45,7 +45,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         vars.Set("name", "ingi");
 
-        await using var call = stack.Push(MakeAction("A"), vars);
+        await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
         var before = DateTimeOffset.UtcNow.AddMilliseconds(-10);
         vars.Set("name", "olafur");
 
@@ -63,7 +63,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
         var list = new List<int> { 1, 2, 3 };
         vars.Set("items", list);
 
-        await using var call = stack.Push(MakeAction("A"), vars);
+        await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
         vars.Set("items", new List<int> { 4, 5 });
 
         var diff = call.Diffs![0];
@@ -80,7 +80,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
         var list = new List<int> { 1, 2, 3 };
         vars.Set("items", list);
 
-        await using var call = stack.Push(MakeAction("A"), vars);
+        await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
         vars.Set("items", new List<int> { 4, 5 });
 
         var diff = call.Diffs![0];
@@ -98,7 +98,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         vars.Set("x", 1);
 
-        var call = stack.Push(MakeAction("A"), vars);
+        var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
         vars.Set("x", 2);
         await call.DisposeAsync();
         // After Dispose, the handler is unsubscribed: subsequent Set must NOT append.
@@ -113,7 +113,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
         var stack = Stack(new() { Diff = true });
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
 
-        await using var call = stack.Push(MakeAction("A"), vars);
+        await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
         await using (vars.Calls.Push(new[] { new Data("greeting", "hello", context: _app.actor.list.User.Context) }))
             await vars.Set("greeting", "bye");
 
@@ -128,8 +128,8 @@ public class DiffCaptureTests : System.IAsyncDisposable
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         await vars.Set("x", 1);
 
-        await using var outer = stack.Push(MakeAction("A"), vars);
-        var inner = stack.Push(MakeAction("B"), vars);
+        await using var outer = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
+        var inner = stack.Push(MakeAction(_app.actor.list.User.Context, "B"), vars);
         await vars.Set("x", 2);
         await inner.DisposeAsync();
         await vars.Set("x", 3);
@@ -145,7 +145,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         var other = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
 
-        await using var call = stack.Push(MakeAction("A"), other);
+        await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), other);
         await vars.Set("x", 1);
 
         await Assert.That(call.Diffs!.Count).IsEqualTo(0);
@@ -159,7 +159,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
         await vars.Set("x", 1);
         await vars.Set("y", "kept");
 
-        await using var call = stack.Push(MakeAction("A"), vars);
+        await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
         var error = new global::app.error.ServiceError("boom", "TestErr", 400);
         await vars.Set("x", 2);
         await vars.Set("z", "new");
@@ -183,7 +183,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
         var big = new List<int>(Enumerable.Range(0, 100_000));
         vars.Set("big", big);
 
-        await using var call = stack.Push(MakeAction("A"), vars);
+        await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
         vars.Set("big", new List<int> { 1, 2, 3 });
 
         var diff = call.Diffs![0];

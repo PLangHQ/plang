@@ -18,7 +18,7 @@ public class TagActionTests
     private static (global::app.callstack.call.@this goal, global::app.callstack.call.@this step, global::app.callstack.call.@this action)
         Frames(global::app.@this app)
     {
-        var action = MakeAction("Goal", module: "debug", actionName: "tag");
+        var action = MakeAction(app.actor.list.User.Context, "Goal", module: "debug", actionName: "tag");
         var stack = app.actor.list.User.CallStack;
         var goal = stack.Push(action.Step!.Goal!);
         var step = stack.Push(action.Step!);
@@ -72,7 +72,7 @@ public class TagActionTests
     public async Task Tag_OutsideAGoal_TagsTheCurrentFrame()
     {
         await using var app = new global::app.@this("/app").Testing();
-        await using var call = app.actor.list.User.CallStack.Push(MakeAction("Goal"));
+        await using var call = app.actor.list.User.CallStack.Push(MakeAction(app.actor.list.User.Context, "Goal"));
         await Tagging(app, new() { ["x"] = true }).Start();
 
         await Assert.That(Count(call, app)).IsEqualTo(1);
@@ -100,12 +100,12 @@ public class TagActionTests
     public async Task Tag_NextStepReadsItThroughScope()
     {
         await using var app = new global::app.@this("/app").Testing();
-        var goal = await RealGoalLoad.ViaChannel(app, Make.Goal("Tagging",
+        var goal = await RealGoalLoad.ViaChannel(app, Make.Goal(app.actor.list.User.Context, "Tagging",
             Make.Step("tag owner=checkout",
-                Make.Action("debug", "tag", Make.Param("Tags", new Dictionary<string, object?> { ["owner"] = "checkout" }, "dict"))),
+                Make.Action(app.actor.list.User.Context, "debug", "tag", Make.Param(app.actor.list.User.Context, "Tags", new Dictionary<string, object?> { ["owner"] = "checkout" }, "dict"))),
             Make.Step("set %read% = %!callStack.Scope.Tags.owner%",
-                Make.Action("variable", "set", Make.Param("Name", "read", "variable"),
-                    Make.Param("Value", "%!callStack.Scope.Tags.owner%", "variable")))));
+                Make.Action(app.actor.list.User.Context, "variable", "set", Make.Param(app.actor.list.User.Context, "Name", "read", "variable"),
+                    Make.Param(app.actor.list.User.Context, "Value", "%!callStack.Scope.Tags.owner%", "variable")))));
         app.goal.list.Add(goal);
 
         var context = app.actor.list.User.Context;

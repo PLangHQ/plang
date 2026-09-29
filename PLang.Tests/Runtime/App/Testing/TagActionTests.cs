@@ -22,9 +22,9 @@ public class TagActionTests
     public async Task Teardown() => await _app.DisposeAsync();
 
     private global::app.goal.@this Goal() =>
-        global::PLang.Tests.Shared.Make.Goal("Start", "/test/T.test.goal",
+        global::PLang.Tests.Shared.Make.Goal(Ctx, "Start", "/test/T.test.goal",
             global::PLang.Tests.Shared.Make.Step("set %x% = 1",
-                global::PLang.Tests.Shared.Make.Action("variable", "set", new (string, object?)[] { ("Name", "x"), ("Value", 1) })));
+                global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set", new (string, object?)[] { ("Name", "x"), ("Value", 1) })));
 
     private global::app.data.@this<global::app.type.item.list.@this> Tags(params string[] tags) =>
         new("Tags", global::PLang.Tests.Shared.Make.List(tags, Ctx));
@@ -62,7 +62,7 @@ public class TagActionTests
         var goal = Goal();
         await Ctx.Variable.Set("goal", goal);
 
-        var action = global::PLang.Tests.Shared.Make.Action("test", "tag", new (string, object?)[] { ("Tags", "%myTags%") });
+        var action = global::PLang.Tests.Shared.Make.Action(Ctx, "test", "tag", new (string, object?)[] { ("Tags", "%myTags%") });
         await Assert.That(await action.Build(Ctx)).IsNull();
 
         await Assert.That(goal.Tag.CountRaw).IsEqualTo(0);

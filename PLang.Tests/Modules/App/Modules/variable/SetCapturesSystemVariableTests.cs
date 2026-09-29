@@ -11,7 +11,7 @@ public class SetCapturesSystemVariableTests
     {
         await using var app = new global::app.@this("/tmp/setnow-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
         var context = app.actor.list.User.Context;
-        var action = context.Action("variable", "set", ("name", "%start%"), ("value", "%Now%"));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%start%", "variable"), ("value", "%Now%"));
         await (await action.Start(context)).IsSuccess();
 
         var first = (await (await context.Variable.Get("start")).Value())?.ToString();

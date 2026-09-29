@@ -2,8 +2,11 @@ using static PLang.Tests.App.CallStackTests.CallStackTestHelpers;
 
 namespace PLang.Tests.App.CallStackTests;
 
-public class ItemsExtensionTests
+public class ItemsExtensionTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private sealed class CacheInfo { public bool Hit { get; set; } }
     private sealed class HttpInfo { public int Status { get; set; } }
 
@@ -11,7 +14,7 @@ public class ItemsExtensionTests
     public async Task Get_BeforeSet_ReturnsNull()
     {
         var stack = new CallStack();
-        await using var call = stack.Push(MakeAction("A"));
+        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await Assert.That(call.GetItem<CacheInfo>()).IsNull();
     }
 
@@ -19,7 +22,7 @@ public class ItemsExtensionTests
     public async Task Set_ThenGet_ReturnsSameInstance()
     {
         var stack = new CallStack();
-        await using var call = stack.Push(MakeAction("A"));
+        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         var info = new CacheInfo { Hit = true };
         call.SetItem(info);
         var fetched = call.GetItem<CacheInfo>();
@@ -30,7 +33,7 @@ public class ItemsExtensionTests
     public async Task Set_DifferentTypes_CoexistInBag()
     {
         var stack = new CallStack();
-        await using var call = stack.Push(MakeAction("A"));
+        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         call.SetItem(new CacheInfo { Hit = true });
         call.SetItem(new HttpInfo { Status = 200 });
         await Assert.That(call.GetItem<CacheInfo>()!.Hit).IsTrue();
@@ -41,7 +44,7 @@ public class ItemsExtensionTests
     public async Task Set_SameType_OverwritesPrevious()
     {
         var stack = new CallStack();
-        await using var call = stack.Push(MakeAction("A"));
+        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         call.SetItem(new CacheInfo { Hit = true });
         call.SetItem(new CacheInfo { Hit = false });
         await Assert.That(call.GetItem<CacheInfo>()!.Hit).IsFalse();
@@ -55,7 +58,7 @@ public class ItemsExtensionTests
         // that no dict exists (a null bag returns null, an empty dict also returns null —
         // both pass; the spec is "lazy", verified at the source level).
         var stack = new CallStack();
-        await using var call = stack.Push(MakeAction("A"));
+        await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await Assert.That(call.GetItem<CacheInfo>()).IsNull();
         await Assert.That(call.GetItem<HttpInfo>()).IsNull();
     }

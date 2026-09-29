@@ -30,8 +30,8 @@ public class StrictRunTests
     {
         var context = _app.actor.list.User.Context;
         context.Variable.Set("upload", PngBytes);
-        var action = context.Action("variable", "set",
-            ("name", "%img%"),
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%img%", "variable"),
             ("value", "%upload%"),
             ("type", new global::app.type.@this("image", "gif", true)));
         var result = await action.Start(context);
@@ -43,8 +43,8 @@ public class StrictRunTests
     {
         var context = _app.actor.list.User.Context;
         context.Variable.Set("upload", GifBytes);
-        var action = context.Action("variable", "set",
-            ("name", "%img%"),
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%img%", "variable"),
             ("value", "%upload%"),
             ("type", new global::app.type.@this("image", "gif", true)));
         var result = await action.Start(context);
@@ -60,8 +60,8 @@ public class StrictRunTests
         // path via the Build hook; non-strict means no content validation. (text
         // does not derive a kind from a literal — see SetMintCarriesKindTests.)
         var context = _app.actor.list.User.Context;
-        var action = context.Action("variable", "set",
-            ("name", "%x%"),
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(context, "Name", "%x%", "variable"),
             ("value", "photo.png"),
             ("type", new global::app.type.@this("image")));
         var result = await action.Start(context);

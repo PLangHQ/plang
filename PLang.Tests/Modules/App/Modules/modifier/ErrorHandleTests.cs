@@ -33,13 +33,13 @@ public class ErrorHandleTests
     }
 
     // An on.error clause with these properties.
-    private static PrAction ErrorHandler(params (string name, object? value)[] parameters)
-        => global::PLang.Tests.Shared.Make.Action("on", "error", parameters);
+    private PrAction ErrorHandler(params (string name, object? value)[] parameters)
+        => global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error", parameters);
 
     /// <summary>An on.error clause whose Recovery calls <paramref name="goalName"/>.</summary>
     private PrAction ErrorHandlerCalling(string goalName, params (string name, object? value)[] parameters)
-        => global::PLang.Tests.Shared.Make.Action("on", "error",
-            [.. parameters, global::PLang.Tests.Shared.Make.Recovery(CallGoal(goalName))]);
+        => global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error",
+            [.. parameters, global::PLang.Tests.Shared.Make.Recovery(Ctx, CallGoal(goalName))]);
 
     /// <summary>One recovery action: a call to <paramref name="goalName"/>.</summary>
     private PrAction CallGoal(string goalName) => new()

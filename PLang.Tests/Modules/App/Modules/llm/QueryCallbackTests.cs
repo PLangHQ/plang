@@ -65,12 +65,12 @@ public class QueryCallbackTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "use tool" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Call("TestTool")
-            }.ToListData(),
-            OnToolCall = Make.Call("LogToolCall")
+                Make.Call(Ctx, "TestTool")
+            }.ToListData(Ctx),
+            OnToolCall = Make.Call(Ctx, "LogToolCall")
         };
 
         // Should complete without crashing even though LogToolCall goal doesn't exist
@@ -99,9 +99,9 @@ public class QueryCallbackTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "use tool" }
-            }.ToListData<LlmMessage>(),
-            Tool = new List<global::app.goal.step.action.@this> { Make.Call("TestTool") }.ToListData(),
-            OnToolCall = Make.Call("LogToolCall")
+            }.ToListData<LlmMessage>(Ctx),
+            Tool = new List<global::app.goal.step.action.@this> { Make.Call(Ctx, "TestTool") }.ToListData(Ctx),
+            OnToolCall = Make.Call(Ctx, "LogToolCall")
         };
         await action.Attach(null, Ctx);
         await (await action.Start()).IsSuccess();
@@ -135,12 +135,12 @@ public class QueryCallbackTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "get data" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Call("GetData")
-            }.ToListData(),
-            OnToolCall = Make.Call("ToolCallHandler")
+                Make.Call(Ctx, "GetData")
+            }.ToListData(Ctx),
+            OnToolCall = Make.Call(Ctx, "ToolCallHandler")
         };
 
         await action.Attach(null, Ctx);
@@ -186,8 +186,8 @@ public class QueryCallbackTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "validate me" }
-            }.ToListData<LlmMessage>(),
-            OnValidateResponse = Make.Call("NonExistentValidator"),
+            }.ToListData<LlmMessage>(Ctx),
+            OnValidateResponse = Make.Call(Ctx, "NonExistentValidator"),
             MaxValidationRetries = (global::app.type.item.number.@this)0
         };
         await action.Attach(null, Ctx);
@@ -212,8 +212,8 @@ public class QueryCallbackTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "validate me" }
-            }.ToListData<LlmMessage>(),
-            OnValidateResponse = Make.Call("NonExistentValidator"),
+            }.ToListData<LlmMessage>(Ctx),
+            OnValidateResponse = Make.Call(Ctx, "NonExistentValidator"),
             MaxValidationRetries = (global::app.type.item.number.@this)2
         };
 
@@ -238,8 +238,8 @@ public class QueryCallbackTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "validate" }
-            }.ToListData<LlmMessage>(),
-            OnValidateResponse = Make.Call("AlwaysFails"),
+            }.ToListData<LlmMessage>(Ctx),
+            OnValidateResponse = Make.Call(Ctx, "AlwaysFails"),
             MaxValidationRetries = (global::app.type.item.number.@this)3
         };
 
@@ -269,12 +269,12 @@ public class QueryCallbackTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "tools then validate" }
-            }.ToListData<LlmMessage>(),
+            }.ToListData<LlmMessage>(Ctx),
             Tool = new List<global::app.goal.step.action.@this>
             {
-                Make.Call("TestTool")
-            }.ToListData(),
-            OnValidateResponse = Make.Call("Validator"),
+                Make.Call(Ctx, "TestTool")
+            }.ToListData(Ctx),
+            OnValidateResponse = Make.Call(Ctx, "Validator"),
             MaxValidationRetries = (global::app.type.item.number.@this)1
         };
 
@@ -302,8 +302,8 @@ public class QueryCallbackTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "stream test" }
-            }.ToListData<LlmMessage>(),
-            OnStream = Make.Call("HandleChunk")
+            }.ToListData<LlmMessage>(Ctx),
+            OnStream = Make.Call(Ctx, "HandleChunk")
         };
 
         // With streaming enabled, the request should have stream:true
@@ -327,8 +327,8 @@ public class QueryCallbackTests
         var action = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "stream" }
-            }.ToListData<LlmMessage>(),
-            OnStream = Make.Call("StreamHandler")
+            }.ToListData<LlmMessage>(Ctx),
+            OnStream = Make.Call(Ctx, "StreamHandler")
         };
 
         await action.Attach(null, Ctx);

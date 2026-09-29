@@ -9,9 +9,6 @@ namespace PLang.Tests;
 /// </summary>
 public static class TemplateStamp
 {
-    public static void Apply(global::app.goal.step.action.@this action)
-        => Apply(action, global::PLang.Tests.TestApp.SharedContext);
-
     /// <summary>Stamps <paramref name="action"/>'s parameters with <paramref name="context"/>'s types.</summary>
     public static void Apply(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
     {

@@ -11,7 +11,7 @@ namespace PLang.Tests.App.SingularNamespaces.BuilderSchemaTests;
 public class MatchTests
 {
     // BuildGoal/Start.goal's old MenuModule — the steps the eval's MenuModule case builds.
-    private static Goal MenuModule() => Make.Goal("MenuModule",
+    private static Goal MenuModule(global::app.actor.context.@this context) => Make.Goal(context, "MenuModule",
         Make.Step("set %key% = \"s%step.Index%_%module.Name%\""),
         Make.Step("if %moduleAnswer[key].noul% is less than %threshold%, return"),
         Make.Step("if %module.Action.Count% is 1, add \"%module.Name%.%module.Action[0].Name%\" to %choices%"),
@@ -65,14 +65,14 @@ public class MatchTests
     private static Dictionary<string, object?> Confirm(string id, double noul)
         => new() { [id] = new Dictionary<string, object?> { ["type"] = "noul", ["noul"] = noul } };
 
-    private static Goal RetryOnce() => Make.Goal("G", Make.Step("call Flaky, on error retry once, ignore"));
+    private static Goal RetryOnce(global::app.actor.context.@this context) => Make.Goal(context, "G", Make.Step("call Flaky, on error retry once, ignore"));
     private const string RetryOnceAnswer = "[0] goal.call(Name=\"Flaky\"); on.error(RetryCount=1, IgnoreError=true)";
 
     [Test]
     public async Task ANumberTheWordsDontWriteAsDigits_IsAskedOfTheDecider_AndTheStepStaysOpen()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = RetryOnce();
+        var goal = RetryOnce(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"));
 
         var result = await Match(goal, RetryOnceAnswer, app.actor.list.System.Context);
@@ -88,7 +88,7 @@ public class MatchTests
     public async Task ANumberTheDeciderConfirms_IsTaken()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = RetryOnce();
+        var goal = RetryOnce(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"));
 
         var result = await Match(goal, RetryOnceAnswer, app.actor.list.System.Context, Confirm("s0_on.error.RetryCount=1", 0.97));
@@ -101,7 +101,7 @@ public class MatchTests
     public async Task ANumberTheDeciderDenies_IsRefusedAsInvented()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = RetryOnce();
+        var goal = RetryOnce(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"));
 
         var result = await Match(goal, RetryOnceAnswer, app.actor.list.System.Context, Confirm("s0_on.error.RetryCount=1", 0.03));
@@ -115,7 +115,7 @@ public class MatchTests
     public async Task AmongOtherProblems_AnUnwrittenNumberIsRefusedWithThem()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = Make.Goal("G", Make.Step("call Flaky, on error retry once, ignore"), Make.Step("write out \"b\""));
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("call Flaky, on error retry once, ignore"), Make.Step("write out \"b\""));
         await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"), (1, "output.write"));
 
         var result = await Match(goal, RetryOnceAnswer, app.actor.list.System.Context);   // step 1 has no line
@@ -132,7 +132,7 @@ public class MatchTests
     public async Task AQuotedTextWithEscapes_IsHeldByTheAnswerThatWritesIt()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = Make.Goal("G", Make.Step("""set %sourceFixMessages% = [{"Role":"system", "Content":"%sourceFixSystem%"}, {"Role":"user", "Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}]"""));
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("""set %sourceFixMessages% = [{"Role":"system", "Content":"%sourceFixSystem%"}, {"Role":"user", "Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}]"""));
         await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
 
         var result = await Match(goal, """[0] variable.set(Name=%sourceFixMessages%, Value=[{"Role":"system", "Content":"%sourceFixSystem%"}, {"Role":"user", "Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}])""", app.actor.list.System.Context);
@@ -147,7 +147,7 @@ public class MatchTests
     public async Task ANumberTheStepWrites_MissingFromTheAnswer_IsRefused()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = Make.Goal("G", Make.Step("""if %itemCount% is 0, write out "Your cart is empty" """.TrimEnd()));
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("""if %itemCount% is 0, write out "Your cart is empty" """.TrimEnd()));
         await Picked(goal, app.actor.list.System.Context, (0, "condition.if"), (0, "output.write"));
 
         var result = await Match(goal, """[0] condition.if(Left=%itemCount%) { output.write(Data="Your cart is empty") }""", app.actor.list.System.Context);
@@ -160,7 +160,7 @@ public class MatchTests
     public async Task ANumberTheStepWrites_HeldByTheAnswer_IsTaken()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = Make.Goal("G", Make.Step("""if %itemCount% is 0, write out "Your cart is empty" """.TrimEnd()));
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("""if %itemCount% is 0, write out "Your cart is empty" """.TrimEnd()));
         await Picked(goal, app.actor.list.System.Context, (0, "condition.if"), (0, "output.write"));
 
         var result = await Match(goal, """[0] condition.if(Left=%itemCount%, Operator="==", Right=0) { output.write(Data="Your cart is empty") }""", app.actor.list.System.Context);
@@ -174,7 +174,7 @@ public class MatchTests
     public async Task AQuotedTextWithEscapes_WrittenDoublyEscaped_IsRefused()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = Make.Goal("G", Make.Step("""set %messages% = [{"Role":"user", "Content":"%why%\n\nThe goal:\n%goal%"}]"""));
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("""set %messages% = [{"Role":"user", "Content":"%why%\n\nThe goal:\n%goal%"}]"""));
         await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
 
         var result = await Match(goal, """[0] variable.set(Name=%messages%, Value=[{"Role":"user", "Content":"%why%\\n\\nThe goal:\\n%goal%"}])""", app.actor.list.System.Context);
@@ -187,7 +187,7 @@ public class MatchTests
     public async Task OneLinePerStep_EachStepTakesItsCode()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = MenuModule();
+        var goal = MenuModule(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, MenuModulePicks);
 
         var result = await Match(goal, NanoAnswer, app.actor.list.System.Context);
@@ -200,7 +200,7 @@ public class MatchTests
     public async Task AStepWithNoLine_IsRefusedByName_AndStaysOpen()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = MenuModule();
+        var goal = MenuModule(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, MenuModulePicks);
 
         var result = await Match(goal, MiniMergedAnswer, app.actor.list.System.Context);
@@ -217,7 +217,7 @@ public class MatchTests
     public async Task AnEmptyLine_IsRefusedAsNotReading()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = Make.Goal("G", Make.Step("write out \"a\""), Make.Step("write out \"b\""));
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("write out \"a\""), Make.Step("write out \"b\""));
         await Picked(goal, app.actor.list.System.Context, (0, "output.write"), (1, "output.write"));
 
         var result = await Match(goal, "[0] output.write(Data=\"a\")\n[1] ", app.actor.list.System.Context);
@@ -230,7 +230,7 @@ public class MatchTests
     public async Task AnExtraLine_AndATwiceAnsweredStep_AreRefused()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = Make.Goal("G", Make.Step("write out \"a\""));
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("write out \"a\""));
         await Picked(goal, app.actor.list.System.Context, (0, "output.write"));
 
         var result = await Match(goal, "[0] output.write(Data=\"a\")\n[0] output.write(Data=\"a\")\n[1] output.write(Data=\"b\")", app.actor.list.System.Context);
@@ -241,7 +241,7 @@ public class MatchTests
     }
 
     // A lone `- if %count% > 0` with two steps indented under it: nano copied step 1 into step 0's body.
-    private static Goal MaybeProcess() => Make.Goal("MaybeProcess",
+    private static Goal MaybeProcess(global::app.actor.context.@this context) => Make.Goal(context, "MaybeProcess",
         Make.Step("if %count% > 0"),
         Make.Step("call ProcessItems", 1),
         Make.Step("write out \"done\"", 1));
@@ -257,7 +257,7 @@ public class MatchTests
     public async Task ABodyCopyingTheIndentedSteps_IsDropped()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = MaybeProcess();
+        var goal = MaybeProcess(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, (0, "condition.if"), (1, "goal.call"), (2, "output.write"));
 
         var result = await Match(goal, NanoChildOverIndentAnswer, app.actor.list.System.Context);
@@ -270,7 +270,7 @@ public class MatchTests
     public async Task ABodyTheIndentedStepsDontHold_IsRefused()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = MaybeProcess();
+        var goal = MaybeProcess(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, (0, "condition.if"), (0, "variable.set"), (1, "goal.call"), (2, "output.write"));
 
         var result = await Match(goal, NanoChildOverIndentAnswer.Replace("{ goal.call(Name=\"ProcessItems\") }", "{ variable.set(Name=%x%, Value=1) }"),
@@ -286,7 +286,7 @@ public class MatchTests
     public async Task ARetry_AnswersOnlyTheRefusedSteps()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = MenuModule();
+        var goal = MenuModule(app.actor.list.User.Context);
         await Picked(goal, app.actor.list.System.Context, MenuModulePicks);
         await Match(goal, MiniMergedAnswer, app.actor.list.System.Context);
         var kept = goal.Step[0].Code;
@@ -306,11 +306,11 @@ public class MatchTests
     public async Task ARefusedStep_ReportsEveryProblemAtOnce()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var goal = Make.Goal("Checkout",
-            Make.Step("read file 'orders/%orderId%.json', write to %order%", Make.Action("file", "read", ("Path", "x"))),
-            Make.Step("count %order.items%, write to %itemCount%", Make.Action("list", "count", ("ListName", "%order.items%"))),
-            Make.Step("write out \"a\"", Make.Action("output", "write", ("Data", "a"))),
-            Make.Step("write out \"b\"", Make.Action("output", "write", ("Data", "b"))),
+        var goal = Make.Goal(app.actor.list.User.Context, "Checkout",
+            Make.Step("read file 'orders/%orderId%.json', write to %order%", Make.Action(app.actor.list.User.Context, "file", "read", ("Path", "x"))),
+            Make.Step("count %order.items%, write to %itemCount%", Make.Action(app.actor.list.User.Context, "list", "count", ("ListName", "%order.items%"))),
+            Make.Step("write out \"a\"", Make.Action(app.actor.list.User.Context, "output", "write", ("Data", "a"))),
+            Make.Step("write out \"b\"", Make.Action(app.actor.list.User.Context, "output", "write", ("Data", "b"))),
             Make.Step("if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%"));
         await Picked(goal, app.actor.list.System.Context, (4, "condition.if"), (4, "goal.call"));
 

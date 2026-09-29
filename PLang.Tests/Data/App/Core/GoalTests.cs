@@ -250,8 +250,9 @@ public class GoalCacheTests
     [Test]
     public async Task Merge_AFoldedBody_IsCachedLikeAnyStep()
     {
-        var set = global::PLang.Tests.Shared.Make.Action("variable", "set", ("Name", "%x%"), ("Value", 1));
-        var condition = global::PLang.Tests.Shared.Make.Action("condition", "if", ("Left", "%b%"));
+        await using var _app = new global::app.@this("/app").Testing();
+        var set = global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "variable", "set", global::PLang.Tests.Shared.Make.Param(_app.actor.list.User.Context, "Name", "%x%", "variable"), ("Value", 1));
+        var condition = global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", "%b%"));
         var body = new Step { Index = 1, Text = "set %x% = 1", Line = new() { Number = 5, Indent = 1 } };
         body.Code.Add(set);
         condition.Child.Add(body);

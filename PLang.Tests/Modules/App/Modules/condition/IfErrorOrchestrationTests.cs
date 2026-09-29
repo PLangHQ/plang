@@ -36,10 +36,10 @@ public class IfErrorOrchestrationTests : IDisposable
     [Test]
     public async Task If_OrchestratedBranchAction_ReturnsError_PropagatesThroughStep()
     {
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("IfCallMissing",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, "IfCallMissing",
             Make.Step("if true, call DoesNotExist",
-                Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
-                Make.Action("goal", "call",
+                Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
+                Make.Action(_app.actor.list.User.Context, "goal", "call",
                     ("name", "DoesNotExist")))));
         var step = goal.Step[0];
 
@@ -64,10 +64,10 @@ public class IfErrorOrchestrationTests : IDisposable
             ChannelDirection.Output, ownsStream: true)
         { Mime = "text/plain" });
 
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("IfWriteRan",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, "IfWriteRan",
             Make.Step("if true, write ran",
-                Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
-                Make.Action("output", "write", ("Data", "ran")))));
+                Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
+                Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "ran")))));
         var step = goal.Step[0];
 
         var result = await step.Start(_app.actor.list.User.Context);

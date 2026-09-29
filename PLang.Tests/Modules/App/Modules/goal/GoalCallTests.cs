@@ -29,9 +29,9 @@ public class GoalCallTests
     private async Task<string> Seer(string param)
     {
         var name = "Seer_" + param;
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(name,
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, name,
             Make.Step($"set %seen% = %{param}%",
-                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", $"%{param}%", "variable")))));
+                Make.Action(_app.actor.list.User.Context, "variable", "set", Make.Param(_app.actor.list.User.Context, "Name", "seen", "variable"), Make.Param(_app.actor.list.User.Context, "Value", $"%{param}%", "variable")))));
         _app.goal.list.Add(goal);
         return name;
     }
@@ -81,7 +81,7 @@ public class GoalCallTests
     public async Task HeldCall_RunnerSuppliesName_SuppliedValueWins()
     {
         var ctx = _app.actor.list.User.Context;
-        var tool = Make.Tool("TestGoal", parameter: new List<Data> { new Data("units", "metric", context: ctx) });
+        var tool = Make.Tool(ctx, "TestGoal", parameter: new List<Data> { new Data("units", "metric", context: ctx) });
 
         await using (ctx.Variable.Calls.Push(new[] { new Data("units", "imperial", context: ctx) }, tool))
         {
@@ -94,7 +94,7 @@ public class GoalCallTests
     public async Task HeldCall_RunnerSilent_ValuedRowIsTheDefault()
     {
         var ctx = _app.actor.list.User.Context;
-        var tool = Make.Tool(await Seer("units"), parameter: new List<Data> { new Data("units", "metric", context: ctx) });
+        var tool = Make.Tool(ctx, await Seer("units"), parameter: new List<Data> { new Data("units", "metric", context: ctx) });
 
         await using (ctx.Variable.Calls.Push(System.Array.Empty<Data>(), tool))
         {
@@ -107,7 +107,7 @@ public class GoalCallTests
     public async Task ParallelHeldCalls_EachSeesOnlyItsOwnSuppliedArguments()
     {
         var ctx = _app.actor.list.User.Context;
-        var tool = Make.Tool("TestGoal", parameter: new List<Data> { new Data("city", null, context: ctx) });
+        var tool = Make.Tool(ctx, "TestGoal", parameter: new List<Data> { new Data("city", null, context: ctx) });
 
         async Task<string?> Invoke(string city)
         {
@@ -130,7 +130,7 @@ public class GoalCallTests
     public async Task Call_DeclarationRow_NeverBinds()
     {
         var ctx = _app.actor.list.User.Context;
-        var tool = Make.Tool("TestGoal", parameter: new List<Data> { new Data("city", null, context: ctx) });
+        var tool = Make.Tool(ctx, "TestGoal", parameter: new List<Data> { new Data("city", null, context: ctx) });
 
         await tool.Start(ctx);
 
@@ -143,7 +143,7 @@ public class GoalCallTests
         var ctx = _app.actor.list.User.Context;
         await ctx.Variable.Set("a", "five");
 
-        await Make.Call(await Seer("a"), ("a", "one")).Start(ctx);
+        await Make.Call(ctx, await Seer("a"), ("a", "one")).Start(ctx);
 
         // the goal saw the argument; the caller's own %a% is its own again after
         await Assert.That(await ValueOf("seen")).IsEqualTo("one");
@@ -154,11 +154,11 @@ public class GoalCallTests
     public async Task FrameForAnotherCall_DoesNotSuppressThisCallsRows()
     {
         var ctx = _app.actor.list.User.Context;
-        var other = Make.Call("TestGoal");
+        var other = Make.Call(ctx, "TestGoal");
 
         await using (ctx.Variable.Calls.Push(new[] { new Data("a", "nine", context: ctx) }, other))
         {
-            await Make.Call(await Seer("a"), ("a", "one")).Start(ctx);
+            await Make.Call(ctx, await Seer("a"), ("a", "one")).Start(ctx);
             await Assert.That(await ValueOf("seen")).IsEqualTo("one");
         }
     }

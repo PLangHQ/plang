@@ -38,9 +38,9 @@ public class PrEnvelopeTests : System.IAsyncDisposable
     [Test]
     public async Task APr_KeepsItsCharactersAsWritten_AndEndsWithANewLine()
     {
-        var goal = global::PLang.Tests.Shared.Make.Goal("Start", "/Start.goal",
+        var goal = global::PLang.Tests.Shared.Make.Goal(_app.actor.list.User.Context, "Start", "/Start.goal",
             global::PLang.Tests.Shared.Make.Step("if %n% >= 5 — write out 'big'",
-                global::PLang.Tests.Shared.Make.Action("output", "write", ("Data", "it's big — n >= 5"))));
+                global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "it's big — n >= 5"))));
         var text = await _app.actor.list.User.Context.Pr(goal);
 
         await Assert.That(text).Contains("\"if %n% >= 5 — write out 'big'\"");

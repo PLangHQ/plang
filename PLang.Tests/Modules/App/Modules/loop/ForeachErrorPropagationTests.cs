@@ -34,12 +34,12 @@ public class ForeachErrorPropagationTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("MissingGoalRunner",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "MissingGoalRunner",
             Make.Step("foreach %items%, call NonExistentGoal item=%item%",
-                Make.Action("loop", "foreach",
-                    ("collection", "%items%"), Make.Param("item", "%item%", "variable")),
-                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%item%", "variable")),
-                Make.Action("goal", "call",
+                Make.Action(context, "loop", "foreach",
+                    ("collection", "%items%"), Make.Param(context, "item", "%item%", "variable")),
+                Make.Action(context, "variable", "set", Make.Param(context, "Name", "seen", "variable"), Make.Param(context, "Value", "%item%", "variable")),
+                Make.Action(context, "goal", "call",
                     ("name", "NonExistentGoal")))));
         var step = goal.Step[0];
 
@@ -101,11 +101,11 @@ public class ForeachErrorPropagationTests
         _app.goal.list.Add(innerGoal);
 
         // Outer step: foreach over items, body is goal.call Inner
-        var outerGoal = await RealGoalLoad.ViaChannel(_app, Make.Goal("InnerCallRunner",
+        var outerGoal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "InnerCallRunner",
             Make.Step("foreach %items%, call Inner item=%item%",
-                Make.Action("loop", "foreach",
-                    ("collection", "%items%"), Make.Param("item", "%item%", "variable")),
-                Make.Action("goal", "call",
+                Make.Action(context, "loop", "foreach",
+                    ("collection", "%items%"), Make.Param(context, "item", "%item%", "variable")),
+                Make.Action(context, "goal", "call",
                     ("name", "Inner")))));
         var outerStep = outerGoal.Step[0];
 
@@ -132,13 +132,13 @@ public class ForeachErrorPropagationTests
 
         _app.goal.list.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
 
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("NoopRunner",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "NoopRunner",
             Make.Step("foreach %items%, call Noop item=%item%",
-                Make.Action("loop", "foreach",
-                    ("collection", "%items%"), Make.Param("item", "%item%", "variable")),
-                Make.Action("goal", "call",
+                Make.Action(context, "loop", "foreach",
+                    ("collection", "%items%"), Make.Param(context, "item", "%item%", "variable")),
+                Make.Action(context, "goal", "call",
                     ("name", "Noop")),
-                Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), Make.Param("Value", "%item%", "variable")))));
+                Make.Action(context, "variable", "set", Make.Param(context, "Name", "seen", "variable"), Make.Param(context, "Value", "%item%", "variable")))));
         var step = goal.Step[0];
 
         var result = await step.Start(context);

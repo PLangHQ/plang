@@ -19,9 +19,9 @@ public class ChildWireRoundTripTests
         var context = app.actor.list.System.Context;
 
         // A condition step with an indented body, folded so the body lives on the gate action's Child.
-        var goal = Make.Goal("G",
-            Make.Step("if %x% = 1", Make.Action("condition", "if", ("Left", "%x%"), ("Operator", "="), ("Right", 1))),
-            Make.Step("write out inside", 1, Make.Action("output", "write", ("Content", "inside"))));
+        var goal = Make.Goal(context, "G",
+            Make.Step("if %x% = 1", Make.Action(context, "condition", "if", ("Left", "%x%"), ("Operator", "="), ("Right", 1))),
+            Make.Step("write out inside", 1, Make.Action(context, "output", "write", ("Content", "inside"))));
 
         var fold = new global::app.module.build.fold(context) { Goal = context.Ok<global::app.goal.@this>(goal) };
         var folded = await new global::app.module.build.code.Default().Fold(fold);

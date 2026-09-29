@@ -46,12 +46,12 @@ public class CallBuildTests
     {
         await using var app = new global::app.@this("/t2").Testing();
         var ctx = app.actor.list.User.Context;
-        app.goal.list.Add(await RealGoalLoad.ViaChannel(app, Make.Goal("Rename",
+        app.goal.list.Add(await RealGoalLoad.ViaChannel(app, Make.Goal(ctx, "Rename",
             Make.Step("set %path% = \"inner\"",
-                Make.Action("variable", "set", Make.Param("Name", "path", "variable"), ("Value", "inner"))))));
+                Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "path", "variable"), ("Value", "inner"))))));
         await ctx.Variable.Set("path", "outer");
 
-        await (await Make.Call("Rename", ("path", "%path%")).Start(ctx)).IsSuccess();
+        await (await Make.Call(ctx, "Rename", ("path", "%path%")).Start(ctx)).IsSuccess();
 
         await Assert.That((await ctx.Variable.GetValue("path"))?.ToString()).IsEqualTo("outer");
     }

@@ -20,15 +20,15 @@ public class StartGoalTests
             global::app.channel.list.@this.Output, captureStream,
             global::app.channel.ChannelDirection.Output, ownsStream: true) { Mime = "text/plain" });
 
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Start",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(engine.actor.list.User.Context, "Start",
             Make.Step("set %name% = \"Plang\"",
-                Make.Action("variable", "set", Make.Param("Name", "name", "variable"), ("Value", "Plang"))),
+                Make.Action(engine.actor.list.User.Context, "variable", "set", Make.Param(engine.actor.list.User.Context, "Name", "name", "variable"), ("Value", "Plang"))),
             Make.Step("write out %name%",
-                Make.Action("output", "write", Make.Template("Data", "%name%"))),
+                Make.Action(engine.actor.list.User.Context, "output", "write", Make.Template(engine.actor.list.User.Context, "Data", "%name%"))),
             Make.Step("set %newVarName% = %name%",
-                Make.Action("variable", "set", Make.Param("Name", "newVarName", "variable"), Make.Param("Value", "%name%", "variable"))),
+                Make.Action(engine.actor.list.User.Context, "variable", "set", Make.Param(engine.actor.list.User.Context, "Name", "newVarName", "variable"), Make.Param(engine.actor.list.User.Context, "Value", "%name%", "variable"))),
             Make.Step("write out \"NewVar: %newVarName%\"",
-                Make.Action("output", "write", Make.Template("Data", "NewVar: %newVarName%")))));
+                Make.Action(engine.actor.list.User.Context, "output", "write", Make.Template(engine.actor.list.User.Context, "Data", "NewVar: %newVarName%")))));
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
@@ -56,11 +56,11 @@ public class StartGoalTests
     {
         await using var engine = new global::app.@this("/app").Testing();
 
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(engine.actor.list.User.Context, "Test",
             Make.Step("set myVar",
-                Make.Action("variable", "set", Make.Param("Name", "myVar", "variable"), ("Value", "Hello"))),
+                Make.Action(engine.actor.list.User.Context, "variable", "set", Make.Param(engine.actor.list.User.Context, "Name", "myVar", "variable"), ("Value", "Hello"))),
             Make.Step("set result = %myVar%",
-                Make.Action("variable", "set", Make.Param("Name", "result", "variable"), Make.Param("Value", "%myVar%", "variable")))));
+                Make.Action(engine.actor.list.User.Context, "variable", "set", Make.Param(engine.actor.list.User.Context, "Name", "result", "variable"), Make.Param(engine.actor.list.User.Context, "Value", "%myVar%", "variable")))));
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
@@ -77,11 +77,11 @@ public class StartGoalTests
 
         var capture = new CapturedOutput(engine);
 
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(engine.actor.list.User.Context, "Test",
             Make.Step("set user",
-                Make.Action("variable", "set", Make.Param("Name", "user", "variable"), ("Value", "World"))),
+                Make.Action(engine.actor.list.User.Context, "variable", "set", Make.Param(engine.actor.list.User.Context, "Name", "user", "variable"), ("Value", "World"))),
             Make.Step("write Hello %user%!",
-                Make.Action("output", "write", Make.Template("Data", "Hello %user%!")))));
+                Make.Action(engine.actor.list.User.Context, "output", "write", Make.Template(engine.actor.list.User.Context, "Data", "Hello %user%!")))));
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
@@ -98,9 +98,9 @@ public class StartGoalTests
 
         var capture = new CapturedOutput(engine);
 
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(engine.actor.list.User.Context, "Test",
             Make.Step("write literal",
-                Make.Action("output", "write", ("Data", "no variables here")))));
+                Make.Action(engine.actor.list.User.Context, "output", "write", ("Data", "no variables here")))));
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
@@ -120,9 +120,9 @@ public class StartGoalTests
 
         _ = new CapturedOutput(engine);
 
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(engine.actor.list.User.Context, "Test",
             Make.Step("write with unknown var",
-                Make.Action("output", "write", Make.Template("Data", "Value: %unknown%")))));
+                Make.Action(engine.actor.list.User.Context, "output", "write", Make.Template(engine.actor.list.User.Context, "Data", "Value: %unknown%")))));
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
@@ -140,9 +140,9 @@ public class StartGoalTests
     {
         await using var engine = new global::app.@this("/app").Testing();
 
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(engine.actor.list.User.Context, "Test",
             Make.Step("set result = %nonexistent%",
-                Make.Action("variable", "set", Make.Param("Name", "result", "variable"), Make.Param("Value", "%nonexistent%", "variable")))));
+                Make.Action(engine.actor.list.User.Context, "variable", "set", Make.Param(engine.actor.list.User.Context, "Name", "result", "variable"), Make.Param(engine.actor.list.User.Context, "Value", "%nonexistent%", "variable")))));
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;
@@ -163,10 +163,10 @@ public class StartGoalTests
 
         // "Type" is NOT in parameters — developer didn't set it
         // "Type" IS in defaults — builder captured it at build time
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(engine.actor.list.User.Context, "Test",
             Make.Step("set greeting = hello",
-                Make.WithDefaults(
-                    Make.Action("variable", "set", Make.Param("Name", "greeting", "variable"), ("Value", "hello")),
+                Make.WithDefaults(engine.actor.list.User.Context, 
+                    Make.Action(engine.actor.list.User.Context, "variable", "set", Make.Param(engine.actor.list.User.Context, "Name", "greeting", "variable"), ("Value", "hello")),
                     ("Type", new global::app.type.@this("text"))))));
         engine.goal.list.Add(goal);
 
@@ -187,11 +187,11 @@ public class StartGoalTests
         await using var engine = new global::app.@this("/app").Testing();
 
         // "Type" is in BOTH parameters and defaults — parameter wins
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(engine.actor.list.User.Context, "Test",
             Make.Step("set count = 42",
-                Make.WithDefaults(
-                    Make.Action("variable", "set",
-                        Make.Param("Name", "count", "variable"), ("Value", 42),
+                Make.WithDefaults(engine.actor.list.User.Context, 
+                    Make.Action(engine.actor.list.User.Context, "variable", "set",
+                        Make.Param(engine.actor.list.User.Context, "Name", "count", "variable"), ("Value", 42),
                         ("Type", new global::app.type.@this("number", "long"))),
                     ("Type", new global::app.type.@this("text"))))));
         engine.goal.list.Add(goal);
@@ -211,9 +211,9 @@ public class StartGoalTests
         await using var engine = new global::app.@this("/app").Testing();
 
         // No defaults at all — falls through to [Default] attribute on the action
-        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal("Test",
+        var goal = await RealGoalLoad.ViaChannel(engine, Make.Goal(engine.actor.list.User.Context, "Test",
             Make.Step("set x = y",
-                Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", "y")))));
+                Make.Action(engine.actor.list.User.Context, "variable", "set", Make.Param(engine.actor.list.User.Context, "Name", "x", "variable"), ("Value", "y")))));
         engine.goal.list.Add(goal);
 
         var context = engine.actor.list.User.Context;

@@ -3,19 +3,22 @@ using static PLang.Tests.App.CallStackTests.CallStackTestHelpers;
 
 namespace PLang.Tests.App.CallStackTests;
 
-public class CycleDetectionTests
+public class CycleDetectionTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task Push_ExceedsMaxDepth_ThrowsCallStackOverflowException()
     {
         var stack = new CallStack { MaxDepth = 3 };
-        await using var a = stack.Push(MakeAction("A"));
-        await using var b = stack.Push(MakeAction("B"));
-        await using var c = stack.Push(MakeAction("C"));
+        await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
+        await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
+        await using var c = stack.Push(MakeAction(app.actor.list.User.Context, "C"));
 
         await Assert.ThrowsAsync<CallStackOverflowException>(async () =>
         {
-            await Task.Run(() => stack.Push(MakeAction("D")));
+            await Task.Run(() => stack.Push(MakeAction(app.actor.list.User.Context, "D")));
         });
     }
 
@@ -23,11 +26,11 @@ public class CycleDetectionTests
     public async Task CallStackOverflowException_IncludesMaxDepth()
     {
         var stack = new CallStack { MaxDepth = 2 };
-        await using var a = stack.Push(MakeAction("A"));
-        await using var b = stack.Push(MakeAction("B"));
+        await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
+        await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
 
         CallStackOverflowException? caught = null;
-        try { stack.Push(MakeAction("C")); }
+        try { stack.Push(MakeAction(app.actor.list.User.Context, "C")); }
         catch (CallStackOverflowException ex) { caught = ex; }
 
         await Assert.That(caught).IsNotNull();
@@ -45,7 +48,7 @@ public class CycleDetectionTests
         try
         {
             for (int i = 0; i < 100; i++)
-                calls.Add(stack.Push(MakeAction("A")));
+                calls.Add(stack.Push(MakeAction(app.actor.list.User.Context, "A")));
         }
         catch (CallStackOverflowException ex) { caught = ex; }
         finally
@@ -64,9 +67,9 @@ public class CycleDetectionTests
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         // A → B → A: a goal may call itself through others; only the depth limit stops it
-        await using var a = context.CallStack.Push(MakeAction("A"));
-        await using var b = context.CallStack.Push(MakeAction("B"));
-        var goalA = Make.Goal("A", "/A.goal", Make.Step("write out \"x\"", Make.Action("output", "write", ("Data", "x"))));
+        await using var a = context.CallStack.Push(MakeAction(context, "A"));
+        await using var b = context.CallStack.Push(MakeAction(context, "B"));
+        var goalA = Make.Goal(context, "A", "/A.goal", Make.Step("write out \"x\"", Make.Action(context, "output", "write", ("Data", "x"))));
 
         var entered = await goalA.Start(context);
 
@@ -79,8 +82,8 @@ public class CycleDetectionTests
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         // Start calls Compile: the file's sub-goals share its .pr — a goal is its .pr and its name
-        await using var start = context.CallStack.Push(MakeAction("Start"));
-        var compile = Make.Goal("Compile", "/Start.goal", Make.Step("write out \"x\"", Make.Action("output", "write", ("Data", "x"))));
+        await using var start = context.CallStack.Push(MakeAction(context, "Start"));
+        var compile = Make.Goal(context, "Compile", "/Start.goal", Make.Step("write out \"x\"", Make.Action(context, "output", "write", ("Data", "x"))));
 
         var entered = await compile.Start(context);
 
@@ -93,10 +96,10 @@ public class CycleDetectionTests
         // Build → EmitBuildEvent → the builder channel's call, which was written in Build: running it
         // does not enter Build (only a goal's entry does), so it is no cycle.
         var stack = new CallStack();
-        await using var build = stack.Push(MakeAction("Build"));
-        await using var emit = stack.Push(MakeAction("EmitBuildEvent"));
+        await using var build = stack.Push(MakeAction(app.actor.list.User.Context, "Build"));
+        await using var emit = stack.Push(MakeAction(app.actor.list.User.Context, "EmitBuildEvent"));
 
-        await using var held = stack.Push(MakeAction("Build"));
+        await using var held = stack.Push(MakeAction(app.actor.list.User.Context, "Build"));
 
         await Assert.That(held).IsNotNull();
     }
@@ -105,11 +108,11 @@ public class CycleDetectionTests
     public async Task Push_RepeatedSiblingNotInChain_DoesNotThrow()
     {
         var stack = new CallStack();
-        await using var outer = stack.Push(MakeAction("A"));
-        var b = stack.Push(MakeAction("B"));
+        await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
+        var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
         await b.DisposeAsync();
         // After B is popped, the live chain is [A]. Pushing C is fine.
-        await using var c = stack.Push(MakeAction("C"));
+        await using var c = stack.Push(MakeAction(app.actor.list.User.Context, "C"));
         await Assert.That(c).IsNotNull();
     }
 }

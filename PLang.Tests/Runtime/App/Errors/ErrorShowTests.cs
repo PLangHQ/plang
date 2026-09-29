@@ -44,8 +44,8 @@ public class ErrorShowTests : System.IAsyncDisposable
 
     private async Task<global::app.goal.@this> Goal(string text)
     {
-        var built = Make.Goal("Start", "/Start.goal",
-            Make.Step(text, Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", 1))));
+        var built = Make.Goal(_app.actor.list.User.Context, "Start", "/Start.goal",
+            Make.Step(text, Make.Action(_app.actor.list.User.Context, "variable", "set", Make.Param(_app.actor.list.User.Context, "Name", "x", "variable"), ("Value", 1))));
         built.Step[0].Line = new() { Number = 3 };
         return await RealGoalLoad.ViaChannel(_app, built);
     }

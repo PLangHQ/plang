@@ -21,10 +21,11 @@ public class NumberRegressionTests
     [Test]
     public async Task Number_Compare_UnchangedUnderItemInheritance()
     {
+        await using var app = new global::app.@this("/app").Testing();
         // Order(1, 2) < 0, AreEqual(5, 5) true — IOrderableValue/IEquatableValue
         // dispatch still routes; `item` adds nothing to ordering.
         await Assert.That(((Number)(1)).CompareTo(((Number)(2)))).IsLessThan(0);
-        await Assert.That(CompareTestOps.Eq(((Number)(5)), ((Number)(5)))).IsTrue();
+        await Assert.That(CompareTestOps.Eq(app.actor.list.User.Context, ((Number)(5)), ((Number)(5)))).IsTrue();
         await Assert.That(CompareTestOps.OrdD(new Data("", ((Number)(1))), new Data("", ((Number)(2))))).IsLessThan(0);
     }
 

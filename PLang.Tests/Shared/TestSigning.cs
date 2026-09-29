@@ -7,7 +7,7 @@ namespace PLang.Tests.Shared;
 ///
 /// It still produces the real signature-LAYER shape (so wire-shape / round-trip tests
 /// pass) but with constant fake crypto, and verify always succeeds. Registered as the
-/// default <c>ISigning</c> by <see cref="global::PLang.Tests.TestApp.Create"/>. Tests
+/// default <c>ISigning</c> by <see cref="global::PLang.Tests.AppTesting.Testing"/>. Tests
 /// that exercise REAL signing/verification construct a plain <c>app.@this</c> (real Ed25519).
 /// </summary>
 public sealed class TestSigning : global::app.module.signing.code.ISigning

@@ -11,10 +11,10 @@ namespace PLang.Tests.App.DataTests;
 /// </summary>
 internal static class NormalizeTestExtensions
 {
-    public static List<Data> Children(this object? normalized) => normalized switch
+    public static List<Data> Children(this object? normalized, global::app.actor.context.@this context) => normalized switch
     {
-        app.type.item.dict.@this d => d.Entries(global::PLang.Tests.TestApp.SharedContext).ToList(),
-        app.type.item.list.@this l => l.Items(global::PLang.Tests.TestApp.SharedContext).ToList(),
+        app.type.item.dict.@this d => d.Entries(context).ToList(),
+        app.type.item.list.@this l => l.Items(context).ToList(),
         List<Data> list => list,
         null => new List<Data>(),
         _ => throw new System.InvalidOperationException(

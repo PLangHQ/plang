@@ -51,9 +51,9 @@ public class DebugSmokeTests
         _app.actor.list.System.Setting.Set("debug", new Dictionary<string, object?> { ["level"] = "action" });
         _app.Debug.Activate();
 
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("Dbg",
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, "Dbg",
             Make.Step("set x",
-                Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", 1)))));
+                Make.Action(_app.actor.list.User.Context, "variable", "set", Make.Param(_app.actor.list.User.Context, "Name", "x", "variable"), ("Value", 1)))));
         _app.goal.list.Add(goal);
 
         // If the widened lambda mis-handles the (action, result) params (e.g. dereferences a

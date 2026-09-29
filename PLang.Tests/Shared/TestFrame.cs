@@ -9,6 +9,6 @@ public static class TestFrame
 {
     public static global::app.callstack.call.@this Live(global::app.actor.context.@this context)
         => context.CallStack.Push(
-            TestAction.Create("variable", "set", ("name", "%frame%"), ("value", "1")),
+            context.Action("variable.set(Name=%frame%, Value=\"1\")"),
             context.Variable);
 }

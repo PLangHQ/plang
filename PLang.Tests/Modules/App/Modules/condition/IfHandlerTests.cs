@@ -25,7 +25,7 @@ public class IfHandlerTests : IDisposable
     // instead of the hand-built shape that bypasses the read.
     private async Task<Data> RunStep(string text, params Action[] actions)
     {
-        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("G", Make.Step(text, actions)));
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(_app.actor.list.User.Context, "G", Make.Step(text, actions)));
         return await _app.Start(goal, _app.actor.list.User.Context);
     }
 
@@ -80,8 +80,8 @@ public class IfHandlerTests : IDisposable
 
         // A step with: condition.if, then output.write
         var result = await RunStep("if true, write true-branch",
-            Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
-            Make.Action("output", "write", ("Data", "true-branch")));
+            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
+            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "true-branch")));
 
         await result.IsSuccess();
 
@@ -100,8 +100,8 @@ public class IfHandlerTests : IDisposable
         { Mime = "text/plain" });
 
         var result = await RunStep("if false, write (should skip)",
-            Make.Action("condition", "if", ("Left", false), ("Operator", "=="), ("Right", true)),
-            Make.Action("output", "write", ("Data", "should-not-appear")));
+            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", false), ("Operator", "=="), ("Right", true)),
+            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "should-not-appear")));
 
         await result.IsSuccess();
 
@@ -121,10 +121,10 @@ public class IfHandlerTests : IDisposable
 
         // if true → write "then", else → write "else"
         var result = await RunStep("if x > 5 write then, else write else",
-            Make.Action("condition", "if", ("Left", 10), ("Operator", ">"), ("Right", 5)),
-            Make.Action("output", "write", ("Data", "then-branch")),
-            Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
-            Make.Action("output", "write", ("Data", "else-branch")));
+            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", 10), ("Operator", ">"), ("Right", 5)),
+            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "then-branch")),
+            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
+            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "else-branch")));
 
         await result.IsSuccess();
 
@@ -144,11 +144,11 @@ public class IfHandlerTests : IDisposable
 
         // if false → skip then, else always true → write "else"
         var result = await RunStep("if x > 5 write then, else write else",
-            Make.Action("condition", "if", ("Left", 3), ("Operator", ">"), ("Right", 5)),
-            Make.Action("output", "write", ("Data", "then-branch")),
+            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", 3), ("Operator", ">"), ("Right", 5)),
+            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "then-branch")),
             // "else" is a condition that's always true
-            Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
-            Make.Action("output", "write", ("Data", "else-branch")));
+            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
+            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "else-branch")));
 
         await result.IsSuccess();
 
@@ -355,10 +355,10 @@ public class IfHandlerTests : IDisposable
         _app.actor.list.User.Context.Variable.Set(new Data("__condition_orchestrating__", true, context: _app.actor.list.User.Context));
 
         var result = await RunStep("if true write inner-then, else write inner-else",
-            Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
-            Make.Action("output", "write", ("Data", "inner-then")),
-            Make.Action("condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
-            Make.Action("output", "write", ("Data", "inner-else")));
+            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
+            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "inner-then")),
+            Make.Action(_app.actor.list.User.Context, "condition", "if", ("Left", true), ("Operator", "=="), ("Right", true)),
+            Make.Action(_app.actor.list.User.Context, "output", "write", ("Data", "inner-else")));
 
         await result.IsSuccess();
 

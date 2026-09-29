@@ -83,12 +83,12 @@ public class DiscoverActionTests
         {
             var actionSpec = actions[i];
             var action = (preConstructedParams != null && i < preConstructedParams.Length)
-                ? global::PLang.Tests.Shared.Make.Action(actionSpec.module, actionSpec.actionName,
+                ? global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, actionSpec.module, actionSpec.actionName,
                     preConstructedParams[i].parameters.Select(d => (d.Name, (object?)d)).ToArray())
-                : global::PLang.Tests.Shared.Make.Action(actionSpec.module, actionSpec.actionName, actionSpec.parameters);
+                : global::PLang.Tests.Shared.Make.Action(_app.actor.list.User.Context, actionSpec.module, actionSpec.actionName, actionSpec.parameters);
             stepDefs.Add(global::PLang.Tests.Shared.Make.Step(stepTexts[i], action));
         }
-        var goal = global::PLang.Tests.Shared.Make.Goal(goalName, "/" + relativePath, stepDefs.ToArray());
+        var goal = global::PLang.Tests.Shared.Make.Goal(_app.actor.list.User.Context, goalName, "/" + relativePath, stepDefs.ToArray());
         goal.BuilderVersion = prBuilderVersion;
         // Snapshot the canonical hash. If corruptHash, mutate one step text AFTER
         // the hash is locked in, so the stored .pr's hash diverges from a fresh parse.
