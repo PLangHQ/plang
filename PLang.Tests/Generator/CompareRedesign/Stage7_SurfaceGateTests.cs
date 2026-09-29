@@ -123,22 +123,26 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task DictKeys_ReturnsListOfText_NotIEnumerableString()
     {
+        await using var app = new global::app.@this("/app").Testing();
+        var ctx = app.actor.list.User.Context;
         var d = new global::app.type.item.dict.@this();
-        d.Set(new Data("name", "a", context: global::PLang.Tests.TestApp.SharedContext));
-        d.Set(new Data("age", 30L, context: global::PLang.Tests.TestApp.SharedContext));
+        d.Set(new Data("name", "a", context: ctx));
+        d.Set(new Data("age", 30L, context: ctx));
         object keys = d.Keys;
         await Assert.That(keys).IsTypeOf<global::app.type.item.list.@this<global::app.type.item.text.@this>>();
         var names = ((global::app.type.item.list.@this<global::app.type.item.text.@this>)keys)
-            .Items(global::PLang.Tests.TestApp.SharedContext).Select(k => k.Peek()).ToList();
+            .Items(ctx).Select(k => k.Peek()).ToList();
         await Assert.That(names.All(v => v is global::app.type.item.text.@this)).IsTrue();
     }
 
     [Test]
     public async Task ListCount_ReturnsNumber_NotInt()
     {
+        await using var app = new global::app.@this("/app").Testing();
+        var ctx = app.actor.list.User.Context;
         var l = new global::app.type.item.list.@this();
-        l.Add(new Data("", 1, context: global::PLang.Tests.TestApp.SharedContext));
-        l.Add(new Data("", 2, context: global::PLang.Tests.TestApp.SharedContext));
+        l.Add(new Data("", 1, context: ctx));
+        l.Add(new Data("", 2, context: ctx));
         object count = l.Count;
         await Assert.That(count).IsTypeOf<global::app.type.item.number.@this>();
         await Assert.That(count.ToString()).IsEqualTo("2");
@@ -149,6 +153,7 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task FileSize_ReturnsNumber_NotLong()
     {
+        await using var app = new global::app.@this("/app").Testing();
         var tmp = Path.Combine(Path.GetTempPath(), "plang_st7size_" + Guid.NewGuid().ToString("N") + ".txt");
         File.WriteAllText(tmp, "12345");
         try
@@ -157,7 +162,7 @@ public class Stage7_SurfaceGateTests
             object size = fp.Size;
             await Assert.That(size).IsTypeOf<global::app.type.item.number.@this>();
             await Assert.That(size.ToString()).IsEqualTo("5");
-            object fileSize = new global::app.type.item.file.@this(fp, global::PLang.Tests.TestApp.SharedContext).Size;
+            object fileSize = new global::app.type.item.file.@this(fp, app.actor.list.User.Context).Size;
             await Assert.That(fileSize).IsTypeOf<global::app.type.item.number.@this>();
         }
         finally { File.Delete(tmp); }

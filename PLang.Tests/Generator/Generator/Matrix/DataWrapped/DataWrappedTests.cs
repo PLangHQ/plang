@@ -8,7 +8,7 @@ public class DataWrappedStringTests
     [Test]
     public async Task DataWrappedString_FullVarMatch_ResolvesToVariableValue()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var result = await MatrixRunner.RunAsync<DataWrappedString>(app,
             parameters: new[] { ("body", (object?)"%greeting%") },
             variables: new Dictionary<string, object?> { ["greeting"] = "hello" });
@@ -19,7 +19,7 @@ public class DataWrappedStringTests
     [Test]
     public async Task DataWrappedString_Interpolation_ResolvesViaResolve()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var result = await MatrixRunner.RunAsync<DataWrappedString>(app,
             parameters: new[] { ("body", (object?)"Hello %name%!") },
             variables: new Dictionary<string, object?> { ["name"] = "world" });
@@ -30,7 +30,7 @@ public class DataWrappedStringTests
     [Test]
     public async Task DataWrappedString_MissingVariable_HandlesGracefully()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var result = await MatrixRunner.RunAsync<DataWrappedString>(app,
             parameters: new[] { ("body", (object?)"%not_set%") });
         // Either FromError or null Value — both are valid; just don't crash.
@@ -43,7 +43,7 @@ public class DataWrappedListTests
     [Test]
     public async Task DataWrappedList_NestedVarInDict_DeepResolvesAndTypes()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var raw = new List<object?>
         {
             new Dictionary<string, object?> { ["role"] = "system", ["content"] = "%comment%" }
@@ -54,14 +54,14 @@ public class DataWrappedListTests
         var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>;
         // Read the way a real handler does: enumerate, resolve + convert each row through its door.
         var items = new List<global::app.module.llm.LlmMessage>();
-        foreach (var row in (await typed!.Value())!.Items(global::PLang.Tests.TestApp.SharedContext)) items.Add((await row.Value()).Clr<global::app.module.llm.LlmMessage>()!);
+        foreach (var row in (await typed!.Value())!.Items(app.actor.list.User.Context)) items.Add((await row.Value()).Clr<global::app.module.llm.LlmMessage>()!);
         await Assert.That(items[0].Content).IsEqualTo("you are a compiler");
     }
 
     [Test]
     public async Task DataWrappedList_EmptyList_ReturnsEmptyTyped()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var result = await MatrixRunner.RunAsync<DataWrappedList>(app,
             parameters: new[] { ("messages", (object?)new List<object?>()) });
         var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>;
@@ -74,7 +74,7 @@ public class DataWrappedDictTests
     [Test]
     public async Task DataWrappedDict_NestedVar_DeepResolves()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var raw = new Dictionary<string, object?> { ["inner"] = "%x%", ["other"] = "literal" };
         var result = await MatrixRunner.RunAsync<DataWrappedDict>(app,
             parameters: new[] { ("headers", (object?)raw) },
@@ -82,8 +82,8 @@ public class DataWrappedDictTests
         var typed = result.Data as global::app.data.@this<global::app.type.item.dict.@this>;
         // Resolve the dict through its door, then read each value through ITS door.
         var d = (await typed!.Value())!;
-        await Assert.That((await d.Get("inner", global::PLang.Tests.TestApp.SharedContext)!.Value()).ToString()).IsEqualTo("substituted");
-        await Assert.That((await d.Get("other", global::PLang.Tests.TestApp.SharedContext)!.Value()).ToString()).IsEqualTo("literal");
+        await Assert.That((await d.Get("inner", app.actor.list.User.Context)!.Value()).ToString()).IsEqualTo("substituted");
+        await Assert.That((await d.Get("other", app.actor.list.User.Context)!.Value()).ToString()).IsEqualTo("literal");
     }
 }
 
@@ -93,7 +93,7 @@ public class DataWrappedActionListTests
     [Skip("Params resolve eagerly at dispatch — nested-action params resolve prematurely; fixed by the pure-lazy source-gen refactor (resolve only on handler .Value()). See todos 2026-06-15.")]
     public async Task DataWrappedActionList_DoesNotRecurseIntoActions()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var raw = new List<object?>
         {
             new Dictionary<string, object?>
@@ -110,7 +110,7 @@ public class DataWrappedActionListTests
         var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.type.clr.@this<PrAction>>>;
         await Assert.That((await typed!.Value())).IsNotNull();
         // The sub-action's parameter Value is still raw "%comment%" — not resolved.
-        var subParam = ((((await typed.Value())!.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).Peek()!) as global::app.type.clr.@this<PrAction>)!.Value).Property["v"];
+        var subParam = ((((await typed.Value())!.Items(app.actor.list.User.Context).ElementAt(0).Peek()!) as global::app.type.clr.@this<PrAction>)!.Value).Property["v"];
         await Assert.That((await subParam!.Data(app.actor.list.User.Context).Value())?.ToString()).IsEqualTo("%comment%");
     }
 
@@ -119,7 +119,7 @@ public class DataWrappedActionListTests
     public async Task DataWrappedActionList_SubActionParametersRemainRaw()
     {
         // Same scenario as above, asserting raw value preservation more explicitly.
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var raw = new List<object?>
         {
             new Dictionary<string, object?>
@@ -134,7 +134,7 @@ public class DataWrappedActionListTests
             variables: new Dictionary<string, object?> { ["x"] = "premature-resolution-would-be-bad" });
 
         var typed = result.Data as global::app.data.@this<global::app.type.item.list.@this<global::app.type.clr.@this<PrAction>>>;
-        var subParam = ((((await typed!.Value())!.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).Peek()!) as global::app.type.clr.@this<PrAction>)!.Value).Property["a"];
+        var subParam = ((((await typed!.Value())!.Items(app.actor.list.User.Context).ElementAt(0).Peek()!) as global::app.type.clr.@this<PrAction>)!.Value).Property["a"];
         await Assert.That((await subParam!.Data(app.actor.list.User.Context).Value())?.ToString()).IsEqualTo("%x%");
     }
 }
@@ -152,7 +152,7 @@ public class DataWrappedStringUsesCycleTests
     [Test]
     public async Task DataWrappedStringUses_CyclicVarRef_NoLongerForms_HandlerReadsVerbatimBytes()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         app.actor.list.User.Context.Variable.Set("a", "%b%");
         app.actor.list.User.Context.Variable.Set("b", "%a%");
 
@@ -167,7 +167,7 @@ public class DataWrappedStringUsesCycleTests
     [Test]
     public async Task DataWrappedStringUses_StoredVarRefWithText_HandlerReadsVerbatimBytes()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         app.actor.list.User.Context.Variable.Set("a", "X-%b%");
         app.actor.list.User.Context.Variable.Set("b", "Y-%a%");
 
@@ -183,7 +183,7 @@ public class DataWrappedStringUsesCycleTests
     public async Task DataWrappedStringUses_NormalResolution_PostRunCheckIsNoOp()
     {
         // Negative test: success path is unaffected by the post-Run __resolutionError check.
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var result = await MatrixRunner.RunAsync<DataWrappedStringUses>(app,
             parameters: new[] { ("body", (object?)"%greeting%") },
             variables: new Dictionary<string, object?> { ["greeting"] = "hello" });

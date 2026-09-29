@@ -181,6 +181,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return _root == null && Named(key) is { } module ? new global::app.data.@this(key, module, parent: parent) : member;
     }
 
+    /// <summary>Select the catalog element that holds <paramref name="clr"/> — the module and the name registration
+    /// gave the class; the app's module asks each of its modules. Null when no module holds it.</summary>
+    internal global::app.goal.step.action.@this? this[System.Type clr]
+        => _root == null
+            ? list.Items().Select(module => module[clr]).FirstOrDefault(action => action != null)
+            : _action.Values.FirstOrDefault(action => action.Class == clr);
+
     /// <summary>The class that runs one of this module's actions — its catalog action's.</summary>
     internal System.Type? Handler(string actionName) => this[actionName]?.Class;
 

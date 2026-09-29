@@ -19,7 +19,7 @@ public class MissingVariableNameTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = TestApp.Create("/app");
+    public void Setup() => _app = new global::app.@this("/app").Testing();
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -54,11 +54,11 @@ public class MissingVariableNameTests
         // missing-listname slot is the failure cause — not a sibling [IsNotNull] check.
         var extras = (module, action) switch
         {
-            ("list", "any") => new (string, object?)[] { ("key", "x"), ("operator", "Equals") },
-            ("list", "group") => new (string, object?)[] { ("key", "x") },
-            _ => System.Array.Empty<(string, object?)>(),
+            ("list", "any") => "Key=\"x\", Operator=\"==\"",
+            ("list", "group") => "Key=\"x\"",
+            _ => "",
         };
-        var act = TestAction.Create(module, action, extras);
+        var act = context.Action($"{module}.{action}({extras})");
 
         var result = await act.Start(context);
 

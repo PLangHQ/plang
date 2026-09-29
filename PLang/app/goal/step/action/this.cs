@@ -98,20 +98,18 @@ public partial class @this
     /// <summary>
     /// The action a C#-composed <paramref name="seed"/> is — an operation one owner composes from another's
     /// (signing hashes, llm sends its request through http), run as an action so it stays observable: its
-    /// frame, its <c>on.start</c>, a binding a program (or a mock) puts on it. The module is the one the
-    /// seed's namespace names; the seed's set parameters pass through, the unset resolve from setting and
-    /// <c>[Default]</c>. Born knowing the step that invoked it: composed and started together, the calling
-    /// frame is this invocation's provenance (null at the boot edge, before any goal runs).
+    /// frame, its <c>on.start</c>, a binding a program (or a mock) puts on it. Its module and name are the
+    /// catalog's — the element registration made for the seed's class; the seed's set parameters pass through,
+    /// the unset resolve from setting and <c>[Default]</c>. Born knowing the step that invoked it: composed and
+    /// started together, the calling frame is this invocation's provenance (null at the boot edge, before any
+    /// goal runs).
     /// </summary>
     public @this(module.ICodeGenerated seed, actor.context.@this context)
     {
-        var type = seed.GetType();
-        var space = type.Namespace ?? "";
-        var named = space[(space.LastIndexOf('.') + 1)..];
-        Module = context.App.module.Named(named)
-            ?? throw new System.InvalidOperationException($"no module '{named}' holds the action {type.Name}");
-        Name = System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.module.ActionAttribute>(type, inherit: false)?.Name
-            ?? type.Name.ToLowerInvariant();
+        var catalog = context.App.module[seed.GetType()]
+            ?? throw new System.InvalidOperationException($"no module holds the action {seed.GetType().Name}");
+        Module = catalog.Module;
+        Name = catalog.Name;
         Seed = seed;
         Step = context.CallStack.Step;
     }

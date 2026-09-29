@@ -13,7 +13,7 @@ public class AppRunScaffoldingTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = TestApp.Create("/app");
+    public void Setup() => _app = new global::app.@this("/app").Testing();
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -23,7 +23,7 @@ public class AppRunScaffoldingTests
     {
         return new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module(module),
+            Module = _app.Module(module),
             Name = actionName,
             Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new Data(p.name, p.value, context: _app.actor.list.User.Context)).ToList())
         };
@@ -75,7 +75,7 @@ public class AppRunScaffoldingTests
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
         var ctx = _app.actor.list.User.Context;
 
-        var goalBefore = new Goal { Name = "before-goal", Path = global::app.type.item.path.@this.Resolve("/g.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goalBefore = new Goal { Name = "before-goal", Path = global::app.type.item.path.@this.Resolve("/g.goal", _app.actor.list.User.Context) };
         await using var caller = ctx.CallStack.Push(goalBefore);
 
         var step = new Step { Index = 0, Text = "s" };
@@ -167,7 +167,7 @@ public class AppRunScaffoldingTests
         _app.actor.list.User.Context.PushCancellation(cts);
 
         var step = new Step { Index = 0, Text = "test" };
-        step.Code.Add(TestAction.Create("matrix.plain", "stringplain", ("path", "x")).In(step));
+        step.Code.Add(MakeAction("matrix.plain", "stringplain", ("path", "x")).In(step));
 
         await Assert.That(async () => await step.Start(_app.actor.list.User.Context))
             .ThrowsExactly<OperationCanceledException>();
