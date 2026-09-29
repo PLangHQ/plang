@@ -10,11 +10,11 @@ public class ChannelSetTests
     [Before(Test)]
     public void Setup()
     {
-        _app = TestApp.Create("/app");
+        _app = new global::app.@this("/app").Testing();
         _app.goal.list.Add(new global::app.goal.@this
         {
             Name = "LogIt",
-            Path = global::app.type.item.path.@this.Resolve("/LogIt.goal", global::PLang.Tests.TestApp.SharedContext)
+            Path = global::app.type.item.path.@this.Resolve("/LogIt.goal", _app.actor.list.User.Context)
         });
     }
 

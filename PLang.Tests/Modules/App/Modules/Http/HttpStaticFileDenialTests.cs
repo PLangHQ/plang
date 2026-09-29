@@ -27,7 +27,7 @@ public class HttpStaticFileDenialTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-http-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return TestApp.Create(root);
+        return new global::app.@this(root).Testing();
     }
 
     [Test] public async Task StaticFile_RequestWithDotDotTraversal_DeniedByAuthGate()

@@ -10,12 +10,12 @@ public class GoalCallTests
     [Before(Test)]
     public void Setup()
     {
-        _app = TestApp.Create("/app");
+        _app = new global::app.@this("/app").Testing();
         // Register a stub goal that call.cs can find
         _app.goal.list.Add(new global::app.goal.@this
         {
             Name = "TestGoal",
-            Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", global::PLang.Tests.TestApp.SharedContext)
+            Path = global::app.type.item.path.@this.Resolve("/TestGoal.goal", _app.actor.list.User.Context)
         });
     }
 

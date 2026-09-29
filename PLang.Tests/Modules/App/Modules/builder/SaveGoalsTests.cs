@@ -21,7 +21,7 @@ public class SaveGoalsTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_builder_savegoals_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = TestApp.Create(_tempDir);
+        _app = new global::app.@this(_tempDir).Testing();
         _app.Build = new global::app.module.build.@this(_app.actor.list.System.Context);
     }
 
@@ -43,7 +43,7 @@ public class SaveGoalsTests
         var step = new Step { Text = "write hello", Index = 0 };
         step.Code.Add(new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write",
+            Module = _app.actor.list.User.Context.App.Module("output"), Name = "write",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "hello", context: _app.actor.list.User.Context) })
         });
         var goal = new Goal

@@ -4,11 +4,14 @@ using app.module.list;
 
 namespace PLang.Tests.App.actions.list;
 
-public class ListSetTests
+public class ListSetTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
-        var app = TestApp.Create("/app");
+        var app = new global::app.@this("/app").Testing();
         return (app.actor.list.User.Context, app.actor.list.User.Context.Variable);
     }
 
@@ -23,7 +26,7 @@ public class ListSetTests
 
         await result.IsSuccess();
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
-        await Assert.That((await list!.At(1, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("replaced");
+        await Assert.That((await list!.At(1, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("replaced");
     }
 
     [Test]
@@ -37,8 +40,8 @@ public class ListSetTests
 
         await result.IsSuccess();
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
-        await Assert.That((await list!.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("new");
-        await Assert.That((await list.At(1, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("keep");
+        await Assert.That((await list!.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("new");
+        await Assert.That((await list.At(1, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("keep");
     }
 
     [Test]
@@ -102,6 +105,6 @@ public class ListSetTests
 
         await result.IsSuccess();
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
-        await Assert.That(await (await list!.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())!.IsEmpty()).IsTrue();
+        await Assert.That(await (await list!.At(0, app.actor.list.User.Context)!.Value())!.IsEmpty()).IsTrue();
     }
 }

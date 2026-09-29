@@ -30,7 +30,7 @@ public class TagActionTests
     {
         // The tag action's own frame and its step's pop when the step ends; the goal's frame lives for
         // the goal's run, so a later step can read what this one tagged.
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var (goal, step, action) = Frames(app);
         await using (goal) await using (step) await using (action)
         {
@@ -48,7 +48,7 @@ public class TagActionTests
     [Test]
     public async Task Tag_LabelAsTrue_SetsTagsLabelTrue()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var (goal, step, action) = Frames(app);
         await using (goal) await using (step) await using (action)
         {
@@ -61,7 +61,7 @@ public class TagActionTests
     [Test]
     public async Task Tag_NoOpWhenCurrentNull()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         // No Push — Current is null.
         var result = await Tagging(app, new() { ["x"] = true }).Start();
         await result.IsSuccess();
@@ -71,7 +71,7 @@ public class TagActionTests
     [Test]
     public async Task Tag_OutsideAGoal_TagsTheCurrentFrame()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         await using var call = app.actor.list.User.CallStack.Push(MakeAction("Goal"));
         await Tagging(app, new() { ["x"] = true }).Start();
 
@@ -82,7 +82,7 @@ public class TagActionTests
     [Test]
     public async Task Tag_MergeOverwritesAKeyAndKeepsTheRest()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var (goal, step, action) = Frames(app);
         await using (goal) await using (step) await using (action)
         {
@@ -99,7 +99,7 @@ public class TagActionTests
     [Test]
     public async Task Tag_NextStepReadsItThroughScope()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var goal = await RealGoalLoad.ViaChannel(app, Make.Goal("Tagging",
             Make.Step("tag owner=checkout",
                 Make.Action("debug", "tag", Make.Param("Tags", new Dictionary<string, object?> { ["owner"] = "checkout" }, "dict"))),

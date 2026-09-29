@@ -20,7 +20,7 @@ public class ListAddIdentityTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = TestApp.Create("/app");
+    public void Setup() => _app = new global::app.@this("/app").Testing();
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -97,7 +97,7 @@ public class ListAddIdentityTests
         var live = (await (await vars.Get("products")).Value()) as global::app.type.item.list.@this;
         await Assert.That(live!.Count).IsEqualTo(1);
         // list.add stores the element Data by reference now (Stage 2 rebind makes it safe).
-        await Assert.That((await live!.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("hello");
+        await Assert.That((await live!.At(0, _app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("hello");
     }
 
     // After the variable is reassigned with Variables.Set("products", newList), the next

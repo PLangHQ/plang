@@ -16,18 +16,18 @@ public class ErrorInPlayTests
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
     [Before(Test)]
-    public void Setup() => _app = TestApp.Create("/app");
+    public void Setup() => _app = new global::app.@this("/app").Testing();
 
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
     // An error.throw with its on.error clauses after it.
-    private static PrAction Throw(string message, PrAction[]? modifiers = null) =>
+    private PrAction Throw(string message, PrAction[]? modifiers = null) =>
         global::PLang.Tests.Shared.Make.With(new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("error"), Name = "throw",
+            Module = _app.actor.list.User.Context.App.Module("error"), Name = "throw",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
-                { new("message", message, context: global::PLang.Tests.TestApp.SharedContext) }),
+                { new("message", message, context: _app.actor.list.User.Context) }),
         }, modifiers ?? []);
 
     // An on.error clause with these properties.
@@ -45,7 +45,7 @@ public class ErrorInPlayTests
         var goal = new Goal
         {
             Name = name,
-            Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext)
+            Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", _app.actor.list.User.Context)
         };
         var step = new Step { Goal = goal, Text = $"step of {name}" };
         // The .pr load applies the template seam; without it a %var% parameter never resolves.
@@ -56,14 +56,14 @@ public class ErrorInPlayTests
     }
 
     /// <summary>An action that copies %!error.Message% into the named variable.</summary>
-    private static PrAction CaptureError(string varName) => new()
+    private PrAction CaptureError(string varName) => new()
     {
-        Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
+        Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
         Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
         {
             new("name", "%" + varName + "%", new global::app.type.@this("variable"),
-                context: global::PLang.Tests.TestApp.SharedContext),
-            new("value", "%!error.Message%", context: global::PLang.Tests.TestApp.SharedContext)
+                context: _app.actor.list.User.Context),
+            new("value", "%!error.Message%", context: _app.actor.list.User.Context)
         })
     };
 
@@ -81,7 +81,7 @@ public class ErrorInPlayTests
     [Test]
     public async Task ErrorInPlay_LiveFrameHoldsError_AnswersThatError()
     {
-        var action = TestAction.Create("variable", "set", ("name", "%x%"), ("value", "v"));
+        var action = Ctx.Action("variable", "set", ("name", "%x%"), ("value", "v"));
         var error = new global::app.error.Error("frame failed");
 
         await using var call = Ctx.CallStack.Push(action, Ctx.Variable);
@@ -95,8 +95,8 @@ public class ErrorInPlayTests
     [Test]
     public async Task ErrorInPlay_InnerFrame_ShadowsCallerThenUnshadows()
     {
-        var outerAction = TestAction.Create("variable", "set", ("name", "%a%"), ("value", "1"));
-        var innerAction = TestAction.Create("variable", "set", ("name", "%b%"), ("value", "2"));
+        var outerAction = Ctx.Action("variable", "set", ("name", "%a%"), ("value", "1"));
+        var innerAction = Ctx.Action("variable", "set", ("name", "%b%"), ("value", "2"));
         var outerError = new global::app.error.Error("outer failed");
         var innerError = new global::app.error.Error("inner failed");
 
@@ -118,7 +118,7 @@ public class ErrorInPlayTests
     [Test]
     public async Task ErrorInPlay_FrameHandled_StopsAnswering()
     {
-        var action = TestAction.Create("variable", "set", ("name", "%x%"), ("value", "v"));
+        var action = Ctx.Action("variable", "set", ("name", "%x%"), ("value", "v"));
 
         await using var call = Ctx.CallStack.Push(action, Ctx.Variable);
         call.Errors.Add(new global::app.error.Error("recovered later"));
@@ -137,7 +137,7 @@ public class ErrorInPlayTests
     [Test]
     public async Task ErrorInPlay_PoppedFrame_NoLongerInPlay()
     {
-        var action = TestAction.Create("error", "throw", ("message", "already finished"));
+        var action = Ctx.Action("error", "throw", ("message", "already finished"));
 
         await using (var call = Ctx.CallStack.Push(action, Ctx.Variable))
         {
@@ -172,14 +172,14 @@ public class ErrorInPlayTests
     }
 
     /// <summary>An action that copies %!error.Key% into the named variable.</summary>
-    private static PrAction CaptureErrorKey(string varName) => new()
+    private PrAction CaptureErrorKey(string varName) => new()
     {
-        Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
+        Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
         Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
         {
             new("name", "%" + varName + "%", new global::app.type.@this("variable"),
-                context: global::PLang.Tests.TestApp.SharedContext),
-            new("value", "%!error.Key%", context: global::PLang.Tests.TestApp.SharedContext)
+                context: _app.actor.list.User.Context),
+            new("value", "%!error.Key%", context: _app.actor.list.User.Context)
         })
     };
 
@@ -194,7 +194,7 @@ public class ErrorInPlayTests
     {
         RegisterGoal("Recover", CaptureErrorKey("seenKey"));
 
-        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var ctx = _app.actor.list.User.Context;
         // timer.sleep(3s); on.error(GoalFirst, Recovery=[call Recover]); on.timeout(1ms) — the recovery runs on
         // the error outcome, after the attempt, and sees the verdict the deadline produced.
         var sleep = global::PLang.Tests.Shared.Make.With(new PrAction

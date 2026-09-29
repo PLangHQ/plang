@@ -10,8 +10,11 @@ namespace PLang.Tests.App.Modules.builder;
 /// Tests for Step.Merge() and Goal.Merge() — OBP methods that own
 /// the knowledge of which fields are LLM-derived vs structural.
 /// </summary>
-public class MergeTests
+public class MergeTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     #region Step.Merge
 
     [Test]
@@ -23,7 +26,7 @@ public class MergeTests
             Text = "do something",
             Code = new StepActions(new[]
             {
-                new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write", Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Message", "hello", context: global::PLang.Tests.TestApp.SharedContext) }) }
+                new Action { Module = app.actor.list.User.Context.App.Module("output"), Name = "write", Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Message", "hello", context: app.actor.list.User.Context) }) }
             })
         };
 
@@ -44,7 +47,7 @@ public class MergeTests
             Line = new() { Number = 1 },
             Code = new StepActions(new[]
             {
-                new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("file"), Name = "read" }
+                new Action { Module = app.actor.list.User.Context.App.Module("file"), Name = "read" }
             })
         };
 
@@ -62,7 +65,7 @@ public class MergeTests
     [Test]
     public async Task StepMerge_EmptySource_LeavesTargetUnchanged()
     {
-        var originalAction = new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write" };
+        var originalAction = new Action { Module = app.actor.list.User.Context.App.Module("output"), Name = "write" };
         var target = new Step
         {
             Text = "step",
@@ -129,7 +132,7 @@ public class MergeTests
                     Text = "do something",
                     Code = new StepActions(new[]
                     {
-                        new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write" }
+                        new Action { Module = app.actor.list.User.Context.App.Module("output"), Name = "write" }
                     })
                 }
             }
@@ -165,7 +168,7 @@ public class MergeTests
                     Text = "old step text",
                     Code = new StepActions(new[]
                     {
-                        new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("file"), Name = "read" }
+                        new Action { Module = app.actor.list.User.Context.App.Module("file"), Name = "read" }
                     })
                 }
             }
@@ -216,7 +219,7 @@ public class MergeTests
                     Text = "do something",
                     Code = new StepActions(new[]
                     {
-                        new Action { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write" }
+                        new Action { Module = app.actor.list.User.Context.App.Module("output"), Name = "write" }
                     })
                 }
             }

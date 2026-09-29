@@ -16,14 +16,14 @@ public class ModuleAddTests
     {
         var assemblyPath = typeof(global::app.@this).Assembly.Location;
         var assemblyDir = global::System.IO.Path.GetDirectoryName(assemblyPath)!;
-        var app = TestApp.Create(assemblyDir);
+        var app = new global::app.@this(assemblyDir).Testing();
         return (app.actor.list.User.Context, app, assemblyPath);
     }
 
     [Test]
     public async Task Add_NonexistentPath_ReturnsError()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var context = app.actor.list.User.Context;
 
         var add = new Add(context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve("nonexistent_mylib.dll", context)),
@@ -141,7 +141,7 @@ public class ModuleAddTests
             await result.IsSuccess();
 
             // Actions registered via Discover should be resolvable
-            var (action, error) = (new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" }).Instance(global::PLang.Tests.TestApp.SharedContext);
+            var (action, error) = (new PrAction { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
             await Assert.That(action).IsNotNull();
             await Assert.That(error).IsNull();
         }

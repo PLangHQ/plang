@@ -11,7 +11,7 @@ public class ForeachTests
     [Before(Test)]
     public void Setup()
     {
-        _app = TestApp.Create("/app");
+        _app = new global::app.@this("/app").Testing();
     }
 
     [Test]
@@ -21,7 +21,7 @@ public class ForeachTests
         var items = new List<object?> { "a", "b", "c" };
         context.Variable.Set("items", items);
 
-        _app.goal.list.Add(new Goal { Name = "ProcessItem", Path = global::app.type.item.path.@this.Resolve("/ProcessItem.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
+        _app.goal.list.Add(new Goal { Name = "ProcessItem", Path = global::app.type.item.path.@this.Resolve("/ProcessItem.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("ForeachRunner",
             Make.Step("foreach %items%, call ProcessItem item=%item%",
@@ -46,7 +46,7 @@ public class ForeachTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("items", new List<object?>());
 
-        var action = TestAction.Create("loop", "foreach",
+        var action = context.Action("loop", "foreach",
             ("collection", "%items%"), ("item", "%item%"));
         var result = await action.Start(context);
 
@@ -62,7 +62,7 @@ public class ForeachTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("items", new List<object?> { "hello" });
 
-        _app.goal.list.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
+        _app.goal.list.Add(new Goal { Name = "DoNothing", Path = global::app.type.item.path.@this.Resolve("/DoNothing.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("SetsItemRunner",
             Make.Step("foreach %items%, call DoNothing item=%myItem%",
@@ -88,7 +88,7 @@ public class ForeachTests
         var dict = new Dictionary<string, object?> { ["name"] = "Alice", ["age"] = 30 };
         context.Variable.Set("dict", dict);
 
-        _app.goal.list.Add(new Goal { Name = "DictGoal", Path = global::app.type.item.path.@this.Resolve("/DictGoal.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
+        _app.goal.list.Add(new Goal { Name = "DictGoal", Path = global::app.type.item.path.@this.Resolve("/DictGoal.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("DictRunner",
             Make.Step("foreach %dict%, call DictGoal item=%val%",
@@ -111,7 +111,7 @@ public class ForeachTests
         var dict = new Dictionary<string, object?> { ["greeting"] = "hello" };
         context.Variable.Set("dict", dict);
 
-        _app.goal.list.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
+        _app.goal.list.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("DictKeyRunner",
             Make.Step("foreach %dict%, call Noop",
@@ -137,7 +137,7 @@ public class ForeachTests
     {
         var context = _app.actor.list.User.Context;
 
-        var action = TestAction.Create("loop", "foreach",
+        var action = context.Action("loop", "foreach",
             ("collection", null), ("item", "%item%"));
         var result = await action.Start(context);
 
@@ -157,7 +157,7 @@ public class ForeachTests
         context.PushCancellation(cts);
         cts.Cancel();
 
-        var action = TestAction.Create("loop", "foreach",
+        var action = context.Action("loop", "foreach",
             ("collection", "%items%"), ("item", "%item%"));
         var result = await action.Start(context);
 
@@ -184,7 +184,7 @@ public class ForeachTests
 
         // The builder writes child keys onto %plan% between llm.query and the foreach
         // (set %plan.system% = ..., etc.). Replicate one such write onto the clr(json).
-        var setChild = TestAction.Create("variable", "set",
+        var setChild = context.Action("variable", "set",
             ("name", "%plan.system%"), ("value", "sys-prompt"));
         await (await setChild.Start(context)).IsSuccess();
 

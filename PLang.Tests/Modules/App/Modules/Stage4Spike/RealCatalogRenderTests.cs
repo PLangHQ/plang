@@ -24,7 +24,7 @@ public class RealCatalogRenderTests
     [Test]
     public async Task ModuleElements_Enumerate_ThroughFluid()
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/tmp/s4-realcat-1");
+        await using var app = new global::app.@this("/tmp/s4-realcat-1").Testing();
         var outp = await Render(app, "{% for m in modules %}[{{ m.Name }}]{% endfor %}");
         await Assert.That(outp).Contains("[file]");
         await Assert.That(outp).Contains("[variable]");
@@ -33,7 +33,7 @@ public class RealCatalogRenderTests
     [Test]
     public async Task ModuleActions_RenderTheirNames_ThroughFluid()
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/tmp/s4-realcat-2");
+        await using var app = new global::app.@this("/tmp/s4-realcat-2").Testing();
         // module.Action is the native list of action class-zoom elements; each action's Name
         // navigates through the Data.Get door.
         var outp = await Render(app,
@@ -44,7 +44,7 @@ public class RealCatalogRenderTests
     [Test]
     public async Task ModuleActions_IsNativeList_Filterable()
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/tmp/s4-realcat-3");
+        await using var app = new global::app.@this("/tmp/s4-realcat-3").Testing();
         var file = app.Module("file");
         await Assert.That(file.Action.CountRaw).IsGreaterThan(0);
     }

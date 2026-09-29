@@ -16,7 +16,7 @@ public class IdentityHandlerTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_identity_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = TestApp.Plain(_tempDir);
+        _app = new global::app.@this(_tempDir).TestSigning();
     }
 
     [After(Test)]

@@ -7,11 +7,14 @@ using ListType = global::app.type.item.list.@this;
 
 namespace PLang.Tests.App.actions.error;
 
-public class ThrowTests
+public class ThrowTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
-        var app = TestApp.Create("/app");
+        var app = new global::app.@this("/app").Testing();
         return (app.actor.list.User.Context, app.actor.list.User.Context.Variable);
     }
 
@@ -130,7 +133,7 @@ public class ThrowTests
         var list = err.Data!.Peek() as ListType;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count.ToInt32()).IsEqualTo(1);
-        await Assert.That(list.First(global::PLang.Tests.TestApp.SharedContext)!.Peek()!.ToString()).IsEqualTo("order-123");
+        await Assert.That(list.First(app.actor.list.User.Context)!.Peek()!.ToString()).IsEqualTo("order-123");
     }
 
     [Test]
@@ -149,8 +152,8 @@ public class ThrowTests
         var list = err.Data!.Peek() as ListType;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count.ToInt32()).IsEqualTo(2);
-        await Assert.That(list.At(0, global::PLang.Tests.TestApp.SharedContext)!.Peek()!.ToString()).IsEqualTo("order-123");
-        await Assert.That(list.At(1, global::PLang.Tests.TestApp.SharedContext)!.Peek()!.ToString()).IsEqualTo("item-9");
+        await Assert.That(list.At(0, app.actor.list.User.Context)!.Peek()!.ToString()).IsEqualTo("order-123");
+        await Assert.That(list.At(1, app.actor.list.User.Context)!.Peek()!.ToString()).IsEqualTo("item-9");
     }
 
 }

@@ -95,7 +95,7 @@ public class HostRenderSpikeTests
     [Test]
     public async Task LegA_EnumerateHostElements()
     {
-        var app = global::PLang.Tests.TestApp.Plain("/tmp/s4spike-a");
+        var app = new global::app.@this("/tmp/s4spike-a").TestSigning();
         var modules = SampleModules(app.actor.list.User.Context);
         var outp = await Render(app, "{% for m in modules %}[{{ m.Name }}]{% endfor %}", modules);
         await Assert.That(outp).IsEqualTo("[file][variable]");
@@ -105,7 +105,7 @@ public class HostRenderSpikeTests
     [Test]
     public async Task LegB_FluidFilterOverElements()
     {
-        var app = global::PLang.Tests.TestApp.Plain("/tmp/s4spike-b");
+        var app = new global::app.@this("/tmp/s4spike-b").TestSigning();
         var modules = SampleModules(app.actor.list.User.Context);
         // where: filter on element property Name, then map: to collect names.
         var outp = await Render(app,
@@ -120,7 +120,7 @@ public class HostRenderSpikeTests
         // The REAL catalog: an action's property rows are a host list Fluid iterates, each row read
         // through its own members (Name, Type.Name, Nullable) — the menu template's shape. A property
         // typed `variable` names a variable, so it advertises as %var%.
-        var app = global::PLang.Tests.TestApp.Plain("/tmp/s4spike-c");
+        var app = new global::app.@this("/tmp/s4spike-c").TestSigning();
         var ctx = app.actor.list.User.Context;
         var actions = NativeList(ctx, app.Module("file")["read"]!, app.Module("variable")["set"]!);
         var outp = await Render(app,
@@ -139,7 +139,7 @@ public class HostRenderSpikeTests
     [Test]
     public async Task LegD_ProseDoorMustBeSyncProperty()
     {
-        var app = global::PLang.Tests.TestApp.Plain("/tmp/s4spike-d");
+        var app = new global::app.@this("/tmp/s4spike-d").TestSigning();
         var modules = SampleModules(app.actor.list.User.Context);
         var syncOut = await Render(app, "{% for m in modules %}[{{ m.DescriptionSync }}]{% endfor %}", modules);
         var methodOut = await Render(app, "{% for m in modules %}[{{ m.DescriptionMethod }}]{% endfor %}", modules);
@@ -152,7 +152,7 @@ public class HostRenderSpikeTests
     [Test]
     public async Task LegE_WhereOverClrAction()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/s4spike-e");
+        var app = new global::app.@this("/tmp/s4spike-e").Testing();
         var ctx = app.actor.list.User.Context;
 
         // Real catalog action elements ride as raw POCOs (clr) in a native list —
@@ -182,7 +182,7 @@ public class HostRenderSpikeTests
         // Read each kept element's Name through the SAME value door `where` used
         // (`d.Get(field)`) — dogfoods the navigation under test, no reflecting helper.
         var names = new List<string>();
-        foreach (var d in kept!.Items(global::PLang.Tests.TestApp.SharedContext))
+        foreach (var d in kept!.Items(app.actor.list.User.Context))
             names.Add((await d.Get("Name"))?.Peek()?.ToString() ?? "");
 
         foreach (var n in names)

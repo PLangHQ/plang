@@ -30,7 +30,7 @@ public class BuilderRunAsyncTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_builder_runasync_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = TestApp.Create(_tempDir);
+        _app = new global::app.@this(_tempDir).Testing();
         _app.Build = new global::app.module.build.@this(_app.actor.list.System.Context);
     }
 

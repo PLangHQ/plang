@@ -8,8 +8,8 @@ namespace PLang.Tests.App.Modules.builder;
 // in those keys; no alias is read.
 public class ActionNameWireReadTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create(
-        "/tmp/actionname-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this(
+        "/tmp/actionname-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private async System.Threading.Tasks.Task<Goal> ReadOneAction(string actionsJson)

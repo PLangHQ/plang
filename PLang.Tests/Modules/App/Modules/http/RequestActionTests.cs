@@ -41,7 +41,7 @@ public class RequestActionTests
 
         // Register stub goals for streaming callbacks — the held call needs to find them
         foreach (var name in new[] { "HandleLine", "HandleSSE", "HandleBytes", "HandleChunk", "ProcessChunk" })
-            _app.goal.list.Add(new global::app.goal.@this { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) });
+            _app.goal.list.Add(new global::app.goal.@this { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", _app.actor.list.User.Context) });
     }
 
     [After(Test)]

@@ -12,22 +12,22 @@ public class ErrorHandleTests
     [Before(Test)]
     public void Setup()
     {
-        _app = TestApp.Create("/app");
+        _app = new global::app.@this("/app").Testing();
     }
 
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
 
     // An error.throw with its on.error clauses after it (bound on it, as a program's read binds them).
-    private static PrAction Throw(string message, int? statusCode = null, string? key = null,
+    private PrAction Throw(string message, int? statusCode = null, string? key = null,
         PrAction[]? modifiers = null)
     {
-        var parameters = new List<global::app.data.@this> { new("message", message, context: global::PLang.Tests.TestApp.SharedContext) };
-        if (statusCode != null) parameters.Add(new("statusCode", statusCode.Value, context: global::PLang.Tests.TestApp.SharedContext));
-        if (key != null) parameters.Add(new("key", key, context: global::PLang.Tests.TestApp.SharedContext));
+        var parameters = new List<global::app.data.@this> { new("message", message, context: _app.actor.list.User.Context) };
+        if (statusCode != null) parameters.Add(new("statusCode", statusCode.Value, context: _app.actor.list.User.Context));
+        if (key != null) parameters.Add(new("key", key, context: _app.actor.list.User.Context));
         return global::PLang.Tests.Shared.Make.With(new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("error"), Name = "throw",
+            Module = _app.actor.list.User.Context.App.Module("error"), Name = "throw",
             Property = global::PLang.Tests.Shared.Make.Properties(parameters),
         }, modifiers ?? []);
     }
@@ -37,17 +37,17 @@ public class ErrorHandleTests
         => global::PLang.Tests.Shared.Make.Action("on", "error", parameters);
 
     /// <summary>An on.error clause whose Recovery calls <paramref name="goalName"/>.</summary>
-    private static PrAction ErrorHandlerCalling(string goalName, params (string name, object? value)[] parameters)
+    private PrAction ErrorHandlerCalling(string goalName, params (string name, object? value)[] parameters)
         => global::PLang.Tests.Shared.Make.Action("on", "error",
             [.. parameters, global::PLang.Tests.Shared.Make.Recovery(CallGoal(goalName))]);
 
     /// <summary>One recovery action: a call to <paramref name="goalName"/>.</summary>
-    private static PrAction CallGoal(string goalName) => new()
+    private PrAction CallGoal(string goalName) => new()
     {
-        Module = global::PLang.Tests.TestApp.SharedContext.App.Module("goal"), Name = "call",
+        Module = _app.actor.list.User.Context.App.Module("goal"), Name = "call",
         Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
         {
-            new("Name", goalName, context: global::PLang.Tests.TestApp.SharedContext)
+            new("Name", goalName, context: _app.actor.list.User.Context)
         })
     };
 
@@ -56,10 +56,10 @@ public class ErrorHandleTests
     {
         var action = global::PLang.Tests.Shared.Make.With(new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
+            Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>
             {
-                new("name", "%ok%", new global::app.type.@this("variable"), context: global::PLang.Tests.TestApp.SharedContext), new("value", "v", context: global::PLang.Tests.TestApp.SharedContext)
+                new("name", "%ok%", new global::app.type.@this("variable"), context: _app.actor.list.User.Context), new("value", "v", context: _app.actor.list.User.Context)
             })
         }, ErrorHandler(("ignoreError", true)));
 
@@ -86,7 +86,7 @@ public class ErrorHandleTests
         return (global::app.channel.type.stream.@this)_app.actor.list.System.Channel.Get(global::app.channel.list.@this.Debug)!;
     }
 
-    private static string Read(global::app.channel.type.stream.@this capture)
+    private string Read(global::app.channel.type.stream.@this capture)
     {
         capture.Stream.Position = 0;
         using var reader = new StreamReader(capture.Stream, leaveOpen: true);
@@ -228,7 +228,7 @@ public class ErrorHandleTests
     {
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
+            Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this>()),
         };
         action.Own().Bind("start", global::app.@event.When.before, async (_, _, _) =>
@@ -327,13 +327,13 @@ public class ErrorHandleTests
     {
         var prAction = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module(module), Name = actionName,
+            Module = _app.actor.list.User.Context.App.Module(module), Name = actionName,
             Property = global::PLang.Tests.Shared.Make.Properties(parameters.Select(p => new global::app.data.@this(p.name, p.value,
-                PrParam.IsVarNameSlot(module, actionName, p.name) ? new global::app.type.@this("variable") : null, context: global::PLang.Tests.TestApp.SharedContext)).ToList())
+                PrParam.IsVarNameSlot(module, actionName, p.name) ? new global::app.type.@this("variable") : null, context: _app.actor.list.User.Context)).ToList())
         };
         var step = new Step { Text = $"test step for {name}" };
         step.Code.Add(prAction);
-        var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", _app.actor.list.User.Context) };
         goal.Step.Add(step);
         _app.goal.list.Add(goal);
         return goal;

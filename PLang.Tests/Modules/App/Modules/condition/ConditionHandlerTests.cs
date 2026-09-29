@@ -17,7 +17,7 @@ public class ConditionHandlerTests : IDisposable
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = TestApp.Create(_tempDir);
+        _app = new global::app.@this(_tempDir).Testing();
     }
 
     public void Dispose()
@@ -64,7 +64,7 @@ public class ConditionHandlerTests : IDisposable
 
         var condAction = new Action
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("condition"), Name = "if",
+            Module = _app.actor.list.User.Context.App.Module("condition"), Name = "if",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("Left", true, context: _app.actor.list.User.Context), new Data("Operator", "==", context: _app.actor.list.User.Context), new Data("Right", true, context: _app.actor.list.User.Context)
@@ -72,7 +72,7 @@ public class ConditionHandlerTests : IDisposable
         };
         var thenAction = new Action
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write",
+            Module = _app.actor.list.User.Context.App.Module("output"), Name = "write",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "true-branch", context: _app.actor.list.User.Context) })
         };
 
@@ -100,7 +100,7 @@ public class ConditionHandlerTests : IDisposable
 
         var condAction = new Action
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("condition"), Name = "if",
+            Module = _app.actor.list.User.Context.App.Module("condition"), Name = "if",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("Left", false, context: _app.actor.list.User.Context), new Data("Operator", "==", context: _app.actor.list.User.Context), new Data("Right", true, context: _app.actor.list.User.Context)
@@ -108,12 +108,12 @@ public class ConditionHandlerTests : IDisposable
         };
         var thenAction = new Action
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write",
+            Module = _app.actor.list.User.Context.App.Module("output"), Name = "write",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "then-branch", context: _app.actor.list.User.Context) })
         };
         var elseCondAction = new Action
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("condition"), Name = "if",
+            Module = _app.actor.list.User.Context.App.Module("condition"), Name = "if",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("Left", true, context: _app.actor.list.User.Context), new Data("Operator", "==", context: _app.actor.list.User.Context), new Data("Right", true, context: _app.actor.list.User.Context)
@@ -121,7 +121,7 @@ public class ConditionHandlerTests : IDisposable
         };
         var elseAction = new Action
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"), Name = "write",
+            Module = _app.actor.list.User.Context.App.Module("output"), Name = "write",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "else-branch", context: _app.actor.list.User.Context) })
         };
 

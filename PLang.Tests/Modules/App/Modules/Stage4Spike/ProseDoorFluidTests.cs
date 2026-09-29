@@ -36,7 +36,7 @@ public class ProseDoorFluidTests
         foreach (var (file, body) in prose)
             System.IO.File.WriteAllText(System.IO.Path.Combine(mdRoot, FixtureModule, file), body);
 
-        var app = global::PLang.Tests.TestApp.Create(tempDir);
+        var app = new global::app.@this(tempDir).Testing();
         app.module.Register(FixtureModule, "setvalue", typeof(FixtureAction));
         return app;
     }

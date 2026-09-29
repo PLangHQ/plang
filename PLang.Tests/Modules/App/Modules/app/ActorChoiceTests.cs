@@ -11,7 +11,7 @@ public class ActorChoiceTests
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
     [Before(Test)]
-    public void Setup() => _app = TestApp.Create("/app");
+    public void Setup() => _app = new global::app.@this("/app").Testing();
 
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();

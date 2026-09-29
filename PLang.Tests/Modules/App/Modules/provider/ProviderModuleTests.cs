@@ -24,7 +24,7 @@ public class ProviderModuleTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_provider_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new PLangEngine(_tempDir);
-        global::PLang.Tests.TestApp.UseSharedIdentity(_app);
+        (_app).TestIdentity();
     }
 
     [After(Test)]
@@ -115,7 +115,7 @@ public class ProviderModuleTests
     public async Task Load_NullPath_IsValueRequired()
     {
         // dispatched as a program runs it — the required slot's guard answers before the action starts
-        var result = await TestAction.Create("code", "load").Start(Ctx);
+        var result = await Ctx.Action("code", "load").Start(Ctx);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ValueRequired");
@@ -322,7 +322,7 @@ public class ProviderModuleTests
         await result.IsSuccess();
         // Providers are plumbing — the action returns their names (list<text>), not the CLR instances.
         var names = (global::app.type.item.list.@this)(await result.Value())!;
-        await Assert.That(names.Items(global::PLang.Tests.TestApp.SharedContext).Count()).IsGreaterThanOrEqualTo(2);
+        await Assert.That(names.Items(_app.actor.list.User.Context).Count()).IsGreaterThanOrEqualTo(2);
     }
 
     [Test]

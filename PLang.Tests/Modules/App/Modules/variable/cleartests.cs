@@ -9,7 +9,7 @@ public class ClearTests
 {
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
-        var app = TestApp.Create("/app");
+        var app = new global::app.@this("/app").Testing();
         return (app.actor.list.User.Context, app.actor.list.User.Context.Variable);
     }
 

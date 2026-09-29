@@ -23,7 +23,7 @@ public class DownloadActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_http_dl_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = TestApp.Create(_tempDir);
+        _app = new global::app.@this(_tempDir).Testing();
 
         _handler = new MockHttpMessageHandler();
         var provider = new Default(_handler) { Name = "test" };

@@ -8,7 +8,7 @@ namespace PLang.Tests.App.actions.variable;
 public class BornTypedDeclineTests
 {
     private global::app.@this _app = null!;
-    [Before(Test)] public void Setup() => _app = TestApp.Create("/app");
+    [Before(Test)] public void Setup() => _app = new global::app.@this("/app").Testing();
 
     // Direct unit test on the decline seam (Variable.Create, app/type/item/variable/this.cs).
     [Test]
@@ -49,11 +49,11 @@ public class BornTypedDeclineTests
         var ctx = _app.actor.list.User.Context;
         var act = new global::app.goal.step.action.@this
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"),
+            Module = _app.actor.list.User.Context.App.Module("variable"),
             Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
-                new Data("name", "%path%", global::PLang.Tests.TestApp.SharedContext.App.type.list["string"], context: ctx),
+                new Data("name", "%path%", _app.actor.list.User.Context.App.type.list["string"], context: ctx),
                 new Data("value", ".", context: ctx),
             })
         };
@@ -72,7 +72,7 @@ public class BornTypedDeclineTests
         var ctx = _app.actor.list.User.Context;
         var act = new global::app.goal.step.action.@this
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"),
+            Module = _app.actor.list.User.Context.App.Module("variable"),
             Name = "set",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {

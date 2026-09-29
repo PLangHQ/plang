@@ -16,7 +16,7 @@ public class DataSourceTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_ds_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = TestApp.Plain(_tempDir);
+        _app = new global::app.@this(_tempDir).TestSigning();
     }
 
     [After(Test)]
@@ -36,7 +36,7 @@ public class DataSourceTests
     [Test]
     public async Task AppDispose_DisposesItsStore()
     {
-        var app = TestApp.Create(_tempDir);
+        var app = new global::app.@this(_tempDir).Testing();
         var store = app.store;
         await store.Set("probe", "k", new Data("k", "held", context: app.actor.list.System.Context));
         await Assert.That((await (await store.Get<global::app.type.item.@this>("probe", "k")).Value())?.ToString()).IsEqualTo("held");
@@ -133,7 +133,7 @@ public class DataSourceTests
 
         var result = await ds.GetAll<global::app.type.item.@this>("settings");
         await result.IsSuccess();
-        var items = (await result.Value<global::app.type.item.list.@this>())!.Items(global::PLang.Tests.TestApp.SharedContext).ToList();
+        var items = (await result.Value<global::app.type.item.list.@this>())!.Items(_app.actor.list.User.Context).ToList();
         await Assert.That(items.Count).IsEqualTo(2);
     }
 
@@ -303,7 +303,7 @@ public class DataSourceTests
         // GetAll
         await ds.Set("items", "key2", new Data("key2", "value2", context: _app.actor.list.System.Context!));
         var allResult = await ds.GetAll<global::app.type.item.@this>("items");
-        var items = (await allResult.Value<global::app.type.item.list.@this>())!.Items(global::PLang.Tests.TestApp.SharedContext).ToList();
+        var items = (await allResult.Value<global::app.type.item.list.@this>())!.Items(_app.actor.list.User.Context).ToList();
         await Assert.That(items.Count).IsEqualTo(2);
 
         // Remove
@@ -367,7 +367,7 @@ public class DataSourceTests
     [Test]
     public async Task App_UsesInMemory_WhenTestingEnabled()
     {
-        await using var engine = TestApp.Plain(_tempDir);
+        await using var engine = new global::app.@this(_tempDir).TestSigning();
         engine.test.list.Open();
 
         // app.store is in-memory under Testing — no .db directory created.
@@ -386,7 +386,7 @@ public class DataSourceTests
     [Test]
     public async Task App_UsesFileBacked_ByDefault()
     {
-        await using var engine = TestApp.Plain(_tempDir);
+        await using var engine = new global::app.@this(_tempDir).TestSigning();
         // Testing not enabled → file-backed system.sqlite.
 
         var ds = engine.store;

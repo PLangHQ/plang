@@ -18,7 +18,7 @@ public class SetTypeInferenceTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = TestApp.Create("/app");
+    public void Setup() => _app = new global::app.@this("/app").Testing();
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -27,7 +27,7 @@ public class SetTypeInferenceTests
     public async Task Set_StringValue_InfersTextType()
     {
         var context = _app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set", ("name", "%s%"), ("value", "hello"));
+        var action = context.Action("variable", "set", ("name", "%s%"), ("value", "hello"));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("s");
@@ -39,7 +39,7 @@ public class SetTypeInferenceTests
     public async Task Set_IntValue_InfersNumberType()
     {
         var context = _app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42));
+        var action = context.Action("variable", "set", ("name", "%n%"), ("value", 42));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("n");
@@ -52,7 +52,7 @@ public class SetTypeInferenceTests
     public async Task Set_LongValue_InfersNumberType()
     {
         var context = _app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42L));
+        var action = context.Action("variable", "set", ("name", "%n%"), ("value", 42L));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("n");
@@ -64,7 +64,7 @@ public class SetTypeInferenceTests
     public async Task Set_DoubleValue_InfersNumberType()
     {
         var context = _app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set", ("name", "%d%"), ("value", 3.14));
+        var action = context.Action("variable", "set", ("name", "%d%"), ("value", 3.14));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("d");
@@ -76,7 +76,7 @@ public class SetTypeInferenceTests
     public async Task Set_BoolValue_InfersBoolType()
     {
         var context = _app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set", ("name", "%b%"), ("value", true));
+        var action = context.Action("variable", "set", ("name", "%b%"), ("value", true));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("b");
@@ -89,7 +89,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         var when = DateTime.UtcNow;
-        var action = TestAction.Create("variable", "set", ("name", "%t%"), ("value", when));
+        var action = context.Action("variable", "set", ("name", "%t%"), ("value", when));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("t");
@@ -106,7 +106,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         var src = new List<object?> { "a", "b" };
-        var action = TestAction.Create("variable", "set", ("name", "%list%"), ("value", src));
+        var action = context.Action("variable", "set", ("name", "%list%"), ("value", src));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("list");
@@ -123,7 +123,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         var src = new List<object?> { "a", "b" };
-        await (await TestAction.Create("variable", "set", ("name", "%list%"), ("value", src)).Start(context)).IsSuccess();
+        await (await context.Action("variable", "set", ("name", "%list%"), ("value", src)).Start(context)).IsSuccess();
         src.Add("c");
         var lst = (await (await context.Variable.Get("list")).Value()) as global::app.type.item.list.@this;
         await Assert.That(lst!.CountRaw).IsEqualTo(3);
@@ -143,7 +143,7 @@ public class SetTypeInferenceTests
         lst.SetAt(2, new Data("", 9L, context: context));
 
         await Assert.That(ReferenceEquals(lst.Clr<List<object?>>(), src)).IsFalse();
-        await Assert.That((await lst.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())).IsTypeOf<global::app.type.item.number.@this>();
+        await Assert.That((await lst.At(2, _app.actor.list.User.Context)!.Value())).IsTypeOf<global::app.type.item.number.@this>();
     }
 
     // A Dictionary<string,object?> is aliased the same way — the CLR exit door
@@ -153,14 +153,14 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         var src = new Dictionary<string, object?> { ["k"] = "v" };
-        var action = TestAction.Create("variable", "set", ("name", "%d%"), ("value", src));
+        var action = context.Action("variable", "set", ("name", "%d%"), ("value", src));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("d");
         var d = (await stored.Value()) as global::app.type.item.dict.@this;
         await Assert.That(d).IsNotNull();
         // A read of a key must not knock the dict off the same-ref fast path.
-        await Assert.That((await d!.Get("k", global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("v");
+        await Assert.That((await d!.Get("k", _app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("v");
         await Assert.That(ReferenceEquals(d.Clr<Dictionary<string, object?>>(), src)).IsTrue();
     }
 
@@ -169,7 +169,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         // Source value is int 42; forced Type="string" should produce Data<global::app.type.item.text.@this> "42".
-        var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", 42), ("type", "string"));
+        var action = context.Action("variable", "set", ("name", "%n%"), ("value", 42), ("type", "string"));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("n");
@@ -183,7 +183,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         // "abc" can't convert to int → handler returns Data with Error.
-        var action = TestAction.Create("variable", "set", ("name", "%n%"), ("value", "abc"), ("type", "int"));
+        var action = context.Action("variable", "set", ("name", "%n%"), ("value", "abc"), ("type", "int"));
         var result = await action.Start(context);
         await result.IsFailure();
     }
@@ -192,7 +192,7 @@ public class SetTypeInferenceTests
     public async Task Set_NullValue_MintsPlainDataNotGeneric()
     {
         var context = _app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set", ("name", "%x%"), ("value", null));
+        var action = context.Action("variable", "set", ("name", "%x%"), ("value", null));
         var result = await action.Start(context);
         await result.IsSuccess();
         var stored = await context.Variable.Get("x");
@@ -204,8 +204,8 @@ public class SetTypeInferenceTests
     public async Task Set_AsDefault_ExistingInitialized_DoesNotReplace()
     {
         var context = _app.actor.list.User.Context;
-        await TestAction.Create("variable", "set", ("name", "%x%"), ("value", "first")).Start(context);
-        var result = await TestAction.Create("variable", "set", ("name", "%x%"), ("value", "second"), ("asdefault", true)).Start(context);
+        await context.Action("variable", "set", ("name", "%x%"), ("value", "first")).Start(context);
+        var result = await context.Action("variable", "set", ("name", "%x%"), ("value", "second"), ("asdefault", true)).Start(context);
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("x"))).IsEqualTo("first");
     }
@@ -220,17 +220,17 @@ public class SetTypeInferenceTests
         x.Add(new Data("", 1L, context: context)); x.Add(new Data("", 2L, context: context));
         context.Variable.Set("x", x);
 
-        var alias = TestAction.Create("variable", "set", ("name", "%y%"), ("value", "%x%"));
+        var alias = context.Action("variable", "set", ("name", "%y%"), ("value", "%x%"));
         await (await alias.Start(context)).IsSuccess();
 
-        var add = TestAction.Create("list", "add", ("listname", "%x%"), ("value", 3));
+        var add = context.Action("list", "add", ("listname", "%x%"), ("value", 3));
         await (await add.Start(context)).IsSuccess();
 
         var y = await context.Variable.Get("y");
         var yList = (await y.Value()) as global::app.type.item.list.@this;
         await Assert.That(yList).IsNotNull();
         await Assert.That(yList!.CountRaw).IsEqualTo(3);
-        await Assert.That((await yList.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("3");
+        await Assert.That((await yList.At(2, _app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("3");
     }
 
     // The binding owns its property bag: a property write on the alias lands
@@ -242,7 +242,7 @@ public class SetTypeInferenceTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("x", "payload");
 
-        var alias = TestAction.Create("variable", "set", ("name", "%y%"), ("value", "%x%"));
+        var alias = context.Action("variable", "set", ("name", "%y%"), ("value", "%x%"));
         await (await alias.Start(context)).IsSuccess();
 
         var y = await context.Variable.Get("y");

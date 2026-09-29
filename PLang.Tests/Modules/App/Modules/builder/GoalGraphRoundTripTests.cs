@@ -10,8 +10,8 @@ namespace PLang.Tests.App.Modules.builder;
 /// </summary>
 public class GoalGraphRoundTripTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create(
-        "/tmp/goalgraph-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this(
+        "/tmp/goalgraph-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     // A representative .pr (shape lifted from a real built goal): enum-as-int visibility,

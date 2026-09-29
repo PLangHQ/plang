@@ -29,7 +29,7 @@ public class ModuleProseDoorTests
         _mdRoot = Path.Combine(_tempDir, "system", "modules");
         Directory.CreateDirectory(Path.Combine(_mdRoot, FixtureModule));
 
-        _app = TestApp.Create(_tempDir);
+        _app = new global::app.@this(_tempDir).Testing();
         _app.module.Register(FixtureModule, FixtureAction1, typeof(FixtureAction));
     }
 

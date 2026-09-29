@@ -16,7 +16,7 @@ public class RenderTests : IDisposable
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_ui_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = global::PLang.Tests.TestApp.Plain(_tempDir);
+        _app = new global::app.@this(_tempDir).TestSigning();
         _provider = new global::app.module.ui.code.Fluid();
     }
 
@@ -41,7 +41,7 @@ public class RenderTests : IDisposable
     public async Task Template_ComparesAChoiceByItsName()
     {
         var context = _app.actor.list.User.Context;
-        var subtract = _app.Module("math").Action.Items(global::PLang.Tests.TestApp.SharedContext)
+        var subtract = _app.Module("math").Action.Items(_app.actor.list.User.Context)
             .First(row => (row.Peek() as global::app.goal.step.action.@this)?.Name == "subtract");
         await context.Variable.Set("a", subtract);
         var action = new Render(context)
@@ -243,7 +243,7 @@ public class RenderTests : IDisposable
         var goal = new Goal
         {
             Name = "Greeter",
-            Path = global::app.type.item.path.@this.Resolve("/Greeter.goal", global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve("/Greeter.goal", _app.actor.list.User.Context),
             Step = new GoalSteps
             {
                 MakeStep("variable", "set",
@@ -462,7 +462,7 @@ public class RenderTests : IDisposable
     public async Task Render_CallGoal_EmptyGoalReturnsEmptyOutput()
     {
         // An empty goal (no steps) returns Data.Ok() — callGoal writes "" to output
-        var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "EmptyGoal", Path = global::app.type.item.path.@this.Resolve("/EmptyGoal.goal", _app.actor.list.User.Context) };
         _app.goal.list.Add(goal);
 
         var context = _app.actor.list.User.Context;
@@ -482,7 +482,7 @@ public class RenderTests : IDisposable
     public async Task Render_CallGoal_GoalNameFromVariable()
     {
         // callGoal can use a Liquid variable for the goal name
-        var goal = new Goal { Name = "DynamicGoal", Path = global::app.type.item.path.@this.Resolve("/DynamicGoal.goal", global::PLang.Tests.TestApp.SharedContext) };
+        var goal = new Goal { Name = "DynamicGoal", Path = global::app.type.item.path.@this.Resolve("/DynamicGoal.goal", _app.actor.list.User.Context) };
         _app.goal.list.Add(goal);
 
         var context = _app.actor.list.User.Context;
@@ -505,7 +505,7 @@ public class RenderTests : IDisposable
         var goal = new Goal
         {
             Name = "GetNumber",
-            Path = global::app.type.item.path.@this.Resolve("/GetNumber.goal", global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve("/GetNumber.goal", _app.actor.list.User.Context),
             Step = new GoalSteps
             {
                 MakeStep("variable", "set",
@@ -664,11 +664,11 @@ public class RenderTests : IDisposable
 
     // --- Helper for creating steps (from EngineTests pattern) ---
 
-    private static Step MakeStep(string actionClass, string method, object? parameters = null, int index = 0, string text = "")
+    private Step MakeStep(string actionClass, string method, object? parameters = null, int index = 0, string text = "")
     {
         var action = new global::app.goal.step.action.@this
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module(actionClass),
+            Module = _app.actor.list.User.Context.App.Module(actionClass),
             Name = method,
             Property = global::PLang.Tests.Shared.Make.Properties(parameters is IDictionary<string, object?> dict
                 ? PrParam.List(actionClass, method, dict)

@@ -5,15 +5,18 @@ using hash = global::app.module.crypto.type.hash.@this;
 
 namespace PLang.Tests.App.Modules.crypto;
 
-public class DefaultCryptoProviderTests
+public class DefaultCryptoProviderTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private readonly global::app.module.crypto.code.Default _provider = new();
 
-    private static Hash HashAction(object data, string algorithm = "keccak256")
-        => new(global::PLang.Tests.TestApp.SharedContext) {  Data = global::PLang.Tests.TestApp.SharedContext.Ok(data), Algorithm = (global::app.type.item.text.@this)algorithm };
+    private Hash HashAction(object data, string algorithm = "keccak256")
+        => new(app.actor.list.User.Context) {  Data = app.actor.list.User.Context.Ok(data), Algorithm = (global::app.type.item.text.@this)algorithm };
 
-    private static Verify VerifyAction(object data, string expectedHash, string algorithm = "keccak256")
-        => new(global::PLang.Tests.TestApp.SharedContext) {  Data = global::PLang.Tests.TestApp.SharedContext.Ok(data), Hash = global::PLang.Tests.TestApp.SharedContext.Ok(expectedHash), Algorithm = (global::app.type.item.text.@this)algorithm };
+    private Verify VerifyAction(object data, string expectedHash, string algorithm = "keccak256")
+        => new(app.actor.list.User.Context) {  Data = app.actor.list.User.Context.Ok(data), Hash = app.actor.list.User.Context.Ok(expectedHash), Algorithm = (global::app.type.item.text.@this)algorithm };
 
     // --- Hash ---
 

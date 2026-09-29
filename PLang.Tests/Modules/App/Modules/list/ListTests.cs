@@ -5,11 +5,14 @@ using app.module.list;
 
 namespace PLang.Tests.App.actions.list;
 
-public class ListTests
+public class ListTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private (global::app.actor.context.@this context, Variables memory) CreateContext()
     {
-        var app = TestApp.Create("/app");
+        var app = new global::app.@this("/app").Testing();
         return (app.actor.list.User.Context, app.actor.list.User.Context.Variable);
     }
 
@@ -18,7 +21,7 @@ public class ListTests
     // list.add stores the WHOLE Data — lists carry Data objects, not raw values,
     // so each element keeps its name/type/context. Readers (list.Navigate,
     // EnumerateItems) unwrap on access; low-level tests look at the Data wrapper.
-    private static object? Unwrap(object? slot) =>
+    private object? Unwrap(object? slot) =>
         slot is global::app.data.@this d ? (d.Peek()) : slot;
 
     [Test]
@@ -33,7 +36,7 @@ public class ListTests
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(1);
-        await Assert.That((await list.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("first");
+        await Assert.That((await list.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("first");
     }
 
     [Test]
@@ -48,7 +51,7 @@ public class ListTests
         await result.IsSuccess();
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
         await Assert.That(list!.Count).IsEqualTo(3);
-        await Assert.That((await list.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("c");
+        await Assert.That((await list.At(2, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("c");
     }
 
     [Test]
@@ -62,7 +65,7 @@ public class ListTests
 
         await result.IsSuccess();
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
-        await Assert.That((await list!.At(1, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("b");
+        await Assert.That((await list!.At(1, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("b");
     }
 
     [Test]
@@ -88,8 +91,8 @@ public class ListTests
 
         // write-through: mutate the leaf in %a% that came from %b% → visible via %b%.
         a.SetAt(2, new global::app.data.@this("", 99L, context: context));
-        await Assert.That((await a.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("99");
-        await Assert.That((await b!.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("99");
+        await Assert.That((await a.At(2, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("99");
+        await Assert.That((await b!.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("99");
 
         // read-view: mutate %b% → %a% flattens through the shared row and tracks it.
         b.Add(new global::app.data.@this("", 70L, context: context));
@@ -123,7 +126,7 @@ public class ListTests
 
         await result.IsSuccess();
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
-        await Assert.That((await list!.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("b");
+        await Assert.That((await list!.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("b");
     }
 
     // --- Get ---
@@ -277,8 +280,8 @@ public class ListTests
 
         await result.IsSuccess();
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
-        await Assert.That((await list!.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("a");
-        await Assert.That((await list.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("c");
+        await Assert.That((await list!.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("a");
+        await Assert.That((await list.At(2, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("c");
     }
 
     // --- Join ---
@@ -322,8 +325,8 @@ public class ListTests
         var result = await action.Start();
 
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
-        await Assert.That((await list!.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("3");
-        await Assert.That((await list.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("1");
+        await Assert.That((await list!.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("3");
+        await Assert.That((await list.At(2, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("1");
     }
 
     // --- Unique ---
@@ -340,7 +343,7 @@ public class ListTests
         var list = (await result.Value()) as global::app.type.item.list.@this;
         await Assert.That(list).IsNotNull();
         await Assert.That(list!.Count).IsEqualTo(3);
-        var values = list.Items(global::PLang.Tests.TestApp.SharedContext).Select(d => d.Peek()?.ToString()).ToList();
+        var values = list.Items(app.actor.list.User.Context).Select(d => d.Peek()?.ToString()).ToList();
         await Assert.That(values).Contains("a");
         await Assert.That(values).Contains("b");
         await Assert.That(values).Contains("c");
@@ -385,7 +388,7 @@ public class ListTests
 
     // --- Where: the value answers ---
 
-    private static global::app.type.item.choice.@this<global::app.data.Operator> Op(string op)
+    private global::app.type.item.choice.@this<global::app.data.Operator> Op(string op)
         => (global::app.type.item.choice.@this<global::app.data.Operator>)new global::app.data.Operator(op);
 
     [Test]
@@ -609,7 +612,7 @@ public class ListTests
         memory.Set("myList", new List<object?> { 2L, 1L });
 
         // `sort %myList% by %field%` with %field% never set: the given `by` fails to resolve
-        var result = await TestAction.Create("list", "sort", ("listName", "%myList%"), ("by", "%field%")).Start(context);
+        var result = await context.Action("list", "sort", ("listName", "%myList%"), ("by", "%field%")).Start(context);
 
         await result.IsFailure();
     }
@@ -699,13 +702,13 @@ public class ListTests
     }
 
     // Helper: find a group bucket by key and return its items list count.
-    private static int BucketCount(global::app.type.item.list.@this groups, string key)
+    private int BucketCount(global::app.type.item.list.@this groups, string key)
     {
-        foreach (var b in groups.Items(global::PLang.Tests.TestApp.SharedContext))
+        foreach (var b in groups.Items(app.actor.list.User.Context))
         {
             var d = (global::app.type.item.dict.@this)(b.Peek())!;
-            if (((d.Get("key", global::PLang.Tests.TestApp.SharedContext)).Peek())?.ToString() == key)
-                return (int)((global::app.type.item.list.@this)((d.Get("items", global::PLang.Tests.TestApp.SharedContext))!.Peek())!).Count;
+            if (((d.Get("key", app.actor.list.User.Context)).Peek())?.ToString() == key)
+                return (int)((global::app.type.item.list.@this)((d.Get("items", app.actor.list.User.Context))!.Peek())!).Count;
         }
         return -1;
     }
@@ -741,7 +744,7 @@ public class ListTests
         var groups = (await result.Value()) as global::app.type.item.list.@this;
         // All items grouped under empty key since "category" doesn't exist
         await Assert.That(groups!.Count).IsEqualTo(1);
-        await Assert.That((await ((global::app.type.item.dict.@this)(await groups.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())!).Get("key", global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("");
+        await Assert.That((await ((global::app.type.item.dict.@this)(await groups.At(0, app.actor.list.User.Context)!.Value())!).Get("key", app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("");
     }
 
     // --- Flatten ---

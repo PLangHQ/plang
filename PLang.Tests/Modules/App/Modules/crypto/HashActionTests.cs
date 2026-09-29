@@ -19,7 +19,7 @@ public class HashActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_test_crypto_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
         _app = new PLangEngine(_tempDir);
-        global::PLang.Tests.TestApp.UseSharedIdentity(_app);
+        (_app).TestIdentity();
     }
 
     [After(Test)]
@@ -104,7 +104,7 @@ public class HashActionTests
     {
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("crypto"), Name = "hash",
+            Module = _app.actor.list.User.Context.App.Module("crypto"), Name = "hash",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("data", null, context: Ctx), new Data("algorithm", "keccak256", context: Ctx) })
         };
         var result = await action.Start(Ctx);
@@ -194,7 +194,7 @@ public class HashActionTests
     {
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("crypto"), Name = "verify",
+            Module = _app.actor.list.User.Context.App.Module("crypto"), Name = "verify",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("data", "hello", context: Ctx), new Data("hash", null, context: Ctx), new Data("algorithm", "keccak256", context: Ctx) })
         };
         var (h, err) = await new Verify(Ctx).Resolve(action, Ctx);
@@ -211,7 +211,7 @@ public class HashActionTests
     {
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("crypto"), Name = "verify",
+            Module = _app.actor.list.User.Context.App.Module("crypto"), Name = "verify",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("data", null, context: Ctx), new Data("hash", "abc123", context: Ctx), new Data("algorithm", "keccak256", context: Ctx) })
         };
         var result = await action.Start(Ctx);

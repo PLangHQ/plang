@@ -10,11 +10,11 @@ public class AppRunTests
     [Before(Test)]
     public void Setup()
     {
-        _app = global::PLang.Tests.TestApp.Plain("/app");
+        _app = new global::app.@this("/app").TestSigning();
         _app.goal.list.Add(new global::app.goal.@this
         {
             Name = "RunTarget",
-            Path = global::app.type.item.path.@this.Resolve("/RunTarget.goal", global::PLang.Tests.TestApp.SharedContext)
+            Path = global::app.type.item.path.@this.Resolve("/RunTarget.goal", _app.actor.list.User.Context)
         });
     }
 

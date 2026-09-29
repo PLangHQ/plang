@@ -9,9 +9,9 @@ public class SetCapturesSystemVariableTests
     [Test]
     public async Task SetFromNow_HoldsTheMomentOfTheSet()
     {
-        await using var app = TestApp.Create("/tmp/setnow-" + System.Guid.NewGuid().ToString("N")[..8]);
+        await using var app = new global::app.@this("/tmp/setnow-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
         var context = app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set", ("name", "%start%"), ("value", "%Now%"));
+        var action = context.Action("variable", "set", ("name", "%start%"), ("value", "%Now%"));
         await (await action.Start(context)).IsSuccess();
 
         var first = (await (await context.Variable.Get("start")).Value())?.ToString();

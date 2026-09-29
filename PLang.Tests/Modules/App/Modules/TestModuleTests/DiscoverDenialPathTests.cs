@@ -24,7 +24,7 @@ public class DiscoverDenialPathTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-discover-deny-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return TestApp.Create(root);
+        return new global::app.@this(root).Testing();
     }
 
     [Test] public async Task Discover_WithTestPathOutsideRoot_DenialNotSilentEmpty()

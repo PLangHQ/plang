@@ -21,7 +21,7 @@ public class GetGoalsTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_builder_getgoals_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = TestApp.Create(_tempDir);
+        _app = new global::app.@this(_tempDir).Testing();
         _app.Build = new global::app.module.build.@this(_app.actor.list.System.Context);
     }
 
@@ -135,7 +135,7 @@ public class GetGoalsTests
         var prGoal = new Goal
         {
             Name = "Start",
-            Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve("/Start.goal", _app.actor.list.User.Context),
             Step = new GoalSteps
             {
                 new Step
@@ -145,7 +145,7 @@ public class GetGoalsTests
                     {
                         new global::app.goal.step.action.@this
                         {
-                            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"),
+                            Module = _app.actor.list.User.Context.App.Module("output"),
                             Name = "write",
                             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Data", "hello", context: _app.actor.list.User.Context) })
                         }

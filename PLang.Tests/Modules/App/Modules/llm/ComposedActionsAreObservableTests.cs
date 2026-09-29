@@ -21,7 +21,7 @@ public class ComposedActionsAreObservableTests
     // llm's call to the model goes through http.request as an action: a before-binding there sees it.
     [Test] public async Task LlmsHttpCall_IsSeenByABindingOnHttpRequest()
     {
-        await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "composed-" + Guid.NewGuid().ToString("N")[..8]));
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "composed-" + Guid.NewGuid().ToString("N")[..8])).Testing();
         LlmTestHelper.SetupMockHttp(app);
         var ctx = app.actor.list.System.Context;
         var seen = new List<string>();
@@ -39,7 +39,7 @@ public class ComposedActionsAreObservableTests
     // The consent door asks through output.ask as an action: on.ask fires for it as for any ask.
     [Test] public async Task TheConsentDoorsAsk_IsSeenByABindingOnOutputAsk()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var seen = new List<string>();
         Watch(app, "output", "ask", seen);

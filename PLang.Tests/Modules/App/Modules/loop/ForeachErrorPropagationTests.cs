@@ -21,7 +21,7 @@ public class ForeachErrorPropagationTests
     [Before(Test)]
     public void Setup()
     {
-        _app = TestApp.Create("/app");
+        _app = new global::app.@this("/app").Testing();
     }
 
     /// <summary>
@@ -69,7 +69,7 @@ public class ForeachErrorPropagationTests
         // Inner goal with a single step: [condition.if(true), goal.call Missing]
         var innerCondAction = new Action
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("condition"), Name = "if",
+            Module = _app.actor.list.User.Context.App.Module("condition"), Name = "if",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("Left", true, context: context), new Data("Operator", "==", context: context), new Data("Right", true, context: context)
@@ -77,7 +77,7 @@ public class ForeachErrorPropagationTests
         };
         var innerGoalCall = new Action
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("goal"), Name = "call",
+            Module = _app.actor.list.User.Context.App.Module("goal"), Name = "call",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 new Data("name", "MissingGoal", context: context)
@@ -87,7 +87,7 @@ public class ForeachErrorPropagationTests
         var innerGoal = new Goal
         {
             Name = "Inner",
-            Path = global::app.type.item.path.@this.Resolve("/Inner.goal", global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve("/Inner.goal", _app.actor.list.User.Context),
         };
         var innerStep = new Step
         {
@@ -130,7 +130,7 @@ public class ForeachErrorPropagationTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("items", new List<object?> { "a", "b", "c" });
 
-        _app.goal.list.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", global::PLang.Tests.TestApp.SharedContext), Step = new GoalSteps() });
+        _app.goal.list.Add(new Goal { Name = "Noop", Path = global::app.type.item.path.@this.Resolve("/Noop.goal", _app.actor.list.User.Context), Step = new GoalSteps() });
 
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal("NoopRunner",
             Make.Step("foreach %items%, call Noop item=%item%",
