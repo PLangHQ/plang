@@ -74,6 +74,26 @@ public class Stage6_ConsumersTests
 
     // ---------- sort ----------
 
+    // The source file of a class: its namespace is its folder under PLang/, and the class is this.cs.
+    private static string SourceOf(System.Type type)
+        => Path.Combine([RepoRoot(), "PLang", .. type.Namespace!.Split('.'), "this.cs"]);
+
+    // The list sorts in two phases: its keys are read async (all I/O lands there), then it orders in
+    // memory — so nothing in the list blocks on a task.
+    [Test]
+    public async Task Sort_TwoPhase_KeysMaterialiseAsync_OrderSync_NoGetResult()
+    {
+        var sort = typeof(global::app.type.item.list.@this).GetMethod("Sort",
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance,
+            [typeof(string), typeof(bool), typeof(global::app.actor.context.@this)]);
+        await Assert.That(sort).IsNotNull();
+        await Assert.That(sort!.GetCustomAttributes(typeof(System.Runtime.CompilerServices.AsyncStateMachineAttribute), false)).IsNotEmpty();
+
+        var file = SourceOf(typeof(global::app.type.item.list.@this));
+        await Assert.That(File.Exists(file)).IsTrue();
+        await Assert.That(await File.ReadAllTextAsync(file)).DoesNotContain(".GetAwaiter().GetResult()");
+    }
+
     [Test]
     public async Task SortBySize_FilesStatInPhaseOne_OrderInPhaseTwo()
     {
