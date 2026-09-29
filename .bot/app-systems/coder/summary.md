@@ -117,15 +117,29 @@ One commit per owner, each name-diffed (no regressions), each bug's test its pin
   only (317); `Template` born, not stamped (322).
 - **Stale:** rewritten to today's behaviour through the door each used, or deleted naming the commit that removed
   the subject (the `if`/Child cluster, the STJ converters, renamed/values-as-items rows).
-- **Baseline:** `baseline-failures.txt` = the 44; `v14/baseline-after-fixes.md` gives each its owner.
+- **Baseline:** `baseline-failures.txt` = the 36; `v14/baseline-after-fixes.md` gives each its owner.
 
-## Next / held
-- **With Ingi:** 304 (a bare text/binary whose raw it owns is born at once; patch kept in the coder scratchpad;
-  `set.cs:197–202`'s throwaway birth to delete), the file reference's Out face, the half-written stream on a
-  failed encode, the Out-view template leak, `%!callStack%/%!variables%/%!trace%` beside `%!app.…%` (0d), a
-  value's `_history`/`_on` on shared instances, the legacy `os/system/modules/` goals.
-- **The `?` briefs** are with the architect (snapshot family waits on the ISnapshot redesign; json narrowing and
-  enum casing are rulings; the rest are harness/stale/one likely bug — Cut1's verbatim json relay).
+## After the baseline (decisions 323–333, all pushed)
+- **The ? rows:** ruled harness/stale and rewritten; `data.AsCanonical` deleted (tests ask `Follow` / the value
+  door); json content relays verbatim onto a json writer (`kind.Owns(writer)` asked by the source; `IWriter.Raw`
+  has a bytes form; injection fails the encode; markers stay content).
+- **Writing structures:** `Tagged.Declares(type, view)` — a type with no face for the view is refused on the wire
+  and named in a Debug dump; `[Debug]` on line/warning/channel. `item.Output`'s default: a leaf writes bare, a
+  structure its face through the reflection kind; the self-writers (error, hop, permission, path, reference,
+  hash, code) state `Output => Write` once; the six reflection overrides are gone (wire byte-identical, captured
+  before/after). `IsLeaf` stays the type door's question (type.Make's Takes arm reads it).
+- **The `%!app%` dump completes:** `app.Culture` (dead) deleted; `ShutdownToken` and a stream channel's `Stream`
+  are handles (`[JsonIgnore]`); the app's module's folder is the modules folder; `item.Fields` protected internal.
+  The app's clr-leak inventory is empty.
+- **Deterministic tests:** the parallel run (a gate), the timeout tests (a sleep only the deadline ends).
+
+## Next / held (all with Ingi)
+- 304 (a bare text/binary whose raw it owns is born at once; `set.cs:197–202`'s throwaway birth to delete; the
+  saved patch was lost in a session restart — rebuild it from this shape), the file reference's Out face, the
+  half-written stream on a failed encode, the Out-view template leak (drop the row's `mode == Debug &&`),
+  `%!callStack%/%!variables%/%!trace%` beside `%!app.…%` (0d), a value's `_history`/`_on` on shared instances,
+  json narrowing (also the two Roundtrip decodes), the legacy `os/system/modules/` goals. The snapshot read-back
+  family waits on the ISnapshot redesign.
 - Gate rule: diff failing **names** against `baseline-failures.txt`; rebuild after reverting a mutation.
 
 ## Code example

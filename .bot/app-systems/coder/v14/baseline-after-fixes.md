@@ -50,4 +50,5 @@ AsT_PlainDataTarget (Follow; AsCanonical deleted), Cut1 (json content relays ver
 ## Load-flaky under the full parallel sweep (not in the list; pass alone)
 - ReadUrl_Fetches_OverHttp — once, 23 s, read null (local test server). To be made explicit if it recurs.
 - Run_ParallelExecution_RespectsSemaphoreLimit — was flaky; made deterministic (f54e2cee8).
-- After_EachRetry_IsAFreshAttempt_WithAFreshDeadline — once.
+- After_EachRetry_IsAFreshAttempt_WithAFreshDeadline, After_ZeroMsTimeout_ImmediateTimeout — were flaky; the deadline
+  firing first is now arranged (a 30 s sleep only the deadline ends), not raced (4890508f1).
