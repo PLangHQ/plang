@@ -64,6 +64,9 @@ These are checks, run and reported by the coder.
 - Every existing C# test passes; each handler in the stage 9 worklist is a one-line hand-over, and the OBP review of each module is clean.
 - The births moved onto `type.Create` leave no caller that drops its `ValueTask` (a temporary `[Obsolete]` on the door lists none).
 
+**10d**
+- The report formats close on their C# pins, not a plan goal. A goal run by `plang --test` runs in an app that shares the outer run's root, so a `test.report` inside it would write `.test/junit.xml` / `.test/results.json` into the folder the outer run owns. Pinned instead: `ReportFormatTests` (the formats are json and junit, each a kind's own answer; a kind that writes no report is refused), `ReportActionTests` (junit writes `junit.xml`, json writes `results.json`, one per run), and `SensitivePropertyFilterTests` (a secret shows masked in an assertion message and a debug dump; the Out view omits it).
+
 **11b–c**
 - Every C# test passes with `TestApp` and `TestAction` deleted, and `App.Run<TAction>` retired.
 - Building a folder with an unreached goal `Unused` emits a warning naming it.
