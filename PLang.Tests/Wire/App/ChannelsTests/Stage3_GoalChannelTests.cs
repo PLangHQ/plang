@@ -16,8 +16,8 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_WriteCore_TheMessageEndsWithTheRun()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/g1");
-        var goal = new EngineGoal { Name = "Probe", Path = global::app.type.item.path.@this.Resolve("Probe.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/Probe.pr", global::PLang.Tests.TestApp.SharedContext) };
+        var app = new global::app.@this("/tmp/g1").Testing();
+        var goal = new EngineGoal { Name = "Probe", Path = global::app.type.item.path.@this.Resolve("Probe.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/Probe.pr", app.actor.list.User.Context) };
         app.goal.list.Add(goal);
         var ch = await Make.GoalChannel("logger", Make.Call(goal.Name), app.actor.list.User);
         var dataIn = app.Ok("payload-A");
@@ -32,7 +32,7 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_TheGoalsFirstStep_ReadsTheWrittenMessage()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/g_message");
+        var app = new global::app.@this("/tmp/g_message").Testing();
         var goal = Make.Goal("Sink", Make.Step("set %seen% = %message%",
             Make.Action("variable", "set", Make.Param("Name", "seen", "variable"), ("Value", "%message%"))));
         app.goal.list.Add(goal);
@@ -47,8 +47,8 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_WriteCore_ReturnsGoalsResultData()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/g2");
-        var goal = new EngineGoal { Name = "ReturnsOk", Path = global::app.type.item.path.@this.Resolve("Returns.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/R.pr", global::PLang.Tests.TestApp.SharedContext) };
+        var app = new global::app.@this("/tmp/g2").Testing();
+        var goal = new EngineGoal { Name = "ReturnsOk", Path = global::app.type.item.path.@this.Resolve("Returns.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/R.pr", app.actor.list.User.Context) };
         app.goal.list.Add(goal);
         var ch = await Make.GoalChannel("c", Make.Call(goal.Name), app.actor.list.User);
         var result = await ch.Write(app.Ok("x"));
@@ -58,8 +58,8 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_IsExecuting_IsFalseBeforeAndAfterWrite()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/g_exec");
-        var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
+        var app = new global::app.@this("/tmp/g_exec").Testing();
+        var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
         app.goal.list.Add(goal);
         var ch = await Make.GoalChannel("x", Make.Call(goal.Name), app.actor.list.User);
         await Assert.That(ch.IsExecuting).IsFalse();
@@ -73,8 +73,8 @@ public class Stage3_GoalChannelTests
         // The load-bearing recursion guard: while a goal-channel's body is
         // running, the registry treats that name as not-found, so a body that
         // writes to its own name can't loop back into itself.
-        var app = global::PLang.Tests.TestApp.Create("/tmp/g_recurse");
-        var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
+        var app = new global::app.@this("/tmp/g_recurse").Testing();
+        var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
         app.goal.list.Add(goal);
         var ch = await Make.GoalChannel("logger", Make.Call(goal.Name), app.actor.list.User);
         app.actor.list.User.Channel.Register(ch);
@@ -105,8 +105,8 @@ public class Stage3_GoalChannelTests
         // visible even when lookups happen inside a goal-channel body.
         // With the old foundational-snapshot approach, late-registered names
         // were invisible there. With per-channel IsExecuting, they aren't.
-        var app = global::PLang.Tests.TestApp.Create("/tmp/g_late");
-        var sinkGoal = new EngineGoal { Name = "Sink", Path = global::app.type.item.path.@this.Resolve("S.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/S.pr", global::PLang.Tests.TestApp.SharedContext) };
+        var app = new global::app.@this("/tmp/g_late").Testing();
+        var sinkGoal = new EngineGoal { Name = "Sink", Path = global::app.type.item.path.@this.Resolve("S.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/S.pr", app.actor.list.User.Context) };
         app.goal.list.Add(sinkGoal);
         var sink = await Make.GoalChannel("sink", Make.Call(sinkGoal.Name), app.actor.list.User);
         app.actor.list.User.Channel.Register(sink);
@@ -133,8 +133,8 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_Ask_InvokesGoal_ReturnsAnswer()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/g8");
-        var goal = new EngineGoal { Name = "Asker", Path = global::app.type.item.path.@this.Resolve("Asker.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/A.pr", global::PLang.Tests.TestApp.SharedContext) };
+        var app = new global::app.@this("/tmp/g8").Testing();
+        var goal = new EngineGoal { Name = "Asker", Path = global::app.type.item.path.@this.Resolve("Asker.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/A.pr", app.actor.list.User.Context) };
         app.goal.list.Add(goal);
         var ch = await Make.GoalChannel("input", Make.Call(goal.Name), app.actor.list.User);
         var result = await ch.Ask(new global::app.module.output.ask(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "q?") });
@@ -144,8 +144,8 @@ public class Stage3_GoalChannelTests
     [Test]
     public async Task GoalChannel_Dispose_DoesNotDisposeUnderlyingGoal()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/g9");
-        var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
+        var app = new global::app.@this("/tmp/g9").Testing();
+        var goal = new EngineGoal { Name = "G", Path = global::app.type.item.path.@this.Resolve("G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
         app.goal.list.Add(goal);
         var ch = await Make.GoalChannel("c", Make.Call(goal.Name), app.actor.list.User);
         await ch.DisposeAsync();

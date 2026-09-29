@@ -12,7 +12,8 @@ public class ActionSyntheticTests
 {
     [Test] public async Task Synthetic_DefaultsToTrue_OnInlineCSharpConstruction()
     {
-        var a = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" };
+        await using var app = new global::app.@this("/app").Testing();
+        var a = new ActionEntity { Module = app.Module("variable"), Name = "set" };
         await Assert.That(a.Synthetic).IsTrue();
     }
     [Test] public async Task Synthetic_SourceGenEmits_FalseFor_PrBuiltAction()
@@ -21,16 +22,17 @@ public class ActionSyntheticTests
         // / Setup.LoadFile (post-deserialization sweep). No fixture .pr handy
         // here — pin the contract that Synthetic is `set`-able (init would
         // make the post-load sweep impossible).
-        var a = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" };
+        await using var app = new global::app.@this("/app").Testing();
+        var a = new ActionEntity { Module = app.Module("variable"), Name = "set" };
         a.Synthetic = false;
         await Assert.That(a.Synthetic).IsFalse();
     }
 
     [Test] public async Task CallFrame_OfASyntheticAction_IsNoResumePoint()
     {
-        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cs-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var synthetic = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" };
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-cs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+        var synthetic = new ActionEntity { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" };
 
         await using var s1 = app.actor.list.User.CallStack.Push(synthetic);
         await Assert.That(s1.Action!.Synthetic).IsTrue();
@@ -42,9 +44,9 @@ public class ActionSyntheticTests
         // Stage 2a.5 stamps Synthetic on Call frames; wire-serialize filtering
         // is a follow-up (architect's todos.md note — per-channel serializer
         // shape deferred). Pin the contract that the flag is readable.
-        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cs2-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var prLoaded = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" }; prLoaded.Synthetic = false;
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-cs2-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+        var prLoaded = new ActionEntity { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" }; prLoaded.Synthetic = false;
         await using var call = app.actor.list.User.CallStack.Push(prLoaded);
         await Assert.That(call.Action!.Synthetic).IsFalse();
     }
@@ -53,9 +55,9 @@ public class ActionSyntheticTests
     {
         // App.Snapshot() captures the full CallStack (synthetic + non-synthetic).
         // Pin: a synthetic frame appears in the snapshot section.
-        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cs3-" + System.Guid.NewGuid().ToString("N")[..8]));
-        var synthetic = new ActionEntity { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set" };
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-cs3-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+        var synthetic = new ActionEntity { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" };
         await using var call = app.actor.list.User.CallStack.Push(synthetic);
         var snap = app.Snapshot(app.actor.list.User.Context);
         await Assert.That(snap).IsNotNull();

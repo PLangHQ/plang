@@ -9,7 +9,7 @@ public class SettingCatalogTwinTests
     [Test]
     public async Task SettingsJson_IsTheClassesOfSettings()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.System.Context;
         var classes = app.type.list["setting"].kind.list(context).Items()
             .Select(t => t.kind).OfType<global::app.type.item.setting.kind.@this>()

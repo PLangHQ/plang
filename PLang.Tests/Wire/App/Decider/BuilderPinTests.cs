@@ -20,7 +20,7 @@ public class BuilderPinTests
     [Test]
     public async Task Start_ACachedGoalReturnsItsCache()
     {
-        await using var os = TestApp.Create(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os"));
+        await using var os = new global::app.@this(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os")).Testing();
         var start = await Installed(os);
 
         var guard = start.Step[0].Code[0];
@@ -39,7 +39,7 @@ public class BuilderPinTests
     [Test]
     public async Task Compile_ARefusedAnswerIsConfirmedOrFixed_InTheOrderWritten()
     {
-        await using var os = TestApp.Create(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os"));
+        await using var os = new global::app.@this(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os")).Testing();
         var compile = (await Installed(os)).Child.Items().Single(g => g.Name == "Compile");
 
         var step = compile.Step.Items().Single(s => s.Code[0] is { Module.Name: "build", Name: "match" });
@@ -54,7 +54,7 @@ public class BuilderPinTests
     [Test]
     public async Task FixSteps_MatchesAgain_AndConfirmsNumbers()
     {
-        await using var os = TestApp.Create(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os"));
+        await using var os = new global::app.@this(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os")).Testing();
         var fix = (await Installed(os)).Child.Items().Single(g => g.Name == "FixSteps");
 
         var step = fix.Step.Items().Single(s => s.Code[0] is { Module.Name: "build", Name: "match" });

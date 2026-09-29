@@ -12,8 +12,8 @@ namespace PLang.Tests.App.CallbackTests;
 public class OutputAskRoutingTests
 {
     private static global::app.@this NewApp() =>
-        global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-rt-" + System.Guid.NewGuid().ToString("N")[..8]));
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-rt-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     private sealed class TestMessageChannel : global::app.channel.type.message.@this
     {

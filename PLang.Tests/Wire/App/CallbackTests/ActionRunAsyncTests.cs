@@ -12,14 +12,14 @@ namespace PLang.Tests.App.CallbackTests;
 public class ActionRunAsyncTests
 {
     private static global::app.@this NewApp() =>
-        TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-rasn-" + System.Guid.NewGuid().ToString("N")[..8]));
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-rasn-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     [Test] public async Task ActionRunAsync_IsSingleEntry_PushAnchorExecute()
     {
         var app = NewApp();
         var context = app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set", ("name", "%v%"), ("value", "ok"));
+        var action = context.Action("variable.set(Name=%v%, Value=\"ok\")");
         var result = await action.Start(context);
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("v"))).IsEqualTo("ok");

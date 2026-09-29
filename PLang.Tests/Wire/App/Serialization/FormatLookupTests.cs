@@ -2,9 +2,12 @@ namespace PLang.Tests.App.Serialization;
 
 // A format is found on the type list by its MIME or its extension — case-insensitive, with or without the
 // leading dot. (FormatKindTests pins the MIME parameter stripping, text/plain, unknown MIME and plang's own.)
-public class FormatLookupTests
+public class FormatLookupTests : System.IAsyncDisposable
 {
-    private static global::app.actor.context.@this Ctx => global::PLang.Tests.TestApp.SharedContext;
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
 
     [Test]
     public async Task Mime_ApplicationJson_IsItemsJson()

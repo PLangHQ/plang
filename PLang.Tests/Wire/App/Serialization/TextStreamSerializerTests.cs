@@ -5,8 +5,8 @@ namespace PLang.Tests.App.Serialization;
 // text's own format (text/plain) — the encode/decode doors on the kind.
 public class TextStreamSerializerTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create(
-        "/tmp/txtser-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this(
+        "/tmp/txtser-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 

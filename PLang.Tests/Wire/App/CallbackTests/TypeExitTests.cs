@@ -15,7 +15,7 @@ public class TypeExitTests
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
     [Before(Test)]
-    public void Setup() => _app = global::PLang.Tests.TestApp.Create("/tmp/typeexit-" + System.Guid.NewGuid().ToString("N")[..6]);
+    public void Setup() => _app = new global::app.@this("/tmp/typeexit-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
 
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();

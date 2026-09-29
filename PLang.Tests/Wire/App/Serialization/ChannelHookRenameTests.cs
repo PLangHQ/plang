@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Serialization;
 
 public class ChannelHookRenameTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/ChannelHookRenameTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this("/tmp/ChannelHookRenameTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     // 1.9 — Base WriteAsync invokes FireBefore → Write → FireAfter in order.

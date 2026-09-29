@@ -9,7 +9,7 @@ public class TypeCatalogTwinTests
     [Test]
     public async Task TypesJson_IsTheTypes()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var types = new List<global::app.type.@this>();
         for (var i = 0; i < app.type.list.CountRaw; i++)
             types.Add((global::app.type.@this)app.type.list.At(i, app.actor.list.User.Context)!.Peek()!);

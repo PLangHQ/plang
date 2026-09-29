@@ -6,8 +6,8 @@ namespace PLang.Tests.App.Serialization;
 public class JsonStreamSerializerTests : System.IAsyncDisposable
 {
     // Born-with-context: the test's Data is born from this app's user context.
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create(
-        "/tmp/jss-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this(
+        "/tmp/jss-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;

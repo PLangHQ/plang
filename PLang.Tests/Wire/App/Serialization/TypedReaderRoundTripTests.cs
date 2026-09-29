@@ -8,16 +8,19 @@ namespace PLang.Tests.App.Serialization;
 //    coverage of the handler logic (no Wire, no signing).
 //  - the *_FullRoundTrip test proves the Wire bridge end-to-end (serialize →
 //    sign → deserialize → the typed path borns the value).
-public class TypedReaderRoundTripTests
+public class TypedReaderRoundTripTests : System.IAsyncDisposable
 {
-    private static global::app.type.item.@this ReadScalar(
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private global::app.type.item.@this ReadScalar(
         global::app.type.reader.ITypeReader typeReader, string json, string? kind)
     {
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
         var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
         utf8.Read();   // position on the value token
         var jr = new global::app.type.item.kind.json.Reader(utf8);
-        return typeReader.Read(ref jr, kind, new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext));
+        return typeReader.Read(ref jr, kind, new global::app.type.reader.ReadContext(app.actor.list.User.Context));
     }
 
     [Test] public async Task Bool_True_Isolated()
@@ -107,7 +110,7 @@ public class TypedReaderRoundTripTests
     {
         var item = ReadScalar(new global::app.type.item.list.serializer.Reader(), "[1,2,\"name\"]", null);
         var list = (global::app.type.item.list.@this)item;
-        await Assert.That(list.Items(global::PLang.Tests.TestApp.SharedContext).Count()).IsEqualTo(3);
+        await Assert.That(list.Items(app.actor.list.User.Context).Count()).IsEqualTo(3);
     }
 
     [Test] public async Task List_Nested_Isolated()
@@ -116,24 +119,24 @@ public class TypedReaderRoundTripTests
         // their elements were read off the pass.
         var item = ReadScalar(new global::app.type.item.list.serializer.Reader(), "[[1,2],[3,4]]", null);
         var list = (global::app.type.item.list.@this)item;
-        await Assert.That(list.Items(global::PLang.Tests.TestApp.SharedContext).Count()).IsEqualTo(2);
-        foreach (var element in list.Items(global::PLang.Tests.TestApp.SharedContext))
-            await Assert.That(((global::app.type.item.list.@this)(await element.Value())!).Items(global::PLang.Tests.TestApp.SharedContext).Count()).IsEqualTo(2);
+        await Assert.That(list.Items(app.actor.list.User.Context).Count()).IsEqualTo(2);
+        foreach (var element in list.Items(app.actor.list.User.Context))
+            await Assert.That(((global::app.type.item.list.@this)(await element.Value())!).Items(app.actor.list.User.Context).Count()).IsEqualTo(2);
     }
 
     [Test] public async Task Dict_StreamsRawSlots_Isolated()
     {
         var item = ReadScalar(new global::app.type.item.dict.serializer.Reader(), "{\"a\":1,\"b\":2}", null);
         var dict = (global::app.type.item.dict.@this)item;
-        await Assert.That(dict.Entries(global::PLang.Tests.TestApp.SharedContext).Count()).IsEqualTo(2);
+        await Assert.That(dict.Entries(app.actor.list.User.Context).Count()).IsEqualTo(2);
     }
 
     // End-to-end through the Wire bridge: serialize a Data, sign, deserialize.
     // The typed bool reader borns the value off the single pass on read.
     [Test] public async Task Bool_FullRoundTrip_ThroughWire()
     {
-        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-typedread-" + Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-typedread-" + Guid.NewGuid().ToString("N")[..8])).Testing();
         await using (app)
         {
             var plang = app.actor.list.User.Context.Format("application/plang");

@@ -2,8 +2,11 @@ using app.module.code;
 
 namespace PLang.Tests.App.SnapshotTests;
 
-public class ProvidersSnapshotTests
+public class ProvidersSnapshotTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     // Public + parameterless ctor so Restore can re-instantiate it from the test DLL.
     public sealed class CustomGrep : global::app.data.code.IGrep
     {
@@ -18,7 +21,7 @@ public class ProvidersSnapshotTests
     public async Task Providers_RoundTrip_PreservesDefaultSelectionsAndRuntimeRegistrations()
     {
         // Default selections per type + runtime (type, name, source) tuples both survive.
-        var src = global::PLang.Tests.TestApp.Create("/src");
+        var src = new global::app.@this("/src").Testing();
         var custom = new CustomGrep();
         // Stamp Source so the snapshot has a loadable origin (use this assembly's path).
         custom.Source = typeof(CustomGrep).Assembly.Location;
@@ -44,13 +47,13 @@ public class ProvidersSnapshotTests
         // names that don't exist yet. We assert the contract by capturing an override that
         // names a registration that only exists post-step-1; if the order were inverted,
         // SetDefault would fire before Register and the restore would hard-error.
-        var src = global::PLang.Tests.TestApp.Create("/src");
+        var src = new global::app.@this("/src").Testing();
         var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
         src.Code.Register(typeof(global::app.data.code.IGrep), custom);
         src.Code.SetDefault(typeof(global::app.data.code.IGrep), "custom");
 
         var snap = src.Snapshot(src.actor.list.User.Context);
-        var dst = global::PLang.Tests.TestApp.Create("/dst");
+        var dst = new global::app.@this("/dst").Testing();
         // Pre-grant Execute on the snapshotted DLL source for the System actor —
         // restore reloads the DLL via path.LoadAssemblyAsync, which gates on
         // Execute. The original App's actor had already passed that gate; the
@@ -80,7 +83,7 @@ public class ProvidersSnapshotTests
     {
         // Captured runtime registration's DLL/source can't be loaded → referent-integrity
         // hard error. No silent fallback to system default.
-        var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
+        var snap = new Snapshot(app.actor.list.User.Context);
         snap.Section("Providers").Write("registrations", new List<global::app.module.code.registration.@this>
         {
             new()
@@ -92,7 +95,7 @@ public class ProvidersSnapshotTests
         });
         snap.Section("Providers").Write("defaultOverrides", new List<global::app.module.code.defaultoverride.@this>());
 
-        var dst = global::PLang.Tests.TestApp.Create("/dst");
+        var dst = new global::app.@this("/dst").Testing();
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
         {
             await dst.Restore(snap, dst.actor.list.User.Context);
@@ -105,7 +108,7 @@ public class ProvidersSnapshotTests
     {
         // Registrations succeed but default-selection name doesn't match any registered
         // provider → referent-integrity hard error.
-        var snap = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
+        var snap = new Snapshot(app.actor.list.User.Context);
         snap.Section("Providers").Write("registrations", new List<global::app.module.code.registration.@this>());
         snap.Section("Providers").Write("defaultOverrides", new List<global::app.module.code.defaultoverride.@this>
         {
@@ -116,7 +119,7 @@ public class ProvidersSnapshotTests
             }
         });
 
-        var dst = global::PLang.Tests.TestApp.Create("/dst");
+        var dst = new global::app.@this("/dst").Testing();
         await Assert.ThrowsAsync<ProviderRestoreException>(async () =>
         {
             await dst.Restore(snap, dst.actor.list.User.Context);
@@ -129,7 +132,7 @@ public class ProvidersSnapshotTests
     {
         // RegisterDefaults output is reconstructed on App boot — only post-defaults
         // registrations end up in the captured payload.
-        var app = global::PLang.Tests.TestApp.Create("/test");
+        var app = new global::app.@this("/test").Testing();
         var snap = app.Snapshot(app.actor.list.User.Context);
         var registrations = await snap.Section("Providers")
             .Records<global::app.module.code.registration.@this>("registrations");
@@ -145,7 +148,7 @@ public class ProvidersSnapshotTests
         // layer (selections + registrations) is in the snapshot. We confirm by inspecting
         // the wire shape: only Registration tuples + DefaultOverride records, no provider
         // object graphs.
-        var src = global::PLang.Tests.TestApp.Create("/src");
+        var src = new global::app.@this("/src").Testing();
         var custom = new CustomGrep { Source = typeof(CustomGrep).Assembly.Location };
         src.Code.Register(typeof(global::app.data.code.IGrep), custom);
 

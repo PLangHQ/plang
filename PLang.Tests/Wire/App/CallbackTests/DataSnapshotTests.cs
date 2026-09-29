@@ -12,12 +12,12 @@ namespace PLang.Tests.App.CallbackTests;
 /// a non-null Snapshot — contract pinned by a generic invariant test.
 public class DataSnapshotTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/DataSnapshotTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this("/tmp/DataSnapshotTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private static global::app.@this NewApp() =>
-        global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-snap-" + System.Guid.NewGuid().ToString("N")[..8]));
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-snap-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     [Test] public async Task DataSnapshot_PropertyExists_AndDefaultsNull()
     {
@@ -27,7 +27,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
 
     [Test] public async Task DataSnapshot_RoundTripsThrough_OkConstructor()
     {
-        var snap = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext);
+        var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
         var d = app.Ok("v");
         d.Snapshot = snap;
         await Assert.That(d.Snapshot).IsSameReferenceAs(snap);
@@ -37,7 +37,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
     {
         var d = new global::app.data.@this<global::app.type.item.text.@this>("", "x");
         await Assert.That(d.Snapshot).IsNull();
-        d.Snapshot = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext);
+        d.Snapshot = new global::app.snapshot.@this(app.actor.list.User.Context);
         await Assert.That(d.Snapshot).IsNotNull();
     }
 
@@ -69,7 +69,7 @@ public class DataSnapshotTests : System.IAsyncDisposable
         // MUST attach a Snapshot. Producers respect this; here we assert the
         // invariant holds for the Ask-carrying Data shape (after the producer
         // call sites in 2a.4 wire the Snapshot capture).
-        var snap = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext);
+        var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
         var data = new global::app.data.@this<Ask>("", new Ask()) { Snapshot = snap };
         await Assert.That(data.Snapshot).IsNotNull();
     }

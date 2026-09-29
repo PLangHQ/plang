@@ -4,23 +4,26 @@ namespace PLang.Tests.App.Serialization;
 // formal parses and writes back byte for byte; its untyped form (as the LLM and a programmer write it) parses
 // to the same actions; and every error python's parser answers, the C# parser answers the same — message,
 // line and column (formal_errors.json, written by tools/decider/formal_fixture.py).
-public class FormalReaderTests
+public class FormalReaderTests : System.IAsyncDisposable
 {
-    private static global::app.data.@this Read(string formal, out global::app.goal.step.@this step)
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private global::app.data.@this Read(string formal, out global::app.goal.step.@this step)
     {
-        var goal = FormalWriterTests.Goal();
+        var goal = FormalWriterTests.Goal(app.actor.list.User.Context);
         step = new global::app.goal.step.@this { Goal = goal };
-        return new global::app.goal.step.action.formal.Reader(step, global::PLang.Tests.TestApp.SharedContext.App.module.list).Read(formal, global::PLang.Tests.TestApp.SharedContext);
+        return new global::app.goal.step.action.formal.Reader(step, app.actor.list.User.Context.App.module.list).Read(formal, app.actor.list.User.Context);
     }
 
-    private static async Task<string> Written(global::app.data.@this read)
+    private async Task<string> Written(global::app.data.@this read)
     {
         var writer = new global::app.goal.step.action.formal.Writer();
-        await ((global::app.goal.step.action.list.@this)read.Peek()!).Output(writer, global::app.View.Store, global::PLang.Tests.TestApp.SharedContext);
+        await ((global::app.goal.step.action.list.@this)read.Peek()!).Output(writer, global::app.View.Store, app.actor.list.User.Context);
         return writer.ToString();
     }
 
-    private static async Task<string> RoundTrips(string key)
+    private async Task<string> RoundTrips(string key)
     {
         var differ = new List<string>();
         foreach (var entry in FormalWriterTests.Golden())
@@ -76,7 +79,7 @@ public class FormalReaderTests
 
         await read.IsSuccess();
         var code = ((global::app.goal.step.action.list.@this)read.Peek()!).Items().ToList();
-        var context = global::PLang.Tests.TestApp.SharedContext;
+        var context = app.actor.list.User.Context;
         // a run reads the row as its Data — the raw slice lifts to the declared type there
         var after = await code[1]["After"]!.Data(context).Value();
         var duration = await code[2]["Duration"]!.Data(context).Value();
@@ -96,11 +99,11 @@ public class FormalReaderTests
     [Test]
     public async Task ABodyStep_IsWrittenOnItsParentsLine()
     {
-        var goal = FormalWriterTests.Goal();
+        var goal = FormalWriterTests.Goal(app.actor.list.User.Context);
         var step = new global::app.goal.step.@this { Goal = goal, Line = new() { Number = 12, Indent = 1 } };
 
-        var read = new global::app.goal.step.action.formal.Reader(step, global::PLang.Tests.TestApp.SharedContext.App.module.list).Read(
-            "condition.if(Left=%n%, Operator=\"<\", Right=5) { goal.return() }", global::PLang.Tests.TestApp.SharedContext);
+        var read = new global::app.goal.step.action.formal.Reader(step, app.actor.list.User.Context.App.module.list).Read(
+            "condition.if(Left=%n%, Operator=\"<\", Right=5) { goal.return() }", app.actor.list.User.Context);
 
         await read.IsSuccess();
         var body = ((global::app.goal.step.action.list.@this)read.Peek()!).Items().Single().Child[0];
@@ -177,7 +180,7 @@ public class FormalReaderTests
         await read.IsSuccess();
         foreach (var a in ((global::app.goal.step.action.list.@this)read.Peek()!).Items()) step.Code.Add(a);
 
-        var invalid = await step.Code.Validate(global::PLang.Tests.TestApp.SharedContext);
+        var invalid = await step.Code.Validate(app.actor.list.User.Context);
 
         var body = invalid!.list?.FirstOrDefault(e => e.Key == "BodyMissing") ?? invalid;
         await Assert.That(body.Key).IsEqualTo("BodyMissing");

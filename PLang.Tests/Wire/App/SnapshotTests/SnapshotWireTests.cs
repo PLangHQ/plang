@@ -15,13 +15,13 @@ public class SnapshotWireTests
     [Test]
     public async Task Variables_SurviveWireRoundTrip_WithValueAndType()
     {
-        var src = global::PLang.Tests.TestApp.Create("/src");
+        var src = new global::app.@this("/src").Testing();
         src.actor.list.User.Context.Variable.Set("count", 42L);
         src.actor.list.User.Context.Variable.Set("name", "plang");
 
         var wired = await RoundTrip(src, src.Snapshot(src.actor.list.User.Context));
 
-        var dst = global::PLang.Tests.TestApp.Create("/dst");
+        var dst = new global::app.@this("/dst").Testing();
         await dst.Restore(wired, dst.actor.list.User.Context);
 
         await Assert.That((await (await dst.actor.list.User.Context.Variable.Get("count")).Value())?.ToString()).IsEqualTo("42");
@@ -32,13 +32,13 @@ public class SnapshotWireTests
     public async Task BuildAndTestingBits_SurviveWireRoundTrip()
     {
         // The App's Mode rides the wire as one value: building here, so the destination builds
-        // and its Test (TestApp.Create sets one) is cleared.
-        var src = global::PLang.Tests.TestApp.Create("/src");
+        // and its Test (Testing() sets one) is cleared.
+        var src = new global::app.@this("/src").Testing();
         src.Build = new global::app.module.build.@this(src.actor.list.System.Context);
 
         var wired = await RoundTrip(src, src.Snapshot(src.actor.list.User.Context));
 
-        var dst = global::PLang.Tests.TestApp.Create("/dst");
+        var dst = new global::app.@this("/dst").Testing();
         await dst.Restore(wired, dst.actor.list.User.Context);
 
         await Assert.That(dst.Build != null).IsTrue();
@@ -56,7 +56,7 @@ public class SnapshotWireTests
         // Build a frame section by hand the way call.@this.Capture does, then drive
         // it through the wire. The int keys must come back as int (not long) so
         // CallStack.Restore's Read<int> resolves them.
-        var src = global::PLang.Tests.TestApp.Create("/src");
+        var src = new global::app.@this("/src").Testing();
         var snap = new global::app.snapshot.@this(src.actor.list.User.Context);
         // Emulate one captured frame's scalar shape.
         var cs = snap.Section("CallStack");
@@ -83,9 +83,13 @@ public class SnapshotWireTests
     }
 
     // A step is born knowing its goal, and the goal is born knowing the step.
-    private static Step SetStep(Goal goal, int index, string varName, object value)
+    // A value as a formal line writes it: a %variable% bare, anything else a JSON literal.
+    private static string Formal(object value)
+        => value is string s && s.Length > 1 && s.StartsWith('%') && s.EndsWith('%') ? s : System.Text.Json.JsonSerializer.Serialize(value);
+
+    private static Step SetStep(global::app.actor.context.@this context, Goal goal, int index, string varName, object value)
     {
-        var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", value));
+        var action = context.Action($"variable.set(Name=%{varName}%, Value={Formal(value)})");
         var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
         action = action.In(step);
         step.Code.Add(action);
@@ -99,13 +103,13 @@ public class SnapshotWireTests
         // The whole point: capture a suspended/failing position, serialize it to a
         // STRING (the disk shape), read it back, and Resume — re-entering the
         // captured step and running to success with nothing held in memory.
-        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-wire-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-wire-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        SetStep(goal, 0, "s0", "first");
-        var step1 = SetStep(goal, 1, "s1", "second");
+        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
+        SetStep(context, goal, 0, "s0", "first");
+        var step1 = SetStep(context, goal, 1, "s1", "second");
         app.goal.list.Add(goal);
 
         // Suspend at step1/action0 (what the throw-time snapshot captures).
@@ -132,13 +136,13 @@ public class SnapshotWireTests
         // snapshot.@this through the type system (snapshot.FromWire) — exactly what
         // the `resume` verb's Data<snapshot> param triggers at the action boundary —
         // then Resume re-enters the suspended step and succeeds.
-        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-conv-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-conv-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        SetStep(goal, 0, "s0", "first");
-        var step1 = SetStep(goal, 1, "s1", "second");
+        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
+        SetStep(context, goal, 0, "s0", "first");
+        var step1 = SetStep(context, goal, 1, "s1", "second");
         app.goal.list.Add(goal);
 
         string json;
@@ -159,9 +163,9 @@ public class SnapshotWireTests
         await Assert.That((await context.Variable.GetValue("s1"))).IsEqualTo("second");
     }
 
-    private static Step SetStepRef(Goal goal, int index, string varName, string expr)
+    private static Step SetStepRef(global::app.actor.context.@this context, Goal goal, int index, string varName, string expr)
     {
-        var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", expr));
+        var action = context.Action($"variable.set(Name=%{varName}%, Value={Formal(expr)})");
         var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {expr}" };
         action = action.In(step);
         step.Code.Add(action);
@@ -180,23 +184,23 @@ public class SnapshotWireTests
         //    PATCHED %i% — so the edit flowed into resumed execution.
         //  - The stack unwinds: the entry goal Start runs its POST-call step.
         //  - Survivor vars are intact.
-        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-mid-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-mid-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
         context.Variable.Set("keep", "alive");
         context.Variable.Set("i", 1L);
 
         // Start: [0] set a, [1] the call to Sub, [2] post-call marker (the unwind proof).
-        var start = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/Start.pr", global::PLang.Tests.TestApp.SharedContext) };
-        SetStep(start, 0, "a", "A");
-        SetStep(start, 1, "calledSub", "yes");          // stands in for `call Sub`
-        SetStepRef(start, 2, "entryReached", "END");    // post-call: only runs on unwind
+        var start = new Goal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/Start.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/Start.pr", app.actor.list.User.Context) };
+        SetStep(context, start, 0, "a", "A");
+        SetStep(context, start, 1, "calledSub", "yes");          // stands in for `call Sub`
+        SetStepRef(context, start, 2, "entryReached", "END");    // post-call: only runs on unwind
 
         // Sub: [0] set b, [1] the throw point (suspended here), [2] continuation reading %i%.
-        var sub = new Goal { Name = "Sub", Path = global::app.type.item.path.@this.Resolve("/Sub.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/Sub.pr", global::PLang.Tests.TestApp.SharedContext) };
-        SetStep(sub, 0, "b", "B");
-        SetStep(sub, 1, "passedThrow", "ok");           // the `throw if i==1` step
-        SetStepRef(sub, 2, "seenI", "%i%");             // reads the patched value
+        var sub = new Goal { Name = "Sub", Path = global::app.type.item.path.@this.Resolve("/Sub.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/Sub.pr", app.actor.list.User.Context) };
+        SetStep(context, sub, 0, "b", "B");
+        SetStep(context, sub, 1, "passedThrow", "ok");           // the `throw if i==1` step
+        SetStepRef(context, sub, 2, "seenI", "%i%");             // reads the patched value
 
         app.goal.list.Add(start); app.goal.list.Add(sub);
 
@@ -211,7 +215,7 @@ public class SnapshotWireTests
         // Round-trip through the disk string, then patch %i% 1 → 2 (the fix the
         // operator/builder makes — the C# stand-in for `set %snap.variable.i% = 2`).
         var snap = (await new global::app.data.@this("", json, context: context).Value<global::app.snapshot.@this>())!;
-        var iVar = snap.Section("Variables").Entries.Get("i", global::PLang.Tests.TestApp.SharedContext)!;   // each captured variable is its own entry
+        var iVar = snap.Section("Variables").Entries.Get("i", app.actor.list.User.Context)!;   // each captured variable is its own entry
         iVar.SetValue(2L);
 
         var result = await snap.Resume(context);
@@ -233,13 +237,13 @@ public class SnapshotWireTests
         // through `as snapshot` → variable.set's typeEntity.Convert (set.cs:218),
         // NOT Deserialize directly. Isolates whether that conversion yields a
         // navigable snapshot.@this and whether the edit survives resume.
-        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-aspath-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-aspath-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var step0 = SetStep(goal, 0, "x", "1");
-        var step1 = SetStepRef(goal, 1, "seen", "%x%");
+        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
+        var step0 = SetStep(context, goal, 0, "x", "1");
+        var step1 = SetStepRef(context, goal, 1, "seen", "%x%");
         app.goal.list.Add(goal);
 
         context.Variable.Set("x", 1L);
@@ -275,8 +279,8 @@ public class SnapshotWireTests
         // BeginObject/BeginArray — no per-type override, no shape selector). So a snapshot writes
         // its json content — the snapshot's own sections, nested Data self-describing via @schema —
         // NOT the top-level plang wire envelope. (A resumable save uses a plang-registered extension.)
-        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-fs-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-fs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
         context.Variable.Set("x", 1L);
 
@@ -306,13 +310,13 @@ public class SnapshotWireTests
         // The ONE difference from the passing edit-resume tests: the snapshot comes
         // from app.Snapshot(error) (throw-time: SnapshotAt + error.CallFrames), the
         // path Error.Callback uses in the .test.goal — not app.Snapshot(app.actor.list.User.Context) (live).
-        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-tt-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-tt-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var step0 = SetStep(goal, 0, "x", "1");
-        var step1 = SetStepRef(goal, 1, "seen", "%x%");
+        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
+        var step0 = SetStep(context, goal, 0, "x", "1");
+        var step1 = SetStepRef(context, goal, 1, "seen", "%x%");
         app.goal.list.Add(goal);
 
         context.Variable.Set("x", 1L);
@@ -347,13 +351,13 @@ public class SnapshotWireTests
         // and cache the snapshot so an edit persists into resume — proving the runtime
         // honours a typed-string snapshot end-to-end (the cast must reach this Data;
         // see RawStringInSnap counterpart: an untyped string loses the edit).
-        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-typed-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-typed-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var step0 = SetStep(goal, 0, "x", "1");
-        var step1 = SetStepRef(goal, 1, "seen", "%x%");
+        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
+        var step0 = SetStep(context, goal, 0, "x", "1");
+        var step1 = SetStepRef(context, goal, 1, "seen", "%x%");
         app.goal.list.Add(goal);
 
         context.Variable.Set("x", 1L);
@@ -380,13 +384,13 @@ public class SnapshotWireTests
         // The PLang fix-and-replay loop, in C#: read a snapshot back, navigate
         // %snap.variables.x% (read), edit it (set), then resume — the edit flows
         // into resumed execution. Mirrors the .test.goal.
-        var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-nav-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-nav-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var context = app.actor.list.User.Context;
 
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        var step0 = SetStep(goal, 0, "x", "1");
-        var step1 = SetStepRef(goal, 1, "seen", "%x%");   // reads the edited value
+        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
+        var step0 = SetStep(context, goal, 0, "x", "1");
+        var step1 = SetStepRef(context, goal, 1, "seen", "%x%");   // reads the edited value
         app.goal.list.Add(goal);
 
         // Suspend at step1 with %x% = 1 captured.
@@ -417,12 +421,12 @@ public class SnapshotWireTests
     [Test]
     public async Task EmptyApp_WireIsValidJson_AndRestoresClean()
     {
-        var src = global::PLang.Tests.TestApp.Create("/src");
+        var src = new global::app.@this("/src").Testing();
         var json = await src.SnapshotToWire(src.Snapshot(src.actor.list.User.Context));
 
         await Assert.That(json.StartsWith("{")).IsTrue();
 
-        var dst = global::PLang.Tests.TestApp.Create("/dst");
+        var dst = new global::app.@this("/dst").Testing();
         dst.Restore(await src.SnapshotFromWire(json, dst.actor.list.User.Context), dst.actor.list.User.Context);
 
         await Assert.That(dst.Build != null).IsFalse();

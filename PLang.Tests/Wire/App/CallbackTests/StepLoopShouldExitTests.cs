@@ -12,7 +12,7 @@ namespace PLang.Tests.App.CallbackTests;
 /// for the step loop, `Step.RunAsync`, and `Goal.Resume`.
 public class StepLoopShouldExitTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/StepLoopShouldExitTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this("/tmp/StepLoopShouldExitTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test] public async Task ShouldExit_True_UnhandledFailure_SuccessFalseHandledFalse()
@@ -38,8 +38,8 @@ public class StepLoopShouldExitTests : System.IAsyncDisposable
 
     [Test] public async Task ShouldExit_True_ExitTypedResult()
     {
-        var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-se-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-se-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var d = new global::app.data.@this<Ask>("", new Ask(), context: app.actor.list.User.Context);
         await Assert.That(d.ShouldExit()).IsTrue();
     }
@@ -56,8 +56,8 @@ public class StepLoopShouldExitTests : System.IAsyncDisposable
     {
         // Pinned by test/Callback/StatelessCrossGoalResumes end-to-end in 2a.8.
         // Here we just pin the predicate contract used by the loop.
-        var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-se-" + System.Guid.NewGuid().ToString("N")[..8]));
+        var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-se-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var exitData = new global::app.data.@this<Ask>("", new Ask(), context: app.actor.list.User.Context);
         await Assert.That(exitData.ShouldExit()).IsTrue();
     }

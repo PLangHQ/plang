@@ -9,8 +9,8 @@ namespace PLang.Tests.App.Serialization;
 
 public class PropertiesWireShapeTests
 {
-    private static global::app.@this NewApp() => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-        "plang-prop-" + Guid.NewGuid().ToString("N")[..8]));
+    private static global::app.@this NewApp() => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+        "plang-prop-" + Guid.NewGuid().ToString("N")[..8])).Testing();
 
     private static (global::app.type.kind.@this plang, global::app.data.@this data, Action dispose)
         SeedData(string name = "thing", object? value = null)

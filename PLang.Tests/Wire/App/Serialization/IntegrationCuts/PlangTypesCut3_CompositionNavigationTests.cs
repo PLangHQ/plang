@@ -13,8 +13,8 @@ public class PlangTypesCut3_CompositionNavigationTests
 
     [Test] public async Task ImageFromFile_PathFacet_IsTypePath_NavigationWorks()
     {
-        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cut3a-" + System.Guid.NewGuid().ToString("N")[..8]));
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-cut3a-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/srv/photo.png", app.actor.list.User.Context);
         var img = new image(PngBytes, p!, app.actor.list.User.Context);
 
@@ -27,8 +27,8 @@ public class PlangTypesCut3_CompositionNavigationTests
 
     [Test] public async Task ImageFromFile_PathExists_TrueForPresentFile()
     {
-        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cut3b-" + System.Guid.NewGuid().ToString("N")[..8]));
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-cut3b-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         System.IO.Directory.CreateDirectory(app.AbsolutePath);
         var abs = System.IO.Path.Combine(app.AbsolutePath, "present.png");
         System.IO.File.WriteAllBytes(abs, PngBytes);
@@ -46,8 +46,8 @@ public class PlangTypesCut3_CompositionNavigationTests
 
     [Test] public async Task ImageFromFile_PathExists_FalseForMissingFile()
     {
-        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cut3c-" + System.Guid.NewGuid().ToString("N")[..8]));
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-cut3c-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         System.IO.Directory.CreateDirectory(app.AbsolutePath);
         var abs = System.IO.Path.Combine(app.AbsolutePath, "missing-" + System.Guid.NewGuid().ToString("N")[..8] + ".png");
         // Don't create the file.

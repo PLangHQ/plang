@@ -9,7 +9,7 @@ public class Stage4_BuilderCatalogTests
     [Test]
     public async Task BuilderCatalog_DescribesChannelParameter_OnIChannelActions()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/s4cat-a");
+        var app = new global::app.@this("/tmp/s4cat-a").Testing();
         var write = app.Module("output")["write"];
         await Assert.That(write).IsNotNull();
         await Assert.That(write!.Property.Any(r => r.Name == "channel")).IsTrue();
@@ -18,7 +18,7 @@ public class Stage4_BuilderCatalogTests
     [Test]
     public async Task BuilderCatalog_PassesPerActorChannelInventory_AtBuildTime()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/s4cat-b");
+        var app = new global::app.@this("/tmp/s4cat-b").Testing();
         global::app.@this.WireDefaultConsoleChannels(app.actor.list.User);
         app.actor.list.User.Channel.Register(StreamChannel.Memory("logger"));
 

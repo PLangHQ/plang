@@ -11,8 +11,8 @@ namespace PLang.Tests.App.ChannelsTests;
 // binding doesn't fire inside itself within one flow; parallel flows each fire it.
 public class Stage8_ChannelEventsTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create(
-        "/tmp/s8-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this(
+        "/tmp/s8-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
@@ -198,7 +198,7 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
     [Test]
     public async Task TheChannelTypesWrite_FiresForEveryChannel_UserAndServiceAlike()
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/tmp/s8-cross");
+        await using var app = new global::app.@this("/tmp/s8-cross").Testing();
         var userLogger = StreamChannel.Memory("logger");
         var serviceLogger = StreamChannel.Memory("logger");
         app.actor.list.User.Channel.Register(userLogger);

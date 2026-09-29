@@ -8,27 +8,27 @@ namespace PLang.Tests.App.Serialization;
 
 public class FailureMatrixTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/FailureMatrixTests-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this("/tmp/FailureMatrixTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     [Test] public async Task PropertiesSet_DataInstanceValue_ThrowsArgumentException()
     {
-        var d = new global::app.data.@this("x", "y", context: global::PLang.Tests.TestApp.SharedContext);
-        var inner = new global::app.data.@this("inner", "v", context: global::PLang.Tests.TestApp.SharedContext);
+        var d = new global::app.data.@this("x", "y", context: app.actor.list.User.Context);
+        var inner = new global::app.data.@this("inner", "v", context: app.actor.list.User.Context);
         await Assert.That(() => d.Properties["k"] = inner).Throws<ArgumentException>();
     }
 
     [Test] public async Task PropertiesSet_ArbitraryObjectValue_ThrowsArgumentException()
     {
-        var d = new global::app.data.@this("x", "y", context: global::PLang.Tests.TestApp.SharedContext);
+        var d = new global::app.data.@this("x", "y", context: app.actor.list.User.Context);
         await Assert.That(() => d.Properties["k"] = new System.Threading.CancellationTokenSource()).Throws<ArgumentException>();
     }
 
     [Skip("Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.")]
     [Test] public async Task SigningVerify_AfterWireByteTamper_ReturnsDataHashMismatch()
     {
-        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-fm-" + Guid.NewGuid().ToString("N")[..8]));
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-fm-" + Guid.NewGuid().ToString("N")[..8])).Testing();
         var plang = app.actor.list.User.Context.Format("application/plang");
 
         var d = new global::app.data.@this("x", "untampered", context: app.actor.list.User.Context);
@@ -48,7 +48,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
 
     [Test] public async Task WireConverter_Read_RandomJsonMissingReservedFields_ProducesTypedFailure()
     {
-        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
         // A JSON object with none of the reserved fields — Read parses, but
         // produces an effectively-empty Data (the converter ignores unknown
@@ -61,7 +61,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
 
     [Test] public async Task Decompress_OnNonArchivedType_ReturnsSelfNoError()
     {
-        var d = new global::app.data.@this("x", "y", global::PLang.Tests.TestApp.SharedContext.App.type.list[new global::app.type.@this("text", "plain"), global::PLang.Tests.TestApp.SharedContext], context: global::PLang.Tests.TestApp.SharedContext);
+        var d = new global::app.data.@this("x", "y", app.actor.list.User.Context.App.type.list[new global::app.type.@this("text", "plain"), app.actor.list.User.Context], context: app.actor.list.User.Context);
         var result = d.Decompress();
         await Assert.That(ReferenceEquals(d, result)).IsTrue();
         await result.IsSuccess();

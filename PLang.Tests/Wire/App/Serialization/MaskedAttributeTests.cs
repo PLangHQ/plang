@@ -32,7 +32,7 @@ public class MaskedAttributeTests
 
     private static async Task<string> Written(global::app.View view)
     {
-        var app = TestApp.Create("/test");
+        var app = new global::app.@this("/test").Testing();
         return await app.actor.list.User.Context.Pr(new MaskedItem { key = "ApiKey", value = "sk-real-secret" }, view);
     }
 

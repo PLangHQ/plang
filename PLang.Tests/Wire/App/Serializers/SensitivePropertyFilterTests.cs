@@ -26,8 +26,8 @@ public class SensitivePropertyFilterTests
     private string _tempDir = null!;
     private PLangEngine _app = null!;
 
-    private static global::app.actor.context.@this Ctx => global::PLang.Tests.TestApp.SharedContext;
-    private static global::app.type.kind.@this Json => Ctx.Format("application/json");
+    private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
+    private global::app.type.kind.@this Json => Ctx.Format("application/json");
 
     [Before(Test)]
     public void Setup()

@@ -105,7 +105,7 @@ public class PickListTests
     [Test]
     public async Task TheStageOneRequest_IsTheOnePythonSends()
     {
-        await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
         var context = os.actor.list.User.Context;
         var differ = new List<string>();
         foreach (var entry in Golden())
@@ -123,7 +123,7 @@ public class PickListTests
     [Test]
     public async Task ThePromptCUserMessage_IsTheOnePythonSends()
     {
-        await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
         var context = os.actor.list.User.Context;
         var differ = new List<string>();
         foreach (var entry in Golden())
@@ -151,7 +151,7 @@ public class PickListTests
     [Test]
     public async Task ThePromptCSettingsAndKeys_AreTheOnesPythonSends()
     {
-        await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
         var context = os.actor.list.User.Context;
         var cases = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(
             RepoRoot(), "PLang.Tests", "Wire", "App", "Decider", "settings_golden.json"))).RootElement.EnumerateArray().ToList();
@@ -185,7 +185,7 @@ public class PickListTests
     [Test]
     public async Task TheStageTwoState_IsTheOnePythonSends()
     {
-        await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
         var context = os.actor.list.User.Context;
         var differ = new List<string>();
         foreach (var entry in Golden())
@@ -204,7 +204,7 @@ public class PickListTests
     [Test]
     public async Task StageOnesAnswer_RendersTheStageTwoQuestionsPythonAsked()
     {
-        await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
         var context = os.actor.list.User.Context;
         var differ = new List<string>();
         foreach (var entry in Golden())
@@ -221,7 +221,8 @@ public class PickListTests
     [Test]
     public async Task BothAnswers_GiveThePicksPythonRead()
     {
-        var context = TestApp.SharedContext;
+        await using var app = new global::app.@this("/app").Testing();
+        var context = app.actor.list.User.Context;
         var differ = new List<string>();
         foreach (var entry in Golden())
         {

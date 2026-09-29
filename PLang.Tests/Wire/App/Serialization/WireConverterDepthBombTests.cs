@@ -9,8 +9,11 @@ namespace PLang.Tests.App.Serialization;
 // the same MaxReadDepth via an AsyncLocal so deep input rejects as a
 // typed JsonException, not a stack overflow.
 
-public class WireConverterDepthBombTests
+public class WireConverterDepthBombTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private static string DeeplyNestedWireJson(int depth)
     {
         // Each level: {"name":"a","type":{"name":"item"},"value": ... } — every row carries its type;
@@ -25,7 +28,7 @@ public class WireConverterDepthBombTests
     [Test] public async Task Deserialize_ShallowNesting_StillWorks()
     {
         // Sanity: 16-level nesting is within budget and round-trips.
-        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
         var json = DeeplyNestedWireJson(16);
         var result = plang.Stored(json, ctx);
@@ -34,7 +37,7 @@ public class WireConverterDepthBombTests
         // next level rides as that dict's `value` entry (a container entry may be a Data).
         var outer = await result.Value();
         await Assert.That(outer).IsTypeOf<global::app.type.item.dict.@this>();
-        var next = ((global::app.type.item.dict.@this)outer).Get("value", global::PLang.Tests.TestApp.SharedContext);
+        var next = ((global::app.type.item.dict.@this)outer).Get("value", app.actor.list.User.Context);
         await Assert.That(next).IsNotNull();
         await Assert.That(await next!.Value()).IsTypeOf<global::app.type.item.dict.@this>();   // level 2 opens the same way
     }
@@ -44,7 +47,7 @@ public class WireConverterDepthBombTests
         // 200 levels: well past the 64-level cap. Must surface a typed
         // PlangDeserializeError, NOT a StackOverflowException (which would
         // unrecoverably crash the test process).
-        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
         var json = DeeplyNestedWireJson(200);
         var result = plang.Stored(json, ctx);
@@ -57,7 +60,7 @@ public class WireConverterDepthBombTests
     [Test] public async Task Deserialize_DepthBomb_FromStream_RejectsAsTypedError()
     {
         // Same shape, straight through the kind's byte decode door.
-        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
         var json = DeeplyNestedWireJson(200);
         var bytes = Encoding.UTF8.GetBytes(json);

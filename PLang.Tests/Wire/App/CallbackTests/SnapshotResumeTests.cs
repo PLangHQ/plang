@@ -11,13 +11,17 @@ namespace PLang.Tests.App.CallbackTests;
 public class SnapshotResumeTests
 {
     private static global::app.@this NewApp() =>
-        global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-sr-" + System.Guid.NewGuid().ToString("N")[..8]));
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-sr-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     // A step is born knowing its goal, and the goal is born knowing the step.
-    private static Step SetStep(Goal goal, int index, string varName, object value)
+    // A value as a formal line writes it: a %variable% bare, anything else a JSON literal.
+    private static string Formal(object value)
+        => value is string s && s.Length > 1 && s.StartsWith('%') && s.EndsWith('%') ? s : System.Text.Json.JsonSerializer.Serialize(value);
+
+    private static Step SetStep(global::app.actor.context.@this context, Goal goal, int index, string varName, object value)
     {
-        var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", value));
+        var action = context.Action($"variable.set(Name=%{varName}%, Value={Formal(value)})");
         var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
         action = action.In(step);
         step.Code.Add(action);
@@ -39,7 +43,7 @@ public class SnapshotResumeTests
     {
         var app = NewApp();
         var data = app.Ok("v");
-        data.Snapshot = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext); // empty snapshot
+        data.Snapshot = new global::app.snapshot.@this(app.actor.list.User.Context); // empty snapshot
         var handler = new start(app.actor.list.User.Context) { Callback = data };
         var result = await handler.Start();
         // Empty snapshot → no CallStack section → RestoredChain null → NoPosition.
@@ -50,7 +54,7 @@ public class SnapshotResumeTests
     [Test] public async Task SnapshotResume_EmptyChainAfterRestore_ReturnsNoPositionError()
     {
         var app = NewApp();
-        var snap = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext);
+        var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
         var result = await snap.Resume(app.actor.list.User.Context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");
@@ -62,9 +66,9 @@ public class SnapshotResumeTests
         // one of its actions (synthesise suspension), snapshot, then Resume.
         var app = NewApp();
         var context = app.actor.list.User.Context;
-        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", global::PLang.Tests.TestApp.SharedContext), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", global::PLang.Tests.TestApp.SharedContext) };
-        SetStep(goal, 0, "s0", "first");
-        var step1 = SetStep(goal, 1, "s1", "second");
+        var goal = new Goal { Name = "G", Path = global::app.type.item.path.@this.Resolve("/G.goal", app.actor.list.User.Context), PrPath = global::app.type.item.path.@this.Resolve("/G.pr", app.actor.list.User.Context) };
+        SetStep(context, goal, 0, "s0", "first");
+        var step1 = SetStep(context, goal, 1, "s1", "second");
         app.goal.list.Add(goal);
 
         // Push the action of step1 so the snapshot captures (stepIdx=1, actionIdx=0).
@@ -89,7 +93,7 @@ public class SnapshotResumeTests
         // just pin the API contract: ResumeChain handles >1 frame without
         // throwing on the recursive walk.
         var app = NewApp();
-        var snap = new global::app.snapshot.@this(global::PLang.Tests.TestApp.SharedContext);
+        var snap = new global::app.snapshot.@this(app.actor.list.User.Context);
         var result = await snap.Resume(app.actor.list.User.Context);
         // Empty chain → NoPosition; demonstrates recursion entry doesn't NRE.
         await Assert.That(result.Error!.Key).IsEqualTo("NoPosition");

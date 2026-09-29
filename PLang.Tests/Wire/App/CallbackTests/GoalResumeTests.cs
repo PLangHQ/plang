@@ -15,14 +15,14 @@ namespace PLang.Tests.App.CallbackTests;
 public class GoalResumeTests
 {
     private static global::app.@this NewApp() =>
-        TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-rf-" + System.Guid.NewGuid().ToString("N")[..8]));
+        new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-rf-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     // The goal comes first — a step is born knowing it, so it cannot be built loose
     // and grafted on afterwards.
-    private static Step SetStep(Goal goal, int index, string varName, object value)
+    private static Step SetStep(global::app.actor.context.@this context, Goal goal, int index, string varName, object value)
     {
-        var action = TestAction.Create("variable", "set", ("name", "%" + varName + "%"), ("value", value));
+        var action = context.Action($"variable.set(Name=%{varName}%, Value={System.Text.Json.JsonSerializer.Serialize(value)})");
         var step = new Step { Goal = goal, Index = index, Text = $"set %{varName}% = {value}" };
         action = action.In(step);
         step.Code.Add(action);
@@ -30,16 +30,16 @@ public class GoalResumeTests
         return step;
     }
 
-    private static Goal Build(string name) =>
-        new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", global::PLang.Tests.TestApp.SharedContext) };
+    private static Goal Build(global::app.actor.context.@this context, string name) =>
+        new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", context) };
 
     [Test]
     public async Task StepRunFrom_Zero_RunsAllActions()
     {
         var app = NewApp();
         var context = app.actor.list.User.Context;
-        var actionA = TestAction.Create("variable", "set", ("name", "%a%"), ("value", "A"));
-        var actionB = TestAction.Create("variable", "set", ("name", "%b%"), ("value", "B"));
+        var actionA = context.Action("variable.set(Name=%a%, Value=\"A\")");
+        var actionB = context.Action("variable.set(Name=%b%, Value=\"B\")");
         var step = new Step { Index = 0, Text = "multi" };
         actionA = actionA.In(step); actionB = actionB.In(step);
         step.Code.Add(actionA); step.Code.Add(actionB);
@@ -55,8 +55,8 @@ public class GoalResumeTests
     {
         var app = NewApp();
         var context = app.actor.list.User.Context;
-        var actionA = TestAction.Create("variable", "set", ("name", "%a%"), ("value", "A"));
-        var actionB = TestAction.Create("variable", "set", ("name", "%b%"), ("value", "B"));
+        var actionA = context.Action("variable.set(Name=%a%, Value=\"A\")");
+        var actionB = context.Action("variable.set(Name=%b%, Value=\"B\")");
         var step = new Step { Index = 0, Text = "multi" };
         actionA = actionA.In(step); actionB = actionB.In(step);
         step.Code.Add(actionA); step.Code.Add(actionB);
@@ -72,10 +72,10 @@ public class GoalResumeTests
     {
         var app = NewApp();
         var context = app.actor.list.User.Context;
-        var goal = Build("G");
-        SetStep(goal, 0, "s0", "skip");
-        SetStep(goal, 1, "s1", "from-here");
-        SetStep(goal, 2, "s2", "and-after");
+        var goal = Build(context, "G");
+        SetStep(context, goal, 0, "s0", "skip");
+        SetStep(context, goal, 1, "s1", "from-here");
+        SetStep(context, goal, 2, "s2", "and-after");
 
         var result = await goal.Resume(context, stepIdx: 1, actionIdx: 0);
         await result.IsSuccess();
@@ -108,9 +108,9 @@ public class GoalResumeTests
         // pins the contract that earlier steps are not re-run.
         var app = NewApp();
         var context = app.actor.list.User.Context;
-        var goal = Build("G");
-        SetStep(goal, 0, "first", "should-not-run");
-        SetStep(goal, 1, "second", "runs");
+        var goal = Build(context, "G");
+        SetStep(context, goal, 0, "first", "should-not-run");
+        SetStep(context, goal, 1, "second", "runs");
 
         await goal.Resume(context, stepIdx: 1, actionIdx: 0);
         await Assert.That((await context.Variable.Get("first")).IsInitialized).IsFalse();

@@ -8,9 +8,12 @@ using Ctx = global::app.actor.context.@this;
 /// and json.Writer's own item arm. Without this a top-level item fell to the json delegate
 /// and came out quoted.
 /// </summary>
-public class TextWriterItemArmTests
+public class TextWriterItemArmTests : System.IAsyncDisposable
 {
-    private static readonly Ctx C = global::PLang.Tests.TestApp.SharedContext;
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private Ctx C => app.actor.list.User.Context;
 
     private static string Render(global::app.type.item.@this item)
     {

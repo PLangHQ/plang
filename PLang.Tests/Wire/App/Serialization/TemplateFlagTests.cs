@@ -12,7 +12,7 @@ public class TemplateFlagTests
     [Test]
     public async Task TemplateParam_ResolvesOnLoad_NoFlagStaysLiteral()
     {
-        var app = global::PLang.Tests.TestApp.Create("/t");
+        var app = new global::app.@this("/t").Testing();
         await app.actor.list.User.Context.Variable.Set("name", "World");
 
         var flaggedType = new global::app.type.@this("text", template: "plang");
@@ -38,7 +38,7 @@ public class TemplateFlagTests
     [Test]
     public async Task AReference_BringsItsValueAsIs_NeverRendersIt()
     {
-        var app = global::PLang.Tests.TestApp.Create("/t");
+        var app = new global::app.@this("/t").Testing();
         var context = app.actor.list.User.Context;
         await context.Variable.Set("answer", context.Ok("[1] output.write(Data=\"hello %name%\")"));
 
@@ -57,7 +57,7 @@ public class TemplateFlagTests
     [Test]
     public async Task AValueSetThroughAReference_ReadsBackAsIs()
     {
-        var app = global::PLang.Tests.TestApp.Create("/t");
+        var app = new global::app.@this("/t").Testing();
         var context = app.actor.list.User.Context;
         await context.Variable.Set("reply", context.Ok("[1] output.write(Data=\"hello %name%\")"));
 
@@ -78,7 +78,7 @@ public class TemplateFlagTests
     [Test]
     public async Task AnUnopenedValueSetThroughAReference_ReadsBackAsIs()
     {
-        var app = global::PLang.Tests.TestApp.Create("/t");
+        var app = new global::app.@this("/t").Testing();
         var context = app.actor.list.User.Context;
         var unopened = new global::app.type.item.source("[1] output.write(Data=\"hello %name%\")", context.App.type.list["text"]);
         await context.Variable.Set("reply", new global::app.data.@this("reply", unopened, context: context));

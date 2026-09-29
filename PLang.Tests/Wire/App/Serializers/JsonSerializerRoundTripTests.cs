@@ -7,7 +7,7 @@ public class JsonSerializerRoundTripTests
     {
         // application/json wire shape is data.Value only; data.Signature
         // backing field stays null after Write.
-        var app = global::PLang.Tests.TestApp.Create("/test");
+        var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var data = new Data("v", "hello", context: ctx);
 
@@ -20,7 +20,7 @@ public class JsonSerializerRoundTripTests
     public async Task JsonSerializer_Read_ProducesData_WithoutPopulatingSignature()
     {
         // Reading a JSON wire payload reconstructs Data with Value set; Signature stays null.
-        var app = global::PLang.Tests.TestApp.Create("/test");
+        var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var raw = "\"hello\"";
         var s = (await ctx.Format("application/json").Deserialize<global::app.type.item.text.@this>(raw, ctx).Value())!;

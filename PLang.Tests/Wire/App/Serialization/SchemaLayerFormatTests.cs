@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Serialization;
 
 public class SchemaLayerFormatTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create("/tmp/SchemaLayer-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this app = new global::app.@this("/tmp/SchemaLayer-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     // Render a value through the json IWriter exactly as the wire writer's
@@ -27,7 +27,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
 
     [Test] public async Task SignatureLayer_RendersFlat_SchemaSignature_WrappingInnerData()
     {
-        var inner = new global::app.data.@this("user", "Ingi", global::PLang.Tests.TestApp.SharedContext.App.type.list["text"], context: app.actor.list.User.Context);
+        var inner = new global::app.data.@this("user", "Ingi", app.actor.list.User.Context.App.type.list["text"], context: app.actor.list.User.Context);
         var sig = new global::app.type.item.signature.@this(
             value: inner,
             algorithm: new global::app.type.item.text.@this("ed25519"),
@@ -65,7 +65,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
 
     [Test] public async Task SignatureLayer_OmitsExpiresAndContracts_WhenAbsent()
     {
-        var inner = new global::app.data.@this("x", "y", global::PLang.Tests.TestApp.SharedContext.App.type.list["text"], context: app.actor.list.User.Context);
+        var inner = new global::app.data.@this("x", "y", app.actor.list.User.Context.App.type.list["text"], context: app.actor.list.User.Context);
         var sig = new global::app.type.item.signature.@this(
             value: inner,
             algorithm: new global::app.type.item.text.@this("ed25519"),

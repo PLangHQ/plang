@@ -3,8 +3,11 @@ namespace PLang.Tests.App.Serialization;
 // The formal writer against the python reference: each golden step's .pr rows, read through the real step
 // reader, written through formal.Writer, must be python's formal byte for byte (formal_golden.json, written
 // by tools/decider/formal_fixture.py from formal.py).
-public class FormalWriterTests
+public class FormalWriterTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     internal static System.Text.Json.JsonElement[] Golden()
     {
         var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory);
@@ -14,15 +17,14 @@ public class FormalWriterTests
         return System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(path)).RootElement.EnumerateArray().ToArray();
     }
 
-    internal static global::app.goal.@this Goal()
+    internal static global::app.goal.@this Goal(global::app.actor.context.@this context)
     {
-        var context = global::PLang.Tests.TestApp.SharedContext;
         var path = global::app.type.item.path.@this.Resolve("/formal.goal", context);
         return global::app.goal.@this.Parse("Formal\n- a step\n", path, context)!;
     }
 
     // The step as the .pr holds it: {index, text, code: [rows]} — read through the step reader.
-    internal static global::app.goal.step.@this Step(global::app.goal.@this goal, System.Text.Json.JsonElement entry)
+    internal static global::app.goal.step.@this Step(global::app.goal.@this goal, System.Text.Json.JsonElement entry, global::app.actor.context.@this context)
     {
         var json = "{\"index\":" + entry.GetProperty("index").GetInt32()
                    + ",\"text\":" + System.Text.Json.JsonSerializer.Serialize(entry.GetProperty("text").GetString())
@@ -32,24 +34,25 @@ public class FormalWriterTests
         utf8.Read();
         var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
         return (global::app.goal.step.@this)new global::app.goal.step.serializer.Reader(goal)
-            .Read(ref reader, null, new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext, "plang"));
+            .Read(ref reader, null, new global::app.type.reader.ReadContext(context, "plang"));
     }
 
-    internal static async Task<string> Formal(global::app.goal.step.@this step)
+    internal static async Task<string> Formal(global::app.goal.step.@this step, global::app.actor.context.@this context)
     {
         var writer = new global::app.goal.step.action.formal.Writer();
-        await step.Code.Output(writer, global::app.View.Store, global::PLang.Tests.TestApp.SharedContext);
+        await step.Code.Output(writer, global::app.View.Store, context);
         return writer.ToString();
     }
 
     [Test]
     public async Task EveryGoldenStep_WritesPythonsFormal_ByteForByte()
     {
-        var goal = Goal();
+        var context = app.actor.list.User.Context;
+        var goal = Goal(context);
         var differ = new List<string>();
         foreach (var entry in Golden())
         {
-            var written = await Formal(Step(goal, entry));
+            var written = await Formal(Step(goal, entry, context), context);
             var expected = entry.GetProperty("formal").GetString();
             if (written != expected)
                 differ.Add($"{entry.GetProperty("goal").GetString()}[{entry.GetProperty("index").GetInt32()}]\n  expected: {expected}\n  written:  {written}");

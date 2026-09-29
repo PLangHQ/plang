@@ -8,8 +8,8 @@ namespace PLang.Tests.App.Serialization;
 public class DictTypedEntryRoundTripTests
 {
     private static global::app.@this NewApp()
-        => global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-dictentry-" + System.Guid.NewGuid().ToString("N")[..8]));
+        => new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-dictentry-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     // Acceptance test for the context-never-null work: a dict of nested typed entries
     // ({type,value}, no @schema) round-trips through the Store wire with each entry's type
@@ -44,7 +44,7 @@ public class DictTypedEntryRoundTripTests
         // Materialize through the async Value door — Peek returns the deferred source.
         var dict = (await back.Value()) as global::app.type.item.dict.@this;
         await Assert.That(dict).IsNotNull();
-        await Assert.That(dict!.Get("steps", global::PLang.Tests.TestApp.SharedContext)!.Type?.Name).IsEqualTo("list");
-        await Assert.That(dict.Get("description", global::PLang.Tests.TestApp.SharedContext)!.Type?.Name).IsEqualTo("text");
+        await Assert.That(dict!.Get("steps", app.actor.list.User.Context)!.Type?.Name).IsEqualTo("list");
+        await Assert.That(dict.Get("description", app.actor.list.User.Context)!.Type?.Name).IsEqualTo("text");
     }
 }

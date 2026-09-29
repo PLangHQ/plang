@@ -13,7 +13,7 @@ public class FormalStepTests
     [Test]
     public async Task AFormalStep_IsTakenAsWritten_AndAskedNothing()
     {
-        await using var os = TestApp.Create(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os"));
+        await using var os = new global::app.@this(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os")).Testing();
         var context = os.actor.list.User.Context;
         var goal = Parse("Start\n- output.write(Data=\"a\")\n- write out \"b\"\n", context);
 
@@ -44,7 +44,7 @@ public class FormalStepTests
     [Test]
     public async Task AFormalStep_NamingAnUnknownAction_IsRefusedWithWhy()
     {
-        await using var os = TestApp.Create(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os"));
+        await using var os = new global::app.@this(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os")).Testing();
         var context = os.actor.list.User.Context;
         var goal = Parse("Start\n- output.shout(Data=\"a\")\n", context);
 

@@ -44,8 +44,8 @@ public class PlangTypesCut2_ImageTwoChannelsTests
 
     [Test] public async Task SameImage_TextWriter_GivesPathPlaceholder()
     {
-        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cut2t-" + System.Guid.NewGuid().ToString("N")[..8]));
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-cut2t-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/srv/photo.png", app.actor.list.User.Context);
         var img = new image(PngBytes, p!, app.actor.list.User.Context);
 
@@ -57,8 +57,8 @@ public class PlangTypesCut2_ImageTwoChannelsTests
 
     [Test] public async Task SameImage_JsonWriter_GivesBase64String()
     {
-        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cut2j-" + System.Guid.NewGuid().ToString("N")[..8]));
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-cut2j-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var img = new image(PngBytes, "image/png");
 
         using var ms = new System.IO.MemoryStream();
@@ -73,8 +73,8 @@ public class PlangTypesCut2_ImageTwoChannelsTests
 
     [Test] public async Task SameInstance_TwoWriters_NeverReMaterializesValue()
     {
-        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cut2s-" + System.Guid.NewGuid().ToString("N")[..8]));
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-cut2s-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/srv/x.png", app.actor.list.User.Context);
         var img = new image(PngBytes, p!, app.actor.list.User.Context);
         var beforeBytes = img.Bytes;
@@ -88,8 +88,8 @@ public class PlangTypesCut2_ImageTwoChannelsTests
 
     [Test] public async Task ImageInstance_DataTypeStaysImage_AcrossBothChannels()
     {
-        await using var app = global::PLang.Tests.TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-cut2i-" + System.Guid.NewGuid().ToString("N")[..8]));
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-cut2i-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var img = new image(PngBytes, "image/png");
         var data = new global::app.data.@this("photo", img,
             new global::app.type.@this("image"), context: app.actor.list.User.Context);

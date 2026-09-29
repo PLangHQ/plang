@@ -88,7 +88,7 @@ public class Stage1_ChannelBaseTests
     {
         // Mime drives serializer selection. Default "text/plain" → text serializer.
         // Switching Mime to "application/json" → JSON serializer.
-        await using var app = global::PLang.Tests.TestApp.Create("/test", autoWireConsoleChannels: false);
+        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
 
         var captureA = new MemoryStream();
         var jsonCh = new StreamChannel("json", captureA, ChannelDirection.Output, ownsStream: false)

@@ -1,12 +1,15 @@
 namespace PLang.Tests.App.SnapshotTests;
 
-public class SnapshotInterfaceTests
+public class SnapshotInterfaceTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task ISnapshotted_Capture_AppendsTypedEntries_ToSnapshot()
     {
         // Capture writes typed entries; Restore reads them back in order.
-        var s = new Snapshot(global::PLang.Tests.TestApp.SharedContext);
+        var s = new Snapshot(app.actor.list.User.Context);
         var section = s.Section("MySection");
         section.Write("name", "alice");
         section.Write<int>("age", 42);

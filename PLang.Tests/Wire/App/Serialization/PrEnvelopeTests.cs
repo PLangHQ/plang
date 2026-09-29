@@ -4,8 +4,8 @@ namespace PLang.Tests.App.Serialization;
 // written again — the two writes are byte-equal, and each step's actions ride under `code`.
 public class PrEnvelopeTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = TestApp.Create(
-        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "prenvelope-" + System.Guid.NewGuid().ToString("N")[..8]));
+    private readonly global::app.@this _app = new global::app.@this(
+        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "prenvelope-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 

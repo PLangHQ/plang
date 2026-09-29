@@ -21,7 +21,7 @@ public class Stage4_ChannelResolutionTests
     [Test]
     public async Task ChannelsGet_Output_ReturnsChannelNamedOutput()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/s4a");
+        var app = new global::app.@this("/tmp/s4a").Testing();
         global::app.@this.WireDefaultConsoleChannels(app.actor.list.User);
         var ch = app.actor.list.User.Channel.Get(global::app.channel.list.@this.Output);
         await Assert.That(ch).IsNotNull();
@@ -31,7 +31,7 @@ public class Stage4_ChannelResolutionTests
     [Test]
     public async Task ChannelsGet_NamedChannel_ReturnsThatChannel()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/s4b");
+        var app = new global::app.@this("/tmp/s4b").Testing();
         var logger = StreamChannel.Memory("logger");
         app.actor.list.User.Channel.Register(logger);
         var ch = app.actor.list.User.Channel.Get("logger");
@@ -41,7 +41,7 @@ public class Stage4_ChannelResolutionTests
     [Test]
     public async Task ChannelsGet_UnknownName_ReturnsNull()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/s4c");
+        var app = new global::app.@this("/tmp/s4c").Testing();
         var ch = app.actor.list.User.Channel.Get("dbg");
         await Assert.That(ch).IsNull();
     }
@@ -49,7 +49,7 @@ public class Stage4_ChannelResolutionTests
     [Test]
     public async Task WriteRun_NoChannelSlot_WritesToDefaultOutput()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/s4d");
+        var app = new global::app.@this("/tmp/s4d").Testing();
         var captured = new MemoryStream();
         app.actor.list.User.Channel.Register(new StreamChannel("output", captured, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
@@ -67,7 +67,7 @@ public class Stage4_ChannelResolutionTests
     [Test]
     public async Task WriteRun_WithChannelSlot_WritesToThatChannel()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/s4e");
+        var app = new global::app.@this("/tmp/s4e").Testing();
         var loggerCapture = new MemoryStream();
         app.actor.list.User.Channel.Register(new StreamChannel("logger", loggerCapture, ChannelDirection.Output, ownsStream: false)
         { Mime = "text/plain" });
@@ -85,7 +85,7 @@ public class Stage4_ChannelResolutionTests
     public async Task Write_PassesFullDataEnvelope_NotJustValue()
     {
         // Plan rule 7: relay don't repackage. Channel.WriteAsync receives full Data.
-        var app = global::PLang.Tests.TestApp.Create("/tmp/s4f");
+        var app = new global::app.@this("/tmp/s4f").Testing();
         var probe = new EnvelopeProbeChannel();
         app.actor.list.User.Channel.Register(probe);
 
