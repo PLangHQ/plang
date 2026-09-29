@@ -461,8 +461,11 @@ public sealed partial class @this : global::app.type.item.path.@this
         };
         var signResult = await new global::app.goal.step.action.@this(sign, context).Start(context);
         if (!signResult.Success) return signResult.Error!;
-        var json = JsonSerializer.Serialize(signResult);
-        request.Headers.TryAddWithoutValidation("X-Signature", json);
+        // The header carries the signed Data as plang writes it on the wire.
+        using var wire = new System.IO.MemoryStream();
+        var written = await context.App.type.list.Mime("application/plang").Encode(wire, signResult, context, global::app.View.Out);
+        if (!written.Success) return written.Error!;
+        request.Headers.TryAddWithoutValidation("X-Signature", System.Text.Encoding.UTF8.GetString(wire.ToArray()));
         return null;
     }
 
