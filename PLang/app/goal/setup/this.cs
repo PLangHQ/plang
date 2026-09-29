@@ -99,7 +99,7 @@ public sealed class @this
     {
         if (string.IsNullOrEmpty(step.Hash)) return false;
 
-        var result = await (await app.store).Exists(Table, step.Hash);
+        var result = await app.store.Exists(Table, step.Hash);
         return result.Success && await result.ToBooleanAsync();
     }
 
@@ -134,6 +134,6 @@ public sealed class @this
             ["error"] = error?.Message
         };
 
-        return await (await app.store).Set(Table, step.Hash, new data.@this(step.Hash, metadata, context: app.actor.list.System.Context));
+        return await app.store.Set(Table, step.Hash, new data.@this(step.Hash, metadata, context: app.actor.list.System.Context));
     }
 }

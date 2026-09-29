@@ -37,7 +37,7 @@ public class DataSourceTests
     public async Task AppDispose_DisposesItsStore()
     {
         var app = TestApp.Create(_tempDir);
-        var store = await app.store;
+        var store = app.store;
         await store.Set("probe", "k", new Data("k", "held", context: app.actor.list.System.Context));
         await Assert.That((await (await store.Get<global::app.type.item.@this>("probe", "k")).Value())?.ToString()).IsEqualTo("held");
 
@@ -371,7 +371,7 @@ public class DataSourceTests
         engine.test.list.Open();
 
         // app.store is in-memory under Testing — no .db directory created.
-        var ds = await engine.store;
+        var ds = engine.store;
         var setResult = await ds.Set("test_table", "k", new Data("k", "v", context: _app.actor.list.System.Context!));
         await setResult.IsSuccess();
 
@@ -389,7 +389,7 @@ public class DataSourceTests
         await using var engine = TestApp.Plain(_tempDir);
         // Testing not enabled → file-backed system.sqlite.
 
-        var ds = await engine.store;
+        var ds = engine.store;
         var setResult = await ds.Set("file_table", "k", new Data("k", "v", context: _app.actor.list.System.Context!));
         await setResult.IsSuccess();
 

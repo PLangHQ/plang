@@ -80,7 +80,7 @@ public class SettingsDataTests
     public async Task ActorDataSource_IsCreatedLazily()
     {
         // Accessing DataSource should create the .db directory
-        var ds = await _app.store;
+        var ds = _app.store;
         await Assert.That(ds).IsNotNull();
 
         var dbDir = System.IO.Path.Combine(_tempDir, ".db");
@@ -93,14 +93,14 @@ public class SettingsDataTests
     public async Task Settings_CorruptDatabase_ReturnsSettingsError()
     {
         // Trigger DataSource creation so the DB file exists
-        _ = await _app.store;
+        _ = _app.store;
 
         // Corrupt the database file — overwrite with garbage
         var dbPath = System.IO.Path.Combine(_tempDir, ".db", "system.sqlite");
         System.IO.File.WriteAllText(dbPath, "NOT A VALID SQLITE DATABASE FILE");
 
         // The store surfaces a SettingsError, not a throw.
-        var resolved = await (await _app.store).Get<global::app.type.item.@this>("settings", "AnyKey");
+        var resolved = await _app.store.Get<global::app.type.item.@this>("settings", "AnyKey");
         await resolved.IsFailure();
         await Assert.That(resolved.Error is SettingsError).IsTrue();
     }

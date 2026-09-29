@@ -8,81 +8,55 @@ namespace app.store.sqlite;
 /// Two-column schema per table: key TEXT PRIMARY KEY, data TEXT (a whole Data in plang's own format).
 /// WAL mode for concurrent reads. Tables auto-created on first write.
 /// Connection per operation (SQLite pools internally via connection string).
+/// Born ready: where the database lives is decided, and the database opened, at the first verb.
 /// </summary>
 public sealed class @this : global::app.store.@this
 {
-    private readonly string _connectionString;
-    private readonly SqliteConnection? _sentinel;
+    /// <summary>plang's own kind of store, never named by a program as a type.</summary>
+    public static bool Internal => true;
+
+    protected override string Kind => "sqlite";
+
+    // Where the database lives: in memory under the name this answers at the first verb, else in this file.
+    private readonly global::app.type.item.path.@this? _file;
+    private readonly System.Func<string?> _memory;
     // The store's own context — system-owned. Its result Data is born from it, and its rows are written
     // and read (verified) with it.
     private readonly actor.context.@this Context;
+
+    // The one open, begun by the first verb: the connection string, or the reason it couldn't open.
+    private readonly object _gate = new();
+    private Task<string>? _opened;
+    // An in-memory database lives as long as a connection to it: this one, held for the store's life.
+    private SqliteConnection? _sentinel;
 
     // A row is a whole Data in plang's own format (application/plang).
     private global::app.type.kind.@this Format => Context.App.type.list["wire"].kind["plang"]!;
     private bool _disposed;
 
     /// <summary>
-    /// Builds a store over an already-authorized connection string. The async
-    /// gate work (Authorize + parent Mkdir) happens in <see cref="CreateAsync"/>
-    /// — the ctor itself does no I/O await, so it never sync-waits.
+    /// A store in <paramref name="file"/>, or in memory under the name <paramref name="memory"/> answers when
+    /// the store opens (null: the file). Nothing is opened here — the first verb opens it.
     /// </summary>
-    private @this(string connectionString, actor.context.@this context)
+    public @this(global::app.type.item.path.@this? file, System.Func<string?> memory, actor.context.@this context)
     {
+        _file = file;
+        _memory = memory;
         Context = context;
-        _connectionString = connectionString;
-        EnableWalMode();
     }
 
     /// <summary>
-    /// Creates a store at the specified database path, creating the parent
-    /// directory if absent. Take-over API: sqlite opens the file itself,
-    /// so we explicitly Authorize(Write) on the path before handing its
-    /// Absolute string to the connection string. Out-of-root paths the
-    /// actor hasn't granted bubble up as an exception — sqlite never sees them.
-    /// Async all the way: no <c>GetAwaiter().GetResult()</c>, so parallel store
-    /// construction never starves the threadpool.
+    /// Creates a store at the specified database path, creating the parent directory at its first verb.
+    /// Take-over API: sqlite opens the file itself, so the path is authorized for write here, before the store
+    /// exists — out-of-root paths the actor hasn't granted bubble up as an exception.
     /// </summary>
     public static async Task<@this> CreateAsync(global::app.type.item.path.@this dbPath, actor.context.@this context)
     {
-        // Take-over API: authorize before passing .Absolute.
         var auth = await dbPath.Authorize(global::app.type.item.permission.Verb.Write, context);
         if (!auth.Success)
             throw new InvalidOperationException(
                 $"Sqlite path '{dbPath}' is not authorized for write: {auth.Error?.Message}");
-
-        // Create parent dir via path verb (gated). Mkdir on the parent path
-        // — fast-passes in-root, prompts/denies out-of-root (but Authorize
-        // above already covered the dbPath's write).
-        var parent = dbPath.Parent;
-        if (parent != null)
-            await parent.Mkdir(context);
-
-        var connectionString = new SqliteConnectionStringBuilder
-        {
-            DataSource = dbPath.Absolute,
-            Mode = SqliteOpenMode.ReadWriteCreate,
-            Cache = SqliteCacheMode.Shared
-        }.ToString();
-
-        return new @this(connectionString, context);
-    }
-
-    /// <summary>
-    /// An in-memory store with a sentinel connection that keeps
-    /// the database alive for the lifetime of this instance.
-    /// </summary>
-    private @this(string name, bool inMemory, actor.context.@this context)
-    {
-        Context = context;
-        _connectionString = new SqliteConnectionStringBuilder
-        {
-            DataSource = name,
-            Mode = SqliteOpenMode.Memory,
-            Cache = SqliteCacheMode.Shared
-        }.ToString();
-
-        _sentinel = new SqliteConnection(_connectionString);
-        _sentinel.Open();
+        return new @this(dbPath, () => null, context);
     }
 
     /// <summary>
@@ -90,13 +64,55 @@ public sealed class @this : global::app.store.@this
     /// Different names produce isolated databases.
     /// </summary>
     public static @this InMemory(string name, actor.context.@this context)
-        => new @this(name, inMemory: true, context);
+        => new @this(null, () => name, context);
+
+    // The database, opened once — every verb awaits the same open.
+    private Task<string> Opened()
+    {
+        lock (_gate) return _opened ??= Open();
+    }
+
+    private async Task<string> Open()
+    {
+        if (_memory() is { } name)
+        {
+            var memory = new SqliteConnectionStringBuilder
+            {
+                DataSource = name,
+                Mode = SqliteOpenMode.Memory,
+                Cache = SqliteCacheMode.Shared
+            }.ToString();
+            _sentinel = new SqliteConnection(memory);
+            _sentinel.Open();
+            return memory;
+        }
+        if (_file == null)
+            throw new InvalidOperationException("a sqlite store needs a file or a name in memory");
+
+        // Take-over API: authorize before passing .Absolute. Out-of-root paths the actor hasn't granted
+        // fail the open — sqlite never sees them.
+        var auth = await _file.Authorize(global::app.type.item.permission.Verb.Write, Context);
+        if (!auth.Success)
+            throw new InvalidOperationException(
+                $"Sqlite path '{_file}' is not authorized for write: {auth.Error?.Message}");
+        if (_file.Parent is { } parent)
+            await parent.Mkdir(Context);
+
+        var connectionString = new SqliteConnectionStringBuilder
+        {
+            DataSource = _file.Absolute,
+            Mode = SqliteOpenMode.ReadWriteCreate,
+            Cache = SqliteCacheMode.Shared
+        }.ToString();
+        EnableWalMode(connectionString);
+        return connectionString;
+    }
 
     // WAL journaling. A database that can't take it answers its mode (in memory: "memory") without throwing,
     // so a throw here is the database failing, and it bubbles.
-    private void EnableWalMode()
+    private void EnableWalMode(string connectionString)
     {
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         connection.Open();
         using var cmd = connection.CreateCommand();
         cmd.CommandText = "PRAGMA journal_mode=WAL;";
@@ -115,8 +131,9 @@ public sealed class @this : global::app.store.@this
     {
         try
         {
-            EnsureTable(table);
-            using var connection = new SqliteConnection(_connectionString);
+            var connectionString = await Opened();
+            EnsureTable(connectionString, table);
+            using var connection = new SqliteConnection(connectionString);
             connection.Open();
             using var cmd = connection.CreateCommand();
             cmd.CommandText = $"SELECT data FROM [{SanitizeTableName(table)}] WHERE key = @key;";
@@ -137,8 +154,9 @@ public sealed class @this : global::app.store.@this
     {
         try
         {
-            EnsureTable(table);
-            using var connection = new SqliteConnection(_connectionString);
+            var connectionString = await Opened();
+            EnsureTable(connectionString, table);
+            using var connection = new SqliteConnection(connectionString);
             connection.Open();
             using var cmd = connection.CreateCommand();
             cmd.CommandText = $"SELECT key, data FROM [{SanitizeTableName(table)}];";
@@ -168,8 +186,9 @@ public sealed class @this : global::app.store.@this
     {
         try
         {
-            EnsureTable(table);
-            using var connection = new SqliteConnection(_connectionString);
+            var connectionString = await Opened();
+            EnsureTable(connectionString, table);
+            using var connection = new SqliteConnection(connectionString);
             connection.Open();
             using var cmd = connection.CreateCommand();
             var sanitized = SanitizeTableName(table);
@@ -194,53 +213,56 @@ public sealed class @this : global::app.store.@this
         }
     }
 
-    public override Task<data.@this> Remove(string table, string key)
+    public override async Task<data.@this> Remove(string table, string key)
     {
         try
         {
-            EnsureTable(table);
-            using var connection = new SqliteConnection(_connectionString);
+            var connectionString = await Opened();
+            EnsureTable(connectionString, table);
+            using var connection = new SqliteConnection(connectionString);
             connection.Open();
             using var cmd = connection.CreateCommand();
             cmd.CommandText = $"DELETE FROM [{SanitizeTableName(table)}] WHERE key = @key;";
             cmd.Parameters.AddWithValue("@key", key);
             cmd.ExecuteNonQuery();
 
-            return Task.FromResult(Context.Ok());
+            return Context.Ok();
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Context.Error(
-                SettingsError.FromException(ex, table, key)));
+            return Context.Error(
+                SettingsError.FromException(ex, table, key));
         }
     }
 
-    public override Task<data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key)
+    public override async Task<data.@this<global::app.type.item.@bool.@this>> Exists(string table, string key)
     {
         try
         {
-            EnsureTable(table);
-            using var connection = new SqliteConnection(_connectionString);
+            var connectionString = await Opened();
+            EnsureTable(connectionString, table);
+            using var connection = new SqliteConnection(connectionString);
             connection.Open();
             using var cmd = connection.CreateCommand();
             cmd.CommandText = $"SELECT COUNT(*) FROM [{SanitizeTableName(table)}] WHERE key = @key;";
             cmd.Parameters.AddWithValue("@key", key);
 
             var count = Convert.ToInt64(cmd.ExecuteScalar());
-            return Task.FromResult(Context.Ok<global::app.type.item.@bool.@this>(count > 0));
+            return Context.Ok<global::app.type.item.@bool.@this>(count > 0);
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Context.Error<global::app.type.item.@bool.@this>(
-                SettingsError.FromException(ex, table, key)));
+            return Context.Error<global::app.type.item.@bool.@this>(
+                SettingsError.FromException(ex, table, key));
         }
     }
 
-    public override Task<data.@this<global::app.type.item.list.@this>> Tables()
+    public override async Task<data.@this<global::app.type.item.list.@this>> Tables()
     {
         try
         {
-            using var connection = new SqliteConnection(_connectionString);
+            var connectionString = await Opened();
+            using var connection = new SqliteConnection(connectionString);
             connection.Open();
             using var cmd = connection.CreateCommand();
             cmd.CommandText = "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;";
@@ -250,19 +272,19 @@ public sealed class @this : global::app.store.@this
             while (reader.Read())
                 tables.Add(new data.@this("", reader.GetString(0), context: Context));
 
-            return Task.FromResult(Context.Ok<global::app.type.item.list.@this>(tables));
+            return Context.Ok<global::app.type.item.list.@this>(tables);
         }
         catch (Exception ex)
         {
-            return Task.FromResult(Context.Error<global::app.type.item.list.@this>(
-                SettingsError.FromException(ex)));
+            return Context.Error<global::app.type.item.list.@this>(
+                SettingsError.FromException(ex));
         }
     }
 
-    private void EnsureTable(string table)
+    private void EnsureTable(string connectionString, string table)
     {
         var sanitized = SanitizeTableName(table);
-        using var connection = new SqliteConnection(_connectionString);
+        using var connection = new SqliteConnection(connectionString);
         connection.Open();
         using var cmd = connection.CreateCommand();
         cmd.CommandText = $"CREATE TABLE IF NOT EXISTS [{sanitized}] (key TEXT PRIMARY KEY, data TEXT);";
@@ -290,6 +312,8 @@ public sealed class @this : global::app.store.@this
             _sentinel.Dispose();
         }
 
-        SqliteConnection.ClearPool(new SqliteConnection(_connectionString));
+        // A store that opened lets its database go; one that never opened holds nothing.
+        if (_opened is { IsCompletedSuccessfully: true } opened)
+            SqliteConnection.ClearPool(new SqliteConnection(opened.Result));
     }
 }

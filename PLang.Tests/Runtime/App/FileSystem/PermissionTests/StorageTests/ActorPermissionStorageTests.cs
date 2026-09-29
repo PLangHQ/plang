@@ -230,7 +230,7 @@ public class ActorPermissionStorageTests
 
         // SettingsStore.Set is keyed by path — the table must hold one row
         // for `/p`, not two.
-        var stored = await (await app.store).GetAll<global::app.type.item.permission.@this>("permission");
+        var stored = await app.store.GetAll<global::app.type.item.permission.@this>("permission");
         await stored.IsSuccess();
         var rowsForP = (await stored.Value())!.Items(global::PLang.Tests.TestApp.SharedContext).Count(d => d.GetValue<global::app.type.item.permission.@this>()?.Path == "/p");
         await Assert.That(rowsForP).IsEqualTo(1);

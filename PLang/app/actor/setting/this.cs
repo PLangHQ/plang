@@ -127,7 +127,7 @@ public sealed class @this
         // rows that could not be read are never written over
         if (await owner.Load() is { Success: false } unread) return unread;
         var row = new data.@this($"{owner._actor!.Name.ToLowerInvariant()}!{path}", setting, context: _context);
-        var stored = await (await _context.App.store).Set(Table, row.Name, row);
+        var stored = await _context.App.store.Set(Table, row.Name, row);
         if (!stored.Success) return stored;
         owner._held![path] = row;
         Tell(path);
@@ -141,7 +141,7 @@ public sealed class @this
         var path = setting.Path;
         var owner = Owner;
         if (await owner.Load() is { Success: false } unread) return unread;
-        var removed = await (await _context.App.store).Remove(Table, $"{owner._actor!.Name.ToLowerInvariant()}!{path}");
+        var removed = await _context.App.store.Remove(Table, $"{owner._actor!.Name.ToLowerInvariant()}!{path}");
         if (!removed.Success) return removed;
         owner._held!.TryRemove(path, out _);
         Tell(path);
@@ -199,16 +199,10 @@ public sealed class @this
         var rows = new ConcurrentDictionary<string, data.@this>(StringComparer.OrdinalIgnoreCase);
         var prefix = _actor!.Name.ToLowerInvariant() + "!";
         _reading.Value = true;
-        global::app.store.@this store;
-        // A store that can't open (an unwritable root) is unread, not empty: a save or remove, which needs it,
-        // answers why (Load too), and nothing writes over rows that may be there.
-        try { store = await _context.App.store; }
-        catch (Exception ex) when (ex is UnauthorizedAccessException or InvalidOperationException)
-        {
-            _unread = new global::app.error.Error($"the settings store could not open, so the {_actor.Name} actor's saved settings are unread — {ex.Message}", "SettingsUnreadable", 500) { Exception = ex };
-            return rows;
-        }
-        var all = await store.GetAll<global::app.type.item.@this>(Table);
+        // A store that can't open (an unwritable root) answers why, as any unreadable rows do: they are unread,
+        // not empty — a save or remove, which needs them, answers why (Load too), and nothing writes over rows
+        // that may be there.
+        var all = await _context.App.store.GetAll<global::app.type.item.@this>(Table);
         if (!all.Success)
         {
             await (_context.App.Debug?.Write($"settings: the {_actor.Name} actor's rows could not be read — {all.Error?.Message}") ?? Task.CompletedTask);

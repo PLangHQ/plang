@@ -26,7 +26,7 @@ public sealed class TypeSafe : IDecider
         if (questions == null || questions.CountRaw == 0)
             return context.Ok(new global::app.type.item.dict.@this());
 
-        var settings = await app.store;
+        var settings = app.store;
 
         var endpoint = await Config(settings, "decider.endpoint", "TYPESAFE_ENDPOINT",
             "https://api.typesafe.ai/v1/systemone");

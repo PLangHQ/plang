@@ -160,12 +160,11 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public ICache Cache { get; internal set; } = new global::app.module.cache.Memory();
 
     /// <summary>
-    /// The app's store — <c>.db/system.sqlite</c> (in memory while testing). One per app — actors
-    /// share it; its owners keep their tables (<c>settings</c>, setup's steps, the LLM cache, …).
-    /// Made on first use, so an app that never touches it pays for no SQLite file.
+    /// The app's store — <c>.db/system.sqlite</c> (in memory while testing, under this app's id). One per
+    /// app — actors share it; its owners keep their tables (<c>settings</c>, setup's steps, the LLM cache, …).
+    /// Born with the app and opened at its first verb, so an app that never touches it pays for no SQLite file.
     /// </summary>
-    public Task<global::app.store.@this> store => _store.Value;
-    private Lazy<Task<global::app.store.@this>> _store = null!;
+    public global::app.store.@this store { get; }
 
     /// <summary>
     /// Debug mode controller. null = off; non-null = on (born under --debug).
@@ -279,7 +278,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         type = new(this);
         type.list.Replace(type);   // %!app.type% and the list's entry named type are one object
         Code = new AppCode(actor.list.System.Context);
-        _store = new Lazy<Task<global::app.store.@this>>(Open);
         module = new(this);
         goal = new(this);
         test = new(this);
@@ -301,6 +299,14 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         type.list.Add(new global::app.type.item.path.scheme.@this("file", (raw, context) => global::app.type.item.path.file.@this.Resolve(raw, context)));
         type.list.Add(new global::app.type.item.path.scheme.@this("http", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
         type.list.Add(new global::app.type.item.path.scheme.@this("https", (raw, context) => global::app.type.item.path.http.@this.Resolve(raw, context)));
+
+        // The store: where it lives is decided when it opens — in memory while testing, scoped by this app's id
+        // (per-test apps never share a database: SQLite's shared cache merges in-memory databases of one name),
+        // else its file.
+        store = new global::app.store.sqlite.@this(
+            global::app.type.item.path.@this.Resolve("/.db/system.sqlite", actor.list.System.Context),
+            () => Mode.Value == global::app.Mode.Test ? $"system-{Id}" : null,
+            actor.list.System.Context);
 
         // Auto-wire console channels for ad-hoc App constructions (sub-process
         // test fixtures, embedded scenarios, C# tests, the `plang --test` child
@@ -599,22 +605,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         return await goal.Start(context);
     }
 
-    // The store, opened on first use: in memory while testing, else .db/system.sqlite.
-    private async Task<global::app.store.@this> Open()
-    {
-        // Testing: in-memory db scoped by App.Id so per-test Apps never share state.
-        // SQLite's shared-cache merges in-memory dbs with identical DataSource names,
-        // so the App.Id scoping is load-bearing.
-        if (Mode.Value == global::app.Mode.Test)
-            return global::app.store.sqlite.@this.InMemory($"system-{Id}", actor.list.System.Context);
-
-        // Lift to Path: AuthGate fires inside CreateAsync on Write,
-        // parent dir creation via path.Mkdir. Async all the way — no sync-wait,
-        // so parallel App constructions never starve the threadpool.
-        var dbPath = global::app.type.item.path.@this.Resolve("/.db/system.sqlite", actor.list.System.Context);
-        return await global::app.store.sqlite.@this.CreateAsync(dbPath, actor.list.System.Context);
-    }
-
     public async ValueTask DisposeAsync()
     {
         if (_disposed)
@@ -630,9 +620,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
         await Code.DisposeAsync();
         await KeepAlive.DisposeAsync();
-        // The store, if it was opened: awaited (an open still under way finishes first) and disposed, so
-        // its database is let go. One that failed to open holds nothing.
-        if (_store.IsValueCreated && _store.Value is { IsFaulted: false, IsCanceled: false } opening)
-            (await opening).Dispose();
+        // The store lets its database go; one that never opened holds nothing.
+        store.Dispose();
     }
 }

@@ -50,7 +50,7 @@ public class IdentityErrorPathTests
     {
         // No identities exist → auto-create path → save fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.store));
+            _app.store));
 
         var getHandler = new global::app.module.identity.Get(Ctx) { Name = null };
         await getHandler.Attach(null, Ctx);
@@ -70,7 +70,7 @@ public class IdentityErrorPathTests
 
         // Now swap to failing DataSource — GetAll still works (delegates), but Set fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.store));
+            _app.store));
 
         var getHandler = new global::app.module.identity.Get(Ctx) { Name = null };
         await getHandler.Attach(null, Ctx);
@@ -86,7 +86,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — Get(null) calls GetOrCreateDefaultAsync which returns error
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.store));
+            _app.store));
 
         var handler = new global::app.module.identity.Get(Ctx) { Name = null };
         await handler.Attach(null, Ctx);
@@ -102,7 +102,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — Export(null) calls GetOrCreateDefaultAsync which returns error
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.store));
+            _app.store));
 
         var handler = new Export(Ctx) { Name = null };
         await handler.Attach(null, Ctx);
@@ -118,7 +118,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save before %MyIdentity% resolves
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.store));
+            _app.store));
 
         // Access %MyIdentity% — the computed cell calls the provider, which
         // fails; the answer is the present-null VALUE (the singleton).
@@ -140,7 +140,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — clearing old default fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.store));
+            _app.store));
 
         var handler = new Create(Ctx) { Name = (global::app.type.item.text.@this)"new", SetAsDefault = (global::app.type.item.@bool.@this)true };
         await handler.Attach(null, Ctx);
@@ -156,7 +156,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — saving the new identity fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.store));
+            _app.store));
 
         var handler = new Create(Ctx) { Name = (global::app.type.item.text.@this)"newid", SetAsDefault = (global::app.type.item.@bool.@this)false };
         await handler.Attach(null, Ctx);
@@ -180,7 +180,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — clearing old default fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.store));
+            _app.store));
 
         var handler = new SetDefault(Ctx) { Name = (global::app.type.item.text.@this)"new" };
         await handler.Attach(null, Ctx);
@@ -201,7 +201,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — saving the new default fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.store));
+            _app.store));
 
         var handler = new SetDefault(Ctx) { Name = (global::app.type.item.text.@this)"target" };
         await handler.Attach(null, Ctx);
@@ -221,7 +221,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — saving with new name fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.store));
+            _app.store));
 
         var handler = new Rename(Ctx) { Name = (global::app.type.item.text.@this)"oldname", NewName = (global::app.type.item.text.@this)"newname" };
         await handler.Attach(null, Ctx);
@@ -241,7 +241,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.store));
+            _app.store));
 
         var handler = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"toarchive" };
         await handler.Attach(null, Ctx);
@@ -265,7 +265,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save
         SwapDataSource(_app, new FailingSaveDataSource(
-            await _app.store));
+            _app.store));
 
         var handler = new Unarchive(Ctx) { Name = (global::app.type.item.text.@this)"tounarchive" };
         await handler.Attach(null, Ctx);
@@ -300,7 +300,7 @@ public class IdentityErrorPathTests
         // store hands back a typed FACE with no processing; a corrupt entry (a raw
         // number, not an identity) surfaces its decline only when the developer LIFTS
         // it — never inside the store.
-        var ds = await _app.store;
+        var ds = _app.store;
         await ds.Set("identity", "weird", new Data("weird", 42, context: Ctx));
 
         var data   = await ds.Get<Identity>("identity", "weird");
@@ -313,7 +313,7 @@ public class IdentityErrorPathTests
     [Test]
     public async Task GetAll_SkipsUndeserializableEntries()
     {
-        var ds = await _app.store;
+        var ds = _app.store;
 
         // Store a valid identity via Create action
         var create = new Create(Ctx) { Name = (global::app.type.item.text.@this)"valid", SetAsDefault = (global::app.type.item.@bool.@this)true };
@@ -341,10 +341,9 @@ public class IdentityErrorPathTests
     /// </summary>
     private static void SwapDataSource(global::app.@this app, global::app.store.@this newDataSource)
     {
-        var field = typeof(global::app.@this).GetField("_store",
+        var field = typeof(global::app.@this).GetField("<store>k__BackingField",
             BindingFlags.NonPublic | BindingFlags.Instance);
-        field!.SetValue(app, new Lazy<System.Threading.Tasks.Task<global::app.store.@this>>(
-            () => System.Threading.Tasks.Task.FromResult(newDataSource)));
+        field!.SetValue(app, newDataSource);
     }
 
     /// <summary>
@@ -354,6 +353,7 @@ public class IdentityErrorPathTests
     {
         private readonly global::app.store.@this _inner;
         public FailingSaveDataSource(global::app.store.@this inner) => _inner = inner;
+        protected override string Kind => "failing";
 
         public override Task<global::app.data.@this<T>> Get<T>(string table, string key) => _inner.Get<T>(table, key);
         public override Task<global::app.data.@this<global::app.type.item.list.@this>> GetAll<T>(string table) => _inner.GetAll<T>(table);
@@ -372,6 +372,7 @@ public class IdentityErrorPathTests
     /// </summary>
     private class FailingGetAllDataSource : global::app.store.@this
     {
+        protected override string Kind => "failing";
         public override Task<global::app.data.@this<T>> Get<T>(string table, string key)
             => Task.FromResult(global::app.data.@this<T>.FromError(new SettingsError("Simulated failure")));
         public override Task<global::app.data.@this<global::app.type.item.list.@this>> GetAll<T>(string table)

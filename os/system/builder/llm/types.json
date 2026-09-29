@@ -89,6 +89,12 @@
   "app.snapshot": {
     "word": "snapshot"
   },
+  "app.store": {
+    "word": "store"
+  },
+  "app.store.sqlite": {
+    "word": null
+  },
   "app.test": {
     "word": "test"
   },
