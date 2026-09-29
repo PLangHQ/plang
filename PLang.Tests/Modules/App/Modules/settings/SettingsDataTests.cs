@@ -92,15 +92,16 @@ public class SettingsDataTests
     [Test]
     public async Task Settings_CorruptDatabase_ReturnsSettingsError()
     {
-        // Trigger DataSource creation so the DB file exists
-        _ = _app.store;
+        // an app kept on disk: its store is the file (a test session's store is in memory)
+        await using var onDisk = new global::app.@this(_tempDir).TestSigning();
 
         // Corrupt the database file — overwrite with garbage
         var dbPath = System.IO.Path.Combine(_tempDir, ".db", "system.sqlite");
+        System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(dbPath)!);
         System.IO.File.WriteAllText(dbPath, "NOT A VALID SQLITE DATABASE FILE");
 
         // The store surfaces a SettingsError, not a throw.
-        var resolved = await _app.store.Get<global::app.type.item.@this>("settings", "AnyKey");
+        var resolved = await onDisk.store.Get<global::app.type.item.@this>("settings", "AnyKey");
         await resolved.IsFailure();
         await Assert.That(resolved.Error is SettingsError).IsTrue();
     }

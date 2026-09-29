@@ -28,7 +28,7 @@ public class Stage7_PathGrowthTests
         await Assert.That(inside.IsUnder(root).Value).IsTrue();
         await Assert.That(outside.IsUnder(root).Value).IsFalse();
         // the builder filter site routes through the type
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "builder", "code", "Default.cs"));
+        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "build", "code", "Default.cs"));
         await Assert.That(src).DoesNotContain("Relative.StartsWith");
         await Assert.That(src).Contains("f.Matches(bf, ");
     }

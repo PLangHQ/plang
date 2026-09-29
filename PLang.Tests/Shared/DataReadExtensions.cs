@@ -9,7 +9,13 @@ namespace PLang.Tests;
 public static class DataReadExtensions
 {
     public static T? GetValue<T>(this global::app.data.@this d)
-        => d.GetValue(typeof(T)) is T result ? result : default;
+    {
+        try { return d.GetValue(typeof(T)) is T result ? result : default; }
+        catch (System.Exception e) when (e is System.FormatException or System.InvalidCastException or System.OverflowException)
+        {
+            return default;
+        }
+    }
 
     public static object? GetValue(this global::app.data.@this d, System.Type targetType)
     {

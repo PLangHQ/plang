@@ -113,11 +113,17 @@ public class Stage4_BuildMethodImplsTests
 
     // --- llm.query.Build() ---
 
+    private static List<Dictionary<string, object?>> Chat => new()
+    {
+        new() { ["Role"] = "system", ["Content"] = "you are a bot" },
+        new() { ["Role"] = "user", ["Content"] = "hi" },
+    };
+
     [Test]
     public async Task LlmQuery_Build_WithSchema_ReturnsOkWithJson()
     {
         var result = await Build("llm", "query",
-            ("System", "you are a bot"), ("User", "hi"), ("Schema", "{\"type\":\"object\"}"));
+            ("Message", Chat), ("Schema", "{\"type\":\"object\"}"));
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("json");
     }
@@ -126,7 +132,7 @@ public class Stage4_BuildMethodImplsTests
     public async Task LlmQuery_Build_WithFormatNoSchema_ReturnsOkWithFormatValue()
     {
         var result = await Build("llm", "query",
-            ("System", "you are a bot"), ("User", "hi"), ("Format", "md"));
+            ("Message", Chat), ("Format", "md"));
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("md");
     }
@@ -135,7 +141,7 @@ public class Stage4_BuildMethodImplsTests
     public async Task LlmQuery_Build_NeitherSchemaNorFormat_ReturnsBareOk()
     {
         var result = await Build("llm", "query",
-            ("System", "you are a bot"), ("User", "hi"));
+            ("Message", Chat));
         await result.IsSuccess();
         await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
     }

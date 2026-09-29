@@ -196,11 +196,11 @@ public class Stage6_ConsumersTests
     [Test]
     public async Task Pile2_SqliteSettings_BindsSerializedBlob_NoToRaw()
     {
-        // settings/Sqlite.cs — Store returns Data<text>; the typed door yields the
-        // json blob, no generic item-leaf/ToRaw collapse at the bind site.
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "settings", "Sqlite.cs"));
+        // the sqlite store binds what its format encoded in the Store view — no generic
+        // item-leaf/ToRaw collapse at the bind site.
+        var src = await File.ReadAllTextAsync(SourceOf(typeof(global::app.store.sqlite.@this)));
         await Assert.That(src).DoesNotContain("ToRaw");
-        await Assert.That(src).Contains("await serialized.Value()");
+        await Assert.That(src).Contains("Format.Encode(ms, data, Context, global::app.View.Store)");
     }
 
     [Test]

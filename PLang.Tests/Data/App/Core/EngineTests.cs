@@ -391,16 +391,12 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task StepRunAsync_ExceptionInHandler_ReturnsError()
     {
-        await using var engine = new global::app.@this("/app").Testing();
-
-        engine.module.Register("throwing", "fail", typeof(ThrowingHandler));
+        app.module.Register("throwing", "fail", typeof(ThrowingHandler));
 
         var step = MakeStep("throwing", "fail");
-        var context = engine.actor.list.User.Context;
+        var context = app.actor.list.User.Context;
 
-        // v4: App.Run owns try/catch around handler dispatch — exceptions from a handler
-        // are translated to ServiceError there, not at the Step level. Step.RunAsync's
-        // catch still exists for non-handler failures (event handlers, iteration logic).
+        // the action dispatch answers a handler's exception as ServiceError
         var steps = new GoalSteps { step };
         var result = await steps.Start(context);
         await result.IsFailure();
@@ -410,12 +406,10 @@ public class EngineTests : System.IAsyncDisposable
     [Test]
     public async Task StepRunAsync_HandlerWithoutICodeGenerated_ReturnsError()
     {
-        await using var engine = new global::app.@this("/app").Testing();
-
-        engine.module.Register("legacy", "do", typeof(NonGeneratedHandler));
+        app.module.Register("legacy", "do", typeof(NonGeneratedHandler));
 
         var step = MakeStep("legacy", "do");
-        var context = engine.actor.list.User.Context;
+        var context = app.actor.list.User.Context;
 
         var steps = new GoalSteps { step };
         var result = await steps.Start(context);

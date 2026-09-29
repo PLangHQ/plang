@@ -57,7 +57,7 @@ public class Plng002SystemIoBanTests
     }
 
     private const string ModulesPath = "/workspace/plang/PLang/app/module/foo/Test.cs";
-    private const string PathTypesPath = "/workspace/plang/PLang/app/type/path/test/Test.cs";
+    private const string PathTypesPath = "/workspace/plang/PLang/app/type/item/path/test/Test.cs";
     private const string PathHelperPath = "/workspace/plang/PLang/app/Utils/PathHelper.cs";
 
     [Test] public async Task Fires_OnFileReadAllText_UnderModulesNamespace()

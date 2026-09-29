@@ -63,9 +63,9 @@ public class NumberParseTests
         foreach (var f in fields)
         {
             var v = f.GetValue(n);
-            // No field's runtime type is actor.context.@this (or any IContext-shaped ref).
+            // No field holds the context.
             if (v != null)
-                await Assert.That(v.GetType().Name).IsNotEqualTo("this"); // context's @this
+                await Assert.That(v is global::app.actor.context.@this).IsFalse();
         }
     }
 
