@@ -133,6 +133,11 @@ public partial class Set : IContext, IScope, IKeep
                 return existing;
         }
 
+        // A whole variable that holds nothing is nothing to assign — the program named a variable that
+        // isn't there (VariableNotFound). Asked of a reference only; any other value stays unopened.
+        if (Value.IsVariable && await Value.Given() is { Success: false } missing)
+            return missing;
+
         // Forced type via [Type]: convert via TryConvert and mint Data<T>. Conversion failure
         // surfaces as Data.Error (Success=false) — Variables.Set is not called in that case so
         // the binding stays whatever it was. For primitives this is straight coercion ("42" → 42).
