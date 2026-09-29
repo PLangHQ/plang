@@ -81,6 +81,14 @@ public class Error : global::app.type.item.@this
     /// back-references that can't round-trip (Exception, Step, Goal, CallFrames) are
     /// dropped — the snapshot's CallStack section carries the chain. Symmetric with the
     /// read side (<c>ErrorWire</c>).</summary>
+    /// <summary>An error writes its own flat form (<see cref="Write"/>) in every view.</summary>
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        Write(writer);
+        return System.Threading.Tasks.ValueTask.CompletedTask;
+    }
+
     public override void Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();

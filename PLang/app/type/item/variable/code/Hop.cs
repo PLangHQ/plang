@@ -29,6 +29,14 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
         => System.Threading.Tasks.ValueTask.FromResult(context.Error(new global::app.error.Error(
             $"'{Text}' can't be written to — a {Kind} answers a value, it holds none.", "VariableNotWritable", 400)));
 
+    /// <summary>A hop writes its own <c>.pr</c> form (<see cref="Write"/>) in every view.</summary>
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        Write(writer);
+        return System.Threading.Tasks.ValueTask.CompletedTask;
+    }
+
     /// <summary>Its <c>.pr</c> form: one object under its kind — <c>{"property": "address"}</c>.</summary>
     public override void Write(global::app.type.format.IWriter writer)
     {

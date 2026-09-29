@@ -76,7 +76,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         if (mode == global::app.View.Debug)
         {
-            await new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
+            await base.Output(writer, mode, context);
             return;
         }
         writer.BeginObject();

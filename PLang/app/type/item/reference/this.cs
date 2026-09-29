@@ -116,4 +116,12 @@ public abstract class @this : global::app.type.item.@this
         if (_format is { IsText: true }) writer.String(ContentText());
         else writer.Bytes(Bytes);
     }
+
+    /// <summary>A reference writes its own form (<see cref="Write"/>) in every view.</summary>
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        Write(writer);
+        return System.Threading.Tasks.ValueTask.CompletedTask;
+    }
 }

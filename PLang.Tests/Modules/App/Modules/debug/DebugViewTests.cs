@@ -78,6 +78,33 @@ public class DebugViewTests : System.IAsyncDisposable
         await Assert.That(written).Contains("maybe file.read");
     }
 
+    // A runtime structure that declares no face is written by name in a dump, never walked:
+    // a channel's actor and its channel list.
+    [Test]
+    public async Task AChannelDump_NamesItsActorAndChannels_NeverWalksThem()
+    {
+        var channel = _app.actor.list.User.Channel[global::app.channel.list.@this.Output];
+
+        var written = await channel.Debug(Ctx);
+
+        await Assert.That(written).Contains("\"name\":\"output\"");
+        await Assert.That(written).Contains("\"actor\":\"");
+        await Assert.That(written).Contains("\"channels\":\"");
+    }
+
+    // A binding (an event's runtime structure) dumps as its name, never walking its event or actor.
+    [Test]
+    public async Task ABindingDump_IsItsName()
+    {
+        var binding = _app.type.list["action"].Own().Bind("start", global::app.@event.When.before,
+            (_, _, c) => System.Threading.Tasks.Task.FromResult(c.Ok()), _app.actor.list.User, global::app.@event.binding.Scope.actor);
+
+        var written = await binding.Debug(Ctx);
+
+        await Assert.That(written).StartsWith("\"");
+        await Assert.That(written).DoesNotContain("{");
+    }
+
     // On the wire a type that declares no face still refuses: nothing it holds leaks out.
     [Test]
     public async Task TheOutView_OfATypeWithNoWireFace_StillRefuses()

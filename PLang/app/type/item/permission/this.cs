@@ -146,6 +146,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     // The grant's regex was checked when the grant was made.
     private static bool RegexMatches(string pattern, string candidate) => Regex.IsMatch(candidate, pattern);
 
+    /// <summary>A grant writes its own form (<see cref="Write"/>) in every view.</summary>
+    public override System.Threading.Tasks.ValueTask Output(IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        Write(writer);
+        return System.Threading.Tasks.ValueTask.CompletedTask;
+    }
+
     /// <summary>
     /// The grant owns its wire form: <c>{actor, path, match, verbs:[…]}</c>. No
     /// reflection — the writer never type-switches on it (OBP Rule 9). Symmetric

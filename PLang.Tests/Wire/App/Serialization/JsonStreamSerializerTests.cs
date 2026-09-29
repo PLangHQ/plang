@@ -240,18 +240,11 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
         await Assert.That(result.Error!.Key).IsEqualTo("MaterializeFailed");
     }
 
-    // A domain item rides the wire as its [Out] bag, written through the reflection kind as module,
-    // channel and setting write themselves.
+    // A domain item rides the wire as its [Out] bag.
     private class TestClass : global::app.type.item.@this, global::app.type.item.ICreate<TestClass>
     {
         [global::app.Out] public string? Name { get; set; }
         [global::app.Out] public int? Value { get; set; }
-
-        public override bool IsLeaf => false;
-
-        public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-            global::app.View mode, global::app.actor.context.@this? context)
-            => new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
     }
 
     private enum LocalStatus

@@ -46,10 +46,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>A structure — written through the reflection kind, its [Out] members.</summary>
     public override bool IsLeaf => false;
 
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
-        => new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
-
     /// <summary>One step down: an option of this class (<c>.os</c>), else what this setting answers next
     /// (<see cref="Next"/>).</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)

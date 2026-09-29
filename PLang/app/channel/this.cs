@@ -27,10 +27,6 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// <summary>A structure — written through the reflection kind, its [Out]/[Debug] members.</summary>
     public override bool IsLeaf => false;
 
-    public override ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
-        => new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
-
     /// <summary>A channel is a live resource: a copy of it is it.</summary>
     protected internal override global::app.type.item.@this Clone() => this;
 

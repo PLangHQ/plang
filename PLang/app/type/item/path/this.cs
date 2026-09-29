@@ -293,6 +293,15 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// </summary>
     public override void Write(global::app.type.format.IWriter w) => w.String(ToString());
 
+    /// <summary>A path writes its own form — its location (<see cref="Write"/>) — in every view.</summary>
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        Write(writer);
+        return System.Threading.Tasks.ValueTask.CompletedTask;
+    }
+
+
     // Path equality follows RootComparison — the same case-sensitivity rule
     // Relative/IsUnder/ValidatePath use, so they can't drift apart. Hard-coding
     // OrdinalIgnoreCase here would make /srv/x and /SRV/x — distinct files on

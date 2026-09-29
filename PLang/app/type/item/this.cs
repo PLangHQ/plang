@@ -691,16 +691,18 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <summary>
     /// The item writes ITSELF to the wire — one async pass that merges flatten
     /// (the old Normalize) and render (Write), resolving lazily as it reaches each
-    /// node. The default is the leaf path: emit my bare wire form via <see cref="Write"/>
-    /// (a non-leaf with no override hits Write's loud throw). Containers and references
-    /// override: dict/list walk + await children, variable resolves itself, clr reflects
-    /// its host. No intermediate tree, no pre-resolve walk; <c>await</c>s happen here,
-    /// between the writer's synchronous buffer writes.
+    /// node. The default: a leaf emits its bare wire form via <see cref="Write"/>; a structure writes its
+    /// face for the view through the reflection kind (its tagged members; a type that declares none is
+    /// refused on the wire and named in a dump). A structure with a flat form of its own says so by
+    /// writing itself (error, path, permission, …). Containers and references override: dict/list walk +
+    /// await children, variable resolves itself, clr reflects its host. No intermediate tree, no
+    /// pre-resolve walk; <c>await</c>s happen here, between the writer's synchronous buffer writes.
     /// </summary>
     public virtual System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
+        if (!IsLeaf) return new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
         Write(writer);
         return System.Threading.Tasks.ValueTask.CompletedTask;
     }

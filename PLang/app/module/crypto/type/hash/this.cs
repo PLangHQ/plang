@@ -52,6 +52,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// formats (the algorithm rides as the value's kind on the type envelope).</summary>
     public override void Write(global::app.type.format.IWriter writer) => writer.String(ToBase64());
 
+    /// <summary>A hash writes its own form — its base64 digest (<see cref="Write"/>) — in every view.</summary>
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        Write(writer);
+        return System.Threading.Tasks.ValueTask.CompletedTask;
+    }
+
     /// <summary>
     /// Parse a base64 digest into a <c>hash</c> of the given algorithm. The
     /// byte↔base64 conversion lives here (OBP — it's hash behavior), so callers

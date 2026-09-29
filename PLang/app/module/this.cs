@@ -30,10 +30,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>A structure — written through the reflection kind, its [Out]/[Debug] members.</summary>
     public override bool IsLeaf => false;
 
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
-        => new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
-
     // The app's module, which holds every module; null on the app's module itself.
     private readonly @this? _root;
     // Held by the app's module only: the app, the modules, and the lock a registration takes.
