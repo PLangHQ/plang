@@ -104,11 +104,29 @@ The llm cache stays unfixed on purpose. Pile2_SqliteSettings reads a file gone b
   harness: real Ed25519 refuses a tampered Properties value (`DataHashMismatch`, Properties ride inside the signed
   value).
 
-## Next
-Waiting on Ingi: fix the 116 here before the merge, or on their own branch. When the test-fix batch runs, the
-Properties-tamper tests (OuterSignature…, Cut4…) take the real-signing pin: read the tampered wire, expect
-DataHashMismatch; no second `signing.verify` on an already-peeled Data. Gate rule: diff failing **names**
-against `baseline-failures.txt`; rebuild (`dev.sh build`) after reverting any mutation before a plang run.
+## The fix pass (decision 302 onward) — 116 inherited failures → 44
+One commit per owner, each name-diffed (no regressions), each bug's test its pin, a mutation sample per cluster.
+- **Harness:** pipeline .pr fixtures regenerated; shims/setup/moved-file scans; the tamper tests on real Ed25519;
+  the parallel test gated deterministically (a TaskCompletionSource, not a clock).
+- **Bugs fixed:** a stored null reads back; nested Properties read through their own type's reader; clr's text form
+  is its json; the nonce recorded only after the hash and signature pass (305); `set` from an unset variable is
+  VariableNotFound (307); Coverage's lone-if outcome; the Debug view writes an action's own shape, never walking back
+  edges, its template parameters as authored, sensitive members masked (310/311); X-Signature is plang's wire; an
+  error value refuses to become another type at the birth doors (`item.Refuses`, 313/314); number pass-through and
+  a declared kind honoured from any raw (303); variable's own decline; directory/image load in the Out view
+  only (317); `Template` born, not stamped (322).
+- **Stale:** rewritten to today's behaviour through the door each used, or deleted naming the commit that removed
+  the subject (the `if`/Child cluster, the STJ converters, renamed/values-as-items rows).
+- **Baseline:** `baseline-failures.txt` = the 44; `v14/baseline-after-fixes.md` gives each its owner.
+
+## Next / held
+- **With Ingi:** 304 (a bare text/binary whose raw it owns is born at once; patch kept in the coder scratchpad;
+  `set.cs:197–202`'s throwaway birth to delete), the file reference's Out face, the half-written stream on a
+  failed encode, the Out-view template leak, `%!callStack%/%!variables%/%!trace%` beside `%!app.…%` (0d), a
+  value's `_history`/`_on` on shared instances, the legacy `os/system/modules/` goals.
+- **The `?` briefs** are with the architect (snapshot family waits on the ISnapshot redesign; json narrowing and
+  enum casing are rulings; the rest are harness/stale/one likely bug — Cut1's verbatim json relay).
+- Gate rule: diff failing **names** against `baseline-failures.txt`; rebuild after reverting a mutation.
 
 ## Code example
 ```csharp
