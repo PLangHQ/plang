@@ -141,3 +141,15 @@ public class SerializationException : AppException
         TargetType = targetType;
     }
 }
+
+/// <summary>
+/// A type declined to make a value from what it was handed (text that isn't a number, a dict that isn't a
+/// whole goal channel), with the reason the type gave — its <see cref="Error"/> keeps that reason's key. An
+/// <see cref="InvalidOperationException"/>, so a lazy value's read answers it as its own failure.
+/// </summary>
+public sealed class DeclinedException : InvalidOperationException
+{
+    public Error Error { get; }
+
+    public DeclinedException(Error error) : base(error.Message) => Error = error;
+}

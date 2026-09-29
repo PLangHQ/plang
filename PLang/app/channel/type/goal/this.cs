@@ -19,15 +19,18 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
 
     /// <summary>The goal channel <paramref name="raw"/>'s settings describe, read by this channel's own property names,
     /// for the actor whose context it is born in: Name and Goal (a <c>goal.call</c>) are required; a setting not
-    /// there keeps the channel's own default. Anything else declines.</summary>
+    /// there keeps the channel's own default. Anything else declines; settings missing a required one decline
+    /// naming it (<c>GoalChannelIncomplete</c>).</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this self) return self;
         var ctx = data.Context;
         if (raw is not global::app.type.item.dict.@this settings || ctx == null) return null;
         global::app.type.item.@this? Setting(string name) => settings.Get(name, ctx)?.Peek() is { IsNull: false } v ? v : null;
-        if (Setting(nameof(Name))?.ToString() is not { Length: > 0 } name
-            || Setting(nameof(Goal)) is not global::app.goal.step.action.@this goal) return null;
+        if (Setting(nameof(Name))?.ToString() is not { Length: > 0 } name)
+            return Incomplete($"a goal channel needs its {nameof(Name)}");
+        if (Setting(nameof(Goal)) is not global::app.goal.step.action.@this goal)
+            return Incomplete($"goal channel '{name}' needs its {nameof(Goal)}: the goal.call each write runs");
         // Direction, buffer and mime are plang values the channel holds as they are; the rest are lowered here
         // to what the transport uses.
         return new @this(name, goal, ctx.Actor,
@@ -38,6 +41,12 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
             encoding: Setting(nameof(Encoding))?.ToString(),
             encryption: (Setting(nameof(Encryption)) as global::app.type.item.variable.@this)?.Name,
             signing: (Setting(nameof(Signing)) as global::app.type.item.variable.@this)?.Name);
+
+        @this? Incomplete(string why)
+        {
+            data.Fail(new global::app.error.Error(why, "GoalChannelIncomplete", 400));
+            return null;
+        }
     }
 
     /// <summary>The goal this channel runs for each write — a <c>goal.call</c> action.</summary>

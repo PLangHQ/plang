@@ -92,6 +92,21 @@ public class ChannelSetTests
         await Assert.That(result.Error!.Key).IsEqualTo("GoalNotFound");
     }
 
+    // Settings missing a required one are refused when the channel is born, naming what's missing — never held
+    // as a dict that fails later as "not a channel".
+    [Test]
+    public async Task SettingsWithoutTheirGoal_AreRefused_AsGoalChannelIncomplete()
+    {
+        var ctx = _app.actor.list.User.Context;
+        var channel = ctx.App.type.list[new global::app.type.@this(typeof(global::app.channel.type.goal.@this)), ctx];
+
+        var born = await channel.Create(new global::app.type.item.dict.@this().Set("Name", "logger"), ctx);
+
+        await born.IsFailure();
+        await Assert.That(born.Error!.Key).IsEqualTo("GoalChannelIncomplete");
+        await Assert.That(born.Error.Message).Contains("needs its Goal");
+    }
+
     // channel.remove: a registered channel goes; a default one is the boot invariant's (replaced, never
     // removed); one not there is NotFound.
     [Test]

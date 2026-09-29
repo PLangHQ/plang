@@ -261,7 +261,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         var events = on.create;
         return events.IsBound(this, context)
             ? Born(events, raw, context, name)
-            : new(new global::app.data.@this(name, Make(raw, context), context: context));
+            : new(Made(raw, context, name));
     }
 
     // The birth with something bound: before is handed the raw, after the value.
@@ -271,8 +271,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         if (await events.Before(this, context, new global::app.data.@this(name, raw, context: context)) is { } answer
             && (!answer.Success || answer.Handled))
             return answer;
-        var made = new global::app.data.@this(name, Make(raw, context), context: context);
-        return await events.After(this, made, context);
+        var made = Made(raw, context, name);
+        return made.Success ? await events.After(this, made, context) : made;
+    }
+
+    // The value a birth makes, or the reason this type declined to make it.
+    private global::app.data.@this Made(object? raw, global::app.actor.context.@this context, string name)
+    {
+        try { return new global::app.data.@this(name, Make(raw, context), context: context); }
+        catch (global::app.error.DeclinedException declined) { return context.Error(declined.Error); }
     }
 
     // THE born-native build — the ENTITY builds a plang VALUE of itself from a raw value, in one
@@ -307,8 +314,14 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // its own birth, handed this declaration — so a file declared a template is born one. A template is
         // the value's birth fact, never stamped here.
         if (raw is item.@this { IsLeaf: false } native)
-            return Takes(native.Type) && Make(raw, new global::app.data.@this("", context: context)) is { } made
-                ? made : native;
+        {
+            if (!Takes(native.Type)) return native;
+            // a decline lands its reason on the carrier — this door throws it, as a leaf's does
+            var declined = new global::app.data.@this("", context: context);
+            if (Make(raw, declined) is { } made) return made;
+            if (declined.Error != null) throw Failed(declined.Error);
+            return native;
+        }
 
         // A source (declared, unparsed) re-declared → the source RE-BIRTHS itself over the same
         // unread raw with THIS declaration (which carries the build's stamped kind/template). The
@@ -356,8 +369,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                 ? lifted : Make(lifted, context);
         return Make(global::app.type.item.@this.Create(raw, context), context);
 
-        static System.Exception Failed(global::app.error.Error? error)
-            => new System.InvalidOperationException(error?.Message ?? "conversion failed");
+        static System.Exception Failed(global::app.error.Error error) => new global::app.error.DeclinedException(error);
     }
 
     /// <summary>A still-encoded slice + the serializer that sliced it — the capture hands over

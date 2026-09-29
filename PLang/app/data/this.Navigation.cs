@@ -36,8 +36,10 @@ public partial class @this
         // land the write on the stale wire. Use the materialized value directly and rebind to the
         // written result, which snapshots a template container into its plain resolved form on
         // first write (correct for a dict built up across several sets).
+        var before = Error;
         var target = await Value();
-        if (Error?.Key == "MaterializeFailed") return _context?.Error(Error) ?? this;
+        // the read failed (the value didn't parse, or its type declined it): that is the write's answer
+        if (Error != null && !ReferenceEquals(Error, before)) return _context?.Error(Error) ?? this;
 
         if (target is null)
             return _context?.NotFound(key) ?? this;

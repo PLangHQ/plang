@@ -184,9 +184,10 @@ public class source : @this
             var where = ex is System.Text.Json.JsonException je && (je.Path != null || je.LineNumber != null)
                 ? $" [at {je.Path ?? "?"}, line {je.LineNumber?.ToString() ?? "?"}]"
                 : "";
+            // a type that declined says why under its own key; any other failure to parse is MaterializeFailed
             data.Fail(new global::app.error.Error(
                 $"failed to read %{data.Name}% as {_type.Name}{(_type.kind.IsEmpty ? "" : $"/{_type.kind.Name}")}: {ex.Message}{where}",
-                "MaterializeFailed", 400) { Exception = ex });
+                ex is global::app.error.DeclinedException declined ? declined.Error.Key : "MaterializeFailed", 400) { Exception = ex });
             return Absent;
         }
     }

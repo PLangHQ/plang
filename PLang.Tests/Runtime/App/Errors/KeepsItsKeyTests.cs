@@ -34,6 +34,15 @@ public class KeepsItsKeyTests : System.IAsyncDisposable
         await Assert.That(encoded.Error?.Key).IsEqualTo("OutputGetterThrew");
     }
 
+    // A value a type declines to make is the birth's answer, with the reason the type gave — never thrown.
+    [Test] public async Task ATypeThatDeclines_AnswersItsOwnReason()
+    {
+        var born = await Ctx.App.type.list["number"].Create(new global::app.type.item.text.@this("abc"), Ctx);
+
+        await born.IsFailure();
+        await Assert.That(born.Error!.Key).IsEqualTo("NumberConversionFailed");
+    }
+
     // An option given a value it can't take is refused with the reason the option gives.
     [Test] public async Task AnOptionsRefusedValue_KeepsTheOptionsKey()
     {
