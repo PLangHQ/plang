@@ -129,6 +129,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         var named = (declared ?? data.Type).kind is { IsEmpty: false } k ? k.Name : null;
+        // Pass-through — a number already of the declared kind (or with none declared) rides out as it is.
+        if (raw is @this same && (named is null || string.Equals(same.Kind.Name, named, System.StringComparison.OrdinalIgnoreCase)))
+            return same;
         if (named is not null && raw is global::app.type.item.@this value)
         {
             if (!Kinds.TryGetValue(named, out var kind))
