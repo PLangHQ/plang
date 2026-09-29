@@ -220,27 +220,14 @@ public class Error : global::app.type.item.@this
     }
 
     /// <summary>
-    /// Wraps a CLR exception as an Error. StatusCode defaults to 500 (runtime error).
+    /// The one door from an exception to an Error. A program's error that travelled as an exception is its own
+    /// Error, whole ("PrFormatOutdated", "GoalNotFound"). Any other exception is one plang didn't raise — a C#
+    /// fault — and has no program key: <c>ServiceError</c> (500), its message naming the exception's type.
     /// </summary>
-    public static Error FromException(Exception ex, string key = "Exception", int statusCode = 500)
+    public static Error FromException(Exception ex)
     {
-        // A program's error that travelled as an exception is its own Error — "PrFormatOutdated", not "Exception".
         if (ex is AppException carried) return carried.Error;
-        return new Error(ex.Message, key, statusCode)
-        {
-            Exception = ex
-        };
-    }
-
-    /// <summary>
-    /// Wraps a CLR exception as an Error with execution context for step/goal/callstack capture.
-    /// </summary>
-    public static Error FromException(Exception ex, actor.context.@this context, string key = "Exception", int statusCode = 500)
-    {
-        return new Error(ex.Message, context, key, statusCode)
-        {
-            Exception = ex
-        };
+        return new ServiceError($"{ex.GetType().Name}: {ex.Message}", "ServiceError", 500) { Exception = ex };
     }
 
     /// <summary>The last-resort line, <c>[Key] Message</c>: for when the error cannot be shown by

@@ -418,16 +418,10 @@ public static class @this
                     try { return await Start(); }
                     // a program's error that travelled as an exception is the action's answer, whole
                     catch (global::app.error.AppException ex) { return global::app.data.@this.FromError(ex.Error); }
+                    // an exception plang didn't raise — the frame the failure is recorded on says which action
                     catch (System.Exception ex) when (ex is not (System.OperationCanceledException or System.OutOfMemoryException or System.StackOverflowException))
                     {
-                        // Bare exceptions from Start() (NRE, InvalidCast, etc.) reach the user
-                        // as "Object reference not set" with no module.action context. Wrap
-                        // here so the message tells the reader which action's Start() threw.
-                        var __mod = __action?.Module.Name ?? "?";
-                        var __act = __action?.Name ?? "?";
-                        return global::app.data.@this.FromError(new global::app.error.ServiceError(
-                            $"{__mod}.{__act}: {ex.GetType().Name}: {ex.Message}", "ServiceError", 500)
-                        { Exception = ex });
+                        return global::app.data.@this.FromError(global::app.error.Error.FromException(ex));
                     }
                 }
 

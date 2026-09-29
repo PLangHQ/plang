@@ -101,7 +101,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
             data.Fail(new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to path.", "PathConversionFailed", 400));
             return null;
         }
-        try { return Resolve(raw, data.Context); }
+        try { return Resolve(raw, data.Context!); }
         catch (scheme.SchemeNotRegistered snr)
         {
             data.Fail(new global::app.error.Error(snr.Message, "SchemeNotRegistered", 400)
@@ -134,8 +134,12 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         if (_location.Cacheable) return this;   // literal location — already resolved
-        var rendered = (await _location.Value(data)).Clr<string>() ?? "";
-        return Resolve(rendered, data.Context);
+        var before = data.Error;
+        var rendered = await _location.Value(data);
+        // the location didn't render (a variable it names isn't set): that reason is the answer
+        if (data.Error != null && !ReferenceEquals(data.Error, before)) return Absent;
+        // a location no path takes (empty, a scheme no kind holds) declines with its reason on data
+        return (global::app.type.item.@this?)Create(rendered.Clr<string>() ?? "", null, data) ?? Absent;
     }
 
     /// <summary>Source generator convention — auto-wraps string parameters.</summary>

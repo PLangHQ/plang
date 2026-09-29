@@ -135,8 +135,7 @@ public sealed partial class @this
             catch (global::app.error.AppException ex) { result = context.Error(ex.Error); }
             catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException or OperationCanceledException))
             {
-                // an exception plang didn't raise has no program key: the same one the action's catch gives it
-                result = context.Error(new global::app.error.ServiceError(ex.Message, "ServiceError", 500) { Exception = ex });
+                result = context.Error(global::app.error.Error.FromException(ex));
             }
         }
         result = await on.start.After(this, result, context);

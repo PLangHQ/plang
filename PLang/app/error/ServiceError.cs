@@ -28,12 +28,4 @@ public class ServiceError : Error
             Exception = ex
         };
     }
-
-    public new static ServiceError FromException(Exception ex, actor.context.@this context, string key = "Exception", int statusCode = 500)
-    {
-        return new ServiceError(ex.Message, context, key, statusCode)
-        {
-            Exception = ex
-        };
-    }
 }

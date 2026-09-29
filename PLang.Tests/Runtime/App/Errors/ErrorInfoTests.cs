@@ -101,21 +101,21 @@ public class ErrorTests
 
         var error = Error.FromException(ex);
 
-        await Assert.That(error.Message).IsEqualTo("Something failed");
-        await Assert.That(error.Key).IsEqualTo("Exception");
+        // an exception plang didn't raise: ServiceError (500), its message naming the exception's type
+        await Assert.That(error.Message).IsEqualTo("InvalidOperationException: Something failed");
+        await Assert.That(error.Key).IsEqualTo("ServiceError");
         await Assert.That(error.StatusCode).IsEqualTo(500);
         await Assert.That(error.Exception).IsEqualTo(ex);
     }
 
     [Test]
-    public async Task FromException_WithCustomKeyAndStatusCode_UsesProvidedValues()
+    public async Task FromException_OfACarriedError_IsThatErrorWhole()
     {
-        var ex = new ArgumentException("Bad argument");
+        var carried = new Error("Bad argument", "ValidationError", 400);
 
-        var error = Error.FromException(ex, "ValidationError", 400);
+        var error = Error.FromException(new global::app.error.AppException(carried));
 
-        await Assert.That(error.Key).IsEqualTo("ValidationError");
-        await Assert.That(error.StatusCode).IsEqualTo(400);
+        await Assert.That(error).IsSameReferenceAs(carried);
     }
 
     [Test]
@@ -126,7 +126,7 @@ public class ErrorTests
 
         var error = Error.FromException(outer);
 
-        await Assert.That(error.Message).IsEqualTo("Outer");
+        await Assert.That(error.Message).IsEqualTo("Exception: Outer");
         await Assert.That(error.Exception).IsNotNull();
         await Assert.That(error.Exception!.InnerException).IsNotNull();
         await Assert.That(error.Exception!.InnerException!.Message).IsEqualTo("Inner");
@@ -254,21 +254,5 @@ public class StepErrorTests
         var error = new StepError("Step failed");
 
         await Assert.That(error.Key).IsEqualTo("StepError");
-    }
-
-    [Test]
-    public async Task FromException_CreatesStepErrorWithStep()
-    {
-        var ex = new Exception("Step crashed");
-        await using var engine = new global::app.@this("/app").Testing();
-        using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
-        var step = new Step { Text = "test step" };
-        await using var inStep = context.CallStack.Push(step);
-
-        var error = StepError.FromException(ex, context);
-
-        await Assert.That(error).IsTypeOf<StepError>();
-        await Assert.That(error.Message).IsEqualTo("Step crashed");
-        await Assert.That(error.Step).IsEqualTo(step);
     }
 }

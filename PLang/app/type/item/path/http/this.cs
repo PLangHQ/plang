@@ -460,9 +460,7 @@ public sealed partial class @this : global::app.type.item.path.@this
             Data = new data.@this("", canonical, context: context),
         };
         var signResult = await new global::app.goal.step.action.@this(sign, context).Start(context);
-        if (!signResult.Success)
-            return new Error($"the request to {_uri} couldn't be signed: {signResult.Error?.Message}",
-                signResult.Error?.Key ?? "SigningFailed", signResult.Error?.StatusCode ?? 400);
+        if (!signResult.Success) return signResult.Error!;
         var json = JsonSerializer.Serialize(signResult);
         request.Headers.TryAddWithoutValidation("X-Signature", json);
         return null;

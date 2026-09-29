@@ -43,15 +43,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>
     /// The children's locations as a native <c>list</c> of <c>path</c> values,
-    /// listed through the path's auth gate (as the caller) on first access and cached.
+    /// listed through the path's auth gate (as the caller) on first access and cached;
+    /// a directory that can't be listed answers why (the path verb's own error).
     /// </summary>
-    public async System.Threading.Tasks.Task<global::app.type.item.list.@this<global::app.type.item.path.@this>> List(actor.context.@this context)
+    public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> List(actor.context.@this context)
     {
-        if (_list != null) return _list;
+        if (_list != null) return context.Ok<global::app.type.item.list.@this<global::app.type.item.path.@this>>(_list);
         var listed = await Path.List(context);
-        if (!listed.Success)
-            throw new System.IO.IOException(listed.Error!.Message);
-        return _list = (await listed.Value())!;
+        if (listed.Success) _list = (await listed.Value())!;
+        return listed;
     }
 
     /// <summary>The already-materialised listing, or null when nothing listed yet —
@@ -68,14 +68,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
-        try { await List(data.Context); }
-        catch (System.IO.IOException ex)
-        {
-            data.Fail(new global::app.error.Error(
-                $"could not list '{Path}': {ex.Message}", "DirectoryListFailed", 400) { Exception = ex });
-            return Absent;
-        }
-        return this;
+        var listed = await List(data.Context!);
+        if (listed.Success) return this;
+        data.Fail(listed.Error!);
+        return Absent;
     }
 
     /// <summary>The item membership hook — routes to the listing rule below.</summary>
@@ -87,8 +83,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public async System.Threading.Tasks.Task<bool> Contains(string needle, actor.context.@this context)
     {
         if (string.IsNullOrEmpty(needle)) return false;
-        var listing = await List(context);
-        foreach (var slot in listing.Slots())
+        // membership answers a bool, so a directory that can't be listed says why as a thrown program error
+        var listed = await List(context);
+        if (!listed.Success) throw new global::app.error.AppException(listed.Error!);
+        foreach (var slot in (await listed.Value())!.Slots())
             if ((slot is global::app.data.@this d ? d.Peek() : slot)?.ToString()?.Contains(needle, System.StringComparison.OrdinalIgnoreCase) == true)
                 return true;
         return false;

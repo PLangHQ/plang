@@ -25,14 +25,6 @@ public class ActionError : Error
         };
     }
 
-    public new static ActionError FromException(Exception ex, actor.context.@this context, string key = "Exception", int statusCode = 500)
-    {
-        return new ActionError(ex.Message, context, key, statusCode)
-        {
-            Exception = ex
-        };
-    }
-
     public static ActionError NotFound(string what) => new($"{what} not found", "ActionNotFound", 404);
     public static ActionError NotFound(string what, actor.context.@this context) => new($"{what} not found", context, "ActionNotFound", 404);
 }

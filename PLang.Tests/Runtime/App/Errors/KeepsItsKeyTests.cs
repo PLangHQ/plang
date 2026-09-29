@@ -80,6 +80,17 @@ public class KeepsItsKeyTests : System.IAsyncDisposable
         await Assert.That(thrown!.Error.Key).IsEqualTo("OutputGetterThrew");
     }
 
+    // A path whose location is a template resolves when read: a scheme no path kind holds is the read's answer.
+    [Test] public async Task ATemplatePathToAnUnknownScheme_ReadsAsSchemeNotRegistered()
+    {
+        await Ctx.Variable.Set("where", Ctx.Ok("s3://bucket/x"));
+        var path = new global::app.data.@this("p", global::app.type.item.path.@this.Resolve("%where%", Ctx), context: Ctx);
+
+        await path.Value();
+
+        await Assert.That(path.Error?.Key).IsEqualTo("SchemeNotRegistered");
+    }
+
     // The wire marker can't be a dict key: the write answers ReservedKey.
     [Test] public async Task TheWireMarkerAsADictKey_IsReservedKey()
     {

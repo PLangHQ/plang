@@ -316,7 +316,7 @@ public partial class @this
         catch (global::app.error.AppException ex) { result = context.Error(ex.Error); }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
-            result = context.Error(new global::app.error.ServiceError(ex.Message, "ServiceError", 500) { Exception = ex });
+            result = context.Error(global::app.error.Error.FromException(ex));
         }
         // A failure — returned or thrown — carries the handler's parameters and is recorded on the frame.
         if (!result.Success && result.Error is { } err)

@@ -23,12 +23,4 @@ public class ProgramError : Error
             Exception = ex
         };
     }
-
-    public new static ProgramError FromException(Exception ex, actor.context.@this context, string key = "Exception", int statusCode = 500)
-    {
-        return new ProgramError(ex.Message, context, key, statusCode)
-        {
-            Exception = ex
-        };
-    }
 }

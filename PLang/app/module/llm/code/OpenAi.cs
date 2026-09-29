@@ -685,8 +685,7 @@ public sealed class OpenAi : ILlm
                 };
             }
             if (!content.Success && content.Error is { StatusCode: not 404 } unread)
-                throw new global::app.error.AppException($"the image '{imgPath}' couldn't be read: {unread.Message}",
-                    unread.Key, unread.StatusCode);
+                throw new global::app.error.AppException(unread);
         }
 
         // Assume base64

@@ -16,12 +16,4 @@ public class StepError : Error
 
     public StepError(string message, actor.context.@this context, string key = "StepError", int statusCode = 400)
         : base(message, context, key, statusCode) { }
-
-    public new static StepError FromException(Exception ex, actor.context.@this context, string key = "Exception", int statusCode = 500)
-    {
-        return new StepError(ex.Message, context, key, statusCode)
-        {
-            Exception = ex
-        };
-    }
 }
