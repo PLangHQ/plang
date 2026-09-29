@@ -68,6 +68,11 @@ public class WireKindShapeTests : System.IAsyncDisposable
     {
         var d = new global::app.data.@this("x", null, global::app.type.@this.Null);
         var json = ToJson(d);
-        await Assert.That(json.Contains("\"type\"")).IsFalse();
+        // the data row itself — inside the signing layer the wire wraps it in, which has a type of its own
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var root = doc.RootElement;
+        var row = root.TryGetProperty("@schema", out var schema) && schema.GetString() == "signature"
+            ? root.GetProperty("value") : root;
+        await Assert.That(row.TryGetProperty("type", out _)).IsFalse();
     }
 }

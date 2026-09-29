@@ -180,13 +180,14 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Serialize_Enum_UsesCamelCase()
+    public async Task Serialize_Enum_KeyCamelCase_ValueAsDeclared()
     {
         var obj = new { Status = LocalStatus.Active };
 
         var json = (await Json.Serialize(app.Ok(obj), Ctx).Value())!.Clr<string>()!;
 
-        await Assert.That(json).Contains("active");
+        // the naming policy is for keys; a value is data — an enum value is its option as declared
+        await Assert.That(json).IsEqualTo("{\"status\":\"Active\"}");
     }
 
     [Test]
@@ -239,10 +240,18 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
         await Assert.That(result.Error!.Key).IsEqualTo("MaterializeFailed");
     }
 
+    // A domain item rides the wire as its [Out] bag, written through the reflection kind as module,
+    // channel and setting write themselves.
     private class TestClass : global::app.type.item.@this, global::app.type.item.ICreate<TestClass>
     {
-        public string? Name { get; set; }
-        public int? Value { get; set; }
+        [global::app.Out] public string? Name { get; set; }
+        [global::app.Out] public int? Value { get; set; }
+
+        public override bool IsLeaf => false;
+
+        public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+            global::app.View mode, global::app.actor.context.@this? context)
+            => new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
     }
 
     private enum LocalStatus

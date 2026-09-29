@@ -39,10 +39,10 @@ public class Cut1_TypedSetRoundTripsKind
             ("type", new global::app.type.@this("text", "md")));
         await action.Start(context);
 
-        // Navigation via the same engine path used by `%doc.Type.Name%` in goal text.
-        var name = await (await context.Variable.Get("doc"))!.Get("Type.Name");
-        var kind = await (await context.Variable.Get("doc"))!.Get("Type.Kind");
-        await Assert.That((await name.Value())?.ToString()).IsEqualTo("text");
-        await Assert.That((await kind.Value())?.ToString()).IsEqualTo("md");
+        // A value's type is on the property plane (`%doc!type%`); `.` is its content.
+        var type = await (await context.Variable.Get("doc"))!.Get("!type");
+        var entity = (global::app.type.@this)(await type.Value())!;
+        await Assert.That(entity.Name).IsEqualTo("text");
+        await Assert.That(entity.kind.Name).IsEqualTo("md");
     }
 }

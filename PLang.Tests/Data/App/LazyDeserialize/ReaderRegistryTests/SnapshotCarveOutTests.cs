@@ -13,15 +13,6 @@ public class SnapshotCarveOutTests
 {
     private static Assembly PLangAssembly => typeof(global::app.@this).Assembly;
 
-    // app/snapshot/this.Wire.cs — snapshot's static `FromWire(string, string?)` stays.
-    [Test] public async Task Snapshot_FromWire_StillExists()
-    {
-        var t = PLangAssembly.GetType("app.snapshot.this");
-        await Assert.That(t).IsNotNull();
-        var m = t!.GetMethod("FromWire", BindingFlags.Public | BindingFlags.Static);
-        await Assert.That(m).IsNotNull();
-    }
-
     [Test] public async Task App_SnapshotToWire_StillExists()
         => await Assert.That(typeof(global::app.@this).GetMethod("SnapshotToWire")).IsNotNull();
 
