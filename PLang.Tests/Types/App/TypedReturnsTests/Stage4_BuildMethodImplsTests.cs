@@ -184,9 +184,24 @@ public class Stage4_BuildMethodImplsTests
     [Test]
     public async Task HttpUpload_Build_NonLiteralUrl_ReturnsBareOk()
     {
-        var result = await Build("http", "upload",
-            ("Url", "%endpoint%"),
-            ("FilePath", "/tmp/dummy.txt"));
+        // a %variable% url, as the builder writes it: the text marked a template (an unmarked "%x%" is literal)
+        var context = _app.actor.list.User.Context;
+        var a = new PrAction
+        {
+            Module = _app.Module("http"),
+            Name = "upload",
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
+            {
+                new Data("Url", "%endpoint%", _app.type.list[new global::app.type.@this("text", template: "plang"), context], context: context),
+                new Data("FilePath", "/tmp/dummy.txt", context: context),
+            }),
+        };
+        var (shell, err) = a.Instance(context);
+        await Assert.That(err).IsNull();
+        var (handler, resolveErr) = await shell!.Resolve(a, context);
+        await Assert.That(resolveErr).IsNull();
+        var result = await ((IClass)handler!).Build();
+
         await result.IsSuccess();
         await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
     }

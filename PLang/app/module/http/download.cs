@@ -12,7 +12,7 @@ namespace app.module.http;
 /// </summary>
 [Action("download", Cacheable = false)]
 [RequiresCapability("network")]
-public partial class download : IContext
+public partial class download : IContext, IAddressed
 {
     /// <summary>URL to download from. Relative URLs resolve against Config.BaseUrl.</summary>
     public partial data.@this<global::app.type.item.text.@this> Url { get; init; }
@@ -32,8 +32,8 @@ public partial class download : IContext
     [GoalCallback("progress")]
     public partial data.@this<global::app.goal.step.action.@this>? OnProgress { get; init; }
 
-    /// <summary>Base URL for resolving relative URLs. Unset = URLs must be absolute.</summary>
-    public partial data.@this<global::app.type.item.text.@this>? BaseUrl { get; init; }
+    /// <summary>Base URL a relative URL joins — an absolute http(s) url. Unset = URLs must be absolute.</summary>
+    public partial data.@this<global::app.type.item.path.http.@this>? BaseUrl { get; init; }
 
     /// <summary>Header merged into every request; per-request <see cref="Header"/> win on conflict.</summary>
     public partial data.@this<global::app.type.item.dict.@this>? DefaultHeaders { get; init; }

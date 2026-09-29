@@ -12,7 +12,7 @@ namespace app.module.http;
 /// </summary>
 [Action("request")]
 [RequiresCapability("network")]
-public partial class request : IContext
+public partial class request : IContext, IAddressed
 {
     /// <summary>Target URL. Relative URLs resolve against Config.BaseUrl. Bare domains get https:// prefix.</summary>
     public partial data.@this<global::app.type.item.text.@this> Url { get; init; }
@@ -50,8 +50,8 @@ public partial class request : IContext
     /// <summary>Stream format: Line (NDJSON), SSE (Server-Sent Events), or Bytes (raw chunks).</summary>
     public partial data.@this<global::app.type.item.choice.@this<StreamFormat>>? StreamAs { get; init; }
 
-    /// <summary>Base URL for resolving relative request URLs. Unset = URLs must be absolute.</summary>
-    public partial data.@this<global::app.type.item.text.@this>? BaseUrl { get; init; }
+    /// <summary>Base URL a relative request URL joins — an absolute http(s) url. Unset = URLs must be absolute.</summary>
+    public partial data.@this<global::app.type.item.path.http.@this>? BaseUrl { get; init; }
 
     /// <summary>Header merged into every request; per-request <see cref="Header"/> win on conflict.</summary>
     public partial data.@this<global::app.type.item.dict.@this>? DefaultHeaders { get; init; }
@@ -88,9 +88,10 @@ public partial class request : IContext
     /// </summary>
     // A literal url says what its body will be by its extension — the path's Kind; none for a %variable% url
     // or an extension no type has.
-    public async Task<data.@this> Build() => Url.HasVariable ? Context.Ok() : await Url.Use(url =>
-    {
-        var kind = global::app.type.item.path.@this.Resolve(url.ToString(), Context).Kind(Context);
-        return Task.FromResult(kind.IsNull ? Context.Ok() : Context.Ok(kind));
-    });
+    public async Task<data.@this> Build() => Url.HasVariable || BaseUrl?.HasVariable == true ? Context.Ok()
+        : await (await ((IAddressed)this).Target()).Use(url =>
+        {
+            var kind = url.Kind(Context);
+            return Task.FromResult(kind.IsNull ? Context.Ok() : Context.Ok(kind));
+        });
 }

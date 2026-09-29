@@ -277,6 +277,44 @@ public class RequestActionTests
         await Assert.That(_handler.LastRequest!.RequestUri!.ToString()).IsEqualTo("https://api.example.com/users/1");
     }
 
+    [Test]
+    public async Task Get_BareHost_IsHttps()
+    {
+        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"api.example.com/users", Unsigned = (global::app.type.item.@bool.@this)true };
+        var result = await _app.Run(action, Ctx);
+
+        await result.IsSuccess();
+        await Assert.That(_handler.LastRequest!.RequestUri!.ToString()).IsEqualTo("https://api.example.com/users");
+    }
+
+    [Test]
+    public async Task Get_NonHttpScheme_IsRefused()
+    {
+        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"file:///etc/passwd", Unsigned = (global::app.type.item.@bool.@this)true };
+        var result = await _app.Run(action, Ctx);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("InvalidUrlScheme");
+        await Assert.That(_handler.LastRequest).IsNull();
+    }
+
+    // What the build expects and what the run requests are one answer: /api/x.json with a base is the base's
+    // json, requested at the joined url.
+    [Test]
+    public async Task BuildAndStart_AgreeOnARelativeUrlWithABase()
+    {
+        await _app.actor.list.System.Setting.Set("http.BaseUrl", Ctx.Ok("https://api.example.com/v1"));
+        // the build walk: the program action binds its handler (its settings read) and publishes Build's answer
+        var program = Make.Action("http", "request", ("Url", "/api/x.json"), ("Unsigned", true));
+        await Assert.That(await program.Build(Ctx)).IsNull();
+        var built = await Ctx.Variable.Get("!buildData");
+        var result = await _app.Run(new request(Ctx) { Url = (global::app.type.item.text.@this)"/api/x.json", Unsigned = (global::app.type.item.@bool.@this)true }, Ctx);
+
+        await Assert.That((built?.Peek() as global::app.type.@this)?.kind.Name).IsEqualTo("json");
+        await result.IsSuccess();
+        await Assert.That(_handler.LastRequest!.RequestUri!.ToString()).IsEqualTo("https://api.example.com/v1/api/x.json");
+    }
+
     #endregion
 
     #region Response Properties

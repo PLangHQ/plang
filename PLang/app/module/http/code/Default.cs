@@ -48,10 +48,10 @@ public sealed class Default : IHttp
         var followRedirects = (await action.FollowRedirects.Value())!;
         var maxRedirects = (await action.MaxRedirects.Value())!;
 
-        var baseUrl = (await action.BaseUrl.Value())?.Clr<string>();
-        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, baseUrl, action.Context);
-        if (!urlResult.Success) return urlResult;
-        var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
+        // the url the action goes to — the one its build expected
+        var target = await ((global::app.module.http.IAddressed)action).Target();
+        if (!target.Success) return target;
+        var resolvedUrl = (await target.Value())!.ToString();
 
         var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
             : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
@@ -126,10 +126,10 @@ public sealed class Default : IHttp
         var followRedirects = (await action.FollowRedirects.Value())!;
         var maxRedirects = (await action.MaxRedirects.Value())!;
 
-        var baseUrl = (await action.BaseUrl.Value())?.Clr<string>();
-        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, baseUrl, action.Context);
-        if (!urlResult.Success) return urlResult;
-        var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
+        // the url the action goes to — the one its build expected
+        var target = await ((global::app.module.http.IAddressed)action).Target();
+        if (!target.Success) return target;
+        var resolvedUrl = (await target.Value())!.ToString();
 
         var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
             : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
@@ -171,10 +171,10 @@ public sealed class Default : IHttp
         var followRedirects = (await action.FollowRedirects.Value())!;
         var maxRedirects = (await action.MaxRedirects.Value())!;
 
-        var baseUrl = (await action.BaseUrl.Value())?.Clr<string>();
-        var urlResult = ResolveUrl((await action.Url.Value())!.Clr<string>()!, baseUrl, action.Context);
-        if (!urlResult.Success) return urlResult;
-        var resolvedUrl = (await urlResult.Value())!.Clr<string>()!;
+        // the url the action goes to — the one its build expected
+        var target = await ((global::app.module.http.IAddressed)action).Target();
+        if (!target.Success) return target;
+        var resolvedUrl = (await target.Value())!.ToString();
 
         var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
             : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
@@ -357,35 +357,6 @@ public sealed class Default : IHttp
         name.Equals("Content-Disposition", StringComparison.OrdinalIgnoreCase) ||
         name.Equals("Content-Range", StringComparison.OrdinalIgnoreCase);
 
-    // --- URL resolution ---
-
-    private static data.@this<global::app.type.item.text.@this> ResolveUrl(string url, string? baseUrl, actor.context.@this context)
-    {
-        if (url.StartsWith('/'))
-        {
-            if (string.IsNullOrEmpty(baseUrl))
-                return context.Error<global::app.type.item.text.@this>(new ServiceError(
-                    "Relative URL requires a BaseUrl configuration. Use 'configure http, base url https://...'",
-                    "NoBaseUrl", 400));
-
-            baseUrl = baseUrl.TrimEnd('/');
-            return context.Ok<global::app.type.item.text.@this>(baseUrl + url);
-        }
-
-        if (!url.Contains("://"))
-            url = "https://" + url;
-
-        // Security: only allow http/https schemes (blocks file://, gopher://, etc.)
-        if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
-        {
-            if (uri.Scheme != "http" && uri.Scheme != "https")
-                return context.Error<global::app.type.item.text.@this>(new ServiceError(
-                    $"Only http:// and https:// URLs are allowed, got {uri.Scheme}://",
-                    "InvalidUrlScheme", 400));
-        }
-
-        return context.Ok<global::app.type.item.text.@this>(url);
-    }
 
     // --- Response parsing ---
 
