@@ -448,7 +448,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     }
 
     /// <summary>The names of this value's fields, to tell a programmer which there are — none known by default.</summary>
-    public virtual System.Collections.Generic.IEnumerable<string> Fields => [];
+    protected internal virtual System.Collections.Generic.IEnumerable<string> Fields => [];
 
     /// <summary>The answer when a <c>where</c> or <c>any</c> names a field no item has — a misspelling, an error
     /// naming it and the fields the items do have (<paramref name="known"/>).</summary>

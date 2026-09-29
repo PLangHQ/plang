@@ -431,7 +431,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         => System.Threading.Tasks.Task.FromResult(Get(name, context));
 
     /// <summary>A dict's fields are its keys.</summary>
-    public override IEnumerable<string> Fields => _value.Keys;
+    protected internal override IEnumerable<string> Fields => _value.Keys;
 
     /// <summary>This dict is the subject, its own only item: kept when its field holds under the operator,
     /// else nothing is. A field it doesn't have is a misspelling, an error naming it. A field, an operator or

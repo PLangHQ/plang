@@ -112,6 +112,8 @@ public class DebugViewTests : System.IAsyncDisposable
         var written = await _app.Debug(Ctx);
 
         await Assert.That(written).StartsWith("{");
+        // a value's field names feed a misspelling's message; they are no part of its face
+        await Assert.That(written).DoesNotContain("\"fields\"");
     }
 
     // On the wire a type that declares no face still refuses: nothing it holds leaks out.
