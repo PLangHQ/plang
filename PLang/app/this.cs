@@ -46,16 +46,17 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public string Name { get; internal set; }
 
     /// <summary>
-    /// When the app was first created.
+    /// When the app was first created — its identity's, else this run's start (an app with no identity yet is
+    /// being created now).
     /// </summary>
     [global::app.Store]
-    public DateTime Created { get; internal set; }
+    public global::app.type.item.datetime.@this Created { get; internal set; }
 
     /// <summary>
-    /// When the app was last updated.
+    /// When the app was last updated — its identity's, else this run's start.
     /// </summary>
     [global::app.Store]
-    public DateTime Updated { get; internal set; }
+    public global::app.type.item.datetime.@this Updated { get; internal set; }
 
     /// <summary>
     /// Version of the builder used.
@@ -110,12 +111,12 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>
     /// When the app was started.
     /// </summary>
-    public DateTime StartedAt { get; }
+    public global::app.type.item.datetime.@this StartedAt { get; }
 
     /// <summary>
     /// How long the app has been running.
     /// </summary>
-    public TimeSpan Uptime => DateTime.UtcNow - StartedAt;
+    public global::app.type.item.duration.@this Uptime => new(DateTimeOffset.UtcNow - StartedAt.Value);
 
     /// <summary>
     /// Cancellation token for graceful shutdown.
@@ -261,7 +262,9 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         Name = lastSep >= 0 ? trimmed[(lastSep + 1)..] : trimmed;
         AbsolutePath = absolutePath;
         Environment = environment ?? "production";
-        StartedAt = DateTime.UtcNow;
+        StartedAt = new(DateTimeOffset.UtcNow);
+        Created = StartedAt;
+        Updated = StartedAt;
 
         // Context is fundamental — it is born before almost everything else. The
         // system & user actors (each owning a long-lived context) are constructed
@@ -418,8 +421,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             var root = doc.RootElement;
             if (root.TryGetProperty("id", out var idProp)) Id = idProp.GetString() ?? Id;
             if (root.TryGetProperty("name", out var nameProp)) Name = nameProp.GetString() ?? Name;
-            if (root.TryGetProperty("created", out var createdProp) && createdProp.TryGetDateTime(out var created)) Created = created;
-            if (root.TryGetProperty("updated", out var updatedProp) && updatedProp.TryGetDateTime(out var updated)) Updated = updated;
+            if (root.TryGetProperty("created", out var createdProp) && createdProp.TryGetDateTimeOffset(out var created)) Created = new(created);
+            if (root.TryGetProperty("updated", out var updatedProp) && updatedProp.TryGetDateTimeOffset(out var updated)) Updated = new(updated);
             if (root.TryGetProperty("version", out var versionProp)) Version = versionProp.GetString();
         }
     }
@@ -429,8 +432,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// </summary>
     public async Task<data.@this> Save()
     {
-        Updated = DateTime.UtcNow;
-        if (Created == default) Created = Updated;
+        Updated = new(DateTimeOffset.UtcNow);
         // App says where; the file writes it — .pr is a program file, so its format writes the host's [Store]
         // face. No hard-coded field list (add a [Store] prop → it persists).
         var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", actor.list.System.Context!);
