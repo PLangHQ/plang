@@ -28,7 +28,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (raw.Length == 0) return new global::app.type.item.@null.@this("goal", kind);
         var utf8 = new System.Text.Json.Utf8JsonReader(raw);
         utf8.Read();
-        var json = new global::app.type.format.json.Reader(utf8, raw);
+        var json = new global::app.type.item.kind.json.Reader(utf8, raw);
         return Walk(ref json, ctx);
     }
 
@@ -38,7 +38,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     // then its own scalars are filled as they arrive. `parent` is null for the root goal in a .pr
     // file (it has none) and the enclosing goal for every sub-goal — a birth fact either way, so
     // nothing repairs Parent afterwards.
-    private global::app.goal.@this Walk(ref global::app.type.format.json.Reader reader,
+    private global::app.goal.@this Walk(ref global::app.type.item.kind.json.Reader reader,
         global::app.type.reader.ReadContext ctx, global::app.goal.@this? parent = null)
     {
         var goal = new global::app.goal.@this { Parent = parent };

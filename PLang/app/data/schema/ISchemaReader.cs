@@ -20,6 +20,6 @@ public interface ISchemaReader
     /// <see cref="app.type.reader.ITypeReader.Kind"/>).</summary>
     string Schema { get; }
 
-    Data Read(ref global::app.type.format.json.Reader reader,
+    Data Read(ref global::app.type.item.kind.json.Reader reader,
         global::app.type.reader.ReadContext ctx);
 }

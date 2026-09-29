@@ -19,7 +19,7 @@ public class SchemaLayerFormatTests : System.IAsyncDisposable
         using var ms = new MemoryStream();
         using (var jw = new System.Text.Json.Utf8JsonWriter(ms))
         {
-            var writer = new global::app.type.format.json.Writer(jw);
+            var writer = new global::app.type.item.kind.json.Writer(jw);
             writer.Value(value);
         }
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());

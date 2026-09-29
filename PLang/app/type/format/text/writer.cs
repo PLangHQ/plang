@@ -19,7 +19,7 @@ public sealed class Writer : global::app.type.format.IWriter
 {
     private readonly Stream _stream;
     private readonly Encoding _encoding;
-    private global::app.type.format.json.Writer? _json;   // started lazily when structure opens
+    private global::app.type.item.kind.json.Writer? _json;   // started lazily when structure opens
     private Utf8JsonWriter? _utf8;
     private int _depth;                                          // open object/array nesting
 
@@ -36,8 +36,8 @@ public sealed class Writer : global::app.type.format.IWriter
     // Structural content becomes json — the writer knows how, no type switch. Started lazily so a
     // pure scalar never allocates a json writer; shared stream is safe because a single value is
     // EITHER a bare top-level scalar OR structural json, never interleaved.
-    private global::app.type.format.json.Writer Structural()
-        => _json ??= new global::app.type.format.json.Writer(
+    private global::app.type.item.kind.json.Writer Structural()
+        => _json ??= new global::app.type.item.kind.json.Writer(
                _utf8 = new Utf8JsonWriter(_stream), emitsSchema: false);
 
     // Scalars: bare at the top, json (quoted / comma-joined) when nested inside an open structure.

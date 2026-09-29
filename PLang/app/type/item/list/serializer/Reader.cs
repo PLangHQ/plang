@@ -50,7 +50,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (parser.Typed(raw) is { } row) return row;
         var utf8 = new System.Text.Json.Utf8JsonReader(raw);
         utf8.Read();
-        var bare = new global::app.type.format.json.Reader(utf8, raw);
+        var bare = new global::app.type.item.kind.json.Reader(utf8, raw);
         return element.Read(ref bare, null, ctx);
     }
 }

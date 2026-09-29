@@ -75,7 +75,7 @@ public class ConverterDeletionsTests
         // The single json Converter exists as a JsonConverterFactory and the
         // wiring works end to end: a path round-trips through the plang wire
         // serializer (one of the 6 former path-converter sites).
-        var converterType = PLangAssembly.GetType("app.type.format.json.Converter");
+        var converterType = PLangAssembly.GetType("app.type.item.kind.json.Converter");
         await Assert.That(converterType).IsNotNull();
         await Assert.That(typeof(System.Text.Json.Serialization.JsonConverterFactory)
             .IsAssignableFrom(converterType!)).IsTrue();
@@ -84,7 +84,7 @@ public class ConverterDeletionsTests
         var ctx = app.actor.list.User.Context;
         var p = global::app.type.item.path.@this.Resolve("/srv/app/cfg.json", ctx);
         var opts = new System.Text.Json.JsonSerializerOptions
-        { Converters = { new global::app.type.format.json.Converter(ctx) } };
+        { Converters = { new global::app.type.item.kind.json.Converter(ctx) } };
         var json = System.Text.Json.JsonSerializer.Serialize<global::app.type.item.path.@this>(p, opts);
         var back = System.Text.Json.JsonSerializer.Deserialize<global::app.type.item.path.@this>(json, opts);
         await Assert.That(back).IsNotNull();
@@ -101,7 +101,7 @@ public class ConverterDeletionsTests
     // context (mirror of how `path.JsonConverter` was built today).
     [Test] public async Task SingleJsonConverter_Exists_AtChannelSerializerJson()
     {
-        await Assert.That(PLangAssembly.GetType("app.type.format.json.Converter")).IsNotNull();
+        await Assert.That(PLangAssembly.GetType("app.type.item.kind.json.Converter")).IsNotNull();
     }
 
     // The behaviour: the single `Converter` consults the registry /
@@ -119,7 +119,7 @@ public class ConverterDeletionsTests
         var opts = new System.Text.Json.JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-            Converters = { new global::app.type.format.json.Converter(ctx) }
+            Converters = { new global::app.type.item.kind.json.Converter(ctx) }
         };
         var inner = System.Text.Json.JsonSerializer.Deserialize<InnerFixture>(
             "{\"file\":\"/srv/app/x.json\"}", opts);
@@ -143,7 +143,7 @@ public class ConverterDeletionsTests
         var opts = new System.Text.Json.JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-            Converters = { new global::app.type.format.json.Converter(ctx) }
+            Converters = { new global::app.type.item.kind.json.Converter(ctx) }
         };
         var outer = System.Text.Json.JsonSerializer.Deserialize<OuterFixture>(
             "{\"mid\":{\"inner\":{\"file\":\"/srv/app/deep.json\"}}}", opts);

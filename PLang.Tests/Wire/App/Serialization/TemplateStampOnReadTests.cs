@@ -11,7 +11,7 @@ public class TemplateStampOnReadTests
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
         var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
         utf8.Read();
-        var jr = new global::app.type.format.json.Reader(utf8);
+        var jr = new global::app.type.item.kind.json.Reader(utf8);
         return (global::app.type.item.text.@this)new global::app.type.item.text.serializer.Reader()
             .Read(ref jr, null, new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext, mode));
     }
@@ -30,7 +30,7 @@ public class TemplateStampOnReadTests
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
         var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
         utf8.Read();
-        var jr = new global::app.type.format.json.Reader(utf8);
+        var jr = new global::app.type.item.kind.json.Reader(utf8);
         return (global::app.type.item.list.@this)new global::app.type.item.list.serializer.Reader()
             .Read(ref jr, null, new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext, mode));
     }

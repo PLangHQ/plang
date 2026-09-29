@@ -15,7 +15,7 @@ public sealed class text : global::app.type.format.IOutput
         using var buffer = new System.IO.MemoryStream();
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(buffer))
         {
-            var json = new global::app.type.format.json.Writer(
+            var json = new global::app.type.item.kind.json.Writer(
                 utf8, view: mode, emitsSchema: false);
             await value.Output(json, mode, context);
         }

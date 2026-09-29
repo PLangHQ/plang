@@ -1,6 +1,7 @@
 using System.Text.Json;
+using app.type.format;
 
-namespace app.type.format.json;
+namespace app.type.item.kind.json;
 
 /// <summary>
 /// JSON implementation of <see cref="IWriter"/> — wraps a

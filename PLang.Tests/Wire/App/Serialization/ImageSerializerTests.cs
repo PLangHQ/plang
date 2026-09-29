@@ -96,7 +96,7 @@ public class ImageSerializerTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.format.json.Writer(utf, view: global::app.View.Out);
+            var w = new global::app.type.item.kind.json.Writer(utf, view: global::app.View.Out);
             w.Value(img);
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());

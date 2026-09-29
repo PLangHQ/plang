@@ -39,7 +39,7 @@ public partial class @this
         using var buffer = new System.IO.MemoryStream();
         await using (var utf8 = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = true }))
         {
-            var writer = new global::app.type.format.json.Writer(
+            var writer = new global::app.type.item.kind.json.Writer(
                 utf8, view: global::app.View.Out, emitsSchema: false);
             await data.Output(writer, global::app.View.Out, data.Context);
         }

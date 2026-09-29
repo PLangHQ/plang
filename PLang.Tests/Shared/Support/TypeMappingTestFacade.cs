@@ -51,7 +51,7 @@ internal static class Json
         WriteIndented = true,
         Converters =
         {
-            new global::app.type.format.json.Converter(),
+            new global::app.type.item.kind.json.Converter(),
         },
     };
 

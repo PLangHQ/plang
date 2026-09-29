@@ -48,7 +48,7 @@ public sealed class @this : global::app.type.kind.@this
                 data = signed;
             }
             await using var utf8 = new Utf8JsonWriter(stream);
-            var writer = new global::app.type.format.json.Writer(utf8, view, emitsSchema: true);
+            var writer = new global::app.type.item.kind.json.Writer(utf8, view, emitsSchema: true);
             if (data.Peek() is global::app.type.item.signature.@this sig)
                 await sig.Output(writer, view, context);
             else
@@ -117,7 +117,7 @@ public sealed class @this : global::app.type.kind.@this
         byte[] bytes = source.Raw as byte[] ?? System.Text.Encoding.UTF8.GetBytes(source.Raw.ToString() ?? "");
         var utf8 = new Utf8JsonReader(bytes);
         utf8.Read();
-        var reader = new global::app.type.format.json.Reader(utf8);
+        var reader = new global::app.type.item.kind.json.Reader(utf8);
         return typeReader.Read(ref reader, kind, ctx);
     }
 

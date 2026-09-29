@@ -109,7 +109,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         var utf8 = new System.Text.Json.Utf8JsonReader(raw);
         utf8.Read();
-        var row = new global::app.type.format.json.Reader(utf8, raw);
+        var row = new global::app.type.item.kind.json.Reader(utf8, raw);
 
         var name = "";
         global::app.type.@this? type = null;
@@ -148,7 +148,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 throw new global::app.error.PrFormatOutdatedException($"property '{name}' is a template without its variable list");
             var bytes = new System.Text.Json.Utf8JsonReader(held);
             bytes.Read();
-            var slot = new global::app.type.format.json.Reader(bytes, held);
+            var slot = new global::app.type.item.kind.json.Reader(bytes, held);
             var born = ctx with { Variable = variables };
             value = type!.Name == "action" ? Read(ref slot, null, born)
                 : type.Name == "list" && type.kind.Name == "action" ? Actions(ref slot, born)

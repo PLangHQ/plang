@@ -359,7 +359,7 @@ public sealed class Formal
             var bytes = Encoding.UTF8.GetBytes(json);
             var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
             utf8.Read();
-            var reader = new global::app.type.format.json.Reader(utf8, bytes);
+            var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
             return marked.Read(ref reader, new global::app.type.reader.ReadContext(_context, marked.Template,
                 Variable: marked.Template != null ? variables : null));
         }
@@ -430,7 +430,7 @@ public sealed class Formal
         {
             using var ms = new System.IO.MemoryStream();
             using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
-                new global::app.type.item.variable.serializer.Entry().Write(new global::app.type.format.json.Writer(utf8), variables);
+                new global::app.type.item.variable.serializer.Entry().Write(new global::app.type.item.kind.json.Writer(utf8), variables);
             return Encoding.UTF8.GetString(ms.ToArray());
         }
 

@@ -30,7 +30,7 @@ public class FormalWriterTests
         var bytes = System.Text.Encoding.UTF8.GetBytes(json);
         var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
         utf8.Read();
-        var reader = new global::app.type.format.json.Reader(utf8, bytes);
+        var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
         return (global::app.goal.step.@this)new global::app.goal.step.serializer.Reader(goal)
             .Read(ref reader, null, new global::app.type.reader.ReadContext(global::PLang.Tests.TestApp.SharedContext, "plang"));
     }

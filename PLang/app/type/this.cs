@@ -373,7 +373,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// build), never because of what it holds. A type whose values are STRUCTURE (an action, a
     /// goal.call) is read eagerly through its own reader; a variable name or a template takes the
     /// content door; every other slot is a lazy wire over its verbatim bytes.</summary>
-    public item.@this Read(ref global::app.type.format.json.Reader reader,
+    public item.@this Read(ref global::app.type.item.kind.json.Reader reader,
         global::app.type.reader.ReadContext ctx)
     {
         // Which types are structure is the TYPE's declaration (ITypeReader.IsEager), never a list of names.

@@ -28,7 +28,7 @@ public static class Format
         WriteIndented = true,
         // Path serializes as its Relative string; without this the default
         // serializer walks Path.GoalCall.PrPath.GoalCall... cycle.
-        Converters = { new global::app.type.format.json.Converter() },
+        Converters = { new global::app.type.item.kind.json.Converter() },
         TypeInfoResolver = new DefaultJsonTypeInfoResolver
         {
             Modifiers = { app.type.format.filter.Sensitive.Mask }

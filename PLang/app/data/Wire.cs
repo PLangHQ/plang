@@ -113,7 +113,7 @@ public class Wire
         _readDepth.Value++;
         try
         {
-            var jr = new global::app.type.format.json.Reader(reader, buffer);
+            var jr = new global::app.type.item.kind.json.Reader(reader, buffer);
             // _context is non-null (born-in-ctor); the Store read routes through the typed wire
             // reader that binds nested typed entries.
             var ctx = new global::app.type.reader.ReadContext(_context, _template, View, _verify, _deferVerify);

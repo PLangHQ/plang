@@ -95,7 +95,7 @@ public class PathSerializerMigrationTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.format.json.Writer(utf, view: global::app.View.Out);
+            var w = new global::app.type.item.kind.json.Writer(utf, view: global::app.View.Out);
             w.Value(p);
         }
         var fromRenderer = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -105,7 +105,7 @@ public class PathSerializerMigrationTests
         // through it and compare.
         var opts = new JsonSerializerOptions
         {
-            Converters = { new global::app.type.format.json.Converter(context) }
+            Converters = { new global::app.type.item.kind.json.Converter(context) }
         };
         var fromConverter = JsonSerializer.Serialize<global::app.type.item.path.@this>(p, opts);
 

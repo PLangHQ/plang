@@ -8,10 +8,10 @@ namespace PLang.Tests.App.Serialization;
 
 public class IWriterFormatTests
 {
-    private static global::app.type.format.json.Writer MakeJsonWriter(System.IO.Stream stream)
+    private static global::app.type.item.kind.json.Writer MakeJsonWriter(System.IO.Stream stream)
     {
         var utf = new Utf8JsonWriter(stream);
-        return new global::app.type.format.json.Writer(utf, view: global::app.View.Out);
+        return new global::app.type.item.kind.json.Writer(utf, view: global::app.View.Out);
     }
 
     [Test]

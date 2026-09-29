@@ -86,7 +86,7 @@ public class NumberSerializerTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.format.json.Writer(utf, view: global::app.View.Out);
+            var w = new global::app.type.item.kind.json.Writer(utf, view: global::app.View.Out);
             w.Value(((number)(42)));
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -107,7 +107,7 @@ public class NumberSerializerTests
         using var ms = new System.IO.MemoryStream();
         using (var utf = new Utf8JsonWriter(ms))
         {
-            var w = new global::app.type.format.json.Writer(utf, view: global::app.View.Out);
+            var w = new global::app.type.item.kind.json.Writer(utf, view: global::app.View.Out);
             w.Value(((number)(0.1m)));
         }
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());

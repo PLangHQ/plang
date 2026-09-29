@@ -35,7 +35,7 @@ public sealed class @this : global::app.type.kind.@this
         {
             var face = view ?? global::app.View.Out;
             await using var utf8 = new Utf8JsonWriter(stream);
-            await data.Output(new global::app.type.format.json.Writer(utf8, face, emitsSchema: false), face, context);
+            await data.Output(new global::app.type.item.kind.json.Writer(utf8, face, emitsSchema: false), face, context);
             await utf8.FlushAsync(ct);
             return context.Ok();
         }
@@ -135,7 +135,7 @@ public sealed class @this : global::app.type.kind.@this
     {
         var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(((JsonElement)host).GetRawText()));
         utf8.Read();
-        var reader = new global::app.type.format.json.Reader(utf8);
+        var reader = new global::app.type.item.kind.json.Reader(utf8);
         return new global::app.type.item.kind.reflection.@this().Read(ref reader, target, new global::app.type.reader.ReadContext(ctx));
     }
 
@@ -148,7 +148,7 @@ public sealed class @this : global::app.type.kind.@this
     {
         var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(((JsonElement)obj).GetRawText()));
         utf8.Read();
-        var stream = new global::app.type.format.json.Reader(utf8);
+        var stream = new global::app.type.item.kind.json.Reader(utf8);
         return reader.Read(ref stream, kind,
             new global::app.type.reader.ReadContext(context, Verify: false));
     }

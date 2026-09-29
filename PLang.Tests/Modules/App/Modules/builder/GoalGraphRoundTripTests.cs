@@ -57,7 +57,7 @@ public class GoalGraphRoundTripTests : System.IAsyncDisposable
 
         var utf8 = new System.Text.Json.Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(Pr));
         utf8.Read();
-        var reader = new global::app.type.format.json.Reader(utf8);
+        var reader = new global::app.type.item.kind.json.Reader(utf8);
         var built = new global::app.type.item.kind.reflection.@this().Read(
             ref reader, typeof(Goal), new global::app.type.reader.ReadContext(ctx));
 
