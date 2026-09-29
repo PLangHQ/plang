@@ -60,6 +60,10 @@ public interface IWriter
     /// </summary>
     void Raw(string value) => String(value);
 
+    /// <summary>The same verbatim emit for content held as its UTF-8 bytes. Default falls back to bytes for
+    /// writers that have no verbatim concept.</summary>
+    void Raw(byte[] value) => Bytes(value);
+
     /// <summary>
     /// Begin an array bracket. <paramref name="count"/> is -1 when the writer
     /// cannot determine the length up front; format encoders that need a

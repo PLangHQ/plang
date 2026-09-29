@@ -251,13 +251,22 @@ public class source : @this
     /// A content source's raw is ALWAYS its own content — a <c>string</c> (text, a template's
     /// authored <c>%ref%</c>, a path, a scalar's text) or a <c>byte[]</c> blob; never a
     /// structured value (a dict/list is held native, a still-encoded slice is a
-    /// <see cref="wire.@this"/>). So the content writes itself directly: bytes as bytes, a string
+    /// <see cref="wire.@this"/>). So the content writes itself directly: into a writer of its declared
+    /// kind's own format (json content into json) verbatim, otherwise bytes as bytes and a string
     /// quoted. No materialize-on-write — there is nothing structured here to render, and a
     /// mime-named type (<c>text/plain</c>, <c>binary</c>) has no (type, kind) reader to parse
     /// through. (A <see cref="wire.@this"/> overrides this to write its slice verbatim.)
     /// </summary>
     public override void Write(global::app.type.format.IWriter w)
     {
+        // Content whose declared kind is the writer's own format is already a token of it — relayed
+        // verbatim, whether held as its text or its bytes (the writer validates it).
+        if (_type.kind.Owns(w))
+        {
+            if (_value is byte[] token) w.Raw(token);
+            else w.Raw(_value.ToString() ?? "");
+            return;
+        }
         if (_value is byte[] b) { w.Bytes(b); return; }
         // In formal, a whole %ref% in a slot not typed text is the variable itself, written bare
         // (`Value: item = %!data%`); inside a text it stays the text it is (`"Total: %x%"`).

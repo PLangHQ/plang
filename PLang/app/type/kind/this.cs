@@ -130,6 +130,10 @@ public class @this
     /// <see cref="ClrForm"/> takes it.</summary>
     public virtual bool Carries(System.Type clr) => ClrForm is { } form && form.IsAssignableFrom(clr);
 
+    /// <summary>Whether <paramref name="writer"/> writes this kind's own format — content of this kind is then
+    /// already a token of it, relayed verbatim. By default no writer is.</summary>
+    public virtual bool Owns(global::app.type.format.IWriter writer) => false;
+
     /// <summary>The other names this kind answers to (<c>integer</c> for int).</summary>
     public virtual System.Collections.Generic.IReadOnlyList<string> Alias => [];
 

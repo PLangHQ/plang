@@ -23,6 +23,10 @@ public sealed class @this : global::app.type.kind.@this
     /// <summary>json content is text.</summary>
     public override bool IsText => true;
 
+    /// <summary>A json writer — plain json, or plang's schema-on json — writes json: json content goes into it
+    /// as the token it already is.</summary>
+    public override bool Owns(global::app.type.format.IWriter writer) => writer.Format is "plang" or "json";
+
     /// <summary>A test run's report in json: the run's tests, written as json.</summary>
     public override string? Report => "results.json";
 

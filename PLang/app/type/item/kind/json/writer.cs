@@ -40,6 +40,8 @@ public sealed class Writer : IWriter
     public void String(string value) => _writer.WriteStringValue(value);
     // Verbatim — raw json (object/number) rides inline, unquoted.
     public void Raw(string value) => _writer.WriteRawValue(value);
+    // Verbatim from UTF-8 bytes — validated as json the same way (invalid bytes or json throw).
+    public void Raw(byte[] value) => _writer.WriteRawValue(value);
     public void DateTime(System.DateTime value) => _writer.WriteStringValue(value);
     public void DateTimeOffset(System.DateTimeOffset value) => _writer.WriteStringValue(value);
     public void TimeSpan(System.TimeSpan value) => _writer.WriteStringValue(value.ToString("c"));
