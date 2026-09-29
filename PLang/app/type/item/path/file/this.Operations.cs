@@ -344,47 +344,21 @@ public sealed partial class @this
         if (sourceOk && destOk)
             return PerformTransfer(destination, isMove, overwrite, includeSubfolders, context);
 
-        string prefix = "";
-        while (true)
+        var question = new StringBuilder();
+        question.Append(context.Actor!.Name).Append(" wants to:");
+        if (!sourceOk) question.Append("\n  - read ").Append(Absolute);
+        if (!destOk)   question.Append("\n  - write ").Append(destination.Absolute);
+        question.Append("\n(y/n/a — covers all)");
+
+        // the denial names the side not yet granted
+        var request = !sourceOk ? BuildRequest(context.Actor!, sourceVerb) : BuildRequest(context.Actor!, destVerb);
+        var consented = await context.Actor!.Permission.Ask(question.ToString(), request, context, async persist =>
         {
-            var sb = new StringBuilder();
-            sb.Append(prefix);
-            sb.Append(context.Actor!.Name).Append(" wants to:");
-            if (!sourceOk) sb.Append("\n  - read ").Append(Absolute);
-            if (!destOk)   sb.Append("\n  - write ").Append(destination.Absolute);
-            sb.Append("\n(y/n/a — covers all)");
-
-            var askAction = new module.output.ask(context)
-            {
-                Question = new data.@this<global::app.type.item.text.@this>("", sb.ToString(), context: context),
-            };
-            var askResult = await context.App.Run(askAction, context);
-
-            if (askResult.ShouldExit()) return data.@this<global::app.type.item.path.@this>.From(askResult);
-            if (!askResult.Success) return data.@this<global::app.type.item.path.@this>.From(askResult);
-
-            var ask = await askResult.Value() as global::app.module.output.Ask;
-            var answer = ask?.Answer?.Trim();
-            switch (answer)
-            {
-                case "a":
-                    if (!sourceOk) await StoreGrant(sourceVerb, persist: true, context);
-                    if (!destOk)   await destination.StoreGrant(destVerb, persist: true, context);
-                    return PerformTransfer(destination, isMove, overwrite, includeSubfolders, context);
-                case "y":
-                    if (!sourceOk) await StoreGrant(sourceVerb, persist: false, context);
-                    if (!destOk)   await destination.StoreGrant(destVerb, persist: false, context);
-                    return PerformTransfer(destination, isMove, overwrite, includeSubfolders, context);
-                case "n":
-                    var denied = !sourceOk
-                        ? new global::app.error.PermissionDenied(BuildRequest(context.Actor!, sourceVerb))
-                        : new global::app.error.PermissionDenied(BuildRequest(context.Actor!, destVerb));
-                    return context.Error<global::app.type.item.path.@this>(denied);
-                default:
-                    prefix = $"Invalid answer '{answer}'. ";
-                    continue;
-            }
-        }
+            if (!sourceOk) await StoreGrant(sourceVerb, persist, context);
+            if (!destOk)   await destination.StoreGrant(destVerb, persist, context);
+            return PerformTransfer(destination, isMove, overwrite, includeSubfolders, context);
+        });
+        return data.@this<global::app.type.item.path.@this>.From(consented);
     }
 
     private async Task<data.@this?> TryAuthorizeWithoutAsk(Verb verb, actor.context.@this context)

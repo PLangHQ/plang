@@ -27,6 +27,43 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     }
 
     /// <summary>
+    /// Asks this actor's consent to <paramref name="question"/> — the one consent door. <c>y</c> grants once and
+    /// <c>a</c> always (<paramref name="granted"/>, handed whether to keep the grant, answers); <c>n</c> or no
+    /// answer is denied (<paramref name="request"/>'s PermissionDenied), and so is nobody able to answer (a closed,
+    /// non-interactive input: the channel failure is the denial's cause). An ask that suspends the goal is the
+    /// answer as it is; any other failed ask surfaces as itself; any other answer asks again, saying why.
+    /// </summary>
+    public async Task<global::app.data.@this> Ask(string question, Grant request, global::app.actor.context.@this context,
+        Func<bool, Task<global::app.data.@this>> granted)
+    {
+        // Loop, not recursion: a channel that keeps returning garbage would grow the async state machine
+        // without bound under recursion.
+        var prefix = "";
+        while (true)
+        {
+            var asked = await context.App.Run(new global::app.module.output.ask(context)
+            {
+                Question = new global::app.data.@this<global::app.type.item.text.@this>("", prefix + question, context: context),
+            }, context);
+            // decided before the exit check, which would otherwise hand the failed ask back as itself
+            if (!asked.Success && asked.Error!.Key == "ChannelEof")
+                return context.Error(new global::app.error.PermissionDenied(request) { list = [asked.Error] });
+            if (asked.ShouldExit() || !asked.Success) return asked;
+
+            var answer = (await asked.Value() as global::app.module.output.Ask)?.Answer?.Trim();
+            switch (answer)
+            {
+                case "a": return await granted(true);
+                case "y": return await granted(false);
+                case "n" or null or "": return context.Error(new global::app.error.PermissionDenied(request));
+                default:
+                    prefix = $"Invalid answer '{answer}'. ";
+                    continue;
+            }
+        }
+    }
+
+    /// <summary>
     /// Returns the first signed grant covering <paramref name="path"/> + <paramref name="verb"/>,
     /// or null if nothing covers. Walks the in-memory list first, then the
     /// persisted table (filtered to this actor's kind). Per-grant signature

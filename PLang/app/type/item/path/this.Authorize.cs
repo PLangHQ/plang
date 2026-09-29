@@ -36,53 +36,12 @@ public partial class @this
         var existing = await actor.Permission.Find(this, verb);
         if (existing != null) return context.Ok();
 
-        // Loop, not recursion: adversarial input (a channel that keeps
-        // returning garbage) would grow the async state machine without
-        // bound under recursion.
-        string prefix = "";
-        while (true)
-        {
-            // Schemes can append a hint — e.g. HttpPath warns when answering
-            // 'a' would persist a URL with a query string verbatim to the
-            // local sqlite. Base returns "".
-            var hint = AuthorizationHint(verb);
-            var hintSuffix = string.IsNullOrEmpty(hint) ? "" : " " + hint;
-            var question = $"{prefix}Allow {actor.Name} to {VerbLabel(verb)} {Absolute}?{hintSuffix} (y/n/a)";
-            var askAction = new module.output.ask(context)
-            {
-                Question = new data.@this<global::app.type.item.text.@this>("", question, context: context),
-            };
-            var askResult = await context.App.Run(askAction, context);
-
-            // Stateless suspend bubbles up unchanged. ShouldExit honors the
-            // Value-side opt-out so a resolved Data<Ask> (Answer bound) flows
-            // through; a pending Ask (Answer null) or a Type-only Exit Data
-            // short-circuits as before.
-            // Nobody could answer (a closed / non-interactive input) — no consent could be had, which is
-            // the permission's verdict: denied, the channel failure carried whole as its cause. Decided
-            // before the exit check, which would otherwise bubble the failed ask as itself.
-            if (!askResult.Success && askResult.Error!.Key == "ChannelEof")
-                return context.Error(new global::app.error.PermissionDenied(BuildRequest(actor, verb)) { list = [askResult.Error] });
-            if (askResult.ShouldExit()) return askResult;
-            // Any other ask failure surfaces as itself.
-            if (!askResult.Success) return askResult;
-
-            // output.ask returns Data<Ask>; the user's reply rides on Ask.Answer.
-            var ask = await askResult.Value() as module.output.Ask;
-            var answer = ask?.Answer?.Trim();
-            switch (answer)
-            {
-                case "a": return await SignAndStore(actor, verb, persist: true, context);
-                case "y": return await SignAndStore(actor, verb, persist: false, context);
-                // No answer (closed/EOF input channel) = no consent — deny rather than
-                // reprompt, or a channel that can never answer loops this forever.
-                case "n" or null or "": return context.Error(
-                    new global::app.error.PermissionDenied(BuildRequest(actor, verb)));
-                default:
-                    prefix = $"Invalid answer '{answer}'. ";
-                    continue;
-            }
-        }
+        // Schemes can append a hint — e.g. HttpPath warns when answering 'a' would persist a URL with a query
+        // string verbatim to the local sqlite. Base returns "".
+        var hint = AuthorizationHint(verb);
+        var hintSuffix = string.IsNullOrEmpty(hint) ? "" : " " + hint;
+        return await actor.Permission.Ask($"Allow {actor.Name} to {VerbLabel(verb)} {Absolute}?{hintSuffix} (y/n/a)",
+            BuildRequest(actor, verb), context, persist => SignAndStore(actor, verb, persist, context));
     }
 
     protected async Task<data.@this> SignAndStore(actor.@this actor, Verb verb, bool persist, actor.context.@this context)

@@ -152,6 +152,53 @@ public class MoveCopyBundledConsentTests
             => Task.FromResult(global::app.data.@this.Ok((object?)null));
     }
 
+    // Nobody able to answer (a closed input): the ask fails ChannelEof.
+    private sealed class EofChannel : global::app.channel.@this
+    {
+        public EofChannel() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        public override Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
+            => Task.FromResult(action.Context.Error(new global::app.error.ServiceError("no interactive answerer", "ChannelEof", 400)));
+    }
+
+    // No answer is no consent: denied at once, never asked again (a channel that can't answer would loop).
+    [Test] public async Task Move_BundledAsk_EmptyAnswer_IsDenied_AskedOnce()
+    {
+        var app = NewApp(out _);
+        var ch = new CapturingChannel("");
+        app.actor.list.User.Channel.Register(ch);
+        var srcFile = System.IO.Path.Combine(ForeignDir(), "x");
+        System.IO.File.WriteAllText(srcFile, "data");
+        var dstFile = System.IO.Path.Combine(ForeignDir(), "y");
+
+        var result = await new Path(srcFile).MoveTo(new Path(dstFile), overwrite: true, app.actor.list.User.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
+        await Assert.That(ch.AskCount).IsEqualTo(1);
+        await Assert.That(System.IO.File.Exists(srcFile)).IsTrue();
+    }
+
+    // Nobody able to answer is denied, the channel failure its cause — never the channel error as itself.
+    [Test] public async Task Move_BundledAsk_ClosedInput_IsPermissionDenied_WithTheChannelCause()
+    {
+        var app = NewApp(out _);
+        app.actor.list.User.Channel.Register(new EofChannel());
+        var srcFile = System.IO.Path.Combine(ForeignDir(), "x");
+        System.IO.File.WriteAllText(srcFile, "data");
+        var dstFile = System.IO.Path.Combine(ForeignDir(), "y");
+
+        var result = await new Path(srcFile).MoveTo(new Path(dstFile), overwrite: true, app.actor.list.User.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
+        await Assert.That(result.Error!.list.Any(e => e.Key == "ChannelEof")).IsTrue();
+        await Assert.That(System.IO.File.Exists(srcFile)).IsTrue();
+    }
+
     [Test] public async Task Move_BundledAsk_AnswerN_ReturnsPermissionDenied_NoFsMutation()
     {
         var app = NewApp(out _);
