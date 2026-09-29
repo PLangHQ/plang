@@ -357,7 +357,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return this;
     }
 
-    public @this Insert(global::app.type.item.number.@this index, @this other) => Insert(index.ToInt32(), other);
+    internal @this Insert(global::app.type.item.number.@this index, @this other) => Insert(index.ToInt32(), other);
 
     public @this Add(Data item)
     {
@@ -391,15 +391,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return this;
     }
 
-    // --- In-place mutation surface for the list action handlers. The index args are
-    //     FLATTENED — Locate maps each to its (row, offset) before editing.
-    //     PLang callers hand a `number`; the int lowering happens HERE, inside
-    //     the type, at its own index-math boundary. The int forms stay for
-    //     engine-interior loops. ---
+    // --- The list's own positional steps under its public faces (Add/SetAt/Remove taking values). The index
+    //     args are FLATTENED — Locate maps each to its (row, offset) before editing. A `number` lowers to
+    //     int HERE, inside the type, at its own index-math boundary; the int forms serve engine-interior
+    //     loops. ---
 
-    public @this Insert(global::app.type.item.number.@this index, Data item) => Insert(index.ToInt32(), item);
-    public void RemoveAt(global::app.type.item.number.@this index) => RemoveAt(index.ToInt32());
-    public void SetAt(global::app.type.item.number.@this index, Data value) => SetAt(index.ToInt32(), value);
+    internal @this Insert(global::app.type.item.number.@this index, Data item) => Insert(index.ToInt32(), item);
+    internal void RemoveAt(global::app.type.item.number.@this index) => RemoveAt(index.ToInt32());
+    internal void SetAt(global::app.type.item.number.@this index, Data value) => SetAt(index.ToInt32(), value);
 
     /// <summary>Removes the leaf at the flattened <paramref name="index"/> (no-op when out of range).</summary>
     internal void RemoveAt(int index)
