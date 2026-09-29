@@ -1,0 +1,158 @@
+{
+  "name": "Start",
+  "comment": "Stage 10 (plan, Settings: \"app.setting are … the app.id and such\"): the app's name is its setting, so the one\nplace it lives is app.setting (how app.pr and the settings rows become one store is the coder's trace first).",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %!app.setting.name% = \"Shop\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%!app.setting.name%",
+              "variable": [
+                {
+                  "text": "%!app.setting.name%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "setting"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "Shop"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %!app.name% equals \"Shop\", \"the app answers its name from its setting\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "Shop"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.name%",
+              "variable": [
+                {
+                  "text": "%!app.name%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the app answers its name from its setting"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "remove %!app.setting%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "setting",
+          "name": "remove",
+          "property": [
+            {
+              "name": "Setting",
+              "type": {
+                "name": "setting",
+                "template": "plang"
+              },
+              "value": "%!app.setting%",
+              "variable": [
+                {
+                  "text": "%!app.setting%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "setting"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/app-systems/app/setting/AppNameIsItsSetting.test.goal",
+  "prPath": "/plan/app-systems/app/setting/.build/appnameisitssetting.test.pr",
+  "hash": "aa14b62b5183116f2b5fe50f1d76fe99777997759124ba8dc89e2496c7883c0f",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

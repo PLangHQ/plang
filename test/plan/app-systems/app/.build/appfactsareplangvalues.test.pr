@@ -1,0 +1,222 @@
+{
+  "name": "Start",
+  "comment": "Stage 10 (decision 129, app tree 4 and 12): the app's facts are plang values, not CLR leaves, and the store is a\nstore, not a pending Task.",
+  "step": [
+    {
+      "index": 0,
+      "text": "assert %!app.created!type.name% equals \"datetime\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "datetime"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.created!type.name%",
+              "variable": [
+                {
+                  "text": "%!app.created!type.name%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "created"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %!app.startedat!type.name% equals \"datetime\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "datetime"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.startedat!type.name%",
+              "variable": [
+                {
+                  "text": "%!app.startedat!type.name%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "startedat"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert %!app.uptime!type.name% equals \"duration\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "duration"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.uptime!type.name%",
+              "variable": [
+                {
+                  "text": "%!app.uptime!type.name%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "uptime"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert %!app.store!type.name% equals \"store\", \"the store is born ready and opens itself on first use\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "store"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.store!type.name%",
+              "variable": [
+                {
+                  "text": "%!app.store!type.name%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "store"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the store is born ready and opens itself on first use"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/app-systems/app/AppFactsArePlangValues.test.goal",
+  "prPath": "/plan/app-systems/app/.build/appfactsareplangvalues.test.pr",
+  "hash": "07c775cdcd7d062ed24d081d59791966d63fd1b27e9c848f8b4c49eca474762c",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}
