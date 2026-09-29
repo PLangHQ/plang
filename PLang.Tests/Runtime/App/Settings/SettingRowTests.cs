@@ -93,7 +93,7 @@ public class SettingRowTests
     // The user falls back to the system's row; the user's own row wins over it.
     [Test] public async Task UserFallsBackToSystem_OwnRowWins()
     {
-        await using var app = TestApp.Create(_dir);
+        await using var app = new global::app.@this(_dir).Testing();
         await Save(app.actor.list.System, os: false);
         await Assert.That(await Os(app.actor.list.User.Context)).IsEqualTo("false");
 
@@ -105,7 +105,7 @@ public class SettingRowTests
     // This run's value wins over the saved row.
     [Test] public async Task ThisRun_WinsOverTheRow()
     {
-        await using var app = TestApp.Create(_dir);
+        await using var app = new global::app.@this(_dir).Testing();
         await Save(app.actor.list.User, os: false);
         await app.actor.list.User.Context.Setting.Set("app.goal.list.setting.os", app.actor.list.User.Context.Ok(true));
         await Assert.That(await Os(app.actor.list.User.Context)).IsEqualTo("true");
@@ -114,7 +114,7 @@ public class SettingRowTests
     // Removing the row goes back to the defaults.
     [Test] public async Task Remove_GoesBackToTheDefaults()
     {
-        await using var app = TestApp.Create(_dir);
+        await using var app = new global::app.@this(_dir).Testing();
         await Save(app.actor.list.User, os: false);
         await (await app.actor.list.User.Setting.Remove(app.actor.list.User.Setting.Of<global::app.goal.list.setting.@this>())).IsSuccess();
         await Assert.That(await Os(app.actor.list.User.Context)).IsEqualTo("true");
@@ -123,7 +123,7 @@ public class SettingRowTests
     // A module's own setting saved as a row reaches the action-param seam (its module key).
     [Test] public async Task ModuleRow_ReachesTheSeam()
     {
-        await using var app = TestApp.Create(_dir);
+        await using var app = new global::app.@this(_dir).Testing();
         var llm = (global::app.module.llm.setting.@this)(await Read("%!llm%", app.actor.list.User.Context)).Peek()!;
         llm.Cache = false;
         await (await app.actor.list.User.Setting.Save(llm)).IsSuccess();

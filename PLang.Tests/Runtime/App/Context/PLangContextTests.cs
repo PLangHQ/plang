@@ -9,7 +9,7 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_SetsProperties()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         await Assert.That(context.App).IsEqualTo(engine);
@@ -20,7 +20,7 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_GeneratesId()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         await Assert.That(context.Id).IsNotNull();
@@ -30,7 +30,7 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_SetsCreatedAt()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         var before = DateTime.UtcNow;
 
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
@@ -43,7 +43,7 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_AcceptsCustomVariables()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         var variables = new Variables(engine.actor.list.User.Context);
         variables.Set("test", "value");
 
@@ -55,7 +55,7 @@ public class PLangContextTests
     [Test]
     public async Task Constructor_WithParent_SetsParent()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var parent = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         using var child = new global::app.actor.context.@this(engine, engine.actor.list.User, parent: parent);
@@ -69,7 +69,7 @@ public class PLangContextTests
         // Each actor owns its call tree. The Context exposes a getter that proxies through
         // to its owning Actor's CallStack so PLang %!callStack% still resolves; there's no
         // per-context allocation.
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         await Assert.That(context.CallStack).IsEqualTo(engine.actor.list.User.CallStack);
@@ -78,7 +78,7 @@ public class PLangContextTests
     [Test]
     public async Task IsAsync_DefaultsFalse()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         await Assert.That(context.IsAsync).IsFalse();
@@ -87,7 +87,7 @@ public class PLangContextTests
     [Test]
     public async Task IsAsync_CanBeSet()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         context.IsAsync = true;
@@ -98,7 +98,7 @@ public class PLangContextTests
     [Test]
     public async Task CancellationToken_LinkedToAppShutdown()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         engine.RequestShutdown();
@@ -109,7 +109,7 @@ public class PLangContextTests
     [Test]
     public async Task Indexer_SetsAndGetsValue()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         context["key"] = "value";
@@ -120,7 +120,7 @@ public class PLangContextTests
     [Test]
     public async Task Indexer_SetNull_RemovesKey()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
         context["key"] = "value";
 
@@ -132,7 +132,7 @@ public class PLangContextTests
     [Test]
     public async Task Indexer_CaseInsensitive()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
         context["Key"] = "value";
 
@@ -143,7 +143,7 @@ public class PLangContextTests
     [Test]
     public async Task Get_ReturnsTypedValue()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
         context["count"] = 42;
 
@@ -155,7 +155,7 @@ public class PLangContextTests
     [Test]
     public async Task Get_NonexistentKey_ReturnsDefault()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         var value = context.Get<int>("nonexistent");
@@ -166,7 +166,7 @@ public class PLangContextTests
     [Test]
     public async Task Set_StoresTypedValue()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         context.Set("count", 42);
@@ -177,7 +177,7 @@ public class PLangContextTests
     [Test]
     public async Task Set_Null_RemovesKey()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
         context.Set<string>("key", "value");
 
@@ -189,7 +189,7 @@ public class PLangContextTests
     [Test]
     public async Task ContainsKey_ExistingKey_ReturnsTrue()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
         context["key"] = "value";
 
@@ -199,7 +199,7 @@ public class PLangContextTests
     [Test]
     public async Task ContainsKey_NonexistentKey_ReturnsFalse()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         await Assert.That(context.ContainsKey("nonexistent")).IsFalse();
@@ -208,7 +208,7 @@ public class PLangContextTests
     [Test]
     public async Task CreateChild_CreatesWithClonedVariables()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var parent = new global::app.actor.context.@this(engine, engine.actor.list.User);
         parent.Variable.Set("test", "value");
 
@@ -221,7 +221,7 @@ public class PLangContextTests
     [Test]
     public async Task CreateChild_SetsParent()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var parent = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         using var child = parent.CreateChild();
@@ -232,7 +232,7 @@ public class PLangContextTests
     [Test]
     public async Task CreateChild_AcceptsCustomVariables()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var parent = new global::app.actor.context.@this(engine, engine.actor.list.User);
         var customStack = new Variables(engine.actor.list.User.Context);
         customStack.Set("custom", "value");
@@ -245,7 +245,7 @@ public class PLangContextTests
     [Test]
     public async Task Clone_CreatesIndependentCopy()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var original = new global::app.actor.context.@this(engine, engine.actor.list.User);
         original["key"] = "value";
         original.IsAsync = true;
@@ -259,7 +259,7 @@ public class PLangContextTests
     [Test]
     public async Task Clone_IndependentData()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var original = new global::app.actor.context.@this(engine, engine.actor.list.User);
         original["key"] = "value";
 
@@ -273,7 +273,7 @@ public class PLangContextTests
     [Test]
     public async Task Clone_AcceptsCustomVariables()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var original = new global::app.actor.context.@this(engine, engine.actor.list.User);
         var customStack = new Variables(engine.actor.list.User.Context);
         customStack.Set("custom", "value");
@@ -286,7 +286,7 @@ public class PLangContextTests
     [Test]
     public async Task Cancel_CancelsCancellationToken()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         context.Cancel();
@@ -297,7 +297,7 @@ public class PLangContextTests
     [Test]
     public async Task Duration_ReturnsPositiveTimeSpan()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
         await Task.Delay(10);
 
@@ -309,7 +309,7 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_CancelsToken()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
         var token = context.CancellationToken;
 
@@ -321,7 +321,7 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_ClearsData()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
         context["key"] = "value";
 
@@ -333,7 +333,7 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_DisposesDisposableValues()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
         var disposable = new TestDisposable();
         context["disposable"] = disposable;
@@ -346,7 +346,7 @@ public class PLangContextTests
     [Test]
     public async Task Dispose_CalledTwice_DoesNotThrow()
     {
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
         var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
         context.Dispose();

@@ -26,7 +26,7 @@ public class ReportActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-report-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = TestApp.Create(_tempDir);
+        _app = new global::app.@this(_tempDir).Testing();
         _captureStream = new System.IO.MemoryStream();
         _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, _captureStream,
@@ -44,12 +44,12 @@ public class ReportActionTests
 
     private string CapturedOutput() => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
 
-    private static global::app.test.@this NewTest(string name, global::app.test.Status status, global::app.error.Error? error = null, string? output = null)
+    private global::app.test.@this NewTest(string name, global::app.test.Status status, global::app.error.Error? error = null, string? output = null)
     {
         var goal = new Goal
         {
             Name = name,
-            Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", _app.actor.list.User.Context),
             Hash = "deadbeef",
             BuilderVersion = "v1"
         };

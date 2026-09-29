@@ -16,7 +16,7 @@ public class SetupTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-setup-test-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = global::PLang.Tests.TestApp.Plain(_tempDir);
+        _app = new global::app.@this(_tempDir).TestSigning();
     }
 
     [After(Test)]
@@ -30,10 +30,10 @@ public class SetupTests
     [Test]
     public async Task Setup_Goals_OrdersSetupFirst_ThenAlphabetical()
     {
-        _app.goal.list.Add(new Goal { Name = "Zebra", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Zebra.goal", global::PLang.Tests.TestApp.SharedContext) });
-        _app.goal.list.Add(new Goal { Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext) });
-        _app.goal.list.Add(new Goal { Name = "Alpha", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Alpha.goal", global::PLang.Tests.TestApp.SharedContext) });
-        _app.goal.list.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.goal.list.Add(new Goal { Name = "Zebra", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Zebra.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal { Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal { Name = "Alpha", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Alpha.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", _app.actor.list.User.Context) });
 
         var setupGoals = _app.goal.list.Setup.Goals.ToList();
 
@@ -46,8 +46,8 @@ public class SetupTests
     [Test]
     public async Task Setup_ExcludesSetupGoalsFromRegularLookup()
     {
-        _app.goal.list.Add(new Goal { Name = "SetupGoal", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/SetupGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
-        _app.goal.list.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", global::PLang.Tests.TestApp.SharedContext) });
+        _app.goal.list.Add(new Goal { Name = "SetupGoal", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/SetupGoal.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", _app.actor.list.User.Context) });
 
         var found = await _app.goal.list.Find("SetupGoal");
         var normal = await _app.goal.list.Find("NormalGoal");
@@ -92,7 +92,7 @@ public class SetupTests
         // Goal first, then its steps — a step is born knowing its goal (Goal is init).
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
+            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
         };
         var step1 = new Step { Goal = goal, Index = 0, Text = "step one",
             Code = CreateNoOpActions() };
@@ -128,7 +128,7 @@ public class SetupTests
     {
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
+            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
         };
         var step = new Step { Goal = goal, Index = 0, Text = "create table",
             Code = CreateNoOpActions() };
@@ -152,7 +152,7 @@ public class SetupTests
     {
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
+            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
             Step = new GoalSteps()
         };
         _app.goal.list.Add(goal);
@@ -184,7 +184,7 @@ public class SetupTests
         // A step that fails (unknown module) and does NOT have IgnoreError
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
+            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
         };
         var step = new Step
         {
@@ -208,7 +208,7 @@ public class SetupTests
         // Goal first, then its steps — a step is born knowing its goal (Goal is init).
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", global::PLang.Tests.TestApp.SharedContext),
+            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
         };
         var step1 = new Step { Goal = goal, Index = 0, Text = "step one",
             Code = CreateNoOpActions() };
@@ -377,13 +377,13 @@ public class SetupTests
     /// <summary>
     /// Creates an Actions collection with an unknown module that will fail at runtime.
     /// </summary>
-    private static StepActions CreateFailingActions()
+    private StepActions CreateFailingActions()
     {
         return new StepActions
         {
             new global::app.goal.step.action.@this
             {
-                Module = global::PLang.Tests.TestApp.SharedContext.App.Module("nonexistent"),
+                Module = _app.actor.list.User.Context.App.Module("nonexistent"),
                 Name = "doesnotexist",
                 Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>())
             }

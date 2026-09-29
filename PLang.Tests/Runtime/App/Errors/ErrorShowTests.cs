@@ -9,7 +9,7 @@ namespace PLang.Tests.App.Errors;
 /// </summary>
 public class ErrorShowTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
+    private readonly global::app.@this _app = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
     private readonly System.IO.MemoryStream _errorOut = new();
 
     public ErrorShowTests()

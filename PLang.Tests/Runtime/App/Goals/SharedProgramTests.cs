@@ -11,7 +11,7 @@ public class SharedProgramTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = TestApp.Create("/tmp/sharedprogram-" + System.Guid.NewGuid().ToString("N")[..8]);
+    public void Setup() => _app = new global::app.@this("/tmp/sharedprogram-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
 
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();
@@ -76,8 +76,8 @@ public class SharedProgramTests
         var systemList = (global::app.type.item.list.@this)(await onSystem.Value.Value())!;
         var userList = (global::app.type.item.list.@this)(await onUser.Value.Value())!;
 
-        await Assert.That((await systemList.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).Value()).ToString()).IsEqualTo("system");
-        await Assert.That((await userList.Items(global::PLang.Tests.TestApp.SharedContext).ElementAt(0).Value()).ToString()).IsEqualTo("user");
+        await Assert.That((await systemList.Items(_app.actor.list.User.Context).ElementAt(0).Value()).ToString()).IsEqualTo("system");
+        await Assert.That((await userList.Items(_app.actor.list.User.Context).ElementAt(0).Value()).ToString()).IsEqualTo("user");
     }
 
     [Test]
@@ -126,7 +126,7 @@ public class SharedProgramTests
         {
             var list = (global::app.type.item.list.@this)(await (await ctx.Variable.Get("l")).Value())!;
             var seen = new List<string>();
-            foreach (var row in list.Items(global::PLang.Tests.TestApp.SharedContext)) seen.Add((await row.Value()).ToString()!);
+            foreach (var row in list.Items(_app.actor.list.User.Context)) seen.Add((await row.Value()).ToString()!);
             return seen;
         }
         var system = await Seen(_app.actor.list.System.Context);

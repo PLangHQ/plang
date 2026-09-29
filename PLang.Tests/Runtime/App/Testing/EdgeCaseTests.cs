@@ -23,7 +23,7 @@ public class EdgeCaseTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-edge-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = TestApp.Create(_tempDir);
+        _app = new global::app.@this(_tempDir).Testing();
         _captureStream = new System.IO.MemoryStream();
         _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, _captureStream,
@@ -116,7 +116,7 @@ public class EdgeCaseTests
     [Test]
     public async Task Report_ConsoleCapture_AnsiEscapeSequences_Stripped()
     {
-        var run = new global::app.test.@this() { Goal = new Goal { Name = "X", Path = global::app.type.item.path.@this.Resolve("/test/X.test.goal", global::PLang.Tests.TestApp.SharedContext) } };
+        var run = new global::app.test.@this() { Goal = new Goal { Name = "X", Path = global::app.type.item.path.@this.Resolve("/test/X.test.goal", _app.actor.list.User.Context) } };
         run.Stdout = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
         run.Complete(global::app.test.Status.Fail, new global::app.error.AssertionError("Expected: 1, Actual: 2", 1, 2, null));
         _app.test.list.Add(run);

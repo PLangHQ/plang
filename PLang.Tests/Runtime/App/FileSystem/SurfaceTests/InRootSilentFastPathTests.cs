@@ -29,7 +29,7 @@ public class InRootSilentFastPathTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-inroot-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return TestApp.Create(root);
+        return new global::app.@this(root).Testing();
     }
 
     [Test] public async Task InRootRead_DoesNotInvokeOutputAsk()

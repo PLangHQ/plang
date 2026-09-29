@@ -16,7 +16,7 @@ public class AppStartTests
     {
         _root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-appstart-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(_root, ".build"));
-        await using var writer = TestApp.Create(_root);
+        await using var writer = new global::app.@this(_root).Testing();
         var goal = Make.Goal("Entry",
             Make.Step("set x", Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", 1))));
         await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_root, ".build", "entry.pr"), await writer.actor.list.User.Context.Pr(goal));
@@ -27,7 +27,7 @@ public class AppStartTests
 
     private async Task<global::app.@this> App()
     {
-        var app = TestApp.Create(_root);
+        var app = new global::app.@this(_root).Testing();
         await app.actor.list.System.Context.Variable.Set("goalFile", "/.build/entry.pr");
         return app;
     }
@@ -37,7 +37,7 @@ public class AppStartTests
 
     [Test] public async Task TheApp_IsAnItem_AndNavigatesAsItDid()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
 
         await Assert.That(ReferenceEquals((await Read("%!app%", context)).Peek(), app)).IsTrue();
@@ -48,7 +48,7 @@ public class AppStartTests
 
     [Test] public async Task ACopyOfTheApp_IsTheApp()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         await Assert.That(ReferenceEquals(app.Clone(), app)).IsTrue();
     }
 

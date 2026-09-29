@@ -18,7 +18,7 @@ public class ActorPermissionStorageTests
             "plang-st-" + System.Guid.NewGuid().ToString("N")[..8]));
         // Real grant signing, but skip the identity recreate-loop (production identity
         // re-read fails verify → recreated keygen+sign each call, ~850ms).
-        global::PLang.Tests.TestApp.UseSharedIdentity(app);
+        (app).TestIdentity();
         return app;
     }
 
@@ -232,7 +232,7 @@ public class ActorPermissionStorageTests
         // for `/p`, not two.
         var stored = await app.store.GetAll<global::app.type.item.permission.@this>("permission");
         await stored.IsSuccess();
-        var rowsForP = (await stored.Value())!.Items(global::PLang.Tests.TestApp.SharedContext).Count(d => d.GetValue<global::app.type.item.permission.@this>()?.Path == "/p");
+        var rowsForP = (await stored.Value())!.Items(app.actor.list.User.Context).Count(d => d.GetValue<global::app.type.item.permission.@this>()?.Path == "/p");
         await Assert.That(rowsForP).IsEqualTo(1);
     }
 

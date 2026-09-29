@@ -18,7 +18,7 @@ public class PlangRuntimeTests : IDisposable
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_runtime_test_" + Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = TestApp.Create(_tempDir);
+        _app = new global::app.@this(_tempDir).Testing();
     }
 
     public void Dispose()
@@ -47,9 +47,9 @@ public class PlangRuntimeTests : IDisposable
             {
                 new global::app.goal.step.action.@this
                 {
-                    Module = global::PLang.Tests.TestApp.SharedContext.App.Module("output"),
+                    Module = _app.actor.list.User.Context.App.Module("output"),
                     Name = "write",
-                    Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "hello kernel", context: global::PLang.Tests.TestApp.SharedContext) })
+                    Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new Data("Data", "hello kernel", context: _app.actor.list.User.Context) })
                 }
             }
         };

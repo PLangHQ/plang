@@ -25,7 +25,7 @@ public class GoalCallResolutionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang_test_goalcall_" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = TestApp.Create(_tempDir);
+        _app = new global::app.@this(_tempDir).Testing();
     }
 
     [After(Test)]
@@ -54,8 +54,8 @@ public class GoalCallResolutionTests
     }
 
     /// <summary>A caller goal whose Path anchors the folder walk.</summary>
-    private static PLangGoal CallerAt(string callerGoalPath)
-        => new() { Name = "Caller", Path = global::app.type.item.path.@this.Resolve(callerGoalPath, global::PLang.Tests.TestApp.SharedContext) };
+    private PLangGoal CallerAt(string callerGoalPath)
+        => new() { Name = "Caller", Path = global::app.type.item.path.@this.Resolve(callerGoalPath, _app.actor.list.User.Context) };
 
     [Test]
     public async Task SlashName_Resolved_ByCallerAncestorWalk()

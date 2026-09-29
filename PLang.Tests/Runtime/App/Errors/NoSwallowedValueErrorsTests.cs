@@ -7,7 +7,7 @@ public class NoSwallowedValueErrorsTests
 {
     [Test] public async Task AGrepPatternThatIsNotARegex_IsAnInvalidPatternError()
     {
-        await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-grep-" + Guid.NewGuid().ToString("N")[..8]));
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-grep-" + Guid.NewGuid().ToString("N")[..8])).Testing();
         var text = app.actor.list.User.Context.Ok("a(b\nc");
         var thrown = await Assert.That(() => { new global::app.data.code.Default().Grep(text, "a(b"); return Task.CompletedTask; })
             .Throws<global::app.error.AppException>();

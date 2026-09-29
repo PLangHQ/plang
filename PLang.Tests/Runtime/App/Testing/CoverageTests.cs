@@ -16,7 +16,7 @@ public class CoverageTests
     [Before(Test)]
     public void Setup()
     {
-        _app = TestApp.Create("/test");
+        _app = new global::app.@this("/test").Testing();
     }
 
     // Fresh Coverage has no observed (module, action) entries.

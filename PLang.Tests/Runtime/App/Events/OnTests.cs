@@ -28,7 +28,7 @@ public class OnTests
 
     [Test] public async Task TheFirstBinding_GivesTheItemItsOwnOn_AndEmptyNeverChanges()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var item = Item();
         var ran = new List<string>();
 
@@ -44,7 +44,7 @@ public class OnTests
 
     [Test] public async Task Start_RunsInTheOrderAdded_AndAnswersTheResultAsItStands()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         var item = Item();
         var ran = new List<string>();
@@ -61,7 +61,7 @@ public class OnTests
 
     [Test] public async Task Start_WithNothingBound_AnswersTheResultAsIs()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var result = app.actor.list.User.Context.Ok("kept");
         var answered = await Item().on["start"]!.after.Start(Item(), result, app.actor.list.User.Context);
         await Assert.That(ReferenceEquals(answered, result)).IsTrue();
@@ -69,7 +69,7 @@ public class OnTests
 
     [Test] public async Task AFailingBeforeBinding_IsTheResult_AndStopsTheRest()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         var item = Item();
         var ran = new List<string>();
@@ -86,7 +86,7 @@ public class OnTests
 
     [Test] public async Task AHandledBeforeAnswer_Cancels_AndIsTheResult()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         var item = Item();
         var ran = new List<string>();
@@ -108,7 +108,7 @@ public class OnTests
 
     [Test] public async Task AFailingAfterBinding_IsTheResult_AndTheRestStillRunOnIt()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         var item = Item();
         global::app.data.@this? seen = null;
@@ -126,7 +126,7 @@ public class OnTests
 
     [Test] public async Task AHandledAfterAnswer_MeansNothing()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         var item = Item();
         var ran = new List<string>();
@@ -148,7 +148,7 @@ public class OnTests
 
     [Test] public async Task AHandlerThatThrows_StillLetsItsBindingFireTheNextTime()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         var item = Item();
         var calls = 0;
@@ -165,7 +165,7 @@ public class OnTests
 
     [Test] public async Task ABinding_DoesNotFireInsideItsOwnHandler()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         var item = Item();
         var times = 0;
@@ -182,7 +182,7 @@ public class OnTests
 
     [Test] public async Task AnActorsBinding_FiresOnlyForThatActor_AnAppsForEvery()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var item = Item();
         var ran = new List<string>();
         var own = item.Own();
@@ -199,7 +199,7 @@ public class OnTests
 
     [Test] public async Task AFilter_TakesTheItemsItFiresFor()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         var type = Item();
         var wanted = Item();
@@ -215,7 +215,7 @@ public class OnTests
 
     [Test] public async Task ARemovedBinding_FiresNoMore()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         var item = Item();
         var ran = new List<string>();
@@ -230,7 +230,7 @@ public class OnTests
 
     [Test] public async Task AClone_IsANewValue_WithNothingBound()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var item = Item();
         item.Set("a", false, 1, app.actor.list.User.Context);
         item.Own().Bind("start", When.after, Record(new List<string>(), "x"), app.actor.list.User, Scope.actor);
@@ -244,7 +244,7 @@ public class OnTests
     // `on` stays off the wire: a value with a binding writes the same bytes as one without.
     [Test] public async Task ABoundItem_WritesTheSameBytes_AsAnUnboundOne()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         var plain = new global::app.type.item.dict.@this();
         plain.Set("a", false, 1, context);
@@ -259,7 +259,7 @@ public class OnTests
     // `on` isn't taught as a property: a type's catalog facts don't list it.
     [Test] public async Task On_IsNotInATypesProperties()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var goal = app.type.list["goal"];
         await Assert.That(goal.Property?.Any(p => string.Equals(p.Name, "on", StringComparison.OrdinalIgnoreCase)) ?? false).IsFalse();
     }

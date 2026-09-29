@@ -13,7 +13,7 @@ public class PrLoadTests : System.IAsyncDisposable
     public PrLoadTests()
     {
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(_root, ".build"));
-        _app = TestApp.Create(_root);
+        _app = new global::app.@this(_root).Testing();
     }
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
@@ -95,7 +95,7 @@ public class PrLoadTests : System.IAsyncDisposable
     [Arguments("/system/error/.build/show.pr", 3)]
     public async Task TheLiveSystemPr_StillLoads(string pr, int steps)
     {
-        await using var os = TestApp.Create(System.IO.Path.Combine(RepoRoot(), "os"));
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
 
         var loaded = await os.goal.Load(pr);
 

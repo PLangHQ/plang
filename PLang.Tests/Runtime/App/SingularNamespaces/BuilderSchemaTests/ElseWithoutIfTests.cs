@@ -19,7 +19,7 @@ public class ElseWithoutIfTests
 
     private static async Task<global::app.error.Error?> Validate(params global::app.goal.step.action.@this[] actions)
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var list = new global::app.goal.step.action.list.@this();
         foreach (var a in actions) list.Add(a);
         return await list.Validate(app.actor.list.System.Context);
@@ -117,7 +117,7 @@ public class ElseWithoutIfTests
     public async Task LoneIf_OverIndentedSteps_NeedsNoChild()
     {
         // `- if %count% > 0` with steps indented under it: its body comes from the layout (build.fold).
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.System.Context;
         var goal = global::app.goal.@this.Parse("G\n- if %count% > 0\n    - call ProcessItems\n",
             global::app.type.item.path.@this.Resolve("/G.goal", ctx), ctx)!;
@@ -133,7 +133,7 @@ public class ElseWithoutIfTests
     [Test]
     public async Task StepValidate_KeepsTheChainsKey_ForTheBuilderToRouteBy()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.System.Context;
         var goal = global::app.goal.@this.Parse("G\n- else\n- if %n% > 5, call Big\n",
             global::app.type.item.path.@this.Resolve("/G.goal", ctx), ctx)!;
@@ -164,9 +164,9 @@ public class ElseWithoutIfTests
     [Test]
     public async Task ElseWithoutIf_InSettle_GoesToSourceErrorOnly_AndCarriesTheFix()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        var shared = TestApp.SharedContext;
+        var shared = app.actor.list.User.Context;
         const string fix = "- if %x% == 1, write out \"one\", else write out \"other\"";
 
         app.goal.list.Add(Make.Goal("SourceError",
@@ -197,7 +197,7 @@ public class ElseWithoutIfTests
     [Test]
     public async Task ElseWithoutIf_NamesItsStep_WhenTheActionHoldsOne()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var goal = Make.Goal("G", Make.Step("if %x% == 1, write out \"one\"", If()), Make.Step("else"));
         var elseStep = goal.Step[1];
         elseStep.Code.Add(Else().In(elseStep));

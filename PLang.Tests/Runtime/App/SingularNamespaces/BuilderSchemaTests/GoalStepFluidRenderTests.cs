@@ -29,7 +29,7 @@ public class GoalStepFluidRenderTests
 
     [Test] public async Task StepLoopOnly_RendersEveryStep()
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var r = await Render(app, "{% for step in goal.Step %}- {{ step.Text }}\n{% endfor %}");
         await Assert.That(r).Contains("first thing");
         await Assert.That(r).Contains("second thing");
@@ -37,7 +37,7 @@ public class GoalStepFluidRenderTests
 
     [Test] public async Task FullGoalFormatTemplate_Renders()
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var r = await Render(app,
             "{{ goal.Name }}\n{% for step in goal.Step %}- {{ step.Text }}\n{% endfor %}"
             + "{% if goal.Warning.size > 0 %}\nwarnings:\n{% endif %}");

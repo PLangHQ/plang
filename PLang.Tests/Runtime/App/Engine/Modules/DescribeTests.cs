@@ -7,7 +7,7 @@ public class DescribeTests
     [Test]
     public async Task Describe_DataWrappedProperty_ShowsInnerTypeName()
     {
-        var app = TestApp.Create("/test");
+        var app = new global::app.@this("/test").Testing();
         app.module.Register("testmod", "datapath", typeof(FakeDataPathAction));
 
         var action = app.Module("testmod")["datapath"];

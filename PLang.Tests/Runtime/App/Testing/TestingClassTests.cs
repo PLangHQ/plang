@@ -16,7 +16,7 @@ public class TestingClassTests
     [Before(Test)]
     public void Setup()
     {
-        _app = TestApp.Create("/test");
+        _app = new global::app.@this("/test").Testing();
     }
 
     // A plain App is not testing: no session is open until a run opens one.
@@ -121,8 +121,8 @@ public class TestingClassTests
         await result.IsSuccess();
         await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToInt32()).IsEqualTo(60);
         await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel.ToInt32()).IsEqualTo(4);
-        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("fast", global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("slow", global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("fast", _app.actor.list.User.Context).IsTrue();
+        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("slow", _app.actor.list.User.Context).IsTrue();
     }
 
     // A choice setting given as CLI text (--test={"format":"junit"}) is made by the choice itself.
@@ -151,11 +151,11 @@ public class TestingClassTests
 
         await result.IsSuccess();
         await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Count.ToInt32()).IsEqualTo(1);
-        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("newInclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("oldInclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
+        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("newInclude", _app.actor.list.User.Context).IsTrue();
+        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Include.Contains("oldInclude", _app.actor.list.User.Context).IsFalse();
         await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Count.ToInt32()).IsEqualTo(1);
-        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("newExclude", global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("oldExclude", global::PLang.Tests.TestApp.SharedContext).IsFalse();
+        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("newExclude", _app.actor.list.User.Context).IsTrue();
+        await _app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Exclude.Contains("oldExclude", _app.actor.list.User.Context).IsFalse();
     }
 
     // Unknown config keys are rejected — the setting walk is strict (same as --app/--build/
@@ -172,12 +172,12 @@ public class TestingClassTests
         await result.IsFailure();
     }
 
-    private static global::app.goal.@this TaggedGoal(string tag)
+    private global::app.goal.@this TaggedGoal(string tag)
     {
         var goal = new global::app.goal.@this
         {
             Name = "T",
-            Path = global::app.type.item.path.@this.Resolve("/test/T.test.goal", global::PLang.Tests.TestApp.SharedContext)
+            Path = global::app.type.item.path.@this.Resolve("/test/T.test.goal", _app.actor.list.User.Context)
         };
         goal.Tag.Add(new global::app.type.item.tag.@this(tag));
         return goal;

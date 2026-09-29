@@ -13,7 +13,7 @@ public class ChannelAccessorTests
 {
     [Test] public async Task ActorChannel_IndexByName_SelectsTheRegisteredChannel()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         // Default-registered channels include "output", "input", "error", "debug".
         var c = app.actor.list.User.Channel["output"];
         await Assert.That(c).IsNotNull();
@@ -22,14 +22,14 @@ public class ChannelAccessorTests
 
     [Test] public async Task ActorChannelList_Enumerates_RegisteredChannels()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var names = app.actor.list.User.Channel.list.Select(c => c.Name.ToLowerInvariant()).ToHashSet();
         await Assert.That(names.Contains("output")).IsTrue();
     }
 
     [Test] public async Task ChannelEntity_Write_RoundTripsDataThroughTheElement()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var channel = app.actor.list.User.Channel["output"];
         var result = await channel.WriteAsync(new global::app.data.@this<global::app.type.item.text.@this>("", "hello"));
         await result.IsSuccess();
@@ -77,7 +77,7 @@ public class ChannelAccessorTests
 
     [Test] public async Task ActorChannel_IndexOfUnknownName_ThrowsTypedError()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         await Assert.That(() => { _ = app.actor.list.User.Channel["nope"]; return Task.CompletedTask; })
             .Throws<KeyNotFoundException>();
     }

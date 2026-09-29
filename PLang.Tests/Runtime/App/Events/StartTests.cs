@@ -13,7 +13,7 @@ public class StartTests
     private readonly List<global::app.@event.binding.@this> _bound = new();
 
     [Before(Test)]
-    public void Setup() => _app = TestApp.Create("/test");
+    public void Setup() => _app = new global::app.@this("/test").Testing();
 
     [After(Test)]
     public async Task Cleanup()
@@ -26,7 +26,7 @@ public class StartTests
     // A step of goal "Main" holding `set %x% = one`, born holding its step.
     private (global::app.goal.@this Goal, global::app.goal.step.@this Step, global::app.goal.step.action.@this Set) Program()
     {
-        var goal = new global::app.goal.@this { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", TestApp.SharedContext) };
+        var goal = new global::app.goal.@this { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", _app.actor.list.User.Context) };
         var step = new global::app.goal.step.@this { Goal = goal, Index = 0, Text = "set %x% = one" };
         goal.Step.Add(step);
         var set = Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", "one"));

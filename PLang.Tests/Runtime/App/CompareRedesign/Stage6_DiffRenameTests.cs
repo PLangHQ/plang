@@ -3,8 +3,11 @@ namespace PLang.Tests.App.CompareRedesign;
 // Stage 6 — the golden-diff `data.Compare` (`this.Compare.cs`) renames to
 // `Diff` (`this.Diff.cs`). ~14 test call sites migrate; no production callers.
 // The diff trees produced are unchanged — only the name.
-public class Stage6_DiffRenameTests
+public class Stage6_DiffRenameTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task GoldenDiff_RenamedFromCompareToDiff_FileAndMethod()
     {
@@ -22,13 +25,13 @@ public class Stage6_DiffRenameTests
     public async Task GoldenDiff_StillProducesSameDiffTrees_ForKnownCases()
     {
         // pick a representative case from the v1 DataCompareTests and assert Diff produces the same shape
-        var a = new Data("a", "hello", context: global::PLang.Tests.TestApp.SharedContext);
-        var b = new Data("b", "hello", context: global::PLang.Tests.TestApp.SharedContext);
+        var a = new Data("a", "hello", context: app.actor.list.User.Context);
+        var b = new Data("b", "hello", context: app.actor.list.User.Context);
         var result = await a.Diff(b);
         var tree = Lower<Dictionary<string, object?>>(await result.Value());
         await Assert.That(tree).IsNotNull();
         await Assert.That(tree!["match"]).IsEqualTo(true);
-        var c = new Data("c", "different", context: global::PLang.Tests.TestApp.SharedContext);
+        var c = new Data("c", "different", context: app.actor.list.User.Context);
         var tree2 = Lower<Dictionary<string, object?>>(await (await a.Diff(c)).Value());
         await Assert.That(tree2!["match"]).IsEqualTo(false);
     }

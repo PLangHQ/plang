@@ -29,7 +29,7 @@ public class RenderStoreViewTests
     [Test]
     public async Task ResolveDoor_StillThrowsOnUnsetRef()
     {
-        await using var app = global::PLang.Tests.TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         // {{ p.Value }} navigates INTO the authored leaf → executes it → the unset %name% throws.
         var r = await Render(app,
             "{% for a in goal.Step[0].Code %}{% for p in a.Property %}{{ p.Value }}{% endfor %}{% endfor %}");

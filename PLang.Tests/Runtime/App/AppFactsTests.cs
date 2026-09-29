@@ -13,7 +13,7 @@ public class AppFactsTests
     [Arguments("%!app.uptime%", "duration")]
     public async Task AFact_IsItsPlangType(string path, string type)
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
 
         var fact = await Read(app, path);
 
@@ -24,7 +24,7 @@ public class AppFactsTests
     // The store is born ready, a store of kind sqlite: a program reads what it is, never its tables.
     [Test] public async Task TheStore_IsAStore_OfKindSqlite()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
 
         var store = await Read(app, "%!app.store%");
 
@@ -42,7 +42,7 @@ public class AppFactsTests
         System.IO.Directory.CreateDirectory(root);
         try
         {
-            await using (var app = TestApp.Create(root)) { _ = app.store; }
+            await using (var app = new global::app.@this(root).Testing()) { _ = app.store; }
             await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(root, ".db", "system.sqlite"))).IsFalse();
         }
         finally { System.IO.Directory.Delete(root, recursive: true); }
@@ -51,7 +51,7 @@ public class AppFactsTests
     // A store that can't open answers why at its verb — none throws.
     [Test] public async Task AStoreThatCantOpen_AnswersWhy()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         using var nowhere = new global::app.store.sqlite.@this(null, () => null, app.actor.list.System.Context);
 
         var set = await nowhere.Set("t", "k", app.actor.list.System.Context.Ok("v"));
@@ -63,7 +63,7 @@ public class AppFactsTests
     // The app's name is its setting, as its asker's settings have it; the system's is its own.
     [Test] public async Task TheName_IsTheAskersSetting()
     {
-        await using var app = TestApp.Create("/shopfolder");
+        await using var app = new global::app.@this("/shopfolder").Testing();
         var user = app.actor.list.User.Context;
 
         var set = await new global::app.type.item.variable.parser.@this("%!app.setting.name%").Variable.Single()
@@ -77,7 +77,7 @@ public class AppFactsTests
 
     [Test] public async Task WithNothingSet_TheNameIsTheFolders()
     {
-        await using var app = TestApp.Create("/shopfolder");
+        await using var app = new global::app.@this("/shopfolder").Testing();
 
         var name = await Read(app, "%!app.name%");
 
@@ -87,7 +87,7 @@ public class AppFactsTests
     // The id is the identity's, read through the app's settings, never set there.
     [Test] public async Task TheId_IsReadThroughTheAppsSettings()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
 
         var id = await Read(app, "%!app.setting.id%");
 
@@ -97,7 +97,7 @@ public class AppFactsTests
     // An app with no identity yet is being created now: created is this run's start.
     [Test] public async Task ANewApp_IsCreated_WhenItStarts()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
 
         await Assert.That(app.Created.Value).IsEqualTo(app.StartedAt.Value);
     }

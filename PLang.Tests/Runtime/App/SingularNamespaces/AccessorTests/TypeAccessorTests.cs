@@ -15,7 +15,7 @@ public class TypeAccessorTests
 {
     [Test] public async Task AppType_IndexByName_ReturnsTypeEntity_WithNameAndClrType()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var t = app.type.list[new global::app.type.@this("number", "int"), app.actor.list.User.Context];
         await Assert.That(t.Name).IsEqualTo("number");
         await Assert.That(t.ClrType).IsEqualTo(typeof(global::app.type.item.number.@this));
@@ -23,14 +23,14 @@ public class TypeAccessorTests
 
     [Test] public async Task AppType_IndexByRuntimeType_ReturnsTypeEntity()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var entity = app.type.list[typeof(string)];
         await Assert.That(entity.Name).IsEqualTo("text");
     }
 
     [Test] public async Task AppType_IndexBySystemType_ReturnsEntity_WithMatchingPlangName()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         // Reverse — Name() gives PLang name for a CLR type.
         await Assert.That(app.type.list[typeof(string)].ToString()).IsEqualTo("text");
     }
@@ -38,7 +38,7 @@ public class TypeAccessorTests
     // A choice is {choice, kind: <its set>}, and its entity carries the set's options.
     [Test] public async Task AppType_IndexByClr_Choice_IsChoiceWithSetKindAndValues()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var t = app.type.list[typeof(global::app.type.item.choice.@this<global::app.data.Operator>)];
         await Assert.That(t.Name).IsEqualTo("choice");
         await Assert.That(t.kind.Name).IsEqualTo("operator");
@@ -48,14 +48,14 @@ public class TypeAccessorTests
     // A closed set's name is a kind, never a type of its own.
     [Test] public async Task AppType_SetName_IsNotATypeName()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         await Assert.That(app.type.list.Contains("operator")).IsFalse();
         await Assert.That(app.type.list.Contains("choice")).IsTrue();
     }
 
     [Test] public async Task AppType_IndexByName_Fields_OnRecordType_FoldedFromEntry()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var g = app.type.list["goal"];
         await Assert.That(g.Property).IsNotNull();
         await Assert.That(g.Property!.Any(f => f.Name == "name")).IsTrue();
@@ -63,7 +63,7 @@ public class TypeAccessorTests
 
     [Test] public async Task AppType_IndexByName_Shape_OnScalarType_FoldedFromEntry()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var p = app.type.list["path"];
         await Assert.That(p.Shape).IsNotNull();
     }
@@ -71,7 +71,7 @@ public class TypeAccessorTests
     [Test] public async Task AppType_IndexByName_Example_FoldedFromEntry_ReadsOffTheEntity()
     {
         // Example may be null for many types — just check the surface exists.
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var t = app.type.list["string"];
         var _ = t.Example;  // doesn't throw, surface present
         await Assert.That(true).IsTrue();
@@ -79,7 +79,7 @@ public class TypeAccessorTests
 
     [Test] public async Task AppType_IndexOfUnknownName_ThrowsTypedError()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         await Assert.That(() => { _ = app.type.list["nopeType"]; return Task.CompletedTask; })
             .Throws<KeyNotFoundException>();
     }

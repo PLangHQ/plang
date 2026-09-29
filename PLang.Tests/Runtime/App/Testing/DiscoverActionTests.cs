@@ -29,7 +29,7 @@ public class DiscoverActionTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-discover-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = TestApp.Create(_tempDir);
+        _app = new global::app.@this(_tempDir).Testing();
     }
 
     [After(Test)]
@@ -213,9 +213,9 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains(new global::app.type.item.tag.@this("http"), global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await file.Tags.Contains(new global::app.type.item.tag.@this("fast"), global::PLang.Tests.TestApp.SharedContext).IsTrue();
-        await file.Tags.Contains(new global::app.type.item.tag.@this("slow"), global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("http"), _app.actor.list.User.Context).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("fast"), _app.actor.list.User.Context).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("slow"), _app.actor.list.User.Context).IsTrue();
     }
 
     // For each action in the .pr, resolves the handler class (via App.Modules.
@@ -234,7 +234,7 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains(new global::app.type.item.tag.@this("network"), global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("network"), _app.actor.list.User.Context).IsTrue();
     }
 
     // Sub-goal reached via static goal.call: its actions' capabilities propagate up
@@ -247,7 +247,7 @@ public class DiscoverActionTests
         var helper = new Goal
         {
             Name = "Helper",
-            Path = global::app.type.item.path.@this.Resolve("/Helper.goal", global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve("/Helper.goal", _app.actor.list.User.Context),
             Step = new GoalSteps
             {
                 new Step
@@ -257,7 +257,7 @@ public class DiscoverActionTests
                     {
                         new PrAction
                         {
-                            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("http"), Name = "request",
+                            Module = _app.actor.list.User.Context.App.Module("http"), Name = "request",
                             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Url", "https://example.com", context: _app.actor.list.User.Context) })
                         }
                     }
@@ -279,7 +279,7 @@ public class DiscoverActionTests
         var files = await Discover();
         var file = files.Single();
 
-        await file.Tags.Contains(new global::app.type.item.tag.@this("network"), global::PLang.Tests.TestApp.SharedContext).IsTrue();
+        await file.Tags.Contains(new global::app.type.item.tag.@this("network"), _app.actor.list.User.Context).IsTrue();
     }
 
     // Config.Include=["fast"]: tests without the "fast" tag are returned as

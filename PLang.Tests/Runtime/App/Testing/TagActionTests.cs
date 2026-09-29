@@ -15,7 +15,7 @@ public class TagActionTests
     [Before(Test)]
     public void Setup()
     {
-        _app = TestApp.Create("/test");
+        _app = new global::app.@this("/test").Testing();
     }
 
     [After(Test)]

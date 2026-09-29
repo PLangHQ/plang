@@ -10,8 +10,11 @@ namespace PLang.Tests.App;
 /// Phase 0 proof tests — each test demonstrates a specific phase's behavior
 /// with clear input → output mapping for black-box validation.
 /// </summary>
-public class Phase0Proof
+public class Phase0Proof : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     // ================================================================
     // Phase 0.1 — Data.FromError() (renamed from Data.Fail())
     // ================================================================
@@ -34,7 +37,7 @@ public class Phase0Proof
     public async Task Phase01_DataOk_StillWorks()
     {
         // INPUT: create a successful Data result
-        var result = global::PLang.Tests.TestApp.SharedContext.Ok("hello world");
+        var result = app.actor.list.User.Context.Ok("hello world");
 
         // OUTPUT: Data has value, is successful
         await result.IsSuccess();
@@ -71,7 +74,7 @@ public class Phase0Proof
     public async Task Phase04_ListType_IsPreserved()
     {
         // INPUT: Data.Ok with a native list — the list names its own type
-        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var ctx = app.actor.list.User.Context;
         var listValue = new global::app.type.item.list.@this();
         foreach (var n in new[] { 1, 2, 3 }) listValue.Add(new Data("", n, context: ctx));
         var result = ctx.Ok(listValue);
@@ -85,7 +88,7 @@ public class Phase0Proof
     public async Task Phase04_ScalarType_AutoInferred()
     {
         // INPUT: Data.Ok with an int value (no explicit type)
-        var result = global::PLang.Tests.TestApp.SharedContext.Ok(42);
+        var result = app.actor.list.User.Context.Ok(42);
 
         // OUTPUT: Type auto-inferred as "int"
         await Assert.That(result.Type).IsNotNull();
@@ -96,7 +99,7 @@ public class Phase0Proof
     public async Task Phase05_CultureInfo_DefaultsToInvariant()
     {
         // INPUT: new Engine
-        await using var engine = TestApp.Create("/app");
+        await using var engine = new global::app.@this("/app").Testing();
 
         // OUTPUT: culture defaults to InvariantCulture
         await Assert.That(engine.Culture).IsEqualTo(System.Globalization.CultureInfo.InvariantCulture);

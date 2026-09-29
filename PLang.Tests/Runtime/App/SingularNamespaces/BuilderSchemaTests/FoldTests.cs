@@ -19,7 +19,7 @@ public class FoldTests
     [Test]
     public async Task Fold_IndentedBlockUnderCondition_BecomesChild()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.System.Context;
 
         var goal = Make.Goal("G",
@@ -44,7 +44,7 @@ public class FoldTests
     [Test]
     public async Task Fold_NestedConditions_Recurse()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.System.Context;
 
         var goal = Make.Goal("G",
@@ -67,7 +67,7 @@ public class FoldTests
     [Test]
     public async Task Fold_IndentedUnderNonCondition_IsBuildError()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.System.Context;
 
         var goal = Make.Goal("G",

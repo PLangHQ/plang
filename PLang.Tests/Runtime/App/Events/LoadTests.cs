@@ -16,7 +16,7 @@ public class LoadTests
     {
         _root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-load-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(_root, ".build"));
-        await using var writer = TestApp.Create(_root);
+        await using var writer = new global::app.@this(_root).Testing();
         var goal = Make.Goal("FullPipeline",
             Make.Step("set x", Make.Action("variable", "set", Make.Param("Name", "x", "variable"), ("Value", 1))));
         await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_root, ".build", "fullpipeline.pr"), await writer.actor.list.User.Context.Pr(goal));
@@ -31,7 +31,7 @@ public class LoadTests
 
     [Test] public async Task BeforeLoad_IsHandedThePr_AfterLoad_TheGoal()
     {
-        await using var app = TestApp.Create(Fixtures());
+        await using var app = new global::app.@this(Fixtures()).Testing();
         var handed = new List<global::app.type.item.@this>();
         var on = app.goal.Own();
         on.Bind("load", When.before, (item, _, ctx) => { handed.Add(item); return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.app);
@@ -48,7 +48,7 @@ public class LoadTests
 
     [Test] public async Task AFailingBeforeLoad_IsTheAnswer_AndNothingIsRead()
     {
-        await using var app = TestApp.Create(Fixtures());
+        await using var app = new global::app.@this(Fixtures()).Testing();
         app.goal.Own().Bind("load", When.before,
             (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Refused", 400))), app.actor.list.System, Scope.app);
 
@@ -61,7 +61,7 @@ public class LoadTests
 
     [Test] public async Task ACancellingBeforeLoad_IsTheAnswer_AndNothingIsRead()
     {
-        await using var app = TestApp.Create(Fixtures());
+        await using var app = new global::app.@this(Fixtures()).Testing();
         app.goal.Own().Bind("load", When.before, (_, _, ctx) =>
         {
             var instead = ctx.Ok("instead");
@@ -77,7 +77,7 @@ public class LoadTests
 
     [Test] public async Task AFailingAfterLoad_IsTheAnswer()
     {
-        await using var app = TestApp.Create(Fixtures());
+        await using var app = new global::app.@this(Fixtures()).Testing();
         app.goal.Own().Bind("load", When.after,
             (_, _, ctx) => Task.FromResult(ctx.Error(new global::app.error.Error("no", "Broke", 400))), app.actor.list.System, Scope.app);
 
@@ -89,7 +89,7 @@ public class LoadTests
 
     [Test] public async Task AHeldGoal_IsNotLoadedAgain()
     {
-        await using var app = TestApp.Create(Fixtures());
+        await using var app = new global::app.@this(Fixtures()).Testing();
         var loads = 0;
         app.goal.Own().Bind("load", When.after, (_, _, ctx) => { loads++; return Task.FromResult(ctx.Ok()); }, app.actor.list.System, Scope.app);
 

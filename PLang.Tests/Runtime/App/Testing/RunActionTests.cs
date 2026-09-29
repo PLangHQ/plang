@@ -26,7 +26,7 @@ public class RunActionTests
         // In-memory (Create) rooted at the temp dir — the fixtures are files on disk,
         // but the settings store needn't be. Create also spins up the test session
         // the runner accumulates into.
-        _app = global::PLang.Tests.TestApp.Create(_tempDir);
+        _app = new global::app.@this(_tempDir).Testing();
     }
 
     [After(Test)]
@@ -57,7 +57,7 @@ public class RunActionTests
         var goal = new Goal
         {
             Name = goalName,
-            Path = global::app.type.item.path.@this.Resolve("/" + relativePath, global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve("/" + relativePath, _app.actor.list.User.Context),
             Step = new GoalSteps()
         };
         for (int i = 0; i < actions.Length; i++)
@@ -65,7 +65,7 @@ public class RunActionTests
             var step = new Step { Index = i, Text = $"action {i}" };
             step.Code.Add(new PrAction
             {
-                Module = global::PLang.Tests.TestApp.SharedContext.App.Module(actions[i].module),
+                Module = _app.actor.list.User.Context.App.Module(actions[i].module),
                 Name = actions[i].actionName,
                 Property = global::PLang.Tests.Shared.Make.Properties(actions[i].parameters)
             });
@@ -99,7 +99,7 @@ public class RunActionTests
         var result = await action.Start();
         // run returns list<test>; materialize the executed tests (each row's value is a test).
         var list = (global::app.type.item.list.@this)(await result.Value())!;
-        return list.Items(global::PLang.Tests.TestApp.SharedContext).Select(r => (global::app.test.@this)r.Peek()).ToList();
+        return list.Items(_app.actor.list.User.Context).Select(r => (global::app.test.@this)r.Peek()).ToList();
     }
 
     // Each global::app.test.@this gets its own App.@this instance. Two tests cannot observe each
@@ -337,10 +337,10 @@ public class RunActionTests
                 ("variable", "set", new List<Data> { new("Name", new global::app.type.item.variable.@this("x"), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) })
             });
             var stale = new global::app.test.@this() {
-                Goal = new Goal { Name = "Stale", Path = global::app.type.item.path.@this.Resolve("/Stale.test.goal", global::PLang.Tests.TestApp.SharedContext) },
+                Goal = new Goal { Name = "Stale", Path = global::app.type.item.path.@this.Resolve("/Stale.test.goal", _app.actor.list.User.Context) },
                 Status = global::app.test.Status.Stale, StatusReason = "no .pr" };
             var skipped = new global::app.test.@this() {
-                Goal = new Goal { Name = "Skip", Path = global::app.type.item.path.@this.Resolve("/Skip.test.goal", global::PLang.Tests.TestApp.SharedContext) },
+                Goal = new Goal { Name = "Skip", Path = global::app.type.item.path.@this.Resolve("/Skip.test.goal", _app.actor.list.User.Context) },
                 Status = global::app.test.Status.Skipped, StatusReason = "excluded by tag" };
 
             var results = await RunTests(new List<global::app.test.@this> { ready, stale, skipped });
@@ -514,17 +514,17 @@ public class RunActionTests
         var helperGoal = new Goal
         {
             Name = "Helper",
-            Path = global::app.type.item.path.@this.Resolve("/Helper.goal", global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve("/Helper.goal", _app.actor.list.User.Context),
             Step = new GoalSteps
             {
                 new Step { Index = 0, Text = "h0", Code = new StepActions
                 {
-                    new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
+                    new PrAction { Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
                         Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Name", new global::app.type.item.variable.@this("h0"), context: _app.actor.list.User.Context), new("Value", 0, context: _app.actor.list.User.Context) }) }
                 }},
                 new Step { Index = 1, Text = "h1", Code = new StepActions
                 {
-                    new PrAction { Module = global::PLang.Tests.TestApp.SharedContext.App.Module("variable"), Name = "set",
+                    new PrAction { Module = _app.actor.list.User.Context.App.Module("variable"), Name = "set",
                         Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { new("Name", new global::app.type.item.variable.@this("h1"), context: _app.actor.list.User.Context), new("Value", 1, context: _app.actor.list.User.Context) }) }
                 }}
             }
@@ -555,14 +555,14 @@ public class RunActionTests
         await Assert.That(run.Status).IsEqualTo(global::app.test.Status.Pass);
         // Exactly 3 timings — entry-goal-only, sub-goal's 2 steps rolled up.
         await Assert.That(run.Timings.Count).IsEqualTo(3);
-        var indices = run.Timings.Items(global::PLang.Tests.TestApp.SharedContext).Select(t => ((global::app.test.timing.@this)t.Peek()).Step.Index).OrderBy(i => i).ToList();
+        var indices = run.Timings.Items(_app.actor.list.User.Context).Select(t => ((global::app.test.timing.@this)t.Peek()).Step.Index).OrderBy(i => i).ToList();
         await Assert.That(indices[0]).IsEqualTo(0);
         await Assert.That(indices[1]).IsEqualTo(1);
         await Assert.That(indices[2]).IsEqualTo(2);
         // Each step recorded a real wall-clock duration; Ms is non-negative
         // (the goal.call step at index 1 bundles the sub-goal time so it's
         // typically the largest, but we don't pin the magnitude).
-        foreach (var t in (run.Timings).Items(global::PLang.Tests.TestApp.SharedContext))
+        foreach (var t in (run.Timings).Items(_app.actor.list.User.Context))
             await Assert.That(((global::app.test.timing.@this)t.Peek()).Elapsed.TotalMilliseconds >= 0.0).IsTrue();
     }
 

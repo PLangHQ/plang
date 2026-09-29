@@ -18,7 +18,7 @@ public class LoudRunTests
     {
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-loud-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = TestApp.Create(_tempDir);
+        _app = new global::app.@this(_tempDir).Testing();
         _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, new System.IO.MemoryStream(),
             ChannelDirection.Output, ownsStream: true) { Mime = "text/plain" });
@@ -31,11 +31,11 @@ public class LoudRunTests
         if (System.IO.Directory.Exists(_tempDir)) System.IO.Directory.Delete(_tempDir, true);
     }
 
-    private static global::app.test.@this NewTest(string name, Status status, string? reason = null)
+    private global::app.test.@this NewTest(string name, Status status, string? reason = null)
     {
         var test = new global::app.test.@this
         {
-            Goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", TestApp.SharedContext) },
+            Goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", _app.actor.list.User.Context) },
         };
         if (status is Status.Stale or Status.Skipped)
         {

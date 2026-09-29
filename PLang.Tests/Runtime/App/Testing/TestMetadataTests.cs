@@ -23,7 +23,7 @@ public class TestMetadataTests
         _tempDir = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-meta-" + Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(_tempDir);
-        _app = TestApp.Create(_tempDir);
+        _app = new global::app.@this(_tempDir).Testing();
         _captureStream = new System.IO.MemoryStream();
         _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, _captureStream,
@@ -41,12 +41,12 @@ public class TestMetadataTests
 
     private string CapturedOutput() => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
 
-    private static global::app.test.@this NewTest(string name, string? builderVersion = null, string? goalHash = "deadbeef")
+    private global::app.test.@this NewTest(string name, string? builderVersion = null, string? goalHash = "deadbeef")
     {
         var goal = new Goal
         {
             Name = name,
-            Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", global::PLang.Tests.TestApp.SharedContext),
+            Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", _app.actor.list.User.Context),
             Hash = goalHash,
             BuilderVersion = builderVersion
         };

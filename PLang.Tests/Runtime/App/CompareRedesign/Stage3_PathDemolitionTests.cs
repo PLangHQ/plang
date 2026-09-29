@@ -18,7 +18,7 @@ public class Stage3_PathDemolitionTests
     {
         var dir = Path.Combine(Path.GetTempPath(), "plang_st3pd_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
-        var app = global::PLang.Tests.TestApp.Plain(dir);
+        var app = new global::app.@this(dir).TestSigning();
         return (app, app.actor.list.User.Context, dir);
     }
 
@@ -148,7 +148,7 @@ public class Stage3_PathDemolitionTests
         var listing = await directory.List(context);
         await Assert.That(listing).IsTypeOf<global::app.type.item.list.@this<global::app.type.item.path.@this>>();
         await Assert.That(listing.Count).IsEqualTo(2);
-        foreach (var entry in listing.Items(global::PLang.Tests.TestApp.SharedContext))
+        foreach (var entry in listing.Items(app.actor.list.User.Context))
             await Assert.That(entry.Peek()).IsAssignableTo<global::app.type.item.path.@this>();
     }
 

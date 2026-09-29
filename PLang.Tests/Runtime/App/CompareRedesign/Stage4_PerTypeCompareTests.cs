@@ -7,16 +7,19 @@ namespace PLang.Tests.App.CompareRedesign;
 // caller-order. `a` is left (this), `b` is right (other); `Less` means
 // `this < other`, no sign flip. Same driver regardless of operand order ⇒
 // antisymmetry holds. Ordering math is sync — Stage 5 awaits the values.
-public class Stage4_PerTypeCompareTests
+public class Stage4_PerTypeCompareTests : System.IAsyncDisposable
 {
-    private static global::app.@this NewApp() => new(System.IO.Path.Combine(
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private global::app.@this NewApp() => new(System.IO.Path.Combine(
         System.IO.Path.GetTempPath(), "plang-stage4-" + System.Guid.NewGuid().ToString("N")[..8]));
 
-    private static async Task<Comparison> Cmp(global::app.@this app, object? a, object? b,
+    private async Task<Comparison> Cmp(global::app.@this app, object? a, object? b,
         string? aType = null, string? bType = null)
     {
-        var da = new Data("a", a, aType == null ? null : global::PLang.Tests.TestApp.SharedContext.App.type.list[aType], context: app.actor.list.User.Context);
-        var db = new Data("b", b, bType == null ? null : global::PLang.Tests.TestApp.SharedContext.App.type.list[bType], context: app.actor.list.User.Context);
+        var da = new Data("a", a, aType == null ? null : app.actor.list.User.Context.App.type.list[aType], context: app.actor.list.User.Context);
+        var db = new Data("b", b, bType == null ? null : app.actor.list.User.Context.App.type.list[bType], context: app.actor.list.User.Context);
         return await da.Compare(db);
     }
 
@@ -113,9 +116,9 @@ public class Stage4_PerTypeCompareTests
             foreach (var i in items) l.Add(new Data("", i, context: c));
             return l;
         }
-        await Assert.That(await L(ctx,1,2).Compare(L(ctx,1,3), global::PLang.Tests.TestApp.SharedContext)).IsEqualTo(Comparison.Less);
-        await Assert.That(await L(ctx,1,2).Compare(L(ctx,1,2,3), global::PLang.Tests.TestApp.SharedContext)).IsEqualTo(Comparison.Less); // prefix first
-        await Assert.That(await L(ctx,2).Compare(L(ctx,1,9), global::PLang.Tests.TestApp.SharedContext)).IsEqualTo(Comparison.Greater);
+        await Assert.That(await L(ctx,1,2).Compare(L(ctx,1,3), app.actor.list.User.Context)).IsEqualTo(Comparison.Less);
+        await Assert.That(await L(ctx,1,2).Compare(L(ctx,1,2,3), app.actor.list.User.Context)).IsEqualTo(Comparison.Less); // prefix first
+        await Assert.That(await L(ctx,2).Compare(L(ctx,1,9), app.actor.list.User.Context)).IsEqualTo(Comparison.Greater);
     }
 
     [Test]
@@ -139,9 +142,9 @@ public class Stage4_PerTypeCompareTests
     public async Task ChoiceEquality_SameChoice_Equal() { var a = new global::app.type.item.choice.@this<global::app.goal.step.ErrorOrder>(global::app.goal.step.ErrorOrder.RetryFirst);
         var b = new global::app.type.item.choice.@this<global::app.goal.step.ErrorOrder>(global::app.goal.step.ErrorOrder.RetryFirst);
         var c = new global::app.type.item.choice.@this<global::app.goal.step.ErrorOrder>(global::app.goal.step.ErrorOrder.GoalFirst);
-        await Assert.That(await a.Compare(b, global::PLang.Tests.TestApp.SharedContext)).IsEqualTo(Comparison.Equal);
-        await Assert.That(await a.Compare(c, global::PLang.Tests.TestApp.SharedContext)).IsEqualTo(Comparison.NotEqual);
-        await Assert.That(await a.Compare(new global::app.type.item.text.@this("RetryFirst"), global::PLang.Tests.TestApp.SharedContext)).IsEqualTo(Comparison.Equal); // by name
+        await Assert.That(await a.Compare(b, app.actor.list.User.Context)).IsEqualTo(Comparison.Equal);
+        await Assert.That(await a.Compare(c, app.actor.list.User.Context)).IsEqualTo(Comparison.NotEqual);
+        await Assert.That(await a.Compare(new global::app.type.item.text.@this("RetryFirst"), app.actor.list.User.Context)).IsEqualTo(Comparison.Equal); // by name
     }
 
     [Test]
@@ -179,10 +182,10 @@ public class Stage4_PerTypeCompareTests
         list.Add(new Data("", 3, context: ctx));
         list.Add(new Data("", null, context: ctx));
         list.Add(new Data("", 1, context: ctx));
-        await list.Sort(null, descending: false, global::PLang.Tests.TestApp.SharedContext);
-        await Assert.That((await list.At(0, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("1");
-        await Assert.That((await list.At(1, global::PLang.Tests.TestApp.SharedContext)!.Value())?.ToString()).IsEqualTo("3");
-        await Assert.That(await (await list.At(2, global::PLang.Tests.TestApp.SharedContext)!.Value())!.IsEmpty()).IsTrue();   // nulls last
+        await list.Sort(null, descending: false, app.actor.list.User.Context);
+        await Assert.That((await list.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("1");
+        await Assert.That((await list.At(1, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("3");
+        await Assert.That(await (await list.At(2, app.actor.list.User.Context)!.Value())!.IsEmpty()).IsTrue();   // nulls last
     }
 
     [Test]

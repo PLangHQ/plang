@@ -10,8 +10,11 @@ namespace PLang.Tests.App.Settings;
 /// <c>[Default]</c> fallback moved onto the generator seam (exercised by the action tests), so
 /// these tests assert scope resolution only, in Data terms.
 /// </summary>
-public class SettingsTests
+public class SettingsTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private global::app.actor.context.@this Ctx()
     {
         var engine = new EngineType("/app");
@@ -19,10 +22,10 @@ public class SettingsTests
     }
 
     // The action an option is read for — the settings build its keys from the module's and the action's names.
-    private static global::app.goal.step.action.@this Request(global::app.actor.setting.@this _)
-        => global::PLang.Tests.TestApp.SharedContext.App.Module("http")["request"]!;
+    private global::app.goal.step.action.@this Request(global::app.actor.setting.@this _)
+        => app.actor.list.User.Context.App.Module("http")["request"]!;
 
-    private static global::app.goal.step.action.@this Query(EngineType engine) => engine.Module("llm")["query"]!;
+    private global::app.goal.step.action.@this Query(EngineType engine) => engine.Module("llm")["query"]!;
 
     [Test]
     public async Task Get_Unset_IsNotFound()
@@ -49,7 +52,7 @@ public class SettingsTests
         // The consumer's read: each string row lifts to a REAL path (text→path via the lift door).
         var files = app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Files;
         var paths = new List<global::app.type.item.path.@this>();
-        foreach (var row in files.Items(global::PLang.Tests.TestApp.SharedContext))
+        foreach (var row in files.Items(app.actor.list.User.Context))
             paths.Add((await row.Value<global::app.type.item.path.@this>())!);
 
         await Assert.That(paths.Count).IsEqualTo(2);

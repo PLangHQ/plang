@@ -19,7 +19,7 @@ public class ConditionIfBranchIndexTests
     [Before(Test)]
     public void Setup()
     {
-        _app = TestApp.Create("/test");
+        _app = new global::app.@this("/test").Testing();
     }
 
     [After(Test)]
@@ -173,7 +173,7 @@ public class ConditionIfBranchIndexTests
         // raises an evaluation error.
         var action = new PrAction
         {
-            Module = global::PLang.Tests.TestApp.SharedContext.App.Module("condition"),
+            Module = _app.actor.list.User.Context.App.Module("condition"),
             Name = "if",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {

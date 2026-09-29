@@ -5,9 +5,12 @@ namespace PLang.Tests.App.CompareRedesign;
 // chain-wide). The sigil picks the plane, so a content key `size` (`.size`) and
 // the value's `size` (`!size`) never collide. Reserved core (`@schema`, `type`,
 // `error`, `success`) is protected — a type may not shadow it.
-public class Stage2_PlaneResolverTests
+public class Stage2_PlaneResolverTests : System.IAsyncDisposable
 {
-    private static global::app.@this NewApp() => new(System.IO.Path.Combine(
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private global::app.@this NewApp() => new(System.IO.Path.Combine(
         System.IO.Path.GetTempPath(), "plang-stage2pl-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     [Test]
@@ -41,7 +44,7 @@ public class Stage2_PlaneResolverTests
         // %x!type% → headline type name (post-narrow: `dict`)
         await using var app = NewApp();
         var d = new Data("x", new Dictionary<string, object?> { ["k"] = 1 },
-            global::PLang.Tests.TestApp.SharedContext.App.type.list["dict"], context: app.actor.list.User.Context);
+            app.actor.list.User.Context.App.type.list["dict"], context: app.actor.list.User.Context);
         var t = await d.Get("!type");
         await Assert.That(((await t.Value()) as global::app.type.@this)?.Name).IsEqualTo("dict");
     }
@@ -51,7 +54,7 @@ public class Stage2_PlaneResolverTests
     {
         // the runtime registration check rejects a shadower; every built-in
         // value family is clean (statics like the lattice `Type` are exempt)
-        var reserved = global::PLang.Tests.TestApp.SharedContext.App.type.list.Reserved;
+        var reserved = app.actor.list.User.Context.App.type.list.Reserved;
         await Assert.That(Shadows(typeof(ReservedShadower), reserved)).IsEqualTo("Error");
         await Assert.That(Shadows(typeof(global::app.type.item.text.@this), reserved)).IsNull();
         await Assert.That(Shadows(typeof(global::app.type.item.dict.@this), reserved)).IsNull();

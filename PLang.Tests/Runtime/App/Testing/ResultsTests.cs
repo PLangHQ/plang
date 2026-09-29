@@ -14,13 +14,13 @@ public class ResultsTests
     [Before(Test)]
     public void Setup()
     {
-        _app = TestApp.Create("/test");
+        _app = new global::app.@this("/test").Testing();
     }
 
-    private static global::app.test.@this NewTest(string name = "T") =>
+    private global::app.test.@this NewTest(string name = "T") =>
         new()
         {
-            Goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", global::PLang.Tests.TestApp.SharedContext) }
+            Goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve($"/test/{name}.test.goal", _app.actor.list.User.Context) }
         };
 
     // Fresh session starts empty — Count == 0, no tests.

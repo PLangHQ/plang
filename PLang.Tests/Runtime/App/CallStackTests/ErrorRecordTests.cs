@@ -8,14 +8,14 @@ namespace PLang.Tests.App.CallStackTests;
 /// </summary>
 public class ErrorRecordTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = TestApp.Create("/tmp/errrec-" + System.Guid.NewGuid().ToString("N")[..8]);
+    private readonly global::app.@this _app = new global::app.@this("/tmp/errrec-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private async Task<global::app.error.Error> Recorded()
     {
         var context = _app.actor.list.User.Context;
         await context.Variable.Set("secret", "hunter2");
-        var action = TestAction.Create("variable", "set", ("name", "%x%"), ("value", 1));
+        var action = context.Action("variable.set(Name=%x%, Value=1)");
         var error = new global::app.error.ServiceError("boom", "Boom", 500);
         await using var call = context.CallStack.Push(action, context.Variable);
         call.Record(error, context);

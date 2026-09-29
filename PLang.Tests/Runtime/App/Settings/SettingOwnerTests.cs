@@ -14,7 +14,7 @@ public class SettingOwnerTests
     // stack that reads it on every push.
     [Test] public async Task CallStack_TakesAPlangSet()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         await Assert.That(app.actor.list.User.CallStack.Timing.Value).IsFalse();
 
@@ -29,7 +29,7 @@ public class SettingOwnerTests
     // The system's value (a CLI flag) reaches both actors' stacks — the user falls back to it.
     [Test] public async Task CallStack_TakesTheSystemsValue()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         await app.actor.list.System.Setting.Set("app.callstack.setting", new Dictionary<string, object?> { ["history"] = true }).IsSuccess();
         await Assert.That(app.actor.list.System.CallStack.History.Value).IsTrue();
         await Assert.That(app.actor.list.User.CallStack.History.Value).IsTrue();
@@ -38,7 +38,7 @@ public class SettingOwnerTests
     // Debug, once born, takes a later value under its path.
     [Test] public async Task Debug_TakesALaterValue()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         app.Debug = new global::app.module.debug.@this(app.actor.list.System.Context);
         await Assert.That(app.Debug.Setting.MaxLength.ToInt32()).IsEqualTo(500);
 
@@ -49,7 +49,7 @@ public class SettingOwnerTests
     // A value the option can't take is refused at the flag, and nothing is written.
     [Test] public async Task Flag_RefusesAValueItsOptionCantTake()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var set = app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "nonsense" });
         await set.IsFailure();
         await Assert.That(app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Format.Value.ToString())
@@ -59,7 +59,7 @@ public class SettingOwnerTests
     // The app's own setting, read through the app: %!app.setting.create%.
     [Test] public async Task AppSetting_ReadsThroughTheApp()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         await Assert.That((await (await Read("%!app.setting.create%", app.actor.list.User.Context)).Value())?.ToString()).IsEqualTo("false");
 
         await app.actor.list.System.Setting.Set("app.setting", new Dictionary<string, object?> { ["create"] = true }).IsSuccess();

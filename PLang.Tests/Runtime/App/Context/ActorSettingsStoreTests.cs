@@ -31,13 +31,13 @@ public class ActorSettingsStoreTests
     {
         // Build mode → on-disk system.sqlite — survives App lifetime so
         // LLM cache and other persistent system data live across builds.
-        await using (var engine = global::PLang.Tests.TestApp.Plain(_testDir))
+        await using (var engine = new global::app.@this(_testDir).TestSigning())
         {
             engine.Build = new global::app.module.build.@this(engine.actor.list.System.Context);
             await engine.store.Set("LlmCache", "testkey", engine.actor.list.User.Context.Ok("cached_response"));
         }
 
-        await using (var engine2 = global::PLang.Tests.TestApp.Plain(_testDir))
+        await using (var engine2 = new global::app.@this(_testDir).TestSigning())
         {
             engine2.Build = new global::app.module.build.@this(engine2.actor.list.System.Context);
             var result = await engine2.store.Get<global::app.type.item.@this>("LlmCache", "testkey");
@@ -52,13 +52,13 @@ public class ActorSettingsStoreTests
         // During testing, the store is in-memory scoped by App.Id so per-test
         // Apps never share state. SQLite's shared-cache merges in-memory dbs
         // with identical DataSource names, so the App.Id scoping is load-bearing.
-        await using (var engine = global::PLang.Tests.TestApp.Plain(_testDir))
+        await using (var engine = new global::app.@this(_testDir).TestSigning())
         {
             engine.test.list.Open();
             await engine.store.Set("LlmCache", "testkey", engine.actor.list.User.Context.Ok("cached_response"));
         }
 
-        await using (var engine2 = global::PLang.Tests.TestApp.Plain(_testDir))
+        await using (var engine2 = new global::app.@this(_testDir).TestSigning())
         {
             engine2.test.list.Open();
             var result = await engine2.store.Get<global::app.type.item.@this>("LlmCache", "testkey");
@@ -74,7 +74,7 @@ public class ActorSettingsStoreTests
         // The seam every module author uses: store an Identity, read it back typed.
         // The store persists the Store view (incl. [Sensitive] PrivateKey) and hands
         // back a Data<Identity> face; the typed lift (.Value()) reconstructs the item.
-        await using var engine = global::PLang.Tests.TestApp.Plain(_testDir);
+        await using var engine = new global::app.@this(_testDir).TestSigning();
         engine.test.list.Open();
 
         var original = new global::app.module.identity.Identity("work")

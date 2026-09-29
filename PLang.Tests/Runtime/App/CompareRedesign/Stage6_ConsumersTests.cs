@@ -14,7 +14,7 @@ public class Stage6_ConsumersTests
         System.IO.Path.GetTempPath(), "plang-stage6-" + System.Guid.NewGuid().ToString("N")[..8]));
 
     private static Data D(global::app.@this app, object? v, string typeName)
-        => new("x", v, global::PLang.Tests.TestApp.SharedContext.App.type.list[typeName], context: app.actor.list.User.Context);
+        => new("x", v, app.actor.list.User.Context.App.type.list[typeName], context: app.actor.list.User.Context);
 
     private static string RepoRoot()
     {
@@ -93,9 +93,9 @@ public class Stage6_ConsumersTests
             foreach (var name in new[] { "big.txt", "tiny.txt", "mid.txt" })
                 files.Add(new Data(name, new global::app.type.item.path.file.@this(System.IO.Path.Combine(dir, name)), context: ctx));
 
-            await files.Sort("size", descending: false, global::PLang.Tests.TestApp.SharedContext);
+            await files.Sort("size", descending: false, app.actor.list.User.Context);
 
-            var ordered = files.Items(global::PLang.Tests.TestApp.SharedContext).Select(d => d.Peek()?.ToString() ?? "").ToList();
+            var ordered = files.Items(app.actor.list.User.Context).Select(d => d.Peek()?.ToString() ?? "").ToList();
             await Assert.That(ordered[0]).Contains("tiny.txt");
             await Assert.That(ordered[1]).Contains("mid.txt");
             await Assert.That(ordered[2]).Contains("big.txt");

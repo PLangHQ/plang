@@ -15,7 +15,7 @@ public class GoalPathTypingTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-goalpathtyping-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        return (TestApp.Create(root), root);
+        return (new global::app.@this(root).Testing(), root);
     }
 
     [Test] public async Task GoalPath_Property_IsPathTyped_NotString()

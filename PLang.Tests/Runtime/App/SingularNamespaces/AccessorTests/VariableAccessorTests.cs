@@ -13,7 +13,7 @@ public class VariableAccessorTests
 
     [Test] public async Task AppVariableList_IsTheAskersMemory()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("user", "ingi");
 
@@ -25,7 +25,7 @@ public class VariableAccessorTests
 
     [Test] public async Task AppVariable_Key_IsThatVariable()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("user", "ingi");
 
@@ -37,7 +37,7 @@ public class VariableAccessorTests
 
     [Test] public async Task AppVariable_Name_IsItsName()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("user", "ingi");
 
@@ -49,7 +49,7 @@ public class VariableAccessorTests
     // The type of one variable is its value's: %user% holds a text.
     [Test] public async Task AppVariable_Type_IsItsValuesType()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("user", "ingi");
 
@@ -60,7 +60,7 @@ public class VariableAccessorTests
 
     [Test] public async Task AppVariable_UnknownKey_IsNotFound()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var read = await Read("%!app.variable.nobody%", app.actor.list.User.Context);
         await Assert.That(read.Success).IsFalse();
         await Assert.That(read.Error!.Key).IsEqualTo("NotFound");
@@ -68,7 +68,7 @@ public class VariableAccessorTests
 
     [Test] public async Task AppVariable_TheCallsOwnShadowsTheActors()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("user", "outer");
         await using (ctx.Variable.Calls.Push([new global::app.data.@this("place", "here", context: ctx)]))
@@ -81,7 +81,7 @@ public class VariableAccessorTests
 
     [Test] public async Task CSharpAppVariableList_HasNoAsker_Throws()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         await Assert.That(() => { _ = app.variable.list; return Task.CompletedTask; })
             .Throws<InvalidOperationException>();
     }

@@ -6,7 +6,7 @@ namespace PLang.Tests.App.CompareRedesign;
 // — parse folds into the door. Read fires only behind an await on navigation.
 public class Stage2_ValueDoorTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/stage2vd-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this("/tmp/stage2vd-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private static global::app.@this NewApp(out string root)
@@ -110,7 +110,7 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
         // A %ref% value rides as a typed `text` (never a bare System.String); the
         // authored seam stamps the %hole% as a template (Template="plang"), which
         // is what marks it a variable reference.
-        var d = new Data("slot", new global::app.type.item.text.@this("%x%", "plang"), context: global::PLang.Tests.TestApp.SharedContext);
+        var d = new Data("slot", new global::app.type.item.text.@this("%x%", "plang"), context: _app.actor.list.User.Context);
         await Assert.That(d.Peek() is global::app.type.item.text.@this).IsTrue();
         await Assert.That(d.IsVariable).IsTrue();
     }

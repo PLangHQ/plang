@@ -17,7 +17,7 @@ public class Stage5_DataCompareEntryTests
     }
 
     private static Data D(global::app.@this app, object? v, string typeName)
-        => new("x", v, global::PLang.Tests.TestApp.SharedContext.App.type.list[typeName], context: app.actor.list.User.Context);
+        => new("x", v, app.actor.list.User.Context.App.type.list[typeName], context: app.actor.list.User.Context);
 
     [Test]
     public async Task DataCompare_CallerOrder_LessMeansThisLessThanOther()
