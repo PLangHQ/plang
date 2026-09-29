@@ -54,12 +54,12 @@ public sealed class @this : global::app.type.kind.@this
         }
     }
 
-    /// <summary>The kind one of this type's kinds makes for <paramref name="name"/> (a list's element kinds);
-    /// null when none makes one.</summary>
-    public override global::app.type.kind.@this? Make(string name)
+    /// <summary>The kind one of this type's kinds coins for <paramref name="name"/> (a list's element kinds);
+    /// null when none coins one.</summary>
+    public override global::app.type.kind.@this? Coin(string name)
     {
         foreach (var kind in Held)
-            if (kind.Make(name) is { } made) return made;
+            if (kind.Coin(name) is { } coined) return coined;
         return null;
     }
 
