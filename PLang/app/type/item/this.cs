@@ -362,10 +362,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// never cached by the holding Data (see <see cref="Cacheable"/> on the
     /// types that honor the stamp).
     /// </summary>
-    // internal set: the build stamps the authored-template flag AFTER the value is built (via
-    // Declare), when it detects a %ref%. A value is otherwise immutable; this one build-seam flag
-    // is set in place rather than re-minting the whole value.
-    public string? Template { get; internal set; }
+    // A birth fact: the value is born a template (its reader or builder knows), never stamped after.
+    public string? Template { get; init; }
 
     /// <summary>The variables this value holds, each once: a template's <c>%…%</c>, a container's
     /// entries', a variable itself. Read-only, born with the value; empty when none.</summary>

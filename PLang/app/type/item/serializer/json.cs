@@ -152,10 +152,9 @@ public partial class json
     // its own type/signature, so it reconstructs as a Data straight into the slot.
     private dict.@this ObjectLeaf(System.Text.Json.JsonElement element, global::app.type.reader.ReadContext? ctx, int depth)
     {
-        var d = new dict.@this();
-        // An authored container carries its template mode so its `%ref%` leaves re-resolve
+        // An authored container is born with its template mode so its `%ref%` leaves re-resolve
         // on read (dict.@this.Value → Resolve); a runtime-ingest read (ctx null) stays literal.
-        if (ctx?.Template != null) d.Template = ctx.Template;
+        var d = new dict.@this { Template = ctx?.Template };
         foreach (var prop in element.EnumerateObject())
             d.Set(prop.Name, RawSlot(prop.Value, ctx, depth + 1));
         return d;
@@ -163,8 +162,7 @@ public partial class json
 
     private list.@this ArrayLeaf(System.Text.Json.JsonElement element, global::app.type.reader.ReadContext? ctx, int depth)
     {
-        var l = new list.@this();
-        if (ctx?.Template != null) l.Template = ctx.Template;
+        var l = new list.@this { Template = ctx?.Template };
         foreach (var item in element.EnumerateArray())
             l.AddRaw(RawSlot(item, ctx, depth + 1));
         return l;

@@ -19,10 +19,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (reader.Null()) return new global::app.type.item.@null.@this("list", kind);
         reader.BeginArray();
         var parser = new global::app.type.item.serializer.json(ctx.Context);
-        var list = new global::app.type.item.list.@this();
-        // An authored list (ctx carries "plang") re-resolves its `%ref%` string leaves on read —
-        // list.@this.Value → Resolve. A runtime-ingest read (ctx.Template null) stays literal.
-        if (ctx.Template != null) list.Template = ctx.Template;
+        // An authored list (ctx carries "plang") is born a template and re-resolves its `%ref%` string
+        // leaves on read — list.@this.Value → Resolve. A runtime-ingest read (ctx.Template null) stays literal.
+        var list = new global::app.type.item.list.@this { Template = ctx.Template };
         // The element type rides as this list's kind (list<action> = {list, kind:action}). If the
         // element type owns a reader, a bare element reads ITSELF through it (a .pr's action → its
         // params). An element the list wrote as its Data row ({type, value} — how a list writes every
