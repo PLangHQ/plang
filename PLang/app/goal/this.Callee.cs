@@ -25,4 +25,21 @@ public sealed partial class @this
 
         return reached;
     }
+
+    /// <summary>The private goals of this file that nothing reaches. A private goal is called only from
+    /// its own file, so what reaches it is this goal — the file's public one — and what that calls. None
+    /// when this is a private goal, and none when a call in the file names its goal only at run: that call
+    /// could name any goal of the file.</summary>
+    public async System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<@this>> Unreached(
+        global::app.actor.context.@this context)
+    {
+        if (Parent != null) return [];
+        foreach (var goal in (System.Collections.Generic.IEnumerable<@this>)[this, .. Child.Items()])
+            foreach (var step in goal.Step.Items())
+                foreach (var action in step.Code.Items())
+                    if (await action.IsDynamic(context)) return [];
+
+        var reached = await Callee(context);
+        return Child.Items().Where(sub => !reached.Any(goal => ReferenceEquals(goal, sub))).ToList();
+    }
 }

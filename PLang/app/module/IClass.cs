@@ -52,4 +52,9 @@ public interface IClass
     /// so it answers none. None — the default — for a handler that calls no goal.</summary>
     System.Threading.Tasks.Task<global::app.goal.@this?> Callee()
         => System.Threading.Tasks.Task.FromResult<global::app.goal.@this?>(null);
+
+    /// <summary>True when this handler calls a goal its properties name only at run (a %var% name): its
+    /// <see cref="Callee"/> answers none, yet it calls one. False — the default — for a handler whose goal,
+    /// if any, is known now.</summary>
+    bool IsDynamic => false;
 }

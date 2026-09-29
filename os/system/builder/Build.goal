@@ -12,5 +12,6 @@ Build
 - build.goals path=%path%, write to %goals%
 - call EmitBuildEvent kind="goals-found", goals=%goals%
 - foreach %goals%, call BuildGoal goal=%item%
+- build.unreached
 - save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'
 - build.appSave

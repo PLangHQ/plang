@@ -48,6 +48,8 @@ public partial class Call : IContext
 
     /// <summary>The goal this call names, selected through the goal collection as seen from the goal
     /// this call sits in — the selection <see cref="Start"/> makes. A %variable% name answers none.</summary>
+    public bool IsDynamic => Name.HasVariable;
+
     public async Task<global::app.goal.@this?> Callee()
     {
         if (Name.HasVariable) return null;

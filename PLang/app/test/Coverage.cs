@@ -108,11 +108,15 @@ public sealed class Coverage
         _branchChains.TryAdd(site, new List<string>(chain));
     }
 
-    /// <summary>Seeds the declared branch chain of every condition step in <paramref name="goal"/>, so a
-    /// site that never runs still shows in the report. One condition: {true, false}; several: their
-    /// names in author order.</summary>
+    // The goals a test reaches, by address.
+    private readonly ConcurrentDictionary<string, byte> _goals = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Takes in a goal a test reaches: the goal is recorded as reached, and the declared branch chain
+    /// of every condition step in it is seeded, so a site that never runs still shows in the report. One
+    /// condition: {true, false}; several: their names in author order.</summary>
     public void Add(global::app.goal.@this goal)
     {
+        if (goal.Address is { } address) _goals.TryAdd(address, 0);
         foreach (var step in goal.Step.Items())
         {
             var conditions = step.Code.Items().Where(a => a.IsCondition).ToList();
@@ -131,10 +135,12 @@ public sealed class Coverage
 
     /// <summary>
     /// The coverage as the console shows it: every module.action of <paramref name="modules"/> marked when
-    /// it fired, then each condition site's branches (its declared chain, else what was observed) marked
-    /// hit or missed, with the totals and the branches no test took.
+    /// it fired; every one of <paramref name="goals"/> marked when a test reaches it, with the public and
+    /// private totals and the goals no test reached; then each condition site's branches (its declared
+    /// chain, else what was observed) marked hit or missed, with the totals and the branches no test took.
     /// </summary>
-    public string Text(global::app.type.item.list.@this<global::app.module.@this> modules)
+    public string Text(global::app.type.item.list.@this<global::app.module.@this> modules,
+        IReadOnlyList<global::app.goal.@this> goals)
     {
         var sb = new System.Text.StringBuilder();
         sb.AppendLine();
@@ -151,6 +157,27 @@ public sealed class Coverage
             }
         }
         sb.AppendLine($"  total: {observed.Count}/{universeCount}");
+
+        sb.AppendLine();
+        sb.AppendLine("Goals reached:");
+        var unreached = new List<string>();
+        int publicReached = 0, publicTotal = 0, privateReached = 0, privateTotal = 0;
+        foreach (var goal in goals.Where(g => g.Address != null).OrderBy(g => g.Address, StringComparer.OrdinalIgnoreCase))
+        {
+            var reached = _goals.ContainsKey(goal.Address!);
+            sb.AppendLine($"  [{(reached ? "x" : " ")}] {goal.Address}");
+            if (goal.Parent == null) { publicTotal++; if (reached) publicReached++; }
+            else { privateTotal++; if (reached) privateReached++; }
+            if (!reached) unreached.Add(goal.Address!);
+        }
+        sb.AppendLine($"  public: {publicReached}/{publicTotal}, private: {privateReached}/{privateTotal}");
+        if (unreached.Count > 0)
+        {
+            sb.AppendLine();
+            sb.AppendLine("  Goals no test reached:");
+            foreach (var address in unreached)
+                sb.AppendLine($"    {address}");
+        }
 
         sb.AppendLine();
         sb.AppendLine("Branch coverage (condition.if):");
@@ -234,6 +261,8 @@ public sealed class Coverage
     {
         foreach (var key in other._moduleActions.Keys)
             _moduleActions.TryAdd(key, 0);
+        foreach (var key in other._goals.Keys)
+            _goals.TryAdd(key, 0);
         foreach (var kvp in other._branches)
         {
             var indices = _branches.GetOrAdd(kvp.Key, _ => new ConcurrentDictionary<int, byte>());

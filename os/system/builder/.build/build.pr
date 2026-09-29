@@ -537,9 +537,24 @@
     },
     {
       "index": 9,
-      "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
+      "text": "build.unreached",
       "line": {
         "number": 15
+      },
+      "code": [
+        {
+          "module": "build",
+          "name": "unreached",
+          "property": []
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
+      "line": {
+        "number": 16
       },
       "code": [
         {
@@ -591,10 +606,10 @@
       "waitForExecution": true
     },
     {
-      "index": 10,
+      "index": 11,
       "text": "build.appSave",
       "line": {
-        "number": 16
+        "number": 17
       },
       "code": [
         {
@@ -610,7 +625,7 @@
   "visibility": "Public",
   "path": "/system/builder/Build.goal",
   "prPath": "/system/builder/.build/build.pr",
-  "hash": "18b12c851c4554511b5084f1995a6657ceec935084c0f357d77f5b20f9c8a900",
+  "hash": "76692d8f918f4bcdea3cc0235d2ac7a03c3d792adfc1f9de4eee83040fcf417e",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
