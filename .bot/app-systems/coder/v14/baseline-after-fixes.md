@@ -1,6 +1,6 @@
-# Baseline after the fix pass (decision 302) — 44 failing, each with its owner
+# Baseline after the fix pass (decision 302) — 36 failing, each with its owner
 
-The 116 inherited failures (`baseline-audit.md`) are down to **44**. `../baseline-failures.txt` is now these 44
+The 116 inherited failures (`baseline-audit.md`) are down to **36**. `../baseline-failures.txt` is now these 36
 names — the gate (`namediff.sh`) diffs failing names against it. No regressions along the way: every commit was
 name-diffed against the list before it (the only extra names were load-timing flakes, one made deterministic).
 
@@ -33,18 +33,19 @@ A raw string/byte[] is born an unread `source`, so code that looks at the value 
 ### Red by ruling — 1
 - Query_CacheHit_PropertiesPreserved — the llm cache is Ingi's specimen.
 
-### The `?` group — not yet ruled (group 4, held) — 19
-- Snapshot read-back family: MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal,
+### Waiting on a redesign or a question — 11
+- Snapshot read-back (waits on the ISnapshot redesign): MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal,
   NavigateAndEditCapturedVariable_ThenResumeToSuccess, PlangPath_AsSnapshotConvert_EditSurvivesResume,
-  SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess, Snapshot_FromWire_StillExists,
-  ThrowTimeSnapshot_EditSurvivesResume, TypedSnapshotString_NavigateEditResume_PersistsEdit
-- json narrowing: Materialize_JsonArrayRoot_NarrowsToListValueType, Materialize_JsonObjectRoot_NarrowsToDict,
-  Navigation_ReadsValueWhichMaterialises
-- a fixture item with no wire face: Roundtrip_PreservesData, Roundtrip_StreamBased_PreservesData,
-  Serialize_Object_IgnoresNullProperties
-- Serialize_Enum_UsesCamelCase, SetAsTextMd_NavigationResolvesKindFromVariableExpression,
-  Wire_Write_OmitsTypeForNullSentinel, MyIdentity_UpdatedAfterSetDefault,
-  AsT_PlainDataTarget_VarReference_ReturnsLiveVariableData, Cut1_UntouchedConfigJson_SerializesByteIdentical
+  SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess, ThrowTimeSnapshot_EditSurvivesResume,
+  TypedSnapshotString_NavigateEditResume_PersistsEdit
+- json narrowing (Ingi's json question): Materialize_JsonArrayRoot_NarrowsToListValueType,
+  Materialize_JsonObjectRoot_NarrowsToDict, Navigation_ReadsValueWhichMaterialises
+- the fixture item's decode (json decodes to an unread {item, json} the courier can't build a record from — the
+  same json question): Roundtrip_PreservesData, Roundtrip_StreamBased_PreservesData
+
+Resolved from the ? group (decisions 323–326): Snapshot_FromWire (deleted), Serialize_Object_IgnoresNullProperties,
+Serialize_Enum (value as declared), SetAsTextMd (`!type`), Wire_Write_OmitsTypeForNull, MyIdentity (real provider),
+AsT_PlainDataTarget (Follow; AsCanonical deleted), Cut1 (json content relays verbatim).
 
 ## Load-flaky under the full parallel sweep (not in the list; pass alone)
 - ReadUrl_Fetches_OverHttp — once, 23 s, read null (local test server). To be made explicit if it recurs.
