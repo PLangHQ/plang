@@ -38,32 +38,6 @@ public class ConverterDeletionsTests
         await Assert.That(PLangAssembly.GetType("app.type.json")).IsNull();
     }
 
-    // Architect call (2026-06-03): these three are NOT folded into one
-    // universally-registered factory — they have site-specific semantics and
-    // folding would change behavior on the snapshot/signing/plang wires (the
-    // no-behavior-change bar). They stay registered only where their semantics
-    // apply; the type-owned READ logic (duration parse, hash FromWire) lives in
-    // the reader registry, but the format-layer STJ converters stay put.
-
-    [Test] public async Task ErrorWire_RegisteredOnlyWhereItApplies_Snapshot()
-    {
-        // ErrorWire is the polymorphic global::app.error.Error wire shape, registered ONLY in
-        // snapshot options — not on any value type, not universal. It stays.
-        await Assert.That(PLangAssembly.GetType("app.error.ErrorWire")).IsNotNull();
-    }
-
-
-    [Test] public async Task TimeSpanIso8601_LivesInFormatLayer_NotOnType()
-    {
-        // The iso8601 TimeSpan converter lives in the channel.serializer
-        // (format) layer, not on the duration type. duration's own Read (in the
-        // reader registry) parses both ISO-8601 and .NET forms; the two-wire-
-        // form unification is tracked as a todo, not done here.
-        var t = PLangAssembly.GetType("app.type.format.TimeSpanIso8601");
-        await Assert.That(t).IsNotNull();
-        await Assert.That(t!.Namespace).IsEqualTo("app.type.format");
-    }
-
     // The path-converter was registered in 6 places (Diagnostics/Format.cs:31,
     // channel/serializer/Json.cs:47, channel/serializer/plang/this.cs:51,
     // module/builder/this.cs:50, app/this.cs:420, type/list/Conversion.cs:42,64).

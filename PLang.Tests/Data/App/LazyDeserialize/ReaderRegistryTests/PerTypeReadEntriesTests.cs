@@ -37,18 +37,16 @@ public class PerTypeReadEntriesTests
         await Assert.That(r.Of("path", "json")).IsNotNull();
         await Assert.That(r.Of("path", global::app.type.reader.@this.AnyKind)).IsNotNull();
     }
-    [Test] public async Task Reader_Of_NumberInt_ReturnsDelegate()
+    // number reads through its typed reader (each storage kind reads its own token).
+    [Test] public async Task Reader_Of_NumberInt_ReturnsTypedReader()
     {
         var r = new global::app.type.reader.@this();
-        await Assert.That(r.Of("number", "int")).IsNotNull();
+        await Assert.That(r.Typed("number", "int")).IsNotNull();
     }
-    // Stage 2 surface, but the entry exists by Stage 1's end. number ships a
-    // Default (wildcard) Read, so (number, biginteger) resolves via the "*"
-    // fallback today; Stage 2 wires the exact parse to the CLR type.
-    [Test] public async Task Reader_Of_NumberBigInteger_ReturnsDelegate()
+    [Test] public async Task Reader_Of_NumberBigInteger_ReturnsTypedReader()
     {
         var r = new global::app.type.reader.@this();
-        await Assert.That(r.Of("number", "biginteger")).IsNotNull();
+        await Assert.That(r.Typed("number", "biginteger")).IsNotNull();
     }
     [Test] public async Task Reader_Of_ImagePng_ReturnsDelegate()
     {
@@ -56,8 +54,7 @@ public class PerTypeReadEntriesTests
         await Assert.That(r.Of("image", "png")).IsNotNull();
     }
     // duration owns the iso8601 kind in the reader registry (its Read parses
-    // ISO-8601 + .NET forms). The format-layer TimeSpanIso8601 STJ converter
-    // stays separate (architect call) — see ConverterDeletionsTests.
+    // ISO-8601 + .NET forms).
     [Test] public async Task Reader_Of_DurationIso8601_ReturnsDelegate()
     {
         var r = new global::app.type.reader.@this();

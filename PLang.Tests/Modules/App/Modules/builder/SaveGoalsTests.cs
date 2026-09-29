@@ -58,13 +58,11 @@ public class SaveGoalsTests
 
         await result.IsSuccess();
 
-        // Verify file content
-        var prPath = System.IO.Path.Combine(_tempDir, ".build", "start.pr");
-        var json = System.IO.File.ReadAllText(prPath);
-        var saved = JsonSerializer.Deserialize<Goal>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.type.item.kind.json.Converter(_app.actor.list.User.Context) } });
-        await Assert.That(saved).IsNotNull();
-        await Assert.That(saved!.Name).IsEqualTo("Start");
+        // the saved .pr loads back through the goal's own door
+        var loaded = await _app.goal.Load("/.build/start.pr");
+        await loaded.IsSuccess();
+        var saved = (Goal)(await loaded.Value())!;
+        await Assert.That(saved.Name).IsEqualTo("Start");
         await Assert.That(saved.Step.Count).IsEqualTo(1);
     }
 
@@ -84,11 +82,12 @@ public class SaveGoalsTests
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "test.pr");
         var json = System.IO.File.ReadAllText(prPath);
 
-        // Should use camelCase
+        // camelCase names
         await Assert.That(json).Contains("\"name\"");
-        // Null [Store] properties included for determinism
-        await Assert.That(json).Contains("\"description\"");
-        // Non-[Store] properties should not appear
+        await Assert.That(json).Contains("\"prPath\"");
+        // a comment is written only when the goal has one
+        await Assert.That(json).DoesNotContain("\"comment\"");
+        // non-stored properties never appear
         await Assert.That(json).DoesNotContain("\"errors\"");
         await Assert.That(json).DoesNotContain("\"warnings\"");
     }
@@ -108,13 +107,12 @@ public class SaveGoalsTests
 
         await result.IsSuccess();
 
-        var prPath = System.IO.Path.Combine(_tempDir, ".build", "multi.pr");
-        var json = System.IO.File.ReadAllText(prPath);
-        var saved = JsonSerializer.Deserialize<Goal>(json,
-            new JsonSerializerOptions { PropertyNameCaseInsensitive = true, Converters = { new global::app.type.item.kind.json.Converter(_app.actor.list.User.Context) } });
+        // one file holds the public goal and its private child; it loads back through the goal's own door
+        var loaded = await _app.goal.Load("/.build/multi.pr");
+        await loaded.IsSuccess();
+        var saved = (Goal)(await loaded.Value())!;
 
-        await Assert.That(saved).IsNotNull();
-        await Assert.That(saved!.Name).IsEqualTo("Public");
+        await Assert.That(saved.Name).IsEqualTo("Public");
         await Assert.That(saved.Child.CountRaw).IsEqualTo(1);
         await Assert.That(saved.Child.Items().First().Name).IsEqualTo("Private");
     }

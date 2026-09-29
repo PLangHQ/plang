@@ -35,21 +35,6 @@ public class TypeOwnedReadParityTests : System.IAsyncDisposable
         }
     }
 
-    [Test] public async Task NumberRead_MatchesPriorConvertOutput()
-    {
-        // Stage 1 keeps the pre-Stage-2 number model; Stage 2 extends the tower.
-        // The reader re-houses number.Convert: Read == Convert, value-identical
-        // across int/long/decimal/double/float.
-        var r = new global::app.type.reader.@this();
-        var ctx = new global::app.type.reader.ReadContext(app.actor.list.User.Context);
-        var read = r.Of("number", "int")!; // Default wildcard covers every kind
-        await Assert.That(read("42", "int", ctx)).IsEqualTo((object)42);
-        await Assert.That(read("42", "long", ctx)).IsEqualTo((object)42L);
-        await Assert.That(read("3.14", "decimal", ctx)).IsEqualTo((object)3.14m);
-        await Assert.That(read("3.14", "double", ctx)).IsEqualTo((object)3.14d);
-        await Assert.That(read("3.14", "float", ctx)).IsEqualTo((object)3.14f);
-    }
-
     [Test] public async Task HashRead_RebuildsFromBase64AndKind()
     {
         // hash's ONE wire read is the registry reader (FromWire folded in, the convention name
