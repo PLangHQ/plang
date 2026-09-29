@@ -21,7 +21,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>An action passes through; anything else is declined. The one way in is its reader
     /// (<c>serializer/Reader.cs</c>) — the .pr wire, a held callback and a nested modifier chain all
     /// read there — so an action is built by its step, never converted from a value.</summary>
-    public static @this? Create(object? raw, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this a) return a;
         data.Fail(new global::app.error.Error(

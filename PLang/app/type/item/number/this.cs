@@ -126,14 +126,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // ── THE COURIER — the declared kind lives here. With no declared kind it is the pure core; with
     //    one, the kind builds it (from the typed ask's item) and the courier owns the error channel
     //    (a thrown reason → data.Fail, PRESERVED, never swallowed). ──
-    public static @this? Create(object? raw, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
-        var declared = data.Type?.kind is { IsEmpty: false } k ? k.Name : null;
-        if (declared is not null && raw is global::app.type.item.@this value)
+        var named = (declared ?? data.Type).kind is { IsEmpty: false } k ? k.Name : null;
+        if (named is not null && raw is global::app.type.item.@this value)
         {
-            if (!Kinds.TryGetValue(declared, out var kind))
+            if (!Kinds.TryGetValue(named, out var kind))
             {
-                data.Fail(new global::app.error.Error($"Unknown number kind '{declared}'.", "UnknownKind", 400));
+                data.Fail(new global::app.error.Error($"Unknown number kind '{named}'.", "UnknownKind", 400));
                 return null;
             }
             try { return kind.Create(value); }

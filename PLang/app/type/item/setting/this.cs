@@ -28,7 +28,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     [Out] public string Path { get; }
 
     /// <summary>A setting is built by the asker's settings, never made from a value.</summary>
-    public static @this? Create(object? raw, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this setting) return setting;
         data.Fail(new global::app.error.Error(

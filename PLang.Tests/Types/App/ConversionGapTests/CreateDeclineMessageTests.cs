@@ -19,7 +19,7 @@ public class CreateDeclineMessageTests
     public async Task Text_DeclinesOpaqueObject_NamesTextType_NoIConvertibleLeak()
     {
         var d = new Data("Message", (object?)null, context: Ctx);
-        var result = Text.Create(new object(), d);
+        var result = Text.Create(new object(), d.Type, d);
 
         await Assert.That(result).IsNull();
         await Assert.That(d.Error).IsNotNull();
@@ -31,7 +31,7 @@ public class CreateDeclineMessageTests
     public async Task Number_DeclinesNonNumericText_NamesNumberType()
     {
         var d = new Data("Count", (object?)null, context: Ctx);
-        var result = Number.Create(new Text("not a number"), d);
+        var result = Number.Create(new Text("not a number"), d.Type, d);
 
         await Assert.That(result).IsNull();
         await Assert.That(d.Error).IsNotNull();

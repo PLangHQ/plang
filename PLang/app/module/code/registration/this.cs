@@ -39,7 +39,5 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The pure core — a registration passes through; nothing else converts into one.</summary>
     public static @this? Create(object? raw) => raw as @this;
 
-    public static @this? Create(object? raw, global::app.actor.context.@this? context) => Create(raw);
-
-    public static @this? Create(object? raw, global::app.data.@this data) => Create(raw);
+    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data) => Create(raw);
 }

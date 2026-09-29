@@ -57,7 +57,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>A goal passes through; anything else is declined. Program structure has one way in —
     /// its reader (<c>serializer/Reader.cs</c>) — and is never converted from a value.</summary>
-    public static @this? Create(object? raw, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this g) return g;
         data.Fail(new global::app.error.Error(

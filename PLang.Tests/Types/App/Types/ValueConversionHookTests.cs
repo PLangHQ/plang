@@ -58,7 +58,7 @@ public class ValueConversionHookTests
     {
         var (_, ctx) = MakeApp();
         var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("image", null), context: ctx);
-        var v = Image.Create("photo.png", carrier) as Image;
+        var v = Image.Create("photo.png", carrier.Type, carrier) as Image;
         await Assert.That(v).IsNotNull();
         await Assert.That(v!.Path).IsNotNull();
         // Lazy: no content read at construction.

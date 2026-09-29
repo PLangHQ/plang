@@ -21,7 +21,7 @@ public class Cut5_NumberTowerRoundTrip
         // The (number, kind) reader is number's Create courier — a carrier declares number{kind}
         // so the exact CLR type is preserved (parsing is context-free).
         var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("number", n.Kind.Name), context: null!);
-        var built = number.Create(n.ToString(), carrier);
+        var built = number.Create(n.ToString(), carrier.Type, carrier);
         var r = built != null ? new global::app.data.@this("", built, context: null!) : carrier;
         await Assert.That(((global::app.type.item.number.@this)(await r.Value())!).BoxedValue.GetType()).IsEqualTo(expectedClr);
     }

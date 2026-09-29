@@ -97,7 +97,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>The ICreate courier face — a <c>list</c> passes through; a blank string is an empty
     /// list (the LLM emits <c>""</c> for <c>[]</c>); a native sequence re-tags through its own
     /// <c>Clr</c>. Uses <c>data.Context</c> for the born-with-context construction.</summary>
-    public static @this? Create(object? value, Data data)
+    public static @this? Create(object? value, global::app.type.@this? declared, Data data)
     {
         if (value is @this self) return self;
         if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this();

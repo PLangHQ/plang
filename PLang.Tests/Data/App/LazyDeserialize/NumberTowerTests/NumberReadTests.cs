@@ -20,7 +20,7 @@ public class NumberReadTests : System.IAsyncDisposable
     private global::app.data.@this Read(string s, string kind)
     {
         var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("number", kind), context: _app.actor.list.User.Context);
-        var n = number.Create(s, carrier);
+        var n = number.Create(s, carrier.Type, carrier);
         return n != null ? _app.actor.list.User.Context.Ok(n) : carrier;
     }
 

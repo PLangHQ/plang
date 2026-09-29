@@ -145,7 +145,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The ICreate courier face — pass-through / byte[] via the core; a string builds a
     /// scheme-path image via <c>Scheme.From</c> (uses <c>data.Context</c>). A non-string source
     /// declines silently; an unregistered/failed scheme lands the reason on <paramref name="data"/>.</summary>
-    public static @this? Create(object? value, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (Create(value) is { } built) return built;
         if (((value as global::app.type.item.@this)?.Clr<object>() ?? value) is not string raw) return null;

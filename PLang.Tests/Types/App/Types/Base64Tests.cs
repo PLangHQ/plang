@@ -43,7 +43,8 @@ public class Base64Tests : System.IAsyncDisposable
 
     [Test] public async Task AsBase64_EncodesText_Lazily()
     {
-        var b64 = base64.Create(new text("hello"), app.actor.list.User.Context.Ok(new text("hello")));
+        var given = app.actor.list.User.Context.Ok(new text("hello"));
+        var b64 = base64.Create(new text("hello"), given.Type, given);
         var ready = await b64!.Value(app.actor.list.User.Context.Ok(b64));
         await Assert.That(ready.ToString()).IsEqualTo("aGVsbG8=");     // base64("hello"), NOT validate
     }
@@ -51,7 +52,8 @@ public class Base64Tests : System.IAsyncDisposable
     [Test] public async Task AsBase64_EncodesImageBytes_NotDoubleEncoded()
     {
         var img = image.FromBytes(PngBytes);
-        var b64 = base64.Create(img, app.actor.list.User.Context.Ok(img!));
+        var given = app.actor.list.User.Context.Ok(img!);
+        var b64 = base64.Create(img, given.Type, given);
         var ready = await b64!.Value(app.actor.list.User.Context.Ok(b64));
         // base64 of the RAW png bytes — not base64 of image's own base64 json render
         await Assert.That(ready.ToString()).IsEqualTo(System.Convert.ToBase64String(PngBytes));

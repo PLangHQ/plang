@@ -93,7 +93,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <summary>The ICreate courier face — a <c>path</c> passes through; a string builds a scheme
     /// path via <see cref="Resolve"/> (uses <c>data.Context</c>); a wrong type or an unregistered
     /// scheme declines with the reason on <paramref name="data"/>.</summary>
-    public static @this? Create(object? value, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (value is @this self) return self;
         if (((value as global::app.type.item.@this)?.Clr<object>() ?? value) is not string raw)

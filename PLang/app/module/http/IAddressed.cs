@@ -19,7 +19,7 @@ public interface IAddressed
             if (BaseUrl is { IsInitialized: true })
                 return await BaseUrl.Use(@base => System.Threading.Tasks.Task.FromResult<data.@this>(@base.Address(url, Context)));
             var carrier = new data.@this<global::app.type.item.path.http.@this>("url", context: Context);
-            return global::app.type.item.path.http.@this.Create(url, carrier) is { } made ? Context.Ok<global::app.type.item.path.http.@this>(made) : carrier;
+            return global::app.type.item.path.http.@this.Create(url, carrier.Type, carrier) is { } made ? Context.Ok<global::app.type.item.path.http.@this>(made) : carrier;
         });
         return data.@this<global::app.type.item.path.http.@this>.From(addressed);
     }

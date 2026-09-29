@@ -164,11 +164,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         _kind = string.IsNullOrEmpty(kind) ? new global::app.type.kind.empty.@this(Name) : new global::app.type.kind.@this(kind);
         Strict = strict;
         Template = template;
-        // The Create doors start pointing at the one-shot binder, which swaps itself for the
-        // closed thunk (or the decline) on first use — every later call is a bare delegate
-        // invocation, no null check. Field initializers can't reference `this`, so bind here.
-        _byContext = Bind;
-        _byData = Bind;
+        // The birth door starts pointing at the one-shot binder, which swaps itself for the closed thunk (or
+        // the decline) on first use — every later call is a bare delegate invocation, no null check. Field
+        // initializers can't reference `this`, so bind here.
+        _lift = Bind;
     }
 
     /// <summary>
@@ -232,13 +231,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// as the <c>item</c> apex. A TYPE-SYSTEM concern, not serialization — json
     /// converts its own tokens then calls here for the leaves.
     /// </summary>
-    // The two Make builds' bound thunks. Both start as the one-shot `Bind` (set in the ctor) and
-    // self-replace with the closed generic (or the decline) on first use — a non-ICreate entity
-    // (primitive/host name) binds a null-thunk so the collection perimeter falls to the next rung.
-    // Named for the discriminating parameter (fields can't overload); NOT `_context`/`_data` — a
-    // context-named field on the deliberately context-free shared entity would read as a late-stamp.
-    private System.Func<object?, global::app.actor.context.@this?, item.@this?> _byContext;
-    private System.Func<object?, global::app.data.@this, item.@this?> _byData;
+    // The bound birth thunk. It starts as the one-shot `Bind` (set in the ctor) and self-replaces with the
+    // closed generic (or the decline) on first use — a non-ICreate entity (primitive/host name) binds a
+    // null-thunk so the collection perimeter falls to the next rung.
+    private System.Func<object?, @this, global::app.data.@this, item.@this?> _lift;
 
     /// <summary>
     /// A program value of this type is born: <paramref name="raw"/> made into it, through this type's
@@ -316,8 +312,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                 && Make(raw, new global::app.data.@this("", new global::app.type.item.@null.@this(this), context: context)) is { } made)
                 native = made;
             // this type's class closes over its kind (list<path>): the value is taken as that class by its lift
-            else if (ClrType is { IsGenericType: true } closed && !closed.IsInstanceOfType(native)
-                     && _byContext(raw, context) is { } retagged) native = retagged;
+            else if (ClrType is { IsGenericType: true } closed && native is global::app.type.item.list.@this && !closed.IsInstanceOfType(native)
+                     && Make(raw, new global::app.data.@this("", new global::app.type.item.@null.@this(this), context: context)) is { } retagged)
+                native = retagged;
             return native;
         }
 
@@ -362,7 +359,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // A raw CLR scalar (int, DateOnly, …) → born through THIS family's own lift, then refine to the
         // declared type/kind. A non-family declared type routes the raw through the collection perimeter
         // (the owner's lift or a clr carrier). The family lift speaks raw natively; refine re-enters here.
-        if (_byContext(raw, context) is { } lifted)
+        if (Make(raw, new global::app.data.@this("", new global::app.type.item.@null.@this(this), context: context)) is { } lifted)
             return string.Equals(Name, lifted.Type.Name, System.StringComparison.OrdinalIgnoreCase)
                 ? lifted : Make(lifted, context);
         return Make(global::app.type.item.@this.Create(raw, context), context);
@@ -414,28 +411,18 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         return Template != null ? new item.wire.@this(encoded, this, transport, ctx.Variable) : Make(encoded, transport);
     }
 
-    // The data build — kind-aware: THIS type makes itself from a value, reading the declared
-    // kind off the carrier's Type and landing a decline on data.Fail (the retype path Convert owned).
-    internal item.@this? Make(object? raw, global::app.data.@this data) => _byData(raw, data);
+    // The birth build — THIS type makes itself from a value, as it declares (its kind, its template), for the
+    // binding data (a decline lands on data.Fail).
+    internal item.@this? Make(object? raw, global::app.data.@this data) => _lift(raw, this, data);
 
-    // The one-shot binders — same overload trick, one verb: on first use each swaps its field for the
-    // closed thunk (or the decline) and forwards, so every later door call is a bare invocation.
-    private item.@this? Bind(object? raw, global::app.actor.context.@this? ctx)
+    // The one-shot binder: on first use it swaps the field for the closed thunk (or the decline) and forwards,
+    // so every later door call is a bare invocation.
+    private item.@this? Bind(object? raw, @this declared, global::app.data.@this data)
     {
-        _byContext = Creatable is { } clr
-            ? _openByContext.MakeGenericMethod(clr)
-                .CreateDelegate<System.Func<object?, global::app.actor.context.@this?, item.@this?>>()
-            : static (_, _) => null;
-        return _byContext(raw, ctx);
-    }
-
-    private item.@this? Bind(object? raw, global::app.data.@this data)
-    {
-        _byData = Creatable is { } clr
-            ? _openByData.MakeGenericMethod(clr)
-                .CreateDelegate<System.Func<object?, global::app.data.@this, item.@this?>>()
-            : static (_, _) => null;
-        return _byData(raw, data);
+        _lift = Creatable is { } clr
+            ? _open.MakeGenericMethod(clr).CreateDelegate<System.Func<object?, @this, global::app.data.@this, item.@this?>>()
+            : static (_, _, _) => null;
+        return _lift(raw, declared, data);
     }
 
     // The one eligibility check both binders share: this type's class when it is an ICreate<clr>
@@ -450,27 +437,14 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                        && i.GenericTypeArguments[0] == clr)
            ? clr : null;
 
-    // Both generic thunks are Create<T> — the context/data difference lives in the PARAMETER LIST,
-    // where overload resolution can see it (a parameterless factory pair differing only by RETURN type
-    // is CS0111 — the reason a second name once existed here). Logic-free: the raw rides straight into
-    // the type's own Create.
-    private static item.@this? Create<T>(object? raw, global::app.actor.context.@this? ctx)
+    // The generic thunk — logic-free: the raw rides straight into the type's own birth, as this type declares it.
+    private static item.@this? Create<T>(object? raw, @this declared, global::app.data.@this data)
         where T : item.@this, global::app.type.item.ICreate<T>
-        => T.Create(raw, ctx);
+        => T.Create(raw, declared, data);
 
-    private static item.@this? Create<T>(object? raw, global::app.data.@this data)
-        where T : item.@this, global::app.type.item.ICreate<T>
-        => T.Create(raw, data);
-
-    // The two opens, disambiguated by the second parameter type (not by name — both are Create):
-    private static readonly System.Reflection.MethodInfo _openByContext = Open(typeof(global::app.actor.context.@this));
-    private static readonly System.Reflection.MethodInfo _openByData = Open(typeof(global::app.data.@this));
-
-    private static System.Reflection.MethodInfo Open(System.Type second)
-        => System.Array.Find(
-               typeof(@this).GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static),
-               m => m.Name == nameof(Create) && m.IsGenericMethodDefinition
-                    && m.GetParameters()[1].ParameterType == second)!;
+    private static readonly System.Reflection.MethodInfo _open = System.Array.Find(
+        typeof(@this).GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static),
+        m => m.Name == nameof(Create) && m.IsGenericMethodDefinition)!;
 
     // The entity's face — the kind rides IN the name for a family whose kind is its content (a
     // list<path>, a dict<number>, a choice<operator>), and stands alone for a scalar sub-kind (a

@@ -11,7 +11,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>A step passes through; anything else is declined. A step is built by its goal, never
     /// converted from a value.</summary>
-    public static @this? Create(object? raw, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this s) return s;
         data.Fail(new global::app.error.Error(

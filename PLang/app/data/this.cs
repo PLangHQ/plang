@@ -457,8 +457,8 @@ public partial class @this
         // other slot opens the door: a reference resolves through it, a container
         // deep-renders, and the resolved value's own type then converts to T.
         if (typeof(T) == typeof(global::app.type.item.variable.@this) && Peek() is global::app.type.item.variable.@this nameRef)
-            return T.Create(nameRef, this);
-        return T.Create(await Value(), this);
+            return T.Create(nameRef, null, this);
+        return T.Create(await Value(), null, this);
     }
 
     /// <summary>

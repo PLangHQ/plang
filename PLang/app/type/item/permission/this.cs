@@ -169,7 +169,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <c>{actor, path, match, verbs:[…]}</c>). Pass-through when the value already
     /// is a grant; declines anything else.
     /// </summary>
-    public static @this? Create(object? value, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (value is @this self) return self;
         if (value is not global::app.type.item.dict.@this dict)

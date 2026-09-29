@@ -64,16 +64,7 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     /// <summary>A <c>list&lt;T&gt;</c> is a RE-TAG of a list, not an element walk: wrap the
     /// list's rows as-is. Each row converts to <typeparamref name="T"/> only when taken out
     /// (<c>row.Value&lt;T&gt;()</c>) — O(1) here, no per-element conversion.</summary>
-    /// <summary>The type door's lift: a list becomes a <c>list&lt;T&gt;</c> by re-tag (its rows held, nothing
-    /// converted); anything else is declined, for the type to lift into a list first.</summary>
-    public static new @this<T>? Create(object? value, global::app.actor.context.@this? context) => value switch
-    {
-        @this<T> already => already,
-        @this list => new @this<T>(list),
-        _ => null,
-    };
-
-    public static new @this<T>? Create(object? value, global::app.data.@this data)
+    public static new @this<T>? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (value is @this<T> already) return already;
         if (value is @this list) return new @this<T>(list);

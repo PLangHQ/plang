@@ -26,7 +26,7 @@ public class PathTypeMapperTests
     private static (PLangPath? value, global::app.error.Error? error) Build(string raw, global::app.actor.context.@this ctx)
     {
         var d = new global::app.data.@this("", new global::app.type.item.@null.@this("path", null), context: ctx);
-        var v = PLangPath.Create(raw, d);
+        var v = PLangPath.Create(raw, d.Type, d);
         return (v, d.Error);
     }
 

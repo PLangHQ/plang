@@ -19,8 +19,8 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// is what lets the lift's clr rung be plain entity dispatch instead of a special case. The
     /// <c>new</c> hides item's apex lift (build-WHATEVER-the-raw-is) with the build-a-clr answer the
     /// "clr" entity owns; null raw is a citizen handled upstream, so it declines here.</summary>
-    public static new @this? Create(object? raw, global::app.actor.context.@this? ctx)
-        => raw is null ? null : new @this(raw, ctx!);
+    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+        => raw is null ? null : new @this(raw, data.Context!);
 
     public object Value { get; }
 

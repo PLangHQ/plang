@@ -112,7 +112,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The ICreate courier face — delegates to the pure core; a value with no textual form
     /// declines with the reason on <paramref name="data"/>. text's kind is a hint (extension), not a
     /// construction switch, so the core needs no kind.</summary>
-    public static @this? Create(object? value, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (Create(value) is { } built) return built;
         data.Fail(new global::app.error.Error(

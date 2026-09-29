@@ -14,7 +14,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>
 {
     /// <summary>A module is registered from its actions' classes, never made from a value.</summary>
-    public static @this? Create(object? raw, global::app.data.@this data)
+    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this module) return module;
         data.Fail(new global::app.error.Error(

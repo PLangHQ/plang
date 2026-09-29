@@ -67,7 +67,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The ICreate courier face — a <c>dict</c> passes through; a blank string is an empty
     /// dict (the LLM emits <c>""</c> for <c>{}</c>); a native container re-tags through its own
     /// <c>Clr</c>. Uses <c>data.Context</c> for the born-with-context construction.</summary>
-    public static @this? Create(object? value, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (value is @this self) return self;
         var text = ((value as global::app.type.item.@this)?.Clr<object>() ?? value) as string;

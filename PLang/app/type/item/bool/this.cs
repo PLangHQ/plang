@@ -75,7 +75,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// on a decline it lands the reason on <paramref name="data"/> (a text that didn't parse vs a
     /// wrong type). A type with a kind (number precision, image format) reads it off
     /// <c>data.Type.Kind</c> here — bool has none, so the core's default construction stands.</summary>
-    public static @this? Create(object? value, global::app.data.@this data)
+    public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (Create(value) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)

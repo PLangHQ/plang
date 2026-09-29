@@ -20,7 +20,7 @@ public static class Default
                 : (string.IsNullOrEmpty(kind) ? null : ctx.Context.App.type.list["image"].kind[kind]?.Mime.FirstOrDefault()) ?? "application/octet-stream";
             return new global::app.type.item.image.@this(bytes, mime, kind);
         }
-        return global::app.type.item.image.@this.Create(raw,
-            new global::app.data.@this("", new global::app.type.item.@null.@this("image", kind), context: ctx.Context));
+        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("image", kind), context: ctx.Context);
+        return global::app.type.item.image.@this.Create(raw, carrier.Type, carrier);
     }
 }

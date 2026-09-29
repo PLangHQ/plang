@@ -20,9 +20,10 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
     /// <summary>The goal channel <paramref name="raw"/>'s settings describe, read by this channel's own property names,
     /// for the actor whose context it is born in: Name and Goal (a <c>goal.call</c>) are required; a setting not
     /// there keeps the channel's own default. Anything else declines.</summary>
-    public static @this? Create(object? raw, global::app.actor.context.@this? ctx)
+    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this self) return self;
+        var ctx = data.Context;
         if (raw is not global::app.type.item.dict.@this settings || ctx == null) return null;
         global::app.type.item.@this? Setting(string name) => settings.Get(name, ctx)?.Peek() is { IsNull: false } v ? v : null;
         if (Setting(nameof(Name))?.ToString() is not { Length: > 0 } name

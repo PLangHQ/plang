@@ -8,6 +8,8 @@ namespace app.type.item.guid.serializer;
 public static class Default
 {
     public static object? Read(object raw, string? kind, global::app.type.reader.ReadContext ctx)
-        => global::app.type.item.guid.@this.Create(raw,
-            new global::app.data.@this("", new global::app.type.item.@null.@this("guid", kind), context: ctx.Context));
+    {
+        var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this("guid", kind), context: ctx.Context);
+        return global::app.type.item.guid.@this.Create(raw, carrier.Type, carrier);
+    }
 }
