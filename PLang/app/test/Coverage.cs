@@ -48,12 +48,15 @@ public sealed class Coverage
             {
                 if (item is not global::app.goal.step.action.@this action) return ctx.Ok();
                 RecordModuleAction(action.Module.Name, action.Name);
-                if (action.IsCondition && await result.ToBooleanAsync())
-                {
-                    var site = Site(action.Step?.Goal, action.Step?.Index.ToString());
-                    RecordBranch(site, action.Step != null ? action.Step.Code.IndexOf(action) : -1);
-                    RecordBranchLabel(site, action.Name);
-                }
+                if (!action.IsCondition || action.Step is not { } step) return ctx.Ok();
+                // A branch is named as the step's chain names it: a lone condition's is its outcome, true
+                // or false; in a chain of several, the one that fired, by its name.
+                var fired = await result.ToBooleanAsync();
+                var lone = Lone(step);
+                if (!fired && !lone) return ctx.Ok();
+                var site = Site(step.Goal, step.Index.ToString());
+                if (fired) RecordBranch(site, step.Code.IndexOf(action));
+                RecordBranchLabel(site, lone ? (fired ? "true" : "false") : action.Name);
                 return ctx.Ok();
             },
             context.Actor, global::app.@event.binding.Scope.actor);
@@ -121,11 +124,14 @@ public sealed class Coverage
         {
             var conditions = step.Code.Items().Where(a => a.IsCondition).ToList();
             if (conditions.Count == 0) continue;
-            RecordBranchChain(Site(goal, step.Index.ToString()), conditions.Count == 1
+            RecordBranchChain(Site(goal, step.Index.ToString()), Lone(step)
                 ? new[] { "true", "false" }
                 : conditions.Select(c => c.Name).ToArray());
         }
     }
+
+    // A step whose chain is one condition — its branches are the condition's outcomes.
+    private bool Lone(global::app.goal.step.@this step) => step.Code.Items().Count(a => a.IsCondition) == 1;
 
     /// <summary>Read-only view of the declared chain per site (author order).</summary>
     public IReadOnlyDictionary<string, IReadOnlyList<string>> BranchChains =>

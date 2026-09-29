@@ -81,11 +81,8 @@ public class RunActionTests
         // per param); a raw-STJ dump of the Data C# surface no longer round-trips through it.
         System.IO.File.WriteAllText(prFile, await _app.actor.list.User.Context.Pr(goal));
 
-        return new global::app.test.@this()
-        {
-            Goal = goal,
-            Status = global::app.test.Status.Ready
-        };
+        // the test as a run takes it — through its own door, reaching its goal
+        return await global::app.test.@this.From(goal, _app.actor.list.User.Context);
     }
 
     private async Task<IReadOnlyList<global::app.test.@this>> RunTests(List<global::app.test.@this> tests, int? parallel = null, int? timeoutSec = null)
