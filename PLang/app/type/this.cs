@@ -486,7 +486,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // refuses to become one (a raw C# value, lifted here, is no item and refuses nothing).
     private static item.@this? Create<T>(object? raw, @this declared, global::app.data.@this data)
         where T : item.@this, global::app.type.item.ICreate<T>
-        => raw is item.@this value and not T && value.Refuses(declared.Name, data) ? null : T.Create(raw, declared, data);
+        => raw is item.@this value && value.Refuses(declared, data) ? null : T.Create(raw, declared, data);
 
     private static readonly System.Reflection.MethodInfo _open = System.Array.Find(
         typeof(@this).GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static),

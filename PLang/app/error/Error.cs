@@ -24,10 +24,11 @@ public class Error : global::app.type.item.@this
     protected internal override global::app.type.@this Type => new(typeof(Error));
 
     /// <summary>An error is not a payload to convert: asked to become another type, it stays the answer —
-    /// primary on the binding, the mismatch on its chain.</summary>
-    public override bool Refuses(string asked, global::app.data.@this data)
+    /// primary on the binding, the mismatch on its chain. Asked as what it already is, it passes.</summary>
+    public override bool Refuses(global::app.type.@this asked, global::app.data.@this data)
     {
-        list.Add(new Error($"%{data.Name}% holds an error — '{asked}' cannot be created from it.", "TypeMismatch", 400));
+        if (Is(asked)) return false;
+        list.Add(new Error($"%{data.Name}% holds an error — '{asked.Name}' cannot be created from it.", "TypeMismatch", 400));
         data.Fail(this);
         return true;
     }

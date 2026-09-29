@@ -34,6 +34,17 @@ public class ErrorBuryingReproTest
 
     }
 
+    // An error asked as what it already is passes through: nothing refused, nothing on its chain.
+    [Test] public async Task ErrorAskedAsItselfOrItem_PassesThrough()
+    {
+        var rootError = new global::app.error.ServiceError("the build failed", "BuildFailed", 500);
+        var d = new global::app.data.@this("!error", rootError);
+
+        await Assert.That(await d.Value<global::app.type.item.@this>()).IsSameReferenceAs(rootError);
+        await Assert.That(rootError.Refuses(new global::app.type.@this(typeof(global::app.error.Error)), d)).IsFalse();
+        await Assert.That(rootError.list.Count).IsEqualTo(0);
+    }
+
     // Every type's birth answers the same: number has its own courier too.
     [Test] public async Task ErrorAsNumberSlot_OriginalErrorStaysPrimary_ConversionFailureGoesOnChain()
     {

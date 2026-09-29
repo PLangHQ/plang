@@ -459,7 +459,7 @@ public partial class @this
         if (T.IsName && Peek() is T name)
             return T.Create(name, null, this);
         var value = await Value();
-        return value is not T && value.Refuses(global::app.type.item.@this.NameOf(typeof(T)), this) ? null : T.Create(value, null, this);
+        return value.Refuses(new global::app.type.@this(typeof(T)), this) ? null : T.Create(value, null, this);
     }
 
     /// <summary>
