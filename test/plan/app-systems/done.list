@@ -1,4 +1,4 @@
-app-systems: what is done (stages 1–8g; 8h's code parts; 9a). The summary says only "done 1–8g, see done.list".
+app-systems: what is done (stages 1–12, except 10b's (C)).
 
 1  Run → Start: the entry verb of every executable object
 3  One set of types: each type owns its name, aliases and kinds; kinds live on their types
@@ -14,6 +14,12 @@ app-systems: what is done (stages 1–8g; 8h's code parts; 9a). The summary says
 8h (code) the builder: the decider's common questions render (never worked since decider v5); a lone if gets its body in the prefill; no hole for optional properties; choices quoted; on.cache/on.timeout asked in stage 1; unwritten numbers confirmed by the decider as a builder step (ConfirmNumbers)
 
 9a every value a read or a conversion makes is born through its type: path.Read lands a reference (the one read verb; content is the reference's own value), `set … as <type>` is a birth, a value already of the declared type is kept unread; data.Use (a carrier answers its own failure or hands its value whole) and data.Follow; the file and http channels are gone
+
+8h the builder builds itself, and plain words work: the builder rebuilds its own goals; "retry once", "if done, return x" and named render arguments compile to what they mean; the decider measured on the prompts the real builder renders. No human language is read by deterministic code; a number written in words is confirmed by the decider as a visible builder step (ConfirmNumbers); the prefill offers only what is certain
+9  every value is born through its type: `type.Create` the one async birth door, firing on.create (`Make` the internal build); converting to another type is a birth; a carrier answers its own failure or hands its value whole, so every module action is a one-line door (9b); handlers live at `app/module/<m>/<a>.cs` and the module registry dissolved into `%!app.module%` (9c)
+10 the app knows its types: built-in and plugin types join `%!app.type.list%`, one name one class (10a); `list<T>` made by the type, a list read no longer copies itself (10b A, B); the app's facts are plang values, its identity read through the format that writes it, the store born ready (10c); formats live with their owners, the test report's format a real kind (10d); one form of computed value (10e)
+11 one door per thing: the actor reached one way (11a); tests reach the app through its own doors, TestApp/TestAction deleted, `App.Run<TAction>` retired (11b); the builder warns about goals nothing reaches, the test report shows the goals reached (11c)
+12 mistakes you can catch precisely: every throw this branch added is plang broken or a result error under its own key, one error carrier (AppException holds its Error), one door from a foreign exception (12a); a goal is born knowing the .pr it was read from, and a .pr refusal names its file (12b)
 
 fixed on the way: the 5-second first signature (500 identities made in a loop); a failed signature is an error, not a silent unsigned write; one default provider per interface
 

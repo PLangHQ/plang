@@ -6,41 +6,13 @@ plang's own structure should be as navigable and as honest as a program's data. 
 
 ## Done
 
-Stages 1–8h and 9a. See [done.list](done.list).
+Stages 1–12, except 10b's (C). See [done.list](done.list).
 
 ## What's left, and what each gives the developer
 
 Each stage is a goal in [start.goal](start.goal); each behaviour there is a comment with the test that proves it.
 
-**8h: the builder builds itself, and plain words work.** The builder is plang code, and it can now rebuild its own goals. Plain phrasings compile to what they mean: "retry once", "if done, return x", named render arguments. This is also the first time the decider is measured on the prompts the real builder renders.
-- *Decisions:* no human language is read by deterministic code; a number the step writes in words is confirmed by the decider, as a visible builder step (ConfirmNumbers). The prefill offers only what is certain: a lone if takes its body, and optional properties get no hole.
-
-**9: every value is born through its type.** A developer can hook the birth of any value: `after file create, call LoadFixture`, e.g. for tests with fake files. Inside, every module action becomes a one-line door to the object that does the work.
-- *Decisions:* `type.Create` is the one async birth door and fires `on.create`; `Make` is the internal build (`on.create` fires once per value). A birth is a value coming into the program from outside the type system.
-- *Stage 9 decisions (175):*
-  1. Converting to another type is a birth (`set %p% as path = "a.txt"` fires `after path create`). A value's own delayed parse, or the same type re-kinded, is not.
-  2. A carrier answers its own failure or hands its value whole (`Path.Use(p => p.Read(…))`), so every action is one line.
-  3. `path.Read` is path's one read verb. It lands a reference; the content is that reference's own value. `channel/type/file` and `channel/type/http` are deleted, because the file and url values already are that.
-  4. `signing.sign` is a one-line door to the signature's owner.
-  5. The test report and failure text move to os templates later, not in this stage.
-  6. The split: 9a (the `Use` door, file.read, one read verb, births through `type.Create`, the channel collapse); 9b (the other modules, one per commit); 9c (`module/action/<m>/<a>.cs` → `module/<m>/action/<a>.cs`, matching `%!app.module.<m>.action.<a>%`).
-
-**10: the app knows its types.** Every type a program can use is listed at `%!app.type.list%`, and a type is the plang value it says it is.
-- **10a: registration.** Built-in types and a plugin's types join `%!app.type.list%`; one name can't be taken twice (a clash fails loudly). `%!app.list%` is kept for the apps running under this app, later.
-- **10b: typed lists.** `list<text>` is made by the type itself: a kind carries its element. A list read no longer copies itself.
-- **10c: the app's facts are plang values.** `%!app.created%` is a datetime, `uptime` a duration; a channel's settings are plang values. The app's identity is read back through the same format that writes it, the store is ready when the app is, and `id`, `name` and `environment` are the app's settings.
-- **10d: formats live with their owners.** A type's formats are its kinds; json's writer and reader live with the json kind, text's with text, the step notation with the action. The test report's format is a real format kind (json, junit), and each writes its own report file.
-- **10e: one form of computed value.** A value computed on each read (`%Now%`, `%!event%`) has one form.
-- *Decisions:* the store is born ready; `code`, `clr` and `table` live under `app.type.item`; the app's identity is read through the same format that writes it; `%!app.type.list%` lists the types (Ingi); the format machinery moves to its owners, and test's format enum dissolves into format kinds (Ingi).
-
-**11: one door per thing.** Each thing is reached one way.
-- **11a: the actor is reached one way.** `%!app.actor.system%` and `%!app.actor.user%`; no second `app.System`/`app.User`. A shortcut, if ever wanted, is a goal that returns the value, not a second property (Ingi).
-- **11b: tests reach the app through its own doors.** The C# tests start actions the way plang does, not through test-only helpers.
-- **11c: nothing unreached goes unnoticed.** The builder warns about goals nothing calls; the test report shows what the tests reached.
-
-**12: mistakes you can catch precisely.** A programmer's mistake is an error with its own key (`on error key "CannotSet"`), never a generic crash.
-- **12a: the exception pass.** Every `throw` in the code this branch touched is either plang itself broken, or becomes an error in the result.
-- **12b: born knowing.** A goal knows where it was loaded from when it's born, not stamped on after.
+**10b (C): a typed list holds its type.** `list<text>` knows its element type when read back. Its plan test, `TypedListHoldsItsType`, waits on Ingi: whether a typed list's elements are born eagerly (when the list is made) or lazily (when each is read), and the `list<path>` teaching.
 
 ## How it's proven
 
@@ -70,6 +42,9 @@ These are checks, run and reported by the coder.
 **11b–c**
 - Every C# test passes with `TestApp` and `TestAction` deleted, and `App.Run<TAction>` retired.
 - Building a folder with an unreached goal `Unused` emits a warning naming it.
+
+**12b**
+- Born knowing closes on its C# pins, not a plan goal: what a program sees (a relative file resolving against its goal's folder) isn't new, only where the folder comes from. Pinned: `PrLoadTests` (a goal and its sub-goal are born holding the `.pr` they were read from; a nested reader's refusal names the file), both mutation-checked (the reference's origin dropped turns them red). The os `Build.goal` build loads and runs the builder's own goals unchanged.
 
 **Every stage**
 - A rebuild of the builder's own goals is byte-identical, or its differences are explained.

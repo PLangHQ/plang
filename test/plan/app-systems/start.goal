@@ -88,7 +88,7 @@ Stage11c
 / the test report shows what the tests reached
 
 Stage12a
-/ the exception pass: a programmer's mistake is an error with its own key, never a crash
+/ the exception pass: a programmer's mistake reaches the result as an error with its own key, never a crash (plus the C# pins: KeepsItsKeyTests)
 / a value that takes no child is an error result
 - call /plan/app-systems/app/type/item/SetChildOnAValueIsAnError
 / an unknown setting is an error result
@@ -96,6 +96,7 @@ Stage12a
 
 Stage12b
 / born knowing: a goal knows where it was loaded from when it's born, not stamped on after
+/ closes on its C# pins (PrLoadTests: born holding its .pr, a refusal names the file), not a plan goal — see start.md, What tests can't show
 
 / Done, kept as validation that the modifiers-as-clauses logic works
 Stage8g
