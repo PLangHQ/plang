@@ -140,6 +140,9 @@ public class RunActionTests
         int currentDepth = 0;
         int maxDepth = 0;
         var depthLock = new object();
+        // Each test's action waits at a gate that opens once two are inside at the same time — so the run
+        // is proven to hold two at once without a clock. A serial run never opens it (the wait times out).
+        var twoInside = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
         void Probe(global::app.@this childApp)
         {
@@ -151,10 +154,9 @@ public class RunActionTests
                     {
                         currentDepth++;
                         if (currentDepth > maxDepth) maxDepth = currentDepth;
+                        if (currentDepth == 2) twoInside.TrySetResult();
                     }
-                    // Hold long enough that at most semaphore-size fixtures overlap.
-                    // 100ms is plenty for the scheduler to start the next task.
-                    await Task.Delay(100);
+                    await twoInside.Task.WaitAsync(System.TimeSpan.FromSeconds(30));
                     lock (depthLock) currentDepth--;
                     return context.Ok();
                 },
@@ -176,9 +178,9 @@ public class RunActionTests
 
             await Assert.That(runs.Count).IsEqualTo(4);
             await Assert.That(runs.All(r => r.Status == global::app.test.Status.Pass)).IsTrue();
-            // The semaphore caps concurrency at 2 — the delay forces overlap to prove it.
-            // A regression to parallel=1 (serial) would drop maxDepth to 1; a regression
-            // to unbounded parallelism would push it to 4.
+            // The semaphore caps concurrency at 2: the gate opened with two inside, and no third was ever
+            // inside with them. A serial run would never open the gate.
+            await Assert.That(twoInside.Task.IsCompletedSuccessfully).IsTrue();
             await Assert.That(maxDepth).IsEqualTo(2);
         }
         finally
