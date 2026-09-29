@@ -62,4 +62,32 @@ public class DebugViewTests : System.IAsyncDisposable
         var file = await (await new global::app.type.item.variable.@this("!app.module.file").Start(Ctx)).Value();
         await Assert.That(file).IsTypeOf<global::app.module.@this>();
     }
+
+    // A dump shows a step's line and its warnings — [Debug] members.
+    [Test]
+    public async Task AGoalDump_ShowsAStepsLineAndWarning()
+    {
+        var goal = Make.Goal(Ctx, "Start", "/Start.goal",
+            Make.Step("read a.txt", Ctx.Action("file.read(Path=\"a.txt\")")));
+        goal.Step[0].Line = new() { Number = 7, Indent = 1 };
+        goal.Step[0].Warning.Add(new global::app.warning.@this { Key = "Unsure", Message = "maybe file.read" });
+
+        var written = await goal.Debug(Ctx);
+
+        await Assert.That(written).Contains("\"number\":7");
+        await Assert.That(written).Contains("maybe file.read");
+    }
+
+    // On the wire a type that declares no face still refuses: nothing it holds leaks out.
+    [Test]
+    public async Task TheOutView_OfATypeWithNoWireFace_StillRefuses()
+    {
+        var channel = _app.actor.list.User.Channel[global::app.channel.list.@this.Output];
+        using var ms = new System.IO.MemoryStream();
+
+        var written = await Ctx.Format("application/json").Encode(ms, new global::app.data.@this("c", channel, context: Ctx), Ctx);
+
+        await written.IsFailure();
+        await Assert.That(written.Error!.Key).IsEqualTo("NoWireContract");
+    }
 }

@@ -13,7 +13,8 @@ public sealed class @this : global::app.channel.type.session.@this
 {
     private readonly bool _ownsStream;
 
-    /// <summary>The underlying stream this channel reads/writes.</summary>
+    /// <summary>The underlying stream this channel reads/writes — a handle, never written with the channel.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public global::System.IO.Stream Stream { get; }
 
     public @this(string name, global::System.IO.Stream stream,

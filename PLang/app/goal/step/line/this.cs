@@ -8,9 +8,9 @@ namespace app.goal.step.line;
 /// </summary>
 public sealed class @this
 {
-    public int Number { get; init; }
+    [global::app.Debug] public int Number { get; init; }
 
-    public int Indent { get; init; }
+    [global::app.Debug] public int Indent { get; init; }
 
     /// <summary>Writes itself as the .pr's <c>line</c> object.</summary>
     public void Output(global::app.type.format.IWriter writer)

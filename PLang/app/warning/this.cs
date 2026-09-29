@@ -13,6 +13,6 @@ namespace app.warning;
 [PlangType]
 public sealed class @this
 {
-    [LlmBuilder] public string Key { get; init; } = "";
-    [LlmBuilder] public string Message { get; init; } = "";
+    [LlmBuilder, global::app.Debug] public string Key { get; init; } = "";
+    [LlmBuilder, global::app.Debug] public string Message { get; init; } = "";
 }

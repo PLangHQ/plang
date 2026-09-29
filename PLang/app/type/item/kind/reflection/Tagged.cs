@@ -58,6 +58,17 @@ public static class Tagged
         return false;
     }
 
+    /// <summary>Whether <paramref name="type"/> declares a face for <paramref name="mode"/>: its wire tags
+    /// (<see cref="IsTagAware"/>), and in the Debug view a <c>[Debug]</c> member as well.</summary>
+    public static bool Declares(System.Type type, global::app.View mode)
+    {
+        if (IsTagAware(type)) return true;
+        if (mode != global::app.View.Debug) return false;
+        foreach (var p in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            if (p.IsDefined(typeof(DebugAttribute), inherit: false)) return true;
+        return false;
+    }
+
     private static IReadOnlyList<Entry> Compute(System.Type type, global::app.View mode)
     {
         var props = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
