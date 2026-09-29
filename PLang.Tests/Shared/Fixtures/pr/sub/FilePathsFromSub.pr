@@ -1,20 +1,21 @@
 {
   "name": "FilePathsFromSub",
-  "path": "/sub/FilePathsFromSub.goal",
-  "steps": [
+  "step": [
     {
       "index": 0,
       "text": "read /testdata.txt, write to %rootAbsolute%",
-      "lineNumber": 2,
-      "actions": [
+      "line": {
+        "number": 0
+      },
+      "code": [
         {
           "module": "file",
-          "action": "read",
-          "parameters": [
+          "name": "read",
+          "property": [
             {
-              "name": "path",
+              "name": "Path",
               "type": {
-                "name": "text"
+                "name": "path"
               },
               "value": "/testdata.txt"
             }
@@ -22,22 +23,56 @@
         },
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "property": [
             {
               "name": "Name",
               "type": {
                 "name": "variable"
               },
-              "value": "rootAbsolute"
+              "value": "%rootAbsolute%",
+              "variable": [
+                {
+                  "text": "%rootAbsolute%",
+                  "code": [
+                    {
+                      "variable": "rootAbsolute"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
-              "value": "%!data%"
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
-      ]
+      ],
+      "waitForExecution": true
     }
-  ]
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/sub/FilePathsFromSub.goal",
+  "prPath": "/sub/.build/filepathsfromsub.pr",
+  "hash": "490f5f94379bb90fa1c49a118418d2a3d9456eb7171d003ceded4d7ad016093b",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
 }

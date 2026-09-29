@@ -1,20 +1,21 @@
 {
   "name": "ReadFile",
-  "path": "/ReadFile.goal",
-  "steps": [
+  "step": [
     {
       "index": 0,
       "text": "read testdata.txt, write to %content%",
-      "lineNumber": 2,
-      "actions": [
+      "line": {
+        "number": 0
+      },
+      "code": [
         {
           "module": "file",
-          "action": "read",
-          "parameters": [
+          "name": "read",
+          "property": [
             {
-              "name": "path",
+              "name": "Path",
               "type": {
-                "name": "text"
+                "name": "path"
               },
               "value": "testdata.txt"
             }
@@ -22,39 +23,90 @@
         },
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "property": [
             {
               "name": "Name",
               "type": {
                 "name": "variable"
               },
-              "value": "content"
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
-              "value": "%!data%"
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
       "index": 1,
       "text": "write out %content%",
-      "lineNumber": 3,
-      "actions": [
+      "line": {
+        "number": 0
+      },
+      "code": [
         {
           "module": "output",
-          "action": "write",
-          "parameters": [
+          "name": "write",
+          "property": [
             {
               "name": "Data",
-              "value": "%content%"
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
-      ]
+      ],
+      "waitForExecution": true
     }
-  ]
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/ReadFile.goal",
+  "prPath": "/.build/readfile.pr",
+  "hash": "b04035def58206c102d2b45cae540d7b1328b0e1aee54b1d1d41daec39c1ab05",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
 }

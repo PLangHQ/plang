@@ -1,20 +1,21 @@
 {
   "name": "FilePathsFromRoot",
-  "path": "/FilePathsFromRoot.goal",
-  "steps": [
+  "step": [
     {
       "index": 0,
       "text": "read testdata.txt, write to %relative%",
-      "lineNumber": 2,
-      "actions": [
+      "line": {
+        "number": 0
+      },
+      "code": [
         {
           "module": "file",
-          "action": "read",
-          "parameters": [
+          "name": "read",
+          "property": [
             {
-              "name": "path",
+              "name": "Path",
               "type": {
-                "name": "text"
+                "name": "path"
               },
               "value": "testdata.txt"
             }
@@ -22,36 +23,63 @@
         },
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "property": [
             {
               "name": "Name",
               "type": {
                 "name": "variable"
               },
-              "value": "relative"
+              "value": "%relative%",
+              "variable": [
+                {
+                  "text": "%relative%",
+                  "code": [
+                    {
+                      "variable": "relative"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
-              "value": "%!data%"
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
       "index": 1,
       "text": "read /testdata.txt, write to %absolute%",
-      "lineNumber": 3,
-      "actions": [
+      "line": {
+        "number": 0
+      },
+      "code": [
         {
           "module": "file",
-          "action": "read",
-          "parameters": [
+          "name": "read",
+          "property": [
             {
-              "name": "path",
+              "name": "Path",
               "type": {
-                "name": "text"
+                "name": "path"
               },
               "value": "/testdata.txt"
             }
@@ -59,36 +87,63 @@
         },
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "property": [
             {
               "name": "Name",
               "type": {
                 "name": "variable"
               },
-              "value": "absolute"
+              "value": "%absolute%",
+              "variable": [
+                {
+                  "text": "%absolute%",
+                  "code": [
+                    {
+                      "variable": "absolute"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
-              "value": "%!data%"
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
       "index": 2,
       "text": "read sub/subdata.txt, write to %subfolder%",
-      "lineNumber": 4,
-      "actions": [
+      "line": {
+        "number": 0
+      },
+      "code": [
         {
           "module": "file",
-          "action": "read",
-          "parameters": [
+          "name": "read",
+          "property": [
             {
-              "name": "path",
+              "name": "Path",
               "type": {
-                "name": "text"
+                "name": "path"
               },
               "value": "sub/subdata.txt"
             }
@@ -96,36 +151,63 @@
         },
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "property": [
             {
               "name": "Name",
               "type": {
                 "name": "variable"
               },
-              "value": "subfolder"
+              "value": "%subfolder%",
+              "variable": [
+                {
+                  "text": "%subfolder%",
+                  "code": [
+                    {
+                      "variable": "subfolder"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
-              "value": "%!data%"
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
       "index": 3,
       "text": "read ./testdata.txt, write to %dotslash%",
-      "lineNumber": 5,
-      "actions": [
+      "line": {
+        "number": 0
+      },
+      "code": [
         {
           "module": "file",
-          "action": "read",
-          "parameters": [
+          "name": "read",
+          "property": [
             {
-              "name": "path",
+              "name": "Path",
               "type": {
-                "name": "text"
+                "name": "path"
               },
               "value": "./testdata.txt"
             }
@@ -133,22 +215,56 @@
         },
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "property": [
             {
               "name": "Name",
               "type": {
                 "name": "variable"
               },
-              "value": "dotslash"
+              "value": "%dotslash%",
+              "variable": [
+                {
+                  "text": "%dotslash%",
+                  "code": [
+                    {
+                      "variable": "dotslash"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Value",
-              "value": "%!data%"
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
-      ]
+      ],
+      "waitForExecution": true
     }
-  ]
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/FilePathsFromRoot.goal",
+  "prPath": "/.build/filepathsfromroot.pr",
+  "hash": "fcd94b7f08fd079ea29e46f96dbc6cb2475d749e744eb5f0264bffbb0c999fb7",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
 }

@@ -1,61 +1,76 @@
 {
   "name": "FullPipeline",
-  "path": "/FullPipeline.goal",
-  "steps": [
+  "step": [
     {
       "index": 0,
       "text": "set %greeting% = \"Hello\"",
-      "lineNumber": 2,
-      "actions": [
+      "line": {
+        "number": 0
+      },
+      "code": [
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "property": [
             {
-              "name": "name",
+              "name": "Name",
               "type": {
                 "name": "variable"
               },
-              "value": "greeting"
+              "value": "%greeting%",
+              "variable": [
+                {
+                  "text": "%greeting%",
+                  "code": [
+                    {
+                      "variable": "greeting"
+                    }
+                  ]
+                }
+              ]
             },
             {
-              "name": "value",
+              "name": "Value",
               "type": {
                 "name": "text"
               },
               "value": "Hello"
             }
-          ],
-          "defaults": [
-            {
-              "name": "type",
-              "type": {
-                "name": "text"
-              },
-              "value": "string"
-            }
           ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
       "index": 1,
       "text": "set %user% = \"World\"",
-      "lineNumber": 3,
-      "actions": [
+      "line": {
+        "number": 0
+      },
+      "code": [
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "property": [
             {
-              "name": "name",
+              "name": "Name",
               "type": {
                 "name": "variable"
               },
-              "value": "user"
+              "value": "%user%",
+              "variable": [
+                {
+                  "text": "%user%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    }
+                  ]
+                }
+              ]
             },
             {
-              "name": "value",
+              "name": "Value",
               "type": {
                 "name": "text"
               },
@@ -63,54 +78,118 @@
             }
           ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
       "index": 2,
       "text": "write out \"%greeting%, %user%!\"",
-      "lineNumber": 4,
-      "actions": [
+      "line": {
+        "number": 0
+      },
+      "code": [
         {
           "module": "output",
-          "action": "write",
-          "parameters": [
+          "name": "write",
+          "property": [
             {
               "name": "Data",
               "type": {
-                "name": "text"
+                "name": "text",
+                "template": "plang"
               },
-              "value": "%greeting%, %user%!"
+              "value": "%greeting%, %user%!",
+              "variable": [
+                {
+                  "text": "%greeting%",
+                  "code": [
+                    {
+                      "variable": "greeting"
+                    }
+                  ]
+                },
+                {
+                  "text": "%user%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
-      ]
+      ],
+      "waitForExecution": true
     },
     {
       "index": 3,
       "text": "set %message% = \"%greeting%, %user%!\"",
-      "lineNumber": 5,
-      "actions": [
+      "line": {
+        "number": 0
+      },
+      "code": [
         {
           "module": "variable",
-          "action": "set",
-          "parameters": [
+          "name": "set",
+          "property": [
             {
-              "name": "name",
+              "name": "Name",
               "type": {
                 "name": "variable"
               },
-              "value": "message"
+              "value": "%message%",
+              "variable": [
+                {
+                  "text": "%message%",
+                  "code": [
+                    {
+                      "variable": "message"
+                    }
+                  ]
+                }
+              ]
             },
             {
-              "name": "value",
+              "name": "Value",
               "type": {
-                "name": "text"
+                "name": "text",
+                "template": "plang"
               },
-              "value": "%greeting%, %user%!"
+              "value": "%greeting%, %user%!",
+              "variable": [
+                {
+                  "text": "%greeting%",
+                  "code": [
+                    {
+                      "variable": "greeting"
+                    }
+                  ]
+                },
+                {
+                  "text": "%user%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
-      ]
+      ],
+      "waitForExecution": true
     }
-  ]
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/FullPipeline.goal",
+  "prPath": "/.build/fullpipeline.pr",
+  "hash": "9ab078184d086e75dae53fb51321666f256ddf3287afa8e1727e529c5b15da45",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
 }
