@@ -91,12 +91,28 @@ public class Cut4_PropertiesWireTests
         var wire = (await plang.Serialize(d, ctx).Value())!.Clr<string>()!;
         var tampered = wire.Replace("\"cost\":100", "\"cost\":999");
         await Assert.That(tampered).IsNotEqualTo(wire);
-        // the same Data signed again (its own nonce) reads back untampered
-        await plang.Deserialize((await plang.Serialize(d, ctx).Value())!.Clr<string>()!, ctx).IsSuccess();
 
         var back = plang.Deserialize(tampered, ctx);
 
         await back.IsFailure();
         await Assert.That(back.Error!.Key).IsEqualTo("DataHashMismatch");
+    }
+
+    // A tampered copy read first is refused on its hash and uses up nothing: the genuine wire,
+    // carrying the same nonce, still verifies after it.
+    [Test] public async Task TamperedCopyReadFirst_GenuineWireStillVerifies()
+    {
+        await using var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-cut4-" + System.Guid.NewGuid().ToString("N")[..8])).TestIdentity();
+        var ctx = app.actor.list.User.Context;
+        var plang = ctx.Format("application/plang");
+        var d = new global::app.data.@this("response", "Hello!", context: ctx);
+        d.Properties["cost"] = 100;
+        var wire = (await plang.Serialize(d, ctx).Value())!.Clr<string>()!;
+
+        var tampered = plang.Deserialize(wire.Replace("\"cost\":100", "\"cost\":999"), ctx);
+        await Assert.That(tampered.Error?.Key).IsEqualTo("DataHashMismatch");
+
+        await plang.Deserialize(wire, ctx).IsSuccess();
     }
 }

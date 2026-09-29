@@ -92,15 +92,12 @@ public class Ed25519 : ISigning
 
         // 3. Nonce replay check — paired with step 1 (wire-freshness). For
         // stored artifacts the same nonce naturally re-presents on every read,
-        // which isn't replay; skip alongside step 1.
-        if (!skipFreshness)
-        {
-            var nonceCacheKey = $"nonce:{signature.Nonce}";
-            var cacheSettings = new CacheSettings { DurationMs = effectiveTimeout };
-            var nonceAdded = await app.Cache.TryAddAsync(nonceCacheKey, action.Context.Ok(true), cacheSettings);
-            if (!nonceAdded)
-                return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
-        }
+        // which isn't replay; skip alongside step 1. Only a look here: the nonce is
+        // recorded once the hash and signature pass (step 7), so an unverified
+        // wire never uses one up.
+        var nonceCacheKey = $"nonce:{signature.Nonce}";
+        if (!skipFreshness && await app.Cache.GetAsync(nonceCacheKey) != null)
+            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
 
         // 4. Contract matching — Contracts may be an unset/absent slot (the
         // boundary-verify path never sets it), so guard the resolved value too.
@@ -136,13 +133,19 @@ public class Ed25519 : ISigning
         {
             if (!Verify(signature).Value)
                 return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Signature verification failed", "SignatureInvalid", 400));
-            return action.Context.Ok<global::app.type.item.@bool.@this>(true);
         }
         catch (Exception ex) when (ex is FormatException or ArgumentException
             or System.Security.Cryptography.CryptographicException or InvalidOperationException)
         {
             return action.Context.Error<global::app.type.item.@bool.@this>(ActionError.FromException(ex, "SignatureInvalid", 400));
         }
+
+        // 7. The verified wire records its nonce — atomically, so of two concurrent
+        // reads of one wire only the first verifies.
+        if (!skipFreshness
+            && !await app.Cache.TryAddAsync(nonceCacheKey, action.Context.Ok(true), new CacheSettings { DurationMs = effectiveTimeout }))
+            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
+        return action.Context.Ok<global::app.type.item.@bool.@this>(true);
     }
 
     private static bool ContractsMatch(List<string>? signed, List<string>? required)
