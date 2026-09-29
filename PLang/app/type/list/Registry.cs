@@ -270,6 +270,9 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 foreach (var format in t.GetCustomAttributes<global::app.Attributes.FormatAttribute>(inherit: false))
                     Hold(new global::app.type.kind.@this(format, reads, encode));
             }
+            // a list's element kinds, made as a list names its element (list<path>)
+            if (t == typeof(global::app.type.item.list.@this) && Items().Any(type => type.Names(global::app.type.item.@this.NameOf(t))))
+                Hold(new global::app.type.item.list.kind.@this(this));
             // each class of settings, a kind of setting by its path (one of it says the path)
             if (t != typeof(global::app.type.item.setting.@this) && typeof(global::app.type.item.setting.@this).IsAssignableFrom(t)
                 && t is { IsAbstract: false } && t.GetConstructor(System.Type.EmptyTypes) != null

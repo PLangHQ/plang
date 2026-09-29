@@ -94,6 +94,11 @@ public class @this
     /// unknown kind, after asking every type).</summary>
     public virtual @this? this[string name] => null;
 
+    /// <summary>A kind of this kind's type made for <paramref name="name"/> — a kind the type holds none of ahead,
+    /// because it can be any other type (a list's element: <c>{list, path}</c>); null when it makes none. Only
+    /// the type door asks, for its own entry: making is not holding, so no walk over every type finds it.</summary>
+    public virtual @this? Make(string name) => null;
+
     /// <summary>One of this kind's type's kinds, by the C# form its values ride as (exact wins, then the
     /// most derived assignable: <c>JsonElement</c>→json, <c>IList</c>→list); null when none claims it.</summary>
     public virtual @this? this[System.Type clr] => null;

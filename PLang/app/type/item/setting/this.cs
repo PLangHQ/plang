@@ -120,26 +120,22 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
             }
             else
             {
-                // Lift the raw setting to its plang value. A plang-typed property (a native
-                // list<path>, a number) stores the plang value DIRECTLY — no Clr boundary to cross; it
-                // holds lazy and materializes at the CONSUMER's door (row.Value<path>()). Only a CLR
-                // slot (bool/string) or a typed-generic plang slot the born native value can't fit
-                // lowers via Clr (the value owns its projection).
+                // Lift the raw setting to its plang value. A setting's option is a plang type (a native
+                // list<path>, a number) and stores the plang value directly; it holds lazy and
+                // materializes at the consumer's door (row.Value<path>()).
                 object? val;
                 try
                 {
                     var built = global::app.type.item.@this.Create(kvp.Value, context);
-                    // a plang-typed slot the born value doesn't fit (a choice from its text) is made by
-                    // the slot's own type, through the type door
-                    if (typeof(global::app.type.item.@this).IsAssignableFrom(prop.PropertyType)
-                        && !prop.PropertyType.IsInstanceOfType(built)
+                    // a slot the born value doesn't fit (a choice from its text, a list<path> from a list) is
+                    // made by the slot's own type, through the type door
+                    if (!prop.PropertyType.IsInstanceOfType(built)
                         && context.App.type.list[prop.PropertyType].Make(kvp.Value, new global::app.data.@this(kvp.Key, context: context)) is { } made
                         && prop.PropertyType.IsInstanceOfType(made))
                         built = made;
-                    val = typeof(global::app.type.item.@this).IsAssignableFrom(prop.PropertyType)
-                          && prop.PropertyType.IsInstanceOfType(built)
-                        ? built
-                        : built.Clr(prop.PropertyType);
+                    // a list whose element is itself a closed type (list<choice<visibility>>) the type door can't
+                    // close yet — its element kind names no single type — is re-tagged by its CLR form
+                    val = prop.PropertyType.IsInstanceOfType(built) ? built : built.Clr(prop.PropertyType);
                 }
                 catch (System.Exception ex) when (ex is System.InvalidCastException or System.FormatException
                     or System.OverflowException or System.NotSupportedException)

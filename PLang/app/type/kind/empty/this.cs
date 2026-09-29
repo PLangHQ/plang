@@ -54,6 +54,15 @@ public sealed class @this : global::app.type.kind.@this
         }
     }
 
+    /// <summary>The kind one of this type's kinds makes for <paramref name="name"/> (a list's element kinds);
+    /// null when none makes one.</summary>
+    public override global::app.type.kind.@this? Make(string name)
+    {
+        foreach (var kind in Held)
+            if (kind.Make(name) is { } made) return made;
+        return null;
+    }
+
     /// <summary>One of this type's kinds by the C# form its values ride as — each kind says whether it
     /// carries the class; exact wins, then the most derived; null when none carries it.</summary>
     public override global::app.type.kind.@this? this[System.Type clr]

@@ -156,7 +156,7 @@ public sealed partial class @this
         var entry = Types.FirstOrDefault(t => t.Names(type.Name));
         var kind = name == null ? null
             : entry?.kind[name] is { } held ? (held.IsEmpty ? null : held)
-            : new global::app.type.kind.@this(name);
+            : entry?.kind.Make(name) ?? new global::app.type.kind.@this(name);
         if (entry == null)
             return new app.type.@this(type.Name, kind?.Name, type.Strict, type.Template) { kind = kind };
         if (kind == null && !type.Strict && type.Template == null) return entry;

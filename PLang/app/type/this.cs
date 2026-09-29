@@ -312,6 +312,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         if (raw is item.@this { IsLeaf: false } native)
         {
             if (!native.Is(this) && From.Any(native.Type.Is) && _byContext(raw, context) is { } made) native = made;
+            // this type's class closes over its kind (list<path>): the value is taken as that class by its lift
+            else if (ClrType is { IsGenericType: true } closed && !closed.IsInstanceOfType(native)
+                     && _byContext(raw, context) is { } retagged) native = retagged;
             if (Template != null && native.Template == null) native.Template = Template;
             return native;
         }

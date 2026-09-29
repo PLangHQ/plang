@@ -15,6 +15,14 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     where T : global::app.type.item.@this, global::app.type.item.ICreate<T>
 {
     public @this() { }
+
+    /// <summary>A typed list is written with its element (<c>list&lt;goal&gt;</c>) however it was born; a list of
+    /// any item (<c>list&lt;item&gt;</c>) is the plain list.</summary>
+    protected internal override global::app.type.@this Type
+        => base.Type is { kind.IsEmpty: false } kinded || typeof(T) == typeof(global::app.type.item.@this)
+            ? base.Type
+            : new(typeof(global::app.type.item.list.@this), global::app.type.item.@this.NameOf(typeof(T))) { Template = Template };
+
     public @this(System.Collections.Generic.IEnumerable<global::app.data.@this> items) : base(items) { }
     public @this(System.Collections.Generic.IEnumerable<global::app.type.item.@this> values) : base(values) { }
 
@@ -56,6 +64,15 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     /// <summary>A <c>list&lt;T&gt;</c> is a RE-TAG of a list, not an element walk: wrap the
     /// list's rows as-is. Each row converts to <typeparamref name="T"/> only when taken out
     /// (<c>row.Value&lt;T&gt;()</c>) — O(1) here, no per-element conversion.</summary>
+    /// <summary>The type door's lift: a list becomes a <c>list&lt;T&gt;</c> by re-tag (its rows held, nothing
+    /// converted); anything else is declined, for the type to lift into a list first.</summary>
+    public static new @this<T>? Create(object? value, global::app.actor.context.@this? context) => value switch
+    {
+        @this<T> already => already,
+        @this list => new @this<T>(list),
+        _ => null,
+    };
+
     public static new @this<T>? Create(object? value, global::app.data.@this data)
     {
         if (value is @this<T> already) return already;
