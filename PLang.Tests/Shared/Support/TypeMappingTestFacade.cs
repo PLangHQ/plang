@@ -54,6 +54,4 @@ internal static class Json
             new global::app.type.item.kind.json.Converter(),
         },
     };
-
-    public static System.Text.Json.JsonSerializerOptions DiagnosticOutput => global::app.Diagnostics.Format.Options;
 }

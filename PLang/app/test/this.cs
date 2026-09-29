@@ -187,20 +187,25 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// variables it captured, else the error's message — then what the test wrote, its ANSI escapes
     /// stripped so a test can't forge the runner's own output. Empty unless it failed with an error.
     /// </summary>
-    public string Failure(global::app.actor.context.@this context)
+    public async System.Threading.Tasks.Task<string> Failure(global::app.actor.context.@this context)
     {
         if (Status != Status.Fail || Error == null) return "";
         var sb = new System.Text.StringBuilder();
         sb.AppendLine("    FAIL: " + Goal.Path);
         if (Error is AssertionError assert)
         {
-            sb.AppendLine($"      Expected: {(global::app.Diagnostics.Format.Value(assert.Expected))}");
-            sb.AppendLine($"      Actual:   {(global::app.Diagnostics.Format.Value(assert.Actual))}");
+            var expected = await global::app.Diagnostics.Format.Value(assert.Expected, context);
+            var actual = await global::app.Diagnostics.Format.Value(assert.Actual, context);
+            sb.AppendLine($"      Expected: {expected}");
+            sb.AppendLine($"      Actual:   {actual}");
             if (assert.Variables is { CountRaw: > 0 } variables)
             {
                 sb.AppendLine("      Variables:");
                 foreach (var variable in variables.Entries(context))
-                    sb.AppendLine($"        %{variable.Name}% = {(global::app.Diagnostics.Format.Value(variable.HasValue ? variable.Peek() : null))}");
+                {
+                    var shown = await global::app.Diagnostics.Format.Value(variable.HasValue ? variable.Peek() : null, context);
+                    sb.AppendLine($"        %{variable.Name}% = {shown}");
+                }
             }
         }
         else

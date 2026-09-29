@@ -1,59 +1,30 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
-
 namespace app.Diagnostics;
 
 /// <summary>
-/// Diagnostic-output subsystem — formats values for human-readable diagnostic strings
-/// (assertion failure messages, console test output, error reports). Scalars render directly;
-/// strings get quoted; anything else goes through a JsonSerializer that masks
-/// <see cref="app.Attributes.SensitiveAttribute"/>-marked properties as "******" so the
-/// data shape is preserved while secrets are redacted.
-///
-/// Distinct from storage (keeps sensitive data) and user output (strips it entirely).
-/// Stage 27 absorbed this from <c>Utils.Json.DiagnosticOutput</c> + <c>FormatForDiagnostic</c>.
-///
-/// Static class because all three consumers (Test reports, AssertionError messages,
-/// modules/assert) call from static contexts where no App is in scope. The state held is
-/// a single immutable JsonSerializerOptions — Rule C exception class for pure-config bags
-/// with no instance variation. Not named <c>@this</c> because there is no
-/// <c>app.Diagnostics</c> mount; the folder-as-instance signal would be misleading.
+/// Diagnostic output — a value as a human reads it in an assertion message, a test report line, a debug dump.
+/// A plang value answers by its own face; a scalar by its text; anything else (a record, a raw collection) is
+/// taken as its plang value and written through the json writer in the Debug view, where a <c>[Sensitive]</c>
+/// member shows masked: a reader tells "not set" from "set but hidden", and never sees the secret.
+/// Never <c>value.ToString()</c> on an arbitrary object — a record's auto-ToString prints every field.
 /// </summary>
 public static class Format
 {
-    private static readonly JsonSerializerOptions DiagnosticOutput = new()
+    public static async System.Threading.Tasks.ValueTask<string> Value(object? value, global::app.actor.context.@this context)
     {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        // Path serializes as its Relative string; without this the default
-        // serializer walks Path.GoalCall.PrPath.GoalCall... cycle.
-        Converters = { new global::app.type.item.kind.json.Converter() },
-        TypeInfoResolver = new DefaultJsonTypeInfoResolver
-        {
-            Modifiers = { app.type.format.filter.Sensitive.Mask }
-        }
-    };
-
-    /// <summary>
-    /// Formats a value for inclusion in a human-readable diagnostic string. Scalars
-    /// render directly; strings get quoted; anything else goes through the masked
-    /// JsonSerializer. Never falls back to <c>value.ToString()</c> on arbitrary objects —
-    /// that bypasses the mask (a C# record's auto-ToString prints every field).
-    /// </summary>
-    public static string Value(object? value)
-    {
-        // A debug formatter wants a READABLE value, not canonical json — every value owns a
-        // sync string face (ToString), so no serializer (and no async) is needed here.
         if (value == null) return "(null)";
         if (value is string s) return $"\"{s}\"";
-        return value.ToString() ?? value.GetType().Name;
+        if (value is global::app.type.item.@this { IsLeaf: true } leaf) return leaf.ToString() ?? leaf.GetType().Name;
+        if (value.GetType().IsPrimitive || value is decimal or System.Enum or System.DateTime or System.DateTimeOffset
+                or System.TimeSpan or System.Guid)
+            return value.ToString() ?? value.GetType().Name;
+        var item = value as global::app.type.item.@this ?? global::app.type.item.@this.Create(value, context);
+        using var stream = new System.IO.MemoryStream();
+        await using (var utf8 = new System.Text.Json.Utf8JsonWriter(stream, new System.Text.Json.JsonWriterOptions
+                     {
+                         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+                     }))
+            await item.Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Debug, emitsSchema: false),
+                global::app.View.Debug, context);
+        return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
-
-    /// <summary>
-    /// Direct access to the underlying JsonSerializerOptions for callers that need to
-    /// drive the serializer themselves (e.g. test-report transport serialization). Prefer
-    /// <see cref="Value"/> when the result is a single value.
-    /// </summary>
-    public static JsonSerializerOptions Options => DiagnosticOutput;
 }

@@ -195,7 +195,7 @@ public sealed class @this
                 // The value as held, never resolved: a BEFORE-step display must not run value doors —
                 // resolving renders templates / hops refs (side-effecting, and NREs on a
                 // not-yet-ready value), which would perturb the very execution we're observing.
-                sb.AppendLine($"    {p.Name} = {FormatValue(p.Value, context)}");
+                sb.AppendLine($"    {p.Name} = {await FormatValue(p.Value, context)}");
             }
 
         }
@@ -208,7 +208,7 @@ public sealed class @this
                 sb.AppendLine($"    at {call}");
         }
 
-        AppendStepVariables(sb, context);
+        await AppendStepVariables(sb, context);
         sb.AppendLine("========================================");
 
         await WriteFiltered(sb, context);
@@ -228,7 +228,7 @@ public sealed class @this
         var took = context.CallStack.Current?.Duration is { } elapsed ? $" ({elapsed.TotalMilliseconds:0.###} ms)" : "";
         sb.AppendLine($"=== DEBUG [AFTER]: Step [{step.Index}] of {goalName}{took} ===");
 
-        AppendStepVariables(sb, context);
+        await AppendStepVariables(sb, context);
         sb.AppendLine("========================================");
 
         await WriteFiltered(sb, context);
@@ -305,7 +305,7 @@ public sealed class @this
         var sb = new StringBuilder();
         sb.AppendLine($"  --- ACTION [BEFORE] in Step [{step.Index}] of {goalName} ---");
 
-        AppendStepVariables(sb, context);
+        await AppendStepVariables(sb, context);
 
         await WriteFiltered(sb, context);
         return context.Ok();
@@ -321,13 +321,13 @@ public sealed class @this
         var sb = new StringBuilder();
         sb.AppendLine($"  --- ACTION [AFTER] in Step [{step.Index}] of {goalName} ---");
 
-        AppendStepVariables(sb, context);
+        await AppendStepVariables(sb, context);
 
         await WriteFiltered(sb, context);
         return context.Ok();
     }
 
-    private static void AppendStepVariables(StringBuilder sb, actor.context.@this context)
+    private static async Task AppendStepVariables(StringBuilder sb, actor.context.@this context)
     {
         var step = context.CallStack.Step;
         if (step == null) return;
@@ -358,115 +358,33 @@ public sealed class @this
                 continue;
             }
 
-            sb.AppendLine($"    %{name}% = {FormatValue(data.Peek(), context)} ({data.Type?.Name ?? "?"})");
+            sb.AppendLine($"    %{name}% = {await FormatValue(data.Peek(), context)} ({data.Type?.Name ?? "?"})");
 
             if (data.Properties.Count > 0)
             {
                 sb.AppendLine($"      Properties ({data.Properties.Count}):");
                 foreach (var prop in data.Properties)
                 {
-                    sb.AppendLine($"        {prop.Key} = {FormatValue(prop.Value, context)}");
+                    sb.AppendLine($"        {prop.Key} = {await FormatValue(prop.Value, context)}");
                 }
             }
         }
     }
 
-    private static string FormatValue(object? value, actor.context.@this context)
+    // Debug output can land in logs, terminals, CI artefacts — anywhere — so a value is shown through the one
+    // diagnostic door: a structure written in full in the Debug view, a [Sensitive] member masked. Truncation
+    // happens at WriteFiltered via maxLength; a raw collection says how many it holds.
+    private static async System.Threading.Tasks.ValueTask<string> FormatValue(object? value, actor.context.@this context)
     {
-        // Always format full content — truncation happens at WriteFiltered via maxLength.
-        // Dictionaries/lists serialize to JSON so diagnostic output carries full structure;
-        // the older 3-key/1-item preview threw away exactly the content we want to see when
-        // chasing null-valued-variable bugs. Preview remains as a fallback on serialization
-        // failure (e.g. cyclic graphs, non-serializable types).
-        if (value == null) return "(null)";
-        if (value is string s) return $"\"{s}\"";
-        if (value is System.Collections.IDictionary or System.Collections.IList)
+        var shown = await global::app.Diagnostics.Format.Value(value, context);
+        return value switch
         {
-            try
-            {
-                var json = System.Text.Json.JsonSerializer.Serialize(value, _debugJsonOptions);
-                var count = value is System.Collections.IDictionary d ? d.Count
-                          : value is System.Collections.IList l ? l.Count : 0;
-                var suffix = value is System.Collections.IDictionary ? $" ({count} keys)"
-                           : $" ({count} items)";
-                return json + suffix;
-            }
-            catch (System.Exception ex) when (ex is System.Text.Json.JsonException || ex is NotSupportedException) { /* fall through to preview */ }
-        }
-        if (value is System.Collections.IEnumerable enumerable and not string)
-        {
-            int count = 0;
-            object? first = null;
-            foreach (var item in enumerable) { if (count == 0) first = item; count++; }
-            if (count == 0) return "[0 items]";
-            var firstStr = FormatPreviewValue(first);
-            return count == 1 ? $"[1 item: {firstStr}]" : $"[{count} items, first: {firstStr}]";
-        }
-        var str = value.ToString() ?? "(null)";
-        return str;
+            System.Collections.IDictionary d => $"{shown} ({d.Count} keys)",
+            System.Collections.IList l => $"{shown} ({l.Count} items)",
+            _ => shown,
+        };
     }
 
-    // Debug output can land in logs, terminals, CI artefacts — anywhere. Strip [Sensitive]
-    // properties so api keys, passwords, private settings never leak through diagnostic
-    // paths. Uses the same SensitivePropertyFilter that the channel serializers use, so
-    // the sensitive-stripping rule has a single source of truth.
-    private static readonly System.Text.Json.JsonSerializerOptions _debugJsonOptions = new()
-    {
-        WriteIndented = false,
-        Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        TypeInfoResolver = new System.Text.Json.Serialization.Metadata.DefaultJsonTypeInfoResolver
-        {
-            Modifiers = { global::app.type.format.filter.Sensitive.Strip }
-        }
-    };
-
-    private static string FormatPreviewValue(object? value)
-    {
-        if (value == null) return "(null)";
-        if (value is string s) return s.Length > 80 ? $"\"{s[..80]}...\" ({s.Length}c)" : $"\"{s}\"";
-        if (value is System.Collections.IDictionary dict)
-        {
-            var parts = new List<string>();
-            var i = 0;
-            foreach (System.Collections.DictionaryEntry entry in dict)
-            {
-                if (i++ >= 4) { parts.Add("..."); break; }
-                parts.Add($"{entry.Key}={TruncateToString(entry.Value, 40)}");
-            }
-            return $"{{ {string.Join(", ", parts)} }}";
-        }
-        if (value is System.Collections.ICollection col)
-            return $"[{col.Count} items]";
-
-        // For objects: show public property names and short values
-        var type = value.GetType();
-        if (!type.IsPrimitive && type != typeof(decimal) && type != typeof(DateTime)
-            && type != typeof(Guid) && !type.IsEnum)
-        {
-            var props = type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-                .Where(p => p.CanRead && p.Name != "EqualityContract" && p.GetIndexParameters().Length == 0)
-                .Take(5)
-                .Select(p =>
-                {
-                    try { return $"{p.Name}={TruncateToString(p.GetValue(value), 40)}"; }
-                    // a getter that throws shows as `?` in the preview; a fault outside the getter bubbles
-                    catch (System.Reflection.TargetInvocationException) { return $"{p.Name}=?"; }
-                });
-            var propStr = string.Join(", ", props);
-            if (!string.IsNullOrEmpty(propStr))
-                return $"{{ {propStr} }}";
-        }
-
-        return TruncateToString(value, 80);
-    }
-
-    private static string TruncateToString(object? value, int max)
-    {
-        if (value == null) return "null";
-        if (value is string s) return s.Length > max ? $"\"{s[..max]}...[{s.Length - max} more chars]\"" : $"\"{s}\"";
-        var str = value.ToString() ?? "?";
-        return str.Length > max ? $"{str[..max]}...[{str.Length - max} more chars]" : str;
-    }
 }
 
 /// <summary>

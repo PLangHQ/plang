@@ -18,9 +18,9 @@ namespace app.type.item.kind.reflection;
 ///         full local object to disk so it can be restored as-is (Identity
 ///         with PrivateKey + IsDefault, setting with real value, etc.).
 ///         No observer to hide from on the local persistence path.</item>
-///   <item><b>View.Debug</b> — every public instance property ships, except
-///         <c>[Sensitive]</c>. <c>[Masked]</c> still emits <c>"****"</c>;
-///         debug never unmasks.</item>
+///   <item><b>View.Debug</b> — every public instance property ships. <c>[Sensitive]</c>
+///         and <c>[Masked]</c> emit <c>"****"</c>: a developer reading a diagnostic tells
+///         "not set" from "set but hidden"; debug never unmasks.</item>
 /// </list>
 ///
 /// <para>The per-(type, mode) result is cached on first use. Reflection
@@ -94,10 +94,10 @@ public static class Tagged
             if (prop.GetIndexParameters().Length > 0) continue;
             if (!prop.CanRead) continue;
 
-            // [Sensitive] is wire-layer-only. Store-mode persists the full
-            // object (Identity.PrivateKey needs to survive sqlite round-trip).
-            if (mode != global::app.View.Store
-                && prop.IsDefined(typeof(SensitiveAttribute), inherit: false))
+            // [Sensitive] never leaves on the wire (Out); Store persists the full object
+            // (Identity.PrivateKey needs to survive sqlite round-trip); Debug shows it masked.
+            var sensitive = prop.IsDefined(typeof(SensitiveAttribute), inherit: false);
+            if (sensitive && mode is not (global::app.View.Store or global::app.View.Debug))
                 continue;
 
             // [JsonIgnore] in Debug/Store mode still excludes — those tags
@@ -128,7 +128,7 @@ public static class Tagged
             // receiver). On the local persistence path, the real value
             // travels — no observer to hide from.
             bool masked = mode != global::app.View.Store
-                && prop.IsDefined(typeof(MaskedAttribute), inherit: false);
+                && (sensitive || prop.IsDefined(typeof(MaskedAttribute), inherit: false));
             // [JsonPropertyName] wins (STJ honors it), else camelCase — so an Output-written shape
             // matches what an STJ read expects, key for key.
             var wireName = prop.GetCustomAttribute<System.Text.Json.Serialization.JsonPropertyNameAttribute>()?.Name

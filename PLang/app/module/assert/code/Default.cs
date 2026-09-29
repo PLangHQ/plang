@@ -17,7 +17,7 @@ public class Default : IAssert
 
         // Error display keeps the materialised form (the masked/rendered path);
         // only the comparison uses the scalar form.
-        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(action.Expected?.Peek(), action.Actual?.Peek(), action.Message?.Peek()?.ToString()));
+        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(action.Expected?.Peek(), action.Actual?.Peek(), action.Message?.Peek()?.ToString(), action.Context));
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> NotEquals(NotEquals action)
@@ -25,8 +25,8 @@ public class Default : IAssert
         if (!await IsEqual(action.Expected, action.Actual))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(action.Expected?.Peek(), action.Actual?.Peek(),
-            action.Message?.Peek()?.ToString() ?? "Values should not be equal"));
+        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(action.Expected?.Peek(), action.Actual?.Peek(),
+            action.Message?.Peek()?.ToString() ?? "Values should not be equal", action.Context));
     }
 
     // Equality through THE comparison entry (data.Compare) — comparison is a
@@ -44,8 +44,8 @@ public class Default : IAssert
         if (await ResolveTruthy(action.Value))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(true, (action.Value == null ? null : await action.Value.Value()),
-            (action.Message == null ? null : await action.Message.Value())?.ToString() ?? "Expected truthy value"));
+        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(true, (action.Value == null ? null : await action.Value.Value()),
+            (action.Message == null ? null : await action.Message.Value())?.ToString() ?? "Expected truthy value", action.Context));
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> IsFalse(IsFalse action)
@@ -53,8 +53,8 @@ public class Default : IAssert
         if (!await ResolveTruthy(action.Value))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(false, (action.Value == null ? null : await action.Value.Value()),
-            (action.Message == null ? null : await action.Message.Value())?.ToString() ?? "Expected falsy value"));
+        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(false, (action.Value == null ? null : await action.Value.Value()),
+            (action.Message == null ? null : await action.Message.Value())?.ToString() ?? "Expected falsy value", action.Context));
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> IsNull(IsNull action)
@@ -66,8 +66,8 @@ public class Default : IAssert
         if (global::app.type.item.@null.@this.IsNullValue(value))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(null, value,
-            action.Message?.Peek()?.ToString() ?? "Expected null"));
+        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(null, value,
+            action.Message?.Peek()?.ToString() ?? "Expected null", action.Context));
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> IsNotNull(IsNotNull action)
@@ -76,8 +76,8 @@ public class Default : IAssert
         if (!global::app.type.item.@null.@this.IsNullValue(value))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError("(not null)", null,
-            action.Message?.Peek()?.ToString() ?? "Expected non-null value"));
+        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of("(not null)", null,
+            action.Message?.Peek()?.ToString() ?? "Expected non-null value", action.Context));
     }
 
     // Resolve a value for a null-check: open its door, but treat an unset %var% as absent (null)
@@ -108,9 +108,9 @@ public class Default : IAssert
             && (await vItem.Contains(action.Container!) || await cItem.Contains(action.Value!)))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(
-            FormatValue(cItem), vItem,
-            action.Message?.Peek()?.ToString() ?? "Container does not contain value"));
+        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(
+            await global::app.Diagnostics.Format.Value(cItem, action.Context), vItem,
+            action.Message?.Peek()?.ToString() ?? "Container does not contain value", action.Context));
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> NotContains(NotContains action)
@@ -126,9 +126,10 @@ public class Default : IAssert
             || (!await vItem.Contains(action.Container!) && !await cItem.Contains(action.Value!)))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(
-            $"absent: {FormatValue(cItem)}", vItem,
-            action.Message?.Peek()?.ToString() ?? "Container contains value but should not"));
+        var container = await global::app.Diagnostics.Format.Value(cItem, action.Context);
+        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(
+            $"absent: {container}", vItem,
+            action.Message?.Peek()?.ToString() ?? "Container contains value but should not", action.Context));
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> GreaterThan(GreaterThan action)
@@ -136,9 +137,10 @@ public class Default : IAssert
         if (await Ordered(action.A, action.B) == global::app.data.Comparison.Greater)
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(
-            $"> {FormatValue(action.B?.Peek())}", action.A?.Peek(),
-            action.Message?.Peek()?.ToString() ?? $"Expected {FormatValue(action.A?.Peek())} > {FormatValue(action.B?.Peek())}"));
+        var a = await global::app.Diagnostics.Format.Value(action.A?.Peek(), action.Context);
+        var b = await global::app.Diagnostics.Format.Value(action.B?.Peek(), action.Context);
+        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(
+            $"> {b}", action.A?.Peek(), action.Message?.Peek()?.ToString() ?? $"Expected {a} > {b}", action.Context));
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> LessThan(LessThan action)
@@ -146,9 +148,10 @@ public class Default : IAssert
         if (await Ordered(action.A, action.B) == global::app.data.Comparison.Less)
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(new AssertionError(
-            $"< {FormatValue(action.B?.Peek())}", action.A?.Peek(),
-            action.Message?.Peek()?.ToString() ?? $"Expected {FormatValue(action.A?.Peek())} < {FormatValue(action.B?.Peek())}"));
+        var a = await global::app.Diagnostics.Format.Value(action.A?.Peek(), action.Context);
+        var b = await global::app.Diagnostics.Format.Value(action.B?.Peek(), action.Context);
+        return action.Context.Error<global::app.type.item.@bool.@this>(await AssertionError.Of(
+            $"< {b}", action.A?.Peek(), action.Message?.Peek()?.ToString() ?? $"Expected {a} < {b}", action.Context));
     }
 
     // Ordering through THE comparison entry. A missing operand never orders
@@ -168,6 +171,4 @@ public class Default : IAssert
     /// </summary>
     private static async Task<bool> ResolveTruthy(data.@this? data)
         => data != null && await data.ToBooleanAsync();
-
-    private static string FormatValue(object? value) => global::app.Diagnostics.Format.Value(value);
 }

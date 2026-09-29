@@ -57,7 +57,7 @@ public sealed class @this
                     && !string.Equals(test.Goal.BuilderVersion, version, System.StringComparison.Ordinal);
                 console.AppendLine($"  [{test.Status}] {test.Goal.Path} ({test.Duration.TotalMilliseconds:F0}ms)"
                     + (drift ? " [builder drift]" : ""));
-                console.Append(test.Failure(context));
+                console.Append(await test.Failure(context));
             }
             console.Append(Coverage.Text(context.App.module.list));
             // the channel ends the line

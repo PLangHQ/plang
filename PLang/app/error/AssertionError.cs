@@ -13,24 +13,27 @@ public class AssertionError : Error
     public AssertionError(string message, string key = "AssertionFailed", int statusCode = 400)
         : base(message, key, statusCode) { }
 
-    public AssertionError(object? expected, object? actual, string? userMessage = null)
-        : base(FormatMessage(expected, actual, userMessage), "AssertionFailed", 400)
+    private AssertionError(object? expected, object? actual, string? userMessage, string message)
+        : base(message, "AssertionFailed", 400)
     {
         Expected = expected;
         Actual = actual;
         UserMessage = userMessage;
     }
 
-    /// <summary>An assertion always keeps the variables it failed among — for the failure's report.</summary>
-    protected internal override bool Keeps(actor.context.@this context) => true;
-
-    private static string FormatMessage(object? expected, object? actual, string? userMessage)
+    /// <summary>The failure of <paramref name="actual"/> against <paramref name="expected"/>: its message shows
+    /// both as a diagnostic does (a secret masked), after <paramref name="userMessage"/> when there is one.</summary>
+    public static async System.Threading.Tasks.Task<AssertionError> Of(object? expected, object? actual, string? userMessage,
+        actor.context.@this context)
     {
-        var msg = $"Expected: {FormatValue(expected)}, Actual: {FormatValue(actual)}";
+        var shownExpected = await global::app.Diagnostics.Format.Value(expected, context);
+        var shownActual = await global::app.Diagnostics.Format.Value(actual, context);
+        var message = $"Expected: {shownExpected}, Actual: {shownActual}";
         if (!string.IsNullOrEmpty(userMessage))
-            msg = $"{userMessage} — {msg}";
-        return msg;
+            message = $"{userMessage} — {message}";
+        return new AssertionError(expected, actual, userMessage, message);
     }
 
-    private static string FormatValue(object? value) => global::app.Diagnostics.Format.Value(value);
+    /// <summary>An assertion always keeps the variables it failed among — for the failure's report.</summary>
+    protected internal override bool Keeps(actor.context.@this context) => true;
 }

@@ -99,9 +99,9 @@ public class SensitivePropertyFilterTests
         await Assert.That(json).Contains("42");
     }
 
-    // Diagnostic output keeps the [Sensitive] key visible and replaces the value with
-    // "******". Distinguishing absent / null / redacted matters when a human is reading
-    // a crash dump — the key must still appear.
+    // Diagnostic output (the json writer's Debug view) keeps the [Sensitive] key visible and masks the
+    // value. Distinguishing absent / null / redacted matters when a human is reading a crash dump — the
+    // key must still appear.
     [Test]
     public async Task Sensitive_DiagnosticOutput_MasksValueAsAsterisks()
     {
@@ -113,12 +113,28 @@ public class SensitivePropertyFilterTests
             IsDefault = true
         };
 
-        var json = JsonSerializer.Serialize(identity, global::app.Utils.Json.DiagnosticOutput);
+        var json = await global::app.Diagnostics.Format.Value(identity, _app.actor.list.User.Context);
 
         await Assert.That(json).Contains("pubkey123");
         await Assert.That(json).DoesNotContain("secret456");
         await Assert.That(json).Contains("privateKey");
-        await Assert.That(json).Contains("******");
+        await Assert.That(json).Contains("****");
+    }
+
+    // A debug dump of a dict holding a secret-bearing value shows its key, masked.
+    [Test]
+    public async Task Sensitive_InADebugDumpOfADict_IsMasked()
+    {
+        var held = new Dictionary<string, object?>
+        {
+            ["id"] = new Identity { Name = "test", PublicKey = "pubkey123", PrivateKey = "secret456" },
+        };
+
+        var json = await global::app.Diagnostics.Format.Value(held, _app.actor.list.User.Context);
+
+        await Assert.That(json).DoesNotContain("secret456");
+        await Assert.That(json).Contains("privateKey");
+        await Assert.That(json).Contains("****");
     }
 
     // CamelCaseIndented is the storage/output format — it must NOT mask or strip,
@@ -148,29 +164,27 @@ public class SensitivePropertyFilterTests
     public async Task AssertionError_Message_MasksSensitiveViaDiagnosticOutput()
     {
         var actual = new LeakySecretRecord("alice", "topsecret-PLAINTEXT-777");
-        var error = new AssertionError(expected: "nope", actual: actual);
+        var error = await AssertionError.Of("nope", actual, null, _app.actor.list.User.Context);
 
         await Assert.That(error.Message).DoesNotContain("topsecret-PLAINTEXT-777");
-        await Assert.That(error.Message).Contains("******");
+        await Assert.That(error.Message).Contains("****");
         // Key name stays visible — distinguishing absent / null / redacted is
         // the contract DiagnosticOutput promises.
         await Assert.That(error.Message).Contains("secret");
     }
 
-    // Regression for F4: non-string [Sensitive] properties used to be dropped
-    // silently by Mask. DiagnosticOutput's stated intent is that the key
-    // remains visible so a human reading a crash dump can distinguish
-    // "not set" from "redacted". The filter now synthesizes a string-typed
-    // property so the mask literal renders regardless of source type.
+    // A non-string [Sensitive] property keeps its key visible in diagnostic output so a human
+    // reading a crash dump can distinguish "not set" from "redacted"; the mask renders whatever
+    // the source type.
     [Test]
     public async Task Sensitive_NonStringProperty_RendersMaskedValueNotStripped()
     {
         var obj = new NonStringSecretCarrier { Name = "ed25519", Key = new byte[] { 0xDE, 0xAD, 0xBE, 0xEF } };
 
-        var json = JsonSerializer.Serialize(obj, global::app.Utils.Json.DiagnosticOutput);
+        var json = await global::app.Diagnostics.Format.Value(obj, _app.actor.list.User.Context);
 
         await Assert.That(json).Contains("key");
-        await Assert.That(json).Contains("******");
+        await Assert.That(json).Contains("****");
         // base64 of the bytes, never leaked
         await Assert.That(json).DoesNotContain("3q2+7w==");
         await Assert.That(json).DoesNotContain("3q2-7w");

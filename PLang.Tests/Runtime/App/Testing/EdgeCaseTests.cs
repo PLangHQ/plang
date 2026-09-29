@@ -118,7 +118,7 @@ public class EdgeCaseTests
     {
         var run = new global::app.test.@this() { Goal = new Goal { Name = "X", Path = global::app.type.item.path.@this.Resolve("/test/X.test.goal", global::PLang.Tests.TestApp.SharedContext) } };
         run.Stdout = "\x1B[32mFAKE OK\x1B[0m\x1B[2JCLEARED";
-        run.Complete(global::app.test.Status.Fail, new global::app.error.AssertionError(1, 2));
+        run.Complete(global::app.test.Status.Fail, await global::app.error.AssertionError.Of(1, 2, null, _app.actor.list.User.Context));
         _app.test.list.Add(run);
 
         var action = new global::app.module.test.report(_app.actor.list.User.Context);

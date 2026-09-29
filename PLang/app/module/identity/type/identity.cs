@@ -47,7 +47,7 @@ public sealed class Identity : global::app.type.item.@this, global::app.type.ite
     ///   Out   → the public face {name, publicKey}
     ///   Store → adds the [Store]/[Sensitive] fields {privateKey, isDefault,
     ///           isArchived, created} for local sqlite round-trip (real PrivateKey).
-    ///   Debug → same fields as Store, but PrivateKey masked to "***".
+    ///   Debug → same fields as Store, but PrivateKey masked to "****" (the one mask a [Sensitive] value shows).
     /// Read-back is ICreate&lt;Identity&gt;.Create from this object.
     /// </summary>
     public override System.Threading.Tasks.ValueTask Output(
@@ -61,7 +61,7 @@ public sealed class Identity : global::app.type.item.@this, global::app.type.ite
         {
             // [Sensitive, Store] — real value only at rest (Store); masked in Debug.
             w.Name("privateKey");
-            w.String(mode == global::app.View.Store ? PrivateKey : "***");
+            w.String(mode == global::app.View.Store ? PrivateKey : "****");
             w.Name("isDefault");  w.Bool(IsDefault);             // [Store]
             w.Name("isArchived"); w.Bool(IsArchived);            // [Store]
             w.Name("created");    w.DateTimeOffset(Created);     // [Store]
