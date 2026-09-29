@@ -13,16 +13,16 @@ public class AssertionError : Error
     public AssertionError(string message, string key = "AssertionFailed", int statusCode = 400)
         : base(message, key, statusCode) { }
 
-    /// <param name="variables">The variables when the assertion failed — for the failure's report.</param>
-    public AssertionError(object? expected, object? actual, string? userMessage = null,
-        global::app.type.item.dict.@this? variables = null)
+    public AssertionError(object? expected, object? actual, string? userMessage = null)
         : base(FormatMessage(expected, actual, userMessage), "AssertionFailed", 400)
     {
         Expected = expected;
         Actual = actual;
         UserMessage = userMessage;
-        Variables = variables;
     }
+
+    /// <summary>An assertion always keeps the variables it failed among — for the failure's report.</summary>
+    protected internal override bool Keeps(actor.context.@this context) => true;
 
     private static string FormatMessage(object? expected, object? actual, string? userMessage)
     {

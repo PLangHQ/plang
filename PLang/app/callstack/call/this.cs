@@ -217,9 +217,9 @@ public sealed partial class @this : IAsyncDisposable
     public int Depth { get; }
 
     /// <summary>The frame records an error against itself — the one door. Stamps what the error does
-    /// not carry yet: the failing chain, the context of the run it met here, and — under --debug —
-    /// the variables as they are now (not by default: variables can hold secrets). Then files it on
-    /// the frame and in the run's audit.
+    /// not carry yet: the failing chain, the context of the run it met here, and — when the error keeps
+    /// them (<c>Keeps</c>: an assertion, or any error under --debug) — the variables as they are now. Then
+    /// files it on the frame and in the run's audit.
     /// <para>Recording each error ONCE is the frame's own contract, kept by instance identity, so no
     /// caller guards: a retry mints a fresh error per attempt and each is kept (real history), while
     /// a layer that passes the same error through records nothing new.</para></summary>
@@ -227,7 +227,7 @@ public sealed partial class @this : IAsyncDisposable
     {
         if (error.CallFrames.Count == 0) error.CallFrames = SnapshotChain();
         error.Context ??= context;
-        if (context.App.Debug != null) error.Variables ??= context.Variable.Snapshot();
+        if (error.Variables == null && error.Keeps(context)) error.Variables = context.Variable.Snapshot();
         if (Errors.Any(x => ReferenceEquals(x, error))) return;
         Errors.Add(error);
         _stack.Audit.Add(error);

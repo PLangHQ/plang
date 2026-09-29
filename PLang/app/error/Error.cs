@@ -130,9 +130,13 @@ public class Error : global::app.type.item.@this
     public Goal? Goal { get; set; }
     public IReadOnlyList<Call> CallFrames { get; set; } = Array.Empty<Call>();
     /// <summary>The variables as they were when the error happened — each variable's Data whole,
-    /// keyed by name (<c>%!error.Variables.foo%</c>). Captured by assert, and by the frame for every
-    /// error under --debug; null otherwise (variables can hold secrets).</summary>
+    /// keyed by name (<c>%!error.Variables.foo%</c>). Captured by the frame that records the error, when the
+    /// error keeps them (<see cref="Keeps"/>); null otherwise (variables can hold secrets).</summary>
     public global::app.type.item.dict.@this? Variables { get; set; }
+
+    /// <summary>Whether this error keeps the variables as they are when it is recorded — an error keeps them
+    /// under <c>--debug</c> only; an assertion always does (its report shows them).</summary>
+    protected internal virtual bool Keeps(actor.context.@this context) => context.App.Debug != null;
 
     /// <summary>
     /// The execution context where this error occurred. Used by verbose debug to dump variables.

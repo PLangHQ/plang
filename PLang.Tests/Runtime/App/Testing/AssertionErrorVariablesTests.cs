@@ -56,8 +56,8 @@ public class AssertionErrorVariablesTests
         await Assert.That(err.Variables!.Held("x")?.ToString()).IsEqualTo("1");
     }
 
-    // Canonical failure path: assert.equals fails → returned Data.Error is AssertionError
-    // with Variables populated from the current Context.Variable.Snapshot().
+    // Canonical failure path: assert.equals fails → returned Data.Error is AssertionError, and the frame that
+    // records it keeps the variables as they are (an assertion always keeps them).
     [Test]
     public async Task EqualsHandler_OnFailure_PopulatesVariablesFromSnapshot()
     {
@@ -65,9 +65,7 @@ public class AssertionErrorVariablesTests
         context.Variable.Set("score", 42);
         context.Variable.Set("label", "foo");
 
-        var action = new AssertEquals(context) { Expected = D(1), Actual = D(2) };
-        await action.Attach(null, context);
-        var result = await action.Start();
+        var result = await _app.Run(new AssertEquals(context) { Expected = D(1), Actual = D(2) }, context);
 
         await result.IsFailure();
         var err = result.Error as AssertionError;
@@ -75,6 +73,25 @@ public class AssertionErrorVariablesTests
         await Assert.That(err!.Variables).IsNotNull();
         await Assert.That(err.Variables!.Held("score")?.ToString()).IsEqualTo("42");
         await Assert.That((err.Variables!.Held("label"))?.ToString()).IsEqualTo("foo");
+    }
+
+    // Any other error keeps no variables unless --debug is on (variables can hold secrets); an assertion
+    // always keeps them.
+    [Test]
+    public async Task APlainError_WithoutDebug_KeepsNoVariables_AnAssertionDoes()
+    {
+        var context = _app.actor.list.User.Context;
+        context.Variable.Set("secret", "s3cr3t");
+        await using var frame = context.CallStack.Push(global::PLang.Tests.App.CallStackTests.CallStackTestHelpers.MakeAction("Goal"));
+
+        var plain = new global::app.error.Error("boom", "Boom", 500);
+        frame.Record(plain, context);
+        var assertion = new AssertionError(1, 2);
+        frame.Record(assertion, context);
+
+        await Assert.That(plain.Variables).IsNull();
+        await Assert.That(assertion.Variables).IsNotNull();
+        await Assert.That(assertion.Variables!.Held("secret")?.ToString()).IsEqualTo("s3cr3t");
     }
 
     // Guard (architect spec): no snapshot cost on passing assertions. A successful
@@ -104,13 +121,8 @@ public class AssertionErrorVariablesTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set("watched", "sentinel");
 
-        // Attach binds each handler's [Code] provider (the construction half of the lifecycle)
-        // before Run — the pipeline does this; a direct-Run fixture must too.
-        async Task<Data> AR(global::app.module.ICodeGenerated a)
-        {
-            await a.Attach(null, context);
-            return await ((dynamic)a).Start();
-        }
+        // Through the production door: the dispatch binds each handler and its frame records the failure.
+        async Task<Data> AR(global::app.module.ICodeGenerated a) => await _app.Run((dynamic)a, context);
 
         var failures = new List<Data>
         {
