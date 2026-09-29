@@ -166,8 +166,7 @@ public sealed class Operator
             return Refused(context, $"Unknown type '{typeName}'", "UnknownType");
         // Ask the VALUE — it walks its own provenance chain (a narrowed dict still answers `is file`).
         if (left.Is(type)) return Answer(context, true);
-        if (left.Peek() is global::app.type.item.file.@this or global::app.type.item.url.@this
-            || left.RawUntouched)
+        if (left.Peek() is { IsFinal: false })
         {
             // `is <type>` IS an examination — the door parses + narrows, then
             // the value answers deterministically from its retained provenance.

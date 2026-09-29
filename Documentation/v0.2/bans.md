@@ -32,7 +32,7 @@ Action handlers and engine code under `PLang/app/**` must NOT call
 `CopyTo`, `ExistsAsync`, `AsBooleanAsync`). Every one of those methods
 passes through `FilePath.AuthGate(verb)` before touching the disk.
 `Read` lands a reference (`file`, `url`, `directory`); its content is the
-reference's own value, and its raw bytes are `IContent.Content` — both read
+reference's own value, and its raw bytes are `reference.Content` — both read
 through the path's gated internal `Bytes`.
 
 A handler reaching for `System.IO.File`, `System.IO.Directory`,

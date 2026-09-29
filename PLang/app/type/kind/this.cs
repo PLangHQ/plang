@@ -25,6 +25,7 @@ public class @this
     private readonly System.Collections.Generic.IReadOnlyList<string> _mime = [];
     private readonly System.Collections.Generic.IReadOnlyList<string> _extension = [];
     private readonly bool _compressible;
+    private readonly bool _text;
     // How the owning type writes this format — its class's IEncode, bound when the kind was made; null for a
     // type that writes none of its formats.
     private readonly Encoder? _encode;
@@ -47,6 +48,7 @@ public class @this
         _mime = format.Mime is { } mime ? [mime] : [];
         _extension = format.Extension;
         _compressible = format.Compressible;
+        _text = format.Text;
         _encode = encode;
     }
 
@@ -88,6 +90,10 @@ public class @this
 
     /// <summary>True for a type's empty kind — the type has no kind.</summary>
     public bool IsEmpty => Name.Length == 0;
+
+    /// <summary>Whether content of this kind is characters, as its format declares (a text media type, or said
+    /// outright: xml, ini); a kind that is its own class says so itself (json).</summary>
+    public virtual bool IsText => _text;
 
     /// <summary>One of this kind's type's kinds, by its name or an alias — a type holds its kinds on its
     /// empty kind; null when it holds none by that name (the type list's <c>Kind(name)</c> then mints the
@@ -189,14 +195,15 @@ public class @this
     /// Content of this kind, read off I/O into a Data — the one decode door (a channel read, a file's or a
     /// url's content, an http body). By default the bytes are a value of this kind's type, left unread until
     /// touched (<c>{image, png}</c>, <c>{text}</c>); a kind whose content is a whole Data (plang's own
-    /// format) overrides it. Born with the caller's context.
+    /// format) overrides it. Born with the caller's context; with a <paramref name="template"/> the content is
+    /// born a template (a file read with its variables resolved).
     /// </summary>
     public virtual async global::System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
         global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,
-        System.Threading.CancellationToken ct = default)
+        System.Threading.CancellationToken ct = default, string? template = null)
     {
         // content decoded into a new value is a birth: it comes through its type's on.create
-        var type = context.App.type.list[new global::app.type.@this(Owner ?? "binary", IsEmpty ? null : Name), context];
+        var type = context.App.type.list[new global::app.type.@this(Owner ?? "binary", IsEmpty ? null : Name, template: template), context];
         return await type.Create(raw, context, name);
     }
 

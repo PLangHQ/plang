@@ -20,6 +20,9 @@ public sealed class @this : global::app.type.kind.@this
     public override System.Collections.Generic.IReadOnlyList<string> Extension => [".json"];
     public override bool Compressible => true;
 
+    /// <summary>json content is text.</summary>
+    public override bool IsText => true;
+
     public override System.Type? ClrForm => typeof(JsonElement);
 
     /// <summary>json content written: the value alone, as json — no Data around it (the type is inferred on

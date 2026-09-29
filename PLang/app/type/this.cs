@@ -584,8 +584,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     {
         Alias = Declared<IReadOnlyList<string>>("Alias") ?? [];
         Owned = Declared<IReadOnlyList<global::app.type.convert.OwnedClr>>("OwnedClrTypes") ?? [];
+        // declared by the class itself: a base that is internal (reference) leaves its subclasses (file, url) named
         Internal = clr.GetProperty("Internal", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
-                                               | System.Reflection.BindingFlags.FlattenHierarchy)?.GetValue(null) is true;
+                                               | System.Reflection.BindingFlags.DeclaredOnly)?.GetValue(null) is true;
         // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
         if (types == null || clr == typeof(@this)) return;
 

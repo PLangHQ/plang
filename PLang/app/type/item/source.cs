@@ -51,7 +51,8 @@ public class source : @this
         // content that merely looks like "%x%" must NOT auto-resolve to a variable; only a
         // builder-marked template does. Decided ONCE at birth.
         if (type.Template == null) return;
-        var raw = value as string;
+        // the variables are read off the source's text face (a byte raw declared text is its UTF-8)
+        var raw = Peek() as string;
         _variable = (variable ?? (raw != null ? new global::app.type.item.variable.parser.@this(raw).Variable : []))
             .DistinctBy(v => v.Text).ToList();
         // A full-match %ref% on ANY declared type is a reference to a binding — resolved at

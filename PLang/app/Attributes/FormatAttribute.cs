@@ -21,10 +21,15 @@ public sealed class FormatAttribute : System.Attribute
     /// compressed (images, audio, video, archives).</summary>
     public bool Compressible { get; set; } = true;
 
+    /// <summary>Whether content of this format is characters — true for a text media type (<c>text/*</c>); a
+    /// text format that arrives as another (<c>application/xml</c>) or has none (<c>ini</c>) says so.</summary>
+    public bool Text { get; set; }
+
     public FormatAttribute(string name, string? mime = null, params string[] extension)
     {
         Name = name;
         Mime = mime;
+        Text = mime?.StartsWith("text/", System.StringComparison.OrdinalIgnoreCase) == true;
         Extension = extension.Length > 0 || name.Length == 0 ? extension : ["." + name];
     }
 }

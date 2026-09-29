@@ -29,14 +29,14 @@ namespace app.type.item.text;
 /// </summary>
 [global::app.Attributes.PlangType("text")]
 [global::app.Attributes.Format("", "text/plain", ".txt")]
-[global::app.Attributes.Format("xml", "application/xml")]
+[global::app.Attributes.Format("xml", "application/xml", Text = true)]
 [global::app.Attributes.Format("md", "text/markdown", ".md", ".markdown")]
 [global::app.Attributes.Format("yml", "text/yaml", ".yml", ".yaml")]
-[global::app.Attributes.Format("ini")]
-[global::app.Attributes.Format("goal")]
-[global::app.Attributes.Format("llm")]
-[global::app.Attributes.Format("template")]
-[global::app.Attributes.Format("liquid")]
+[global::app.Attributes.Format("ini", Text = true)]
+[global::app.Attributes.Format("goal", Text = true)]
+[global::app.Attributes.Format("llm", Text = true)]
+[global::app.Attributes.Format("template", Text = true)]
+[global::app.Attributes.Format("liquid", Text = true)]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>, global::app.type.item.IEncode<@this>
 {

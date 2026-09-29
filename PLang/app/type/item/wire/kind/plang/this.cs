@@ -64,10 +64,11 @@ public sealed class @this : global::app.type.kind.@this
     }
 
     /// <summary>The whole Data the bytes are — reconstructed, its signature verified; between actors (Out) a Data
-    /// without a signature is refused.</summary>
+    /// without a signature is refused. A Data carries its own facts, so a <paramref name="template"/> asks nothing
+    /// of it.</summary>
     public override async System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
         global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,
-        System.Threading.CancellationToken ct = default)
+        System.Threading.CancellationToken ct = default, string? template = null)
     {
         try
         {

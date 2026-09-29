@@ -21,6 +21,7 @@ public sealed class @this : global::app.type.kind.@this
     public override System.Collections.Generic.IReadOnlyList<string> Mime => _format?.Mime ?? [];
     public override System.Collections.Generic.IReadOnlyList<string> Extension => _format?.Extension ?? [];
     public override bool Compressible => _format?.Compressible ?? false;
+    public override bool IsText => _format?.IsText ?? false;
 
     /// <summary>The type's own format writes it (<c>.pr</c> for goal); a type with none writes nothing.</summary>
     public override System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
