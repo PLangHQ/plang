@@ -55,16 +55,6 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
         // Pass-through — the same instance rides out.
         if (raw is TSelf self) return self;
 
-        // An error value isn't a convertible payload — keep it primary, demote the failure.
-        if (raw is @this ev && ev.Clr<object>() is global::app.error.Error errVal)
-        {
-            errVal.list.Add(new global::app.error.Error(
-                $"%{data.Name}% holds an error — '{@this.NameOf(typeof(TSelf))}' cannot be created from it.",
-                "TypeMismatch", 400));
-            data.Fail(errVal);
-            return null;
-        }
-
         // The pure core builds it — the type owns its own arms (CLR/item coercions in one switch).
         if (TSelf.Create(raw) is { } made) return made;
 

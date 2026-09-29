@@ -484,6 +484,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual System.Threading.Tasks.ValueTask<bool> IsEmpty()
         => System.Threading.Tasks.ValueTask.FromResult(false);
 
+    /// <summary>Whether this value, asked to become a <paramref name="asked"/> for <paramref name="data"/>,
+    /// refuses — answering on <paramref name="data"/> itself. A value refuses nothing: the birth goes on.</summary>
+    public virtual bool Refuses(string asked, global::app.data.@this data) => false;
+
     /// <summary>This value, given by <paramref name="carrier"/>, goes into <paramref name="into"/> at
     /// <paramref name="at"/> (a position in it, else the end) — as one element pointing at the value's current
     /// instance. A list goes in as its elements instead.</summary>

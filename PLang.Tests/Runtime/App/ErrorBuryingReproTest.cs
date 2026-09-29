@@ -33,4 +33,18 @@ public class ErrorBuryingReproTest
         await Assert.That(resolved.Error.list[0].Key).IsEqualTo("TypeMismatch");
 
     }
+
+    // Every type's birth answers the same: number has its own courier too.
+    [Test] public async Task ErrorAsNumberSlot_OriginalErrorStaysPrimary_ConversionFailureGoesOnChain()
+    {
+        var rootError = new global::app.error.ServiceError("the build failed", "BuildFailed", 500);
+
+        var d = new global::app.data.@this("!error", rootError);
+        var resolved = d.As<global::app.type.item.number.@this>(await d.Value<global::app.type.item.number.@this>());
+
+        await resolved.IsFailure();
+        await Assert.That(resolved.Error!.Key).IsEqualTo("BuildFailed");
+        await Assert.That(resolved.Error.list.Count).IsEqualTo(1);
+        await Assert.That(resolved.Error.list[0].Key).IsEqualTo("TypeMismatch");
+    }
 }

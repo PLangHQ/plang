@@ -458,7 +458,8 @@ public partial class @this
         // deep-renders, and the resolved value's own type then converts to T.
         if (T.IsName && Peek() is T name)
             return T.Create(name, null, this);
-        return T.Create(await Value(), null, this);
+        var value = await Value();
+        return value is not T && value.Refuses(global::app.type.item.@this.NameOf(typeof(T)), this) ? null : T.Create(value, null, this);
     }
 
     /// <summary>

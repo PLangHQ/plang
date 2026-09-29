@@ -23,6 +23,15 @@ public class Error : global::app.type.item.@this
     /// <summary>Every error, whichever its class, is of the type <c>error</c>.</summary>
     protected internal override global::app.type.@this Type => new(typeof(Error));
 
+    /// <summary>An error is not a payload to convert: asked to become another type, it stays the answer —
+    /// primary on the binding, the mismatch on its chain.</summary>
+    public override bool Refuses(string asked, global::app.data.@this data)
+    {
+        list.Add(new Error($"%{data.Name}% holds an error — '{asked}' cannot be created from it.", "TypeMismatch", 400));
+        data.Fail(this);
+        return true;
+    }
+
     public string Id { get; }
     public string Message { get; }
     public string Key { get; }
