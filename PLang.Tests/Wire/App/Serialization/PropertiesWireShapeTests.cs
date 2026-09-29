@@ -107,20 +107,25 @@ public class PropertiesWireShapeTests
     {
         var dict = new Dictionary<string, object?> { ["cost"] = 100L, ["model"] = "claude" };
         var back = await RoundTrip(dict);
-        var roundDict = (await back.Properties.Value("k")) as Dictionary<string, object?>;
+        // the dict comes back as the dict it was written as, its entries keeping their types
+        var roundDict = (await back.Properties.Value("k")) as global::app.type.item.dict.@this;
         await Assert.That(roundDict).IsNotNull();
-        await Assert.That(roundDict!["cost"]).IsEqualTo(100L);
-        await Assert.That((roundDict["model"])?.ToString()).IsEqualTo("claude");
+        var cost = await roundDict!.Get("cost", back.Context!)!.Value();
+        await Assert.That(cost is global::app.type.item.number.@this).IsTrue();
+        await Assert.That(cost!.ToString()).IsEqualTo("100");
+        await Assert.That((await roundDict.Get("model", back.Context!)!.Value())?.ToString()).IsEqualTo("claude");
     }
 
     [Test] public async Task Properties_RoundTrip_ListOfPrimitives()
     {
         var list = new List<object?> { 1L, 2L, "three" };
         var back = await RoundTrip(list);
-        var roundList = (await back.Properties.Value("k")) as List<object?>;
+        // the list comes back as the list it was written as, its elements keeping their types
+        var roundList = (await back.Properties.Value("k")) as global::app.type.item.list.@this;
         await Assert.That(roundList).IsNotNull();
-        await Assert.That(roundList!.Count).IsEqualTo(3);
-        await Assert.That((roundList[2])?.ToString()).IsEqualTo("three");
+        await Assert.That(roundList!.Count.ToString()).IsEqualTo("3");
+        await Assert.That((await roundList.At(2L, back.Context!).Value())?.ToString()).IsEqualTo("three");
+        await Assert.That(await roundList.At(0L, back.Context!).Value() is global::app.type.item.number.@this).IsTrue();
     }
 
     [Test] public async Task Wire_PropertiesEmittedAsNestedObject_SiblingOfReservedFields()

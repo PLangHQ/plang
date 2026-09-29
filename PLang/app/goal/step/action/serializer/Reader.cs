@@ -135,7 +135,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     held = row.Slice();
                     break;
                 case "variable": variables = new global::app.type.item.variable.serializer.Entry().Read(ref row, ctx); break;
-                case "properties": properties = global::app.data.Properties.Read(ref row.Inner); break;
+                case "properties": properties = global::app.data.Properties.Read(ref row, ctx); break;
                 default: throw new global::app.error.PrFormatOutdatedException($"property key '{key}' isn't in this .pr format", ctx.Origin);
             }
         }

@@ -86,7 +86,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                     variables = new global::app.type.item.variable.serializer.Entry().Read(ref reader, ctx);
                     break;
                 case "properties":
-                    properties = Properties.Read(ref reader.Inner);
+                    properties = Properties.Read(ref reader, ctx);
                     break;
                 default:
                     reader.Skip();

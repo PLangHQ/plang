@@ -53,60 +53,30 @@ public sealed class Properties : IEnumerable<KeyValuePair<string, object?>>
 
     /// <summary>Reads the bag off the reader — its own <c>"properties": {…}</c> object. Values are
     /// EAGERLY parsed: they are small metadata leaves, so a lazy source buys nothing; a %ref% in a
-    /// value is handled by the async read door (<see cref="Value"/>).</summary>
-    public static Properties Read(ref System.Text.Json.Utf8JsonReader reader)
+    /// value is handled by the async read door (<see cref="Value"/>). A scalar is read as it is; an
+    /// object or array was written by the dict or list itself (its entries self-describing), so it
+    /// reads back through that type's own reader.</summary>
+    public static Properties Read(ref global::app.type.item.kind.json.Reader reader, global::app.type.reader.ReadContext ctx)
     {
         var props = new Properties();
-        if (reader.TokenType == System.Text.Json.JsonTokenType.Null) return props;
-        if (reader.TokenType != System.Text.Json.JsonTokenType.StartObject)
-            throw new System.Text.Json.JsonException("properties field must be a JSON object");
-
-        while (reader.Read())
+        if (reader.Null()) return props;
+        reader.BeginObject();
+        while (reader.NextName(out var key))
         {
-            if (reader.TokenType == System.Text.Json.JsonTokenType.EndObject) return props;
-            if (reader.TokenType != System.Text.Json.JsonTokenType.PropertyName)
-                throw new System.Text.Json.JsonException("Expected property name inside properties object");
-            var key = reader.GetString()!;
-            reader.Read();
-            props[key] = Leaf(ref reader);
-        }
-        throw new System.Text.Json.JsonException("Unterminated properties object");
-    }
-
-    private static object? Leaf(ref System.Text.Json.Utf8JsonReader reader)
-    {
-        switch (reader.TokenType)
-        {
-            case System.Text.Json.JsonTokenType.Null: return null;
-            case System.Text.Json.JsonTokenType.String: return reader.GetString();
-            case System.Text.Json.JsonTokenType.True: return true;
-            case System.Text.Json.JsonTokenType.False: return false;
-            case System.Text.Json.JsonTokenType.Number:
-                if (reader.TryGetInt64(out var l)) return l;
+            props[key] = reader.Peek() switch
+            {
+                global::app.type.format.TokenKind.Null => null,
+                global::app.type.format.TokenKind.Bool => reader.Bool(),
                 // A bare decimal-point literal defaults to double (universal language
                 // convention); decimal is opt-in via `as number/decimal`.
-                return reader.GetDouble();
-            case System.Text.Json.JsonTokenType.StartArray:
-            {
-                var list = new List<object?>();
-                while (reader.Read() && reader.TokenType != System.Text.Json.JsonTokenType.EndArray)
-                    list.Add(Leaf(ref reader));
-                return list;
-            }
-            case System.Text.Json.JsonTokenType.StartObject:
-            {
-                var dict = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
-                while (reader.Read() && reader.TokenType != System.Text.Json.JsonTokenType.EndObject)
-                {
-                    var key = reader.GetString()!;
-                    reader.Read();
-                    dict[key] = Leaf(ref reader);
-                }
-                return dict;
-            }
-            default:
-                throw new System.Text.Json.JsonException($"Unexpected token in property value: {reader.TokenType}");
+                global::app.type.format.TokenKind.Number => reader.Number(),
+                global::app.type.format.TokenKind.String => reader.String(),
+                global::app.type.format.TokenKind.Object => ctx.Context.App.type.list.Reader.Reader("dict", null, ctx.Context).Read(ref reader, null, ctx),
+                _ => ctx.Context.App.type.list.Reader.Reader("list", null, ctx.Context).Read(ref reader, null, ctx),
+            };
         }
+        reader.EndObject();
+        return props;
     }
 
     public bool Remove(string key) => _items.Remove(key);
