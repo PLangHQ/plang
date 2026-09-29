@@ -79,21 +79,24 @@ public class Cut4_PropertiesWireTests
         }
     }
 
+    // Properties ride inside the signed value: real signing refuses a tampered Properties value on read.
     [Test] public async Task Cut4_TamperingPropertyValue_FailsOuterSignatureVerify()
     {
-        var (wire, _, app) = await WriteAndRead();
-        await using (app)
-        {
-            var tampered = wire.Replace("\"cost\":100", "\"cost\":999");
-            await Assert.That(tampered).IsNotEqualTo(wire);
-            var plang = app.actor.list.User.Context.Format("application/plang");
-            var back = plang.Deserialize(tampered, app.actor.list.User.Context);
-            var verify = await new global::app.goal.step.action.@this(new global::app.module.signing.verify(app.actor.list.User.Context)
-                {
-                    Data = back,
-                    SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", true)
-                }, app.actor.list.User.Context).Start(app.actor.list.User.Context);
-            await verify.IsFailure();
-        }
+        await using var app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-cut4-" + System.Guid.NewGuid().ToString("N")[..8])).TestIdentity();
+        var ctx = app.actor.list.User.Context;
+        var plang = ctx.Format("application/plang");
+        var d = new global::app.data.@this("response", "Hello!", context: ctx);
+        d.Properties["cost"] = 100;
+        var wire = (await plang.Serialize(d, ctx).Value())!.Clr<string>()!;
+        var tampered = wire.Replace("\"cost\":100", "\"cost\":999");
+        await Assert.That(tampered).IsNotEqualTo(wire);
+        // the same Data signed again (its own nonce) reads back untampered
+        await plang.Deserialize((await plang.Serialize(d, ctx).Value())!.Clr<string>()!, ctx).IsSuccess();
+
+        var back = plang.Deserialize(tampered, ctx);
+
+        await back.IsFailure();
+        await Assert.That(back.Error!.Key).IsEqualTo("DataHashMismatch");
     }
 }
