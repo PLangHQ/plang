@@ -43,14 +43,15 @@ public sealed class @this : global::app.type.kind.@this
 }
 
 /// <summary>
-/// Thrown when a raw path names a scheme that is not one of the app's path kinds. The PLang
-/// type-mapper catches it and shapes it as <c>data.@this.Fail</c>.
+/// A raw path names a scheme that is not one of the app's path kinds (<c>s3://</c>) — the program's
+/// mistake, carried with its Error: key <c>SchemeNotRegistered</c> and how to fix it.
 /// </summary>
-public sealed class SchemeNotRegistered : Exception
+public sealed class SchemeNotRegistered : global::app.error.AppException
 {
     public string Scheme { get; }
     public SchemeNotRegistered(string scheme)
-        : base($"No path scheme registered for '{scheme}'.")
+        : base(new global::app.error.Error($"No path scheme registered for '{scheme}'.", "SchemeNotRegistered", 400)
+            { FixSuggestion = $"Add a path kind for scheme '{scheme}' (app.Type.Kind.Add(new path.scheme.@this(…))), or use a bare/file:// path." })
     {
         Scheme = scheme;
     }

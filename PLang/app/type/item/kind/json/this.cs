@@ -138,10 +138,14 @@ public sealed class @this : global::app.type.kind.@this
     // walk driven off that reader). The door a clr(json) delegates to instead of terminal-lowering.
     public override object? Clr(object host, System.Type target, global::app.actor.context.@this ctx)
     {
-        var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(((JsonElement)host).GetRawText()));
-        utf8.Read();
-        var reader = new global::app.type.item.kind.json.Reader(utf8);
-        return new global::app.type.item.kind.reflection.@this().Read(ref reader, target, new global::app.type.reader.ReadContext(ctx));
+        try
+        {
+            var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(((JsonElement)host).GetRawText()));
+            utf8.Read();
+            var reader = new global::app.type.item.kind.json.Reader(utf8);
+            return new global::app.type.item.kind.reflection.@this().Read(ref reader, target, new global::app.type.reader.ReadContext(ctx));
+        }
+        catch (JsonException shape) { throw Unread(shape, target.Name); }
     }
 
     // The format→type read: json bridges its content into a json stream and drives the declared
@@ -151,12 +155,24 @@ public sealed class @this : global::app.type.kind.@this
     public override object? Read(object obj, global::app.type.reader.ITypeReader reader, string? kind,
                                  global::app.actor.context.@this context)
     {
-        var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(((JsonElement)obj).GetRawText()));
-        utf8.Read();
-        var stream = new global::app.type.item.kind.json.Reader(utf8);
-        return reader.Read(ref stream, kind,
-            new global::app.type.reader.ReadContext(context, Verify: false));
+        try
+        {
+            var utf8 = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(((JsonElement)obj).GetRawText()));
+            utf8.Read();
+            var stream = new global::app.type.item.kind.json.Reader(utf8);
+            return reader.Read(ref stream, kind,
+                new global::app.type.reader.ReadContext(context, Verify: false));
+        }
+        catch (JsonException shape) { throw Unread(shape, kind ?? reader.GetType().Name); }
     }
+
+    // json content that doesn't have the shape its target reads (an object where a list goes) — the program's
+    // data, not a fault in plang: keyed like any content that doesn't read as its declared type, naming where.
+    private static global::app.error.AppException Unread(JsonException shape, string target)
+        => new(new global::app.error.Error(
+            $"json content doesn't read as {target}: {shape.Message}"
+            + (shape.Path != null || shape.LineNumber != null ? $" [at {shape.Path ?? "?"}, line {shape.LineNumber?.ToString() ?? "?"}]" : ""),
+            "MaterializeFailed", 400) { Exception = shape }, shape);
 
     // A json value writes its own raw json inline — NEVER reflecting the JsonElement's BCL props.
     public override global::System.Threading.Tasks.ValueTask Output(

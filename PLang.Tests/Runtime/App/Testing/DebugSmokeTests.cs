@@ -40,6 +40,18 @@ public class DebugSmokeTests
         return reader.ReadToEnd();
     }
 
+    // A --debug grep that isn't a regex is refused, answered with its key — the run doesn't start on it.
+    [Test]
+    public async Task Debug_GrepThatIsNotARegex_IsAnsweredAsInvalidPattern()
+    {
+        _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
+        _app.actor.list.System.Setting.Set("debug", new Dictionary<string, object?> { ["grep"] = "a(b" });
+
+        var refused = _app.Debug.Activate();
+
+        await Assert.That(refused?.Key).IsEqualTo("InvalidPattern");
+    }
+
     // Debug config (level="action") set via the walk, then Activate() attaches BeforeAction +
     // AfterAction widened handlers. Running a goal with one action must fire them without throwing.
     [Test]

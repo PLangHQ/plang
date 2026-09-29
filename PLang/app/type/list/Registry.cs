@@ -72,8 +72,10 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             var faceted = Items().Select(t => new global::app.type.@this(t.Name, t.ClrType!, this)).ToArray();
             while (CountRaw > 0) RemoveAt(0);
             foreach (var type in faceted) base.Add(type);
-            foreach (var assembly in Assemblies) Enlist(assembly);
-            Guard();
+            // plang's own assemblies: a refusal here is plang broken
+            foreach (var assembly in Assemblies)
+                if (Enlist(assembly) is { } refused) throw new InvalidOperationException(refused.Message);
+            if (Guard() is { } clash) throw new InvalidOperationException(clash.Message);
             _loaded = true;
         }
     }
@@ -119,14 +121,17 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         lock (_lock)
         {
             Load();
-            if (Items().FirstOrDefault(t => t.Names(claimed)) is { } owner)
-                return owner.ClrType == clr
-                    ? context.Ok(owner)
-                    : context.Error(new error.Error(
-                        $"type name '{claimed}' is claimed by both {owner.ClrType?.FullName} and {clr.FullName} — one name, one class.",
+            if (Items().FirstOrDefault(t => t.Names(claimed)) is { } owner && owner.ClrType == clr)
+                return context.Ok(owner);
+            // every name it answers to — its word, its namespace, its aliases — is one another class may own
+            var named = new global::app.type.@this(claimed, clr, null);
+            foreach (var claim in named.Claims)
+                if (Items().FirstOrDefault(t => t.Names(claim)) is { } other && other.ClrType != clr)
+                    return context.Error(new error.Error(
+                        $"type name '{claim}' is claimed by both {other.ClrType?.FullName} and {clr.FullName} — one name, one class.",
                         "TypeLoadCollision", 400));
             // Its own name first, so its facts can name a property of its own type.
-            base.Add(new global::app.type.@this(claimed, clr, null));
+            base.Add(named);
             var added = new global::app.type.@this(claimed, clr, this);
             RemoveAt(CountRaw - 1);
             base.Add(added);
@@ -170,8 +175,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             if (!result.Success) return result;
             added.Add(this[NameOf(clr)!]);
         }
-        Enlist(assembly);
-        Guard();
+        // a loaded assembly's kinds are the program's: a refusal is the load's answer
+        if ((Enlist(assembly) ?? Guard()) is { } refused) return context.Error(refused);
         return context.Ok(added);
     }
 
@@ -205,7 +210,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             foreach (var type in Items())
                 if (type.kind[key] is { } taken
                     && !(string.Equals(taken.Owner, kind.Owner, StringComparison.OrdinalIgnoreCase) && string.Equals(taken.Name, kind.Name, StringComparison.OrdinalIgnoreCase)))
-                    throw Taken(key, taken, kind);
+                    throw new InvalidOperationException(Taken(key, taken, kind).Message);
         Hold(kind);
     }
 
@@ -221,8 +226,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
 
     // The guard every format passes once a scan has held its kinds: a MIME or an extension is one format's —
     // a second kind answering to it would make the walk's answer depend on the order the types came in.
-    // One pass over the held kinds; what it sees is dropped when it returns.
-    private void Guard()
+    // One pass over the held kinds; what it sees is dropped when it returns. Answers the first clash.
+    private error.Error? Guard()
     {
         var seen = new Dictionary<string, global::app.type.kind.@this>(StringComparer.OrdinalIgnoreCase);
         foreach (var type in Items())
@@ -230,12 +235,13 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 foreach (var kind in root.Kinds)
                     foreach (var key in kind.Mime.Concat(kind.Extension))
                         if (!seen.TryAdd(key, kind) && !ReferenceEquals(seen[key], kind))
-                            throw Taken(key, seen[key], kind);
+                            return Taken(key, seen[key], kind);
+        return null;
     }
 
-    private InvalidOperationException Taken(string key, global::app.type.kind.@this taken, global::app.type.kind.@this kind)
+    private static error.Error Taken(string key, global::app.type.kind.@this taken, global::app.type.kind.@this kind)
         => new($"'{key}' is already the format '{taken.Owner}{(taken.IsEmpty ? "" : "/" + taken.Name)}' — "
-               + $"'{kind.Owner}{(kind.IsEmpty ? "" : "/" + kind.Name)}' cannot answer to it too.");
+               + $"'{kind.Owner}{(kind.IsEmpty ? "" : "/" + kind.Name)}' cannot answer to it too.", "TypeLoadCollision", 400);
 
     // How a type's class writes its formats — its IEncode, bound once into a delegate (no reflection per
     // write); null when the class writes none.
@@ -250,8 +256,9 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
 
     // The kinds an assembly brings onto their types: every kind class (born from nothing), and the
     // closed set every choice<T> in it draws on, each with its reader. A set is only identifiable
-    // by its usage, so this reflects the assembly's property types.
-    private void Enlist(Assembly assembly)
+    // by its usage, so this reflects the assembly's property types. Answers what it refuses (a choice over a
+    // set that isn't closed); null when every kind is held.
+    private error.Error? Enlist(Assembly assembly)
     {
         var seen = new HashSet<System.Type>();
         foreach (var t in assembly.GetTypes())
@@ -288,7 +295,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 var inner = held.GetGenericArguments()[0];
                 var set = new global::app.type.item.choice.set.@this(inner);
                 if (!set.IsClosed)
-                    throw new InvalidOperationException($"{inner.FullName} is not a closed set — no enum members, no Choices(context?).");
+                    return new error.Error($"{inner.FullName} is not a closed set — no enum members, no Choices(context?).", "TypeLoadOpenSet", 400);
                 Hold(set);
                 // the closed reader for this set — one reflective instantiation, then typed reads.
                 Reader.Register("choice", set.Name,
@@ -296,6 +303,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                         typeof(global::app.type.item.choice.serializer.Reader<>).MakeGenericType(inner), set.Name)!);
             }
         }
+        return null;
     }
 
     // The name a class's type goes by (its declared word, else its namespace), or null when it is no type

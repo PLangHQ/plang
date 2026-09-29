@@ -92,6 +92,23 @@ public class RuntimeTypeLoadingTests : System.IAsyncDisposable
         await Assert.That(result.Error?.Message).Contains("identity");
     }
 
+    private sealed class AliasOwner : global::app.type.item.@this { }
+    private sealed class AliasTaker : global::app.type.item.@this
+    {
+        public static IReadOnlyList<string> Alias => ["aliasowned"];
+    }
+
+    // An alias another class already owns is the same one-name-one-class refusal as a word — answered, not thrown.
+    [Test] public async Task AddType_AnAliasAnotherClassOwns_FailsWith_TypeLoadCollision()
+    {
+        var types = new global::app.type.list.@this();
+        await types.Add(typeof(AliasOwner), Ctx, "aliasowned").IsSuccess();
+
+        var result = types.Add(typeof(AliasTaker), Ctx, "aliastaker");
+
+        await Assert.That(result.Error?.Key).IsEqualTo("TypeLoadCollision");
+    }
+
     [Test] public async Task LoadDll_AnUndeclaredCallbackFolder_GoesByItsNamespace_NotTheSealedWord()
     {
         // The loaded assembly holds a `this`-named class in a namespace ending `.callback` and declares no

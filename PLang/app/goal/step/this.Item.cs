@@ -44,8 +44,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         foreach (var row in Rows(incoming, context))
             if (row is global::app.goal.step.action.@this built) node.Add(built);
             else if (row.Read(reader, null, context) is global::app.goal.step.action.@this made) node.Add(made);
-            else throw new System.NotSupportedException(
-                $"cannot build an action from a {row.Type.Name} — an action reads from its own wire shape.");
+            else throw new global::app.error.AppException(
+                $"cannot build an action from a {row.Type.Name} — an action reads from its own wire shape.", "NotAnAction", 400);
         _code = node;
         return this;
     }

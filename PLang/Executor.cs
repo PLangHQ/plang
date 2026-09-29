@@ -69,7 +69,7 @@ namespace PLang
 			{
 				if (Flag<global::app.module.debug.setting.@this>("!debug") is { } debugError) return (null, debugError);
 				app.Debug = new Debug(app.actor.list.System.Context);
-				app.Debug.Activate();
+				if (app.Debug.Activate() is { } refused) return (null, app.actor.list.System.Context.Error(refused));
 			}
 
 			// Test mode (--test is canonical; --tester is gone). The setting first: it names the actor the

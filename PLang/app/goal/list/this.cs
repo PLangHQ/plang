@@ -185,7 +185,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         {
             var given = setting.KeyNames.ToDictionary(k => k, k => setting.Stored(k), StringComparer.OrdinalIgnoreCase);
             var applied = wants.Apply(given, context);
-            if (!applied.Success) throw new ArgumentException(applied.Error!.Message, nameof(setting));
+            // a walk streams its goals, so a setting it refuses (an option that isn't one) travels as its Error
+            if (!applied.Success) throw new global::app.error.AppException(applied.Error!);
         }
         var held = Items().Where(g => !g.IsSetup && (wants.Os.Value || !g.IsSystem)).ToList();
         foreach (var goal in held)

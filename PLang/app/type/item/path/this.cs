@@ -102,10 +102,9 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
             return null;
         }
         try { return Resolve(raw, data.Context!); }
-        catch (scheme.SchemeNotRegistered snr)
+        catch (global::app.error.AppException ex)
         {
-            data.Fail(new global::app.error.Error(snr.Message, "SchemeNotRegistered", 400)
-                { FixSuggestion = $"Add a path kind for scheme '{snr.Scheme}' (app.Type.Kind.Add(new path.scheme.@this(…))), or use a bare/file:// path." });
+            data.Fail(ex.Error);
             return null;
         }
         catch (System.Exception ex) when (ex is not (System.NullReferenceException or System.OutOfMemoryException or System.StackOverflowException))

@@ -28,7 +28,7 @@ public sealed partial class @this
     /// The result is the same in-memory shape <see cref="Snapshot(actor.context.@this)"/> produces, so
     /// <see cref="Restore"/> consumes it unchanged.
     /// </summary>
-    public async Task<global::app.snapshot.@this> SnapshotFromWire(string json, global::app.actor.context.@this context)
+    public async Task<global::app.data.@this<global::app.snapshot.@this>> SnapshotFromWire(string json, global::app.actor.context.@this context)
     {
         // A still-encoded slice born holding the format that reads it — plang's own, the mirror of
         // Serialize. A structured payload rides here rather than as a bare source: a source decodes a
@@ -37,11 +37,11 @@ public sealed partial class @this
         var slice = new global::app.type.item.wire.@this(
             json, snapshotType, (global::app.type.item.wire.kind.plang.@this)context.App.type.list["wire"].kind["plang"]!);
         var wire = new global::app.data.@this("", slice, snapshotType, context: context);
-        var snapshot = await wire.Value<global::app.snapshot.@this>();
-        // Carry the real reason. A decline here is a materialization failure with its own message;
-        // replacing it with "could not be rebuilt" hides the one fact that identifies the cause.
-        return snapshot ?? throw new System.InvalidOperationException(
-            $"Snapshot could not be rebuilt from wire JSON — {wire.Error?.Message ?? "the value door declined without an error"}");
+        // the snapshot, or the reason its wire didn't read — whole, it is the one fact that names the cause
+        return await wire.Value<global::app.snapshot.@this>() is { } snapshot
+            ? context.Ok<global::app.snapshot.@this>(snapshot)
+            : context.Error<global::app.snapshot.@this>(wire.Error
+                ?? new global::app.error.Error("the snapshot's wire read as nothing", "SnapshotUnreadable", 400));
     }
 
     /// <summary>
@@ -52,5 +52,8 @@ public sealed partial class @this
     /// verbs and hands the string here (System.IO stays out of the engine).
     /// </summary>
     public async Task<global::app.data.@this> ResumeFromWire(string json, global::app.actor.context.@this context)
-        => await (await SnapshotFromWire(json, context)).Resume(context);
+    {
+        var snapshot = await SnapshotFromWire(json, context);
+        return snapshot.Success ? await (await snapshot.Value())!.Resume(context) : snapshot;
+    }
 }

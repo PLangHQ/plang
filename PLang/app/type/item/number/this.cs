@@ -137,6 +137,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                 return null;
             }
             try { return kind.Create(value); }
+            // a value the kind can't hold (a fraction as an integer kind, NaN) says why under its own key
+            catch (global::app.error.AppException e)
+            {
+                data.Fail(e.Error);
+                return null;
+            }
             catch (System.Exception e) when (e is System.InvalidCastException or System.FormatException or System.OverflowException)
             {
                 data.Fail(new global::app.error.Error(e.Message, "NumberConversionFailed", 400) { Exception = e });
@@ -160,8 +166,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
              || target == typeof(byte) || target == typeof(sbyte) || target == typeof(uint)
              || target == typeof(ulong) || target == typeof(ushort) || target == typeof(BigInteger))
             && Cat != Category.Integer && AsDecimalLossy() % 1m != 0m)
-            throw new System.InvalidCastException(
-                $"Number {ToString()} has a fractional part and cannot convert to {target.Name} — round it first (math.round / math.floor).");
+            throw new global::app.error.AppException(
+                $"Number {ToString()} has a fractional part and cannot convert to {target.Name} — round it first (math.round / math.floor).",
+                "FractionalToInteger", 400);
         return ClrConvert(_value, target);
     }
 
@@ -183,7 +190,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         int v => v, uint v => v, long v => v, ulong v => v,
         Int128 v => (BigInteger)v, UInt128 v => (BigInteger)v, BigInteger v => v,
         decimal d when d == System.Math.Truncate(d) => (BigInteger)d,
-        _ => throw new System.InvalidOperationException($"number kind '{Kind.Name}' is not an exact integer."),
+        _ => throw new global::app.error.AppException($"number {ToString()} (kind '{Kind.Name}') is not an exact integer.", "NotAnInteger", 400),
     };
 
     internal decimal AsDecimal() => _value switch
@@ -210,28 +217,26 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         Category.Integer => checked((int)AsBigInteger()),
         Category.Decimal => checked((int)AsDecimal()),
-        _ => double.IsNaN(AsDouble()) || double.IsInfinity(AsDouble())
-            ? throw new System.ArithmeticException("number is NaN or Infinity, cannot convert to int")
-            : checked((int)AsDouble()),
+        _ => double.IsNaN(AsDouble()) || double.IsInfinity(AsDouble()) ? throw NotFinite("int") : checked((int)AsDouble()),
     };
 
     public long ToInt64() => Cat switch
     {
         Category.Integer => checked((long)AsBigInteger()),
         Category.Decimal => checked((long)AsDecimal()),
-        _ => double.IsNaN(AsDouble()) || double.IsInfinity(AsDouble())
-            ? throw new System.ArithmeticException("number is NaN or Infinity, cannot convert to long")
-            : checked((long)AsDouble()),
+        _ => double.IsNaN(AsDouble()) || double.IsInfinity(AsDouble()) ? throw NotFinite("long") : checked((long)AsDouble()),
     };
 
     public decimal ToDecimal() => Cat switch
     {
         Category.Integer => (decimal)AsBigInteger(),
         Category.Decimal => AsDecimal(),
-        _ => double.IsNaN(AsDouble()) || double.IsInfinity(AsDouble())
-            ? throw new System.ArithmeticException("number is NaN or Infinity, cannot convert to decimal")
-            : (decimal)AsDouble(),
+        _ => double.IsNaN(AsDouble()) || double.IsInfinity(AsDouble()) ? throw NotFinite("decimal") : (decimal)AsDouble(),
     };
+
+    // NaN and ±Infinity have no integer or decimal form — the program's value, keyed.
+    private global::app.error.AppException NotFinite(string target)
+        => new($"number {ToString()} is NaN or Infinity and cannot convert to {target}", "NumberNotFinite", 400);
 
     /// <summary>IEEE-754 saturates over-range to ±Infinity; never throws.</summary>
     public double ToDouble() => AsDouble();

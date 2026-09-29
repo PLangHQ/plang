@@ -64,7 +64,8 @@ public class NumberValueTests : System.IAsyncDisposable
     public async Task Explicit_IntCast_OnNaN_Throws()
     {
         var nan = ((number)(double.NaN));
-        await Assert.That(() => (int)nan).Throws<System.ArithmeticException>();
+        var thrown = await Assert.That(() => (int)nan).Throws<global::app.error.AppException>();
+        await Assert.That(thrown!.Error.Key).IsEqualTo("NumberNotFinite");
     }
 
     [Test]

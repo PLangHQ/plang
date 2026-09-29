@@ -55,10 +55,21 @@ public sealed class @this
     /// step/goal(/action) event bindings. The config is debug's setting (<c>--debug={…}</c> is this run's
     /// values for it, written before Debug is born); this does the side-effects only —
     /// Debug is born, then activated. No config parsing or callstack cross-write lives here
-    /// (callstack config is its own flag, <c>--callstack</c>).
+    /// (callstack config is its own flag, <c>--callstack</c>). A grep that isn't a regex is the caller's
+    /// error, answered (<c>InvalidPattern</c>) before anything is bound — never a quiet literal match.
     /// </summary>
-    public void Activate()
+    public global::app.error.Error? Activate()
     {
+        if (Setting.Grep?.ToString() is { Length: > 0 } grep)
+        {
+            try { _grepRegex = new Regex(grep, RegexOptions.IgnoreCase); }
+            catch (ArgumentException ex)
+            {
+                return new global::app.error.Error($"--debug grep '{grep}' is not a valid regex: {ex.Message}", "InvalidPattern", 400)
+                    { Exception = ex };
+            }
+        }
+
         // The watch binds after every set and remove of a variable the User actor makes, for the watched names.
         if (Setting.Variables.CountRaw > 0)
         {
@@ -109,17 +120,6 @@ public sealed class @this
             }
         }
 
-        // Build grep regex
-        if (Setting.Grep?.ToString() is { Length: > 0 } grep)
-        {
-            // a --grep that isn't a regex is the caller's error, named — never a quiet literal match
-            try { _grepRegex = new Regex(grep, RegexOptions.IgnoreCase); }
-            catch (ArgumentException ex)
-            {
-                throw new global::app.error.AppException($"--debug grep '{grep}' is not a valid regex: {ex.Message}", ex, "InvalidPattern", 400);
-            }
-        }
-
         // Debug watches user execution, so its bindings on the step, goal (and action) types' on.start are the
         // User actor's (where user goals run) — Debug itself is born with System's context. They live as long
         // as the app whose types they are bound on.
@@ -142,6 +142,7 @@ public sealed class @this
             actions.Bind("start", When.before, (_, _, context) => BeforeActionHandler(context, step), user, global::app.@event.binding.Scope.actor);
             actions.Bind("start", When.after, (_, _, context) => AfterActionHandler(context, step), user, global::app.@event.binding.Scope.actor);
         }
+        return null;
     }
 
     // Whether debug watches <paramref name="goal"/>: every goal (`*`), the goals a `prefix*` starts, or the one

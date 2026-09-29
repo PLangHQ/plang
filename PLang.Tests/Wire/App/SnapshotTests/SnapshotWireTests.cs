@@ -10,7 +10,7 @@ namespace PLang.Tests.App.SnapshotTests;
 public class SnapshotWireTests
 {
     private static async Task<global::app.snapshot.@this> RoundTrip(global::app.@this app, global::app.snapshot.@this snap)
-        => await app.SnapshotFromWire(await app.SnapshotToWire(snap), snap.Context);
+        => (await (await app.SnapshotFromWire(await app.SnapshotToWire(snap), snap.Context)).Value())!;
 
     [Test]
     public async Task Variables_SurviveWireRoundTrip_WithValueAndType()
@@ -427,7 +427,7 @@ public class SnapshotWireTests
         await Assert.That(json.StartsWith("{")).IsTrue();
 
         var dst = new global::app.@this("/dst").Testing();
-        dst.Restore(await src.SnapshotFromWire(json, dst.actor.list.User.Context), dst.actor.list.User.Context);
+        dst.Restore((await (await src.SnapshotFromWire(json, dst.actor.list.User.Context)).Value())!, dst.actor.list.User.Context);
 
         await Assert.That(dst.Build != null).IsFalse();
     }
