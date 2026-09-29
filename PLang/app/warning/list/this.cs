@@ -3,9 +3,8 @@ namespace app.warning.list;
 /// <summary>
 /// A program node's build diagnostics — its own collection of <see cref="app.warning.@this"/> rows
 /// (private backing, own Add, read-only surface, per the naked-collection rule). Exposed behind the
-/// singular <c>.Warning</c> property on goal/step/action. Reflection-serializable in Debug mode
-/// (Count + indexer) exactly as the <c>List&lt;Info&gt;</c> it replaced; <c>[Debug]</c>-only on the
-/// node, never on the <c>.pr</c> Store wire.
+/// singular <c>.Warning</c> property on goal/step. Reflection-serializable in Debug mode
+/// (Count + indexer).
 /// </summary>
 public sealed class @this : System.Collections.Generic.IReadOnlyList<global::app.warning.@this>
 {

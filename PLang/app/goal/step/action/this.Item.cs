@@ -33,20 +33,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>A structure, never a single-token leaf — drives the serializer's structure branch.</summary>
     public override bool IsLeaf => false;
 
-    /// <summary>The action writes ITSELF — the bare [Store] shape it owns:
-    /// <c>{module, name, property, default?, modifier}</c>. Each property writes its own row
-    /// (<c>{name, type, value, properties?}</c>); modifiers are
-    /// action-shaped items (each writes itself). The DEBUG view (the live --debug channel, never the
-    /// persisted wire) still routes through the reflection (*) kind so diagnostic props ride.</summary>
+    /// <summary>The action writes ITSELF — the bare shape it owns, in every view:
+    /// <c>{module, name, property, default?, child?}</c>. Its module is a reference, written by name,
+    /// never walked. Each property writes its own row (<c>{name, type, value, properties?}</c>);
+    /// a child step writes itself.</summary>
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
-        if (mode == global::app.View.Debug)
-        {
-            await new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
-            return;
-        }
         if (writer is global::app.goal.step.action.formal.Writer formal)
         {
             await Formal(formal, mode, context);

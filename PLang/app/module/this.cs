@@ -79,7 +79,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The App this module belongs to — reached through the app's module.</summary>
     internal global::app.@this App => Root._app!;
 
-    /// <summary>Every module the app has loaded — a plain list, the same for every module.</summary>
+    /// <summary>Every module the app has loaded — a plain list, the same for every module. Navigated
+    /// (<c>%!app.module.list%</c>), never written with a module: every module reaches it.</summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public global::app.type.item.list.@this<@this> list => Root._modules!;
 
     /// <summary>The module <paramref name="name"/> names, by its own <see cref="Match"/>; NotFound when none does.</summary>

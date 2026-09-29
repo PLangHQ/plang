@@ -53,9 +53,6 @@ public partial class @this
     [Store, Debug, Default]
     public global::app.goal.step.list.@this Child { get; set; } = new();
 
-    [Debug]
-    public global::app.warning.list.@this Warning { get; init; } = new();
-
     // `new`: this is the ACTION-cache flag (may this action's run result be
     // cached), a distinct concept from the item base's answer-keep rule —
     // which never applies here (an action's Ready() answers itself).

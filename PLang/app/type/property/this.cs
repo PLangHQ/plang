@@ -122,7 +122,10 @@ public sealed class @this
             Type.Write(writer);   // the slot is the type's identity in every view
         }
         writer.Name("value");
-        await (Value ?? global::app.type.item.@null.@this.Instance).Output(writer, mode, context);
+        // A template is program text: a diagnostic shows it as written, never run against live
+        // variables. Any other value writes in the asked view (a [Sensitive] member stays masked).
+        var asWritten = mode == global::app.View.Debug && Value is { HasVariable: true } ? global::app.View.Store : mode;
+        await (Value ?? global::app.type.item.@null.@this.Instance).Output(writer, asWritten, context);
         // A stored row names the variables its value holds, parsed once at build.
         if (mode == global::app.View.Store && Value is { HasVariable: true } held)
         {
