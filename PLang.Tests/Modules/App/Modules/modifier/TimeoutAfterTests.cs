@@ -22,6 +22,16 @@ public class TimeoutAfterTests
     private PrAction TimeoutModifier(int ms)
         => global::PLang.Tests.Shared.Make.Action(Ctx, "on", "timeout", ("After", System.TimeSpan.FromMilliseconds(ms)));
 
+    // An action only its deadline can end: a sleep far longer than any deadline here, honouring the attempt's
+    // cancellation — so "the deadline fires first" is arranged, not raced. With no deadline it sleeps it out.
+    private PrAction Held()
+        => new PrAction
+        {
+            Module = _app.actor.list.User.Context.App.Module("timer"),
+            Name = "sleep",
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 30000, context: Ctx) })
+        };
+
     [Test]
     public async Task After_ActionCompletesBefore_PassesThroughResult()
     {
@@ -102,12 +112,7 @@ public class TimeoutAfterTests
     [Test]
     public async Task After_ZeroMsTimeout_ImmediateTimeout()
     {
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
-        {
-            Module = _app.actor.list.User.Context.App.Module("timer"),
-            Name = "sleep",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 1000, context: Ctx) })
-        }, TimeoutModifier(0));
+        var action = global::PLang.Tests.Shared.Make.With(Held(), TimeoutModifier(0));
 
         var result = await action.Start(Ctx);
 
@@ -136,14 +141,10 @@ public class TimeoutAfterTests
     [Test]
     public async Task After_EachRetry_IsAFreshAttempt_WithAFreshDeadline()
     {
-        // timer.sleep(2000); on.timeout(100); on.error(RetryCount=2): three attempts, each cut at its own 100ms.
-        // A deadline shared across the attempts would be spent by the first, and the retries would fail at once.
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
-        {
-            Module = _app.actor.list.User.Context.App.Module("timer"),
-            Name = "sleep",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 2000, context: Ctx) })
-        }, TimeoutModifier(100), global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error", ("RetryCount", 2)));
+        // a held sleep; on.timeout(300); on.error(RetryCount=2): three attempts, each cut by its own deadline. A
+        // deadline shared across the attempts would be spent by the first, and the retries would fail at once.
+        var action = global::PLang.Tests.Shared.Make.With(Held(),
+            TimeoutModifier(300), global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error", ("RetryCount", 2)));
 
         var start = DateTimeOffset.UtcNow;
         var result = await action.Start(Ctx);
@@ -151,8 +152,9 @@ public class TimeoutAfterTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
-        // each attempt ran to its own 100ms deadline (≥ ~300ms), and none ran its full 2s sleep (3 × 2s uncut)
-        await Assert.That(elapsed.TotalMilliseconds).IsGreaterThanOrEqualTo(280);
-        await Assert.That(elapsed.TotalMilliseconds).IsLessThan(4000);
+        // three fresh deadlines each ran out: at least 3 × 300ms (a lower bound load can only raise). And the sleep
+        // was cut, never slept out (one full sleep is 30s).
+        await Assert.That(elapsed.TotalMilliseconds).IsGreaterThanOrEqualTo(880);
+        await Assert.That(elapsed.TotalMilliseconds).IsLessThan(25000);
     }
 }
