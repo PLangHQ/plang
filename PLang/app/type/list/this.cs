@@ -160,20 +160,7 @@ public sealed partial class @this
         if (entry == null)
             return new app.type.@this(type.Name, kind?.Name, type.Strict, type.Template) { kind = kind };
         if (kind == null && !type.Strict && type.Template == null) return entry;
-        return new app.type.@this(entry.Name, kind != null ? kind.Of(entry.ClrType) : entry.ClrType, kind?.Name, type.Strict, type.Template)
-        {
-            kind = kind,
-            Namespace = entry.Namespace,
-            Alias = entry.Alias,
-            Owned = entry.Owned,
-            Internal = entry.Internal,
-            Property = entry.Property,
-            Values = kind is global::app.type.item.choice.set.@this set ? set.Values : entry.Values,
-            Shape = entry.Shape,
-            ConstructorSignature = entry.ConstructorSignature,
-            Example = entry.Example,
-            Description = entry.Description,
-        };
+        return new app.type.@this(entry, kind, type.Strict, type.Template);
     }
 
     // The container families whose element rides as the KIND (list<path> = {list, kind:path}).

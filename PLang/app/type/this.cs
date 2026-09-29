@@ -94,7 +94,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <c>app.channel.type.goal</c>) — the type answers to it as to its name. Null for a type known only by
     /// the name a slot spelled (<c>{"name":"text"}</c>), which the types resolve to their entry.</summary>
     [JsonIgnore]
-    public string? Namespace { get; init; }
+    public string? Namespace { get => Family._namespace; init => _namespace = value; }
+    private string? _namespace;
 
     /// <summary>
     /// The subtype refinement ("md", "gif", "int"). Never null: a type with no kind has its empty
@@ -551,43 +552,59 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     // --- The facts ---
     // Set by app.type when it builds a full type; a value's bare type carries none. Navigation
     // (%x!type.Description%) answers them through the full type — see Get below. The wire form is
-    // Write's {name, kind?, strict?, template?}; these never ride it.
+    // Write's {name, kind?, strict?, template?}; these never ride it. A kinded type ({text, md}) holds
+    // its family's entry and reads every fact through it: one set of facts per class.
+
+    /// <summary>The family entry this type's facts are — the registry's entry for its class; a family
+    /// entry (or a type with none) is its own.</summary>
+    internal @this Family => _family ?? this;
+    private readonly @this? _family;
 
     /// <summary>The type's properties — a record's fields, a scalar's navigable members; each a
     /// named slot carrying its type. Null when the type declares none. A record is a type with
     /// properties and no <see cref="Shape"/>.</summary>
-    public property.list.@this? Property { get; init; }
+    public property.list.@this? Property { get => Family._property; init => _property = value; }
+    private property.list.@this? _property;
 
-    /// <summary>Enum values. Non-null marks this as an enum-shape type.</summary>
-    public IReadOnlyList<string>? Values { get; init; }
+    /// <summary>Enum values — the kind's own when it is a set of options (a choice's), else the family's.
+    /// Non-null marks this as an enum-shape type.</summary>
+    public IReadOnlyList<string>? Values { get => kind.Values ?? Family._values; init => _values = value; }
+    private IReadOnlyList<string>? _values;
 
     /// <summary>Scalar wire shape (the underlying primitive form, e.g. "string" for path).</summary>
-    public string? Shape { get; init; }
+    public string? Shape { get => Family._shape; init => _shape = value; }
+    private string? _shape;
 
     /// <summary>Constructor signature for scalar types (<c>"name: shape"</c>).</summary>
-    public string? ConstructorSignature { get; init; }
+    public string? ConstructorSignature { get => Family._constructorSignature; init => _constructorSignature = value; }
+    private string? _constructorSignature;
 
     /// <summary>Canonical example from a static <c>Example</c> property on the type.</summary>
-    public string? Example { get; init; }
+    public string? Example { get => Family._example; init => _example = value; }
+    private string? _example;
 
     /// <summary>Semantic description from a static <c>Description</c> property on the type.</summary>
-    public string? Description { get; init; }
+    public string? Description { get => Family._description; init => _description = value; }
+    private string? _description;
 
     /// <summary>The other names this type answers to (<c>string</c> for text, <c>map</c> for dict),
     /// declared by its class as a static <c>Alias</c>. Never null.</summary>
     [JsonIgnore]
-    public IReadOnlyList<string> Alias { get; init; } = [];
+    public IReadOnlyList<string> Alias { get => Family._alias; init => _alias = value; }
+    private IReadOnlyList<string> _alias = [];
 
     /// <summary>The C# shapes this type owns (<c>int</c> → number, kind int), declared by its class
     /// as a static <c>OwnedClrTypes</c>: a raw C# value of one of them is a value of this type.</summary>
     [JsonIgnore]
-    internal IReadOnlyList<global::app.type.convert.OwnedClr> Owned { get; init; } = [];
+    internal IReadOnlyList<global::app.type.convert.OwnedClr> Owned { get => Family._owned; init => _owned = value; }
+    private IReadOnlyList<global::app.type.convert.OwnedClr> _owned = [];
 
     /// <summary>True for a type plang's own machinery uses but a program never names (a wire slice,
     /// a C# host carrier), declared by its class as a static <c>Internal</c>. It stays in the types —
     /// naming answers it — and stays out of their face.</summary>
     [JsonIgnore]
-    public bool Internal { get; init; }
+    public bool Internal { get => Family._internal; init => _internal = value; }
+    private bool _internal;
 
     /// <summary>A type born knowing its C# class — the registry's entries and the full types it
     /// builds for an identity.</summary>
@@ -596,6 +613,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     {
         _clrType = clrType;
         if (clrType != null && typeof(item.@this).IsAssignableFrom(clrType)) Namespace = item.@this.NamespaceOf(clrType);
+    }
+
+    /// <summary>A kinded type of <paramref name="family"/> ({text, md}, {choice, operator}): born holding the family
+    /// entry, whose facts it reads; its class is the one <paramref name="kind"/> makes of the family's.</summary>
+    internal @this(@this family, global::app.type.kind.@this? kind, bool strict, string? template)
+        : this(family.Name, kind != null ? kind.Of(family.ClrType) : family.ClrType, kind?.Name, strict, template)
+    {
+        _family = family;
+        _kind = kind ?? new global::app.type.kind.empty.@this(Name);
     }
 
     /// <summary>The type of the item class <paramref name="clr"/> — the name the class goes by (its declared

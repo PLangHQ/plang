@@ -122,6 +122,10 @@ public class @this
     /// unless the kind closes it (a choice set: <c>choice&lt;T&gt;</c> → <c>choice&lt;Format&gt;</c>).</summary>
     public virtual System.Type? Of(System.Type? type) => type;
 
+    /// <summary>The options a value of this kind is one of — a set of options answers them (a choice's
+    /// closed set); any other kind answers none, and its type's own apply.</summary>
+    public virtual System.Collections.Generic.IReadOnlyList<string>? Values => null;
+
     /// <summary>Whether a value of C# class <paramref name="clr"/> rides as this kind — its
     /// <see cref="ClrForm"/> takes it.</summary>
     public virtual bool Carries(System.Type clr) => ClrForm is { } form && form.IsAssignableFrom(clr);

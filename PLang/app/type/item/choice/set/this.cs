@@ -38,7 +38,7 @@ public sealed class @this : global::app.type.kind.@this
     internal bool IsClosed => Closed(_clr);
 
     /// <summary>The options: an enum's member names, or the set's own <c>Choices(context?)</c>.</summary>
-    public System.Collections.Generic.IReadOnlyList<string> Values
+    public override System.Collections.Generic.IReadOnlyList<string> Values
     {
         get
         {
