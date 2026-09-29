@@ -30,8 +30,9 @@ public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyn
     public async Task<data.@this> Use(data.@this<global::app.type.item.choice.@this<Name>>? named,
         global::app.actor.context.@this asker, Func<actor.@this, Task<data.@this>> then)
     {
-        if (named == null || await named.Given() is not { } given) return await then(asker.Actor);
-        return await given.Use<global::app.type.item.choice.@this<Name>>(name => then(this[name]));
+        if (named == null || await named.Given() is null) return await then(asker.Actor);
+        // the typed carrier's own door: the name as written (text) is made the choice it names
+        return await named.Use(name => then(this[name]));
     }
 
     public async ValueTask DisposeAsync()
