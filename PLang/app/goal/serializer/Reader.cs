@@ -41,7 +41,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     private global::app.goal.@this Walk(ref global::app.type.item.kind.json.Reader reader,
         global::app.type.reader.ReadContext ctx, global::app.goal.@this? parent = null)
     {
-        var goal = new global::app.goal.@this { Parent = parent, Origin = ctx.Origin };
+        var goal = new global::app.goal.@this { Parent = parent };
         var step = new global::app.goal.step.serializer.Reader(goal);   // born holding this goal
 
         var named = false;

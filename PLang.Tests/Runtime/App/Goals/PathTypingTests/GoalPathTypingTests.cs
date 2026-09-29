@@ -56,15 +56,14 @@ public class GoalPathTypingTests
         await Assert.That(rel).IsEqualTo("/.build/start.pr");
     }
 
-    [Test] public async Task GoalFolder_IsTheFolderAboveItsOrigin()
+    [Test] public async Task GoalFolder_IsItsPathsFolder()
     {
         var (app, root) = MakeApp();
         var context = app.actor.list.User.Context;
-        var goal = new Goal { Name = "Test", Origin = global::app.type.item.path.@this.Resolve("/Cache/.build/test.pr", context) };
+        var goal = new Goal { Name = "Test", Path = global::app.type.item.path.@this.Resolve("/Cache/test.goal", context) };
         var dir = goal.Folder;
         await Assert.That(dir).IsNotNull();
-        await Assert.That(dir!.Relative(context).Replace('\\', '/').TrimStart('/').TrimStart('.').TrimStart('/'))
-            .Contains("Cache");
+        await Assert.That(dir!.Relative(context).Replace('\\', '/').TrimEnd('/')).IsEqualTo("/Cache");
     }
 
     [Test] public async Task Goal_JsonRoundTrip_PreservesPathAsRelativeString()

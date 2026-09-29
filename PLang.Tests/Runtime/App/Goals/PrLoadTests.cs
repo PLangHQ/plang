@@ -46,19 +46,6 @@ public class PrLoadTests : System.IAsyncDisposable
         await Assert.That(loaded.Error.Message).Contains("start.pr: step key");
     }
 
-    // A goal read from a .pr is born knowing the file — and so is every sub-goal of it.
-    [Test]
-    public async Task AGoalAndItsSubGoal_AreBornKnowingTheirPr()
-    {
-        var loaded = await Load("start.pr", "{\"name\":\"Start\",\"path\":\"/start.goal\",\"step\":[],\"child\":[{\"name\":\"Sub\",\"step\":[]}]}");
-
-        await loaded.IsSuccess();
-        var goal = (global::app.goal.@this)(await loaded.Value())!;
-        await Assert.That(goal.Origin?.ToString()).Contains("/.build/start.pr");
-        await Assert.That(goal.Child.Items().First().Origin).IsSameReferenceAs(goal.Origin);
-        await Assert.That(goal.Folder?.ToString()).IsNotNull();
-    }
-
     // A .pr whose content doesn't read as a goal is refused under a key of its own, never a bare exception.
     [Test]
     public async Task AnUntypedProperty_IsRefusedUnderAKey()

@@ -86,28 +86,10 @@ public sealed partial class @this : global::app.type.item.path.@this
 
         var resolved = rawPath;
 
-        // Relative paths resolve against the goal's folder. Prefer the folder its .pr
-        // was read from — Goal.Path is the build-time identity (parent-perspective in
-        // child Apps) and would mis-resolve. Fall back to Goal.Path's directory for
-        // in-memory goals, which were read from no file.
-        if (!rawPath.StartsWith('/') && !rawPath.StartsWith('\\') && !rawPath.Contains("://"))
-        {
-            var goal = context.CallStack.Goal;
-            if (goal?.Folder is { } folder)
-            {
-                resolved = PathHelper.Combine(folder.Absolute, rawPath);
-            }
-            else
-            {
-                var goalPath = goal?.Path;
-                if (goalPath != null)
-                {
-                    var goalDir = goalPath.Parent;
-                    if (goalDir != null)
-                        resolved = PathHelper.Combine(goalDir.Absolute, rawPath);
-                }
-            }
-        }
+        // Relative paths resolve against the running goal's folder.
+        if (!rawPath.StartsWith('/') && !rawPath.StartsWith('\\') && !rawPath.Contains("://")
+            && context.CallStack.Goal?.Folder is { } folder)
+            resolved = PathHelper.Combine(folder.Absolute, rawPath);
 
         var absolute = ValidatePath(resolved, context.App);
         // An OS location handed in (C# infra, a listing root) is shown in its plang form;

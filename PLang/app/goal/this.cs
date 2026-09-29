@@ -74,30 +74,9 @@ public sealed partial class @this
     [Store, Debug]
     public global::app.type.item.path.@this? Path { get; set; }
 
-    /// <summary>
-    /// The .pr this goal was read from — a birth fact: the read that made it (and every sub-goal of its file)
-    /// carried it. Distinct from Path (the build-time identity, parent-perspective for goals run inside a child
-    /// App). Null for a goal that wasn't read from a file (built in memory by tests / fixtures).
-    /// </summary>
-    [JsonIgnore, LlmIgnore]
-    public global::app.type.item.path.@this? Origin { get; init; }
-
-    /// <summary>
-    /// The folder holding this goal's source .goal file in the current App's filesystem — the folder above
-    /// its <see cref="Origin"/> (a <c>&lt;dir&gt;/.build/&lt;name&gt;.pr</c>), so it stays right in a child App
-    /// where Path was baked from a different root. Null when the goal wasn't read from a file.
-    /// </summary>
-    public global::app.type.item.path.@this? Folder
-    {
-        get
-        {
-            // The .build parent's own parent is the goal folder. Validate the .build
-            // segment so naive in-memory paths don't quietly return the wrong dir.
-            if (Origin?.Parent is not { } build) return null;
-            if (!string.Equals(build.FileName, ".build", StringComparison.OrdinalIgnoreCase)) return null;
-            return build.Parent;
-        }
-    }
+    /// <summary>The folder holding this goal's source .goal file — what a relative path in it resolves against.
+    /// Null for a goal with no Path.</summary>
+    public global::app.type.item.path.@this? Folder => Path?.Parent;
 
     [Store, Debug]
     public global::app.type.item.path.@this? PrPath
