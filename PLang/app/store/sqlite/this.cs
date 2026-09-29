@@ -46,20 +46,6 @@ public sealed class @this : global::app.store.@this
     }
 
     /// <summary>
-    /// Creates a store at the specified database path, creating the parent directory at its first verb.
-    /// Take-over API: sqlite opens the file itself, so the path is authorized for write here, before the store
-    /// exists — out-of-root paths the actor hasn't granted bubble up as an exception.
-    /// </summary>
-    public static async Task<@this> CreateAsync(global::app.type.item.path.@this dbPath, actor.context.@this context)
-    {
-        var auth = await dbPath.Authorize(global::app.type.item.permission.Verb.Write, context);
-        if (!auth.Success)
-            throw new InvalidOperationException(
-                $"Sqlite path '{dbPath}' is not authorized for write: {auth.Error?.Message}");
-        return new @this(dbPath, () => null, context);
-    }
-
-    /// <summary>
     /// An in-memory store. The database lives as long as this instance.
     /// Different names produce isolated databases.
     /// </summary>

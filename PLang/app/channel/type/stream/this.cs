@@ -159,15 +159,6 @@ public sealed class @this : global::app.channel.type.session.@this
         return buffer.ToArray();
     }
 
-    public async Task WriteBytesAsync(byte[] data, CancellationToken cancellationToken = default)
-    {
-        if (!CanWrite)
-            throw new InvalidOperationException($"Channel '{Name}' does not support writing");
-
-        await Stream.WriteAsync(data, cancellationToken);
-        await Stream.FlushAsync(cancellationToken);
-    }
-
     public async Task<string> ReadAllTextAsync(CancellationToken cancellationToken = default)
     {
         var bytes = await ReadAllBytesAsync(cancellationToken);

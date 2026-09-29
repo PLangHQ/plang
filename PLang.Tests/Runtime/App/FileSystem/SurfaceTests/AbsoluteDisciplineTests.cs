@@ -52,18 +52,17 @@ public class AbsoluteDisciplineTests
 
     [Test] public async Task MutationGuard_RemovingAuthorizeBeforeAbsolute_BreaksThisTest()
     {
-        // Mutation-test placeholder: if the Sqlite ctor's Authorize call were
-        // removed, an out-of-root db path would open without permission. With
-        // Authorize in place + a denied actor, it must throw.
+        // If the store's open lost its Authorize call, an out-of-root db path would open without
+        // permission. With Authorize in place + a denied actor, the first verb fails and nothing is created.
         var app = NewApp(out _);
         app.actor.list.User.Channel.Register(new CannedChannel("n"));
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "db.sqlite");
         var dbPath = new FilePath(outOfRoot);
-        bool threw = false;
-        try { using var _ = await global::app.store.sqlite.@this.CreateAsync(dbPath, app.actor.list.User.Context); }
-        catch (System.InvalidOperationException) { threw = true; }
-        await Assert.That(threw).IsTrue();
+        using var store = new global::app.store.sqlite.@this(dbPath, () => null, app.actor.list.User.Context);
+        var read = await store.Get<global::app.type.item.@this>("t", "k");
+        await Assert.That(read.Success).IsFalse();
+        await Assert.That(System.IO.File.Exists(outOfRoot)).IsFalse();
     }
 
     [Test] public async Task PathInternals_ReachForAbsolute_IsAllowed_NoDiagnostic()

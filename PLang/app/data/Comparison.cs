@@ -48,10 +48,8 @@ public enum Comparison
 }
 
 /// <summary>
-/// The two companions a <see cref="Comparison"/> needs but an enum can't carry
-/// as instance methods. <see cref="Invert"/> preserves ordering when the RIGHT
-/// operand drove the comparison; <see cref="AsSign"/> is the exit to .NET's
-/// sort convention and throws where no total order exists.
+/// The companion a <see cref="Comparison"/> needs but an enum can't carry as an instance method:
+/// <see cref="Invert"/> preserves ordering when the RIGHT operand drove the comparison.
 /// </summary>
 public static class ComparisonExtensions
 {
@@ -63,16 +61,5 @@ public static class ComparisonExtensions
         Comparison.Less => Comparison.Greater,
         Comparison.Greater => Comparison.Less,
         _ => c,
-    };
-
-    /// <summary>The .NET sort-convention sign. A pair with no total order
-    /// (<see cref="Comparison.NotEqual"/>/<see cref="Comparison.Incomparable"/>)
-    /// has no honest sign — sort must surface that as an error, not park it.</summary>
-    public static int AsSign(this Comparison c) => c switch
-    {
-        Comparison.Less => -1,
-        Comparison.Equal => 0,
-        Comparison.Greater => 1,
-        _ => throw new System.InvalidOperationException("no ordering exists between these values"),
     };
 }

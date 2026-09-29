@@ -47,10 +47,10 @@ public class DataSourceTests
         await Assert.That((await after.Value())?.ToString() ?? "").IsNotEqualTo("held");
     }
 
-    private async System.Threading.Tasks.Task<global::app.store.sqlite.@this> CreateDataSource()
+    private System.Threading.Tasks.Task<global::app.store.sqlite.@this> CreateDataSource()
     {
         var dbPath = global::app.type.item.path.@this.Resolve("/.db/test.sqlite", _app.actor.list.System.Context!);
-        return await global::app.store.sqlite.@this.CreateAsync(dbPath, _app.actor.list.System.Context!);
+        return System.Threading.Tasks.Task.FromResult(new global::app.store.sqlite.@this(dbPath, () => null, _app.actor.list.System.Context!));
     }
 
     [Test]
