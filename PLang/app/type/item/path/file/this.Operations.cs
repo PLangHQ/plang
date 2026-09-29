@@ -69,20 +69,18 @@ public sealed partial class @this
 
     /// <summary>The <c>file</c> reference's type; a location with no known format expects nothing.</summary>
     public override Task<data.@this> Expect(actor.context.@this context)
-        => Task.FromResult(Known(context)
-            ? context.Ok(context.App.type.list[new global::app.type.item.file.@this(this, context).Type, context])
-            : context.Ok());
+        => Task.FromResult(Known(context) ? context.Ok(Reference("file", context)) : context.Ok());
 
-    /// <summary>Why a file of a known format isn't there at build (missing, or one the build may not stat) —
-    /// for a warning, never a failure: the read at run asks again under its own grant. Null when it is there,
-    /// or its format is unknown.</summary>
-    public override async Task<string?> Absence(actor.context.@this context)
+    /// <summary>Why a file of a known format isn't there at build: missing, or the stat's own error when the
+    /// build may not stat it — for a warning, never a failure: the read at run asks again under its own grant.
+    /// Null when it is there, or its format is unknown.</summary>
+    public override async Task<global::app.error.Error?> Absence(actor.context.@this context)
     {
         if (!Known(context)) return null;
         var exists = await ExistsAsync(context);
-        return !exists.Success
-            ? $"could not check '{this}': {exists.Error?.Message} ({exists.Error?.Key})"
-            : !await exists.ToBooleanAsync() ? $"'{this}' does not exist on disk" : null;
+        if (!exists.Success) return exists.Error;
+        return await exists.ToBooleanAsync() ? null
+            : new global::app.error.Error($"'{this}' does not exist on disk", "NotFound", 404);
     }
 
     // A location whose extension names a format — its kind carries extensions ({binary, xyz} for an unknown one carries none).

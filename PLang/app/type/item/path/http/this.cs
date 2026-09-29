@@ -189,7 +189,7 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     /// <summary>The <c>url</c> reference's type — the build asks nothing of the remote.</summary>
     public override Task<data.@this> Expect(actor.context.@this context)
-        => Task.FromResult<data.@this>(context.Ok(context.App.type.list[new global::app.type.item.url.@this(this, context).Type, context]));
+        => Task.FromResult<data.@this>(context.Ok(Reference("url", context)));
 
     internal override async Task<data.@this<global::app.type.item.binary.@this>> Bytes(actor.context.@this context)
     {

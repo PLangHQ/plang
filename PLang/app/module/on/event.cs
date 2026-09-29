@@ -42,7 +42,9 @@ public partial class OnEvent : IContext
         {
             reached = await hop.Start(reached, Context);
             if (reached.IsInitialized && reached.Success) continue;
-            await __action.Warn($"on.event: '{path.Text}' reaches nothing at '{hop.Text}' at build time — it binds only if that exists when the step runs", Context);
+            await __action.Warn(new global::app.error.Error(
+                $"on.event: '{path.Text}' reaches nothing at '{hop.Text}' at build time — it binds only if that exists when the step runs",
+                "EventUnreached", 404), Context);
             break;
         }
         return Context.Ok();

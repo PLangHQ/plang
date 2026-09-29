@@ -27,6 +27,7 @@ public class ReadBuildWarningTests
         await Assert.That(failed).IsNull();
         var written = System.Text.Encoding.UTF8.GetString(warnings.ToArray());
         await Assert.That(written).Contains("file.read");
+        await Assert.That(written).Contains("NotFound");
         await Assert.That(written).Contains("does not exist on disk");
     }
 

@@ -72,15 +72,16 @@ public partial class @this
         };
     }
 
-    /// <summary>A build-time warning about this action — written on the build's "builder" channel as
-    /// <c>{action, message}</c>, naming the action; never a refusal. The one door a handler's <c>Build()</c> warns
-    /// through.</summary>
-    public async System.Threading.Tasks.Task Warn(string message, global::app.actor.context.@this context)
+    /// <summary>A build-time warning about this action — <paramref name="problem"/> written on the build's
+    /// "builder" channel as <c>{action, key, message}</c>, naming the action; never a refusal. The one door a
+    /// handler's <c>Build()</c> warns through.</summary>
+    public async System.Threading.Tasks.Task Warn(global::app.error.Error problem, global::app.actor.context.@this context)
     {
         if (context.Actor.Channel.Get("builder") is { } builder)
             await builder.WriteAsync(context.Ok(new global::app.type.item.dict.@this()
                 .Set("action", $"{Module}.{Name}")
-                .Set("message", message)));
+                .Set("key", problem.Key)
+                .Set("message", problem.Message)));
     }
 
     /// <summary>Freezes the class's <c>[Default]</c> of every property this action does not set — and

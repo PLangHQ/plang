@@ -72,7 +72,11 @@ public abstract partial class @this
 
     /// <summary>Why this location isn't there at build, for a warning — null when the build doesn't ask (a url
     /// is not fetched at build) or it is there.</summary>
-    public virtual Task<string?> Absence(actor.context.@this context) => Task.FromResult<string?>(null);
+    public virtual Task<global::app.error.Error?> Absence(actor.context.@this context) => Task.FromResult<global::app.error.Error?>(null);
+
+    // The type a reference of this location is: the reference type named, of this location's content kind.
+    protected global::app.type.@this Reference(string type, actor.context.@this context)
+        => context.App.type.list[new global::app.type.@this(type, Kind(context).kind is { IsEmpty: false } k ? k.Name : null), context];
 
     /// <summary>The raw bytes at this location, through the gate — what a reference this path lands samples
     /// when its content is first touched. Content is the reference's (<see cref="Read"/>), not the path's.</summary>
