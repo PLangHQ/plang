@@ -80,6 +80,24 @@ public class ListNestingTests
         await Assert.That(flat.CountRaw).IsEqualTo(3);
     }
 
+    // Flattening lifts nested lists however deep; every other element is itself.
+    [Test]
+    public async Task Flatten_LiftsNestedListsAtAnyDepth()
+    {
+        var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "listnest-" + System.Guid.NewGuid().ToString("N")[..6]));
+        var ctx = app.actor.list.User.Context;
+        ctx.Variable.Set("l", Parsed("[[1,[2,[3]]],4]"));
+
+        var result = await app.Run(new global::app.module.list.Flatten(ctx)
+        {
+            ListName = new global::app.type.item.variable.@this("l"),
+        }, ctx);
+
+        await result.IsSuccess();
+        var flat = (global::app.type.item.list.@this)(await result.Value())!;
+        await Assert.That(flat.CountRaw).IsEqualTo(4);
+    }
+
     [Test]
     public async Task NestedJsonArray_StaysNested_CountsItsElements()
     {

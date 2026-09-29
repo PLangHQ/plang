@@ -484,6 +484,22 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual System.Threading.Tasks.ValueTask<bool> IsEmpty()
         => System.Threading.Tasks.ValueTask.FromResult(false);
 
+    /// <summary>This value, given by <paramref name="carrier"/>, goes into <paramref name="into"/> at
+    /// <paramref name="at"/> (a position in it, else the end) — as one element pointing at the value's current
+    /// instance. A list goes in as its elements instead.</summary>
+    internal virtual void Enroll(global::app.type.item.list.@this into, global::app.data.@this carrier,
+        global::app.type.item.number.@this at, global::app.actor.context.@this context)
+        => into.Place(new global::app.data.@this(carrier.Name, carrier.Peek(), carrier.Type, context: context), at);
+
+    /// <summary>This value, given by <paramref name="carrier"/>, spread into <paramref name="into"/> — itself, as
+    /// one element. A list spreads its elements, however deep.</summary>
+    internal virtual System.Threading.Tasks.ValueTask Spread(global::app.type.item.list.@this into,
+        global::app.data.@this carrier, global::app.actor.context.@this context)
+    {
+        into.Add(carrier);
+        return System.Threading.Tasks.ValueTask.CompletedTask;
+    }
+
     /// <summary>
     /// Synchronous truthiness — the hot path so a plain <c>if %bool%</c> never
     /// takes an async hop. The default is "reference-ish item is truthy when

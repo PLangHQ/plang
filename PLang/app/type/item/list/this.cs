@@ -813,21 +813,38 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>Adds <paramref name="value"/> at <paramref name="at"/> when that is a position in this list,
-    /// else at the end: a list's elements join this one (nothing copied), anything else is one element that
-    /// points at the value's current instance. Answers this list.</summary>
+    /// else at the end — the value enrolls itself (a list's elements join this one, nothing copied; anything
+    /// else is one element). Answers this list.</summary>
     public async System.Threading.Tasks.Task<Data> Add(Data value, global::app.type.item.number.@this at, actor.context.@this context)
     {
-        var positioned = at >= 0 && at <= Count;
-        if (await value.Value() is @this items)
-        {
-            if (positioned) Insert(at, items); else Add(items);
-        }
-        else
-        {
-            var element = new Data(value.Name, value.Peek(), value.Type, context: context);
-            if (positioned) Insert(at, element); else Add(element);
-        }
+        if (await value.Value() is { } item) item.Enroll(this, value, at, context);
+        else Place(new Data(value.Name, value.Peek(), value.Type, context: context), at);
         return context.Ok(this);
+    }
+
+    /// <summary>A list enrolls in another as one chunk that reads its elements in place — later changes to
+    /// it show there.</summary>
+    internal override void Enroll(@this into, Data carrier, global::app.type.item.number.@this at, actor.context.@this context)
+        => into.Place(this, at);
+
+    /// <summary>A list spreads its elements, each spreading itself — a nested list's elements are lifted in
+    /// its place, however deep.</summary>
+    internal override async System.Threading.Tasks.ValueTask Spread(@this into, Data carrier, actor.context.@this context)
+    {
+        foreach (var element in Items(context))
+            if (await element.Value() is { } item) await item.Spread(into, element, context);
+            else into.Add(element);
+    }
+
+    // An element, or another list as one chunk, at a position in this list — else at the end.
+    internal void Place(Data element, global::app.type.item.number.@this at)
+    {
+        if (at >= 0 && at <= Count) Insert(at, element); else Add(element);
+    }
+
+    internal void Place(@this chunk, global::app.type.item.number.@this at)
+    {
+        if (at >= 0 && at <= Count) Insert(at, chunk); else Add(chunk);
     }
 
     /// <summary>The element at <paramref name="index"/> becomes <paramref name="value"/> (pointing at its
@@ -884,15 +901,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public async System.Threading.Tasks.Task<Data> Flatten(actor.context.@this context)
     {
         var flat = new @this();
-        await Lift(this, flat, context);
+        await Spread(flat, context.Ok(this), context);
         return await context.App.type.list["list"].Create(flat, context);
-
-        static async System.Threading.Tasks.Task Lift(@this source, @this into, actor.context.@this context)
-        {
-            foreach (var element in source.Items(context))
-                if (await element.Value() is @this nested) await Lift(nested, into, context);
-                else into.Add(element);
-        }
     }
 
     /// <summary>The elements grouped by their <paramref name="key"/> field, in first-seen order: a list of
