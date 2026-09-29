@@ -5,16 +5,13 @@ namespace app.type.item.variable;
 /// carrying a rendered value. Only <see cref="@this"/> is an <c>IName</c>.
 ///
 /// <para>
-/// Two consumers rely on it. (1) <c>Data.As&lt;T&gt;</c> hands a raw <c>"%x%"</c>
-/// straight to <see cref="@this.Resolve"/> (skipping <c>%var%</c> substitution), so
-/// <c>%x%</c> yields <c>variable{ Name = "x" }</c> — the identity, not the value.
-/// (2) the source generator detects a <c>Data&lt;IName&gt;</c> slot at compile time (it
-/// cannot <c>typeof</c> the runtime type from a netstandard2.0 analyzer) and emits the
-/// required-parameter guard for a non-nullable name slot.
-/// </para>
-/// <para>
-/// Empty marker — no methods. Runtime code that has the loaded type compares against
-/// <c>typeof(app.type.item.variable.@this)</c> directly; the interface exists for the generator.
+/// The one declaration of the fact. Runtime code asks it through the type's static
+/// channel, <see cref="global::app.type.item.ICreate{TSelf}.IsName"/> (derived from this
+/// marker): the type's build makes a name type's text into the name at once instead of
+/// deferring it as content, and the typed ask hands a held name over without opening it.
+/// The source generator reads it at compile time (it cannot <c>typeof</c> the runtime type
+/// from a netstandard2.0 analyzer) and emits the required-parameter guard for a
+/// non-nullable name slot.
 /// </para>
 /// </summary>
 public interface IName { }

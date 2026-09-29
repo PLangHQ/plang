@@ -85,4 +85,10 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
     /// list from a list; a container of any other type declared this one is held as it is. The base takes none.
     /// </summary>
     static virtual bool Takes(global::app.type.@this other) => false;
+
+    /// <summary>
+    /// A value of this type is a name (<see cref="global::app.type.item.variable.IName"/>): born from its text at
+    /// once — never deferred as content — and never opened for a value, since it names one.
+    /// </summary>
+    static virtual bool IsName => typeof(global::app.type.item.variable.IName).IsAssignableFrom(typeof(TSelf));
 }

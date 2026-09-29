@@ -11,6 +11,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 {
     public string Kind => global::app.type.reader.@this.AnyKind;
 
+    /// <summary>A name is read where it stands — never captured as content to parse later.</summary>
+    public bool IsEager => true;
+
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct

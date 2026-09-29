@@ -456,8 +456,8 @@ public partial class @this
         // NOT open the door (the door resolves a reference to what it points at). Every
         // other slot opens the door: a reference resolves through it, a container
         // deep-renders, and the resolved value's own type then converts to T.
-        if (typeof(T) == typeof(global::app.type.item.variable.@this) && Peek() is global::app.type.item.variable.@this nameRef)
-            return T.Create(nameRef, null, this);
+        if (T.IsName && Peek() is T name)
+            return T.Create(name, null, this);
         return T.Create(await Value(), null, this);
     }
 

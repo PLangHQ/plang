@@ -301,10 +301,21 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // Typed absence — the declaration survives (a typed null, a tool-parameter slot; a JSON-null too).
         if (raw is null or global::app.type.item.@null.@this) return new global::app.type.item.@null.@this(this);
 
-        // A raw-name declared type (variable) NAMES a thing — the name IS the variable (a write-target),
-        // not a value to defer. Before the string→source branch (else the name becomes a deferred source).
-        if (raw is string rawName && ClrType == typeof(app.type.item.variable.@this))
-            return app.type.item.variable.@this.Resolve(rawName, context);
+        // A name type's text IS the name (a write target), not content to defer: its own reader reads it now,
+        // as it reads a wire slot. A raw string, or the text a built leaf of another type holds; an unread
+        // source stays deferred (re-declared below).
+        if (IsName && raw switch
+            {
+                string s => s,
+                item.source => null,
+                item.@this { IsLeaf: true } other when !string.Equals(other.Type.Name, Name, System.StringComparison.OrdinalIgnoreCase) => other.RawText,
+                _ => null,
+            } is { } name)
+        {
+            var reader = new global::app.type.format.value.Reader(name);
+            return context.App.type.list.Reader.Reader(Name, null, context)
+                .Read(ref reader, null, new global::app.type.reader.ReadContext(context));
+        }
 
         // Wire-raw (string / byte[]) → defer through a source declared as THIS type, parsed lazily on
         // first use. The source carries the type's Name/Kind/Strict/template and reads its own raw —
@@ -336,11 +347,6 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // A built leaf (text/number/… carrying its raw):
         if (raw is item.@this leaf)
         {
-            // A raw-name declared type (variable) NAMES a thing — the leaf's raw string is the variable.
-            var backing = leaf.RawText;
-            if (ClrType == typeof(app.type.item.variable.@this) && backing != null)
-                return app.type.item.variable.@this.Resolve(backing, context);
-
             // Already this type → hold; refine a matching leaf to the declared kind.
             var minted = leaf.Type;
             if (string.Equals(Name, minted.Name, System.StringComparison.OrdinalIgnoreCase))
@@ -401,12 +407,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         if (reader.Peek() == global::app.type.format.TokenKind.String)
         {
             var slice = System.Text.Encoding.UTF8.GetString(reader.Slice());
-            // A SEMANTIC string — a variable NAME, or a template (its row's marker) — takes the
-            // content door, with the variables its row's list says it holds; the kind-parse stays
-            // lazy on the content source. A literal string under any other type rides the wire
-            // (strict, byte-identical).
-            if (ClrType == typeof(global::app.type.item.variable.@this))
-                return global::app.type.item.variable.@this.Resolve(JsonSerializer.Deserialize<string>(slice)!, ctx.Context, ctx.Variable);
+            // A template (its row's marker) takes the content door, with the variables its row's list says
+            // it holds; the kind-parse stays lazy on the content source. A literal string under any other
+            // type rides the wire (strict, byte-identical). A name was read above, by its own eager reader.
             return Template != null
                 ? new item.source(JsonSerializer.Deserialize<string>(slice)!, this, ctx.Variable)
                 : Make(slice, transport);
@@ -449,6 +452,18 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     private static bool Takes<T>(@this other)
         where T : item.@this, global::app.type.item.ICreate<T>
         => T.Takes(other);
+
+    /// <summary>A value of this type is a name — this type's class's own answer (<c>ICreate.IsName</c>), read once.</summary>
+    internal bool IsName => _isName ??= Creatable is { } clr
+        && (bool)_naming.MakeGenericMethod(clr).Invoke(null, null)!;
+
+    private bool? _isName;
+
+    private static bool Named<T>() where T : item.@this, global::app.type.item.ICreate<T> => T.IsName;
+
+    private static readonly System.Reflection.MethodInfo _naming = System.Array.Find(
+        typeof(@this).GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static),
+        m => m.Name == nameof(Named) && m.IsGenericMethodDefinition)!;
 
     private static readonly System.Reflection.MethodInfo _taking = System.Array.Find(
         typeof(@this).GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static),
