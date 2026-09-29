@@ -38,8 +38,8 @@ public sealed class @this : global::app.channel.type.session.@this
     public static @this Memory(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
         => new(name, new MemoryStream(), direction, ownsStream: true);
 
-    public override bool CanRead => IsOpen && Direction != ChannelDirection.Output && Stream.CanRead;
-    public override bool CanWrite => IsOpen && Direction != ChannelDirection.Input && Stream.CanWrite;
+    public override bool CanRead => IsOpen && Direction.Value != ChannelDirection.Output && Stream.CanRead;
+    public override bool CanWrite => IsOpen && Direction.Value != ChannelDirection.Input && Stream.CanWrite;
 
     public override async Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
     {
@@ -52,11 +52,12 @@ public sealed class @this : global::app.channel.type.session.@this
             // The channel's Mime is a format, and the format writes the data (a text value on a text channel
             // is its characters, in the channel's encoding).
             var context = Context ?? data.Context;
-            var result = await context.App.type.list.Mime(Mime).Encode(Stream, data, context, encoding: ResolveEncoding(), ct: ct);
+            var format = context.App.type.list.Mime(Mime.ToString());
+            var result = await format.Encode(Stream, data, context, encoding: ResolveEncoding(), ct: ct);
             // Line framing is the channel's job (console/pipe ergonomics, NDJSON):
-            // delimit each line-oriented text message with a newline. Binary and the
-            // self-describing plang envelope are not framed.
-            if (result.Success && IsLineDelimited(Mime))
+            // delimit each text message with a newline. Binary and the self-describing plang
+            // envelope are not framed.
+            if (result.Success && format.IsText)
                 await Stream.WriteAsync(ResolveEncoding().GetBytes(System.Environment.NewLine), ct);
             return result;
         }
@@ -71,10 +72,6 @@ public sealed class @this : global::app.channel.type.session.@this
 
     // Line-oriented text mimes are framed one-message-per-line. Binary
     // (image/*, octet-stream) and the self-describing plang envelope are not.
-    private static bool IsLineDelimited(string mime)
-        => mime.StartsWith("text/", System.StringComparison.OrdinalIgnoreCase)
-           || mime.Equals("application/json", System.StringComparison.OrdinalIgnoreCase);
-
     public override async Task<global::app.data.@this> Read(CancellationToken ct = default)
     {
         if (!CanRead)

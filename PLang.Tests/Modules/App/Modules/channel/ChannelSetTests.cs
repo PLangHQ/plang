@@ -68,7 +68,7 @@ public class ChannelSetTests
         await Assert.That(output.Direction).IsEqualTo(global::app.channel.ChannelDirection.Output);
         await Assert.That(output.Buffer).IsEqualTo(4096L);
         await Assert.That(output.Timeout).IsEqualTo(System.TimeSpan.FromSeconds(30));
-        await Assert.That(output.Mime).IsEqualTo("text/plain");
+        await Assert.That(output.Mime.ToString()).IsEqualTo("text/plain");
         await Assert.That(output.Signing).IsEqualTo("auto");
         await Assert.That(chat.Direction).IsEqualTo(global::app.channel.ChannelDirection.Input);
         await Assert.That(chat.Buffer).IsEqualTo(65536L);

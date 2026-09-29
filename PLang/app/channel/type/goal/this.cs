@@ -28,13 +28,13 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
         global::app.type.item.@this? Setting(string name) => settings.Get(name, ctx)?.Peek() is { IsNull: false } v ? v : null;
         if (Setting(nameof(Name))?.ToString() is not { Length: > 0 } name
             || Setting(nameof(Goal)) is not global::app.goal.step.action.@this goal) return null;
-        // The settings are CLR values the transport uses, lowered here at the channel's birth — the interim
-        // boundary, until a channel's settings are plang values the transport lowers at its own use.
+        // Direction, buffer and mime are plang values the channel holds as they are; the rest are lowered here
+        // to what the transport uses.
         return new @this(name, goal, ctx.Actor,
-            direction: Setting(nameof(Direction)) is global::app.type.item.choice.@this<ChannelDirection> way ? (ChannelDirection)way : null,
-            buffer: (Setting(nameof(Buffer)) as global::app.type.item.number.@this)?.ToInt64(),
+            direction: Setting(nameof(Direction)) as global::app.type.item.choice.@this<ChannelDirection>,
+            buffer: Setting(nameof(Buffer)) as global::app.type.item.number.@this,
             timeout: Setting(nameof(Timeout)) is global::app.type.item.duration.@this after ? (TimeSpan)after : null,
-            mime: Setting(nameof(Mime))?.ToString(),
+            mime: Setting(nameof(Mime)) as global::app.type.item.text.@this,
             encoding: Setting(nameof(Encoding))?.ToString(),
             encryption: (Setting(nameof(Encryption)) as global::app.type.item.variable.@this)?.Name,
             signing: (Setting(nameof(Signing)) as global::app.type.item.variable.@this)?.Name);
@@ -61,7 +61,8 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
     /// A setting that isn't given keeps the channel's own default. Without a direction, a channel called
     /// <c>input</c> or <c>output</c> is that way, and any other both ways (a goal channel can answer an ask).</summary>
     protected @this(string name, global::app.goal.step.action.@this goal, global::app.actor.@this actor,
-        ChannelDirection? direction = null, long? buffer = null, TimeSpan? timeout = null, string? mime = null,
+        global::app.type.item.choice.@this<ChannelDirection>? direction = null, global::app.type.item.number.@this? buffer = null,
+        TimeSpan? timeout = null, global::app.type.item.text.@this? mime = null,
         string? encoding = null, string? encryption = null, string? signing = null)
     {
         Name = name;

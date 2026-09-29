@@ -23,7 +23,7 @@ public class Stage1_ChannelBaseTests
         await Assert.That(ch.Direction).IsEqualTo(ChannelDirection.Bidirectional);
         await Assert.That(ch.Buffer).IsEqualTo(8192L);
         await Assert.That(ch.Timeout).IsEqualTo(TimeSpan.FromSeconds(45));
-        await Assert.That(ch.Mime).IsEqualTo("application/json");
+        await Assert.That(ch.Mime.ToString()).IsEqualTo("application/json");
         await Assert.That(ch.Encoding).IsEqualTo("utf-16");
         await Assert.That(ch.Encryption).IsEqualTo("aes");
         await Assert.That(ch.Signing).IsEqualTo("myKey");
@@ -35,7 +35,7 @@ public class Stage1_ChannelBaseTests
         var ch = StreamChannel.Memory("d");
         await Assert.That(ch.Buffer).IsEqualTo(4096L);
         await Assert.That(ch.Timeout).IsEqualTo(TimeSpan.FromSeconds(30));
-        await Assert.That(ch.Mime).IsEqualTo("text/plain");
+        await Assert.That(ch.Mime.ToString()).IsEqualTo("text/plain");
         await Assert.That(ch.Encoding).IsEqualTo("utf-8");
         await Assert.That(ch.Encryption).IsNull();
         await Assert.That(ch.Signing).IsEqualTo("auto");
@@ -74,11 +74,13 @@ public class Stage1_ChannelBaseTests
     }
 
     [Test]
-    public async Task ChannelBase_Buffer_IsLong_NotInt()
+    public async Task ChannelBase_Settings_ArePlangValues()
     {
-        var bufferProp = typeof(Channel).GetProperty("Buffer", BindingFlags.Public | BindingFlags.Instance);
-        await Assert.That(bufferProp).IsNotNull();
-        await Assert.That(bufferProp!.PropertyType).IsEqualTo(typeof(long));
+        // a channel holds its direction, buffer and mime as plang values; the transport lowers them at its own use
+        System.Type Of(string name) => typeof(Channel).GetProperty(name, BindingFlags.Public | BindingFlags.Instance)!.PropertyType;
+        await Assert.That(Of("Direction")).IsEqualTo(typeof(global::app.type.item.choice.@this<ChannelDirection>));
+        await Assert.That(Of("Buffer")).IsEqualTo(typeof(global::app.type.item.number.@this));
+        await Assert.That(Of("Mime")).IsEqualTo(typeof(global::app.type.item.text.@this));
     }
 
     [Test]

@@ -46,16 +46,16 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     public string Name { get; init; } = "";
 
     /// <summary>Direction (Input / Output / Bidirectional).</summary>
-    public ChannelDirection Direction { get; init; } = ChannelDirection.Bidirectional;
+    public global::app.type.item.choice.@this<ChannelDirection> Direction { get; init; } = ChannelDirection.Bidirectional;
 
     /// <summary>Buffer size in bytes. Stream-backed channels honour; Goal channel ignores. Default 4096.</summary>
-    public long Buffer { get; init; } = 4096;
+    public global::app.type.item.number.@this Buffer { get; init; } = 4096;
 
     /// <summary>I/O timeout. JSON wire shape is ISO 8601 (e.g. "PT30S") via custom converter. Default 30s.</summary>
     public TimeSpan Timeout { get; init; } = TimeSpan.FromSeconds(30);
 
     /// <summary>MIME type that drives serializer selection. Default "text/plain".</summary>
-    public string Mime { get; init; } = "text/plain";
+    public global::app.type.item.text.@this Mime { get; init; } = "text/plain";
 
     /// <summary>Text encoding name. Default "utf-8".</summary>
     public string Encoding { get; init; } = "utf-8";
@@ -87,12 +87,12 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// <summary>
     /// Whether reading is supported. Default tracks Direction + IsOpen; concretes can override.
     /// </summary>
-    public virtual bool CanRead => IsOpen && Direction != ChannelDirection.Output;
+    public virtual bool CanRead => IsOpen && Direction.Value != ChannelDirection.Output;
 
     /// <summary>
     /// Whether writing is supported. Default tracks Direction + IsOpen; concretes can override.
     /// </summary>
-    public virtual bool CanWrite => IsOpen && Direction != ChannelDirection.Input;
+    public virtual bool CanWrite => IsOpen && Direction.Value != ChannelDirection.Input;
 
     /// <summary>
     /// Abstract write — concrete subtypes implement. Receives the full Data (Rule 7,
@@ -225,7 +225,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     {
         var context = Context ?? throw new InvalidOperationException(
             $"channel '{Name}' belongs to no list — it has no context to read in");
-        return context.App.type.list.Mime(Mime ?? "").Decode(raw, context, Name, ct: ct);
+        return context.App.type.list.Mime(Mime.ToString()).Decode(raw, context, Name, ct: ct);
     }
 
     /// <summary>
