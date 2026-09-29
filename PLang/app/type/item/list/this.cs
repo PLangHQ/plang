@@ -146,13 +146,23 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     internal @this AddRaw(object? raw)
     {
         Admit(raw);
+        Change(raw, static (list, r) =>
+        {
+            if (IsWrapped(r)) list._hasWrapped = true;   // a Data / nested wrapper diverges the backing
+            list._items.Add(r);
+        });
+        return this;
+    }
+
+    // The one mutation door: the edit runs under the list's lock, and the rows' snapshot is dropped with it —
+    // so no write can leave a reader walking stale rows. The edit's state rides in, so the edits capture nothing.
+    private void Change<TState>(TState state, System.Action<@this, TState> edit)
+    {
         lock (_gate)
         {
-            if (IsWrapped(raw)) _hasWrapped = true;   // a Data / nested wrapper diverges the backing
-            _items.Add(raw);
+            edit(this, state);
             _rows = null;
         }
-        return this;
     }
 
     // The raw slots in element order — a chunk contributes its list's slots. No Data is made: the
@@ -306,12 +316,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this Add(global::app.type.item.@this value)
     {
         Admit(value);
-        lock (_gate)
+        Change(value, static (list, v) =>
         {
-            _hasWrapped = true;
-            _items.Add(value);
-            _rows = null;
-        }
+            list._hasWrapped = true;
+            list._items.Add(v);
+        });
         return this;
     }
 
@@ -322,12 +331,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this Add(@this other)
     {
         Admit(other);
-        lock (_gate)
+        Change(other, static (list, o) =>
         {
-            _hasWrapped = true;
-            _items.Add(new Chunk(other));
-            _rows = null;
-        }
+            list._hasWrapped = true;
+            list._items.Add(new Chunk(o));
+        });
         return this;
     }
 
@@ -336,24 +344,24 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     internal @this Insert(int index, @this other)
     {
         Admit(other);
-        lock (_gate)
+        Change((index, other), static (list, s) =>
         {
-            _hasWrapped = true;
+            var (index, other) = s;
+            list._hasWrapped = true;
             if (index < 0) index = 0;
-            if (Locate(index, out int row, out int offset, out @this? inner) && inner == null)
-                _items.Insert(row, new Chunk(other));
+            if (list.Locate(index, out int row, out int offset, out @this? inner) && inner == null)
+                list._items.Insert(row, new Chunk(other));
             else if (inner != null)
             {
                 // inside a chunk: split it at the offset so the extend lands between its halves
                 var head = new @this(inner.Slots().Take(offset).ToList()) { _hasWrapped = true };
                 var tail = new @this(inner.Slots().Skip(offset).ToList()) { _hasWrapped = true };
-                _items[row] = new Chunk(tail);
-                _items.Insert(row, new Chunk(other));
-                _items.Insert(row, new Chunk(head));
+                list._items[row] = new Chunk(tail);
+                list._items.Insert(row, new Chunk(other));
+                list._items.Insert(row, new Chunk(head));
             }
-            else _items.Add(new Chunk(other));   // index >= Count → append
-            _rows = null;
-        }
+            else list._items.Add(new Chunk(other));   // index >= Count → append
+        });
         return this;
     }
 
@@ -362,12 +370,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public @this Add(Data item)
     {
         Admit(item);
-        lock (_gate)
+        Change(item, static (list, i) =>
         {
-            _hasWrapped = true;
-            _items.Add(item);
-            _rows = null;
-        }
+            list._hasWrapped = true;
+            list._items.Add(i);
+        });
         return this;
     }
 
@@ -376,18 +383,18 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     internal @this Insert(int index, Data item)
     {
         Admit(item);
-        lock (_gate)
+        Change((index, item), static (list, s) =>
         {
-            _hasWrapped = true;
+            var (index, item) = s;
+            list._hasWrapped = true;
             if (index < 0) index = 0;
-            if (Locate(index, out int row, out int offset, out @this? inner))
+            if (list.Locate(index, out int row, out int offset, out @this? inner))
             {
                 if (inner != null) inner.Insert(offset, item);
-                else _items.Insert(row, item);
+                else list._items.Insert(row, item);
             }
-            else _items.Add(item);   // index >= Count → append
-            _rows = null;
-        }
+            else list._items.Add(item);   // index >= Count → append
+        });
         return this;
     }
 
@@ -402,20 +409,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>Removes the leaf at the flattened <paramref name="index"/> (no-op when out of range).</summary>
     internal void RemoveAt(int index)
-    {
-        lock (_gate)
+        => Change(index, static (list, index) =>
         {
-            _hasWrapped = true;
-            if (!Locate(index, out int row, out int offset, out @this? inner)) return;
+            list._hasWrapped = true;
+            if (!list.Locate(index, out int row, out int offset, out @this? inner)) return;
             if (inner != null)
             {
                 inner.RemoveAt(offset);
-                if (inner.Count == 0) _items.RemoveAt(row);   // drop an emptied chunk
+                if (inner.Count == 0) list._items.RemoveAt(row);   // drop an emptied chunk
             }
-            else _items.RemoveAt(row);
-            _rows = null;
-        }
-    }
+            else list._items.RemoveAt(row);
+        });
 
     /// <summary>Removes the first leaf whose value equals <paramref name="value"/> through
     /// the one compare path (structural for dict/list, case-insensitive text).</summary>
@@ -524,14 +528,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // weight-1 rows — a new order is a new flat list.
     private void ResetTo(IEnumerable<object?> flat)
     {
-        var slots = flat.ToList();
-        lock (_gate)
+        Change(flat.ToList(), static (list, slots) =>
         {
-            _hasWrapped = true;
-            _items.Clear();
-            _items.AddRange(slots);
-            _rows = null;
-        }
+            list._hasWrapped = true;
+            list._items.Clear();
+            list._items.AddRange(slots);
+        });
     }
 
 
@@ -543,17 +545,17 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     private void Put(int index, object? slot)
     {
         Admit(slot);
-        lock (_gate)
+        Change((index, slot), static (list, s) =>
         {
-            if (IsWrapped(slot)) _hasWrapped = true;
-            if (Locate(index, out int row, out int offset, out @this? inner))
+            var (index, slot) = s;
+            if (IsWrapped(slot)) list._hasWrapped = true;
+            if (list.Locate(index, out int row, out int offset, out @this? inner))
             {
                 if (inner != null) inner.Put(offset, slot);
-                else _items[row] = slot;
+                else list._items[row] = slot;
             }
-            else if (index == Count) _items.Add(slot);
-            _rows = null;
-        }
+            else if (index == list.Count) list._items.Add(slot);
+        });
     }
 
     /// <summary>A list owns its child write — replace the element at the index. The key is already
