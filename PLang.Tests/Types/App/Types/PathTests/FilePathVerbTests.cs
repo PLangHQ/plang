@@ -15,7 +15,7 @@ public class FilePathVerbTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-fpv-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        return (TestApp.Create(root), root);
+        return (new global::app.@this(root).Testing(), root);
     }
 
     private static FilePath At(global::app.@this app, string root, string name) =>

@@ -35,7 +35,7 @@ public class TypeEntityShapeTests
         var t = typeof(TypeEntity);
         await Assert.That(t.GetProperty("ClrType", BindingFlags.Public | BindingFlags.Instance)).IsNull();
         // Interior access still works through the registry — App.type.list.Clr(name).
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         await Assert.That(app.type.list.Clr("number")).IsEqualTo(typeof(global::app.type.item.number.@this));
     }
 
@@ -48,7 +48,7 @@ public class TypeEntityShapeTests
         var noSubtype = new TypeEntity("image");
         await Assert.That(noSubtype.kind.IsEmpty).IsTrue();
 
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var split = app.type.list[new TypeEntity("image", "jpeg"), app.actor.list.User.Context];
         await Assert.That(split.Name).IsEqualTo("image");
         await Assert.That(split.kind.Name).IsEqualTo("jpg");
@@ -56,7 +56,7 @@ public class TypeEntityShapeTests
 
     [Test] public async Task Entity_Compressible_DerivesFromName()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         // Compressibility is the format's knowledge about a type: image is already compressed.
         var image = app.type.list["image"];
         await Assert.That(image.kind.Compressible).IsFalse();
@@ -65,7 +65,7 @@ public class TypeEntityShapeTests
     [Test] public async Task BareType_CarriesNoFacts_ItsFullTypeDoes()
     {
         // A bare type object is identity only; the facts live on its full type in app.type.
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var bare = new global::app.type.@this("identity");
         await Assert.That(bare.Property).IsNull();
         await Assert.That(app.type.list[bare, app.actor.list.User.Context].Property).IsNotNull();

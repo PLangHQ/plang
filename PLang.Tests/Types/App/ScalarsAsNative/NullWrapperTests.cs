@@ -9,8 +9,11 @@ namespace PLang.Tests.App.ScalarsAsNative;
 // The Data.Null()-stamps-singleton + sort-last-via-Compare integration lands with
 // the construction flip (the final coordinated pass), since it touches Data's
 // `_value == null` value-switches across Compare/Normalize/ToBoolean.
-public class NullWrapperTests
+public class NullWrapperTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task Null_IsSingleton_DataNullStampsSameInstance()
     {
@@ -25,7 +28,7 @@ public class NullWrapperTests
     public async Task Null_Truthiness_AlwaysFalsy()
     {
         await Assert.That(NullV.Instance.IsTruthy()).IsFalse();
-        await Assert.That(await NullV.Instance.AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
+        await Assert.That(await NullV.Instance.AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
     }
 
     [Test]

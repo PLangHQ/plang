@@ -11,9 +11,12 @@ using Number = global::app.type.item.number.@this;
 /// "Object must implement IConvertible" text. (The unresolved-<c>%var%</c> cause is
 /// reported one layer up, at variable resolution — see StartGoalTests.)
 /// </summary>
-public class CreateDeclineMessageTests
+public class CreateDeclineMessageTests : System.IAsyncDisposable
 {
-    private static readonly global::app.actor.context.@this Ctx = global::PLang.Tests.TestApp.SharedContext;
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
 
     [Test]
     public async Task Text_DeclinesOpaqueObject_NamesTextType_NoIConvertibleLeak()

@@ -15,13 +15,13 @@ public class TypeIsTests
 
     [Test] public async Task Is_SameName_True()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         await Assert.That(app.type.list["image"].Is(app.type.list["image"])).IsTrue();
     }
 
     [Test] public async Task Is_ImageBornFromPath_IsPath()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         // Composition is the VALUE's type history: an image born from a path carries a "path"
         // entry, so the value answers `is path`. (A bare type entity does NOT — no history.)
@@ -33,26 +33,26 @@ public class TypeIsTests
 
     [Test] public async Task Is_NonFacet_ImageIsNotText()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         // image has a Mime string but does NOT declare text as a facet.
         await Assert.That(app.type.list["image"].Is(app.type.list["text"])).IsFalse();
     }
 
     [Test] public async Task Is_NotSymmetric_PathIsNotImage()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         await Assert.That(app.type.list["path"].Is(app.type.list["image"])).IsFalse();
     }
 
     [Test] public async Task Set_ImageBoundToPathSlot_KeptAsImage_NotDowngraded()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var img = new image(PngHeader, "image/png");
 
         // Declared type=path, but the value is already an image (which has-a
         // path). It must stay an image — not be converted/downgraded to path.
-        var action = TestAction.Create("variable", "set",
+        var action = ctx.Action("variable", "set",
             ("name", "%p%"),
             ("value", img),
             ("type", new global::app.type.@this("path")));

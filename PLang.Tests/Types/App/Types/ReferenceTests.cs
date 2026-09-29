@@ -8,8 +8,8 @@ namespace PLang.Tests.App.Types;
 // they are text. The reference itself is no plang type.
 public class ReferenceTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = TestApp.Create(
-        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-reference-" + System.Guid.NewGuid().ToString("N")[..8]));
+    private readonly global::app.@this app = new global::app.@this(
+        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-reference-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();

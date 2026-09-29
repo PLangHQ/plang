@@ -6,7 +6,7 @@ public class TypedListKindTests
 {
     [Test] public async Task TheTypeDoor_ClosesListOverTheElement()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var typed = app.type.list[new global::app.type.@this("list", "path"), ctx];
         await Assert.That(typed.ClrType).IsEqualTo(typeof(global::app.type.item.list.@this<global::app.type.item.path.@this>));
@@ -16,7 +16,7 @@ public class TypedListKindTests
     // The face a typed list is read and written by keeps its element — list<goal>, list<path>.
     [Test] public async Task ATypedList_IsWrittenWithItsElement()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
         await Assert.That(app.type.list[new global::app.type.@this("list", "goal"), ctx].ToString()).IsEqualTo("list<goal>");
         await Assert.That(app.type.list[new global::app.type.@this("list", "path"), ctx].ToString()).IsEqualTo("list<path>");
@@ -25,7 +25,7 @@ public class TypedListKindTests
 
     [Test] public async Task AnElementKind_IsOneObjectPerElementType()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var a = app.type.list[new global::app.type.@this("list", "text"), ctx].kind;
         var b = app.type.list[new global::app.type.@this("list", "text"), ctx].kind;
@@ -34,7 +34,7 @@ public class TypedListKindTests
 
     [Test] public async Task AValueMadeThroughTheType_IsTheClosedList()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var typed = app.type.list[new global::app.type.@this("list", "path"), ctx];
         var made = await typed.Create(new List<object?> { "a.txt", "b.txt" }, ctx);
@@ -44,7 +44,7 @@ public class TypedListKindTests
 
     [Test] public async Task AnUnknownElement_IsNoClosedList()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var typed = app.type.list[new global::app.type.@this("list", "no-such-type"), ctx];
         await Assert.That(typed.ClrType).IsEqualTo(typeof(global::app.type.item.list.@this));

@@ -5,8 +5,8 @@ namespace PLang.Tests.App.Types;
 // fires once however many re-types it runs.
 public class CreateEventTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this app = global::PLang.Tests.TestApp.Create(
-        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-create-event-" + System.Guid.NewGuid().ToString("N")[..8]));
+    private readonly global::app.@this app = new global::app.@this(
+        System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-create-event-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
     private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
@@ -101,7 +101,7 @@ public class CreateEventTests : System.IAsyncDisposable
 
         var landed = await global::app.type.item.path.@this.Resolve("once.txt", Ctx).Read(Ctx);
         await Ctx.Variable.Set("!data", landed);
-        var kept = await TestAction.Create("variable", "set", ("name", "%file%"), ("value", "%!data%"),
+        var kept = await Ctx.Action("variable", "set", ("name", "%file%"), ("value", "%!data%"),
             ("type", new global::app.type.@this("file", (string?)null))).Start(Ctx);
 
         await kept.IsSuccess();
@@ -115,7 +115,7 @@ public class CreateEventTests : System.IAsyncDisposable
 
         var landed = await global::app.type.item.path.@this.Resolve("lazy.txt", Ctx).Read(Ctx);
         await Ctx.Variable.Set("!data", landed);
-        await (await TestAction.Create("variable", "set", ("name", "%file%"), ("value", "%!data%"),
+        await (await Ctx.Action("variable", "set", ("name", "%file%"), ("value", "%!data%"),
             ("type", new global::app.type.@this("file", (string?)null))).Start(Ctx)).IsSuccess();
 
         var kept = (await Ctx.Variable.Get("file")).Peek() as global::app.type.item.file.@this;
@@ -131,7 +131,7 @@ public class CreateEventTests : System.IAsyncDisposable
         await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.AbsolutePath, "given.txt"), "x");
         await Ctx.Variable.Set("doc", await global::app.type.item.path.@this.Resolve("given.txt", Ctx).Read(Ctx));
 
-        var (handler, _) = await TestAction.Create("variable", "set", ("name", "%y%"), ("value", "%doc%")).Bind(Ctx);
+        var (handler, _) = await Ctx.Action("variable", "set", ("name", "%y%"), ("value", "%doc%")).Bind(Ctx);
         var given = await ((global::app.module.variable.Set)handler!).Given();
 
         await given.IsSuccess();

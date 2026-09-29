@@ -12,7 +12,7 @@ public class HashTypeTests
 {
     [Test] public async Task HashType_Resolves_ViaRegistry()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var t = app.type.list["hash"];
         await Assert.That(t.Name).IsEqualTo("hash");
         await Assert.That(t.ClrType).IsEqualTo(typeof(hash));
@@ -29,9 +29,9 @@ public class HashTypeTests
 
     [Test] public async Task CryptoHash_ReturnsHashValueWithAlgorithmKind()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        var action = TestAction.Create("crypto", "hash",
+        var action = ctx.Action("crypto", "hash",
             ("data", "hello"), ("algorithm", "sha256"));
         var result = await action.Start(ctx);
         await result.IsSuccess();
@@ -45,7 +45,7 @@ public class HashTypeTests
 
     [Test] public async Task CryptoVerify_DefaultsAlgorithmFromHashValue()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var crypto = new global::app.module.crypto.code.Default();
 

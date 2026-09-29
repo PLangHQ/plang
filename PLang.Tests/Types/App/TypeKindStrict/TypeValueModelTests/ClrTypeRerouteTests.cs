@@ -18,7 +18,7 @@ public class ClrTypeRerouteTests
     {
         // Surface check: registry's Clr() handles every name the old call-site
         // would have asked the entity's ClrType for.
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         await Assert.That(app.type.list.Clr("string")).IsEqualTo(typeof(global::app.type.item.text.@this));
         await Assert.That(app.type.list.Clr("bytes")).IsEqualTo(typeof(global::app.type.item.binary.@this));
     }
@@ -26,7 +26,7 @@ public class ClrTypeRerouteTests
     [Test] public async Task VariableSet_StillResolves_ClrTypeViaRegistry()
     {
         // variable.set reroutes value.Type.ClrType to value.Context.App.type.list.Clr(value.Type.Name).
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         await Assert.That(app.type.list.Clr("number")).IsEqualTo(typeof(global::app.type.item.number.@this));
         await Assert.That(app.type.list.Clr("bool")).IsEqualTo(typeof(global::app.type.item.@bool.@this));
     }
@@ -34,7 +34,7 @@ public class ClrTypeRerouteTests
     [Test] public async Task SettingsSqlite_StillResolves_ClrTypeViaRegistry()
     {
         // Sqlite reroutes data.Type.ClrType to data.Context.App.type.list.Clr(data.Type.Name).
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         await Assert.That(app.type.list.Clr("guid")).IsEqualTo(typeof(global::app.type.item.guid.@this));
         await Assert.That(app.type.list.Clr("datetime")).IsEqualTo(typeof(global::app.type.item.datetime.@this));
     }

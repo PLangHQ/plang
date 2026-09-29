@@ -11,7 +11,7 @@ public class ImageFormatTests
         System.IO.Directory.CreateDirectory(root);
         try
         {
-            await using var app = TestApp.Create(root);
+            await using var app = new global::app.@this(root).Testing();
             var ctx = app.actor.list.User.Context;
             var target = global::app.type.item.path.@this.Resolve(System.IO.Path.Combine(root, "photo.png"), ctx)!;
             var saved = await target.Save(ctx.Ok(new global::app.type.item.image.@this(Png, "image/png", "png")), ctx);
@@ -23,7 +23,7 @@ public class ImageFormatTests
 
     [Test] public async Task AnImageChannelWrite_WritesTheBytes()
     {
-        await using var app = TestApp.Create("/test", autoWireConsoleChannels: false);
+        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
         var capture = new System.IO.MemoryStream();
         var channel = new StreamChannel("img", capture, ChannelDirection.Output, ownsStream: false) { Mime = "image/png" };
         app.actor.list.User.Channel.Register(channel);
@@ -35,7 +35,7 @@ public class ImageFormatTests
 
     [Test] public async Task AnImageFormat_RefusesAValueThatIsNoImage()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var result = await app.type.list.Stamp("image/png", ctx).kind.Encode(new System.IO.MemoryStream(), ctx.Ok("not an image"), ctx);
         await Assert.That(result.Success).IsFalse();

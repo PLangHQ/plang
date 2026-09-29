@@ -7,19 +7,22 @@ namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 
 // `type` is the structured entity on the wire — ONE field carrying
 // `{name, kind?, strict?}`, no flat sibling `kind` key.
-public class WireKindShapeTests
+public class WireKindShapeTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     // A Data writes itself via Data.Output through the serializer's async path (the Out view),
     // NOT JsonSerializer.Serialize — the Wire converter is read-only and throws on STJ Write.
-    private static string ToJson(global::app.data.@this data)
-        => global::PLang.Tests.TestApp.SharedContext.Format("application/plang")
-            .Serialize(data, global::PLang.Tests.TestApp.SharedContext).Peek()!.ToString()!;
-    private static global::app.data.@this FromJson(string json)
-        => global::PLang.Tests.TestApp.SharedContext.Format("application/plang").Stored(json, global::PLang.Tests.TestApp.SharedContext);
+    private string ToJson(global::app.data.@this data)
+        => app.actor.list.User.Context.Format("application/plang")
+            .Serialize(data, app.actor.list.User.Context).Peek()!.ToString()!;
+    private global::app.data.@this FromJson(string json)
+        => app.actor.list.User.Context.Format("application/plang").Stored(json, app.actor.list.User.Context);
 
     [Test] public async Task Wire_Write_EmitsTypeAsStructuredEntity()
     {
-        var d = new global::app.data.@this("x", "hi", new global::app.type.@this("text", "md"), context: global::PLang.Tests.TestApp.SharedContext);
+        var d = new global::app.data.@this("x", "hi", new global::app.type.@this("text", "md"), context: app.actor.list.User.Context);
         var json = ToJson(d);
         // ONE `type` field carrying the dict. No flat sibling `kind` key.
         await Assert.That(json.Contains("\"type\":{\"name\":\"text\",\"kind\":\"md\"}")).IsTrue();
@@ -28,7 +31,7 @@ public class WireKindShapeTests
 
     [Test] public async Task Wire_Write_OmitsKindWhenNull()
     {
-        var d = new global::app.data.@this("x", "hi", new global::app.type.@this("text"), context: global::PLang.Tests.TestApp.SharedContext);
+        var d = new global::app.data.@this("x", "hi", new global::app.type.@this("text"), context: app.actor.list.User.Context);
         var json = ToJson(d);
         await Assert.That(json.Contains("\"type\":{\"name\":\"text\"}")).IsTrue();
         await Assert.That(json.Contains("\"kind\"")).IsFalse();
@@ -36,7 +39,7 @@ public class WireKindShapeTests
 
     [Test] public async Task Wire_Write_NoTypeColonKindCompositeString()
     {
-        var d = new global::app.data.@this("x", "hi", new global::app.type.@this("text", "md"), context: global::PLang.Tests.TestApp.SharedContext);
+        var d = new global::app.data.@this("x", "hi", new global::app.type.@this("text", "md"), context: app.actor.list.User.Context);
         var json = ToJson(d);
         await Assert.That(json.Contains("text:md")).IsFalse();
         await Assert.That(json.Contains("\"text/md\"")).IsFalse();
@@ -44,7 +47,7 @@ public class WireKindShapeTests
 
     [Test] public async Task Wire_RoundTrip_PreservesNameKindStrict()
     {
-        var d = new global::app.data.@this("x", "data", new global::app.type.@this("image", "gif"), context: global::PLang.Tests.TestApp.SharedContext);
+        var d = new global::app.data.@this("x", "data", new global::app.type.@this("image", "gif"), context: app.actor.list.User.Context);
         var json = ToJson(d);
         var roundTripped = FromJson(json);
         await Assert.That(roundTripped.Type.Name).IsEqualTo("image");

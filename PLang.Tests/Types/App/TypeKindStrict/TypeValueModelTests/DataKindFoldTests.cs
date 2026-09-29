@@ -9,8 +9,11 @@ namespace PLang.Tests.App.TypeKindStrict.TypeValueModelTests;
 
 // `Data.Kind` is no longer a stored field — it folds through to
 // `Type.Kind`, the single owner of the build-time subtype refinement.
-public class DataKindFoldTests
+public class DataKindFoldTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test] public async Task Data_HasNoStoredKindField()
     {
         // Reflection: Data carries no private `_kind` backing field. The
@@ -23,7 +26,7 @@ public class DataKindFoldTests
 
     [Test] public async Task Data_KindGetter_ReadsTypeKind()
     {
-        var d = new DataT("x", "hello", new TypeEntity("text", "md"), context: global::PLang.Tests.TestApp.SharedContext);
+        var d = new DataT("x", "hello", new TypeEntity("text", "md"), context: app.actor.list.User.Context);
         await Assert.That(d.Kind).IsEqualTo("md");
         await Assert.That(d.Type.kind.Name).IsEqualTo("md");
     }

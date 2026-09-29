@@ -9,7 +9,7 @@ public class StrictRunTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() { _app = TestApp.Create("/app"); }
+    public void Setup() { _app = new global::app.@this("/app").Testing(); }
 
     private static readonly byte[] GifBytes = new byte[]
     {
@@ -30,7 +30,7 @@ public class StrictRunTests
     {
         var context = _app.actor.list.User.Context;
         context.Variable.Set("upload", PngBytes);
-        var action = TestAction.Create("variable", "set",
+        var action = context.Action("variable", "set",
             ("name", "%img%"),
             ("value", "%upload%"),
             ("type", new global::app.type.@this("image", "gif", true)));
@@ -43,7 +43,7 @@ public class StrictRunTests
     {
         var context = _app.actor.list.User.Context;
         context.Variable.Set("upload", GifBytes);
-        var action = TestAction.Create("variable", "set",
+        var action = context.Action("variable", "set",
             ("name", "%img%"),
             ("value", "%upload%"),
             ("type", new global::app.type.@this("image", "gif", true)));
@@ -60,7 +60,7 @@ public class StrictRunTests
         // path via the Build hook; non-strict means no content validation. (text
         // does not derive a kind from a literal — see SetMintCarriesKindTests.)
         var context = _app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set",
+        var action = context.Action("variable", "set",
             ("name", "%x%"),
             ("value", "photo.png"),
             ("type", new global::app.type.@this("image")));

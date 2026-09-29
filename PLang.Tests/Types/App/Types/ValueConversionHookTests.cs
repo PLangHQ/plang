@@ -13,13 +13,16 @@ namespace PLang.Tests.App.Types;
 /// (NumberParse, DateWrapper, DurationWrapper, PathTests, BoolWrapper); this file
 /// keeps only what those don't: the locale guard and the reference-fundamental hooks.
 /// </summary>
-public class ValueConversionHookTests
+public class ValueConversionHookTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private static (global::app.@this app, global::app.actor.context.@this context) MakeApp()
     {
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-conv-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
-        var app = TestApp.Create(dir);
+        var app = new global::app.@this(dir).Testing();
         return (app, app.actor.list.User.Context);
     }
 
@@ -37,7 +40,7 @@ public class ValueConversionHookTests
             System.Threading.Thread.CurrentThread.CurrentCulture =
                 System.Globalization.CultureInfo.GetCultureInfo("de-DE");
 
-            var ctx = global::PLang.Tests.TestApp.SharedContext;
+            var ctx = app.actor.list.User.Context;
             var text = ctx.Format("text/plain");
             var dec = (await text.Deserialize<global::app.type.item.number.@this>("3.14", ctx).Value());
             await Assert.That(dec).IsEqualTo(3.14m);

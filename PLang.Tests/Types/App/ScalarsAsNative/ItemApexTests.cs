@@ -12,8 +12,11 @@ namespace PLang.Tests.App.ScalarsAsNative;
 // narrow as behavior — but NOT ordering and NOT value-equality. Those stay
 // opt-in interfaces (IOrderableValue / IEquatableValue) so `dict : item`
 // keeps no order it can't honor.
-public class ItemApexTests
+public class ItemApexTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task Item_IsApex_EveryValueTypeInheritsItem()
     {
@@ -47,7 +50,7 @@ public class ItemApexTests
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.DeclaredOnly,
             null, new[] { typeof(object), typeof(object) }, null)).IsNull();
         // dict declares its OWN hook — equality-only (NotEqual for unequal, no order).
-        await Assert.That(await new Dict().Compare(new Dict(), global::PLang.Tests.TestApp.SharedContext)).IsEqualTo(global::app.data.Comparison.Equal);
+        await Assert.That(await new Dict().Compare(new Dict(), app.actor.list.User.Context)).IsEqualTo(global::app.data.Comparison.Equal);
     }
 
     [Test]
@@ -57,7 +60,7 @@ public class ItemApexTests
         // UNEQUAL dicts answer NotEqual, which has no order: the boundary errors.
         var d1 = new Dict(); d1.Set("a", 1);
         var d2 = new Dict(); d2.Set("a", 2);
-        var ctx = global::PLang.Tests.TestApp.SharedContext;
+        var ctx = app.actor.list.User.Context;
         await Assert.That(() => CompareTestOps.OrdD(new Data("a", d1, context: ctx), new Data("b", d2, context: ctx)))
             .Throws<global::app.data.IncomparableException>();
         // list, which DOES implement IOrderableValue, still sorts (empty == empty).
@@ -73,7 +76,7 @@ public class ItemApexTests
         Item emptyList = new PList();
         Item five = ((Number)(5));
         var fullDict = new Dict();
-        fullDict.Set(new Data("k", "v", context: global::PLang.Tests.TestApp.SharedContext));
+        fullDict.Set(new Data("k", "v", context: app.actor.list.User.Context));
         Item nonEmptyDict = fullDict;
 
         await Assert.That(emptyDict.IsTruthy()).IsFalse();
@@ -81,8 +84,8 @@ public class ItemApexTests
         await Assert.That(five.IsTruthy()).IsTrue();
         await Assert.That(nonEmptyDict.IsTruthy()).IsTrue();
         // The async contract delegates to the sync path by default.
-        await Assert.That(await emptyDict.AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
-        await Assert.That(await five.AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
+        await Assert.That(await emptyDict.AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
+        await Assert.That(await five.AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
     }
 
     [Test]

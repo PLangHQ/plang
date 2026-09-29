@@ -9,8 +9,11 @@ namespace PLang.Tests.App.Types;
 // int/long/decimal/double/float are KINDS of number — not separate top-level types.
 // No Context, no IContext stored.
 
-public class NumberValueTests
+public class NumberValueTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test] public async Task From_Int_StoresKindInt()
         => await Assert.That(((number)(5)).Kind.Name).IsEqualTo("int");
 
@@ -86,22 +89,22 @@ public class NumberValueTests
     [Test]
     public async Task IBooleanResolvable_Zero_IsFalsy()
     {
-        await Assert.That(await ((number)(0)).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
-        await Assert.That(await ((number)(0m)).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
-        await Assert.That(await ((number)(0d)).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
+        await Assert.That(await ((number)(0)).AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
+        await Assert.That(await ((number)(0m)).AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
+        await Assert.That(await ((number)(0d)).AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
     }
 
     [Test]
     public async Task IBooleanResolvable_NonZero_IsTruthy()
     {
-        await Assert.That(await ((number)(1)).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
-        await Assert.That(await ((number)(-1)).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
-        await Assert.That(await ((number)(0.1m)).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
+        await Assert.That(await ((number)(1)).AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
+        await Assert.That(await ((number)(-1)).AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
+        await Assert.That(await ((number)(0.1m)).AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
     }
 
     [Test]
     public async Task IBooleanResolvable_NaN_IsFalsy()
-        => await Assert.That(await ((number)(double.NaN)).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
+        => await Assert.That(await ((number)(double.NaN)).AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
 
     [Test]
     public async Task NumberDoesNotImplementOrStore_IContextOrContextReference()

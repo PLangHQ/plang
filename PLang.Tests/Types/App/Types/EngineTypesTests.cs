@@ -137,7 +137,7 @@ public class EngineTypesTests
     [Test]
     public async Task Engine_HasTypesProperty()
     {
-        await using var engine = TestApp.Create("/test");
+        await using var engine = new global::app.@this("/test").Testing();
 
         await Assert.That(engine.type.list).IsNotNull();
         await Assert.That(engine.type.list.Clr("string")).IsEqualTo(typeof(global::app.type.item.text.@this));

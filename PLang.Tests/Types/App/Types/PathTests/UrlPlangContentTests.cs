@@ -12,7 +12,7 @@ public class UrlPlangContentTests
         System.IO.Directory.CreateDirectory(root);
         // real signing — the no-crypto test signer verifies anything, and verifying is what's under test
         var app = new global::app.@this(root);
-        TestApp.UseSharedIdentity(app);
+        (app).TestIdentity();
         return (app, root);
     }
 

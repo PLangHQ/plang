@@ -14,7 +14,7 @@ public class HttpPathTests
     {
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-http-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
-        var app = TestApp.Create(dir);
+        var app = new global::app.@this(dir).Testing();
         // Pre-grant http access so the Permission gate doesn't prompt during tests.
         return (app, app.actor.list.User.Context);
     }

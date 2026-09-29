@@ -6,7 +6,7 @@ namespace PLang.Tests.App.TypeKindStrict.KindDerivationTests;
 
 public class NumericInferenceTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/numinfer-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this("/tmp/numinfer-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     [Test] public async Task MintTyped_FromInt_ProducesNumberIntName_NotInt()

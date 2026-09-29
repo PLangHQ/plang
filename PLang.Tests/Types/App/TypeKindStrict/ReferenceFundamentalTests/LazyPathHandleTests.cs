@@ -18,7 +18,7 @@ public class LazyPathHandleTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-lazy-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        _app = TestApp.Create(root);
+        _app = new global::app.@this(root).Testing();
     }
 
     [After(Test)]
@@ -41,7 +41,7 @@ public class LazyPathHandleTests
         // The file does NOT exist. If `set` read it, this would error — it
         // doesn't, because a path-backed handle reads nothing at the set.
         var context = _app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set",
+        var action = context.Action("variable", "set",
             ("name", "%pic%"),
             ("value", "ghost.jpg"),
             ("type", new global::app.type.@this("image")));

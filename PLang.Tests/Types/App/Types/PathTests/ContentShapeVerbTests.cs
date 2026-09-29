@@ -17,7 +17,7 @@ public class ContentShapeVerbTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-csv-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return TestApp.Create(root);
+        return new global::app.@this(root).Testing();
     }
 
     private static async Task<global::app.data.@this> Content(FilePath p, global::app.actor.context.@this context)

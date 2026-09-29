@@ -9,7 +9,7 @@ public class StrictValidateBuildTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() { _app = TestApp.Create("/app"); }
+    public void Setup() { _app = new global::app.@this("/app").Testing(); }
 
     // Minimal 1×1 GIF87a + PNG byte fixtures.
     private static readonly byte[] GifBytes = new byte[]

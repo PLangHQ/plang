@@ -11,9 +11,12 @@ using LlmMessage = global::app.module.llm.LlmMessage;
 /// lowers ITSELF (string→int, nested dict→record, list-of-dicts→list-of-records) —
 /// no STJ round-trip. Consolidates the former Runtime/Modules dict-conversion suites.
 /// </summary>
-public class DictListToRecordTests
+public class DictListToRecordTests : System.IAsyncDisposable
 {
-    private static readonly global::app.actor.context.@this Ctx = global::PLang.Tests.TestApp.SharedContext;
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
+    private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
 
     private static Dict D(params (string Key, object? Value)[] entries)
     {
@@ -22,7 +25,7 @@ public class DictListToRecordTests
         return d;
     }
 
-    private static PlangList L(params global::app.type.item.@this[] items)
+    private PlangList L(params global::app.type.item.@this[] items)
     {
         var l = new PlangList();
         foreach (var i in items) l.Add(i);
@@ -112,7 +115,7 @@ public class DictListToRecordTests
             .Value<global::app.type.item.list.@this<LlmMessage>>();
 
         await Assert.That(typed).IsNotNull();
-        await Assert.That(typed!.Items(global::PLang.Tests.TestApp.SharedContext).Count()).IsEqualTo(2);
+        await Assert.That(typed!.Items(app.actor.list.User.Context).Count()).IsEqualTo(2);
     }
 }
 

@@ -6,7 +6,7 @@ public class HttpReadTemplateTests
 {
     [Test] public async Task AUrlRead_AsATemplate_IsBornATemplate()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var url = global::app.type.item.path.@this.Resolve("https://example.com/t.txt", ctx);
 
@@ -20,7 +20,7 @@ public class HttpReadTemplateTests
     [Test] public async Task AUrlRead_AsATemplate_RendersItsContent()
     {
         using var server = new HttpTestServer();
-        await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "urltpl-" + System.Guid.NewGuid().ToString("N")[..6]));
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "urltpl-" + System.Guid.NewGuid().ToString("N")[..6])).Testing();
         var ctx = app.actor.list.User.Context;
         var address = server.MapStoredBody(System.Text.Encoding.UTF8.GetBytes("Hello %name%!"), "text/plain");
         var grant = new global::app.type.item.permission.@this("User", new global::app.type.item.path.http.@this(address).Absolute,
@@ -36,7 +36,7 @@ public class HttpReadTemplateTests
 
     [Test] public async Task AUrlRead_Plain_IsNoTemplate()
     {
-        await using var app = TestApp.Create("/app");
+        await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var url = global::app.type.item.path.@this.Resolve("https://example.com/t.txt", ctx);
 

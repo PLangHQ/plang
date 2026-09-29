@@ -6,8 +6,11 @@ namespace PLang.Tests.App.Types;
 // the cross-assembly coverage the Cut4 plang goals can't express (the goal
 // language has no surface for constructing arbitrary CLR instances).
 
-public class TypeProviderDllRoundtripTests
+public class TypeProviderDllRoundtripTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private static readonly string FixtureDll = System.IO.Path.GetFullPath(
         System.IO.Path.Combine(AppContext.BaseDirectory, "..", "..", "..",
             "..", "Shared", "Fixtures", "dlls", "TypeProvider.dll"));
@@ -18,7 +21,7 @@ public class TypeProviderDllRoundtripTests
     {
         var asm = LoadFixture();
         var types = new global::app.type.list.@this();
-        var result = types.Add(asm, global::PLang.Tests.TestApp.SharedContext);
+        var result = types.Add(asm, app.actor.list.User.Context);
 
         await Assert.That(result.Success).IsTrue();
         await Assert.That(types.Contains("money")).IsTrue();

@@ -33,7 +33,7 @@ public class DotDotTraversalRegressionTests
         System.IO.Directory.CreateDirectory(dir);
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(dir, "subdir"));
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(dir, "subdir", ".build"));
-        var app = TestApp.Create(dir);
+        var app = new global::app.@this(dir).Testing();
         return (app, app.actor.list.User.Context, dir);
     }
 

@@ -11,7 +11,7 @@ public class ContainerKindDoorTests
     [Test]
     public async Task PlangList_ResolvesToListWithElementKind()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/ckd-1");
+        var app = new global::app.@this("/tmp/ckd-1").Testing();
         var entity = app.type.list[typeof(ItemList)];
         await Assert.That(entity.Name).IsEqualTo("list");
         await Assert.That(entity.kind.Name).IsEqualTo("path");     // element rides as kind
@@ -21,7 +21,7 @@ public class ContainerKindDoorTests
     [Test]
     public async Task ClrCollections_MapToTheSameListEntity()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/ckd-2");
+        var app = new global::app.@this("/tmp/ckd-2").Testing();
         // CLR List<T>, arrays, and IList<T> all resolve to the plang list family.
         foreach (var t in new[] {
             typeof(System.Collections.Generic.List<string>),
@@ -37,7 +37,7 @@ public class ContainerKindDoorTests
     [Test]
     public async Task ByteArray_IsBytes_NotList()
     {
-        var app = global::PLang.Tests.TestApp.Create("/tmp/ckd-4");
+        var app = new global::app.@this("/tmp/ckd-4").Testing();
         await Assert.That(app.type.list[typeof(byte[])].Name).IsNotEqualTo("list");
     }
 }

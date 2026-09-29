@@ -11,7 +11,7 @@ public class TypeNavigatesAsFullTypeTests
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
     [Before(Test)]
-    public void Setup() => _app = TestApp.Create("/tmp/typenav-" + System.Guid.NewGuid().ToString("N")[..8]);
+    public void Setup() => _app = new global::app.@this("/tmp/typenav-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
 
     [After(Test)]
     public async Task Cleanup() => await _app.DisposeAsync();

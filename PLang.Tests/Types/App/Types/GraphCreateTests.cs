@@ -17,7 +17,7 @@ public class GraphCreateTests
     [Test]
     public async Task Goal_FromDict_IsDeclined()
     {
-        await using var app = TestApp.Create("/t");
+        await using var app = new global::app.@this("/t").Testing();
         var slot = DictSlot(app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.@this>()).IsNull();
         await Assert.That(slot.Error?.Message).Contains("a goal is read from its .pr, never converted from a value");
@@ -27,7 +27,7 @@ public class GraphCreateTests
     [Test]
     public async Task Step_FromDict_IsDeclined()
     {
-        await using var app = TestApp.Create("/t");
+        await using var app = new global::app.@this("/t").Testing();
         var slot = DictSlot(app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.step.@this>()).IsNull();
         await Assert.That(slot.Error?.Message).Contains("a step is built by its goal, never converted from a value");
@@ -36,7 +36,7 @@ public class GraphCreateTests
     [Test]
     public async Task Action_FromDict_IsDeclined()
     {
-        await using var app = TestApp.Create("/t");
+        await using var app = new global::app.@this("/t").Testing();
         var slot = DictSlot(app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.step.action.@this>()).IsNull();
         await Assert.That(slot.Error?.Message).Contains("an action is built by its step, never converted from a value");
@@ -45,7 +45,7 @@ public class GraphCreateTests
     [Test]
     public async Task Goal_PassesThrough()
     {
-        await using var app = TestApp.Create("/t");
+        await using var app = new global::app.@this("/t").Testing();
         var goal = new global::app.goal.@this { Name = "Start" };
         var slot = new global::app.data.@this("node", goal, context: app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.@this>()).IsSameReferenceAs(goal);
@@ -54,7 +54,7 @@ public class GraphCreateTests
     [Test]
     public async Task Step_PassesThrough()
     {
-        await using var app = TestApp.Create("/t");
+        await using var app = new global::app.@this("/t").Testing();
         var step = new global::app.goal.step.@this { Index = 0, Text = "write out 'hi'" };
         var slot = new global::app.data.@this("node", step, context: app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.step.@this>()).IsSameReferenceAs(step);
@@ -63,7 +63,7 @@ public class GraphCreateTests
     [Test]
     public async Task Action_PassesThrough()
     {
-        await using var app = TestApp.Create("/t");
+        await using var app = new global::app.@this("/t").Testing();
         var action = new global::app.goal.step.action.@this { Module = app.Module("output"), Name = "write" };
         var slot = new global::app.data.@this("node", action, context: app.actor.list.User.Context);
         await Assert.That(await slot.Value<global::app.goal.step.action.@this>()).IsSameReferenceAs(action);

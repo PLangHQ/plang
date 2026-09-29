@@ -10,7 +10,7 @@ public class FileUrlTests : System.IAsyncDisposable
         "plang-fileurl-" + System.Guid.NewGuid().ToString("N")[..8]);
     private readonly global::app.@this _app;
 
-    public FileUrlTests() => _app = TestApp.Create(_root);
+    public FileUrlTests() => _app = new global::app.@this(_root).Testing();
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 

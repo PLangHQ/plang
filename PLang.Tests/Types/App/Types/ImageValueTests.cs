@@ -7,8 +7,11 @@ namespace PLang.Tests.App.Types;
 // IBooleanResolvable = bytes.Length>0. Composition over union: an image carries a Path
 // facet rather than being typed as path|image.
 
-public class ImageValueTests
+public class ImageValueTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     private static readonly byte[] PngHeader = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
 
     [Test] public async Task Image_FromBytesAndMime_StoresBoth()
@@ -35,8 +38,8 @@ public class ImageValueTests
 
     [Test] public async Task Image_FromFileRead_PathReferencesSourceFile()
     {
-        await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-img-" + System.Guid.NewGuid().ToString("N")[..8]));
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-img-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var raw = System.IO.Path.Combine(app.AbsolutePath, "photo.png");
         var p = global::app.type.item.path.@this.Resolve(raw, app.actor.list.User.Context);
         var img = new image(PngHeader, p, app.actor.list.User.Context);
@@ -46,8 +49,8 @@ public class ImageValueTests
 
     [Test] public async Task Image_PathBorn_JpegExtension_KindIsCanonicalJpg()
     {
-        await using var app = TestApp.Create(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-            "plang-img-" + System.Guid.NewGuid().ToString("N")[..8]));
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-img-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("photo.jpeg", app.actor.list.User.Context);
         var img = new image(p, app.actor.list.User.Context);
         await Assert.That(img.Mime).IsEqualTo("image/jpeg");
@@ -70,10 +73,10 @@ public class ImageValueTests
     }
 
     [Test] public async Task Image_IBooleanResolvable_NonEmptyBytes_Truthy()
-        => await Assert.That(await new image(PngHeader, "image/png").AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
+        => await Assert.That(await new image(PngHeader, "image/png").AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
 
     [Test] public async Task Image_IBooleanResolvable_EmptyBytes_Falsy()
-        => await Assert.That(await new image(System.Array.Empty<byte>(), "image/png").AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
+        => await Assert.That(await new image(System.Array.Empty<byte>(), "image/png").AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
 
     [Test] public async Task Image_PlangTypeAttribute_Registered()
     {

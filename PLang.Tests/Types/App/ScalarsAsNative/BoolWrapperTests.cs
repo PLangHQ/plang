@@ -6,13 +6,16 @@ namespace PLang.Tests.App.ScalarsAsNative;
 
 // bool.@this — the truthiness primitive. Wraps a raw bool; this is where the
 // IBooleanResolvable turtles stop. Equality-only (Order throws). OwnedClrTypes = bool.
-public class BoolWrapperTests
+public class BoolWrapperTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task Bool_WrapsRawBool_AsBooleanAsyncBottomsOutAtValue()
     {
-        await Assert.That(await new Bool(true).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsTrue();
-        await Assert.That(await new Bool(false).AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
+        await Assert.That(await new Bool(true).AsBooleanAsync(app.actor.list.User.Context)).IsTrue();
+        await Assert.That(await new Bool(false).AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
         await Assert.That(new Bool(true).IsTruthy()).IsTrue();
         await Assert.That(new Bool(false).IsTruthy()).IsFalse();
     }
@@ -44,7 +47,7 @@ public class BoolWrapperTests
     {
         // bool is equality-only: unequal bools answer NotEqual (never an order),
         // so the ordering boundary errors.
-        await Assert.That(await new Bool(true).Compare(new Bool(false), global::PLang.Tests.TestApp.SharedContext)).IsEqualTo(global::app.data.Comparison.NotEqual);
+        await Assert.That(await new Bool(true).Compare(new Bool(false), app.actor.list.User.Context)).IsEqualTo(global::app.data.Comparison.NotEqual);
         await Assert.That(() => CompareTestOps.OrdD(new Data("", new Bool(true)), new Data("", new Bool(false))))
             .Throws<global::app.data.IncomparableException>();
     }

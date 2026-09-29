@@ -7,7 +7,7 @@ public class CollectedTypeTests
     // A concept for the test: named by its namespace tail ("probe"), answering for its own Name.
     [Test] public async Task Get_AnswersTheMatchingElement_Or404()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var probes = new global::app.type.@this<Probe.@this, global::app.type.item.list.@this<Probe.@this>>(app);
         probes.list.Add(new Probe.@this("a"));
         probes.list.Add(new Probe.@this("b"));
@@ -23,7 +23,7 @@ public class CollectedTypeTests
 
     [Test] public async Task TheCollectedType_IsNamedByItsElement_AndItsClassIsAType()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var probes = new global::app.type.@this<Probe.@this, global::app.type.item.list.@this<Probe.@this>>(app);
         await Assert.That(probes.Name).IsEqualTo("probe");
         await Assert.That(app.type.list[probes.GetType()].Name).IsEqualTo("type");
@@ -31,7 +31,7 @@ public class CollectedTypeTests
 
     [Test] public async Task AppType_IsTheTypeNamedType_ItsGetAnswersByNameOrAlias()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         await Assert.That(app.type.Name).IsEqualTo("type");
 
         var text = await app.type.Get("string");
@@ -47,7 +47,7 @@ public class CollectedTypeTests
 
     [Test] public async Task AppType_Navigation_AMemberFirst_ThenAType()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var parent = new global::app.data.@this("type", app.type, context: app.actor.list.User.Context);
 
         var list = await app.type.Get(parent, "list");
@@ -73,7 +73,7 @@ public class CollectedTypeTests
 
     [Test] public async Task Face_OfAppType_IsTheTypeNames_WithoutInternalOnes()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var face = await Out(app, app.type);
         await Assert.That(face).Contains("\"list\"");
         await Assert.That(face).Contains("\"text\"");
@@ -83,7 +83,7 @@ public class CollectedTypeTests
 
     [Test] public async Task Face_OfOneType_IsItsFacts_AndItsKindNames()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var face = await Out(app, app.type.list["number"]);
         // named by its namespace; the word it goes by beside it
         await Assert.That(face).Contains("\"name\":\"app.type.item.number\"");
@@ -95,14 +95,14 @@ public class CollectedTypeTests
 
     [Test] public async Task A_TypeInTheStoreView_StaysItsIdentity()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var store = await Out(app, app.type.list["number"], global::app.View.Store);
         await Assert.That(store).IsEqualTo("{\"name\":\"number\"}");
     }
 
     [Test] public async Task Current_WithNothingInside_IsNotFound()
     {
-        await using var app = TestApp.Create("/test");
+        await using var app = new global::app.@this("/test").Testing();
         var probes = new global::app.type.@this<Probe.@this, global::app.type.item.list.@this<Probe.@this>>(app);
         var current = probes.current(app.actor.list.User.Context);
         await Assert.That(current.Success).IsFalse();

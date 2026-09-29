@@ -6,17 +6,17 @@ namespace PLang.Tests.App.Types;
 // one field carrying full identity, no flat sibling `kind` key.
 public class KindFieldTests : System.IAsyncDisposable
 {
-    private readonly global::app.@this _app = global::PLang.Tests.TestApp.Create("/tmp/kindfield-" + System.Guid.NewGuid().ToString("N")[..6]);
+    private readonly global::app.@this _app = new global::app.@this("/tmp/kindfield-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     // A Data writes itself via Data.Output through the serializer's async path (the Out view),
     // NOT JsonSerializer.Serialize — the Wire converter is read-only and throws on STJ Write.
-    private static string ToJson(global::app.data.@this data)
-        => global::PLang.Tests.TestApp.SharedContext.Format("application/plang")
-            .Serialize(data, global::PLang.Tests.TestApp.SharedContext).Peek()!.ToString()!;
+    private string ToJson(global::app.data.@this data)
+        => _app.actor.list.User.Context.Format("application/plang")
+            .Serialize(data, _app.actor.list.User.Context).Peek()!.ToString()!;
 
-    private static global::app.data.@this FromJson(string json)
-        => global::PLang.Tests.TestApp.SharedContext.Format("application/plang").Deserialize(json, global::PLang.Tests.TestApp.SharedContext);
+    private global::app.data.@this FromJson(string json)
+        => _app.actor.list.User.Context.Format("application/plang").Deserialize(json, _app.actor.list.User.Context);
 
     [Test]
     public async Task PrParameter_OmitsKindWhenAbsent()

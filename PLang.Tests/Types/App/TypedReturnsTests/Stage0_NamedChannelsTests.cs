@@ -12,7 +12,7 @@ public class Stage0_NamedChannelsTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() => _app = TestApp.Create("/app");
+    public void Setup() => _app = new global::app.@this("/app").Testing();
 
     [After(Test)]
     public async Task TearDown() { await _app.DisposeAsync(); }
@@ -36,7 +36,7 @@ public class Stage0_NamedChannelsTests
     public async Task Builder_BuildEnd_DisposesBuilderChannel()
     {
         Channels.CreateMemoryChannel("builder");
-        var removed = await Channels.Remove("builder", global::PLang.Tests.TestApp.SharedContext);
+        var removed = await Channels.Remove("builder", _app.actor.list.User.Context);
         await removed.IsSuccess();
         await Assert.That(Channels.Get("builder")).IsNull();
     }
@@ -52,7 +52,7 @@ public class Stage0_NamedChannelsTests
         var raw = Lower<Dictionary<string, object?>>(w1)!;
         await Assert.That((string)raw["action"]!).IsEqualTo("file.read");
         await Assert.That((string)raw["message"]!).IsEqualTo("duplicate");
-        await Assert.That(await w1.AreEqual(w2, global::PLang.Tests.TestApp.SharedContext)).IsTrue()
+        await Assert.That(await w1.AreEqual(w2, _app.actor.list.User.Context)).IsTrue()
             .Because("Structural dict equality lets consumers de-dup identical warnings.");
     }
 

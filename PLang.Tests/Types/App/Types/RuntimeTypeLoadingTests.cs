@@ -8,8 +8,11 @@ namespace PLang.Tests.App.Types;
 // Tests use the in-test fixture assembly via app.type.list.Loader (the static helper
 // behind code.load) — no real DLL roundtrip needed to verify the wiring.
 
-public class RuntimeTypeLoadingTests
+public class RuntimeTypeLoadingTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [global::app.Attributes.PlangType("runtime-fixture-only")]
     public sealed class FixtureOnly : global::app.type.item.@this
     {
@@ -23,7 +26,7 @@ public class RuntimeTypeLoadingTests
     private static System.Reflection.Assembly TestAssembly =>
         typeof(RuntimeTypeLoadingTests).Assembly;
 
-    private static global::app.actor.context.@this Ctx => global::PLang.Tests.TestApp.SharedContext;
+    private global::app.actor.context.@this Ctx => app.actor.list.User.Context;
 
     [Test] public async Task LoadDll_PlangTypeClass_RegistersViaRegistryRegisterRuntime()
     {

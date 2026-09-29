@@ -14,8 +14,8 @@ public class Stage4_BuildMethodImplsTests
     [Before(Test)]
     public void Setup()
     {
-        _app = TestApp.Create(System.IO.Path.Combine(
-            System.IO.Path.GetTempPath(), "plang-stage4-" + System.Guid.NewGuid().ToString("N")[..8]));
+        _app = new global::app.@this(System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(), "plang-stage4-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
     }
 
     [After(Test)]

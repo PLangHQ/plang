@@ -9,7 +9,7 @@ public class SetMintCarriesKindTests
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() { _app = TestApp.Create("/app"); }
+    public void Setup() { _app = new global::app.@this("/app").Testing(); }
 
     [Test] public async Task Run_BareSetWithLiteralReadmeMd_MintTypeIsTextMd()
     {
@@ -19,7 +19,7 @@ public class SetMintCarriesKindTests
         // contract for the bare-set path. Stamping kind from extension at the
         // bare-set path is the `as text` enhancement, not this path.
         var context = _app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set",
+        var action = context.Action("variable", "set",
             ("name", "%doc%"),
             ("value", "readme.md"));
         var result = await action.Start(context);
@@ -35,7 +35,7 @@ public class SetMintCarriesKindTests
         // derives a kind from a literal — kind comes only from an explicit
         // `as text/<kind>` or a producing action'(await s Build()).
         var context = _app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set",
+        var action = context.Action("variable", "set",
             ("name", "%doc%"),
             ("value", "readme.md"),
             ("type", new global::app.type.@this("text")));
@@ -51,7 +51,7 @@ public class SetMintCarriesKindTests
         // A reference fundamental DOES parse its kind from the path — the value
         // is a path/handle whose extension is a real format signal.
         var context = _app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set",
+        var action = context.Action("variable", "set",
             ("name", "%pic%"),
             ("value", "file.jpg"),
             ("type", new global::app.type.@this("image")));
@@ -67,7 +67,7 @@ public class SetMintCarriesKindTests
         // No `as` clause → the value-shape type wins. A media extension in a
         // bare literal does NOT promote it to image — there is no image literal.
         var context = _app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set",
+        var action = context.Action("variable", "set",
             ("name", "%x%"),
             ("value", "file.jpg"));
         var result = await action.Start(context);
@@ -80,7 +80,7 @@ public class SetMintCarriesKindTests
     [Test] public async Task Run_SetAsImageGifWithGifBytes_MintTypeIsImageGif()
     {
         var context = _app.actor.list.User.Context;
-        var action = TestAction.Create("variable", "set",
+        var action = context.Action("variable", "set",
             ("name", "%img%"),
             ("value", "real.gif"),
             ("type", new global::app.type.@this("image", "gif")));

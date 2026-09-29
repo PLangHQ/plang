@@ -18,7 +18,7 @@ public class SchemeRegistryTests
     {
         var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-scheme-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
-        var app = TestApp.Create(dir);
+        var app = new global::app.@this(dir).Testing();
         return (app, app.actor.list.User.Context);
     }
 

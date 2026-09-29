@@ -20,7 +20,7 @@ public class PathDerivationVerbTests
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-deriv-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        var app = TestApp.Create(root);
+        var app = new global::app.@this(root).Testing();
         var abs = System.IO.Path.Combine(root, relUnderRoot.TrimStart('/'));
         return (app, new FilePath(abs));
     }
@@ -31,7 +31,7 @@ public class PathDerivationVerbTests
         // check inheritance; an App with arbitrary root is fine.
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-deriv-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        var app = TestApp.Create(root);
+        var app = new global::app.@this(root).Testing();
         return new HttpPath(url);
     }
 

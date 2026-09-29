@@ -10,14 +10,17 @@ namespace PLang.Tests;
 public static class TemplateStamp
 {
     public static void Apply(global::app.goal.step.action.@this action)
+        => Apply(action, global::PLang.Tests.TestApp.SharedContext);
+
+    /// <summary>Stamps <paramref name="action"/>'s parameters with <paramref name="context"/>'s types.</summary>
+    public static void Apply(global::app.goal.step.action.@this action, global::app.actor.context.@this context)
     {
-        Stamp(action.Property);
-        Stamp(action.Default);
+        Stamp(action.Property, context);
+        Stamp(action.Default, context);
     }
 
-    private static void Stamp(global::app.type.property.list.@this properties)
+    private static void Stamp(global::app.type.property.list.@this properties, global::app.actor.context.@this context)
     {
-        var context = global::PLang.Tests.TestApp.SharedContext;
         foreach (var p in properties.ToList())
         {
             var item = p.Value;

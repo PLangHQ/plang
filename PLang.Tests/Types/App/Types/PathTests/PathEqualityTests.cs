@@ -18,7 +18,7 @@ public class PathEqualityTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-eq-" + tag + "-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(root);
-        return (TestApp.Create(root), root);
+        return (new global::app.@this(root).Testing(), root);
     }
 
     private static global::app.type.item.path.file.@this Make(global::app.@this app, string abs)

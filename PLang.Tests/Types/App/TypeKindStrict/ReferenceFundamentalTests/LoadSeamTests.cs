@@ -17,8 +17,8 @@ public class LoadSeamTests
 {
     private global::app.@this _app = null!;
 
-    private static global::app.actor.context.@this Ctx => global::PLang.Tests.TestApp.SharedContext;
-    private static global::app.type.kind.@this Plang => Ctx.Format("application/plang");
+    private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
+    private global::app.type.kind.@this Plang => Ctx.Format("application/plang");
 
     [Before(Test)]
     public void Setup()
@@ -26,7 +26,7 @@ public class LoadSeamTests
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-load-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        _app = TestApp.Create(root);
+        _app = new global::app.@this(root).Testing();
     }
 
     [After(Test)]

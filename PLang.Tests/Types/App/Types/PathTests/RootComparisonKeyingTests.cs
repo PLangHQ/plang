@@ -16,7 +16,7 @@ public class RootComparisonKeyingTests
         root = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-rce-" + System.Guid.NewGuid().ToString("N")[..8]);
         System.IO.Directory.CreateDirectory(root);
-        return TestApp.Create(root);
+        return new global::app.@this(root).Testing();
     }
 
     [Test] public async Task PathEquals_SameAbsolutePath_DifferentCase_OnLinux_AreNotEqual()

@@ -9,8 +9,11 @@ namespace PLang.Tests.App.ScalarsAsNative;
 // After build-out it carries ops, ordinal compare, value-equality + GetHashCode,
 // truthiness, and atomicity (NOT IEnumerable as chars). Order/equality are
 // ordinal case-insensitive — matching the historical ScalarComparer policy.
-public class TextWrapperTests
+public class TextWrapperTests : System.IAsyncDisposable
 {
+    private readonly global::app.@this app = new global::app.@this("/app").Testing();
+    public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
+
     [Test]
     public async Task Text_Length_ReturnsCodepointCount()
     {
@@ -91,7 +94,7 @@ public class TextWrapperTests
         Item nonEmpty = new Text("x");
         await Assert.That(empty.IsTruthy()).IsFalse();
         await Assert.That(nonEmpty.IsTruthy()).IsTrue();
-        await Assert.That(await empty.AsBooleanAsync(global::PLang.Tests.TestApp.SharedContext)).IsFalse();
+        await Assert.That(await empty.AsBooleanAsync(app.actor.list.User.Context)).IsFalse();
     }
 
     [Test]

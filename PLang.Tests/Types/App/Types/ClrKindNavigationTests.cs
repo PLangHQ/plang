@@ -8,7 +8,7 @@ namespace PLang.Tests.App.Types;
 public class ClrKindNavigationTests : System.IAsyncDisposable
 {
     private readonly global::app.@this _app =
-        global::PLang.Tests.TestApp.Create("/tmp/clrkind-" + System.Guid.NewGuid().ToString("N")[..6]);
+        new global::app.@this("/tmp/clrkind-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
     private static JsonElement Json(string s) => JsonDocument.Parse(s).RootElement.Clone();

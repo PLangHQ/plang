@@ -29,7 +29,7 @@ public class HttpPathRedirectTests
             "plang-http-redirect-" + System.Guid.NewGuid().ToString("N"));
         System.IO.Directory.CreateDirectory(dir);
         var app = new AppEngine(dir);
-        global::PLang.Tests.TestApp.UseTestSigning(app);
+        (app).TestSigning();
         return (app, app.actor.list.User.Context);
     }
 

@@ -9,7 +9,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
     private global::app.@this _app = null!;
 
     [Before(Test)]
-    public void Setup() { _app = TestApp.Create("/app"); }
+    public void Setup() { _app = new global::app.@this("/app").Testing(); }
 
     private static readonly byte[] GifBytes = new byte[]
     {
@@ -56,7 +56,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
         // Validate defers — value is a %var% reference.
         await Assert.That(await Handler("%upload%").Validate()).IsNull();
 
-        var action = TestAction.Create("variable", "set",
+        var action = context.Action("variable", "set",
             ("name", "%img%"),
             ("value", "%upload%"),
             ("type", Type("image", "gif", true)));
@@ -71,7 +71,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
 
         await Assert.That(await Handler(GifBytes).Validate()).IsNull();
 
-        var action = TestAction.Create("variable", "set",
+        var action = context.Action("variable", "set",
             ("name", "%img%"),
             ("value", GifBytes),
             ("type", Type("image", "gif", true)));
@@ -93,7 +93,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
     {
         var context = _app.actor.list.User.Context;
         var pngImage = new global::app.type.item.image.@this(PngBytes, "image/png");
-        var action = TestAction.Create("variable", "set",
+        var action = context.Action("variable", "set",
             ("name", "%img%"),
             ("value", pngImage),
             ("type", Type("image", "gif", true)));
@@ -106,7 +106,7 @@ public class Cut2_StrictMismatchFailsAtRightLayer
     {
         var context = _app.actor.list.User.Context;
         var gifImage = new global::app.type.item.image.@this(GifBytes, "image/gif");
-        var action = TestAction.Create("variable", "set",
+        var action = context.Action("variable", "set",
             ("name", "%img%"),
             ("value", gifImage),
             ("type", Type("image", "gif", true)));
