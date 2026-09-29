@@ -669,8 +669,7 @@ public sealed class OpenAi : ILlm
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException) { }
         if (imgPath != null)
         {
-            var content = await (await imgPath.Read(context))
-                .Use<global::app.type.item.reference.@this>(async file => await file.Content(context));
+            var content = await imgPath.Bytes(context);
             // OpenAI takes an attached image as a data URI — composed here, at its boundary.
             if (content.Success && content.Peek() is global::app.type.item.binary.@this { Value.Length: > 0 } bytes)
             {

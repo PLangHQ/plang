@@ -78,8 +78,9 @@ public abstract partial class @this
     protected global::app.type.@this Reference(string type, actor.context.@this context)
         => context.App.type.list[new global::app.type.@this(type, Kind(context).kind is { IsEmpty: false } k ? k.Name : null), context];
 
-    /// <summary>The raw bytes at this location, through the gate — what a reference this path lands samples
-    /// when its content is first touched. Content is the reference's (<see cref="Read"/>), not the path's.</summary>
+    /// <summary>The raw bytes at this location, through the gate — asked in C# by whatever needs the bytes
+    /// themselves (a reference sampling its content, a request body, an attachment). A program reads a location
+    /// through <see cref="Read"/>, which lands a value; this is the bytes, not a value.</summary>
     internal abstract Task<data.@this<global::app.type.item.binary.@this>> Bytes(actor.context.@this context);
     public abstract Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync(actor.context.@this context);
     public abstract Task<data.@this<StatInfo>> Stat(actor.context.@this context);
