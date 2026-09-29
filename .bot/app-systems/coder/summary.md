@@ -82,9 +82,16 @@ as the User actor, so "Write only for system" would block its self-rebuild); whe
 (`actor/memory` vs `actor/context/variable`) plus `Context {internal set}` and the `%!variables%` second door.
 The llm cache stays unfixed on purpose. Pile2_SqliteSettings reads a file gone before this branch.
 
+- **12a** (the exception pass, 5fc297836 … 17199645f): 234 throws this branch added were classified; a program's
+  mistake now reaches the result under its own key. One carrier: `AppException` holds an `Error`
+  (Output/Normalize/Declined/SchemeNotRegistered/Callback* are AppExceptions) and every catch answers `ex.Error`;
+  one door from a foreign exception, `Error.FromException(ex)` (ServiceError 500, the type in the message); a
+  method that can answer a result answers (`Fail`/`Error`) instead of throwing. Dead code deleted
+  (sqlite.CreateAsync, stream WriteBytesAsync, Comparison.AsSign). Pins: `KeepsItsKeyTests` and key asserts beside
+  each change. Report-only: the `?` rows, PrFormatOutdated's load rebuild, the six `new static FromException` hides.
+
 ## Next
-12a: every `throw` this branch added is either plang itself broken (kept) or becomes a result error with a key.
-Then 12b (born knowing: a goal knows where it was loaded from at birth). Gate rule: diff failing **names**
+12b (born knowing: a goal knows where it was loaded from at birth). Gate rule: diff failing **names**
 against `baseline-failures.txt`; rebuild (`dev.sh build`) after reverting any mutation before a plang run.
 
 ## Code example
