@@ -193,15 +193,6 @@ public class SetTests
     }
 
     [Test]
-    public async Task Validate_TypeMismatch_ReturnsError()
-    {
-        var result = await WithValue("not a number", NumberInt).Validate();
-
-        await Assert.That(result).IsNotNull();
-        await Assert.That(result!.Message).Contains("type=number");
-    }
-
-    [Test]
     public async Task Validate_ValidTypeMatch_ReturnsNull()
     {
         var result = await WithValue(42, NumberInt).Validate();

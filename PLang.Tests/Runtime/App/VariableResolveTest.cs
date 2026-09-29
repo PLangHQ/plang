@@ -81,7 +81,10 @@ public class VariableResolveTest : System.IAsyncDisposable
         }, context).Start(context);
 
         var response = await context.Variable.Get("response");
-        await Assert.That((await response.Properties.Value("cost"))).IsEqualTo(100);
+        // the property holds the plang value written: the number 100
+        var cost = await response.Properties.Value("cost");
+        await Assert.That(cost is global::app.type.item.number.@this).IsTrue();
+        await Assert.That(cost?.ToString()).IsEqualTo("100");
     }
 
     [Test] public async Task VariableSet_BangOnUnsetVariable_IsVariableNotFound()

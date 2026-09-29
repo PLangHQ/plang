@@ -79,11 +79,14 @@ public class SettingsDataTests
     [Test]
     public async Task ActorDataSource_IsCreatedLazily()
     {
-        // Accessing DataSource should create the .db directory
-        var ds = _app.store;
-        await Assert.That(ds).IsNotNull();
-
+        // an app kept on disk (a test session's store is in memory): the store opens where it lives on first use
+        await using var onDisk = new global::app.@this(_tempDir).TestSigning();
         var dbDir = System.IO.Path.Combine(_tempDir, ".db");
+        await Assert.That(onDisk.store).IsNotNull();
+        await Assert.That(System.IO.Directory.Exists(dbDir)).IsFalse();
+
+        var ctx = onDisk.actor.list.System.Context;
+        await (await onDisk.store.Set("settings", "k", new global::app.data.@this("k", "v", context: ctx))).IsSuccess();
         await Assert.That(System.IO.Directory.Exists(dbDir)).IsTrue();
     }
 

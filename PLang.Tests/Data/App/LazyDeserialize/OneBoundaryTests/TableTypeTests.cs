@@ -42,7 +42,7 @@ public class TableTypeTests
     // signal that the reader is missing. The day a table/xlsx reader is added, this test
     // breaks and we update it to assert the parsed grid instead. (Silent ride-as-bytes
     // would hide the gap.)
-    [Test] public async Task TableXlsx_HasNoReaderYet_ThrowsUntilOneIsAdded()
+    [Test] public async Task TableXlsx_HasNoReaderYet_FailsUntilOneIsAdded()
     {
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
@@ -50,7 +50,11 @@ public class TableTypeTests
 
         byte[] bytes = { 0x50, 0x4B, 0x03, 0x04 }; // PK.. zip header (xlsx is a zip)
         var d = global::PLang.Tests.Shared.Make.FromRaw(bytes, ctx.App.type.list[new type("table", "xlsx"), ctx], ctx, "sheet");
-        await Assert.ThrowsAsync<System.NotSupportedException>(async () => await d.Value());
+        // no reader for the kind: the read fails on the Data, under its own key
+        await d.Value();
+        await d.IsFailure();
+        await Assert.That(d.Error!.Key).IsEqualTo("MaterializeFailed");
+        await Assert.That(d.Error.Message).Contains("no reader for type 'table' (kind 'xlsx')");
     }
 
     // The shape claim — `table` advertises itself as a grid (rows,

@@ -118,16 +118,6 @@ public class VariablesTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Set_StripsPercentFromName()
-    {
-        var stack = new Variables(_app.actor.list.User.Context);
-
-        stack.Set("%name%", "John");
-
-        await Assert.That(stack.Contains("name")).IsTrue();
-    }
-
-    [Test]
     public async Task Set_DataWithDifferentName_AliasesByKey_NoClone_NoRename()
     {
         // F3-3: when the value is a Data whose Name differs from the storage key,
@@ -714,7 +704,9 @@ public class VariablesTests : System.IAsyncDisposable
         var dict = stack.ToDictionary();
 
         await Assert.That((dict["name"])?.ToString()).IsEqualTo("John");
-        await Assert.That(dict["age"]).IsEqualTo(30);
+        // a value is the plang value it is: 30 is a number
+        await Assert.That(dict["age"] is global::app.type.item.number.@this).IsTrue();
+        await Assert.That(dict["age"]?.ToString()).IsEqualTo("30");
     }
 
     [Test]

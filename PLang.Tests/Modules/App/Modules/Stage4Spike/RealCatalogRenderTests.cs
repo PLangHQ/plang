@@ -38,7 +38,8 @@ public class RealCatalogRenderTests
         // navigates through the Data.Get door.
         var outp = await Render(app,
             "{% for m in modules %}{% if m.Name == 'file' %}{% for a in m.Action %}{{ a.Name }};{% endfor %}{% endif %}{% endfor %}");
-        await Assert.That(outp).Contains("file.read");
+        // an action's name is its own ("read"); it never borrows its module's
+        await Assert.That(outp).Contains("read;");
     }
 
     [Test]
