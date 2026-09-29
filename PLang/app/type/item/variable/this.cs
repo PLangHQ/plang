@@ -99,19 +99,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         => Code.Set(value, context);
 
     /// <summary>What the variable holds — or, when it holds nothing, the value <paramref name="value"/>
-    /// gives birth to, written there. A bare name does it in one step (runs asking at once all answer the
-    /// same Data); a deeper variable reads, then writes. A refused birth or write is the answer.</summary>
-    public async System.Threading.Tasks.ValueTask<global::app.data.@this> Ensure(
+    /// gives birth to, written there (its code: a bare name in one step, a path read then written).</summary>
+    public System.Threading.Tasks.ValueTask<global::app.data.@this> Ensure(
         System.Func<System.Threading.Tasks.ValueTask<global::app.data.@this>> value, actor.context.@this context)
-    {
-        if (Code.Count == 1) return await context.Variable.Ensure(Code.Root.Name, value);
-        var held = await Start(context);
-        if (held.IsInitialized) return held;
-        var born = await value();
-        if (!born.Success || born.Handled) return born;
-        var written = await Set(born.Peek(), context);
-        return written.Success ? await Start(context) : written;
-    }
+        => Code.Ensure(value, context);
 
     // What the variable holds, its value touched (lazy content — a json list, a file's content — becomes what
     // it is), so a variable used as a list is its content; a failure or an ask is left as it is.
@@ -151,9 +142,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// — the Data the caller read — so a newer value written in between is left alone and is the answer;
     /// what is bound on the set answers too. A deeper variable's Data is born per read, so there it just
     /// writes.</summary>
-    public async System.Threading.Tasks.ValueTask<global::app.data.@this> Replace(global::app.data.@this expected,
+    public System.Threading.Tasks.ValueTask<global::app.data.@this> Replace(global::app.data.@this expected,
         global::app.type.item.@this value, actor.context.@this context)
-        => Code.Count == 1 ? await context.Variable.Replace(Code.Root.Name, expected, value) : await Set(value, context);
+        => Code.Replace(expected, value, context);
 
     /// <summary>What the variable holds, through that value's own door (a container deep-renders, a
     /// template renders, a scalar answers itself). Loud: a variable that holds nothing throws — a

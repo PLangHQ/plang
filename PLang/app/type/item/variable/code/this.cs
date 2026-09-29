@@ -69,4 +69,26 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
         }
         return await hops[^1].Set(parent, value, context);
     }
+
+    /// <summary>What the variable holds — or, when it holds nothing, the value <paramref name="value"/> gives birth
+    /// to, written there. A bare root does it in one step through memory (runs asking at once all answer the
+    /// same Data); a path reads, then writes. A refused birth or write is the answer.</summary>
+    public async System.Threading.Tasks.ValueTask<global::app.data.@this> Ensure(
+        System.Func<System.Threading.Tasks.ValueTask<global::app.data.@this>> value, global::app.actor.context.@this context)
+    {
+        if (CountRaw == 1) return await context.Variable.Ensure(Root.Name, value);
+        var held = await Start(context);
+        if (held.IsInitialized) return held;
+        var born = await value();
+        if (!born.Success || born.Handled) return born;
+        var written = await Set(born.Peek(), context);
+        return written.Success ? await Start(context) : written;
+    }
+
+    /// <summary>Writes <paramref name="value"/> only if the variable still holds <paramref name="expected"/> — a
+    /// bare root through memory's compare-and-set, so a newer value written in between is left alone and is the
+    /// answer; a path's Data is born per read, so there it just writes.</summary>
+    public System.Threading.Tasks.ValueTask<global::app.data.@this> Replace(global::app.data.@this expected,
+        global::app.type.item.@this value, global::app.actor.context.@this context)
+        => CountRaw == 1 ? context.Variable.Replace(Root.Name, expected, value) : Set(value, context);
 }
