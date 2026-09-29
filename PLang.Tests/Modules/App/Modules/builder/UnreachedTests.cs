@@ -55,7 +55,7 @@ public class UnreachedTests : System.IAsyncDisposable
     {
         var file = await File(Steps(Make.Step("write out hi", Write("hi"))), "Lonely");
 
-        await Assert.That((await file.Unreached(Ctx)).Select(g => g.Name)).IsEquivalentTo(["Lonely"]);
+        await Assert.That((await file.Unreached(Ctx)).Select(u => u.Goal.Name)).IsEquivalentTo(["Lonely"]);
         await Unreached();
         await Assert.That(Written).Contains("GoalUnreached");
         await Assert.That(Written).Contains("'Lonely' in /Main.goal is not reached by any goal");
@@ -114,9 +114,11 @@ public class UnreachedTests : System.IAsyncDisposable
 
     [Test] public async Task ASubGoalReachedOnlyFromAnUnreachedOne_SaysSo()
     {
-        await File(Steps(Make.Step("write out hi", Write("hi"))),
+        var file = await File(Steps(Make.Step("write out hi", Write("hi"))),
             Sub("Bind", Make.Step("call Handler", Make.Call(Ctx, "Handler"))), Sub("Handler"));
 
+        await Assert.That((await file.Unreached(Ctx)).Select(u => $"{u.Goal.Name}<{u.From?.Name}"))
+            .IsEquivalentTo(["Bind<", "Handler<Bind"]);
         await Unreached();
         await Assert.That(Written).Contains("'Bind' in /Main.goal is not reached by any goal");
         await Assert.That(Written).Contains("'Handler' in /Main.goal is reached only from 'Bind', which nothing reaches");

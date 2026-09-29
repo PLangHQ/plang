@@ -14,16 +14,8 @@ public partial class unreached : IContext
         var own = new global::app.type.item.dict.@this().Set("os", false);
         await foreach (var file in Context.App.goal.list.Walk(own, Context))
         {
-            var dead = await file.Unreached(Context);
-            foreach (var goal in dead)
+            foreach (var (goal, from) in await file.Unreached(Context))
             {
-                global::app.goal.@this? from = null;
-                foreach (var other in dead)
-                    if (!ReferenceEquals(other, goal) && (await other.Callee(Context)).Any(g => ReferenceEquals(g, goal)))
-                    {
-                        from = other;
-                        break;
-                    }
                 var message = from == null
                     ? $"'{goal.Name}' in {goal.Path} is not reached by any goal"
                     : $"'{goal.Name}' in {goal.Path} is reached only from '{from.Name}', which nothing reaches";

@@ -166,7 +166,7 @@ public sealed class Coverage
         {
             var reached = _goals.ContainsKey(goal.Address!);
             sb.AppendLine($"  [{(reached ? "x" : " ")}] {goal.Address}");
-            if (goal.Parent == null) { publicTotal++; if (reached) publicReached++; }
+            if (goal.Visibility.Value == global::app.goal.Visibility.Public) { publicTotal++; if (reached) publicReached++; }
             else { privateTotal++; if (reached) privateReached++; }
             if (!reached) unreached.Add(goal.Address!);
         }
