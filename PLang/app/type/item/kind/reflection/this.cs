@@ -24,7 +24,14 @@ public sealed class @this : global::app.type.kind.@this
                 | System.Reflection.BindingFlags.Instance
                 | System.Reflection.BindingFlags.IgnoreCase
                 | System.Reflection.BindingFlags.DeclaredOnly);
-        return prop == null ? (false, null) : (true, prop.GetValue(obj));
+        if (prop != null) return (true, prop.GetValue(obj));
+        // A member that answers as its asker (the app's name, as the asker's settings have it) is a one-context
+        // method the catalog lists as a property — read the same, with the asker's context.
+        var member = System.Array.Find(obj.GetType().GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance),
+            m => string.Equals(m.Name, key, System.StringComparison.OrdinalIgnoreCase)
+                 && System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void)
+                 && m.GetParameters() is [{ ParameterType: var p }] && p == typeof(global::app.actor.context.@this));
+        return member == null ? (false, null) : (true, member.Invoke(obj, [ctx]));
     }
 
     public override System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate(

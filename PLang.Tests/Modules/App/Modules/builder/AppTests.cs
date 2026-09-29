@@ -50,7 +50,8 @@ public class AppTests
         await _app.Load();
 
         await Assert.That(_app.Id).IsEqualTo("test-id-123");
-        await Assert.That(_app.Name).IsEqualTo("TestApp");
+        // the name is a setting now: an old app.pr's name is passed over, the app goes by its folder
+        await Assert.That(_app.Name(_app.actor.list.System.Context).ToString()).IsNotEqualTo("TestApp");
     }
 
     [Test]
@@ -81,13 +82,13 @@ public class AppTests
         await Assert.That(root.GetProperty("id").GetString()).IsEqualTo("test-id");
         await Assert.That(root.GetProperty("version").GetString()).IsEqualTo("0.2");
 
-        // Golden: the reflected [Store] face is EXACTLY the 5 stamp fields (no App-graph leak,
-        // no @schema envelope), indented (the goal-.pr writer path).
+        // Golden: the reflected [Store] face is EXACTLY the identity's stamp fields (no App-graph leak,
+        // no @schema envelope; the name is a setting, not the identity), indented (the goal-.pr writer path).
         await Assert.That(json).Contains("\n");
         await Assert.That(json).DoesNotContain("@schema");
         var keys = new System.Collections.Generic.HashSet<string>();
         foreach (var p in root.EnumerateObject()) keys.Add(p.Name);
-        await Assert.That(keys).IsEquivalentTo(new[] { "id", "name", "created", "updated", "version" });
+        await Assert.That(keys).IsEquivalentTo(new[] { "id", "created", "updated", "version" });
     }
 
     [Test]
@@ -110,7 +111,7 @@ public class AppTests
         // an app.pr naming more than the app writes sets nothing else: environment isn't part of the identity
         var buildDir = System.IO.Path.Combine(_tempDir, ".build");
         System.IO.Directory.CreateDirectory(buildDir);
-        var before = _app.Environment;
+        var before = _app.Environment(_app.actor.list.System.Context).ToString();
         System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "app.pr"),
             "{\"id\":\"id-7\",\"created\":\"2026-01-02T03:04:05Z\",\"environment\":\"hacked\",\"absolutePath\":\"/elsewhere\"}");
 
@@ -119,7 +120,7 @@ public class AppTests
         await loaded.IsSuccess();
         await Assert.That(_app.Id).IsEqualTo("id-7");
         await Assert.That(_app.Created.Value).IsEqualTo(new DateTimeOffset(2026, 1, 2, 3, 4, 5, TimeSpan.Zero));
-        await Assert.That(_app.Environment).IsEqualTo(before);
+        await Assert.That(_app.Environment(_app.actor.list.System.Context).ToString()).IsEqualTo(before);
         await Assert.That(_app.AbsolutePath).IsNotEqualTo("/elsewhere");
     }
 

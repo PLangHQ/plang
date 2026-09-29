@@ -60,6 +60,40 @@ public class AppFactsTests
         await Assert.That(set.Error!.Message).Contains("needs a file");
     }
 
+    // The app's name is its setting, as its asker's settings have it; the system's is its own.
+    [Test] public async Task TheName_IsTheAskersSetting()
+    {
+        await using var app = TestApp.Create("/shopfolder");
+        var user = app.actor.list.User.Context;
+
+        var set = await new global::app.type.item.variable.parser.@this("%!app.setting.name%").Variable.Single()
+            .Set(user.Ok(new global::app.type.item.text.@this("Shop")), user);
+        var name = await Read(app, "%!app.name%");
+
+        await set.IsSuccess();
+        await Assert.That((await name.Value())?.ToString()).IsEqualTo("Shop");
+        await Assert.That(app.Name(app.actor.list.System.Context).ToString()).IsEqualTo("shopfolder");
+    }
+
+    [Test] public async Task WithNothingSet_TheNameIsTheFolders()
+    {
+        await using var app = TestApp.Create("/shopfolder");
+
+        var name = await Read(app, "%!app.name%");
+
+        await Assert.That((await name.Value())?.ToString()).IsEqualTo("shopfolder");
+    }
+
+    // The id is the identity's, read through the app's settings, never set there.
+    [Test] public async Task TheId_IsReadThroughTheAppsSettings()
+    {
+        await using var app = TestApp.Create("/app");
+
+        var id = await Read(app, "%!app.setting.id%");
+
+        await Assert.That((await id.Value())?.ToString()).IsEqualTo(app.Id);
+    }
+
     // An app with no identity yet is being created now: created is this run's start.
     [Test] public async Task ANewApp_IsCreated_WhenItStarts()
     {

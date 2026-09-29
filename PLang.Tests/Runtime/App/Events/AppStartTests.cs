@@ -58,7 +58,7 @@ public class AppStartTests
         var ran = new List<string>();
         var own = app.Own();
         // bound by the System actor, for the app: it fires though the goal runs as the User
-        own.Bind("start", When.before, (item, _, ctx) => { lock (ran) ran.Add($"before {(item as global::app.@this)?.Name}"); return Task.FromResult(ctx.Ok()); },
+        own.Bind("start", When.before, (item, _, ctx) => { lock (ran) ran.Add($"before {(item as global::app.@this)?.Name(ctx)}"); return Task.FromResult(ctx.Ok()); },
             app.actor.list.System, Scope.app);
         own.Bind("start", When.after, async (_, result, ctx) =>
         {
@@ -70,7 +70,7 @@ public class AppStartTests
         var result = await app.Start();
 
         await result.IsSuccess();
-        await Assert.That(ran).IsEquivalentTo(new[] { $"before {app.Name}", "after x=True" },
+        await Assert.That(ran).IsEquivalentTo(new[] { $"before {app.Name(app.actor.list.System.Context)}", "after x=True" },
             TUnit.Assertions.Enums.CollectionOrdering.Matching);
     }
 

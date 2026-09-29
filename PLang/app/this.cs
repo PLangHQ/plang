@@ -40,10 +40,15 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public string Id { get; internal set; }
 
     /// <summary>
-    /// Name of this app.
+    /// The app's name as <paramref name="context"/>'s settings have it (<c>%!app.setting.name%</c>), else its
+    /// folder's name — <c>%!app.name%</c> answers as its asker.
     /// </summary>
-    [global::app.Store]
-    public string Name { get; internal set; }
+    [global::app.LlmBuilder]
+    public global::app.type.item.text.@this Name(global::app.actor.context.@this context)
+        => context.Setting.Of<global::app.setting.@this>().Name ?? _folder;
+
+    // The app's folder's name — what the app goes by until a setting names it.
+    private readonly string _folder;
 
     /// <summary>
     /// When the app was first created — its identity's, else this run's start (an app with no identity yet is
@@ -98,9 +103,12 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         PathHelper.GetFullPath(PathHelper.Combine(AppContext.BaseDirectory, "os"));
 
     /// <summary>
-    /// Environment name (e.g., "production", "development").
+    /// The environment the app runs in ("production", "development") as <paramref name="context"/>'s settings
+    /// have it (<c>%!app.setting.environment%</c>) — <c>%!app.environment%</c> answers as its asker.
     /// </summary>
-    public string Environment { get; set; }
+    [global::app.LlmBuilder]
+    public global::app.type.item.text.@this Environment(global::app.actor.context.@this context)
+        => context.Setting.Of<global::app.setting.@this>().Environment;
 
     /// <summary>
     /// Application culture for formatting dates, numbers, etc.
@@ -258,9 +266,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         Id = Guid.NewGuid().ToString("N")[..12];
         var trimmed = absolutePath.TrimEnd('/', '\\');
         var lastSep = trimmed.LastIndexOfAny(['/', '\\']);
-        Name = lastSep >= 0 ? trimmed[(lastSep + 1)..] : trimmed;
+        _folder = lastSep >= 0 ? trimmed[(lastSep + 1)..] : trimmed;
         AbsolutePath = absolutePath;
-        Environment = environment ?? "production";
         StartedAt = new(DateTimeOffset.UtcNow);
         Created = StartedAt;
         Updated = StartedAt;
@@ -303,6 +310,14 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         // The store: where it lives is decided when it opens — in memory while testing, scoped by this app's id
         // (per-test apps never share a database: SQLite's shared cache merges in-memory databases of one name),
         // else its file.
+        // an environment given at construction is this run's value of the app's setting
+        if (environment != null)
+        {
+            var own = new global::app.setting.@this().Path;
+            _ = actor.list.System.Setting.Set(own + ".environment",
+                new data.@this("environment", new global::app.type.item.text.@this(environment), context: actor.list.System.Context));
+        }
+
         store = new global::app.store.sqlite.@this(
             global::app.type.item.path.@this.Resolve("/.db/system.sqlite", actor.list.System.Context),
             () => Mode.Value == global::app.Mode.Test ? $"system-{Id}" : null,

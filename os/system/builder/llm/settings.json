@@ -55,6 +55,16 @@
       "name": "create",
       "type": "bool",
       "default": "false"
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "default": null
+    },
+    {
+      "name": "environment",
+      "type": "text",
+      "default": "production"
     }
   ],
   "app.test.setting": [

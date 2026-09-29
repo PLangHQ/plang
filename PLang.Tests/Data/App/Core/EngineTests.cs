@@ -167,17 +167,20 @@ public class EngineTests
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/myapp");
 
-        await Assert.That(engine.Name).IsEqualTo("myapp");
+        await Assert.That(engine.Name(engine.actor.list.System.Context).ToString()).IsEqualTo("myapp");
     }
 
+    // The name is a setting, layered as any: the user's write is the user's, the system keeps its own.
     [Test]
-    public async Task Name_CanBeChanged()
+    public async Task Name_IsTheAskersSetting()
     {
         await using var engine = global::PLang.Tests.TestApp.Create("/app");
+        var user = engine.actor.list.User.Context;
 
-        engine.Name = "CustomEngine";
+        await user.Setting.Set("app.setting.name", new Data("name", new global::app.type.item.text.@this("CustomEngine"), context: user));
 
-        await Assert.That(engine.Name).IsEqualTo("CustomEngine");
+        await Assert.That(engine.Name(user).ToString()).IsEqualTo("CustomEngine");
+        await Assert.That(engine.Name(engine.actor.list.System.Context).ToString()).IsEqualTo("app");
     }
 
     [Test]

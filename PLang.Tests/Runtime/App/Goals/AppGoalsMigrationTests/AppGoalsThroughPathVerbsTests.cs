@@ -78,13 +78,13 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.Directory.CreateDirectory(prDir);
         System.IO.File.WriteAllText(System.IO.Path.Combine(prDir, "app.pr"), "this is not json");
         var idBefore = app.Id;
-        var nameBefore = app.Name;
+        var createdBefore = app.Created.Value;
         // A corrupt app.pr is an error naming the file; nothing is half-applied (identity/name unchanged).
         var loaded = await app.Load();
         await Assert.That(loaded.Error?.Key).IsEqualTo("AppIdentityUnreadable");
         await Assert.That(loaded.Error!.Message).Contains("app.pr");
         await Assert.That(app.Id).IsEqualTo(idBefore);
-        await Assert.That(app.Name).IsEqualTo(nameBefore);
+        await Assert.That(app.Created.Value).IsEqualTo(createdBefore);
     }
 
     [Test] public async Task AppLoad_OnABadField_AppliesNothing()
@@ -105,13 +105,13 @@ public class AppGoalsThroughPathVerbsTests
     [Test] public async Task AppSave_RoundTrip_WrittenAppPr_RehydratesUnderAppLoad()
     {
         var (app1, root) = await NewApp();
-        app1.Name = "RoundTrip";
+        app1.Id = "round-trip";
         await app1.Save();
         await app1.DisposeAsync();
 
         var app2 = TestApp.Create(root);
         await app2.Load();
-        await Assert.That(app2.Name).IsEqualTo("RoundTrip");
+        await Assert.That(app2.Id).IsEqualTo("round-trip");
         await app2.DisposeAsync();
     }
 }
