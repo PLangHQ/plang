@@ -46,6 +46,22 @@ change reverted.
   The two tag tests pass built fresh (their .pr not committed).
 - Fixture DLLs (TestProvider, NoCtorProvider) rebuilt from source; ProviderModuleTests 19/19.
 
+## After the gate (2026-09-29, all pushed; the architect reviews each commit read in full)
+- **10a** registration: the plan tests read `%!app.type.list%` / `%!app.type.<name>%`, built and
+  revert-checked; `code.load` lost its dead `Name` slot.
+- **10b** (A) the type door makes `list<T>` (`list.kind.element`, coined by `kind.Coin`, not held);
+  (B) copy-on-write list reads, every write through one door `Change(state, edit)`. (C) — the plan test
+  `TypedListHoldsItsType` — waits on Ingi (eager vs lazy element births) and the `list<path>` teaching.
+- **Review batch 1** (data/variable/list): EnumerateItems via Follow; `variable.Held`; one door per list
+  operation; `item.Enroll` / `item.Spread`; `data.Use<TAs>` follows; `variable.code` owns Ensure/Replace.
+- **Review batch 2** (path/http/assert/consent): `action.Warn(Error)` the one build-warning door;
+  `path.Read(ctx, bool?)` and url templates born and rendered; `Error.Keeps`; `http` `BaseUrl` an http
+  path + `IAddressed.Target()`; one consent door `actor.permission.Ask` (empty and EOF denied); `NoAnswer`.
+- Regressions of mine found by name-diffing against `baseline-failures.txt` and fixed: the actor-by-name
+  door (CrossActorGoalCall), the path shape test. Gate rule now: diff failing **names**, never counts.
+- Next: batch 2 item 6 (`From` → `Takes`, one Create door — shape question open), item 8 (one reference
+  base for file/url), then the eval batch (`list<path>`, `code.load`, `BaseUrl`).
+
 ## Open / held for Ingi
 binding → on (names, hit/miss); decision 236 (variable.set type.Convert); key strictness stays (b); channel
 Timeout; `%!app` missing-node reads; environment.start (delete?); timer shape; return depth. The llm cache stays
