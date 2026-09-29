@@ -213,9 +213,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private global::app.type.item.path.@this Teaching
         => global::app.type.item.path.@this.Resolve("/system/modules", App.actor.list.System.Context);
 
-    /// <summary>The module's docs folder — os/system/modules/{Name}. Its actions reach their own doc
-    /// files through it.</summary>
-    internal global::app.type.item.path.@this Folder => Teaching.Combine(Name);
+    /// <summary>The module's docs folder — os/system/modules/{Name}; the app's module, which holds every
+    /// module and has no name, is the modules folder itself. Its actions reach their own doc files through it.</summary>
+    internal global::app.type.item.path.@this Folder => _root is null ? Teaching : Teaching.Combine(Name);
 
     // A lazy file handle: born unread, content materializes at the Value door (AuthGate'd path
     // verbs), and an absent file is falsy (existence truthiness), so `{% if module.Description %}`

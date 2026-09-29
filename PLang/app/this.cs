@@ -100,12 +100,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         => context.Setting.Of<global::app.setting.@this>().Environment;
 
     /// <summary>
-    /// Application culture for formatting dates, numbers, etc.
-    /// Defaults to InvariantCulture.
-    /// </summary>
-    public CultureInfo Culture { get; internal set; } = CultureInfo.InvariantCulture;
-
-    /// <summary>
     /// When the app was started.
     /// </summary>
     public global::app.type.item.datetime.@this StartedAt { get; }
@@ -116,8 +110,9 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public global::app.type.item.duration.@this Uptime => new(DateTimeOffset.UtcNow - StartedAt.Value);
 
     /// <summary>
-    /// Cancellation token for graceful shutdown.
+    /// Cancellation token for graceful shutdown — a handle, never written with the app.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
     public CancellationToken ShutdownToken => _shutdownCts.Token;
 
     /// <summary>

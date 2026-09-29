@@ -94,14 +94,4 @@ public class Phase0Proof : System.IAsyncDisposable
         await Assert.That(result.Type).IsNotNull();
         await Assert.That(result.Type!.Name).IsEqualTo("number");
     }
-
-    [Test]
-    public async Task Phase05_CultureInfo_DefaultsToInvariant()
-    {
-        // INPUT: new Engine
-        await using var engine = new global::app.@this("/app").Testing();
-
-        // OUTPUT: culture defaults to InvariantCulture
-        await Assert.That(engine.Culture).IsEqualTo(System.Globalization.CultureInfo.InvariantCulture);
-    }
 }

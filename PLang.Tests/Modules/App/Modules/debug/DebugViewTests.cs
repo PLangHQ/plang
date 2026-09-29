@@ -105,6 +105,15 @@ public class DebugViewTests : System.IAsyncDisposable
         await Assert.That(written).DoesNotContain("{");
     }
 
+    // The app dumps whole: nothing on its surface walks back into itself.
+    [Test]
+    public async Task AnAppDump_Completes()
+    {
+        var written = await _app.Debug(Ctx);
+
+        await Assert.That(written).StartsWith("{");
+    }
+
     // On the wire a type that declares no face still refuses: nothing it holds leaks out.
     [Test]
     public async Task TheOutView_OfATypeWithNoWireFace_StillRefuses()
