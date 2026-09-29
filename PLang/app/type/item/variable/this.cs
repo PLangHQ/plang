@@ -113,16 +113,20 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return written.Success ? await Start(context) : written;
     }
 
-    /// <summary>What the variable holds, as a <typeparamref name="TAs"/>, handed to <paramref name="then"/>: its
-    /// value touched first (lazy content — a json list, a file's content — becomes what it is), so a variable
-    /// used as a list is its content. A failure, an ask, or a value that isn't a TAs is the answer.</summary>
-    public async System.Threading.Tasks.Task<global::app.data.@this> Use<TAs>(actor.context.@this context,
-        System.Func<TAs, System.Threading.Tasks.Task<global::app.data.@this>> then)
+    // What the variable holds, its value touched (lazy content — a json list, a file's content — becomes what
+    // it is), so a variable used as a list is its content; a failure or an ask is left as it is.
+    private async System.Threading.Tasks.ValueTask<global::app.data.@this> Held(actor.context.@this context)
     {
         var held = await Start(context);
         if (held.Success && !held.Exits) await held.Value();
-        return await held.Use(then);
+        return held;
     }
+
+    /// <summary>What the variable holds, as a <typeparamref name="TAs"/>, handed to <paramref name="then"/> —
+    /// its content, touched. A failure, an ask, or a value that isn't a TAs is the answer.</summary>
+    public async System.Threading.Tasks.Task<global::app.data.@this> Use<TAs>(actor.context.@this context,
+        System.Func<TAs, System.Threading.Tasks.Task<global::app.data.@this>> then)
+        => await (await Held(context)).Use(then);
 
     /// <summary>What the variable holds, as a <typeparamref name="TAs"/>, changed in place by
     /// <paramref name="then"/>, then written back (<see cref="Replace"/>) — for a bare name holding that very
@@ -133,8 +137,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public async System.Threading.Tasks.Task<global::app.data.@this> Change<TAs>(actor.context.@this context,
         System.Func<TAs, System.Threading.Tasks.Task<global::app.data.@this>> then) where TAs : global::app.type.item.@this
     {
-        var held = await Start(context);
-        if (held.Success && !held.Exits) await held.Value();
+        var held = await Held(context);
         return await held.Use<TAs>(async value =>
         {
             var changed = await then(value);
