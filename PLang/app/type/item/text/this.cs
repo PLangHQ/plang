@@ -52,7 +52,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (await data.Value() is @this text)
             await stream.WriteAsync(characters.GetBytes(text.ToString()), ct);
         else
-            await data.Output(new global::app.type.format.text.Writer(stream, characters), view ?? global::app.View.Out, context);
+            await data.Output(new global::app.type.item.text.Writer(stream, characters), view ?? global::app.View.Out, context);
         await stream.FlushAsync(ct);
         return context.Ok();
     }
@@ -160,7 +160,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private async System.Threading.Tasks.ValueTask<string> Rendered(global::app.actor.context.@this context)
     {
         using var ms = new System.IO.MemoryStream();
-        var w = new global::app.type.format.text.Writer(ms, System.Text.Encoding.UTF8);
+        var w = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8);
         int pos = 0;
         for (int at = _value.IndexOf('%'); at >= 0; at = _value.IndexOf('%', at + 1))
         {

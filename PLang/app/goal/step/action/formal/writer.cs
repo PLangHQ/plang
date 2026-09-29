@@ -1,13 +1,14 @@
 using System.Globalization;
 using System.Text;
+using app.type.format;
 
-namespace app.type.format.formal;
+namespace app.goal.step.action.formal;
 
 /// <summary>
 /// Formal — a program's actions written as calls, the one text form of an action:
 /// <c>file.read(Path: path = "notes.txt"); variable.set(Name: variable = %content%, Value: item = %!data%)</c>.
 ///
-/// <para>A format beside <see cref="json.Writer"/> and the text writer. Values write themselves through it
+/// <para>A format beside <see cref="global::app.type.item.kind.json.Writer"/> and the text writer. Values write themselves through it
 /// unchanged — a text pushes <see cref="String"/> (quoted), a number <see cref="Long"/> (bare), a list its
 /// array (<c>[a, b]</c>), a dict its object (<c>{"k": v}</c>, keys quoted). The action, its property rows and
 /// a list of arguments write their own shapes through the structure below, each in its formal branch

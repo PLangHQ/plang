@@ -128,7 +128,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             // a step written in formal is its own line: read as written, whatever the answer says
             string? line = step.IsFormal ? step.Text : null;
             if (line == null && !lines.TryGetValue(i, out line)) { Refuse(i, $"step {i} (\"{step.Text}\") has no entry"); continue; }
-            var formal = new global::app.goal.step.action.serializer.Formal(step, modules).Read(line, context);
+            var formal = new global::app.goal.step.action.formal.Reader(step, modules).Read(line, context);
             if (!formal.Success && step.IsFormal)
             {
                 Refuse(i, $"step {i} is written in formal and does not read: {formal.Error!.FixSuggestion ?? formal.Error.Message}");

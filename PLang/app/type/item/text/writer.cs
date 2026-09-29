@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 
-namespace app.type.format.text;
+namespace app.type.item.text;
 
 /// <summary>
 /// Plain-text <see cref="global::app.type.format.IWriter"/>. A TOP-LEVEL scalar renders

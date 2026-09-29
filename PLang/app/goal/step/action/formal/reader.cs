@@ -1,11 +1,11 @@
 using System.Text;
 
-namespace app.goal.step.action.serializer;
+namespace app.goal.step.action.formal;
 
 /// <summary>
 /// Reads a step's actions from formal — <c>file.read(Path="notes.txt"); variable.set(Name=%content%, Value=%!data%)</c>
-/// — the read-side twin of the formal writer (<see cref="app.type.format.formal.Writer"/>). Born with
-/// the step whose actions it reads, as <see cref="Reader"/> is, so every action it makes holds that step.
+/// — the read-side twin of the formal writer (<see cref="Writer"/>). Born with the step whose actions it reads,
+/// as <see cref="serializer.Reader"/> is, so every action it makes holds that step.
 ///
 /// <para>Grammar (whitespace, new lines included, between any two tokens):</para>
 /// <code>
@@ -29,14 +29,14 @@ namespace app.goal.step.action.serializer;
 /// <see cref="Read"/> answers the actions, or a <c>FormalInvalid</c> error naming the line, the column and
 /// the fix.</para>
 /// </summary>
-public sealed class Formal
+public sealed class Reader
 {
     private readonly global::app.goal.step.@this _step;
     private readonly global::app.type.item.list.@this<global::app.module.@this> _modules;
 
     /// <summary>Born with the step it reads for and the modules its actions are picked from
     /// (<c>app.module.list</c>); the read stays synchronous.</summary>
-    public Formal(global::app.goal.step.@this step, global::app.type.item.list.@this<global::app.module.@this> modules)
+    public Reader(global::app.goal.step.@this step, global::app.type.item.list.@this<global::app.module.@this> modules)
     {
         _step = step;
         _modules = modules;

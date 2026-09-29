@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 
-namespace app.type.format.filter;
+namespace app.type.item.kind.reflection;
 
 /// <summary>
 /// Tagged-view filter: decides which properties on a CLR type ship on the

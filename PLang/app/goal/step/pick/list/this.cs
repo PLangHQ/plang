@@ -348,7 +348,7 @@ public sealed class @this
         }
         if (known != null) line.Add($"variable.set(Name={known.Text}, Value=%!data%)");
         if (line.Count == 0) return new();
-        var read = new global::app.goal.step.action.serializer.Formal(_step, modules).Read(string.Join("; ", line), context);
+        var read = new global::app.goal.step.action.formal.Reader(_step, modules).Read(string.Join("; ", line), context);
         if (read.Success) return (global::app.goal.step.action.list.@this)read.Peek()!;
         await (context.App.Debug?.Write($"build.pick: step {_step.Index}'s known code does not read: {read.Error?.Message}") ?? Task.CompletedTask);
         return new();

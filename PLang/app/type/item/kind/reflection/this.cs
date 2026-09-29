@@ -100,7 +100,7 @@ public sealed class @this : global::app.type.kind.@this
         var host = global::System.Activator.CreateInstance(target)!;
         var byName = new global::System.Collections.Generic.Dictionary<string, global::System.Reflection.PropertyInfo>(
             global::System.StringComparer.OrdinalIgnoreCase);
-        foreach (var entry in global::app.type.format.filter.Tagged.PropertiesFor(target, global::app.View.Store))
+        foreach (var entry in Tagged.PropertiesFor(target, global::app.View.Store))
             byName[entry.WireName] = entry.Property;
 
         reader.BeginObject();
@@ -143,7 +143,7 @@ public sealed class @this : global::app.type.kind.@this
 
         // Every value is made before any is written, so a slot that can't be read leaves the host as it was.
         var read = new global::System.Collections.Generic.List<(global::System.Reflection.PropertyInfo, object?)>();
-        foreach (var entry in global::app.type.format.filter.Tagged.PropertiesFor(target, global::app.View.Store))
+        foreach (var entry in Tagged.PropertiesFor(target, global::app.View.Store))
         {
             if (!entry.Property.CanWrite || !byName.TryGetValue(entry.WireName, out var key)) continue;
             var type = entry.Property.PropertyType;
@@ -270,7 +270,7 @@ public sealed class @this : global::app.type.kind.@this
         // writing it (a context, a callstack) is a bug, so throw LOUD naming it. An untagged
         // FOREIGN type (a plang-blind library DTO) can't declare, so it dumps transparently.
         if (mode != global::app.View.Debug
-            && !global::app.type.format.filter.Tagged.IsTagAware(type)
+            && !Tagged.IsTagAware(type)
             && type.Assembly == typeof(global::app.type.kind.@this).Assembly)
             throw new global::app.data.OutputException(
                 $"'{type.FullName}' has no wire contract — it declares no [Out]/[Store] face and is "
@@ -278,7 +278,7 @@ public sealed class @this : global::app.type.kind.@this
                 "NoWireContract");
 
         writer.BeginObject();
-        foreach (var entry in global::app.type.format.filter.Tagged.PropertiesFor(type, mode))
+        foreach (var entry in Tagged.PropertiesFor(type, mode))
         {
             if (entry.Masked) { writer.Name(entry.WireName); writer.String("****"); continue; }
             object? value;

@@ -47,7 +47,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             await new global::app.type.item.kind.reflection.@this().Output(this, writer, mode, context);
             return;
         }
-        if (writer is global::app.type.format.formal.Writer formal)
+        if (writer is global::app.goal.step.action.formal.Writer formal)
         {
             await Formal(formal, mode, context);
             return;
@@ -74,7 +74,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>The action in formal: its own call, then a condition's body inline after it (<c>{ a; b }</c>).
     /// A clause (<c>on.error</c>, …) is its step's next call, written by the step like any action.</summary>
-    private async System.Threading.Tasks.ValueTask Formal(global::app.type.format.formal.Writer writer,
+    private async System.Threading.Tasks.ValueTask Formal(global::app.goal.step.action.formal.Writer writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
         await Call(writer, mode, context);
@@ -89,7 +89,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>The action's call alone: <c>module.name(rows)</c> — its properties and its frozen defaults
     /// (<c>?=</c>).</summary>
-    private async System.Threading.Tasks.ValueTask Call(global::app.type.format.formal.Writer writer,
+    private async System.Threading.Tasks.ValueTask Call(global::app.goal.step.action.formal.Writer writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
         writer.BeginCall(Module.Name, Name);

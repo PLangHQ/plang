@@ -13,7 +13,7 @@ public sealed class formal : global::app.type.format.IOutput
         global::app.View mode, global::app.actor.context.@this? context)
     {
         var list = (global::app.type.item.list.@this)value;
-        var writerFormal = (global::app.type.format.formal.Writer)writer;
+        var writerFormal = (global::app.goal.step.action.formal.Writer)writer;
         var items = list.Items(context!).ToList();
         if (items.Count > 0 && items.All(d => !string.IsNullOrEmpty(d.Name)))
         {

@@ -33,7 +33,7 @@ public sealed partial class @this
     /// doesn't count.</summary>
     public async System.Threading.Tasks.Task<List<string>> Cover(global::app.actor.context.@this context)
     {
-        var writer = new global::app.type.format.formal.Writer();
+        var writer = new global::app.goal.step.action.formal.Writer();
         await Code.Output(writer, global::app.View.Store, context);
         var written = writer.ToString();
         var problems = new List<string>();
@@ -81,7 +81,7 @@ public sealed partial class @this
                 foreach (var p in a.Property)
                 {
                     if (p.Value is null || p.Value is global::app.goal.step.action.@this or global::app.goal.step.action.list.@this) continue;
-                    var writer = new global::app.type.format.formal.Writer();
+                    var writer = new global::app.goal.step.action.formal.Writer();
                     await p.Value.Output(writer, global::app.View.Store, context);
                     foreach (var n in Number.Matches(Quoted.Replace(writer.ToString(), "")).Select(m => m.Value))
                         if (!said.Contains(double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)))
@@ -106,7 +106,7 @@ public sealed partial class @this
             foreach (var p in a.Property)
             {
                 if (p.Type?.Name != "text" || p.Value is null) continue;
-                var writer = new global::app.type.format.formal.Writer();
+                var writer = new global::app.goal.step.action.formal.Writer();
                 await p.Value.Output(writer, global::app.View.Store, context);
                 var json = writer.ToString();
                 if (json.StartsWith('"') && System.Text.Json.JsonSerializer.Deserialize<string>(json) is { } s) texts.Add(s);

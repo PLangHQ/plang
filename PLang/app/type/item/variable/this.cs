@@ -255,7 +255,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// string everywhere else.</summary>
     public override void Write(global::app.type.format.IWriter w)
     {
-        if (w.Format == global::app.type.format.formal.Writer.Token) w.Raw(Text);
+        if (w.Format == global::app.goal.step.action.formal.Writer.Token) w.Raw(Text);
         else w.String(Text);
     }
 }

@@ -686,7 +686,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
 
     /// <summary>
     /// Reflective Output for a STRUCTURAL item — writes its tagged property bag, the View selecting
-    /// the attribute set (<see cref="global::app.type.format.filter.Tagged"/>:
+    /// the attribute set (<see cref="global::app.type.item.kind.reflection.Tagged"/>:
     /// <c>Out→[Out]</c>, <c>Store→[Store]</c>, <c>Debug→all</c>). Each property value writes ITSELF:
     /// an <see cref="@this"/> via its own <see cref="Output"/>, a raw C# scalar via the writer, a
     /// sequence as an array. The general-object wire form; leaves and special shapes
@@ -698,7 +698,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         global::app.actor.context.@this? context)
     {
         writer.BeginObject();
-        foreach (var entry in global::app.type.format.filter.Tagged.PropertiesFor(GetType(), mode))
+        foreach (var entry in global::app.type.item.kind.reflection.Tagged.PropertiesFor(GetType(), mode))
         {
             if (entry.Masked) { writer.Name(entry.WireName); writer.String("****"); continue; }
             var value = entry.Property.GetValue(this);

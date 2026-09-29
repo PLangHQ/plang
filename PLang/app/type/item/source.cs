@@ -250,7 +250,7 @@ public class source : @this
         if (_value is byte[] b) { w.Bytes(b); return; }
         // In formal, a whole %ref% in a slot not typed text is the variable itself, written bare
         // (`Value: item = %!data%`); inside a text it stays the text it is (`"Total: %x%"`).
-        if (w.Format == global::app.type.format.formal.Writer.Token && _type.Template != null && IsVariable
+        if (w.Format == global::app.goal.step.action.formal.Writer.Token && _type.Template != null && IsVariable
             && !string.Equals(_type.Name, "text", System.StringComparison.OrdinalIgnoreCase) && _value is string reference)
         {
             w.Raw(reference);
