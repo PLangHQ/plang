@@ -18,7 +18,9 @@ public enum View
 public sealed class StoreAttribute : Attribute { }
 
 /// <summary>Catalog visibility for the builder LLM. On a method it marks a member that needs the
-/// asker's context (one <c>actor.context.@this</c> parameter) — listed as a field like a property.</summary>
+/// asker's context (one <c>actor.context.@this</c> parameter) — listed as a field like a property, and read
+/// like one: navigation (<c>%!app.name%</c>) calls it with the asker's context. So such a method must be a fact
+/// about its owner, with no effects — a read may call it any number of times.</summary>
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Method)]
 public sealed class LlmBuilderAttribute : Attribute { }
 
