@@ -117,20 +117,36 @@ public sealed class @this : global::app.type.kind.@this
     /// is the list kind's job, element by element.
     /// </summary>
     public object? Read(global::app.type.item.dict.@this slots, global::System.Type target)
+        => Read(slots, global::System.Activator.CreateInstance(target)!, null);
+
+    /// <summary>
+    /// The same read into a given <paramref name="host"/> — one that isn't built from its slots (the app, whose
+    /// identity is read back from its <c>app.pr</c>). Only the host's <c>[Store]</c> members are written: the
+    /// face Output wrote is the face read back, and a slot naming anything else is passed over. A member that
+    /// holds a plang value (a datetime) is made by its own type, as <paramref name="context"/>'s types have it.
+    /// </summary>
+    public object Read(global::app.type.item.dict.@this slots, object host, global::app.actor.context.@this? context)
     {
-        var host = global::System.Activator.CreateInstance(target)!;
+        var target = host.GetType();
         // Index the dict's keys by name, case-insensitive — matching the IReader Read's key
         // policy (a hand-built plang dict's keys aren't guaranteed to match the wire-name casing).
         var byName = new global::System.Collections.Generic.Dictionary<string, string>(
             global::System.StringComparer.OrdinalIgnoreCase);
         foreach (var key in slots.KeyNames) byName[key] = key;
 
+        // Every value is made before any is written, so a slot that can't be read leaves the host as it was.
+        var read = new global::System.Collections.Generic.List<(global::System.Reflection.PropertyInfo, object?)>();
         foreach (var entry in global::app.type.format.filter.Tagged.PropertiesFor(target, global::app.View.Store))
         {
             if (!entry.Property.CanWrite || !byName.TryGetValue(entry.WireName, out var key)) continue;
-            // Each entry lowers ITSELF to the property's CLR type — at the exit door, no context.
-            entry.Property.SetValue(host, slots.Clr(key, entry.Property.PropertyType));
+            var type = entry.Property.PropertyType;
+            // A plang member is made by its type, through the type door; any other entry lowers ITSELF to the
+            // property's CLR type — at the exit door, no context.
+            read.Add((entry.Property, context != null && typeof(global::app.type.item.@this).IsAssignableFrom(type)
+                ? context.App.type.list[type].Make(slots.Get(key, context)?.Peek(), context)
+                : slots.Clr(key, type)));
         }
+        foreach (var (property, value) in read) property.SetValue(host, value);
         return host;
     }
 

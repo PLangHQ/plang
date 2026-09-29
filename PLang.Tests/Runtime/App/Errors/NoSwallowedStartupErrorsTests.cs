@@ -11,8 +11,9 @@ public class NoSwallowedStartupErrorsTests
         try
         {
             await using var app = TestApp.Create(root);
-            var thrown = await Assert.That(async () => await app.Load()).Throws<InvalidOperationException>();
-            await Assert.That(thrown!.Message).Contains("app.pr");
+            var loaded = await app.Load();
+            await Assert.That(loaded.Error?.Key).IsEqualTo("AppIdentityUnreadable");
+            await Assert.That(loaded.Error!.Message).Contains("app.pr");
         }
         finally { System.IO.Directory.Delete(root, recursive: true); }
     }

@@ -370,14 +370,16 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
     /// <summary>
     /// Loads app identity from .build/app.pr. Called at startup.
-    /// If no app.pr exists, the app keeps its generated Id.
+    /// If no app.pr exists, the app keeps its generated Id; one that can't be read is the answer.
     /// </summary>
-    public async Task Load()
+    public async Task<data.@this> Load()
     {
-        await Identity();
+        var identity = await Identity();
+        if (!identity.Success) return identity;
         // the actors' saved settings, read once: after this a setting is built in memory
         await actor.list.User.Setting.Load();
         Refresh("");
+        return identity;
     }
 
     /// <summary>
@@ -399,32 +401,37 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             Debug.Setting = actor.list.System.Context.Setting.Of<global::app.module.debug.setting.@this>();
     }
 
-    // The app's identity, from .build/app.pr when there is one.
-    private async Task Identity()
+    // The app's identity, from .build/app.pr when there is one — read back through the face Save writes: the
+    // content, json, taken as a dict, and the app's [Store] members read from it. An app.pr that can't be
+    // read is the app's error, naming the file; the identity is left as it was.
+    private async Task<data.@this> Identity()
     {
-        var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", actor.list.System.Context!);
-        var exists = await prPath.ExistsAsync(actor.list.System.Context!);
-        if (!exists.Success || (await exists.Value())?.Value != true) return;
+        var context = actor.list.System.Context!;
+        var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", context);
+        var exists = await prPath.ExistsAsync(context);
+        if (!exists.Success || (await exists.Value())?.Value != true) return context.Ok();
         // app.pr is the app's identity, not a goal: its raw content. Its value would go through the .pr
         // format's goal reader, which refuses a file that isn't a goal.
-        var bytes = await (await prPath.Read(actor.list.System.Context!)).Use<global::app.type.item.reference.@this>(async file => await file.Content(actor.list.System.Context!));
-        if (!bytes.Success)
-            throw new InvalidOperationException($"{prPath} could not be read: {bytes.Error?.Message}");
-        if (bytes.Peek().IsNull) return;
-        var json = global::System.Text.Encoding.UTF8.GetString((await bytes.Value())!.Clr<byte[]>()!);
-        if (string.IsNullOrWhiteSpace(json)) return;
-        JsonDocument doc;
-        try { doc = JsonDocument.Parse(json); }
-        catch (JsonException ex) { throw new InvalidOperationException($"{prPath} is not the app's identity: {ex.Message}", ex); }
-        using (doc)
+        var bytes = await (await prPath.Read(context)).Use<global::app.type.item.reference.@this>(async file => await file.Content(context));
+        if (!bytes.Success) return Unreadable(bytes.Error?.Message);
+        var raw = (await bytes.Value())?.Clr<byte[]>();
+        if (raw is not { Length: > 0 } || raw.All(b => b is (byte)' ' or (byte)'\n' or (byte)'\r' or (byte)'\t'))
+            return context.Ok();
+        try
         {
-            var root = doc.RootElement;
-            if (root.TryGetProperty("id", out var idProp)) Id = idProp.GetString() ?? Id;
-            if (root.TryGetProperty("name", out var nameProp)) Name = nameProp.GetString() ?? Name;
-            if (root.TryGetProperty("created", out var createdProp) && createdProp.TryGetDateTimeOffset(out var created)) Created = new(created);
-            if (root.TryGetProperty("updated", out var updatedProp) && updatedProp.TryGetDateTimeOffset(out var updated)) Updated = new(updated);
-            if (root.TryGetProperty("version", out var versionProp)) Version = versionProp.GetString();
+            var decoded = await context.App.type.list.Mime("application/json").Decode(raw, context, "app.pr");
+            if (await decoded.Value<global::app.type.item.dict.@this>() is not { } identity || !decoded.Success)
+                return Unreadable(decoded.Error?.Message ?? "not a json object");
+            new global::app.type.item.kind.reflection.@this().Read(identity, this, context);
+            return context.Ok();
         }
+        catch (Exception ex) when (ex is JsonException or FormatException or InvalidCastException or InvalidOperationException)
+        {
+            return Unreadable(ex.Message);
+        }
+
+        data.@this Unreadable(string? why) => context.Error(new global::app.error.Error(
+            $"{prPath} is not the app's identity: {why}", "AppIdentityUnreadable", 400));
     }
 
     /// <summary>
@@ -546,7 +553,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
     private async Task<data.@this> Launch()
     {
-        await Load();
+        var identity = await Load();
+        if (!identity.Success) return identity;
 
         // Invariant: every I/O actor must have all three role-channels registered
         // by the entry point before goal execution. Surface a clear error otherwise.

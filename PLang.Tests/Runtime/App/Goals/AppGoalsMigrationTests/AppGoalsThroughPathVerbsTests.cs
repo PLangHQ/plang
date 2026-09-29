@@ -80,10 +80,26 @@ public class AppGoalsThroughPathVerbsTests
         var idBefore = app.Id;
         var nameBefore = app.Name;
         // A corrupt app.pr is an error naming the file; nothing is half-applied (identity/name unchanged).
-        var thrown = await Assert.That(async () => await app.Load()).Throws<InvalidOperationException>();
-        await Assert.That(thrown!.Message).Contains("app.pr");
+        var loaded = await app.Load();
+        await Assert.That(loaded.Error?.Key).IsEqualTo("AppIdentityUnreadable");
+        await Assert.That(loaded.Error!.Message).Contains("app.pr");
         await Assert.That(app.Id).IsEqualTo(idBefore);
         await Assert.That(app.Name).IsEqualTo(nameBefore);
+    }
+
+    [Test] public async Task AppLoad_OnABadField_AppliesNothing()
+    {
+        var (app, root) = await NewApp();
+        var prDir = System.IO.Path.Combine(root, ".build");
+        System.IO.Directory.CreateDirectory(prDir);
+        // the id reads, the created doesn't: the identity is read whole or not at all
+        System.IO.File.WriteAllText(System.IO.Path.Combine(prDir, "app.pr"), "{\"id\":\"new-id\",\"created\":\"not a date\"}");
+        var idBefore = app.Id;
+
+        var loaded = await app.Load();
+
+        await Assert.That(loaded.Error?.Key).IsEqualTo("AppIdentityUnreadable");
+        await Assert.That(app.Id).IsEqualTo(idBefore);
     }
 
     [Test] public async Task AppSave_RoundTrip_WrittenAppPr_RehydratesUnderAppLoad()

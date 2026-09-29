@@ -99,7 +99,43 @@ public class AppTests
         var idBefore = _app.Id;
 
         // A corrupt app.pr is an error naming it — never a quietly kept identity
-        await Assert.That(async () => await _app.Load()).Throws<InvalidOperationException>();
+        var loaded = await _app.Load();
+        await Assert.That(loaded.Error?.Key).IsEqualTo("AppIdentityUnreadable");
         await Assert.That(_app.Id).IsEqualTo(idBefore);
+    }
+
+    [Test]
+    public async Task GetApp_ReadsBackOnlyItsStoredFace()
+    {
+        // an app.pr naming more than the app writes sets nothing else: environment isn't part of the identity
+        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
+        System.IO.Directory.CreateDirectory(buildDir);
+        var before = _app.Environment;
+        System.IO.File.WriteAllText(System.IO.Path.Combine(buildDir, "app.pr"),
+            "{\"id\":\"id-7\",\"created\":\"2026-01-02T03:04:05Z\",\"environment\":\"hacked\",\"absolutePath\":\"/elsewhere\"}");
+
+        var loaded = await _app.Load();
+
+        await loaded.IsSuccess();
+        await Assert.That(_app.Id).IsEqualTo("id-7");
+        await Assert.That(_app.Created.Value).IsEqualTo(new DateTimeOffset(2026, 1, 2, 3, 4, 5, TimeSpan.Zero));
+        await Assert.That(_app.Environment).IsEqualTo(before);
+        await Assert.That(_app.AbsolutePath).IsNotEqualTo("/elsewhere");
+    }
+
+    [Test]
+    public async Task SaveThenLoad_ReadsBackWhatWasWritten()
+    {
+        _app.Id = "round-trip";
+        _app.Version = "0.3";
+        await (await _app.Save()).IsSuccess();
+        var written = _app.Updated.Value;
+        _app.Id = "changed";
+
+        await (await _app.Load()).IsSuccess();
+
+        await Assert.That(_app.Id).IsEqualTo("round-trip");
+        await Assert.That(_app.Version).IsEqualTo("0.3");
+        await Assert.That(_app.Updated.Value).IsEqualTo(written);
     }
 }
