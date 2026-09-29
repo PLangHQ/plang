@@ -129,10 +129,14 @@ public class LoudRunTests
     [Test]
     public async Task JUnit_ATestThatCouldNotLoad_IsAnError()
     {
-        var xml = new global::app.test.junit.@this(new List<global::app.test.@this>
+        var ctx = _app.actor.list.User.Context;
+        var run = new global::app.type.item.list.@this<global::app.test.@this>(new List<global::app.test.@this>
         {
             NewTest("Old", Status.Stale, "no .pr"), NewTest("A", Status.Pass),
-        }).ToString();
+        });
+        using var ms = new System.IO.MemoryStream();
+        await (await new global::app.test.junit.@this().Encode(ms, ctx.Ok(run), ctx)).IsSuccess();
+        var xml = System.Text.Encoding.UTF8.GetString(ms.ToArray());
 
         await Assert.That(xml).Contains("errors=\"1\"");
         await Assert.That(xml).Contains("<error message=\"could not load\">no .pr</error>");

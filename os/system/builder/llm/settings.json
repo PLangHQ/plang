@@ -86,7 +86,7 @@
     {
       "name": "format",
       "type": "choice<format>",
-      "default": "Json"
+      "default": "json"
     },
     {
       "name": "include",

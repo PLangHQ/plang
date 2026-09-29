@@ -36,7 +36,7 @@ public class ConceptSettingTests
         var set = await global::PLang.Tests.TestAction.Create("variable", "set",
             ("name", "%!app.test.setting.format%"), ("value", "junit")).Start(context);
         await set.IsSuccess();
-        await Assert.That((global::app.test.Format)context.Setting.Of<global::app.test.setting.@this>().Format).IsEqualTo(global::app.test.Format.JUnit);
+        await Assert.That(context.Setting.Of<global::app.test.setting.@this>().Format.Value.ToString()).IsEqualTo("junit");
     }
 
     // A value the option can't take is refused, and this run holds nothing for it.
@@ -47,7 +47,7 @@ public class ConceptSettingTests
         var set = await global::PLang.Tests.TestAction.Create("variable", "set",
             ("name", "%!app.test.setting.format%"), ("value", "csv")).Start(context);
         await set.IsFailure();
-        await Assert.That((global::app.test.Format)context.Setting.Of<global::app.test.setting.@this>().Format).IsEqualTo(global::app.test.Format.Json);
+        await Assert.That(context.Setting.Of<global::app.test.setting.@this>().Format.Value.ToString()).IsEqualTo("json");
     }
 
     [Test] public async Task GoalsTypeNamesNoSettings_ItsListDoes()

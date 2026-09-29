@@ -52,8 +52,8 @@ public class SettingOwnerTests
         await using var app = TestApp.Create("/test");
         var set = app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "nonsense" });
         await set.IsFailure();
-        await Assert.That(app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Format.Clr<global::app.test.Format>())
-            .IsEqualTo(global::app.test.Format.Json);
+        await Assert.That(app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Format.Value.ToString())
+            .IsEqualTo("json");
     }
 
     // The app's own setting, read through the app: %!app.setting.create%.

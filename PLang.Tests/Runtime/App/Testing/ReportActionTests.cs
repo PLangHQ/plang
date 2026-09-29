@@ -122,7 +122,7 @@ public class ReportActionTests
         await Report();
 
         var json = await System.IO.File.ReadAllTextAsync(System.IO.Path.Combine(_tempDir, ".test", "results.json"));
-        await Assert.That(json).Contains("\"name\": \"X\"");
+        await Assert.That(json).Contains("\"name\":\"X\"");
         await Assert.That(json).Contains("deadbeef");
         await Assert.That(json).DoesNotContain("%response%");
     }

@@ -23,6 +23,9 @@ public sealed class @this : global::app.type.kind.@this
     /// <summary>json content is text.</summary>
     public override bool IsText => true;
 
+    /// <summary>A test run's report in json: the run's tests, written as json.</summary>
+    public override string? Report => "results.json";
+
     public override System.Type? ClrForm => typeof(JsonElement);
 
     /// <summary>json content written: the value alone, as json — no Data around it (the type is inferred on

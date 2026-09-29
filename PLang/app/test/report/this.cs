@@ -39,7 +39,7 @@ public sealed class @this
     public async Task<global::app.data.@this> Write(global::app.actor.context.@this context)
     {
         var tests = _tests.Items().ToList();
-        Format chosen = context.Setting.Of<global::app.test.setting.@this>().Format;
+        var chosen = context.Setting.Of<global::app.test.setting.@this>().Format.Value;
         var nested = global::app.test.@this.Current(context) != null;
         var summary = Summary();
 
@@ -64,22 +64,13 @@ public sealed class @this
             await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(console.ToString().TrimEnd('\r', '\n'));
         }
 
+        // the run written by the chosen format's kind, its Out face, to the file that kind writes a report to
         var run = new global::app.type.item.list.@this<global::app.test.@this>(tests);
-        string content;
-        global::app.type.item.path.@this target;
-        if (chosen == Format.JUnit)
-        {
-            content = new global::app.test.junit.@this(tests).ToString();
-            target = global::app.type.item.path.@this.Resolve("/.test/junit.xml", context);
-        }
-        else
-        {
-            // the run written bare, in the program form a .pr is (goal's format), its Out face
-            using var ms = new System.IO.MemoryStream();
-            await context.App.type.list["goal"].kind.Encode(ms, context.Ok(run), context, global::app.View.Out);
-            content = System.Text.Encoding.UTF8.GetString(ms.ToArray());
-            target = global::app.type.item.path.@this.Resolve("/.test/results.json", context);
-        }
+        using var ms = new System.IO.MemoryStream();
+        var encoded = await chosen.Kind.Encode(ms, context.Ok(run), context, global::app.View.Out);
+        if (!encoded.Success) return encoded;
+        var content = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        var target = global::app.type.item.path.@this.Resolve("/.test/" + chosen.Kind.Report, context);
         var written = await target.WriteText(content, context);
         if (!written.Success) return context.Error(written.Error!);
 

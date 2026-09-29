@@ -132,7 +132,7 @@ public class TestingClassTests
         var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["format"] = "junit" });
 
         await result.IsSuccess();
-        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Format.Clr<global::app.test.Format>()).IsEqualTo(global::app.test.Format.JUnit);
+        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Format.Value.ToString()).IsEqualTo("junit");
     }
 
     // Include/Exclude are replace-semantics — the walk sets a fresh list<text>, so a second

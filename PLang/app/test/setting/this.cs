@@ -17,8 +17,8 @@ public sealed class @this : global::app.type.item.setting.@this
     /// machine, so it reads (and is taught) the same everywhere.</summary>
     [Out, Store] public global::app.type.item.number.@this Parallel { get; set; } = 0;
 
-    /// <summary>The report's file format. The console is always written.</summary>
-    [Out, Store] public global::app.type.item.choice.@this<global::app.test.Format> Format { get; set; } = global::app.test.Format.Json;
+    /// <summary>The report's format — a format kind that writes one (json, junit). The console is always written.</summary>
+    [Out, Store] public global::app.type.item.choice.@this<global::app.test.format.@this> Format { get; set; } = new global::app.test.format.@this("json");
 
     /// <summary>The tags a test must carry one of to run (empty = every test). Case-insensitive.</summary>
     [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Include { get; set; } = new();

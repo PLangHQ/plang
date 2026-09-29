@@ -4,23 +4,44 @@ using System.Text;
 namespace app.test.junit;
 
 /// <summary>
-/// The JUnit-XML view of a set of tests — a genuine external CI format (not the
-/// plang wire), so the format owns its own rendering. <c>ToString()</c> is the
-/// document. Grouped by the goal's parent folder as testsuites.
+/// JUnit XML — a kind of test: a run's tests written as the document CI tools read (not the plang wire), so
+/// the kind owns its own rendering. Grouped by the goal's parent folder as testsuites. A run's report in
+/// junit is <c>.test/junit.xml</c>.
 /// </summary>
-public sealed class @this
+public sealed class @this : global::app.type.kind.@this
 {
-    private readonly IReadOnlyList<global::app.test.@this> _tests;
+    public @this() : base("junit") { }
 
-    public @this(IReadOnlyList<global::app.test.@this> tests) => _tests = tests;
+    protected internal override string Owner => "test";
 
-    public override string ToString()
+    public override System.Collections.Generic.IReadOnlyList<string> Mime => ["application/junit+xml"];
+
+    public override System.Collections.Generic.IReadOnlyList<string> Extension => [];
+
+    public override bool IsText => true;
+
+    public override string? Report => "junit.xml";
+
+    /// <summary>The run <paramref name="data"/> holds (its tests), written as a JUnit document.</summary>
+    public override async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
+        global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
+        System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
+    {
+        if (data.Peek() is not global::app.type.item.list.@this<global::app.test.@this> run)
+            return context.Error(new global::app.error.Error(
+                $"%{data.Name}% holds no test run to write as junit", "NothingToWrite", 400));
+        var bytes = (encoding ?? System.Text.Encoding.UTF8).GetBytes(Document(run.Items().ToList()));
+        await stream.WriteAsync(bytes, ct);
+        return context.Ok();
+    }
+
+    private string Document(IReadOnlyList<global::app.test.@this> tests)
     {
         var sb = new StringBuilder();
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
-        sb.AppendLine($"<testsuites tests=\"{_tests.Count}\" failures=\"{_tests.Count(t => t.Status == Status.Fail)}\" errors=\"{_tests.Count(t => t.Status == Status.Stale)}\">");
+        sb.AppendLine($"<testsuites tests=\"{tests.Count}\" failures=\"{tests.Count(t => t.Status == Status.Fail)}\" errors=\"{tests.Count(t => t.Status == Status.Stale)}\">");
         // Group by the goal's parent folder (path verb, no string surgery).
-        var byPath = _tests.GroupBy(t => t.Goal.Path?.Parent?.ToString() ?? "");
+        var byPath = tests.GroupBy(t => t.Goal.Path?.Parent?.ToString() ?? "");
         foreach (var group in byPath)
         {
             var suite = group.ToList();

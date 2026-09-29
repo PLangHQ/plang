@@ -95,6 +95,10 @@ public class @this
     /// outright: xml, ini); a kind that is its own class says so itself (json).</summary>
     public virtual bool IsText => _text;
 
+    /// <summary>The file a test run's report is written to in this kind (<c>results.json</c>), its content
+    /// this kind's <see cref="Encode"/> of the run; null when this kind writes no report.</summary>
+    public virtual string? Report => null;
+
     /// <summary>One of this kind's type's kinds, by its name or an alias — a type holds its kinds on its
     /// empty kind; null when it holds none by that name (the type list's <c>Kind(name)</c> then mints the
     /// unknown kind, after asking every type).</summary>
