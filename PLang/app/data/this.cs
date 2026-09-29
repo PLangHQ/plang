@@ -812,10 +812,11 @@ public class @this<T> : @this
 }
 
 /// <summary>
-/// Dynamic Data — a cell whose value computes fresh on every access (system
-/// variables like <c>%!Now%</c>). The lazy mechanism is the TYPE's, not Data's:
-/// the cell holds a <see cref="global::app.type.item.computed"/> instance whose
-/// own door answers fresh and is never kept.
+/// Dynamic Data — a Data found at every read (<c>%Now%</c>, <c>%!app%</c>, <c>%!event%</c>: the call stack's
+/// running event), built with the asker's context. It answers the whole Data it stands for: its value and its
+/// properties are the found Data's; none found, the null value and an empty bag. The lazy mechanism is the
+/// TYPE's, not Data's: the cell holds a <see cref="global::app.type.item.computed"/> whose own door answers
+/// fresh and is never kept.
 /// </summary>
 public class DynamicData : @this
 {
@@ -823,31 +824,29 @@ public class DynamicData : @this
     // time it asks.
     private readonly global::app.type.item.computed _cell;
 
-    public DynamicData(string name, Func<object?> valueFactory, actor.context.@this context, type? type = null)
-        // The declared type rides on the computed instance itself (its label),
-        // not through the entry judgement — a computed answers fresh and must
-        // stay reachable as the instance.
-        : this(name, new global::app.type.item.computed(valueFactory, type?.IsNull == false ? type.Name : null, type?.kind is { IsEmpty: false } kind ? kind.Name : null), context)
+    // The Data this stands for, found per read with the asker's context.
+    private readonly Func<actor.context.@this, @this?> _found;
+
+    /// <summary>A Data <paramref name="found"/> at each read. <paramref name="declared"/> labels what it is
+    /// before it is read (<c>%Now%</c> is a datetime).</summary>
+    public DynamicData(string name, Func<actor.context.@this, @this?> found, actor.context.@this context, type? declared = null)
+        : this(name, new global::app.type.item.computed(asker => found(asker)?.Peek(),
+            declared?.IsNull == false ? declared.Name : null, declared?.kind is { IsEmpty: false } kind ? kind.Name : null),
+            found, context)
     {
     }
 
-    /// <summary>A Data found per read (<c>%!event%</c>: the call stack's running event) — its value and its
-    /// properties are the found Data's; none found, the null citizen and an empty bag. A property set through it
-    /// lands in the found Data's own bag.</summary>
-    public DynamicData(string name, Func<@this?> found, actor.context.@this context)
-        : this(name, new global::app.type.item.computed(() => found()?.Peek()), context)
-        => _found = found;
-
-    private DynamicData(string name, global::app.type.item.computed cell, actor.context.@this context)
+    private DynamicData(string name, global::app.type.item.computed cell, Func<actor.context.@this, @this?> found,
+        actor.context.@this context)
         : base(name, cell, context: context)
-        => _cell = cell;
-
-    // The Data this stands for, found per read — only the Data form has one.
-    private readonly Func<@this?>? _found;
+    {
+        _cell = cell;
+        _found = found;
+    }
 
     public override Properties Properties
     {
-        get => _found?.Invoke()?.Properties ?? base.Properties;
+        get => _found(Context)?.Properties ?? base.Properties;
         set => base.Properties = value;
     }
 

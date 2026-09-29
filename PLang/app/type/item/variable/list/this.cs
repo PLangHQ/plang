@@ -52,9 +52,9 @@ public partial class @this
         // through the registry, so it must hold a context at birth (not stamped after).
         // Built with the actors, before the app's types exist: each type carries its class itself.
         var datetime = new app.type.@this("datetime", typeof(app.type.item.datetime.@this));
-        _variables["Now"] = new data.DynamicData("Now", () => DateTimeOffset.Now, context, datetime);
-        _variables["NowUtc"] = new data.DynamicData("NowUtc", () => DateTimeOffset.UtcNow, context, datetime);
-        _variables["GUID"] = new data.DynamicData("GUID", () => Guid.NewGuid(), context,
+        _variables["Now"] = new data.DynamicData("Now", asker => asker.Ok(DateTimeOffset.Now), context, datetime);
+        _variables["NowUtc"] = new data.DynamicData("NowUtc", asker => asker.Ok(DateTimeOffset.UtcNow), context, datetime);
+        _variables["GUID"] = new data.DynamicData("GUID", asker => asker.Ok(Guid.NewGuid()), context,
             new app.type.@this("guid", typeof(app.type.item.guid.@this)));
     }
 

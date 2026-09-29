@@ -137,26 +137,26 @@ public sealed class @this : IDisposable
         var vars = Variable;
 
         // All context variables are lazy — context has app, fetch at request time
-        vars.Set(new data.DynamicData("!app", () => App, this));
-        vars.Set(new data.DynamicData("!context", () => this, this));
-        vars.Set(new data.DynamicData("!variables", () => Variable, this));
-        vars.Set(new data.DynamicData("!callStack", () => CallStack, this));
-        vars.Set(new data.DynamicData("!trace", () => Trace, this));
-        vars.Set(new data.DynamicData("!channels", () => Actor.Channel, this));
+        vars.Set(new data.DynamicData("!app", asker => asker.Ok(App), this));
+        vars.Set(new data.DynamicData("!context", asker => asker.Ok(this), this));
+        vars.Set(new data.DynamicData("!variables", asker => asker.Ok(Variable), this));
+        vars.Set(new data.DynamicData("!callStack", asker => asker.Ok(CallStack), this));
+        vars.Set(new data.DynamicData("!trace", asker => asker.Ok(Trace), this));
+        vars.Set(new data.DynamicData("!channels", asker => asker.Ok(Actor.Channel), this));
         // the goal and step in play are the current frame's place — the stack is where they already live
-        vars.Set(new data.DynamicData("!goal", () => CallStack.Goal, this));
-        vars.Set(new data.DynamicData("!step", () => CallStack.Step, this));
+        vars.Set(new data.DynamicData("!goal", asker => asker.Ok(CallStack.Goal), this));
+        vars.Set(new data.DynamicData("!step", asker => asker.Ok(CallStack.Step), this));
         // %!error% reads the CALL STACK. The error is already recorded on the frame that
         // failed, and that frame is still live while its recovery runs (one frame per action,
         // spanning its modifiers), so nothing stores the error a second time. CallStack.Error
         // walks Caller outward for the first frame holding an unrecovered one — nesting
         // shadows for free, and parallel branches don't cross (the stack is AsyncLocal).
-        vars.Set(new data.DynamicData("!error", () => CallStack.Error, this));
+        vars.Set(new data.DynamicData("!error", asker => asker.Ok(CallStack.Error), this));
         // %!event% reads the CALL STACK too: the running event lives on the frame it fired in while its bound
         // call runs — the whole Data (%!event!item%, %!event!result%), gone when the call returns.
-        vars.Set(new data.DynamicData("!event", () => CallStack.Event, this));
-        vars.Set(new data.DynamicData("!data", () => App.actor.list.System.Context.Variable.Peek("data")?.Peek(), this));
-        vars.Set(new data.DynamicData("!test", () => Test, this));
+        vars.Set(new data.DynamicData("!event", _ => CallStack.Event, this));
+        vars.Set(new data.DynamicData("!data", _ => App.actor.list.System.Context.Variable.Peek("data"), this));
+        vars.Set(new data.DynamicData("!test", asker => asker.Ok(Test), this));
     }
 
     // --- Value births ---

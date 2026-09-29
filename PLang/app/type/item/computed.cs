@@ -10,11 +10,12 @@ namespace app.type.item;
 /// </summary>
 public sealed class computed : @this
 {
-    private readonly System.Func<object?> _factory;
+    private readonly System.Func<actor.context.@this, @this?> _factory;
     private readonly string? _declared;
     private readonly string? _declaredKind;
 
-    public computed(System.Func<object?> factory,
+    /// <summary>A value found at each read by <paramref name="factory"/>, handed the asker's context.</summary>
+    public computed(System.Func<actor.context.@this, @this?> factory,
         string? declaredTypeName = null, string? declaredKind = null)
     {
         _factory = factory ?? throw new System.ArgumentNullException(nameof(factory));
@@ -33,10 +34,10 @@ public sealed class computed : @this
     /// <summary>Never final — the door computes a fresh answer on every read.</summary>
     internal override bool IsFinal => false;
 
-    /// <summary>The current answer — the factory's result lifted to its item form with the
-    /// asker's context (a host the factory returns, <c>%!app%</c>, resolves its kind through it).</summary>
+    /// <summary>The current answer — what the factory finds with the asker's context; nothing found is the
+    /// null value.</summary>
     internal @this Compute(actor.context.@this context)
-        => global::app.type.item.@this.Create(_factory(), context);
+        => _factory(context) ?? global::app.type.item.@this.Create(null, context);
 
     public override System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
         => System.Threading.Tasks.ValueTask.FromResult(Compute(data.Context));

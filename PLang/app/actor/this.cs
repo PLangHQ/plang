@@ -101,13 +101,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _channels = new global::app.channel.list.@this(app, this);
 
         // Register %!app% — navigates the App object graph (e.g., %!app.test.Verbose%)
-        Context.Variable.Set("!app", new data.DynamicData("!app", () => app, Context));
+        Context.Variable.Set("!app", new data.DynamicData("!app", asker => asker.Ok(app), Context));
 
         // %MyIdentity% — the app's own identity; %Identity% — who this actor acts for: its identity's public key
         // (a caller's, in a service), else, in a local run, the app's own. Both computed on each read, so a
         // setDefault or rename is reflected.
-        Context.Variable.Set("MyIdentity", new data.DynamicData("MyIdentity", () => DefaultIdentity, Context));
-        Context.Variable.Set("Identity", new data.DynamicData("Identity", () => (Identity ?? DefaultIdentity)?.PublicKey, Context));
+        Context.Variable.Set("MyIdentity", new data.DynamicData("MyIdentity", asker => asker.Ok(DefaultIdentity), Context));
+        Context.Variable.Set("Identity", new data.DynamicData("Identity", asker => asker.Ok((Identity ?? DefaultIdentity)?.PublicKey), Context));
     }
 
     /// <summary>The app's default identity — the system actor's, made on first ask. Not <see cref="Identity"/>'s
