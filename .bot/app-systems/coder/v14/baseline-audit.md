@@ -1,20 +1,51 @@
-# Baseline audit — app-systems vs its merge-base (report only, no fixes)
+# Baseline audit — app-systems vs its parent (report only, no fixes)
 
-## The three columns
-Merge-base with runtime2: `0ea5a4b94` (origin/runtime2 fetched: it is still there). Built in a separate worktree
-with dev.sh's flags (Debug, analyzers off) and run with the same runner (the test binary, 900s cap).
+## Against the parent
+The parent is `origin/builder-formal` at `bd00000d4`, app-systems' fork point (fetched: its tip hasn't moved).
+Built in a separate worktree (restored, then `./dev.sh test`: the same runner, same six suites) and removed after.
 
-- **Base: 4095 tests, 4095 pass, 0 fail.**
-- **Branch now: 116 failing names.** 98 exist at base (and pass there); 18 are tests base doesn't have.
-- **both: 0. branch-only: 116. base-only: 0.**
+- **Parent: 165 failing names** (Modules 38, Types 23, Wire 19, Data 45, Generator 18, Runtime 24 — 167 rows,
+  two parameterized).
+- **Branch now: 116 failing names.**
 
-**All 116 were already failing when app-systems itself started** (6db8d5732, `v1/baseline-tests.md`: 166
-failing then; the branch has since fixed ~50). None is introduced by app-systems' own decisions. They come from
-the ~2,300 inherited commits between runtime2 and app-systems' start (the STJ collapse, Phase B tree runtime,
-clr-navigators, nav-driven-record-builder, context-never-null, …) that runtime2 doesn't have yet — so for the
-merge into runtime2 they are all branch-only.
+| list | count |
+|---|---|
+| **regressions** (failing now, passing at the parent) | **0** |
+| **new failing** (the parent doesn't have the test) | **0** |
+| failing at both (not this branch's) | 116 |
+| **fixed** (failing at the parent, passing now) | 29 |
+| gone (failing at the parent; the test no longer exists on the branch) | 20 |
 
-## Classification (four read-only passes; the flagged rows re-checked by me)
+Every name failing now fails at the parent too. The branch fixed 29 and removed 20.
+
+**Fixed (29):** Add_ThrowsWhenPathIsEmptyString, AppRun_CalledTwiceByRetryModifier_TwoFramesAndSnapshots,
+AppRun_HandlerThrowsOCE_TranslatesToServiceError_DoesNotPropagate, AppRun_HandlerThrows_TranslatesToServiceError_AndPopsFrame,
+AppRun_OnSuccess_FinallySnapshotsAndPops, AppRun_PushesAndPopsCallstackFrame_AroundHandler,
+AssertionError_Message_MasksSensitiveViaDiagnosticOutput, Data_Materialization_CachesResultOnFirstAccess,
+Data_PropertyAccess_UsesDeclaredTypeForMaterialization, Discover_WithDotDotTraversal_DeniedByAuthGate,
+EveryBuilderStep_TakesItsCode_WhereAndOnlyWherePythonAccepted, FluidInclude_InRootTemplate_RendersSilently,
+IContextHandler_ContextSameInstance_AsExecuteAsyncArg, LoadAction_NoCtorDll_ReturnsProviderConstructorError,
+LoadAction_ValidDll_RegistersProvider, MergeStep_EmptyActions_ClearsStepActions, NewInstance_IsEnabled_FalseByDefault,
+ReResolveAcrossCalls_SharedParameterData_RawValueUnchanged, Render_IncludeResolvesFromGoalDirectory,
+Render_Include_InheritsVariables, Render_Include_NestedPathResolvesRelativeToPartial, Render_Include_RendersPartialInline,
+RunAsync_FailedStepNotRecorded, StepRunAsync_ActionNotFound_ReturnsError, StepRunAsync_CancellationTokenCancelled_LetsOCEPropagate,
+StringPlain_ReadTwice_ReturnsCachedBackingField, Type_LazyDerivation_WithContext,
+ValidateActions_MixedValidAndInvalid_ReturnsActionNotFound, ValidateActions_OneInvalid_ReturnsActionNotFound.
+
+**Gone (20; failing at the parent, deleted or renamed here):** AppRun_SavesAndRestoresContextGoal,
+AppRun_SavesAndRestoresContextStep, BeforeAction_SignatureUnchanged_NoPayloadWidening,
+BuilderCatalog_ForFixedTypeSet_RendersByteIdentical_BeforeAndAfterEntryFold, Entity_Kinds_PopulatedForNumber,
+ErrorPropagation_VariablesGet_SettingsMissing_ReturnsAskError, GenerateLlmFilePath_ProducedViaPathDerivationVerbs,
+GoalCall_StillIncluded, LoadDll_CustomInt_OverridesBuiltInName_RuntimeRendererWins,
+LoadDll_Money_RegistersTypeAndRenderer_ProducesExpectedWireString, LoadDll_SealedNameAsRendererTypeName_FailsWith_TypeLoadCollision,
+OnAsk_OnMessageChannel_FiresPreSerialise, Parse_yields_expected_token_stream, Schema_Kinds_AdvertisesNumberPrecisions,
+Schema_Kinds_CoversAdvertisedAndExtensionFamilies, Settings_DotNotation_MissingKey_ReturnsAskError,
+Sort_TwoPhase_KeysMaterialiseAsync_OrderSync_NoGetResult, Split_peels_head_from_tail,
+TraceWrite_GoesThroughPathVerbs_NotFileWriteAllText, Variables_Clone_SettingsData_MissingKey_ReturnsAskError.
+
+(For the record, against runtime2's merge-base `0ea5a4b94` all 4095 pass; that is not this branch's bar.)
+
+## What the 116 are — all inherited from the parent (four read-only passes; flagged rows re-checked by me)
 Totals: **STALE ~48, HARNESS ~24, BUG ~17, ? ~26.**
 
 ### BUG — the behaviour the test protects should still hold
