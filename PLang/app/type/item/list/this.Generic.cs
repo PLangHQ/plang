@@ -73,6 +73,10 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
             ? new @this<T>(lifted) : null;
     }
 
+    /// <summary>A typed list is made from any list: a list<typeparamref name="T"/> passes through, another is
+    /// re-tagged.</summary>
+    public static bool Takes(global::app.type.@this other) => other.Is("list");
+
     /// <summary>Walks the items, one at a time — the ones held. A list that loads its items (goal's) reads
     /// each as the walk reaches it, so a walk that stops early (the type's <c>Get(key)</c>) reads no
     /// further. With no asker: the app's own walk.</summary>

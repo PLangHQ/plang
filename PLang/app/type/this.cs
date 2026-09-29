@@ -166,8 +166,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         Template = template;
         // The birth door starts pointing at the one-shot binder, which swaps itself for the closed thunk (or
         // the decline) on first use — every later call is a bare delegate invocation, no null check. Field
-        // initializers can't reference `this`, so bind here.
+        // initializers can't reference `this`, so bind here. The "made from" answer binds the same way.
         _lift = Bind;
+        _takes = Bind;
     }
 
     /// <summary>
@@ -302,21 +303,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             return new item.source(raw, this);
 
         // A container / domain value is already native (dict, list, path, image, …) — hold it; a value of a
-        // type this type is born from (its From: a path declared a file) is made into this type by its own
-        // lift. A template is the value's birth fact (a reference read as one is born with it), never stamped here.
+        // type this type takes (a path declared a file, a list declared list<path>) is made into this type by
+        // its own birth, handed this declaration — so a file declared a template is born one. A template is
+        // the value's birth fact, never stamped here.
         if (raw is item.@this { IsLeaf: false } native)
-        {
-            // (the lift is handed this declaration — a typed absence of this type — so what it makes is born
-            // with the declaration's facts: a file declared a template is born one)
-            if (!native.Is(this) && From.Any(native.Type.Is)
-                && Make(raw, new global::app.data.@this("", new global::app.type.item.@null.@this(this), context: context)) is { } made)
-                native = made;
-            // this type's class closes over its kind (list<path>): the value is taken as that class by its lift
-            else if (ClrType is { IsGenericType: true } closed && native is global::app.type.item.list.@this && !closed.IsInstanceOfType(native)
-                     && Make(raw, new global::app.data.@this("", new global::app.type.item.@null.@this(this), context: context)) is { } retagged)
-                native = retagged;
-            return native;
-        }
+            return Takes(native.Type) && Make(raw, new global::app.data.@this("", context: context)) is { } made
+                ? made : native;
 
         // A source (declared, unparsed) re-declared → the source RE-BIRTHS itself over the same
         // unread raw with THIS declaration (which carries the build's stamped kind/template). The
@@ -347,7 +339,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             // courier (kind-aware build — path parses a string, number parses a token). A decline lands
             // its reason on the carrier's Error — this door is the throw boundary (rides MaterializeFailed).
             var lowered = leaf.Clr<object>();
-            var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(this), context: context);
+            var carrier = new global::app.data.@this("", context: context);
             if (Make(lowered, carrier) is { } made) return made;
             if (carrier.Error != null) throw Failed(carrier.Error);
             // No family hook AND no error — nothing can build this shape (architect ruling: the
@@ -359,7 +351,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // A raw CLR scalar (int, DateOnly, …) → born through THIS family's own lift, then refine to the
         // declared type/kind. A non-family declared type routes the raw through the collection perimeter
         // (the owner's lift or a clr carrier). The family lift speaks raw natively; refine re-enters here.
-        if (Make(raw, new global::app.data.@this("", new global::app.type.item.@null.@this(this), context: context)) is { } lifted)
+        if (Make(raw, new global::app.data.@this("", context: context)) is { } lifted)
             return string.Equals(Name, lifted.Type.Name, System.StringComparison.OrdinalIgnoreCase)
                 ? lifted : Make(lifted, context);
         return Make(global::app.type.item.@this.Create(raw, context), context);
@@ -424,6 +416,28 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             : static (_, _, _) => null;
         return _lift(raw, declared, data);
     }
+
+    /// <summary>Is a value of <paramref name="other"/>, declared this type, made into it — this type's class's own
+    /// answer, asked without making (a path declared a file is; a dict declared a list is not).</summary>
+    internal bool Takes(@this other) => _takes(other);
+
+    private System.Func<@this, bool> _takes;
+
+    private bool Bind(@this other)
+    {
+        _takes = Creatable is { } clr
+            ? _taking.MakeGenericMethod(clr).CreateDelegate<System.Func<@this, bool>>()
+            : static _ => false;
+        return _takes(other);
+    }
+
+    private static bool Takes<T>(@this other)
+        where T : item.@this, global::app.type.item.ICreate<T>
+        => T.Takes(other);
+
+    private static readonly System.Reflection.MethodInfo _taking = System.Array.Find(
+        typeof(@this).GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static),
+        m => m.Name == nameof(Takes) && m.IsGenericMethodDefinition)!;
 
     // The one eligibility check both binders share: this type's class when it is an ICreate<clr>
     // family — ICreate<clr> SPECIFICALLY (a subtype implementing ICreate<base>, e.g.
@@ -539,13 +553,6 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     [JsonIgnore]
     internal IReadOnlyList<global::app.type.convert.OwnedClr> Owned { get; init; } = [];
 
-    /// <summary>The types a value of this type is born from (<c>path</c> for file, url and directory: each is
-    /// the reference to what is at a path), declared by its class as a static <c>From</c>. A value of one of
-    /// them declared as this type is made into it; any other container declared as this type is held.
-    /// Never null.</summary>
-    [JsonIgnore]
-    public IReadOnlyList<string> From { get; init; } = [];
-
     /// <summary>True for a type plang's own machinery uses but a program never names (a wire slice,
     /// a C# host carrier), declared by its class as a static <c>Internal</c>. It stays in the types —
     /// naming answers it — and stays out of their face.</summary>
@@ -577,7 +584,6 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     {
         Alias = Declared<IReadOnlyList<string>>("Alias") ?? [];
         Owned = Declared<IReadOnlyList<global::app.type.convert.OwnedClr>>("OwnedClrTypes") ?? [];
-        From = Declared<IReadOnlyList<string>>("From") ?? [];
         Internal = clr.GetProperty("Internal", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
                                                | System.Reflection.BindingFlags.FlattenHierarchy)?.GetValue(null) is true;
         // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.

@@ -15,7 +15,7 @@ namespace app.channel.type.goal;
 public class @this : global::app.channel.type.session.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>A goal channel is born from its settings — a dict of them by name (what channel.set was given).</summary>
-    public static IReadOnlyList<string> From => ["dict"];
+    public static bool Takes(global::app.type.@this other) => other.Is("dict");
 
     /// <summary>The goal channel <paramref name="raw"/>'s settings describe, read by this channel's own property names,
     /// for the actor whose context it is born in: Name and Goal (a <c>goal.call</c>) are required; a setting not

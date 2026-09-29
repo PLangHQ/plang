@@ -78,4 +78,11 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
             "CreateItemDeclined", 400));
         return null;
     }
+
+    /// <summary>
+    /// Is a value of <paramref name="other"/>, declared a <typeparamref name="TSelf"/>, made into one — asked
+    /// without making. A file, url or directory is made from a path (the reference to what is there), a typed
+    /// list from a list; a container of any other type declared this one is held as it is. The base takes none.
+    /// </summary>
+    static virtual bool Takes(global::app.type.@this other) => false;
 }

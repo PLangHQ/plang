@@ -18,8 +18,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static string Example => "/config/settings.json";
     public static string Description => "A file, by its path; its content is read when it is used.";
     public static string Shape => "string";
-    public static IReadOnlyList<string> From => ["path"];
-
+    /// <summary>A file is made from a path.</summary>
+    public static bool Takes(global::app.type.@this other) => other.Is("path");
 
     /// <summary>The location facet — owns scheme, auth gate, stat.</summary>
     [global::app.LlmBuilder, global::app.Out, global::app.Store]

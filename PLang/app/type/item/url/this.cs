@@ -14,8 +14,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static string Example => "https://example.com/data.json";
     public static string Description => "A web address; its content is fetched when it is used.";
     public static string Shape => "string";
-    public static IReadOnlyList<string> From => ["path"];
-
+    /// <summary>A url is made from a path.</summary>
+    public static bool Takes(global::app.type.@this other) => other.Is("path");
 
     /// <summary>The location facet (an <c>HttpPath</c> — owns consent + fetch).</summary>
     [global::app.LlmBuilder, global::app.Out, global::app.Store]
