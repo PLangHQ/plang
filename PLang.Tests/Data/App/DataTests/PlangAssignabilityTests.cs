@@ -58,6 +58,26 @@ public class PlangAssignabilityTests
         await Assert.That(items[0].Peek()?.ToString()).IsEqualTo("hello");
     }
 
+    // A carrier naming a variable enumerates what the name holds — and is still that reference after:
+    // enumerating never rewrites the carrier.
+    [Test]
+    public async Task EnumerateItems_OfAReference_WalksWhatItNames_AndLeavesTheCarrier()
+    {
+        var ctx = _app.actor.list.User.Context;
+        var list = new global::app.type.item.list.@this();
+        list.Add((global::app.type.item.text.@this)"a");
+        list.Add((global::app.type.item.text.@this)"b");
+        await ctx.Variable.Set("items", list);
+        var source = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items"), context: ctx);
+
+        var items = new List<global::app.data.@this>();
+        foreach (var (_, item) in await source.EnumerateItems()) items.Add(item);
+
+        await Assert.That(items.Count).IsEqualTo(2);
+        await Assert.That(source.IsVariable).IsTrue();
+        await Assert.That(source.Peek()).IsTypeOf<global::app.type.item.variable.@this>();
+    }
+
     [Test]
     public async Task EnumerateItems_NumberValue_YieldsOneWholeItem()
     {

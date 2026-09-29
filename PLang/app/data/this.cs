@@ -402,16 +402,12 @@ public partial class @this
     /// </summary>
     public async System.Threading.Tasks.ValueTask<IEnumerable<(@this key, @this value)>> EnumerateItems()
     {
-        // A value-slot %var% (IsVariable) NAMES a binding, not content — follow it ONCE to the
-        // stored value and enumerate THAT. Get resolves the name without opening the target's
-        // value door, so a real list/dict is aliased (never materialized). After the hop _item
-        // IS the stored list (IsVariable now false); the value owns its own lazy enumeration.
-        if (_item.IsVariable)
-        {
-            var bound = await _item.Get(_context);
-            if (bound is not null && bound.IsInitialized) _item = bound.Peek();
-        }
-        return _item.EnumerateItems(_context);
+        // A value-slot %var% names a binding, not content: what it names is enumerated (Follow — the value
+        // door stays shut, so a real list/dict is walked in place), and this carrier stays as it is. A name
+        // that holds nothing enumerates the carrier itself.
+        var held = await Follow(_context);
+        var walked = held.IsInitialized ? held : this;
+        return walked._item.EnumerateItems(_context);
     }
 
     /// <summary>Emptiness — the binding answers for absence (uninitialized,
