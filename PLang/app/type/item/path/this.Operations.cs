@@ -60,8 +60,11 @@ public abstract partial class @this
     // other verbs have a single fixed shape — typed.
     /// <summary>What reading this location lands: a reference to what is there, with nothing read — its
     /// content is the reference's own value, read at first touch. <paramref name="template"/> marks the
-    /// content a template (its variables are filled at use).</summary>
-    public abstract Task<data.@this> Read(actor.context.@this context, data.@this<global::app.type.item.@bool.@this>? template = null);
+    /// content a template (its variables are filled at use) — a fact of the reference, whatever its scheme.</summary>
+    public abstract Task<data.@this> Read(actor.context.@this context, global::app.type.item.@bool.@this? template = null);
+
+    // The template mark a reference is born with: plang's when the read asked for one.
+    protected string? Marked(global::app.type.item.@bool.@this? template) => template?.Value == true ? "plang" : null;
 
     /// <summary>Read's build face: the type <see cref="Read"/> lands, with no content read — the build knows
     /// what a later step captures.</summary>
