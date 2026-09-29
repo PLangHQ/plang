@@ -1,6 +1,6 @@
 # coder — app-systems
 
-**Version:** v14 (stages 10 and 11 closed; 12a — the exception pass — in progress)
+**Version:** v14 (stages 1–12 done except 10b's (C); batch 3 done; baseline audited)
 
 ## What this is
 app-systems makes every `app.X` the type X, so the plang path, the C# path and the file path agree. The
@@ -90,8 +90,24 @@ The llm cache stays unfixed on purpose. Pile2_SqliteSettings reads a file gone b
   (sqlite.CreateAsync, stream WriteBytesAsync, Comparison.AsSign). Pins: `KeepsItsKeyTests` and key asserts beside
   each change. Report-only: the `?` rows, PrFormatOutdated's load rebuild, the six `new static FromException` hides.
 
+- **12b** (1610abfe7): content read off a file carries its `origin` down its own read (`reference.Value` →
+  `kind.Decode(…, origin)` → `type.Create`/`Make` → `source` → `ReadContext.Origin`); all 21 PrFormatOutdated throws
+  name their .pr. Then decision 294 (ec1105380): `goal.Origin` deleted (plang never builds under one root and runs
+  under another) — `goal.Folder => Path?.Parent`; the read-carried origin stays for the file-naming errors.
+- **Batch 3** (4d83eeadc, d4dbf5279, 8fb2334dd): code wanting a path's bytes asks `path.Bytes`; "a value of this type
+  is a name" is `ICreate.IsName` (from the IName marker) — no `typeof(variable)` left, and Make reads a name type's
+  text through its own eager reader (the courier still declines a value asked as a variable); a kinded type is born
+  holding its family (`type.Family`), `kind.Values` answering a choice set's options.
+- **Baseline audit** (`v14/baseline-audit.md`): runtime2's merge-base `0ea5a4b94` passes all 4095 C# tests; all 116
+  failing here are branch-only, and all were already failing when app-systems started (inherited from ~2,300 earlier
+  branch commits). Classified STALE ~48 / HARNESS ~24 / BUG ~17 / ? ~26. The Properties-tamper "security" row is
+  harness: real Ed25519 refuses a tampered Properties value (`DataHashMismatch`, Properties ride inside the signed
+  value).
+
 ## Next
-12b (born knowing: a goal knows where it was loaded from at birth). Gate rule: diff failing **names**
+Waiting on Ingi: fix the 116 here before the merge, or on their own branch. When the test-fix batch runs, the
+Properties-tamper tests (OuterSignature…, Cut4…) take the real-signing pin: read the tampered wire, expect
+DataHashMismatch; no second `signing.verify` on an already-peeled Data. Gate rule: diff failing **names**
 against `baseline-failures.txt`; rebuild (`dev.sh build`) after reverting any mutation before a plang run.
 
 ## Code example
