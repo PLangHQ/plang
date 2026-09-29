@@ -73,10 +73,10 @@ public class ListNestingTests : System.IAsyncDisposable
         var ctx = app.actor.list.User.Context;
         ctx.Variable.Set("l", Parsed("[[1,2],3]"));
 
-        var result = await app.Run(new global::app.module.list.Flatten(ctx)
+        var result = await new global::app.goal.step.action.@this(new global::app.module.list.Flatten(ctx)
         {
             ListName = new global::app.type.item.variable.@this("l"),
-        }, ctx);
+        }, ctx).Start(ctx);
 
         await result.IsSuccess();
         var flat = (global::app.type.item.list.@this)(await result.Value())!;
@@ -91,10 +91,10 @@ public class ListNestingTests : System.IAsyncDisposable
         var ctx = app.actor.list.User.Context;
         ctx.Variable.Set("l", Parsed("[[1,[2,[3]]],4]"));
 
-        var result = await app.Run(new global::app.module.list.Flatten(ctx)
+        var result = await new global::app.goal.step.action.@this(new global::app.module.list.Flatten(ctx)
         {
             ListName = new global::app.type.item.variable.@this("l"),
-        }, ctx);
+        }, ctx).Start(ctx);
 
         await result.IsSuccess();
         var flat = (global::app.type.item.list.@this)(await result.Value())!;

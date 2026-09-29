@@ -139,9 +139,9 @@ public class Stage6_ConsumersTests
         var list = new global::app.type.item.list.@this();
         list.Add(new Data("", dict, context: ctx));
         await ctx.Variable.Set("items", list);
-        var result = await app.Run(new global::app.module.list.IndexOf(ctx) { ListName = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items")),
+        var result = await new global::app.goal.step.action.@this(new global::app.module.list.IndexOf(ctx) { ListName = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items")),
             Value = D(app, 99, "number"),
-        }, ctx);
+        }, ctx).Start(ctx);
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("-1");
     }
@@ -158,8 +158,8 @@ public class Stage6_ConsumersTests
         list.Add(new Data("", 5, context: ctx));
         list.Add(new Data("", 5, context: ctx));
         await ctx.Variable.Set("items", list);
-        var result = await app.Run(new global::app.module.list.Unique(ctx) { ListName = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items")),
-        }, ctx);
+        var result = await new global::app.goal.step.action.@this(new global::app.module.list.Unique(ctx) { ListName = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items")),
+        }, ctx).Start(ctx);
         await result.IsSuccess();
     }
 

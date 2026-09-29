@@ -76,12 +76,11 @@ public class Cut1_PlainRoundTripTests
         var (_, back, app) = await WriteAndRead("greeting", "hello");
         await using (app)
         {
-            var verify = await app.Run<global::app.module.signing.verify>(
-                new global::app.module.signing.verify(app.actor.list.User.Context)
+            var verify = await new global::app.goal.step.action.@this(new global::app.module.signing.verify(app.actor.list.User.Context)
                 {
                     Data = back,
                     SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", true)
-                }, app.actor.list.User.Context);
+                }, app.actor.list.User.Context).Start(app.actor.list.User.Context);
             await verify.IsSuccess();
         }
     }

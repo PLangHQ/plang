@@ -165,7 +165,7 @@ public class SensitivePropertyFilterTests
     {
         var actual = new LeakySecretRecord("alice", "topsecret-PLAINTEXT-777");
         var ctx = _app.actor.list.User.Context;
-        var failed = await _app.Run(new global::app.module.assert.Equals(ctx) { Expected = ctx.Ok("nope"), Actual = ctx.Ok(actual) }, ctx);
+        var failed = await new global::app.goal.step.action.@this(new global::app.module.assert.Equals(ctx) { Expected = ctx.Ok("nope"), Actual = ctx.Ok(actual) }, ctx).Start(ctx);
         var error = failed.Error!;
 
         await Assert.That(error.Message).DoesNotContain("topsecret-PLAINTEXT-777");

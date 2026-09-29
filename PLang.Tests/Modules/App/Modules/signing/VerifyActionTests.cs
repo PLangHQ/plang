@@ -50,7 +50,7 @@ public class VerifyActionTests
             Expires = expires.HasValue ? (global::app.type.item.duration.@this)expires.Value : null,
             Header = headers?.ToDictData(Ctx)
         };
-        return await _app.Run<sign>(action, Ctx);
+        return await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
     }
 
     private async Task<Data> VerifyHelper(Data signedData, List<string>? contracts = null,
@@ -61,7 +61,7 @@ public class VerifyActionTests
             Header = headers?.ToDictData(Ctx),
             TimeoutMs = timeoutMs.HasValue ? (global::app.type.item.number.@this)timeoutMs.Value : null
         };
-        return await _app.Run<verify>(action, Ctx);
+        return await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
     }
 
     // sign returns a Data whose value IS the signature layer (immutable). To

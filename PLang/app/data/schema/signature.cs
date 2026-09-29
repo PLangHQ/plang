@@ -104,8 +104,8 @@ public sealed class signature : ISchemaReader
                 SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>(
                     "", ctx.View == global::app.View.Store),
             };
-            var verifyResult = context.App
-                .Run(verifyAction, context)
+            var verifyResult = new global::app.goal.step.action.@this(verifyAction, context)
+                .Start(context)
                 .GetAwaiter().GetResult();
             if (!verifyResult.Success)
                 return context.Error(verifyResult.Error

@@ -67,18 +67,18 @@ public class VariableResolveTest : System.IAsyncDisposable
         await using var app = new global::app.@this("/tmp/var-set-bang-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
         var context = app.actor.list.User.Context;
 
-        await app.Run<global::app.module.variable.Set>(new global::app.module.variable.Set(app.actor.list.User.Context)
+        await new global::app.goal.step.action.@this(new global::app.module.variable.Set(app.actor.list.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("response")),
             Value = app.actor.list.User.Context.Ok("hello"),
-        }, context);
+        }, context).Start(context);
 
-        await app.Run<global::app.module.variable.Set>(new global::app.module.variable.Set(app.actor.list.User.Context)
+        await new global::app.goal.step.action.@this(new global::app.module.variable.Set(app.actor.list.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("",
                 global::app.type.item.variable.@this.Resolve("%response!cost%", context)),
             Value = app.actor.list.User.Context.Ok(100),
-        }, context);
+        }, context).Start(context);
 
         var response = await context.Variable.Get("response");
         await Assert.That((await response.Properties.Value("cost"))).IsEqualTo(100);
@@ -89,12 +89,12 @@ public class VariableResolveTest : System.IAsyncDisposable
         await using var app = new global::app.@this("/tmp/var-set-unset-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
         var context = app.actor.list.User.Context;
 
-        var result = await app.Run<global::app.module.variable.Set>(new global::app.module.variable.Set(app.actor.list.User.Context)
+        var result = await new global::app.goal.step.action.@this(new global::app.module.variable.Set(app.actor.list.User.Context)
         {
             Name = new global::app.data.@this<global::app.type.item.variable.@this>("",
                 global::app.type.item.variable.@this.Resolve("%response!cost%", context)),
             Value = app.actor.list.User.Context.Ok(100),
-        }, context);
+        }, context).Start(context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");

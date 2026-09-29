@@ -54,7 +54,7 @@ public class SaveGoalsTests
         };
 
         var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
-        var result = await _app.Run(action, _app.actor.list.User.Context);
+        var result = await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);
 
         await result.IsSuccess();
 
@@ -79,7 +79,7 @@ public class SaveGoalsTests
         };
 
         var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
-        await _app.Run(action, _app.actor.list.User.Context);
+        await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);
 
         var prPath = System.IO.Path.Combine(_tempDir, ".build", "test.pr");
         var json = System.IO.File.ReadAllText(prPath);
@@ -104,7 +104,7 @@ public class SaveGoalsTests
         goal.Child.Add(new Goal { Name = "Private" });
 
         var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
-        var result = await _app.Run(action, _app.actor.list.User.Context);
+        var result = await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);
 
         await result.IsSuccess();
 
@@ -130,7 +130,7 @@ public class SaveGoalsTests
         };
 
         var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
-        var result = await _app.Run(action, _app.actor.list.User.Context);
+        var result = await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("GoalInvalid");
@@ -145,7 +145,7 @@ public class SaveGoalsTests
     {
         var goal = new Goal { Name = "Test" }; // No Path → no PrPath
         var action = new goalsSave(_app.actor.list.User.Context) { Goal = new("", goal) };
-        var result = await _app.Run(action, _app.actor.list.User.Context);
+        var result = await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NoPrPath");

@@ -40,14 +40,12 @@ public class ActionRunAsyncTests
 
     [Test] public async Task AppRunAction_SymbolAbsent_FromProductionSource()
     {
-        // Spec-deferred: Run retained as the inline-composition entry.
-        // It builds an Action.@this entity with PreboundHandler set and
-        // dispatches through entity.RunAsync — same path as PR-loaded actions,
-        // synthetic-stamped. Pin current behavior (will flip when removed).
+        // A composed action runs through its own door — new action(seed, context).Start(context) —
+        // so app has no Run<TAction> to dispatch it.
         var runAction = typeof(global::app.@this).GetMethods(
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .FirstOrDefault(m => m.Name == "Run" && m.GetGenericArguments().Length == 1);
-        await Assert.That(runAction).IsNotNull();
+            .FirstOrDefault(m => m.Name == "Run" && m.IsGenericMethodDefinition);
+        await Assert.That(runAction).IsNull();
     }
 
     [Test] public async Task CauseParameter_AbsentFromAllCallSites()

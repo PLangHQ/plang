@@ -65,7 +65,7 @@ public class AssertionErrorVariablesTests
         context.Variable.Set("score", 42);
         context.Variable.Set("label", "foo");
 
-        var result = await _app.Run(new AssertEquals(context) { Expected = D(1), Actual = D(2) }, context);
+        var result = await new global::app.goal.step.action.@this(new AssertEquals(context) { Expected = D(1), Actual = D(2) }, context).Start(context);
 
         await result.IsFailure();
         var err = result.Error as AssertionError;
@@ -122,7 +122,7 @@ public class AssertionErrorVariablesTests
         context.Variable.Set("watched", "sentinel");
 
         // Through the production door: the dispatch binds each handler and its frame records the failure.
-        async Task<Data> AR(global::app.module.ICodeGenerated a) => await _app.Run((dynamic)a, context);
+        async Task<Data> AR(global::app.module.ICodeGenerated a) => await new global::app.goal.step.action.@this(a, context).Start(context);
 
         var failures = new List<Data>
         {

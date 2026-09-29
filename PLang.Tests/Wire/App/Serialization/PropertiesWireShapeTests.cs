@@ -223,12 +223,11 @@ public class PropertiesWireShapeTests
 
             var back = plang.Deserialize(tampered, d.Context);
             var app = d.Context!.App;
-            var verify = await app.Run<global::app.module.signing.verify>(
-                new global::app.module.signing.verify(app.actor.list.User.Context)
+            var verify = await new global::app.goal.step.action.@this(new global::app.module.signing.verify(app.actor.list.User.Context)
                 {
                     Data = back,
                     SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", true)
-                }, d.Context);
+                }, d.Context).Start(d.Context);
             await verify.IsFailure();
         }
         finally { dispose(); }

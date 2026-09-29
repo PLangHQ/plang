@@ -13,8 +13,7 @@ public class CryptoV1PassThroughTests
     {
         var app = NewApp();
         var input = new byte[] { 1, 2, 3, 4 };
-        var result = await app.Run<encrypt>(
-            new encrypt(app.actor.list.User.Context) { Input = global::app.data.@this<global::app.type.item.binary.@this>.Ok(input) }, app.actor.list.User.Context);
+        var result = await new global::app.goal.step.action.@this(new encrypt(app.actor.list.User.Context) { Input = global::app.data.@this<global::app.type.item.binary.@this>.Ok(input) }, app.actor.list.User.Context).Start(app.actor.list.User.Context);
         await result.IsSuccess();
         await Assert.That(result.GetValue<byte[]>()).IsEquivalentTo(input);
     }
@@ -24,8 +23,7 @@ public class CryptoV1PassThroughTests
     {
         var app = NewApp();
         var input = new byte[] { 9, 8, 7 };
-        var result = await app.Run<decrypt>(
-            new decrypt(app.actor.list.User.Context) { Input = global::app.data.@this<global::app.type.item.binary.@this>.Ok(input) }, app.actor.list.User.Context);
+        var result = await new global::app.goal.step.action.@this(new decrypt(app.actor.list.User.Context) { Input = global::app.data.@this<global::app.type.item.binary.@this>.Ok(input) }, app.actor.list.User.Context).Start(app.actor.list.User.Context);
         await result.IsSuccess();
         await Assert.That(result.GetValue<byte[]>()).IsEquivalentTo(input);
     }
@@ -35,11 +33,9 @@ public class CryptoV1PassThroughTests
     {
         var app = NewApp();
         var input = new byte[] { 11, 22, 33, 44, 55 };
-        var encrypted = await app.Run<encrypt>(
-            new encrypt(app.actor.list.User.Context) { Input = global::app.data.@this<global::app.type.item.binary.@this>.Ok(input) }, app.actor.list.User.Context);
+        var encrypted = await new global::app.goal.step.action.@this(new encrypt(app.actor.list.User.Context) { Input = global::app.data.@this<global::app.type.item.binary.@this>.Ok(input) }, app.actor.list.User.Context).Start(app.actor.list.User.Context);
         var encryptedBytes = encrypted.GetValue<byte[]>()!;
-        var decrypted = await app.Run<decrypt>(
-            new decrypt(app.actor.list.User.Context) { Input = global::app.data.@this<global::app.type.item.binary.@this>.Ok(encryptedBytes) }, app.actor.list.User.Context);
+        var decrypted = await new global::app.goal.step.action.@this(new decrypt(app.actor.list.User.Context) { Input = global::app.data.@this<global::app.type.item.binary.@this>.Ok(encryptedBytes) }, app.actor.list.User.Context).Start(app.actor.list.User.Context);
         await Assert.That(decrypted.GetValue<byte[]>()).IsEquivalentTo(input);
     }
 

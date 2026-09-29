@@ -23,7 +23,7 @@ public class FirstIdentityTests
                     return Task.FromResult(c.Ok());
                 }, who, global::app.@event.binding.Scope.actor);
 
-            var identity = await app.Run(new global::app.module.identity.Get(ctx), ctx);
+            var identity = await new global::app.goal.step.action.@this(new global::app.module.identity.Get(ctx), ctx).Start(ctx);
             await identity.IsSuccess();
 
             // the one ask, and the one its own save makes — never a chain down to the stack's limit

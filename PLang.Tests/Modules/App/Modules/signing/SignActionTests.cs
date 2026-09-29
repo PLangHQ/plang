@@ -50,7 +50,7 @@ public class SignActionTests
             Expires = expires.HasValue ? (global::app.type.item.duration.@this)expires.Value : null,
             Header = headers?.ToDictData(Ctx)
         };
-        return await _app.Run<sign>(action, Ctx);
+        return await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
     }
 
     // sign now returns a Data whose value IS the signature layer (no Data.Signature).
@@ -248,7 +248,7 @@ public class SignActionTests
         bare.Code.SetDefault<IKey>("throwing-key");
 
         var ctx = bare.actor.list.System.Context;
-        var result = await bare.Run<sign>(new sign(ctx) { Data = new Data("", "test", context: ctx) }, ctx);
+        var result = await new global::app.goal.step.action.@this(new sign(ctx) { Data = new Data("", "test", context: ctx) }, ctx).Start(ctx);
         await result.IsFailure();
         // Key generation fails, identity creation fails, sign fails
         await Assert.That(result.Error).IsNotNull();

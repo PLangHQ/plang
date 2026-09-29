@@ -88,12 +88,11 @@ public class Cut4_PropertiesWireTests
             await Assert.That(tampered).IsNotEqualTo(wire);
             var plang = app.actor.list.User.Context.Format("application/plang");
             var back = plang.Deserialize(tampered, app.actor.list.User.Context);
-            var verify = await app.Run<global::app.module.signing.verify>(
-                new global::app.module.signing.verify(app.actor.list.User.Context)
+            var verify = await new global::app.goal.step.action.@this(new global::app.module.signing.verify(app.actor.list.User.Context)
                 {
                     Data = back,
                     SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", true)
-                }, app.actor.list.User.Context);
+                }, app.actor.list.User.Context).Start(app.actor.list.User.Context);
             await verify.IsFailure();
         }
     }

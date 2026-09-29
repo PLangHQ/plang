@@ -142,8 +142,8 @@ public partial class @this
     /// PROGRAM: the reader builds the step shell first and hands it down at construction, so it is
     /// never stamped in afterwards. Null is not a repair hole, it is a real state: two kinds of
     /// action exist outside any program and therefore have no step — a catalog element (a
-    /// module-minted descriptor), and a synthetic action composed in C# (<c>app.Run(new sign{...})</c>,
-    /// the signing/verify/ask seam).</summary>
+    /// module-minted descriptor), and a synthetic action composed in C# (<c>new action(new sign{...}, context)</c>,
+    /// the signing/verify/ask seam) when it starts before any goal runs.</summary>
     [JsonIgnore]
     public Step? Step { get; init; }
 

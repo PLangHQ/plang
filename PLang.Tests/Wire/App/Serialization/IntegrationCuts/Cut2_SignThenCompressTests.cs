@@ -77,12 +77,11 @@ public class Cut2_SignThenCompressTests
         await back.IsSuccess();
         var restored = back;
 
-        var verify = await app.Run<global::app.module.signing.verify>(
-            new global::app.module.signing.verify(app.actor.list.User.Context)
+        var verify = await new global::app.goal.step.action.@this(new global::app.module.signing.verify(app.actor.list.User.Context)
             {
                 Data = restored,
                 SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", true)
-            }, app.actor.list.User.Context);
+            }, app.actor.list.User.Context).Start(app.actor.list.User.Context);
         await verify.IsFailure();
     }
 }
