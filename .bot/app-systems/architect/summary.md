@@ -7,6 +7,7 @@ Done: 1–8h, 9a, 9b, 9c, 11a, 10a, and 10b's (A) and (B) (see `test/plan/app-sy
 - **9c is done** (Ingi's rulings 239–241): handlers live at `app/module/<m>/<a>.cs`; the module registry dissolved into `list<module>` on the module type; `%!app.module%` is an empty module carrying `.list`.
 - **Ingi's review order is in force (247):** every coder commit is read in full, with its call path walked upstream. Two review batches (248, 249) produced about 20 fixes, all landed (250–262). The findings included a security bug in the consent prompt (an empty answer looped forever) and a url template bug. Gates now diff failing test *names* against the baseline file, and a count had hidden a regression.
 - **Eval round 26:** 63/64/63; the one silent is the known lone-`if` drift (221).
+- **Decided overnight, to check (271):** `[Sensitive]` in debug output is **masked** as `"******"` (the key shown, the value hidden), not stripped. One filter now does it everywhere, so a redacted value no longer looks like a missing one.
 - **Reversal to check (268):** `%!app.name%` is the asker's view of the app's name (settings are layered per actor), which reverses my own 264(4b). Making app-level settings global would let a user program or a remote caller rename the app for everyone.
 
 **Waiting for Ingi (don't touch):**
