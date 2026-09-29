@@ -99,10 +99,26 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public override string ToString() => Path.ToString();
 
     /// <summary>
+    /// The directory writes itself: in the Out view it lists through its own door (as the writer, past the
+    /// path's auth gate) and writes the listing. The Store and Debug views never list — a dump or a store
+    /// does no I/O — and a write with no context can't; they write what <see cref="Write"/> has.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        if (mode == global::app.View.Out && context != null)
+        {
+            var listing = new global::app.data.@this("", this, context: context);
+            await Value(listing);
+            if (listing.Error != null) throw new global::app.error.AppException(listing.Error);
+        }
+        Write(writer);
+    }
+
+    /// <summary>
     /// The directory renders itself as a FLAT LISTING of its children's
     /// locations, never their contents. An unlisted directory renders its
-    /// location (the reference face); the listing was pre-materialised by the
-    /// serialize chokepoint's <c>Load()</c> pass.
+    /// location (the reference face).
     /// </summary>
     public override void Write(global::app.type.format.IWriter writer)
     {

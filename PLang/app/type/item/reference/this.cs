@@ -106,10 +106,9 @@ public abstract class @this : global::app.type.item.@this
     public override string ToString() => Path.ToString();
 
     /// <summary>
-    /// The reference renders itself as its CONTENT (the bare-scalar contract: <c>write out %file%</c> emits what
-    /// was read), pre-sampled by the serialize chokepoint's <c>Load()</c> pass: text content as its text, any
-    /// other as its bytes — the format says which. An unsampled reference renders its location: writing it out
-    /// is not consent to read it.
+    /// The reference renders itself as its CONTENT once sampled (its value door was opened): text content as its
+    /// text, any other as its bytes — the format says which. An unsampled reference renders its location:
+    /// writing it out is not consent to read it.
     /// </summary>
     public override void Write(global::app.type.format.IWriter writer)
     {

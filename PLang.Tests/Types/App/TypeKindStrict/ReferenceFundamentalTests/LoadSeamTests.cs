@@ -115,6 +115,21 @@ public class LoadSeamTests
         await Assert.That(json).Contains("iVBOR");
     }
 
+    // Only the Out view loads: a store keeps the reference, a dump does no I/O.
+    [Test] public async Task StoreAndDebug_PathBackedImage_NeverLoad()
+    {
+        var img = PathBackedPng("kept.png");
+        using var ms = new System.IO.MemoryStream();
+
+        var stored = await Plang.Encode(ms, _app.actor.list.User.Context.Ok(img), Ctx, global::app.View.Store);
+        await stored.IsSuccess();
+        var dumped = await img.Debug(Ctx);
+
+        await Assert.That(img.RawBytes).IsNull();
+        await Assert.That(Encoding.UTF8.GetString(ms.ToArray())).DoesNotContain("iVBOR");
+        await Assert.That(dumped).DoesNotContain("iVBOR");
+    }
+
     [Test] public async Task Serialize_StrictMismatch_FailsCleanly_BeforeStreamWrite()
     {
         var img = PathBackedPng("bad.png");

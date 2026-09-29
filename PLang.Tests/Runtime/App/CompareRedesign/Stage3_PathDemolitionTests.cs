@@ -166,6 +166,25 @@ public class Stage3_PathDemolitionTests
         await Assert.That(json).DoesNotContain("TOP-SECRET-CONTENT");
     }
 
+    // Only the Out view lists: a store keeps the location, a dump does no I/O.
+    [Test]
+    public async Task Directory_StoreAndDebug_NeverList()
+    {
+        var (app, context, dir) = MakeApp();
+        await using var _ = app;
+        Directory.CreateDirectory(Path.Combine(dir, "docs"));
+        File.WriteAllText(Path.Combine(dir, "docs", "a.txt"), "x");
+        var directory = new global::app.type.item.directory.@this(new PLangFilePath(Path.Combine(dir, "docs")));
+
+        using var ms = new MemoryStream();
+        await app.actor.list.User.Context.Format("application/plang").Encode(ms, new Data("d", directory, context: context), context, global::app.View.Store);
+        var dumped = await directory.Debug(context);
+
+        await Assert.That(directory.Listed).IsNull();
+        await Assert.That(Encoding.UTF8.GetString(ms.ToArray())).DoesNotContain("a.txt");
+        await Assert.That(dumped).DoesNotContain("a.txt");
+    }
+
     [Test]
     public async Task ReadUrl_Fetches_OverHttp()
     {

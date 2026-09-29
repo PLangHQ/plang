@@ -81,6 +81,24 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public string Mime => _mime ?? "application/octet-stream";
 
     /// <summary>
+    /// The image writes itself: in the Out view a path-backed image loads its bytes through its own door (as
+    /// the writer, past the path's auth gate, its strict kind checked) and writes them. The Store and Debug
+    /// views never load — a dump or a store does no I/O — and a write with no context can't; they write what
+    /// <see cref="Write"/> has.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        if (mode == global::app.View.Out && context != null)
+        {
+            var loading = new global::app.data.@this("", this, context: context);
+            await Value(loading);
+            if (loading.Error != null) throw new global::app.error.AppException(loading.Error);
+        }
+        Write(writer);
+    }
+
+    /// <summary>
     /// The image renders itself, per wire format. The portable form is base64
     /// (json/plang/any). A text stream can't carry base64 readably — it emits
     /// the source location when wired, else a scannable label. A protobuf
