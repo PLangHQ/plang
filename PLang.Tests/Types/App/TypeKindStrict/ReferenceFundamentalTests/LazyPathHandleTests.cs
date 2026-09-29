@@ -48,13 +48,14 @@ public class LazyPathHandleTests
         var result = await action.Start(context);
         await result.IsSuccess();
 
+        // Looked at without opening its door (the value door is the load): an image holding its path, unread.
         var stored = await context.Variable.Get("pic");
-        await Assert.That((await stored!.Value()) is image).IsTrue();
-        var img = (image)(await stored.Value())!;
+        await Assert.That(stored!.Peek() is image).IsTrue();
+        var img = (image)stored.Peek()!;
         await Assert.That(img.Path).IsNotNull();
         await Assert.That(img.Path!.FileName).IsEqualTo("ghost.jpg");
-        // Nothing loaded — Bytes is empty until first async access.
-        await Assert.That(img.Bytes.Length).IsEqualTo(0);
+        // Nothing loaded — Bytes is empty until the value door is opened.
+        await Assert.That(img.RawBytes).IsNull();
     }
 
     [Test] public async Task BytesAsync_FirstAccess_LoadsThroughPath()

@@ -31,12 +31,13 @@ public class HostCarrierKindTests
         return probe;
     }
 
+    // %!app% is the app itself, of its own type — not a host carried inside an item.
     [Test]
-    public async Task App_ReportsItemApex_KindApp()
+    public async Task App_IsItsOwnType()
     {
         var v = await Materialise("!app");
-        await Assert.That(v.Type.Name).IsEqualTo("item");
-        await Assert.That(v.Kind).IsEqualTo("app");
+        await Assert.That(v.Peek()).IsSameReferenceAs(_app);
+        await Assert.That(v.Type.Name).IsEqualTo("app");
     }
 
     [Test]
