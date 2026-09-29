@@ -74,9 +74,15 @@ public class Stage6_ConsumersTests
 
     // ---------- sort ----------
 
-    // The source file of a class: its namespace is its folder under PLang/, and the class is this.cs.
+    // The source file of a class: its namespace is its folder under PLang/; an @this class is this.cs, any
+    // other the file its name names (case aside: `Sort` is sort.cs).
     private static string SourceOf(System.Type type)
-        => Path.Combine([RepoRoot(), "PLang", .. type.Namespace!.Split('.'), "this.cs"]);
+    {
+        var folder = Path.Combine([RepoRoot(), "PLang", .. type.Namespace!.Split('.')]);
+        var name = (type.Name == "@this" ? "this" : type.Name) + ".cs";
+        return Directory.EnumerateFiles(folder, "*.cs").FirstOrDefault(f =>
+            string.Equals(Path.GetFileName(f), name, System.StringComparison.OrdinalIgnoreCase)) ?? Path.Combine(folder, name);
+    }
 
     // The list sorts in two phases: its keys are read async (all I/O lands there), then it orders in
     // memory — so nothing in the list blocks on a task.
@@ -126,11 +132,13 @@ public class Stage6_ConsumersTests
     [Test]
     public async Task ComparerObjectDefault_NotUsedAnywhere_GrepGate()
     {
-        // sort.cs no longer references Comparer<object>.Default — uses the typed Compare pipeline
-        var src = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "module", "list", "sort.cs"));
-        await Assert.That(src).DoesNotContain("Comparer<object>.Default");
-        var listSrc = await File.ReadAllTextAsync(Path.Combine(RepoRoot(), "PLang", "app", "type", "list", "this.cs"));
-        await Assert.That(listSrc).DoesNotContain("Comparer<object>.Default");
+        // list.sort and the list it sorts don't order through Comparer<object>.Default — the typed Compare pipeline
+        foreach (var type in new[] { typeof(global::app.module.list.Sort), typeof(global::app.type.item.list.@this) })
+        {
+            var file = SourceOf(type);
+            await Assert.That(File.Exists(file)).IsTrue();
+            await Assert.That(await File.ReadAllTextAsync(file)).DoesNotContain("Comparer<object>.Default");
+        }
     }
 
     // ---------- membership (never errors) ----------
