@@ -28,9 +28,9 @@ public class FailedWriteTests
     }
 
     // Written to a plang channel and read back through another app, the error comes back whole — its id, message,
-    // key, status and its causes. (Whether the read result is then a failure is with Ingi; the value is the error.)
+    // key, status and its causes — and the read is that failure: the step that reads it fails, its on error runs.
     [Test]
-    public async Task AFailedResult_ReadBackThroughAnotherApp_IsTheSameError()
+    public async Task AFailedResult_ReadBackThroughAnotherApp_IsTheSameFailure()
     {
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
         var user = app.actor.list.User.Context;
@@ -48,8 +48,8 @@ public class FailedWriteTests
         reader.actor.list.User.Channel.Register(input);
         var read = await input.ReadAsync();
 
-        await read.IsSuccess();
-        var back = (await read.Value()) as global::app.error.Error;
+        await read.IsFailure();
+        var back = read.Error;
         await Assert.That(back).IsNotNull();
         await Assert.That(back!.Id).IsEqualTo(sent.Id);
         await Assert.That(back.Message).IsEqualTo("the disk is full");
