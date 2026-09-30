@@ -10,9 +10,5 @@ public interface IBrowser : ICode
 {
     Task<data.@this<Browser>> Start(start action);
     Task<data.@this> Send(send action);
-    Task<data.@this> Open(open action);
-    Task<data.@this> Post(post action);
-    Task<data.@this> CallGoal(callGoal action);
-    Task<data.@this> Navigate(navigate action);
     Task<data.@this> Stop(stop action);
 }

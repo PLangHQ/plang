@@ -135,19 +135,16 @@ public sealed partial class Chromium : IBrowser
 
         var browser = new Browser
         {
-            Url = url, Width = screen.Width, Height = screen.Height, Os = chrome, Screen = screen, Program = chromium, Port = port!.Value, Page = new ClientWebSocket(),
+            Url = url, Width = screen.Width, Height = screen.Height, Os = chrome, Screen = screen, Program = chromium, Port = port!.Value,
             Root = new Uri(context.App.AbsolutePath.TrimEnd('/') + "/").AbsoluteUri,
         };
-        browser.Pages.Desktop = pageUrl[(pageUrl.LastIndexOf('/') + 1)..];
-        // each window paired with its page as it gets a title, so its address field knows where it is
-        display.Told += e => Follow(browser, e);
         var onMessage = action.OnMessage == null ? null : await action.OnMessage.Value();
         if (onMessage != null)
             browser.Message = said => global::app.module.on.code.Gate.Call(onMessage, Payload(said, context), context);
-        await browser.Page.ConnectAsync(new Uri(pageUrl), CancellationToken.None);
-        _ = Task.Run(() => Receive(browser, "", null));
-        await Cdp(browser, "Runtime.enable", new JsonObject());
-        await Cdp(browser, "Runtime.addBinding", new JsonObject { ["name"] = "plang" });
+        // the desktop is window 0; each other window is paired with its page as it gets a title
+        var desktop = pageUrl[(pageUrl.LastIndexOf('/') + 1)..];
+        await browser.Windows.ShowDesktop(desktop, url);
+        display.Told += browser.Windows.Follow;
 
         // the whole browser, for pages opened as tabs: they become windows (Watch)
         try
@@ -156,8 +153,8 @@ public sealed partial class Chromium : IBrowser
             browser.Control = new ClientWebSocket();
             await browser.Control.ConnectAsync(new Uri(version.RootElement.GetProperty("webSocketDebuggerUrl").GetString()!), CancellationToken.None);
             _ = Task.Run(() => Watch(browser));
-            using var desktop = JsonDocument.Parse(await Ask(browser, "Browser.getWindowForTarget", new JsonObject { ["targetId"] = browser.Pages.Desktop }, browser.Control));
-            browser.DesktopWindow = desktop.RootElement.GetProperty("result").GetProperty("windowId").GetInt32();
+            using var desktopWindow = JsonDocument.Parse(await Ask(browser, "Browser.getWindowForTarget", new JsonObject { ["targetId"] = desktop }, browser.Control));
+            browser.DesktopWindow = desktopWindow.RootElement.GetProperty("result").GetProperty("windowId").GetInt32();
             await Cdp(browser, "Target.setDiscoverTargets", new JsonObject { ["discover"] = true }, browser.Control);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or TimeoutException or JsonException or KeyNotFoundException or WebSocketException)
@@ -212,163 +209,17 @@ public sealed partial class Chromium : IBrowser
 
     private static readonly HttpClient DevTools = new() { Timeout = TimeSpan.FromSeconds(3) };
 
-    /// <summary>A window got a title (it opened or went somewhere): pair it with its page and tell
-    /// the screen the page's address; a page of the app's own gets to talk with plang. A closed
-    /// window lets its page go.</summary>
-    private static async Task Follow(Browser browser, JsonObject e)
+    /// <summary>A page in a window of its own (<c>window.open</c>): an app window, title bar only.
+    /// The running Chromium opens it; the one started here hands it over and exits.</summary>
+    internal static void Open(Browser browser, string url, actor.context.@this context)
     {
-        if (e["window"]?.GetValue<string>() is not { } what || e["id"] is not JsonValue idValue) return;
-        var id = idValue.GetValue<int>();
-        if (what == "closed")
-        {
-            browser.Pages.Forget(id);
-            if (browser.Talks.TryRemove(id, out var gone)) gone.Close();
-            return;
-        }
-        if (what != "titled") return;
-        try
-        {
-            using var list = JsonDocument.Parse(await DevTools.GetStringAsync($"http://127.0.0.1:{browser.Port}/json/list"));
-            var title = e["title"]?.GetValue<string>() ?? "";
-            if (browser.Pages.Match(id, title, list.RootElement) is not { } page || page.GetProperty("url").GetString() is not { } url) return;
-            browser.Screen?.Display?.Url(id, url);
-            if (url.StartsWith(browser.Root, StringComparison.Ordinal) && browser.Message is { } hear)
-            {
-                var talk = new Talk(id, page.GetProperty("id").GetString()!, browser.Root);
-                if (browser.Talks.TryAdd(id, talk)) await talk.Open(browser.Port, hear);
-            }
-        }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or WebSocketException or TimeoutException) { }
-    }
-
-    public async Task<data.@this> Navigate(navigate action)
-    {
-        var context = action.Context;
-        var browser = await action.Browser.Value();
-        if (browser is not { Port: > 0 })
-            return context.Error(new ActionError($"The browser has no windows to navigate: {browser}", "BrowserNotRunning", 409));
-        var window = (long)(await action.Window.Value())!.ToDouble();
-        if (browser.Pages.Of(window) is not { } page)
-            return context.Error(new ActionError($"Window {window} has no page (yet).", "WindowNotFound", 404));
-        if (await action.Url.Value() is not Text typed)
-            return context.Error(new ActionError($"Nowhere to go: Url is {action.Url.Peek()}", "UrlMissing", 400));
-        // the window's own page, on a connection of its own: DevTools takes more than one
-        using var socket = new ClientWebSocket();
-        await socket.ConnectAsync(new Uri($"ws://127.0.0.1:{browser.Port}/devtools/page/{page}"), CancellationToken.None);
-        var message = new JsonObject { ["id"] = 1, ["method"] = "Page.navigate", ["params"] = new JsonObject { ["url"] = Address(typed.Clr<string>() ?? "") } };
-        await socket.SendAsync(Encoding.UTF8.GetBytes(message.ToJsonString()), WebSocketMessageType.Text, true, CancellationToken.None);
-        var reply = new byte[4096];
-        try { await socket.ReceiveAsync(new ArraySegment<byte>(reply), CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5)); } catch (TimeoutException) { }
-        await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
-        return context.Ok();
-    }
-
-    /// <summary>What was typed, as an address: one with a scheme stays; a name with a dot and no
-    /// spaces is https; anything else is a search.</summary>
-    private static string Address(string typed)
-    {
-        var text = typed.Trim();
-        if (Regex.IsMatch(text, @"^[a-zA-Z][a-zA-Z0-9+.-]*:")) return text;
-        if (!text.Contains(' ') && text.Contains('.')) return "https://" + text;
-        return "https://duckduckgo.com/?q=" + Uri.EscapeDataString(text);
-    }
-
-    public async Task<data.@this> Open(open action)
-    {
-        var context = action.Context;
-        var browser = await action.Browser.Value();
-        if (browser is not { Program: { } program, Screen: { } screen, Os.HasExited: false })
-            return context.Error(new ActionError($"The browser can't open windows: {browser}", "BrowserNotRunning", 409));
-        if (await action.Url.Value() is not Text url)
-            return context.Error(new ActionError($"No page to open: Url is {action.Url.Peek()}", "UrlMissing", 400));
-        // --app: a window of its own, title bar only. The running Chromium opens it; this one exits.
-        var handOver = Process.Start(Chrome(program, screen, context, "--app=" + url.Clr<string>()))!;
+        if (browser is not { Program: { } program, Screen: { } screen }) return;
+        var handOver = Process.Start(Chrome(program, screen, context, "--app=" + url))!;
         handOver.StandardInput.Close();
         _ = Drain(handOver.StandardOutput);
         _ = Drain(handOver.StandardError);
-        return context.Ok();
     }
 
-    public async Task<data.@this> Post(post action)
-    {
-        var context = action.Context;
-        var browser = await action.Browser.Value();
-        if (browser?.Page is not { State: WebSocketState.Open })
-            return context.Error(new ActionError($"The browser isn't running: {browser}", "BrowserNotRunning", 409));
-        // the Data writes itself as text (a dict as its json); the page gets it as a message event
-        using var text = new MemoryStream();
-        await Text.Encode(text, action.Data, context, null, null, CancellationToken.None);
-        if ((action.Window == null ? null : await action.Window.Value()) is { } window)
-        {
-            // a window's own page (one of the app's, that talks with plang)
-            var id = (long)window.ToDouble();
-            if (!browser.Talks.TryGetValue(id, out var talk))
-                return context.Error(new ActionError($"Window {id} shows no page of this app's to talk with.", "WindowNotFound", 404));
-            await talk.Post(Encoding.UTF8.GetString(text.ToArray()));
-            return context.Ok();
-        }
-        var message = JsonSerializer.Serialize(Encoding.UTF8.GetString(text.ToArray()));
-        await Cdp(browser, "Runtime.evaluate", new JsonObject
-        {
-            ["expression"] = "window.dispatchEvent(new MessageEvent('message',{data:" + message + ",origin:'plang'}))",
-        });
-        return context.Ok();
-    }
-
-    public async Task<data.@this> CallGoal(callGoal action)
-    {
-        var context = action.Context;
-        var browser = await action.Browser.Value();
-        if (browser?.Page is not { State: WebSocketState.Open })
-            return context.Error(new ActionError($"The browser isn't running: {browser}", "BrowserNotRunning", 409));
-        var name = JsonSerializer.Serialize((await action.Name.Value())?.Clr<string>() ?? "");
-        // the arguments as one object: a dict writes itself as json
-        var arguments = new global::app.type.item.dict.@this();
-        if (action.Parameter != null && await action.Parameter.Value() is global::app.type.item.list.@this list)
-            foreach (var argument in list.Items(context))
-                if (argument.Peek() is { IsNull: false })
-                    arguments.Set((await argument.Follow(context)).Copy(argument.Name));
-        using var written = new MemoryStream();
-        await Text.Encode(written, new data.@this("arguments", arguments, context: context), context, null, null, CancellationToken.None);
-        var expression = $"(async()=>{{const goal=window[{name}];if(typeof goal!=='function')throw new Error('The page has no goal '+{name});" +
-            $"return await goal({Encoding.UTF8.GetString(written.ToArray())});}})()";
-        JsonElement reply;
-        try
-        {
-            if ((action.Window == null ? null : await action.Window.Value()) is not { } window)
-            {
-                using var doc = JsonDocument.Parse(await Ask(browser, "Runtime.evaluate", new JsonObject { ["expression"] = expression, ["awaitPromise"] = true, ["returnByValue"] = true }));
-                reply = doc.RootElement.Clone();
-            }
-            else
-            {
-                var id = (long)window.ToDouble();
-                if (!browser.Talks.TryGetValue(id, out var talk))
-                    return context.Error(new ActionError($"Window {id} shows no page of this app's to talk with.", "WindowNotFound", 404));
-                reply = await talk.Evaluate(expression);
-            }
-        }
-        catch (Exception ex) when (ex is TimeoutException or WebSocketException)
-        {
-            return context.Error(new ActionError($"The page's goal {name} didn't answer: {ex.Message}", "PageGoalTimeout", 504));
-        }
-        return Answered(reply, name, context);
-    }
-
-    /// <summary>What a page's goal returned, as plang's value; what it threw, as an error.</summary>
-    private static data.@this Answered(JsonElement reply, string name, actor.context.@this context)
-    {
-        if (!reply.TryGetProperty("result", out var outer))
-            return context.Error(new ActionError($"The page's goal {name} failed: {reply}", "PageGoalFailed", 500));
-        if (outer.TryGetProperty("exceptionDetails", out var thrown))
-        {
-            var why = thrown.TryGetProperty("exception", out var ex) && ex.TryGetProperty("description", out var d) ? d.GetString() : thrown.GetProperty("text").GetString();
-            return context.Error(new ActionError($"The page's goal {name} failed: {why}", "PageGoalFailed", 500));
-        }
-        if (!outer.TryGetProperty("result", out var result) || !result.TryGetProperty("value", out var value))
-            return context.Ok();
-        return context.Ok(new global::app.type.item.serializer.json(context).Parse(value.Clone()));
-    }
 
     public async Task<data.@this> Send(send action)
     {
@@ -438,7 +289,9 @@ public sealed partial class Chromium : IBrowser
     {
         var browser = await action.Browser.Value();
         if (browser == null) return action.Context.Ok();
-        try { if (browser.Page is { State: WebSocketState.Open }) await Cdp(browser, "Browser.close", new JsonObject()); } catch { }
+        // the whole browser's connection on a screen, the page's off-screen
+        var speaks = browser.Control is { State: WebSocketState.Open } control ? control : browser.Page;
+        try { if (speaks is { State: WebSocketState.Open }) await Cdp(browser, "Browser.close", new JsonObject(), speaks); } catch { }
         if (browser.Os is { HasExited: false } os && !os.WaitForExit(1000)) os.Kill(entireProcessTree: true);
         return action.Context.Ok();
     }
@@ -554,7 +407,7 @@ public sealed partial class Chromium : IBrowser
                 var info = root.GetProperty("params").GetProperty("targetInfo");
                 var target = info.GetProperty("targetId").GetString()!;
                 var url = info.GetProperty("url").GetString() ?? "";
-                if (info.GetProperty("type").GetString() != "page" || target == browser.Pages.Desktop
+                if (info.GetProperty("type").GetString() != "page" || target == browser.Desktop.Target
                     || url.Length == 0 || url == "about:blank") continue;
                 // not awaited: it asks the browser, whose answer this loop reads
                 _ = Task.Run(() => Tab(browser, target, url));
@@ -565,7 +418,7 @@ public sealed partial class Chromium : IBrowser
 
     private static async Task Tab(Browser browser, string target, string url)
     {
-        if (!browser.Pages.First(target)) return;   // each page is looked at once
+        if (!browser.Windows.First(target)) return;   // each page is looked at once
         try
         {
             using var reply = JsonDocument.Parse(await Ask(browser, "Browser.getWindowForTarget", new JsonObject { ["targetId"] = target }, browser.Control));
