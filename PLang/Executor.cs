@@ -55,7 +55,7 @@ namespace PLang
 			// Each flag's dict is this run's values for its owner's setting class, on the system actor (the
 			// user falls back to it): --debug → %!debug%, --test → %!app.test.setting%, --app →
 			// %!app.setting%, --callstack → %!app.callstack.setting% (both actors' call stacks read it),
-			// --build → %!build%. A key that isn't one of the class's options is refused.
+			// --build → %!build.setting%. A key that isn't one of the class's options is refused.
 			global::app.data.@this? Flag<TSetting>(string name) where TSetting : global::app.type.item.setting.@this, new()
 			{
 				if (!parameters.TryGetValue(name, out var value) || value is not IDictionary<string, object?> dict) return null;
@@ -104,13 +104,12 @@ namespace PLang
 					userVars.Set("path", startupDirectory);
 				if (Flag<global::app.module.build.setting.@this>("!build") is { } buildError) return (null, buildError);
 
-				// Build-mode-inversion (§6.D, Case A): a cache-off build flows DOWN to llm.query
-				// as the `llm.cache` setting, so llm.query reads its own `action.Cache`
-				// (which resolves %!llm.query.cache% → %!llm.cache% → [Default]) instead of sniffing
-				// the build. The cache-off default reaches every llm.query without threading. The
-				// run's value is in memory, so the sync Configure sets it at once.
+				// A cache-off build flows DOWN to llm.query as llm's cache setting, so llm.query reads its
+				// own `action.Cache` (which resolves %!llm.query.setting.cache% → %!llm.setting.cache% →
+				// [Default]) instead of sniffing the build. The cache-off default reaches every llm.query
+				// without threading. The run's value is in memory, so the sync Configure sets it at once.
 				if (!app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Cache.Value)
-					app.actor.list.System.Setting.Set("llm.cache", app.actor.list.System.Context.Ok(false))
+					app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this().Path + ".cache", app.actor.list.System.Context.Ok(false))
 						.GetAwaiter().GetResult();
 			}
 

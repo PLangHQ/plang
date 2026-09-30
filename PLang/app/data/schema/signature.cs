@@ -81,37 +81,31 @@ public sealed class signature : ISchemaReader
             new global::app.module.crypto.type.hash.@this(hashValue, hashAlgo), sig,
             expires is { } ex ? new global::app.type.item.datetime.@this(ex) : null, contracts);
 
-        var peeled = layer.Value;
-
         // The OUTER read verifies the signature; a NESTED reconstruction (ctx.Verify == false) peels
         // without verifying — the inner Data is already covered by the outer signature, and an inner
-        // layer has no actor of its own to verify against.
-        if (ctx.Verify)
+        // layer has no actor of its own to verify against, so its claimed signer is not the Data's.
+        if (!ctx.Verify) return layer.Value;
+
+        // The Data answered is born holding the layer it arrived in — its signer known.
+        var peeled = layer.Value.Copy(layer);
+
+        // Async caller (plang's Decode) verifies after the sync read — a `ref`-struct reader can't
+        // `await`, and sync-waiting here starves the threadpool under parallel reads. It answers a
+        // fresh error when the verify fails, so this Data never escapes unverified.
+        if (ctx.DeferVerify) return peeled;
+
+        var verifyAction = new global::app.module.signing.verify(context)
         {
-            if (ctx.DeferVerify)
-            {
-                // Async caller (DeserializeAsync) verifies after the sync read — a `ref`-struct
-                // reader can't `await`, and sync-waiting here starves the threadpool under
-                // parallel reads. Stamp the layer; the caller verifies + clears it.
-                peeled.PendingVerification = layer;
-                return peeled;
-            }
-
-            var carrier = context.Ok(layer);
-            var verifyAction = new global::app.module.signing.verify(context)
-            {
-                Data = carrier,
-                SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>(
-                    "", ctx.View == global::app.View.Store),
-            };
-            var verifyResult = new global::app.goal.step.action.@this(verifyAction, context)
-                .Start(context)
-                .GetAwaiter().GetResult();
-            if (!verifyResult.Success)
-                return context.Error(verifyResult.Error
-                    ?? new global::app.error.ServiceError("Signature verification failed", "SignatureInvalid", 400));
-        }
-
+            Data = context.Ok(layer),
+            SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>(
+                "", ctx.View == global::app.View.Store),
+        };
+        var verifyResult = new global::app.goal.step.action.@this(verifyAction, context)
+            .Start(context)
+            .GetAwaiter().GetResult();
+        if (!verifyResult.Success)
+            return context.Error(verifyResult.Error
+                ?? new global::app.error.ServiceError("Signature verification failed", "SignatureInvalid", 400));
         return peeled;
     }
 }

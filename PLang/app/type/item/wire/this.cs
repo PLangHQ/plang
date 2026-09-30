@@ -13,9 +13,12 @@ namespace app.type.item.wire;
 ///
 /// <para>Its kind <c>plang</c> is plang's own format (<c>application/plang</c>): content that is a whole
 /// Data, decoded whole by the transport.</para>
+///
+/// <para>A slice the builder marked a template is a <see cref="template"/>: it names its variables, not their
+/// values, so outside what plang keeps (Store) it is decoded and its parts render, never relayed.</para>
 /// </summary>
 [global::app.Attributes.PlangType("wire")]
-public sealed class @this : global::app.type.item.source
+public class @this : global::app.type.item.source
 {
     /// <summary>A still-encoded slice is plang's own machinery; no program names it.</summary>
     public static bool Internal => true;
@@ -40,7 +43,7 @@ public sealed class @this : global::app.type.item.source
 
     // The decoded value, with the caller's context: the kind owns the decode (one Parse, the same
     // value Value() materializes to); a kind that declines (csv, png) falls to the type reader.
-    private global::app.type.item.@this Decoded(actor.context.@this context)
+    private protected global::app.type.item.@this Decoded(actor.context.@this context)
         => (Type.kind is { IsEmpty: false } ? context.App.type.list.Kind(Type, context).Parse(Raw, context) : null) ?? Read(context);
 
     // A wire writes verbatim ONLY into its own format (a byte-identical relay of the captured
@@ -77,6 +80,7 @@ public sealed class @this : global::app.type.item.source
     internal override object? Clr(System.Type target) => throw new System.InvalidOperationException(
         "an undecoded wire lowers to CLR through its Data (Data.Clr) — decoding needs the caller's context.");
 
+    // Re-declared, the slice is what its new declaration makes of it — a template only when marked one.
     internal override global::app.type.item.source Declared(global::app.type.@this type)
-        => new @this((string)Raw, type, _reader, Variable);
+        => type.Make((string)Raw, _reader, Variable);
 }

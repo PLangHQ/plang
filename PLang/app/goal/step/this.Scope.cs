@@ -13,7 +13,7 @@ public sealed partial class @this
     public global::app.type.property.list.@this Typed => _typed;
 
     private List<global::app.type.item.setting.kind.@this> _setting = [];
-    /// <summary>The classes of settings the step's words name (<c>%!llm.cache%</c> → llm's,
+    /// <summary>The classes of settings the step's words name (<c>%!llm.setting.cache%</c> → llm's,
     /// <c>%!app.test.setting.parallel%</c> → test's), in the order written — what the builder teaches the
     /// step's options from. Left by the walk; empty until then. Build-time only.</summary>
     [JsonIgnore]

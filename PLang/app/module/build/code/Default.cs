@@ -53,7 +53,7 @@ public class Default : IBuilder
         if (files == null || files.Count == 0)
             return context.Ok(new global::app.type.item.list.@this<Goal>());
 
-        // Filter by build's files setting if set (--build={"files":[...]}, %!build.files%)
+        // Filter by build's files setting if set (--build={"files":[...]}, %!build.setting.files%)
         // Honor the user's specified order — building has bootstrapping concerns
         // (e.g., system/builder rebuilding itself: BuildGoal must come LAST so
         // earlier iterations use the previous in-memory build pipeline).

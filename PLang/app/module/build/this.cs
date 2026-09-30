@@ -11,7 +11,7 @@ namespace app.module.build;
 /// so the builder can validate SQL against real schema without creating files.
 /// Activated by: plang p build
 /// </summary>
-public sealed partial class @this
+public sealed partial class @this : global::app.type.item.setting.ISetting<setting.@this>
 {
     private readonly actor.context.@this _context;
 

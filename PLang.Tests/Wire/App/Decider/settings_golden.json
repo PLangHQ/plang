@@ -2,12 +2,12 @@
   {
     "goal": "Named",
     "steps": [
-      "set default %!build.cache% = true",
-      "read notes.txt, cache=%!llm.cache%, write to %notes%",
+      "set default %!build.setting.cache% = true",
+      "read notes.txt, cache=%!llm.setting.cache%, write to %notes%",
       "set %!app.test.setting.parallel% = 1",
-      "set %!build.files% = [\"a.goal\"]"
+      "set %!build.setting.files% = [\"a.goal\"]"
     ],
-    "block": "\n\nSettings\n- %!build%(cache: bool = true, files: list = [])\n- %!llm%(cache: bool = true)\n- %!app.test.setting%(actor: choice<actor> = user, timeoutSeconds: number = 30, parallel: number = 0, format: choice<format> = json, include: list<text> = [], exclude: list<text> = [])"
+    "block": "\n\nSettings\n- %!build.setting%(cache: bool = true, files: list = [])\n- %!llm.setting%(cache: bool = true)\n- %!app.test.setting%(actor: choice<actor> = user, timeoutSeconds: number = 30, parallel: number = 0, format: choice<format> = json, include: list<text> = [], exclude: list<text> = [])"
   },
   {
     "goal": "NoneNamed",
@@ -28,9 +28,9 @@
   {
     "goal": "SettingAndKeyed",
     "steps": [
-      "set %!llm.cache% = false",
+      "set %!llm.setting.cache% = false",
       "write out %!app.goal[\"/checkout\"].name%"
     ],
-    "block": "\n\nSettings\n- %!llm%(cache: bool = true)\n\nKeys\n- %!app.goal[\"/show\"]% is one goal by its key: one element of %!app.goal.list% (so too %!app.module[\"file\"]%)"
+    "block": "\n\nSettings\n- %!llm.setting%(cache: bool = true)\n\nKeys\n- %!app.goal[\"/show\"]% is one goal by its key: one element of %!app.goal.list% (so too %!app.module[\"file\"]%)"
   }
 ]

@@ -405,11 +405,14 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     }
 
     /// <summary>A still-encoded slice + the serializer that sliced it — the capture hands over
-    /// itself. Mints the lazy <see cref="item.wire.@this"/>; the parse stays at first touch. The
-    /// capture build beside the content <see cref="Make(object?, actor.context.@this?)"/> build —
+    /// itself. Mints the lazy <see cref="item.wire.@this"/>, or — when this declaration is marked a
+    /// template — a <see cref="item.wire.template"/> holding the <paramref name="variable"/>s its row lists;
+    /// the parse stays at first touch. The one place a slice is made (a re-declared slice comes back here).
+    /// The capture build beside the content <see cref="Make(object?, actor.context.@this?)"/> build —
     /// same verb, the capture's knowledge as an argument, never a format name. Not a birth.</summary>
-    internal item.@this Make(string slice, global::app.type.item.wire.kind.plang.@this reader)
-        => new item.wire.@this(slice, this, reader);
+    internal item.wire.@this Make(string slice, global::app.type.item.wire.kind.plang.@this reader,
+        IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
+        => Template != null ? new item.wire.template(slice, this, reader, variable ?? []) : new item.wire.@this(slice, this, reader);
 
     /// <summary>Reads a value slot of this type off the reader — the one door for a
     /// <c>{name, type, value}</c> row's value, a Data's or an action property's. The slot is exactly
@@ -440,8 +443,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // EVERY other slot is a wire: a VERBATIM Slice with the capturing transport named at the
         // mint site. Face validation is free — the type's own pull IS the validator on first touch.
         // A container is a template only by its own row's marker, holding its row's variables.
-        var encoded = System.Text.Encoding.UTF8.GetString(reader.Slice());
-        return Template != null ? new item.wire.@this(encoded, this, transport, ctx.Variable) : Make(encoded, transport);
+        return Make(System.Text.Encoding.UTF8.GetString(reader.Slice()), transport, ctx.Variable);
     }
 
     // The birth build — THIS type makes itself from a value, as it declares (its kind, its template), for the

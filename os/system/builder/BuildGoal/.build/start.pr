@@ -128,7 +128,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 1 uses goal.call, which the decider was not sure of (0.66)"
+          "message": "step 1 uses goal.call, which the decider was not sure of (0.56)"
         }
       ],
       "waitForExecution": true
@@ -1594,7 +1594,7 @@
           "warning": [
             {
               "key": "Unsure",
-              "message": "step 0 uses goal.call, which the decider was not sure of (0.70)"
+              "message": "step 0 uses goal.call, which the decider was not sure of (0.71)"
             }
           ],
           "waitForExecution": true
@@ -1678,7 +1678,7 @@
         },
         {
           "index": 2,
-          "text": "llm.query Message=%fixMessages%, Model=\"gpt-5.4-nano\", cache=%!build.cache%, continuePreviousConversation=true, write to %answer%",
+          "text": "llm.query Message=%fixMessages%, Model=\"gpt-5.4-nano\", cache=%!build.setting.cache%, continuePreviousConversation=true, write to %answer%",
           "line": {
             "number": 48
           },
@@ -1719,13 +1719,16 @@
                     "name": "bool",
                     "template": "plang"
                   },
-                  "value": "%!build.cache%",
+                  "value": "%!build.setting.cache%",
                   "variable": [
                     {
-                      "text": "%!build.cache%",
+                      "text": "%!build.setting.cache%",
                       "code": [
                         {
                           "variable": "!build"
+                        },
+                        {
+                          "property": "setting"
                         },
                         {
                           "property": "cache"
@@ -1936,7 +1939,7 @@
       "visibility": "Private",
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "bdc4da9bbf3c8ab879416397e18ba34cb79aed8032a64325326d3437d3637dac",
+      "hash": "c2282befb651913aee71f30915b728a4aef372f391b6081cc284f6c379a0afac",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,
@@ -2454,7 +2457,7 @@
           "warning": [
             {
               "key": "Unsure",
-              "message": "step 1 uses goal.call, which the decider was not sure of (0.79)"
+              "message": "step 1 uses goal.call, which the decider was not sure of (0.77)"
             }
           ],
           "waitForExecution": true
@@ -2938,7 +2941,7 @@
           "warning": [
             {
               "key": "Unsure",
-              "message": "step 7 uses goal.call, which the decider was not sure of (0.78)"
+              "message": "step 7 uses goal.call, which the decider was not sure of (0.75)"
             }
           ],
           "waitForExecution": true
@@ -3123,7 +3126,7 @@
         },
         {
           "index": 2,
-          "text": "llm.query Message=%sourceFixMessages%, Model=\"gpt-5.4-nano\", cache=%!build.cache%, write to %sourceFix%",
+          "text": "llm.query Message=%sourceFixMessages%, Model=\"gpt-5.4-nano\", cache=%!build.setting.cache%, write to %sourceFix%",
           "line": {
             "number": 81
           },
@@ -3164,13 +3167,16 @@
                     "name": "bool",
                     "template": "plang"
                   },
-                  "value": "%!build.cache%",
+                  "value": "%!build.setting.cache%",
                   "variable": [
                     {
-                      "text": "%!build.cache%",
+                      "text": "%!build.setting.cache%",
                       "code": [
                         {
                           "variable": "!build"
+                        },
+                        {
+                          "property": "setting"
                         },
                         {
                           "property": "cache"
@@ -3344,7 +3350,7 @@
       "visibility": "Private",
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "82dcb8f2acc2c45477bddcc1447ffa7787b0811fd9718f33087e939709e70826",
+      "hash": "c157fda8132a8c4c73a150e0ceab486e4a19b8c804b649d66b0e04ab9da633f1",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,
@@ -3394,7 +3400,7 @@
           "warning": [
             {
               "key": "Unsure",
-              "message": "step 0 uses goal.call, which the decider was not sure of (0.62)"
+              "message": "step 0 uses goal.call, which the decider was not sure of (0.71)"
             }
           ],
           "waitForExecution": true

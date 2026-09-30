@@ -58,6 +58,29 @@ public class FailedWriteTests
         await Assert.That(back.list.Single().Key).IsEqualTo("Quota");
     }
 
+    // Between two apps signing for real: the failure is signed with its error, verified on arrival, and read
+    // as that failure.
+    [Test]
+    public async Task AFailedResult_SignedBetweenActors_ArrivesAsTheSameFailure()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "plang_failed_" + Guid.NewGuid().ToString("N")[..8]);
+        await using var sender = new global::app.@this(Path.Combine(root, "sender"), autoWireConsoleChannels: false);
+        await using var receiver = new global::app.@this(Path.Combine(root, "receiver"), autoWireConsoleChannels: false);
+        var from = sender.actor.list.User.Context;
+        var to = receiver.actor.list.User.Context;
+
+        using var body = new MemoryStream();
+        var encoded = await from.Format("application/plang").Encode(body,
+            from.Error(new global::app.error.Error("the disk is full", "DiskFull", 507)), from);
+        await encoded.IsSuccess();
+
+        var read = await receiver.type.list["wire"].kind["plang"]!.Decode(body.ToArray(), to);
+
+        await read.IsFailure();
+        await Assert.That(read.Error!.Key).IsEqualTo("DiskFull");
+        await Assert.That(read.Error.Message).IsEqualTo("the disk is full");
+    }
+
     [Test]
     public async Task AFailedResult_ToAPlangChannel_CarriesTheError()
     {

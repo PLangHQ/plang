@@ -1,8 +1,8 @@
 / A setting's life: set for this run, saved as the actor's row, changed, the row removed
 Start
-- set %!llm.cache% = false
-- assert %!llm.cache% is false
-- save %!llm%
-- set %!llm.cache% = true
-- assert %!llm.cache% is true
-- remove %!llm%
+- set %!llm.setting.cache% = false
+- assert %!llm.setting.cache% is false
+- save %!llm.setting%
+- set %!llm.setting.cache% = true
+- assert %!llm.setting.cache% is true
+- remove %!llm.setting%

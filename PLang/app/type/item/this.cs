@@ -240,13 +240,15 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         return member.IsInitialized ? member : await Setting(parent, key) ?? member;
     }
 
-    /// <summary>This owner's settings as the asker sees them, when <paramref name="key"/> is
-    /// <c>setting</c> and this owner names a setting class (<see cref="setting.ISetting{T}"/>):
-    /// <c>%!app.goal.list.setting%</c>. Null otherwise.</summary>
-    protected async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
-        => string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase)
-            ? await parent.Context.Setting.Of(this)
-            : null;
+    /// <summary>This owner's settings when <paramref name="key"/> is <c>setting</c> (<c>%!app.goal.list.setting%</c>);
+    /// null for any other key, or an owner with none.</summary>
+    private protected async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
+        => string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase) ? await Setting(parent) : null;
+
+    /// <summary>This owner's settings as the asker sees them — the class it names (<see cref="setting.ISetting{T}"/>);
+    /// null when it names none. An owner whose settings are not one class (a module, an action) answers its own.</summary>
+    protected virtual async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
+        => await parent.Context.Setting.Of(this);
 
     /// <summary>The child at <paramref name="key"/>, where <paramref name="isIndex"/> tells a position
     /// (<c>[0]</c>) from a member (<c>.name</c>) — the read twin of <see cref="Set"/>. A value that

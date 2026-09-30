@@ -154,6 +154,33 @@ public class RequestActionTests
         await Assert.That(await _handler.LastRequest!.Content!.ReadAsStringAsync()).IsEqualTo("{\"name\":\"Alice\"}");
     }
 
+    // A dict body holding %variables%, read from its .pr as the builder writes it: it sends its variables' values,
+    // never the slice's names — the educator's report, blocker 1.
+    [Test]
+    public async Task Post_TemplateDictBody_SendsItsValues()
+    {
+        var goal = await RealGoalLoad.Read(_app, """
+            {"name": "Speak", "path": "/Speak.goal", "step": [
+              {"index": 0, "text": "set %lesson%", "line": {"number": 2}, "code": [{"module": "variable", "name": "set", "property": [
+                {"name": "Name", "type": {"name": "variable"}, "value": "%lesson%", "variable": [{"text": "%lesson%", "code": [{"variable": "lesson"}]}]},
+                {"name": "Value", "type": {"name": "dict"}, "value": {"voice": {"model": "m-1"}}}]}]},
+              {"index": 1, "text": "post the body", "line": {"number": 3}, "code": [{"module": "http", "name": "request", "property": [
+                {"name": "Url", "type": {"name": "text"}, "value": "https://api.example.com/speech"},
+                {"name": "Method", "type": {"name": "choice", "kind": "httpmethod"}, "value": "POST"},
+                {"name": "Body", "type": {"name": "dict", "template": "plang"}, "value": {"deep": "%lesson.voice.model%", "fixed": "pcm"},
+                 "variable": [{"text": "%lesson.voice.model%", "code": [{"variable": "lesson"}, {"property": "voice"}, {"property": "model"}]}]},
+                {"name": "Unsigned", "type": {"name": "bool"}, "value": true}]}]}]}
+            """);
+
+        await (await goal.Step[0].Start(Ctx)).IsSuccess();
+        await (await goal.Step[1].Start(Ctx)).IsSuccess();
+
+        await Assert.That(await _handler.LastRequest!.Content!.ReadAsStringAsync()).IsEqualTo("{\"deep\":\"m-1\",\"fixed\":\"pcm\"}");
+        // the goal written back keeps the body as authored
+        await Assert.That(await _app.actor.list.User.Context.Pr(goal))
+            .Contains("\"value\": {\"deep\": \"%lesson.voice.model%\", \"fixed\": \"pcm\"}");
+    }
+
     // The body is written through a channel, which reads the value: a file sends what it holds.
     [Test]
     public async Task Post_FileBody_SendsItsContent_NotItsPath()
@@ -173,6 +200,77 @@ public class RequestActionTests
         var sent = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         await Assert.That(sent).Contains("the note");
         await Assert.That(sent).DoesNotContain("note.txt");
+    }
+
+    // Another app, signing for real, answers in plang: each Data it sends is one line. Returns its public key.
+    private async Task<string> RemoteAnswers(params Func<global::app.actor.context.@this, global::app.data.@this>[] sent)
+    {
+        await using var remote = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang_remote_" + Guid.NewGuid().ToString("N")[..8]));
+        var remoteCtx = remote.actor.list.User.Context;
+        using var body = new System.IO.MemoryStream();
+        foreach (var d in sent)
+        {
+            var encoded = await remoteCtx.Format("application/plang").Encode(body, d(remoteCtx), remoteCtx);
+            await encoded.IsSuccess();
+            body.WriteByte((byte)'\n');
+        }
+        var bytes = body.ToArray();
+        _handler.Handler = _ =>
+        {
+            var content = new ByteArrayContent(bytes);
+            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/plang");
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = content });
+        };
+        var identity = await new global::app.goal.step.action.@this(new global::app.module.identity.Get(remoteCtx), remoteCtx).Start(remoteCtx);
+        return ((global::app.module.identity.Identity)(await identity.Value())!).PublicKey;
+    }
+
+    // A remote failure: another app answers with its failed result, written in plang. The request that reads it
+    // fails with that error — the step fails and its on error runs.
+    [Test]
+    public async Task AResponseCarryingAFailure_FailsTheRequest_WithThatError()
+    {
+        await RemoteAnswers(ctx => ctx.Error(new global::app.error.Error("the disk is full", "DiskFull", 507)));
+
+        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/disk" };
+        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("DiskFull");
+        await Assert.That(result.Error.Message).IsEqualTo("the disk is full");
+    }
+
+    // A signed answer reads as the value sent, and knows who signed it.
+    [Test]
+    public async Task ASignedResponse_ReadsItsValue_WithItsSignerKnown()
+    {
+        var remoteKey = await RemoteAnswers(ctx => ctx.Ok("hello"));
+
+        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/hello" };
+        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("hello");
+        await Assert.That(result.Signature).IsNotNull();
+        await Assert.That(result.Signature!.Identity.ToString()).IsEqualTo(remoteKey);
+    }
+
+    // A streamed line carrying a failure is that chunk's answer: the callback is handed it, failed.
+    [Test]
+    public async Task AStreamedFailure_ReachesTheCallback_AsThatFailure()
+    {
+        await RemoteAnswers(ctx => ctx.Error(new global::app.error.Error("the disk is full", "DiskFull", 507)));
+
+        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/plang-stream",
+            OnStream = Make.Call(Ctx, "HandleChunk") };
+        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+
+        await result.IsSuccess();
+        var chunk = await Ctx.Variable.Get("chunk");
+        await Assert.That(chunk).IsNotNull();
+        await chunk!.IsFailure();
+        await Assert.That(chunk.Error!.Key).IsEqualTo("DiskFull");
     }
 
     [Test]
@@ -303,7 +401,7 @@ public class RequestActionTests
     [Test]
     public async Task Get_RelativeUrlWithBaseUrl_CombinesCorrectly()
     {
-        await _app.actor.list.System.Setting.Set("http.BaseUrl", Ctx.Ok("https://api.example.com"));
+        await _app.actor.list.System.Setting.Set("http.setting.BaseUrl", Ctx.Ok("https://api.example.com"));
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"/users/1", Unsigned = (global::app.type.item.@bool.@this)true };
         var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
@@ -338,7 +436,7 @@ public class RequestActionTests
     [Test]
     public async Task BuildAndStart_AgreeOnARelativeUrlWithABase()
     {
-        await _app.actor.list.System.Setting.Set("http.BaseUrl", Ctx.Ok("https://api.example.com/v1"));
+        await _app.actor.list.System.Setting.Set("http.setting.BaseUrl", Ctx.Ok("https://api.example.com/v1"));
         // the build walk: the program action binds its handler (its settings read) and publishes Build's answer
         var program = Make.Action(Ctx, "http", "request", ("Url", "/api/x.json"), ("Unsigned", true));
         await Assert.That(await program.Build(Ctx)).IsNull();
@@ -702,7 +800,7 @@ public class RequestActionTests
     public async Task Get_DefaultAndStepHeaders_BothApplied()
     {
         var defaults = new Dictionary<string, object> { ["X-Api-Key"] = "default-key", ["X-Shared"] = "default" };
-        await _app.actor.list.System.Setting.Set("http.DefaultHeaders", Ctx.Ok(defaults));
+        await _app.actor.list.System.Setting.Set("http.setting.DefaultHeaders", Ctx.Ok(defaults));
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/merged",
             Header = new Dictionary<string, object> { ["X-Custom"] = "step-value", ["X-Shared"] = "overridden" }.ToDictData(Ctx),
@@ -745,7 +843,7 @@ public class RequestActionTests
     public async Task Get_OversizedResponse_ReturnsResponseTooLarge()
     {
         // Configure a tiny max response size
-        await _app.actor.list.System.Setting.Set("http.MaxResponseSize", Ctx.Ok(50L));
+        await _app.actor.list.System.Setting.Set("http.setting.MaxResponseSize", Ctx.Ok(50L));
 
         // Return a response larger than 50 bytes
         _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
@@ -764,7 +862,7 @@ public class RequestActionTests
     [Test]
     public async Task Get_OversizedBinaryResponse_ReturnsResponseTooLarge()
     {
-        await _app.actor.list.System.Setting.Set("http.MaxResponseSize", Ctx.Ok(50L));
+        await _app.actor.list.System.Setting.Set("http.setting.MaxResponseSize", Ctx.Ok(50L));
 
         _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -784,7 +882,7 @@ public class RequestActionTests
     [Test]
     public async Task Get_WithinSizeLimit_Succeeds()
     {
-        await _app.actor.list.System.Setting.Set("http.MaxResponseSize", Ctx.Ok(1000L));
+        await _app.actor.list.System.Setting.Set("http.setting.MaxResponseSize", Ctx.Ok(1000L));
 
         _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -801,7 +899,7 @@ public class RequestActionTests
     public async Task Stream_SSE_OversizedBuffer_StreamContinues()
     {
         // Configure a tiny SSE buffer (50 bytes)
-        await _app.actor.list.System.Setting.Set("http.MaxSSEBufferSize", Ctx.Ok(50L));
+        await _app.actor.list.System.Setting.Set("http.setting.MaxSSEBufferSize", Ctx.Ok(50L));
 
         // SSE with one message that exceeds the buffer, followed by a normal-sized message
         var sseContent = "data: " + new string('x', 100) + "\n\ndata: ok\n\n";

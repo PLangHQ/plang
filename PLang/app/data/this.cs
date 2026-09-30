@@ -84,14 +84,13 @@ public partial class @this
         => to.Convert(this, _context);
 
     /// <summary>
-    /// A signed (@schema:signature) Data read in <see cref="app.type.reader.ReadContext.DeferVerify"/>
-    /// mode carries its unverified signature layer here instead of verifying inline inside the
-    /// sync `ref`-struct reader. The async deserialize caller verifies it (async, no sync-wait)
-    /// and clears it. Non-null = NOT YET VERIFIED — a transient read-path marker, never serialized.
+    /// The signature this Data arrived in — who signed it, read as <c>%x!signature.identity%</c>. Null for a
+    /// Data born here. Never written by <see cref="Output"/>: a forwarded Data does not carry its old signer,
+    /// and a re-sign does not hash it. plang's format answers only a Data whose signature it verified.
     /// </summary>
     [JsonIgnore]
     [LlmIgnore]
-    internal global::app.type.item.signature.@this? PendingVerification { get; set; }
+    public global::app.type.item.signature.@this? Signature { get; private init; }
 
     [JsonIgnore]
     public string Path { get; }
@@ -582,7 +581,12 @@ public partial class @this
     /// Data over the caller's argument, so the callee binds it in its own scope and never writes the original.</summary>
     public @this Copy(actor.context.@this context) => Copy(Name, context);
 
-    private protected virtual @this Copy(string name, actor.context.@this? context)
+    /// <summary>The copy born holding the signature it arrived in — the read that peeled
+    /// <paramref name="signature"/> answers this Data, its signer known.</summary>
+    public @this Copy(global::app.type.item.signature.@this signature) => Copy(Name, _context, signature);
+
+    private protected virtual @this Copy(string name, actor.context.@this? context,
+        global::app.type.item.signature.@this? signature = null)
     {
         return new @this(name, _item, context: context)
         {
@@ -591,6 +595,7 @@ public partial class @this
             Returned = Returned,
             ReturnDepth = ReturnDepth,
             Properties = Properties.Clone(),
+            Signature = signature ?? Signature,
         };
     }
 
@@ -822,7 +827,8 @@ public class DynamicData : @this
 
     /// <summary>A copy captures the current answer — `set %start% = %Now%` holds the moment of the
     /// set, not a live cell. Computed with the copy's context (the asker's).</summary>
-    private protected override @this Copy(string name, actor.context.@this? context)
+    private protected override @this Copy(string name, actor.context.@this? context,
+        global::app.type.item.signature.@this? signature = null)
     {
         var ctx = context ?? Context;
         return new @this(name, _cell.Compute(ctx), context: ctx) { Properties = Properties.Clone() };

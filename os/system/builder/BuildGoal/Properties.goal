@@ -13,6 +13,6 @@ Properties
 - render template "/system/builder/llm/Properties.llm", write to %propertiesSystemMsg%
 - set %messages% = [{"Role":"system", "Content":"%propertiesSystemMsg%"}, {"Role":"user", "Content":"%propertiesUserMsg%"}]
 
-- llm.query Message=%messages%, Model="gpt-5.4-nano", cache=%!build.cache%, write to %answer%
+- llm.query Message=%messages%, Model="gpt-5.4-nano", cache=%!build.setting.cache%, write to %answer%
 
 - call /system/builder/EmitBuildEvent kind="goal-properties", goal=%goal%

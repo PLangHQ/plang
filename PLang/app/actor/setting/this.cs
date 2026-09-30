@@ -55,19 +55,22 @@ public sealed class @this
 
     /// <summary>
     /// An action's option as the settings hold it — the action-param seam's rung and
-    /// <c>%!llm.query.cache%</c>'s: this run's value (the action's key <c>llm.query.cache</c>, then the
-    /// module's <c>llm.cache</c>), the closest scope first; else the saved rows (the action's row, then the
-    /// module's own), the user's before the system's. NotFound when none.
+    /// <c>%!llm.query.setting.cache%</c>'s: this run's value (the action's key <c>llm.query.setting.cache</c>,
+    /// then the module's <c>llm.setting.cache</c>), the closest scope first; else the saved rows (the action's
+    /// row, then the module's own), the user's before the system's. NotFound when none.
     /// </summary>
     public async ValueTask<data.@this> Get(global::app.goal.step.action.@this action, string option)
     {
         await Load();
-        var module = action.Module.Name;
-        var run = Run([$"{module}.{action.Name}.{option}", $"{module}.{option}"]);
+        // read where each node writes: under the action's settings' path, then its module's
+        var settings = new global::app.type.item.setting.action.@this(action);
+        var own = settings.Path;
+        var module = settings.Module.Path;
+        var run = Run([$"{own}.{option}", $"{module}.{option}"]);
         if (run.IsInitialized) return run;
-        if (Saved($"{module}.{action.Name}") is { } row && Option(row, option) is { } saved) return saved;
-        if (Saved(module) is { } own && Option(own, option) is { } kept) return kept;
-        return _context.NotFound($"{module}.{action.Name}.{option}");
+        if (Saved(own) is { } row && Option(row, option) is { } saved) return saved;
+        if (Saved(module) is { } held && Option(held, option) is { } kept) return kept;
+        return _context.NotFound($"{own}.{option}");
     }
 
     // This run's value for the first key that has one, the closest scope first.
@@ -119,7 +122,7 @@ public sealed class @this
     public async ValueTask<data.@this> Save(global::app.type.item.setting.@this setting)
     {
         var path = setting.Path;
-        // a node that leads to settings (%!http%, %!llm.query%) is no class: its row could not be read back
+        // a node's settings (%!http.setting%, %!llm.query.setting%) are no class: its row could not be read back
         if (Class(path) == null)
             return _context.Error(new global::app.error.Error(
                 $"'{path}' is not a setting class — save the class that holds the option.", "NotASettingClass", 400));
@@ -271,20 +274,14 @@ public sealed class @this
     }
 
     /// <summary>
-    /// The first setting a <c>!</c> name the memory doesn't bind names (<c>%!llm%</c>, <c>%!http%</c>): the
-    /// module's settings — its own class when it has one — which answer the next hop themselves (an action,
-    /// then its options). NotFound when the name is no module's. (An owner's settings are reached through
-    /// the owner: <c>%!app.goal.list.setting%</c>.)
+    /// <paramref name="module"/>'s settings as this scope sees them — <c>%!llm.setting%</c>, <c>%!http.setting%</c>:
+    /// its own class when it has one, else the module's node, whose options are ones its actions take.
     /// </summary>
-    public async ValueTask<data.@this> Get(string name)
+    public async ValueTask<data.@this> Of(global::app.module.@this module)
     {
-        // a name that is no module's names no setting: unset, as an unbound %!x% has always read (a
-        // template leaves it as written, the ask sentinel reads its absence)
-        if (!(await _context.App.module.Get(name)).Success) return _context.NotFound(name);
         await Load();
-        return Class(name) != null
-            ? Instance(name)
-            : new data.@this(name, new global::app.type.item.setting.module.@this(name), context: _context);
+        var node = new global::app.type.item.setting.module.@this(module.Name);
+        return Class(node.Path) != null ? Instance(node.Path) : new data.@this(node.Path, node, context: _context);
     }
 
     // This run's values under path, the closest scope winning, as the options they set — a key deeper than

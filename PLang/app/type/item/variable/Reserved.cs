@@ -9,7 +9,6 @@ public static class Reserved
 {
     public const string Identity = "Identity";
     public const string MyIdentity = "MyIdentity";
-    public const string ServiceIdentity = "ServiceIdentity";
 
     public const string ParametersAtAppStart = "!ArgsAtAppStart";
     public const string Debug = "!Debug";

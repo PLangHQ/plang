@@ -3,11 +3,11 @@ namespace app.type.item.setting;
 /// <summary>
 /// A setting — what an owner lets be set: a class of options (its public settable properties) whose
 /// initializers are the defaults (<c>app.goal.list.setting</c>'s <c>Os</c>, llm's <c>Cache</c>). Each class
-/// is a kind of this type, named by its path: its namespace, which is its owner's path in plang
-/// (<c>%!app.goal.list.setting%</c>); a module's own class is read by the module's name
-/// (<c>app.module.llm.setting</c> → <c>llm</c>, <c>%!llm.cache%</c>). A bare setting is a node — a
-/// path that leads to settings (a module, an action's <c>llm.query</c>). The asker's settings build one,
-/// the saved row and this run's values on it.
+/// is a kind of this type, named by its path — the path a program reads it by, its owner's then
+/// <c>.setting</c>: its namespace (<c>%!app.goal.list.setting%</c>), a module's read from the module
+/// (<c>app.module.llm.setting</c> → <c>llm.setting</c>, <c>%!llm.setting.cache%</c>). A bare setting is a
+/// node — the settings of a module or an action with no class of its own (<c>%!llm.query.setting%</c>). The
+/// asker's settings build one, the saved row and this run's values on it.
 /// </summary>
 [global::app.Attributes.PlangType("setting")]
 public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
@@ -15,16 +15,17 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>A node: the path it stands for.</summary>
     public @this(string path) => Path = path;
 
-    /// <summary>A class of options: its path is its namespace, a module's own class read as the module's
-    /// name.</summary>
+    /// <summary>A class of options: its path is its namespace — a module's read from the module, so
+    /// <c>app.module.llm.setting</c> is <c>llm.setting</c>.</summary>
     protected @this()
     {
         var path = GetType().Namespace!;
-        const string module = "app.module.", own = ".setting";
-        Path = path.StartsWith(module) && path.EndsWith(own) ? path[module.Length..^own.Length] : path;
+        const string module = "app.module.";
+        Path = path.StartsWith(module) ? path[module.Length..] : path;
     }
 
-    /// <summary>The path this setting is read by — <c>%!app.goal.list.setting%</c> is <c>app.goal.list.setting</c>.</summary>
+    /// <summary>The path this setting is read by — <c>%!app.goal.list.setting%</c> is <c>app.goal.list.setting</c>,
+    /// <c>%!llm.setting%</c> is <c>llm.setting</c>.</summary>
     [Out] public string Path { get; }
 
     /// <summary>A setting is built by the asker's settings, never made from a value.</summary>
@@ -55,13 +56,13 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         return await Next(parent, key);
     }
 
-    /// <summary>What a key that isn't one of this class's options names — a module's settings answer an
-    /// action (<c>%!llm.query%</c>), an action's its options; a class has nothing past its options.</summary>
+    /// <summary>What a key that isn't one of this class's options names — an action's settings answer its
+    /// options (<c>%!llm.query.setting.cache%</c>); a class has nothing past its options.</summary>
     protected virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Next(global::app.data.@this parent, string key)
         => System.Threading.Tasks.ValueTask.FromResult(parent.Context.NotFound(key));
 
     /// <summary>Writes an option for this run: the value lands in the writer's settings under this class's
-    /// path (<c>set %!app.goal.list.setting.os% = true</c> → <c>goal.list.setting.os</c>), where the next read
+    /// path (<c>set %!app.goal.list.setting.os% = true</c> → <c>app.goal.list.setting.os</c>), where the next read
     /// builds it from — and on this instance.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex,
         object? value, global::app.actor.context.@this context)

@@ -79,11 +79,11 @@ public sealed class @this : global::app.type.kind.@this
             var read = new global::app.data.Wire(view, context: context, deferVerify: true).ReadBuffered(raw);
             if (read == null) return context.Ok();
 
-            // Deferred verify: the sync reader stamped the unverified signature layer (it can't await inside a
-            // ref-struct reader); verify it now, awaited.
-            if (read.PendingVerification is { } layer)
+            // Deferred verify: the sync reader answered the Data holding the signature it arrived in (it can't
+            // await inside a ref-struct reader); verify it now, awaited. A failed verify answers a fresh error,
+            // so a Data this answers holds only a signer it verified.
+            if (read.Signature is { } layer)
             {
-                read.PendingVerification = null;
                 var verified = await new global::app.goal.step.action.@this(new global::app.module.signing.verify(context)
                 {
                     Data = context.Ok(layer),

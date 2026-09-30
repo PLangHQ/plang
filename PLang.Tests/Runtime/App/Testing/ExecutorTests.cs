@@ -96,8 +96,8 @@ public class ExecutorTests
         await using var _ = engine;
     }
 
-    // --build sets Building.IsEnabled and syncs the !build.cache variable so the
-    // PLang builder's Build.goal reads it. Default cache flag is Building.Cache's default.
+    // --build makes the app's build; %!build.setting.cache% is then the running build's settings (the app's
+    // member answers before the module). Default cache flag is the class's default.
     [Test]
     public async Task Configure_BuildFlag_SetsBuildingIsEnabled_SyncsCacheVar()
     {
@@ -107,13 +107,13 @@ public class ExecutorTests
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
         await Assert.That(engine!.Build != null).IsTrue();
-        // %!build.cache% — what the builder's goals hand llm.query (`cache=%!build.cache%`)
-        var cacheVar = await new global::app.type.item.variable.@this("!build.cache").Start(engine.actor.list.User.Context);
+        // %!build.setting.cache% — what the builder's goals hand llm.query (`cache=%!build.setting.cache%`)
+        var cacheVar = await new global::app.type.item.variable.@this("!build.setting.cache").Start(engine.actor.list.User.Context);
         await Assert.That((await cacheVar.Value())?.ToString()).IsEqualTo("true");
         await using var _ = engine;
     }
 
-    // --build={"cache":false} reaches %!build.cache% — llm.query in the builder's goals gets false.
+    // --build={"cache":false} reaches %!build.setting.cache% — llm.query in the builder's goals gets false.
     [Test]
     public async Task Configure_BuildCacheOff_ReachesBuildCacheSetting()
     {
@@ -122,7 +122,7 @@ public class ExecutorTests
 
         await Assert.That(error).IsNull();
         await using var _ = engine!;
-        var cacheVar = await new global::app.type.item.variable.@this("!build.cache").Start(engine!.actor.list.User.Context);
+        var cacheVar = await new global::app.type.item.variable.@this("!build.setting.cache").Start(engine!.actor.list.User.Context);
         await Assert.That((await cacheVar.Value())?.ToString()).IsEqualTo("false");
     }
 

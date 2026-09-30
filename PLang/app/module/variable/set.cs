@@ -124,7 +124,7 @@ public partial class Set : IContext, IScope, IKeep
             return Context.Error(Name.Error
                 ?? new global::app.error.Error("variable.set: Name did not resolve to a variable.", "CreateVariableDeclined", 400));
 
-        // `set default` writes only where nothing is — a setting included (%!build.cache% holds its
+        // `set default` writes only where nothing is — a setting included (%!build.setting.cache% holds its
         // class's default, or this run's value).
         if (await AsDefault.ToBooleanAsync())
         {
@@ -303,8 +303,8 @@ public partial class Set : IContext, IScope, IKeep
         // name as-is, without inspecting or computing it (no .Value). A reference
         // or template resolves/renders on its own door at read; a literal is itself. A self-write
         // (`set %a%=%a%`) is dropped at build, never handled here. The variable writes itself: a
-        // bare name rebinds, `%x.a%` sets a member, `%x!cost%` the binding's Properties, `%!llm.cache%` a
-        // setting's option for this run.
+        // bare name rebinds, `%x.a%` sets a member, `%x!cost%` the binding's Properties, `%!llm.setting.cache%`
+        // a setting's option for this run.
         return await name.Set(Value, Context);
     }
 

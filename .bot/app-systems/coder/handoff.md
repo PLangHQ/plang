@@ -1,47 +1,18 @@
-# handoff — 375 (1) mid-flight
+# handoff — app-systems coder
 
-Committed: data reader births a received error as a failed Data; error reader IsEager; FailedWriteTests pin (green). Gate + ptest NOT yet run on this commit.
+375 (2) landed (decisions 389, 392): a `!x` root the memory doesn't bind is the app's member, else the module by
+that name; a setting is always under `.setting` — `%!llm.setting.cache%`, `%!llm.query.setting.cache%`,
+`%!build.setting.cache%`. A setting class's path is its read path (`llm.setting`); the module and the action answer
+`.setting` themselves (item's `Setting` is virtual). Rows saved as `user!llm` are no longer read (no migration).
 
-Open: http pin `AResponseCarryingAFailure_FailsTheRequest_WithThatError` fails with NoSignature.
-Remote app must sign for real (plain app, not .Testing()); receiver's verify now says NoSignature — next: trace how verify finds the signature on a Data read back failed (the failed Data may lose the signature layer).
+A module whose name is an app member (goal, module, test, variable, cache, code) is shadowed in the short form;
+its file path `%!module.variable.set.setting.x%` is 375 (3)'s to make work. When 380 (4) lands, the module-by-name
+step goes and short names become dynamic variables set in /system/on/create.goal.
 
-```diff
-diff --git a/PLang.Tests/Modules/App/Modules/http/RequestActionTests.cs b/PLang.Tests/Modules/App/Modules/http/RequestActionTests.cs
-index 3dd7dd2d4..be98c2954 100644
---- a/PLang.Tests/Modules/App/Modules/http/RequestActionTests.cs
-+++ b/PLang.Tests/Modules/App/Modules/http/RequestActionTests.cs
-@@ -175,6 +175,33 @@ public class RequestActionTests
-         await Assert.That(sent).DoesNotContain("note.txt");
-     }
- 
-+    // A remote failure: another app answers with its failed result, written in plang. The request that reads it
-+    // fails with that error — the step fails and its on error runs.
-+    [Test]
-+    public async Task AResponseCarryingAFailure_FailsTheRequest_WithThatError()
-+    {
-+        await using var remote = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
-+            "plang_remote_" + Guid.NewGuid().ToString("N")[..8]));
-+        var remoteCtx = remote.actor.list.User.Context;
-+        using var body = new System.IO.MemoryStream();
-+        await remoteCtx.Format("application/plang").Encode(body,
-+            remoteCtx.Error(new global::app.error.Error("the disk is full", "DiskFull", 507)), remoteCtx);
-+        var bytes = body.ToArray();
-+        _handler.Handler = _ =>
-+        {
-+            var content = new ByteArrayContent(bytes);
-+            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/plang");
-+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = content });
-+        };
-+
-+        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/disk" };
-+        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
-+
-+        await result.IsFailure();
-+        await Assert.That(result.Error!.Key).IsEqualTo("DiskFull");
-+        await Assert.That(result.Error.Message).IsEqualTo("the disk is full");
-+    }
-+
-     [Test]
-     public async Task Post_FormUrlEncoded_SendsCorrectContentType()
-     {
-```
+## Next
+
+375 (3) the current-node rule (+ `%!module.x…%`); (4) the event node (shape first); (5) the registrations sweep.
+380 (4) `system.on.create` (shape first); 380 (5) read-as-text verbatim.
+
+Waiting on Ingi: the http `response` reshape (387) — http/ belongs to the fix branch `app-systems-http` until it
+comes back. Not urgent: make `After_ActionExceedsTimeout_Returns408Error` deterministic (a held gate).
