@@ -45,15 +45,15 @@ type `path`). That prose is the seed the generator's `notes.md` enrichment reuse
 not throwaway.
 
 ## Code example (the source → page contract)
-Source line (`file/list.notes.md`):
+Source line (`file/list.notes.md`) — authored verbatim, generator is pass-through:
 ```
-Pattern — which files come back, as a glob. · say: matching '<glob>' · builder: only when the step names one
+Pattern — which files come back, as a glob · say: `matching '<glob>'` · builder: only when the step names one
 ```
 Generated learner row (`docs/modules/file.md#list`):
 ```
-| Pattern | matching '<glob>' | string | no | * | which files come back, as a glob |
+| Pattern | `matching '<glob>'` | text | no | * | which files come back, as a glob |
 ```
-Compile-teaching line (same source, `say:` stripped):
+Compile-teaching line (same source, learner `say:` field not shown):
 ```
-Pattern — which files come back, as a glob. only when the step names one
+Pattern — which files come back, as a glob · only when the step names one
 ```
