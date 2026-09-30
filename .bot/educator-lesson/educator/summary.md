@@ -1,6 +1,6 @@
 # educator: summary
 
-**Version:** v1, in progress (2026-09-30).
+**Version:** v2, in progress (2026-09-30). v1 = lesson 1 "What is plang", done and voiced. v2 = lesson 2 "your first plang program" (hands-on), text first, animation last (Ingi).
 
 ## What this is
 
@@ -65,3 +65,10 @@ film.scene.art.variable = frame => {
   tag.draw(frame, right + 330, ty, { scale: frame.at(tagIn, tagIn + 0.45, 'outBack') });
 };
 ```
+
+## v2: lesson 2 (hands-on)
+- The lesson text is `/shared/educator/course/02-first-program/lesson.md`, with its examples as real goals in `code/NN-*/Start.goal`. Each is built and run on this branch; real output in `output.txt`.
+- 01 hello, 02 variable, 05 list/foreach, 07 goal with a value and 08 shopping list work.
+- 03 ask, 04 condition and 06 file read are blocked by PLang bugs, reported in `/shared/architect/educator-beginner-steps.md`. The architect has queued them after http 2 and 3.
+- Install and editor screens and facts were asked of the os bot (`/shared/educator/os/first-program/`, stills and videos). Nothing has arrived yet.
+- Engine: `film.video` and `film.paper.photo` are started but not wired or tested. They are parked until the lesson text is settled.
