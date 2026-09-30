@@ -45,7 +45,9 @@ public sealed class Wayland : IScreen
         var notes = System.Threading.Channels.Channel.CreateUnbounded<string>();
         _ = Task.Run(async () =>
         {
-            await foreach (var note in notes.Reader.ReadAllAsync()) await context.App.Debug.Write(note);
+            // the debug channel is there with --debug only
+            await foreach (var note in notes.Reader.ReadAllAsync())
+                if (context.App.Debug is { } debug) await debug.Write(note);
         });
         var display = new wayland.Display(new wayland.Size(width, height), "is", socket.Absolute, output,
             font == null ? null : (await font.Value())?.RawBytes, note => notes.Writer.TryWrite(note));

@@ -25,7 +25,7 @@ public static class Gate
             await context.Variable.Set("!data", payload);
             var result = await held.Start(context);
             if (!result.Success)
-                await context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteText(result.Error?.Message ?? "");
+                await context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(result);
         }
         finally { gate.Release(); }
     }

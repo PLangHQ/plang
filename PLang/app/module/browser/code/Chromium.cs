@@ -125,7 +125,7 @@ public sealed partial class Chromium : IBrowser
         var chrome = Process.Start(Chrome(chromium, screen, context, "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=0", "--app=" + url))!;
         chrome.StandardInput.Close();
         _ = Drain(chrome.StandardOutput);
-        var port = await PortOf(chrome.StandardError, TimeSpan.FromSeconds(30), line => context.App.Debug.Write("chromium: " + line));
+        var port = await PortOf(chrome.StandardError, TimeSpan.FromSeconds(30), line => context.App.Debug?.Write("chromium: " + line) ?? Task.CompletedTask);
         var pageUrl = port == null ? null : await PageOf(port.Value);
         if (pageUrl == null)
         {
@@ -162,7 +162,7 @@ public sealed partial class Chromium : IBrowser
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or TimeoutException or JsonException or KeyNotFoundException or WebSocketException)
         {
-            await context.App.Debug.Write("browser: no DevTools browser connection; new tabs stay tabs: " + ex.Message);
+            await (context.App.Debug?.Write("browser: no DevTools browser connection; new tabs stay tabs: " + ex.Message) ?? Task.CompletedTask);
         }
         return context.Ok<Browser>(browser);
     }
@@ -298,10 +298,10 @@ public sealed partial class Chromium : IBrowser
         // the Data writes itself as text (a dict as its json); the page gets it as a message event
         using var text = new MemoryStream();
         await Text.Encode(text, action.Data, context, null, null, CancellationToken.None);
-        if (action.Window != null)
+        if ((action.Window == null ? null : await action.Window.Value()) is { } window)
         {
             // a window's own page (one of the app's, that talks with plang)
-            var id = (long)(await action.Window.Value())!.ToDouble();
+            var id = (long)window.ToDouble();
             if (!browser.Talks.TryGetValue(id, out var talk))
                 return context.Error(new ActionError($"Window {id} shows no page of this app's to talk with.", "WindowNotFound", 404));
             await talk.Post(Encoding.UTF8.GetString(text.ToArray()));
@@ -335,14 +335,14 @@ public sealed partial class Chromium : IBrowser
         JsonElement reply;
         try
         {
-            if (action.Window == null)
+            if ((action.Window == null ? null : await action.Window.Value()) is not { } window)
             {
                 using var doc = JsonDocument.Parse(await Ask(browser, "Runtime.evaluate", new JsonObject { ["expression"] = expression, ["awaitPromise"] = true, ["returnByValue"] = true }));
                 reply = doc.RootElement.Clone();
             }
             else
             {
-                var id = (long)(await action.Window.Value())!.ToDouble();
+                var id = (long)window.ToDouble();
                 if (!browser.Talks.TryGetValue(id, out var talk))
                     return context.Error(new ActionError($"Window {id} shows no page of this app's to talk with.", "WindowNotFound", 404));
                 reply = await talk.Evaluate(expression);

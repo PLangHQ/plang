@@ -133,12 +133,12 @@ public sealed class Default : ITerminal
         var running = new Process { Program = program.Absolute, Id = os.Id, Os = os };
 
         // binary messages when asked — or when the output goes to a screen, which takes nothing else
-        if ((await action.Binary.Value())!.Value || action.OutputTo != null)
+        var screen = action.OutputTo == null ? null : await action.OutputTo.Value();
+        if ((await action.Binary.Value())!.Value || screen != null)
         {
             // stdout is [u32 length][bytes] messages: each one, as it arrives, straight to the screen
             // it goes to (no goal per message), and to OnOutput as binary when there is one
             _ = Pump(os.StandardError, true, System.Threading.Channels.Channel.CreateUnbounded<(bool, string)>().Writer);
-            var screen = action.OutputTo == null ? null : await action.OutputTo.Value();
             running.Reading = Task.Run(async () =>
             {
                 await foreach (var message in Messages(os.StandardOutput.BaseStream))
@@ -307,7 +307,7 @@ public sealed class Default : ITerminal
         await context.Variable.Set("!data", Line(line, context));
         var result = await held.Start(context);
         if (!result.Success)
-            await context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteText(result.Error?.Message ?? "");
+            await context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(result);
     }
 
     private static data.@this<Text> Result(actor.context.@this context, string output, string error, int exitCode,
