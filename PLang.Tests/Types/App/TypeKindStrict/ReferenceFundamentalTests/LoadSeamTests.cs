@@ -87,6 +87,21 @@ public class LoadSeamTests
         await Assert.That(data.Error!.Key).IsEqualTo("StrictKindMismatch");
     }
 
+    [Test] public async Task Birth_StrictKind_BytesInHand_MismatchDeclines_MatchIsBorn()
+    {
+        var bytes = new global::app.type.item.binary.@this(Png1x1);
+        var asGif = _app.type.list[new global::app.type.@this("image", "gif", true), Ctx];
+        var asPng = _app.type.list[new global::app.type.@this("image", "png", true), Ctx];
+
+        var refused = await asGif.Create(bytes, Ctx);
+        var born = await asPng.Create(bytes, Ctx);
+
+        await refused.IsFailure();
+        await Assert.That(refused.Error!.Key).IsEqualTo("StrictKindMismatch");
+        await born.IsSuccess();
+        await Assert.That(born.Peek() is image).IsTrue();
+    }
+
     [Test] public async Task Value_NoLazyContent_IsNoOp()
     {
         // A bytes-backed image and a scalar graph carry nothing lazy — materializing succeeds.

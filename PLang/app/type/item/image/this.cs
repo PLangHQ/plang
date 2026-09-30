@@ -150,13 +150,28 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The ICreate courier face — pass-through / byte[] via the core; a string is a path,
     /// made by path's own courier, and the image is held over it. A non-string source declines silently;
-    /// a location path declines (an unregistered scheme, an empty one) lands its reason on <paramref name="data"/>.</summary>
+    /// a location path declines (an unregistered scheme, an empty one) lands its reason on <paramref name="data"/>.
+    /// A strict declaration (<c>as image/png strict</c>) is the image's own: imprinted at birth, checked now when
+    /// the bytes are in hand (a mismatch declines onto <paramref name="data"/>), else when they load.</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
-        if (Create(value) is { } built) return built;
-        if (((value as global::app.type.item.@this)?.Clr<object>() ?? value) is not string) return null;
-        return global::app.type.item.path.@this.Create(value, null, data) is { } path ? new @this(path, data.Context) : null;
+        var image = Create(value)
+            ?? (((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string
+                && global::app.type.item.path.@this.Create(value, null, data) is { } path ? new @this(path, data.Context) : null);
+        if (image == null || declared is not { Strict: true, kind.IsEmpty: false }) return image;
+        image.RequireStrictKind(declared.kind.Name);
+        if (image.Mismatch() is { } refused) { data.Fail(refused); return null; }
+        return image;
     }
+
+    // The strict kind the loaded bytes break, as the program's error; null when they match, nothing is required,
+    // or nothing is loaded yet.
+    private global::app.error.Error? Mismatch() => CheckStrictKind() is { ok: false } mismatch
+        ? new global::app.error.Error(
+            $"Strict kind mismatch: declared kind '{_requiredKind}'"
+            + (mismatch.actualKind != null ? $" but content is '{mismatch.actualKind}'." : "."),
+            "StrictKindMismatch", 400)
+        : null;
 
     /// <summary>Bytes-backed, no source: the content is in hand (base64 decode, the wire).
     /// <paramref name="kind"/> is a fact the creator already has — sniffed off the magic
@@ -215,12 +230,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             }
             _bytes = (await read.Value())?.Value ?? System.Array.Empty<byte>();
             // Strict kind fires here, at byte-materialization — the set stayed lazy.
-            if (CheckStrictKind() is { ok: false } mismatch)
+            if (Mismatch() is { } refused)
             {
-                data.Fail(new global::app.error.Error(
-                    $"Strict kind mismatch: declared kind '{_requiredKind}'"
-                    + (mismatch.actualKind != null ? $" but content is '{mismatch.actualKind}'." : "."),
-                    "StrictKindMismatch", 400));
+                data.Fail(refused);
                 return Absent;
             }
         }
