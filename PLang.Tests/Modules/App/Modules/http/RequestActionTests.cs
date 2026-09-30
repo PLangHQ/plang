@@ -154,6 +154,33 @@ public class RequestActionTests
         await Assert.That(await _handler.LastRequest!.Content!.ReadAsStringAsync()).IsEqualTo("{\"name\":\"Alice\"}");
     }
 
+    // A dict body holding %variables%, read from its .pr as the builder writes it: it sends its variables' values,
+    // never the slice's names — the educator's report, blocker 1.
+    [Test]
+    public async Task Post_TemplateDictBody_SendsItsValues()
+    {
+        var goal = await RealGoalLoad.Read(_app, """
+            {"name": "Speak", "path": "/Speak.goal", "step": [
+              {"index": 0, "text": "set %lesson%", "line": {"number": 2}, "code": [{"module": "variable", "name": "set", "property": [
+                {"name": "Name", "type": {"name": "variable"}, "value": "%lesson%", "variable": [{"text": "%lesson%", "code": [{"variable": "lesson"}]}]},
+                {"name": "Value", "type": {"name": "dict"}, "value": {"voice": {"model": "m-1"}}}]}]},
+              {"index": 1, "text": "post the body", "line": {"number": 3}, "code": [{"module": "http", "name": "request", "property": [
+                {"name": "Url", "type": {"name": "text"}, "value": "https://api.example.com/speech"},
+                {"name": "Method", "type": {"name": "choice", "kind": "httpmethod"}, "value": "POST"},
+                {"name": "Body", "type": {"name": "dict", "template": "plang"}, "value": {"deep": "%lesson.voice.model%", "fixed": "pcm"},
+                 "variable": [{"text": "%lesson.voice.model%", "code": [{"variable": "lesson"}, {"property": "voice"}, {"property": "model"}]}]},
+                {"name": "Unsigned", "type": {"name": "bool"}, "value": true}]}]}]}
+            """);
+
+        await (await goal.Step[0].Start(Ctx)).IsSuccess();
+        await (await goal.Step[1].Start(Ctx)).IsSuccess();
+
+        await Assert.That(await _handler.LastRequest!.Content!.ReadAsStringAsync()).IsEqualTo("{\"deep\":\"m-1\",\"fixed\":\"pcm\"}");
+        // the goal written back keeps the body as authored
+        await Assert.That(await _app.actor.list.User.Context.Pr(goal))
+            .Contains("\"value\": {\"deep\": \"%lesson.voice.model%\", \"fixed\": \"pcm\"}");
+    }
+
     // The body is written through a channel, which reads the value: a file sends what it holds.
     [Test]
     public async Task Post_FileBody_SendsItsContent_NotItsPath()

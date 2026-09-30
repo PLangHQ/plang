@@ -14,14 +14,14 @@ How a request's body and its `Content-Type` go out, as the code does it today. E
 | 35-36 | `Encoding` | `data<text>`, `[Default("utf-8")]` | the charset put on the content type. |
 | 57 | `DefaultHeaders` | `data<dict>?` | merged under `Header`. |
 
-The `.pr` value of `Body` decides what item the Data holds (`PLang/app/type/this.cs:420-445`, the one door for a row's value):
+The `.pr` value of `Body` decides what item the Data holds (`PLang/app/type/this.cs:423-447`, the one door for a row's value). A slice is made in one place, `Make` (`type/this.cs:413-415`): a `template` when the row's type is marked one, else a plain `wire`.
 
 | the step writes | `.pr` row | item held |
 |---|---|---|
-| `body %request%` | `{type: {item, template: plang}, value: "%request%"}` | a `source` whose whole text is one variable (`IsVariable`, `type/item/source.cs:65`), from `type/this.cs:436-437` |
-| `body {"a": 1}` | `{type: {dict}, value: {...}}` | a `wire`: the row's json slice, unread (`type/this.cs:444`, `Make` at `:411-412`) |
-| `body {"deep": %x.y%}` | `{type: {dict, template: plang}, value: {...}, variable: [...]}` | a `wire` **holding a template**: the same slice, with the row's variables (`type/this.cs:444`) |
-| `body "some text"` | `{type: {text}, value: "some text"}` | a `wire` over the quoted json string (`type/this.cs:438`) |
+| `body %request%` | `{type: {item, template: plang}, value: "%request%"}` | a `source` whose whole text is one variable (`IsVariable`, `type/item/source.cs:65`), from `type/this.cs:439-440` |
+| `body {"a": 1}` | `{type: {dict}, value: {...}}` | a `wire`: the row's json slice, unread (`type/this.cs:446` → `Make`) |
+| `body {"deep": %x.y%}` | `{type: {dict, template: plang}, value: {...}, variable: [...]}` | a `template` (`type/item/wire/template.cs`): the same slice, with the row's variables (`type/this.cs:446` → `Make`) |
+| `body "some text"` | `{type: {text}, value: "some text"}` | a `wire` over the quoted json string (`type/this.cs:441`) |
 
 A variable set from any of these (`variable.set` without `as`, `module/variable/set.cs:308`) holds the same item: the variable stores the Data as it is.
 
@@ -83,7 +83,8 @@ What each item held in a body does in `Output`:
 |---|---|---|
 | `source`, whole `%var%` (`type/item/source.cs:287-304`) | `:296-300` resolves the variable and writes the bound Data | whatever the bound value writes |
 | `source`, no template (`source.cs:260-279`, via `:291-294`) | `:264-268` its declared kind owns the writer (`kind.Owns`) → the raw verbatim; else `:278` a string | `{item, json}` content relays as its bytes |
-| `wire` (`type/item/wire/this.cs:60-68`) | `:64` the wire's reader (plang's own format, `wire/kind/plang/this.cs:129`) owns json and plang writers → the `.pr` slice verbatim; any other writer decodes the slice (`:67`) and the value writes itself | **the slice as written in the `.pr`, whitespace included** |
+| `wire` (`type/item/wire/this.cs:63-71`) | `:67` the wire's reader (plang's own format, `wire/kind/plang/this.cs:129`) owns json and plang writers → the `.pr` slice verbatim; any other writer decodes the slice (`:70`) and the value writes itself | the slice as written in the `.pr`, whitespace included |
+| `template` (`type/item/wire/template.cs:21-35`) | `:27-31` in the Store view (a `.pr`) its slice as authored, as a wire; in any other view `:34` the slice is decoded and its parts write themselves, each rendering its variable | the rendered value: `{"deep":"m-1"}` |
 | native `dict` (`type/item/dict/this.cs:163-174`) | an object; each entry writes itself | entries render (a template entry resolves at `text/this.cs:237-243`) |
 | `text` (`type/item/text/this.cs:228-244`) | `:232-235` plain text → `writer.String`; `:237-241` whole `%var%` → the bound value; `:243` a partial template → its rendered string | always a json string, whatever the text's kind |
 | file / url reference (`type/item/content/this.cs:113-136`) | sampled → its content (`:117` json into json verbatim, `:118` text as a string, `:119` bytes); unsampled → `:115` its location | the content if sampled, else the path as a string |
@@ -96,8 +97,7 @@ What each item held in a body does in `Output`:
 
 Reproduced on app-systems at 8a5130ef9 against httpbin.org/anything.
 
-1. **A dict body holding `%variables%` is sent unrendered.** The body is a `wire` holding a template (`type/this.cs:444`). The json writer is the wire's own format, so `wire/this.cs:64` writes the `.pr` slice verbatim before any variable renders. The same happens with `save %request% to 'x.json'`. Headers render because `Header` is read through its typed door (`Default.cs:58-59`). `write out %request%` renders because the text writer is a foreign format for the wire (`:67`).
-2. **A text body sent as application/json is a json string.** A text writes `writer.String` whatever its kind (`text/this.cs:234`, `:243`, `:258`). A text written in a `.pr` is a wire over its quoted slice, relayed as that string (`wire/this.cs:64`). `ui.render` returns a text with no kind (`module/ui/code/Fluid.cs:125`), so a rendered `.json` template is plain text.
-3. **`content type` and a `Content-Type` header are joined.** `:86` sets the content type from the parameter; `:344` then adds the header's value to the same header with `TryAddWithoutValidation`, which appends: `text/plain; charset=utf-8, application/json`. Every content header takes the same path, so a `Content-Length` or `Content-Encoding` header would append too. The upload action (`:187`) goes through the same `ApplyHeaders`.
+1. **A text body sent as application/json is a json string.** A text writes `writer.String` whatever its kind (`text/this.cs:234`, `:243`, `:258`). A text written in a `.pr` is a wire over its quoted slice, relayed as that string (`wire/this.cs:67`). `ui.render` returns a text with no kind (`module/ui/code/Fluid.cs:125`), so a rendered `.json` template is plain text.
+2. **`content type` and a `Content-Type` header are joined.** `:86` sets the content type from the parameter; `:344` then adds the header's value to the same header with `TryAddWithoutValidation`, which appends: `text/plain; charset=utf-8, application/json`. Every content header takes the same path, so a `Content-Length` or `Content-Encoding` header would append too. The upload action (`:187`) goes through the same `ApplyHeaders`.
 
 Stale comments in `request.cs`: `:11` says requests are signed with `X-Signature` (not since a13fd386a); `:24` says "Strings sent as-is" (not since 27c9749d7, June).
