@@ -31,7 +31,11 @@ not in the step at all, and was invented.
 {%- assign a = m.Action | where: "Name", an | first -%}
 {%- assign about = a.Description | strip -%}
 {{ nl }}- {{ n.Action }}: {{ about }}
-{%- if a.Notes -%}{%- assign notes = a.Notes | strip -%}{{ nl }}  {{ notes }}{%- endif -%}
+{%- comment %} its notes, line by line: a named line as `Name — prose (builder)`, a free line as written {% endcomment -%}
+{%- capture notes -%}{%- for line in a.Note.Line -%}{% if line.Name %}{{ line.Name }} — {{ line.Prose }}{% if line.Builder %} ({{ line.Builder }}){% endif %}{% else %}{{ line.Prose }}{% endif %}{% unless forloop.last %}
+{% endunless %}{%- endfor -%}{%- endcapture -%}
+{%- assign notes = notes | strip -%}
+{%- if notes != "" -%}{{ nl }}  {{ notes }}{%- endif -%}
 {%- assign named = named | append: n.Action | append: "|" -%}
 {%- endunless -%}
 {%- endfor -%}

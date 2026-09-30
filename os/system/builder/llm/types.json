@@ -77,6 +77,12 @@
   "app.goal.step.action.loop": {
     "word": "loop"
   },
+  "app.goal.step.action.note": {
+    "word": null
+  },
+  "app.goal.step.action.note.line": {
+    "word": null
+  },
   "app.module": {
     "word": "module"
   },

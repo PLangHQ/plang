@@ -76,6 +76,33 @@ def misplaced_examples(state):
 def whole(p):
     return open(p, encoding='utf-8').read().strip() if os.path.exists(p) else None
 
+# a named notes line: the name, then " — ", then the rest
+NOTE_NAMED = re.compile(r'^([A-Za-z_]\w*) — (.*)$')
+
+def notes(p):
+    """A notes file as the compile prompt shows it — the twin of action.note (PLang/app/goal/step/action/note) and
+    the notes loop in properties.template and confirm.state.template. Each line is read once: outside a code fence,
+    `Name — prose · say: … · builder: …` is a named line, shown as `Name — prose (builder)`; any other line is free,
+    shown as written. A part after " · " that is no tag stays in the prose. None when there is no file, or it is empty."""
+    if not os.path.exists(p): return None
+    shown, fenced = [], False
+    for text in open(p, encoding='utf-8').read().split('\n'):
+        text = text.rstrip('\r')
+        fence = text.lstrip().startswith('```')
+        named = None if fenced or fence else NOTE_NAMED.match(text)
+        if fence: fenced = not fenced
+        if not named:
+            shown.append(text)
+            continue
+        part = named.group(2).split(' · ')
+        prose, builder = part[0], None
+        for tag in part[1:]:
+            if tag.startswith('say:'): continue
+            elif tag.startswith('builder:'): builder = tag[len('builder:'):].strip()
+            else: prose += ' · ' + tag
+        shown.append(f'{named.group(1)} — {prose}' + (f' ({builder})' if builder else ''))
+    return '\n'.join(shown).strip() or None
+
 def catalogue():
     """The WHOLE teaching set per module — description, notes, and per action description, notes,
     examples — exactly the markdown the builder's compile prompt is fed. Nothing summarised."""
@@ -88,13 +115,11 @@ def catalogue():
             an = os.path.basename(a)[:-len('.description.md')]
             if an == 'module': continue
             entry = {'description': whole(a)}
-            for facet in ('notes', 'examples'):
-                t = whole(os.path.join(d, f'{an}.{facet}.md'))
-                if t: entry[facet] = t
+            if t := notes(os.path.join(d, f'{an}.notes.md')): entry['notes'] = t
+            if t := whole(os.path.join(d, f'{an}.examples.md')): entry['examples'] = t
             acts[an] = entry
         mod = {'description': whole(os.path.join(d, 'module.description.md'))}
-        notes = whole(os.path.join(d, 'module.notes.md'))
-        if notes: mod['notes'] = notes
+        if t := whole(os.path.join(d, 'module.notes.md')): mod['notes'] = t
         # The module's example steps, lifted from its actions' examples.md — the on-disk teaching,
         # shown at module level so stage 1 can recognise the shapes without seeing the action docs.
         ex = [t for an in acts for t in example_steps(os.path.join(d, f'{an}.examples.md'))]

@@ -338,7 +338,7 @@ def user_message_c(goal, picks):
         module, name = a.split('.', 1)
         out += f'\n\n## {b.signature(a)}'
         if d := b.doc(module, name, 'description'): out += '\n' + d.split('\n')[0]
-        if n := b.doc(module, name, 'notes'): out += '\n' + n.replace('## ', '### ')
+        if n := h.notes(f'{b.ROOT}/os/system/modules/{module}/{name}.notes.md'): out += '\n' + n.replace('## ', '### ')
     return out + '\n'
 
 # ---------------------------------------------------------------- the check
@@ -604,7 +604,7 @@ def confirm_state(numbers):
         d = f'{b.ROOT}/os/system/modules/{module}/{action}'
         about = open(d + '.description.md', encoding='utf-8').read().strip() if os.path.exists(d + '.description.md') else ''
         out += f'\n- {n["action"]}: {about}'
-        if os.path.exists(d + '.notes.md'): out += f'\n  {open(d + ".notes.md", encoding="utf-8").read().strip()}'
+        if n := h.notes(d + '.notes.md'): out += f'\n  {n}'
     return out
 
 def confirm_questions(numbers):

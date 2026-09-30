@@ -6,9 +6,9 @@ namespace PLang.Tests.App.Modules.CatalogTests;
 
 /// <summary>
 /// The module knows its docs folder (<c>os/system/modules/&lt;module&gt;</c>); its description and its
-/// actions' description/notes/examples are lazy <c>file</c> handles in it. A handle is born unread:
-/// truthiness is EXISTENCE (so <c>{% if action.Notes %}</c> guards presence without reading), and the
-/// content materializes only at the value door.
+/// actions' description/examples are lazy <c>file</c> handles in it (an action's notes are read line by line: its
+/// <c>Note</c>). A handle is born unread: truthiness is EXISTENCE (so <c>{% if action.Examples %}</c> guards
+/// presence without reading), and the content materializes only at the value door.
 /// </summary>
 public class ModuleProseDoorTests
 {
@@ -47,7 +47,7 @@ public class ModuleProseDoorTests
     private void Stage(string fileName, string body)
         => File.WriteAllText(Path.Combine(_mdRoot, FixtureModule, fileName), body);
 
-    private FileItem Notes() => _app.Module(FixtureModule)![FixtureAction1]!.Notes;
+    private FileItem Examples() => _app.Module(FixtureModule)![FixtureAction1]!.Examples;
 
     [Test]
     public async Task ModuleDescription_IsAFileHandle_InTheModuleFolder()
@@ -58,25 +58,25 @@ public class ModuleProseDoorTests
     }
 
     [Test]
-    public async Task ActionNotes_IsAFileHandle_InItsModulesFolder()
+    public async Task ActionExamples_IsAFileHandle_InItsModulesFolder()
     {
-        await Assert.That(Notes().Path.FileName).IsEqualTo(FixtureAction1 + ".notes.md");
+        await Assert.That(Examples().Path.FileName).IsEqualTo(FixtureAction1 + ".examples.md");
     }
 
     [Test]
     public async Task Prose_AbsentFile_IsFalsy_WithoutReading()
     {
         // No file staged — the handle exists but its location doesn't; truthiness is existence.
-        await Assert.That(await Notes().AsBooleanAsync(_app.actor.list.System.Context!)).IsFalse();
-        await Assert.That(Notes().IsLoaded).IsFalse();
+        await Assert.That(await Examples().AsBooleanAsync(_app.actor.list.System.Context!)).IsFalse();
+        await Assert.That(Examples().IsLoaded).IsFalse();
     }
 
     [Test]
     public async Task Prose_StagedFile_IsTruthy_AndReadsContentAtTheValueDoor()
     {
-        Stage(FixtureAction1 + ".notes.md", "Action rule.");
+        Stage(FixtureAction1 + ".examples.md", "Action rule.");
 
-        var handle = Notes();
+        var handle = Examples();
         await Assert.That(await handle.AsBooleanAsync(_app.actor.list.System.Context!)).IsTrue();   // existence, no content read yet
         await Assert.That(handle.IsLoaded).IsFalse();
 
@@ -90,6 +90,7 @@ public class ModuleProseDoorTests
         var module = _app.Module(FixtureModule)!;
         var action = module[FixtureAction1]!;
         await Assert.That(module.Description).IsSameReferenceAs(module.Description);
-        await Assert.That(action.Notes).IsSameReferenceAs(action.Notes);
+        await Assert.That(action.Examples).IsSameReferenceAs(action.Examples);
+        await Assert.That(action.Note).IsSameReferenceAs(action.Note);
     }
 }
