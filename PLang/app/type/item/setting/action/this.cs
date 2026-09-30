@@ -10,8 +10,18 @@ public sealed class @this : global::app.type.item.setting.@this
 {
     private readonly global::app.goal.step.action.@this _action;
 
+    /// <summary>The settings of the action's module — where an option the action's own don't set is read next.</summary>
+    internal global::app.type.item.setting.module.@this Module { get; }
+
     /// <param name="action">The action as the catalog has it.</param>
-    public @this(global::app.goal.step.action.@this action) : base($"{action.Module.Name}.{action.Name}.setting") => _action = action;
+    public @this(global::app.goal.step.action.@this action) : this(action, new global::app.type.item.setting.module.@this(action.Module.Name)) { }
+
+    private @this(global::app.goal.step.action.@this action, global::app.type.item.setting.module.@this module)
+        : base($"{action.Module.Name}.{action.Name}.setting")
+    {
+        _action = action;
+        Module = module;
+    }
 
     /// <summary>One of the action's options, as this run and the saved rows set it, else its default.</summary>
     protected override async System.Threading.Tasks.ValueTask<global::app.data.@this> Next(global::app.data.@this parent, string key)

@@ -180,10 +180,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     /// <summary>This module's settings — <c>%!llm.setting%</c>: its own class, or the options its actions take.</summary>
-    protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
-        => _root != null && string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase)
-            ? await parent.Context.Setting.Of(this)
-            : await base.Setting(parent, key);
+    protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
+        => _root != null ? await parent.Context.Setting.Of(this) : await base.Setting(parent);
 
     /// <summary>Select the catalog element that holds <paramref name="clr"/> — the module and the name registration
     /// gave the class; the app's module asks each of its modules. Null when no module holds it.</summary>

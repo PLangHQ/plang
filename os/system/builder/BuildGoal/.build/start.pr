@@ -34,21 +34,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Operator",
-              "type": {
-                "name": "choice",
-                "kind": "operator"
-              },
-              "value": "=="
-            },
-            {
-              "name": "Right",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
             }
           ],
           "child": [
@@ -143,7 +128,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 1 uses goal.call, which the decider was not sure of (0.70)"
+          "message": "step 1 uses goal.call, which the decider was not sure of (0.56)"
         }
       ],
       "waitForExecution": true

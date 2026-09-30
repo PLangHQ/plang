@@ -62,8 +62,10 @@ public sealed class @this
     public async ValueTask<data.@this> Get(global::app.goal.step.action.@this action, string option)
     {
         await Load();
-        var own = $"{action.Module.Name}.{action.Name}.setting";
-        var module = $"{action.Module.Name}.setting";
+        // read where each node writes: under the action's settings' path, then its module's
+        var settings = new global::app.type.item.setting.action.@this(action);
+        var own = settings.Path;
+        var module = settings.Module.Path;
         var run = Run([$"{own}.{option}", $"{module}.{option}"]);
         if (run.IsInitialized) return run;
         if (Saved(own) is { } row && Option(row, option) is { } saved) return saved;

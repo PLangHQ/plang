@@ -302,3 +302,10 @@ which the same file already uses to encode a tool result. The arguments should b
 `module/action/code/this.Load.cs` `Register` stamps `instance.Source = source.Absolute` so a snapshot can reload
 the DLL: a string copy of the path (and a reach for `.Absolute` outside `app.type.path.**`). The provider should
 hold the path itself; the snapshot writes and reloads it as a path.
+
+## A module's settings recover the module by cutting their own path [logged 2026-09-30, 375 (2)]
+
+`type/item/setting/module/this.cs` finds its module's name as `Path[..^".setting".Length]` and looks the module up
+again (`app.module.Get`) to judge an option its actions take — though `actor.setting.Of(module)` had the module in
+hand. Holding the module would be a late stamp for the module setting classes made by `new()` (llm's, build's), so
+it stays until a setting class is born from its owner.
