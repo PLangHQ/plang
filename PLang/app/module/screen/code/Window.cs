@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 using System.Text.Json;
 
 namespace app.module.screen.code;
@@ -124,6 +125,7 @@ internal sealed class Window
             case 1 or 3 or 4 or 7: PatchBinary(message); return true;
             case 2: Cursor(System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1)); return true;
             case 5: Clipboard(System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1)); return true;
+            case 8: Media(message); return true;
             default: return false;
         }
     }
@@ -184,6 +186,7 @@ internal sealed class Window
             if (m[0] == 7 && Move(m) is { } moved) areas.Add(moved);
             for (var i = 0; i < count; i++)
                 if (decoded[i] is { } px && Copy(parts[i].x, parts[i].y, parts[i].w, parts[i].h, px) is { } area) areas.Add(area);
+            if (layers.Count > 0) Remerge(areas);
         }
         // repaint only what changed: WM_PAINT's clip is these areas, so GDI copies just these pixels
         if (hwnd != IntPtr.Zero)
@@ -193,6 +196,141 @@ internal sealed class Window
                 InvalidateArea(hwnd, ref a, false);
             }
         return areas.Count > 0;
+    }
+
+    // ---- redirected videos: decoded here, shown where the page has the key colour ------------------
+
+    private readonly Dictionary<int, media.Player> players = new();
+    private readonly Dictionary<int, Layer> layers = new();
+    private const uint KeyColour = 0x00FE01FD;   // the page's key colour (BGR; alpha not compared): r 254, g 1, b 253
+    private bool mediaFailed;
+
+    /// <summary>A redirected video's picture over the page: the element's box, the picture's place in
+    /// it, the picture (the player's, until its next); and the box as painted (the picture where the
+    /// page has the key colour, black bars around it, the page everywhere else) — kept, made again
+    /// only when the box's size changes.</summary>
+    private sealed class Layer
+    {
+        internal (int x, int y, int w, int h) Box, Inner;
+        internal uint[]? Picture;
+        internal byte[] Painted = [];
+    }
+
+    /// <summary>A redirected video's news (message 8: [8][u32 n][JSON head][frames' bytes]), to its player.</summary>
+    private void Media(byte[] m)
+    {
+        var n = BitConverter.ToInt32(m, 1);
+        var head = System.Text.Json.Nodes.JsonNode.Parse(m.AsSpan(5, n)) as System.Text.Json.Nodes.JsonObject;
+        if (head?["track"] is not { } t) return;
+        var track = t.GetValue<int>();
+        media.Player? player;
+        lock (players)
+        {
+            if (head["op"]?.GetValue<string>() == "gone")
+            {
+                if (players.Remove(track, out var gone)) gone.Dispose();
+                return;
+            }
+            if (!players.TryGetValue(track, out player))
+                players[track] = player = new media.Player(track, Show, Hide, Failed,
+                    () => Math.Max(0, pipe.At(50)) / 2000.0);   // one way: half the pipe's round trip
+        }
+        player.Heard(head, m.AsMemory(5 + n));
+    }
+
+    private void Show(int track, (int x, int y, int w, int h) box, (int x, int y, int w, int h) inner, uint[]? picture)
+    {
+        lock (gate)
+        {
+            if (!layers.TryGetValue(track, out var layer)) layers[track] = layer = new Layer();
+            else if (layer.Box != box) Invalidate(layer.Box);   // where it was, repainted as the page
+            if (layer.Painted.Length != box.w * box.h * 4) layer.Painted = new byte[Math.Max(0, box.w * box.h * 4)];
+            layer.Box = box;
+            layer.Inner = inner;
+            layer.Picture = picture;
+            Merge(layer);
+        }
+        Invalidate(box);
+    }
+
+    private void Hide(int track)
+    {
+        Layer? was;
+        lock (gate) layers.Remove(track, out was);
+        if (was != null) Invalidate(was.Box);
+    }
+
+    private void Failed(string why)
+    {
+        if (mediaFailed) return;
+        mediaFailed = true;
+        onEvent("{\"media\":false,\"why\":" + JsonSerializer.Serialize(why) + "}");
+    }
+
+    /// <summary>A layer as painted, from the page as it is now: per row, the bars (black) and the
+    /// picture put where the page has the key colour, 8 pixels a step. Under the gate.</summary>
+    private void Merge(Layer layer)
+    {
+        var (bx, by, bw, bh) = layer.Box;
+        var (ix, iy, iw, ih) = layer.Inner;
+        var page = MemoryMarshal.Cast<byte, uint>(pixels.AsSpan());
+        var painted = MemoryMarshal.Cast<byte, uint>(layer.Painted.AsSpan());
+        // the box's columns on the screen, and the picture's within them
+        int left = Math.Max(0, -bx), right = Math.Min(bw, frameWidth - bx);
+        int pl = Math.Clamp(ix - bx, left, right), pr = Math.Clamp(ix + iw - bx, pl, right);
+        for (var y = 0; y < bh; y++)
+        {
+            var sy = by + y;
+            var row = painted.Slice(y * bw, bw);
+            if (sy < 0 || sy >= frameHeight || right <= left) { row.Clear(); continue; }
+            var screen = page.Slice(sy * frameWidth + bx + left, right - left);
+            var out_ = row[left..right];
+            var py = sy - iy;
+            if (layer.Picture is { } picture && py >= 0 && py < ih && pr > pl)
+            {
+                Keyed(screen[..(pl - left)], default, out_[..(pl - left)]);
+                Keyed(screen[(pl - left)..(pr - left)], picture.AsSpan(py * iw + (bx + pl - ix), pr - pl), out_[(pl - left)..(pr - left)]);
+                Keyed(screen[(pr - left)..], default, out_[(pr - left)..]);
+            }
+            else Keyed(screen, default, out_);
+        }
+    }
+
+    /// <summary>Where <paramref name="page"/> has the key colour, <paramref name="video"/> (black when
+    /// there is none); the page elsewhere.</summary>
+    private static void Keyed(ReadOnlySpan<uint> page, ReadOnlySpan<uint> video, Span<uint> into)
+    {
+        var x = 0;
+        var black = video.IsEmpty;
+        if (Vector256.IsHardwareAccelerated)
+        {
+            var key = Vector256.Create(KeyColour);
+            var rgb = Vector256.Create(0xFFFFFFu);
+            var dark = Vector256.Create(0xFF000000u);
+            for (; x + 8 <= page.Length; x += 8)
+            {
+                var p = Vector256.Create(page.Slice(x, 8));
+                var v = black ? dark : Vector256.Create(video.Slice(x, 8));
+                Vector256.ConditionalSelect(Vector256.Equals(p & rgb, key), v, p).CopyTo(into.Slice(x, 8));
+            }
+        }
+        for (; x < page.Length; x++)
+            into[x] = (page[x] & 0xFFFFFF) != KeyColour ? page[x] : black ? 0xFF000000u : video[x];
+    }
+
+    /// <summary>The layers the page changed under: merged again. Under the gate.</summary>
+    private void Remerge(List<RECT> areas)
+    {
+        foreach (var layer in layers.Values)
+            if (areas.Any(a => a.left < layer.Box.x + layer.Box.w && layer.Box.x < a.right && a.top < layer.Box.y + layer.Box.h && layer.Box.y < a.bottom))
+                Merge(layer);
+    }
+
+    private void Invalidate((int x, int y, int w, int h) box)
+    {
+        if (hwnd == IntPtr.Zero) return;
+        var r = new RECT { left = box.x, top = box.y, right = box.x + box.w, bottom = box.y + box.h };
+        InvalidateArea(hwnd, ref r, false);
     }
 
     // ---- a video playing in PlangOS: an H.264 stream for its part of the screen ----------------
@@ -634,6 +772,14 @@ internal sealed class Window
                 },
             };
             SetDIBitsToDevice(ps.hdc, 0, 0, (uint)frameWidth, (uint)frameHeight, 0, 0, 0, (uint)frameHeight, pixels, ref info, 0);
+            // redirected videos over the page, where it has the key colour
+            foreach (var layer in layers.Values)
+            {
+                var (lx, ly, lw, lh) = layer.Box;
+                if (lw <= 0 || lh <= 0) continue;
+                var box = new BITMAPINFO { bmiHeader = info.bmiHeader with { biWidth = lw, biHeight = -lh } };
+                SetDIBitsToDevice(ps.hdc, lx, ly, (uint)lw, (uint)lh, 0, 0, 0, (uint)lh, layer.Painted, ref box, 0);
+            }
         }
         EndPaint(h, ref ps);
     }

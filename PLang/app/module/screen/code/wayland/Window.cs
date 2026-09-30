@@ -139,6 +139,9 @@ internal sealed class Window : ISurfaceRole
 
     // ---- where it is and what it looks like -----------------------------------------------------
 
+    /// <summary>Where its client's pixel (0, 0) is on the screen: a page's (0, 0), for Chromium.</summary>
+    internal Point Origin => Picture.Rect.Corner;
+
     private void Place()
     {
         Picture.Place(At - offset);

@@ -186,6 +186,11 @@ internal sealed class Display
             else if (e.ContainsKey("clipboard")) Clipboard.Copied(S("clipboard"));
             else if (e.ContainsKey("stats")) Tell(e);   // the host's numbers: the desktop's taskbar shows them
             else if (e.ContainsKey("video")) Frame.Lossless("the host can't show H.264: " + S("why"));
+            else if (e.ContainsKey("media"))
+            {
+                Redirects = false;
+                Debug("screen: the host can't show redirected video: " + S("why"));
+            }
             else if (e.ContainsKey("window")) Windows.ById(N("id"))?.Command(S("window"), e);
             Frame.Send();
             Flush();
@@ -248,6 +253,19 @@ internal sealed class Display
         if (Panel is { } panel && panel.Key(scancode, extended, mods, down)) return;
         if (Keyboard.Evdev(scancode, extended) is { } key) Keyboard.Key(key, down);
     }
+
+    /// <summary>Whether pages' videos go to the host to decode (until the host says it can't).</summary>
+    internal bool Redirects { get; private set; } = true;
+
+    /// <summary>Where window <paramref name="id"/>'s page starts on the screen, if the window is here.</summary>
+    internal Point? Origin(int id)
+    {
+        lock (Gate) return Windows.ById(id)?.Origin;
+    }
+
+    /// <summary>A redirected video's news for the host (its frames, where and when it plays): sent as
+    /// it is, between frames.</summary>
+    internal void Media(JsonObject head, IReadOnlyList<ReadOnlyMemory<byte>>? parts = null) => Frame.Media(head, parts);
 
     /// <summary>The page window <paramref name="id"/> shows (for its address field).</summary>
     internal void Url(int id, string url)

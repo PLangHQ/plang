@@ -122,6 +122,11 @@ public sealed partial class Chromium : IBrowser
         // on 127.0.0.1 inside PlangOS, lets the page talk to plang: plang(text) → OnMessage,
         // browser.post → the page's message event.
         var url = (await action.Url.Value())!.Clr<string>()!;
+        // a Chromium that was killed (PlangOS closed hard) leaves its profile's lock naming its process;
+        // in a new PlangOS another process can have that number, and the new Chromium would hand its
+        // page to "the running one" and exit. None of ours runs yet: the lock is stale.
+        foreach (var name in new[] { "SingletonLock", "SingletonSocket", "SingletonCookie" })
+            await FilePath.Resolve(PathHelper.Combine(context.App.AbsolutePath, ".browser", name), context).Delete(false, true, context);
         var chrome = Process.Start(Chrome(chromium, screen, context, "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=0", "--app=" + url))!;
         chrome.StandardInput.Close();
         _ = Drain(chrome.StandardOutput);
@@ -156,6 +161,8 @@ public sealed partial class Chromium : IBrowser
             using var desktopWindow = JsonDocument.Parse(await Ask(browser, "Browser.getWindowForTarget", new JsonObject { ["targetId"] = desktop }, browser.Control));
             browser.DesktopWindow = desktopWindow.RootElement.GetProperty("result").GetProperty("windowId").GetInt32();
             await Cdp(browser, "Target.setDiscoverTargets", new JsonObject { ["discover"] = true }, browser.Control);
+            // every page, as it starts and before its own scripts: the video redirection script (Attached)
+            await Cdp(browser, "Target.setAutoAttach", new JsonObject { ["autoAttach"] = true, ["waitForDebuggerOnStart"] = true, ["flatten"] = true }, browser.Control);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or TimeoutException or JsonException or KeyNotFoundException or WebSocketException)
         {
@@ -353,6 +360,37 @@ public sealed partial class Chromium : IBrowser
     private static Task Cdp(Browser browser, string method, JsonObject parameters, ClientWebSocket? socket = null)
         => Post(browser, Interlocked.Increment(ref browser.MessageId), method, parameters, socket);
 
+    /// <summary>A request to one page over the whole browser's connection (its DevTools
+    /// <paramref name="session"/>), not waited for: the loop that would read its answer may be the caller.</summary>
+    private static async Task Cdp(Browser browser, string session, string method, JsonObject parameters)
+    {
+        var message = new JsonObject { ["id"] = Interlocked.Increment(ref browser.MessageId), ["sessionId"] = session, ["method"] = method, ["params"] = parameters };
+        var bytes = Encoding.UTF8.GetBytes(message.ToJsonString());
+        await browser.Sending.WaitAsync();
+        try { await browser.Control!.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None); }
+        finally { browser.Sending.Release(); }
+    }
+
+    /// <summary>A page (or anything else) DevTools attached to as it started, paused: a page gets the
+    /// video redirection script — before any of its own — and its binding; then everything runs on.</summary>
+    private static async Task Attached(Browser browser, JsonElement attached)
+    {
+        var session = attached.GetProperty("sessionId").GetString()!;
+        var info = attached.GetProperty("targetInfo");
+        // the host said it can't show redirected video (no decoder): pages play theirs themselves
+        if (info.GetProperty("type").GetString() == "page" && browser.Screen?.Display?.Redirects != false)
+        {
+            browser.Sessions[session] = info.GetProperty("targetId").GetString()!;
+            await Cdp(browser, session, "Runtime.enable", new JsonObject());   // or the binding isn't in a navigated-to document
+            await Cdp(browser, session, "Runtime.addBinding", new JsonObject { ["name"] = Media.Binding });
+            await Cdp(browser, session, "Page.enable", new JsonObject());   // or a new document (the page navigating) doesn't get the script
+            // for its later documents, and the one it is starting with now (held: before any of its scripts)
+            await Cdp(browser, session, "Page.addScriptToEvaluateOnNewDocument", new JsonObject { ["source"] = Media.Script, ["runImmediately"] = true });
+        }
+        if (attached.TryGetProperty("waitingForDebugger", out var waiting) && waiting.GetBoolean())
+            await Cdp(browser, session, "Runtime.runIfWaitingForDebugger", new JsonObject());
+    }
+
     /// <summary>A request whose reply is wanted: the raw reply JSON, or a timeout after 2 s.</summary>
     private static async Task<string> Ask(Browser browser, string method, JsonObject parameters, ClientWebSocket? socket = null)
     {
@@ -393,16 +431,53 @@ public sealed partial class Chromium : IBrowser
                 if (r.MessageType == WebSocketMessageType.Close) break;
                 message.Write(buffer, 0, r.Count);
                 if (!r.EndOfMessage) continue;
-                var text = Encoding.UTF8.GetString(message.GetBuffer(), 0, (int)message.Length);
+                // parsed from the bytes received (a page's append is a megabyte): no string of it; the
+                // buffer is reused for the next message only after this one is done with
+                var received = message.GetBuffer().AsMemory(0, (int)message.Length);
+                using var doc = JsonDocument.Parse(received);
                 message.SetLength(0);
-                using var doc = JsonDocument.Parse(text);
                 var root = doc.RootElement;
                 if (root.TryGetProperty("id", out var idElement) && idElement.TryGetInt32(out var id))
                 {
-                    if (browser.Pending.TryRemove(id, out var waiting)) waiting.TrySetResult(text);
+                    if (browser.Pending.TryRemove(id, out var waiting)) waiting.TrySetResult(Encoding.UTF8.GetString(received.Span));
                     continue;
                 }
                 var method = root.TryGetProperty("method", out var m) ? m.GetString() : null;
+                switch (method)
+                {
+                    case "Target.attachedToTarget": await Attached(browser, root.GetProperty("params")); continue;
+                    case "Target.detachedFromTarget":
+                        if (root.GetProperty("params").TryGetProperty("sessionId", out var left))
+                        {
+                            browser.Tracks.Left(left.GetString()!);
+                            browser.Sessions.TryRemove(left.GetString()!, out _);
+                        }
+                        continue;
+                    case "Runtime.bindingCalled" when root.TryGetProperty("sessionId", out var session):
+                    {
+                        var call = root.GetProperty("params");
+                        if (call.GetProperty("name").GetString() != Media.Binding) continue;
+                        var page = session.GetString()!;
+                        // in order, here: a page's next append waits for this one's answer anyway. A page's
+                        // bytes that can't be read end that video, never this loop (every page's answers go through it)
+                        try
+                        {
+                            await browser.Tracks.Heard(page, browser.Sessions.GetValueOrDefault(page) ?? "", call.GetProperty("payload").GetString() ?? "",
+                                answer => Cdp(browser, page, "Runtime.evaluate", new JsonObject { ["expression"] = "window.__plangMedia&&__plangMedia.reply(" + answer + ")" }));
+                        }
+                        catch (Exception ex) when (ex is not OutOfMemoryException)
+                        {
+                            browser.Tracks.Left(page);
+                            browser.Screen?.Display?.Debug("browser: a video can't be redirected: " + ex.Message);
+                        }
+                        continue;
+                    }
+                    case "Page.frameNavigated" when root.TryGetProperty("sessionId", out var navigated):
+                        // the page went elsewhere: its videos went with the document they were in
+                        if (!root.GetProperty("params").GetProperty("frame").TryGetProperty("parentId", out _))
+                            browser.Tracks.Left(navigated.GetString()!);
+                        continue;
+                }
                 if (method is not ("Target.targetCreated" or "Target.targetInfoChanged")) continue;
                 var info = root.GetProperty("params").GetProperty("targetInfo");
                 var target = info.GetProperty("targetId").GetString()!;

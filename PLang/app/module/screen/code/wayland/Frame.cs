@@ -202,6 +202,29 @@ internal sealed class Frame
             catch (IOException) { /* the host went away */ }
     }
 
+    /// <summary>A redirected video's news for the host (message 8): [u32 n][n bytes JSON head] then the
+    /// parts (its coded frames), one after another as the head lists them.</summary>
+    internal void Media(System.Text.Json.Nodes.JsonObject head, IReadOnlyList<ReadOnlyMemory<byte>>? parts)
+    {
+        if (output == null) return;
+        var json = System.Text.Encoding.UTF8.GetBytes(head.ToJsonString());
+        var size = 1 + 4 + json.Length;
+        if (parts != null) foreach (var part in parts) size += part.Length;
+        Span<byte> start = stackalloc byte[9];
+        BinaryPrimitives.WriteInt32LittleEndian(start, size);
+        start[4] = 8;
+        BinaryPrimitives.WriteInt32LittleEndian(start[5..], json.Length);
+        lock (writing)
+            try
+            {
+                output.Write(start);
+                output.Write(json);
+                if (parts != null) foreach (var part in parts) output.Write(part.Span);
+                output.Flush();
+            }
+            catch (IOException) { /* the host went away */ }
+    }
+
     /// <summary>One region as a frame of its own — a video's picture, from its encoder's thread.</summary>
     internal void Alone(Region region)
     {

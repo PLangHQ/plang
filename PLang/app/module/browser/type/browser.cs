@@ -19,6 +19,13 @@ public sealed class Browser : global::app.type.item.@this, global::app.type.item
     /// <summary>Its windows on the screen.</summary>
     internal global::app.module.window.Windows Windows => windows ??= new(this);
 
+    /// <summary>The videos its pages play that the host shows (video redirection).</summary>
+    internal code.Tracks Tracks => tracks ??= new(this);
+    private code.Tracks? tracks;
+
+    /// <summary>The pages DevTools attached to over the whole browser's connection: session → page (target) id.</summary>
+    internal System.Collections.Concurrent.ConcurrentDictionary<string, string> Sessions { get; } = new();
+
     /// <summary>The page it opened first.</summary>
     [LlmBuilder, Out] public string Url { get; set; } = "";
 

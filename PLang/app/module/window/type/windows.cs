@@ -25,6 +25,11 @@ internal sealed class Windows(Browser browser)
 
     internal Window? ById(long id) => id == Desktop.Number ? Desktop : shown.GetValueOrDefault(id);
 
+    /// <summary>The screen's id of the window showing DevTools' page <paramref name="target"/>, if one does.</summary>
+    internal long? IdOf(string target)
+        => target == Desktop.Target ? Desktop.Number
+            : shown.Where(w => w.Value.Target == target).Select(w => (long?)w.Key).FirstOrDefault();
+
     /// <summary>A window about to open: shown when its page is.</summary>
     internal Window Opening()
     {
