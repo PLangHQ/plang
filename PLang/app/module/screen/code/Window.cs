@@ -361,8 +361,9 @@ internal sealed class Window
         var ms = statUpdates == 0 ? 0 : statTicks * 1000.0 / System.Diagnostics.Stopwatch.Frequency / statUpdates;
         var mb = Interlocked.Exchange(ref statBytes, 0) / 1048576.0 / seconds;
         var numbers = System.Globalization.CultureInfo.InvariantCulture;
-        onEvent("{\"stats\":{" + string.Format(numbers, "\"updates\":{0:F0},\"mb\":{1:F2},\"apply\":{2:F1}", statUpdates / seconds, mb, ms)
-            + ",\"picture\":" + picture.Json() + ",\"pipe\":" + pipe.Json() + "}}");
+        var stats = "{\"stats\":{" + string.Format(numbers, "\"updates\":{0:F0},\"mb\":{1:F2},\"apply\":{2:F1},\"queued\":{3}", statUpdates / seconds, mb, ms, patches.Count)
+            + ",\"picture\":" + picture.Json() + ",\"pipe\":" + pipe.Json() + "}}";
+        onEvent(stats);
         statUpdates = 0; statTicks = 0; statSince = now;
     }
 
