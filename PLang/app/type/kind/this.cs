@@ -223,15 +223,17 @@ public class @this
     /// <summary>
     /// A Data written onto a stream in this format — the one encode door, <see cref="Decode"/>'s pair. The
     /// type that declares the format writes it (bound once, when the kind was made); a kind whose content is
-    /// written its own way overrides it (json, plang's transport). A format no type writes answers an error.
+    /// written its own way overrides it (json, plang's transport). A kind with no writer of its own (one coined
+    /// for an extension: <c>.xyz</c>) writes as its family writes; a family with no format answers an error.
     /// With no <paramref name="view"/> the format writes its own face (a .pr its Store face).
     /// </summary>
     public virtual global::System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
         global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view = null,
         System.Text.Encoding? encoding = null, System.Threading.CancellationToken ct = default)
         => _encode != null ? _encode(stream, data, context, view, encoding, ct)
+            : !IsEmpty ? context.App.type.list[Owner ?? "binary"].kind.Encode(stream, data, context, view, encoding, ct)
             : global::System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.Error(
-                $"nothing writes {Owner ?? "binary"}{(IsEmpty ? "" : "/" + Name)} content", "NoEncoder", 400)));
+                $"nothing writes {Owner ?? "binary"} content", "NoEncoder", 400)));
 
     /// <summary>The async face over <see cref="Parse"/> — the materialization rung (<c>source.Value</c>)
     /// asks the kind first; a decline (null) falls to the family's type reader. No second decode
