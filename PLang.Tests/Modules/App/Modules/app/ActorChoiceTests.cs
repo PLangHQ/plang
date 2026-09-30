@@ -58,7 +58,7 @@ public class ActorChoiceTests
                 Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "seen", "variable"), Make.Param(Ctx, "Value", "%onSystem%", "variable"))))));
         var action = new global::app.module.goal.Call(Ctx)
         {
-            Name = new global::app.type.item.text.@this("TestGoal"),
+            Name = new Data("", new global::app.type.item.text.@this("TestGoal"), context: Ctx).As<global::app.goal.@this>(),
             Actor = new global::app.type.item.choice.@this<global::app.actor.Name>(global::app.actor.Name.system),
             Parameter = new global::app.type.item.list.@this(
                 new List<Data> { new Data("onSystem", "yes", context: Ctx) }),

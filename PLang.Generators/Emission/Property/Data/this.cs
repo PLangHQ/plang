@@ -188,7 +188,10 @@ public sealed record @this(
         // A template or a variable is unknown at build (judging must not resolve); an absent
         // optional slot has nothing to judge. The typed view's own door is the verdict — a
         // decline lands on the view (Success false, the type's reason in Error).
-        sb.AppendLine($"        if (!{Name}.HasVariable && {Name}.Peek() is {{ IsNull: false }} and not global::app.type.item.variable.@this)");
+        // A key of a type whose values are selected (a goal's name) is selected at run — the one it names may be
+        // built later, and only the run knows its caller.
+        sb.AppendLine($"        if (!{Name}.HasVariable && {Name}.Peek() is {{ IsNull: false }} and not global::app.type.item.variable.@this");
+        sb.AppendLine($"            && !{Name}.IsSelected)");
         sb.AppendLine("        {");
         sb.AppendLine($"            await {Name}.Value();");
         sb.AppendLine($"            if (!{Name}.Success)");
@@ -204,6 +207,7 @@ public sealed record @this(
         // A whole %variable% the store holds a value for is opened through the typed view — the
         // run's door; a variable the store doesn't know, or holds as a typed null, is unknown.
         sb.AppendLine($"        if ({Name}.Peek() is global::app.type.item.source {{ IsVariable: true, Raw: var __ref{Name} }} __source{Name}");
+        sb.AppendLine($"            && !{Name}.IsSelected");
         sb.AppendLine($"            && await __source{Name}.Get(Context) is {{ IsInitialized: true }} __known{Name} && __known{Name}.Peek() is {{ IsNull: false }})");
         sb.AppendLine("        {");
         sb.AppendLine($"            await {Name}.Value();");

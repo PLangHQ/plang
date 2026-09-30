@@ -11,10 +11,11 @@ namespace app.module.goal;
 [Action("call")]
 public partial class Call : IContext
 {
-    /// <summary>The goal to call — a bare name (a child or a goal in the caller's folder), a
+    /// <summary>The goal to call, made from its name — a bare one (a child or a goal in the caller's folder), a
     /// slash-qualified one (<c>BuildGoal/Start</c>), an app-absolute one
-    /// (<c>/system/builder/EmitBuildEvent</c>), or a %variable% that holds one.</summary>
-    public partial data.@this<global::app.type.item.text.@this> Name { get; init; }
+    /// (<c>/system/builder/EmitBuildEvent</c>), or a %variable% that holds one — selected as seen from the
+    /// goal this call sits in.</summary>
+    public partial data.@this<global::app.goal.@this> Name { get; init; }
 
     /// <summary>The arguments — one named, typed row each, bound as a variable of that name in the
     /// called goal.</summary>
@@ -39,31 +40,20 @@ public partial class Call : IContext
     /// </summary>
     public async Task<data.@this> Build()
     {
-        if (await Callee() is { } target && target.Reference(__action?.Step?.Goal) is { } address
-            && !string.Equals(address, (await Name.Value())?.RawText, System.StringComparison.OrdinalIgnoreCase)
-            && __action!["Name"] is { } name)
+        // at build, the goal is the one the name selects from the goal being built (the frame is the builder's)
+        if (!Name.HasVariable && __action?["Name"] is { Value.RawText: { Length: > 0 } authored } name
+            && await Context.App.goal.list.Find(authored, __action.Step?.Goal) is { } target
+            && target.Reference(__action.Step?.Goal) is { } address
+            && !string.Equals(address, authored, System.StringComparison.OrdinalIgnoreCase))
             __action.Property.Set(name.Holding(new global::app.type.item.text.@this(address)));
         return Context.Ok();
     }
 
-    /// <summary>The goal this call names, selected through the goal collection as seen from the goal
-    /// this call sits in — the selection <see cref="Start"/> makes. A %variable% name answers none.</summary>
-    public bool IsDynamic => Name.HasVariable;
-
-    public async Task<global::app.goal.@this?> Callee()
-    {
-        if (Name.HasVariable) return null;
-        var authored = (await Name.Value())?.RawText;
-        return string.IsNullOrEmpty(authored) ? null : await Context.App.goal.list.Find(authored, __action?.Step?.Goal);
-    }
-
     public async Task<data.@this> Start()
     {
-        // The goal is selected through the goal collection as seen from the goal this call sits in.
-        // A %variable% name resolves here, in the caller's context.
-        var goal = await Context.App.goal.list.Find((await Name.Value())?.RawText ?? "", __action?.Step?.Goal);
-        if (goal == null)
-            return Context.Error(new global::app.error.ActionError($"Goal '{Name.Peek()}' not found.", "GoalNotFound", 404));
+        // The goal is the one the name selects, as seen from the goal this call sits in; a %variable% name
+        // selects here, in the caller's context.
+        if (await Name.Value() is not { } goal) return Name;
 
         // the actor named runs it; none named, this one
         return await Context.App.actor.list.Use(Actor, Context, runner => Run(goal, runner.Context));

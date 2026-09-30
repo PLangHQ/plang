@@ -46,6 +46,18 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             Child.Items().FirstOrDefault(c => string.Equals(c.Address, key, StringComparison.OrdinalIgnoreCase)));
     }
 
+    /// <summary>A goal is selected by its name: one that exists, never made from a value.</summary>
+    public static bool IsSelected => true;
+
+    /// <summary>The goal a text names, as seen from the goal the asker is running — its own chain, its folder, then
+    /// the app (<see cref="global::app.goal.list.@this.Find"/>); a goal not read yet loads. Any other value names
+    /// none.</summary>
+    public static async System.Threading.Tasks.ValueTask<@this?> Select(global::app.type.item.@this key,
+        global::app.actor.context.@this asker)
+        => key is global::app.type.item.text.@this name
+            ? await asker.App.goal.list.Find(name.Clr<string>() ?? "", asker.CallStack.Goal)
+            : null;
+
     /// <summary>The goal running for the asker — what <c>%!goal%</c> answers.</summary>
     public static @this? Current(global::app.actor.context.@this context) => context.CallStack.Goal;
 
@@ -60,6 +72,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
         if (raw is @this g) return g;
+        // a name reaching the lift is one no goal answered to (Select already asked)
+        if (raw is global::app.type.item.text.@this name)
+        {
+            data.Fail(new global::app.error.Error($"Goal '{name}' not found.", "GoalNotFound", 404));
+            return null;
+        }
         data.Fail(new global::app.error.Error(
             $"%{data.Name}% holds a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "null"} — " +
             "a goal is read from its .pr, never converted from a value.", "CreateItemDeclined", 400));

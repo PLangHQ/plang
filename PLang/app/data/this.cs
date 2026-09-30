@@ -459,6 +459,9 @@ public partial class @this
         if (T.IsName && Peek() is T name)
             return T.Create(name, null, this);
         var value = await Value();
+        // a type selected by key answers the one the value names (a goal by its name), as this Data's asker sees it
+        if (T.IsSelected && value is not T && Context != null && await T.Select(value, Context) is { } chosen)
+            return chosen;
         return value.Refuses(new global::app.type.@this(typeof(T)), this) ? null : T.Create(value, null, this);
     }
 
@@ -665,6 +668,9 @@ public class @this<T> : @this
     /// observes), answer null.
     /// </summary>
     public new ValueTask<T?> Value() => Value<T>();
+
+    /// <summary>This slot holds a type selected by key (a goal by its name) — one that exists, known only at run.</summary>
+    public bool IsSelected => T.IsSelected;
 
     public @this(string name = "", T? value = default, type? type = null, @this? parent = null,
         actor.context.@this? context = null)

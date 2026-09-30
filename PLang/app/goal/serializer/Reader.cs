@@ -25,6 +25,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("goal", kind);
         var raw = reader.RawValue();
+        // a goal is written whole (an object — a .pr file arrives as its text) or by its name (a call's row): the
+        // name is the goal's name, selected when its slot reads it
+        if (System.Text.Encoding.UTF8.GetString(raw) is var written && !written.TrimStart().StartsWith('{'))
+            return new global::app.type.item.text.@this(written);
         if (raw.Length == 0) return new global::app.type.item.@null.@this("goal", kind);
         var utf8 = new System.Text.Json.Utf8JsonReader(raw);
         utf8.Read();

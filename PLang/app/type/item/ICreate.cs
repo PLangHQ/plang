@@ -81,4 +81,13 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
     /// once — never deferred as content — and never opened for a value, since it names one.
     /// </summary>
     static virtual bool IsName => typeof(global::app.type.item.variable.IName).IsAssignableFrom(typeof(TSelf));
+
+    /// <summary>A value of this type is selected by a key — one that exists, named (a goal by its name): never made
+    /// from a value, never judged before the run.</summary>
+    static virtual bool IsSelected => false;
+
+    /// <summary>The one <paramref name="key"/> names, as <paramref name="asker"/> sees it — a selection, never a
+    /// birth; null when the key names none, or this type isn't selected by key.</summary>
+    static virtual System.Threading.Tasks.ValueTask<TSelf?> Select(@this key, global::app.actor.context.@this asker)
+        => default;
 }

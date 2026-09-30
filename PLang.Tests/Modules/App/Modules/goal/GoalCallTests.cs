@@ -24,6 +24,10 @@ public class GoalCallTests
 
     private static global::app.type.item.text.@this Text(string s) => new(s);
 
+    // A goal named as a call names it: its name, selected when the call starts.
+    private global::app.data.@this<global::app.goal.@this> Named(string s)
+        => new global::app.data.@this("", Text(s), context: _app.actor.list.User.Context).As<global::app.goal.@this>();
+
     // A goal that copies what %<param>% is while it runs into %seen% — a write that reaches the caller,
     // since a call's own parameters end with it.
     private async Task<string> Seer(string param)
@@ -39,7 +43,7 @@ public class GoalCallTests
     [Test]
     public async Task Call_ExistingGoal_RunsSuccessfully()
     {
-        var action = new Call(_app.actor.list.User.Context) { Name = Text("TestGoal") };
+        var action = new Call(_app.actor.list.User.Context) { Name = Named("TestGoal") };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -48,7 +52,7 @@ public class GoalCallTests
     [Test]
     public async Task Call_MissingGoal_ReturnsError()
     {
-        var action = new Call(_app.actor.list.User.Context) { Name = Text("NonExistent") };
+        var action = new Call(_app.actor.list.User.Context) { Name = Named("NonExistent") };
         var result = await action.Start();
 
         await result.IsFailure();
@@ -60,7 +64,7 @@ public class GoalCallTests
     {
         var action = new Call(_app.actor.list.User.Context)
         {
-            Name = Text(await Seer("myParam")),
+            Name = Named(await Seer("myParam")),
             Parameter = new global::app.type.item.list.@this(
                 new List<Data> { new Data("myParam", "myValue", context: _app.actor.list.User.Context) })
         };
@@ -167,7 +171,7 @@ public class GoalCallTests
     public async Task Call_NullActor_UsesCurrentContext()
     {
         _app.actor.list.User.Context.Variable.Set("marker", "fromCaller");
-        var action = new Call(_app.actor.list.User.Context) { Name = Text("TestGoal"), Actor = null };
+        var action = new Call(_app.actor.list.User.Context) { Name = Named("TestGoal"), Actor = null };
         var result = await action.Start();
 
         await result.IsSuccess();
