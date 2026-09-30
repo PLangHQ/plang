@@ -203,6 +203,42 @@ internal sealed class CloseButton(TitleBar bar) : Button(bar)
 }
 
 /// <summary>
+/// The size grip in a window's bottom-right corner (as Windows 95 and Mac OS 9 had it): three
+/// diagonal ridges over the corner of the page, where its scrollbars meet. Dragging it resizes the
+/// window's width and height. Two-toned, so it shows on a light page and a dark one; not there while
+/// the window is maximized.
+/// </summary>
+internal sealed class SizeGrip(Window window)
+{
+    internal const int Side = 16;
+    private static readonly Color Dark = Color.Rgba(0x6b, 0x72, 0x80, 0.95f);
+    private static readonly Color Light = Color.Rgba(0xff, 0xff, 0xff, 0.9f);
+
+    internal Picture Picture { get; } = Paint();
+
+    internal bool Holds(int x, int y) => window.Shown == Shown.Normal && Picture.Rect.Contains(x, y);
+
+    internal void Place() => Picture.Place(new Point(window.At.X + window.Size.Width - Side, window.At.Y + window.Size.Height - Side));
+
+    internal void Draw(int y, int x0, Span<byte> line)
+    {
+        if (window.Shown == Shown.Normal) Picture.Draw(y, x0, line);
+    }
+
+    private static Picture Paint()
+    {
+        var c = new Canvas(Side, Side);
+        for (var i = 0; i < 3; i++)
+        {
+            var d = 4 + 4 * i;   // how far from the corner this ridge starts
+            c.Line(Side - d, Side - 1, Side - 1, Side - d, 1.2f, Dark);
+            c.Line(Side - d + 1.2f, Side - 1, Side - 1, Side - d + 1.2f, 1f, Light);
+        }
+        return c.Picture(default);
+    }
+}
+
+/// <summary>
 /// A window's title bar, drawn by plang-screen: back, forward, address; the title; menu, minimize,
 /// maximize, close. It draws itself again when the window's title, width, activity or hover changes.
 /// </summary>
