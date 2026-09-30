@@ -99,6 +99,19 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public global::app.type.item.text.@this Environment(global::app.actor.context.@this context)
         => context.Setting.Of<global::app.setting.@this>().Environment;
 
+    /// <summary>The call stack of <paramref name="context"/>'s actor — <c>%!app.callstack%</c> answers as its asker.</summary>
+    [global::app.LlmBuilder]
+    public global::app.callstack.@this callstack(global::app.actor.context.@this context) => context.CallStack;
+
+    /// <summary>The trace of <paramref name="context"/>'s run — <c>%!app.trace%</c> answers as its asker.</summary>
+    [global::app.LlmBuilder]
+    public global::app.actor.context.trace.@this trace(global::app.actor.context.@this context) => context.Trace;
+
+    /// <summary>What the asker's last action answered — its memory's <c>!data</c>; <c>%!app.data%</c> answers as its
+    /// asker.</summary>
+    [global::app.LlmBuilder]
+    public global::app.data.@this? data(global::app.actor.context.@this context) => context.Variable.Peek("!data");
+
     /// <summary>
     /// When the app was started.
     /// </summary>
