@@ -186,6 +186,9 @@ public sealed partial class Chromium : IBrowser
             "--disable-gpu-compositing", "--use-angle=swiftshader", "--enable-unsafe-swiftshader",
             "--num-raster-threads=4",   // CPU rendering: rasterize on more cores
             "--hide-crash-restore-bubble",   // PlangOS ends Chromium when the host closes: not a crash to report
+            // no HTTP/3: over QUIC (UDP) through WSL's network YouTube's video fetches starve (measured
+            // 2026-09-30: 0.9 MB in 40 s after a seek, then "something went wrong"; over TCP 17 MB)
+            "--disable-quic",
             // memory (measured, 2026-09-29: Chromium 430 → 351 MB PSS, 12 → 9 processes):
             "--in-process-gpu",   // no GPU process: with the GPU off it only composites, in the browser process as well
             // no spare renderer kept waiting for a next site; no preloaded address-bar drop-downs
