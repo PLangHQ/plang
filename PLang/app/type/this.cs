@@ -30,7 +30,7 @@ namespace app.type;
 // holdable in a variable (`set %t% = %x!type%`). TypeName derives from the
 // namespace ("type"); behavior defaults from the item base.
 [global::app.Attributes.PlangType("type")]
-public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.ICurrent<@this>, item.ILoad<@this>,
+public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.ILoad<@this>,
     item.IList<@this, list.@this>
 {
     /// <summary>The types' list — the app's types, with the lookups by other keys.</summary>

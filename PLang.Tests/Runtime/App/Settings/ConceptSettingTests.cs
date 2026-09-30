@@ -53,13 +53,14 @@ public class ConceptSettingTests : System.IAsyncDisposable
         await Assert.That(context.Setting.Of<global::app.test.setting.@this>().Format.Value.ToString()).IsEqualTo("json");
     }
 
+    // The goal concept names no settings: past its own members a dot is the running goal's member, and outside a
+    // goal that is unset. The goal list's settings are its list's.
     [Test] public async Task GoalsTypeNamesNoSettings_ItsListDoes()
     {
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         var none = await Read("%!app.goal.setting%", context);
-        await none.IsFailure();
-        await Assert.That(none.Error!.Key).IsEqualTo("NotFound");
+        await Assert.That(none.IsInitialized).IsFalse();
         await (await Read("%!app.goal.list.setting.os%", context)).IsSuccess();
     }
 }

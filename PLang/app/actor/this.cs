@@ -100,7 +100,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Permission = new permission.@this(this);
         _channels = new global::app.channel.list.@this(app, this);
 
-        // Register %!app% — navigates the App object graph (e.g., %!app.test.Verbose%)
+        // Register %!app% — navigates the App object graph (e.g., %!app.goal.list%)
         Context.Variable.Set("!app", new data.DynamicData("!app", asker => asker.Ok(app), Context));
 
         // %MyIdentity% — the app's own identity; %Identity% — who this actor acts for: its identity's public key

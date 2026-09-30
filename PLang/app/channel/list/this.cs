@@ -136,7 +136,7 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     public IEnumerable<string> ChannelNames => _channels.Keys;
 
     /// <summary>One step down: the list's own members first, then a channel by name —
-    /// <c>%!app.actor.user.channel.output%</c> is the channel a program binds its events on.</summary>
+    /// <c>%!app.actor["user"].channel.output%</c> is the channel a program binds its events on.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
     {
         var member = await base.Get(parent, key);

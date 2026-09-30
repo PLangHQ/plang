@@ -100,11 +100,11 @@ public class CollectedTypeTests
         await Assert.That(store).IsEqualTo("{\"name\":\"number\"}");
     }
 
+    // A concept execution is inside, while nothing is inside one (no goal is running): its current is NotFound.
     [Test] public async Task Current_WithNothingInside_IsNotFound()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var probes = new global::app.type.@this<Probe.@this, global::app.type.item.list.@this<Probe.@this>>(app);
-        var current = probes.current(app.actor.list.User.Context);
+        var current = app.goal.current(app.actor.list.User.Context);
         await Assert.That(current.Success).IsFalse();
         await Assert.That(current.Error!.StatusCode).IsEqualTo(404);
     }

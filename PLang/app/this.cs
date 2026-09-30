@@ -153,7 +153,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// reading: every goal through <c>all()</c>, the goal a call names through <c>Find</c>),
     /// <c>Get(address)</c> is one goal as a result, <c>current</c> the running one.
     /// </summary>
-    public global::app.type.@this<Goal, global::app.goal.list.@this> goal { get; }
+    public global::app.type.current.@this<Goal, global::app.goal.list.@this> goal { get; }
 
     /// <summary>
     /// The file system abstraction.
@@ -182,7 +182,13 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// setting, report and session), <c>Get(address)</c> is one test as a result, <c>current</c> the test the
     /// asker is running. The app is testing while the list's session is open.
     /// </summary>
-    public global::app.type.@this<global::app.test.@this, global::app.test.list.@this> test { get; }
+    public global::app.type.current.@this<global::app.test.@this, global::app.test.list.@this> test { get; }
+
+    /// <summary>
+    /// The type named <c>error</c> — <c>%!app.error%</c>: <c>current</c> is the error in play (the asker's call
+    /// stack's, not yet handled), <c>list</c> every error on the asker's call stack, handled or not.
+    /// </summary>
+    public global::app.type.current.@this<global::app.error.Error, global::app.error.list.@this> error { get; }
 
     /// <summary>
     /// The type named <c>variable</c> — <c>%!app.variable%</c>: its <c>list</c> is the asker's memory
@@ -216,7 +222,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// The type named <c>actor</c> — <c>%!app.actor%</c>: its <c>list</c> is the app's two actors, System
     /// and User; <c>Get(name)</c> is one as a result, <c>current</c> the one the asker acts as.
     /// </summary>
-    public global::app.type.@this<global::app.actor.@this, global::app.actor.list.@this> actor { get; }
+    public global::app.type.current.@this<global::app.actor.@this, global::app.actor.list.@this> actor { get; }
 
     // The types a step and an action start through, and a channel writes, reads and asks through — the type
     // list's own entries, held because every start and every channel write reaches their events and a walk of
@@ -284,11 +290,13 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         module = new(this);
         goal = new(this);
         test = new(this);
+        error = new(this);
         variable = new(this);
         // each concept's type is the list's entry of its name, as app.type is — %!app.goal% and the type goal
         // are one object
         type.list.Replace(goal);
         type.list.Replace(test);
+        type.list.Replace(error);
         type.list.Replace(variable);
         step = type.list["step"];
         action = type.list["action"];
