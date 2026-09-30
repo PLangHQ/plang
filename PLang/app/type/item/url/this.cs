@@ -9,7 +9,7 @@ namespace app.type.item.url;
 /// composed <c>HttpPath</c>.
 /// </summary>
 [global::app.Attributes.PlangType("url")]
-public sealed class @this : global::app.type.item.reference.@this, global::app.type.item.ICreate<@this>
+public sealed class @this : global::app.type.item.content.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "https://example.com/data.json";
     public static string Description => "A web address; its content is fetched when it is used.";

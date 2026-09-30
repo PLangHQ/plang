@@ -13,7 +13,7 @@ namespace app.type.item.file;
 /// (<c>FilePath</c>/<c>HttpPath</c>); the reference owns content laziness.</para>
 /// </summary>
 [global::app.Attributes.PlangType("file")]
-public sealed class @this : global::app.type.item.reference.@this, global::app.type.item.ICreate<@this>
+public sealed class @this : global::app.type.item.content.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "/config/settings.json";
     public static string Description => "A file, by its path; its content is read when it is used.";

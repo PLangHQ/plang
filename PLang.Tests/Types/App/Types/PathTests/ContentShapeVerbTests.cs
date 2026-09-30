@@ -7,7 +7,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Types.PathTests;
 
 /// <summary>
-/// A file's raw content: <c>path.Read</c> lands the reference, and its <see cref="global::app.type.item.reference.@this.Content"/>
+/// A file's raw content: <c>path.Read</c> lands the reference, and its <see cref="global::app.type.item.content.@this.Content"/>
 /// hands the bytes — through the same Read gate as every other read.
 /// </summary>
 public class ContentShapeVerbTests
@@ -21,7 +21,7 @@ public class ContentShapeVerbTests
     }
 
     private static async Task<global::app.data.@this> Content(FilePath p, global::app.actor.context.@this context)
-        => await (await p.Read(context)).Use<global::app.type.item.reference.@this>(async file => await file.Content(context));
+        => await (await p.Read(context)).Use<global::app.type.item.content.@this>(async file => await file.Content(context));
 
     private sealed class CannedChannel : global::app.channel.@this
     {

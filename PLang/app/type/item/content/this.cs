@@ -1,4 +1,4 @@
-namespace app.type.item.reference;
+namespace app.type.item.content;
 
 /// <summary>
 /// A reference to content somewhere else — a <c>file</c>, a <c>url</c>: a location plus content read lazily.

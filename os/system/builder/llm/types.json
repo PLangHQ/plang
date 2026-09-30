@@ -134,6 +134,9 @@
   "app.type.item.choice": {
     "word": "choice"
   },
+  "app.type.item.content": {
+    "word": "content"
+  },
   "app.type.item.date": {
     "word": "date"
   },
@@ -179,9 +182,6 @@
   },
   "app.type.item.permission": {
     "word": "permission"
-  },
-  "app.type.item.reference": {
-    "word": "content"
   },
   "app.type.item.setting": {
     "word": "setting"
