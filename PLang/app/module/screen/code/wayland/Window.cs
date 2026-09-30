@@ -14,13 +14,29 @@ internal enum Shown { Normal, Maximized, Minimized }
 internal sealed class Window : ISurfaceRole
 {
     /// <summary>How far outside a window its edges can be grabbed.</summary>
-    internal const int Grip = 6;
+    internal const int Band = 8;
+    /// <summary>How far along an edge from a corner the grab is that corner's (both its edges).</summary>
+    internal const int Reach = 24;
     private static readonly (int w, int h) Smallest = (240, 160);
 
     private Point offset;                 // where the window starts inside its buffer (shadows around it)
     private Shown was = Shown.Normal;     // how it showed before it was minimized
     private Rect restore;                 // where it was before it was maximized
     private Rect onScreen;                // where it was last drawn (At changes before the client redraws at its new size)
+
+    /// <summary>All it draws: the window with its title bar, its picture — which, while it is resized,
+    /// can reach past the size the client says it is — and the surfaces placed on it.</summary>
+    private Rect Drawn
+    {
+        get
+        {
+            var all = Outer.Merge(Picture.Rect);
+            foreach (var child in Surface.Children)
+                if (child.Picture is { } p)
+                    all = all.Merge(Rect.At(Picture.Rect.Corner + child.At, p.Rect.Width, p.Rect.Height));
+            return all;
+        }
+    }
     private Size asked;                   // the size last asked of the client
     private bool resizing;
     private string sent = "";             // the last configure, so an unchanged one isn't sent again
@@ -30,6 +46,8 @@ internal sealed class Window : ISurfaceRole
     internal int Id { get; }
     internal bool Desktop { get; }
     internal TitleBar? Bar { get; }
+    /// <summary>The size grip in the bottom-right corner (not the desktop's).</summary>
+    internal SizeGrip? SizeGrip { get; }
     internal Point At { get; private set; }            // the page's top-left on the screen (the title bar is above it)
     internal Size Size { get; private set; }           // the page's size
     internal Picture Picture { get; private set; } = Picture.None;
@@ -46,7 +64,11 @@ internal sealed class Window : ISurfaceRole
         At = at;
         Size = asked = size;
         restore = Rect.At(at, size.Width, size.Height);
-        if (!desktop) Bar = new TitleBar(this);
+        if (!desktop)
+        {
+            Bar = new TitleBar(this);
+            SizeGrip = new SizeGrip(this);
+        }
     }
 
     internal WlSurface Surface => Toplevel.Xdg.Surface;
@@ -84,7 +106,7 @@ internal sealed class Window : ISurfaceRole
         Display.Panel?.Follow(this);
         if (Visible)
         {
-            if (first || old != Outer) Display.Frame.Redraw(old, Outer);
+            if (first || old != Drawn) Display.Frame.Redraw(old, Drawn);
             else
             {
                 var corner = Picture.Rect.Corner;
@@ -92,7 +114,7 @@ internal sealed class Window : ISurfaceRole
                 else foreach (var d in update.Damage) Display.Frame.Present(d.Moved(corner));
                 Display.Frame.Send();
             }
-            onScreen = Outer;
+            onScreen = Drawn;
         }
         update.Answer(Display);
     }
@@ -100,7 +122,10 @@ internal sealed class Window : ISurfaceRole
     /// <summary>A surface placed on this window's (a subsurface) changed.</summary>
     internal void Changed()
     {
-        if (Visible) Display.Frame.Redraw(Picture.Rect, default);
+        if (!Visible) return;
+        // where it was and where it is: a surface on it may have moved or shrunk
+        Display.Frame.Redraw(onScreen, Drawn);
+        onScreen = Drawn;
     }
 
     public void Gone() => Display.Windows.Close(this);
@@ -118,6 +143,7 @@ internal sealed class Window : ISurfaceRole
     {
         Picture.Place(At - offset);
         Bar?.Place();
+        SizeGrip?.Place();
     }
 
     /// <summary>Row <paramref name="y"/> of this window over <paramref name="line"/>; as the bottom
@@ -138,6 +164,7 @@ internal sealed class Window : ISurfaceRole
                 p.Place(Picture.Rect.Corner + child.At);
                 p.Draw(y, x0, line);
             }
+        SizeGrip?.Draw(y, x0, line);   // over the page's corner
     }
 
     /// <summary>The desktop's parts above the windows — its taskbar (<paramref name="taskbar"/>) and
@@ -157,21 +184,30 @@ internal sealed class Window : ISurfaceRole
 
     internal bool IsAbove(int x, int y) => Above is { } a && a.Contains(x, y);
 
-    /// <summary>What of this window is at (x, y): its page, a part of its title bar, or an edge.</summary>
+    /// <summary>What of this window is at (x, y): its page, its size grip, a part of its title bar, or an
+    /// edge. Near a corner (within <see cref="Reach"/> of it along an edge) an edge is that corner's
+    /// — both its edges — so a corner is easy to catch.</summary>
     internal IPart? Part(int x, int y)
     {
         if (!Visible) return null;
         var page = new Content(this, new Target(Surface, Picture.Rect.Corner));
         if (Desktop) return Picture.Rect.Contains(x, y) ? page : null;
+        if (SizeGrip?.Holds(x, y) == true) return new Edge(this, 2 | 8);
         if (Frame.Contains(x, y)) return page;
         if (Outer.Contains(x, y)) return Bar!.Hit(x - At.X);
-        if (Shown == Shown.Maximized || !Outer.Grown(Grip).Contains(x, y)) return null;
-        uint edges = 0;
-        if (y < Outer.Y) edges |= 1;
-        if (y >= Outer.Bottom) edges |= 2;
-        if (x < Outer.X) edges |= 4;
-        if (x >= Outer.Right) edges |= 8;
-        return new Edge(this, edges);
+        if (Shown == Shown.Maximized || !Outer.Grown(Band).Contains(x, y)) return null;
+        bool left = x < Outer.X, right = x >= Outer.Right, top = y < Outer.Y, bottom = y >= Outer.Bottom;
+        if (left || right)
+        {
+            top |= y < Outer.Y + Reach;
+            bottom |= y >= Outer.Bottom - Reach;
+        }
+        if (top || bottom)
+        {
+            left |= x < Outer.X + Reach;
+            right |= x >= Outer.Right - Reach;
+        }
+        return new Edge(this, (top ? 1u : 0) | (bottom ? 2u : 0) | (left ? 4u : 0) | (right ? 8u : 0));
     }
 
     // ---- what it is asked -------------------------------------------------------------------
@@ -248,11 +284,11 @@ internal sealed class Window : ISurfaceRole
     /// <summary>Its top-left page corner goes to <paramref name="to"/> (kept on the screen, under the taskbar).</summary>
     internal void MoveTo(Point to)
     {
-        var old = Outer;
+        var old = Drawn;
         var work = Display.Windows.Work;
         At = to with { Y = Math.Clamp(to.Y, TitleBar.Height, work.Bottom - 8) };
         Place();
-        var now = Outer;
+        var now = Drawn;
         if (now == old) return;
         // the host moves the pixels it has; only what the window uncovered is sent, and whatever
         // lies over its new place (the taskbar, a menu) is put right
