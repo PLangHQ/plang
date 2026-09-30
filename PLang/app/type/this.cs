@@ -389,10 +389,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             var carrier = new global::app.data.@this("", context: context);
             if (Make(lowered, carrier) is { } made) return made;
             if (carrier.Error != null) throw Failed(carrier.Error);
-            // No family hook AND no error — nothing can build this shape (architect ruling: the
-            // general CLR-target converter fallback dies; a leaf no family retypes is a producer bug).
-            throw new System.InvalidOperationException(
-                $"cannot build a '{Name}' from a {leaf.Type.Name} value — no family hook");
+            // Nothing in this type builds it from that value (`set %x% as dict = "hello"`): the type refuses the
+            // conversion, as its own answer.
+            throw Failed(new global::app.error.Error(
+                $"cannot make a '{Name}' from a {leaf.Type.Name} value", "TypeConversionFailed", 400));
         }
 
         // A raw CLR scalar (int, DateOnly, …) → born through THIS family's own lift, then refine to the
