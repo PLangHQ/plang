@@ -6,7 +6,9 @@ namespace app.module.screen.code.wayland;
 /// <summary>
 /// What the host sees: the screen as last sent, the regions of the frame being built, and the
 /// messages out — [u32 length][u8 kind][payload], little-endian:
-///   1 a frame: [u16 count] then per rectangle [i32 x][i32 y][u32 w][u32 h][u32 n][n bytes QOI of BGRA]
+///   1 a frame: [u16 count] then per rectangle [i32 x][i32 y][u32 w][u32 h][u32 n][n bytes]: QOI of
+///     BGRA ("qoif"…), or a video's next picture: "h264" [u32 stream] then H.264 (Annex B, baseline,
+///     BT.709 video range) — a new stream number starts with a key frame, the host decodes it anew
 ///   7 a frame that opens with a move (a window dragged): [i32 x][i32 y][u32 w][u32 h][i32 dx][i32 dy],
 ///     the host's pixels there move by (dx, dy); then as 1
 ///   2 the pointer to show: its CSS name
@@ -27,6 +29,9 @@ internal sealed class Frame
     private readonly List<Region> pending = new();
     private readonly List<WlCallback> later = new();
     private (Rect from, Point by)? moved;   // the move that opens the frame being built
+    private readonly Motion motion = new();
+    private readonly Lock writing = new();  // the display and a video's encoder both send
+    private Video? video;                   // a part of the screen playing a video, sent as H.264
     private (ulong t, long at)? stamp;
 
     internal Frame(Display display, Stream? output)
@@ -40,11 +45,32 @@ internal sealed class Frame
     }
 
     /// <summary>Composes the screen inside <paramref name="area"/> — everything, bottom to top — and
-    /// encodes the rows that changed, for the next frame.</summary>
+    /// encodes the rows that changed, for the next frame. A video playing there goes into its stream.</summary>
     internal void Present(Rect area)
     {
         var r = area.Clip(new Rect(0, 0, display.Size.Width, display.Size.Height));
         if (r.Empty) return;
+        // a video starts playing here — or where it plays now isn't where its stream is (the page
+        // laid it out anew: a window maximized, the player made bigger): the stream moves
+        if (motion.Playing(r) && video?.Rect != Video.Place(r))
+        {
+            Still();
+            video = Video.At(r, this);
+            if (video != null) display.Debug($"screen: a video plays at {video.Rect}: sent as H.264");
+        }
+        if (video is { } v && r.Overlaps(v.Rect))
+        {
+            v.Changed();
+            foreach (var around in r.Without(v.Rect)) Compose(around, all: false);
+            return;
+        }
+        Compose(r, all: false);
+    }
+
+    /// <summary>The screen inside <paramref name="r"/>, composed and encoded: the rows that changed,
+    /// or <paramref name="all"/> of them (what the host shows there isn't exact: a video was there).</summary>
+    private void Compose(Rect r, bool all)
+    {
         var row = r.Width * 4;
         int first = -1, last = -1;   // the rows that changed: only they are sent
         for (var y = r.Y; y < r.Bottom; y++)
@@ -52,7 +78,7 @@ internal sealed class Frame
             var line = composing.AsSpan((y - r.Y) * row, row);
             display.Draw(y, r.X, line);   // writes all of it: the bottom window is copied in, not blended over a cleared line
             var shown = screen.AsSpan((y * display.Size.Width + r.X) * 4, row);
-            if (shown.SequenceEqual(line)) continue;
+            if (!all && shown.SequenceEqual(line)) continue;
             line.CopyTo(shown);
             if (first < 0) first = y;
             last = y;
@@ -82,6 +108,7 @@ internal sealed class Frame
     /// message, so the host shows all of it at once; then the stamp of the input it answers.</summary>
     internal void Send()
     {
+        video?.Next(display);
         if (pending.Count == 0 && moved == null) return;
         if (output != null)
         {
@@ -101,13 +128,14 @@ internal sealed class Frame
                 at = 29;
             }
             BinaryPrimitives.WriteUInt16LittleEndian(head[at..], (ushort)pending.Count);
-            try
-            {
-                output.Write(head[..(at + 2)]);
-                foreach (var region in pending) region.WriteTo(output);
-                output.Flush();
-            }
-            catch (IOException) { /* the host went away */ }
+            lock (writing)
+                try
+                {
+                    output.Write(head[..(at + 2)]);
+                    foreach (var region in pending) region.WriteTo(output);
+                    output.Flush();
+                }
+                catch (IOException) { /* the host went away */ }
         }
         foreach (var region in pending) region.Done();
         pending.Clear();
@@ -125,6 +153,7 @@ internal sealed class Frame
     /// </summary>
     internal void Move(Rect from, Point by)
     {
+        Still();   // a video's place moves with its window: its stream ends, exact pixels first
         Send();   // what came before goes first
         // what is on the screen and lands on the screen
         var screenRect = new Rect(0, 0, display.Size.Width, display.Size.Height);
@@ -163,13 +192,53 @@ internal sealed class Frame
         Span<byte> head = stackalloc byte[5];
         BinaryPrimitives.WriteInt32LittleEndian(head, payload.Length + 1);
         head[4] = kind;
-        try
-        {
-            output.Write(head);
-            output.Write(payload);
-            output.Flush();
-        }
-        catch (IOException) { /* the host went away */ }
+        lock (writing)
+            try
+            {
+                output.Write(head);
+                output.Write(payload);
+                output.Flush();
+            }
+            catch (IOException) { /* the host went away */ }
+    }
+
+    /// <summary>One region as a frame of its own — a video's picture, from its encoder's thread.</summary>
+    internal void Alone(Region region)
+    {
+        if (output == null) return;
+        Span<byte> head = stackalloc byte[7];
+        BinaryPrimitives.WriteInt32LittleEndian(head, 1 + 2 + region.Size);
+        head[4] = 1;
+        BinaryPrimitives.WriteUInt16LittleEndian(head[5..], 1);
+        lock (writing)
+            try
+            {
+                output.Write(head);
+                region.WriteTo(output);
+                output.Flush();
+            }
+            catch (IOException) { /* the host went away */ }
+        region.Done();
+    }
+
+    /// <summary>The video, if one plays, stops being one: its stream ends and its place is sent
+    /// again, exact (the host shows the stream's last picture there, which is close, not exact).</summary>
+    private void Still()
+    {
+        if (video is not { } v) return;
+        video = null;
+        Compose(v.Rect, all: true);
+        v.Dispose();
+    }
+
+    /// <summary>No more videos as H.264, <paramref name="why"/>: everything lossless from now on (the
+    /// one playing is sent again, exact).</summary>
+    internal void Lossless(string why)
+    {
+        Video.Off();
+        Still();
+        Send();
+        display.Debug("screen: " + why);
     }
 
     /// <summary>Callbacks of commits with nothing new: answered on the next tick.</summary>
@@ -177,6 +246,11 @@ internal sealed class Frame
 
     internal void Tick()
     {
+        if (video is { Still: true })
+        {
+            Still();
+            Send();
+        }
         if (later.Count == 0) return;
         var time = display.Time();
         foreach (var callback in later) callback.Done(time);
@@ -194,6 +268,11 @@ internal sealed class Region(Rect rect, ReadOnlyMemory<byte> pixels)
 {
     private byte[]? qoi;
     private int length;
+    private bool rented;
+
+    /// <summary>A region already encoded (a video's picture: "h264", then its stream).</summary>
+    internal static Region Encoded(Rect rect, byte[] bytes, int length) =>
+        new(rect, ReadOnlyMemory<byte>.Empty) { qoi = bytes, length = length };
 
     /// <summary>Worth encoding in parallel bands.</summary>
     internal bool Big => rect.Width * rect.Height >= 256 * 256;
@@ -219,6 +298,7 @@ internal sealed class Region(Rect rect, ReadOnlyMemory<byte> pixels)
     internal void Encode()
     {
         qoi = ArrayPool<byte>.Shared.Rent(Qoi.MaxSize(rect.Width, rect.Height));
+        rented = true;
         length = new Qoi(pixels.Span, rect.Width, rect.Height).Into(qoi);
     }
 
@@ -237,7 +317,7 @@ internal sealed class Region(Rect rect, ReadOnlyMemory<byte> pixels)
     /// <summary>Sent: its buffer goes back to the pool.</summary>
     internal void Done()
     {
-        if (qoi != null) ArrayPool<byte>.Shared.Return(qoi);
+        if (qoi != null && rented) ArrayPool<byte>.Shared.Return(qoi);
         qoi = null;
     }
 }
