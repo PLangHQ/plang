@@ -49,7 +49,7 @@ public class CallTests : System.IAsyncDisposable
     {
         var stack = new CallStack();
         await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
-        await Assert.That(call.Handled).IsFalse();
+        await Assert.That(call.Handled.Value).IsFalse();
     }
 
     [Test]
@@ -67,8 +67,8 @@ public class CallTests : System.IAsyncDisposable
         var off = new CallStack();
         await using var withTiming = on.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using var noTiming = off.Push(MakeAction(app.actor.list.User.Context, "A"));
-        await Assert.That(withTiming.StartedAt).IsNotEqualTo(default(DateTimeOffset));
-        await Assert.That(noTiming.StartedAt).IsEqualTo(default(DateTimeOffset));
+        await Assert.That(withTiming.StartedAt).IsNotNull();
+        await Assert.That(noTiming.StartedAt).IsNull();
     }
 
     [Test]

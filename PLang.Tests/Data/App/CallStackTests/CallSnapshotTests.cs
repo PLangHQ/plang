@@ -39,6 +39,26 @@ public class CallSnapshotTests : System.IAsyncDisposable
         await Assert.That(snap.Has("steps")).IsFalse();
     }
 
+    // A frame's captured position is written exactly so — its facts ride as the plain tokens they always have,
+    // whatever their plang faces are.
+    [Test]
+    public async Task Call_Capture_WritesItsExactShape()
+    {
+        var (app, action) = BuildLiveAction("G", "a step");
+        var user = app.actor.list.User.Context;
+        await using var call = app.actor.list.User.CallStack.Push(action);
+        var snap = new Snapshot(user);
+        call.Capture(snap);
+
+        using var ms = new MemoryStream();
+        await user.Format("application/json").Encode(ms, user.Ok(snap), user);
+        var json = System.Text.Encoding.UTF8.GetString(ms.ToArray()).Replace(call.Id.ToString()!, "ID");
+
+        await Assert.That(json).IsEqualTo(
+            "{\"goalName\":\"G\",\"goalPrPath\":\"/.build/g.pr\",\"goalHash\":\"" + action.Step!.Goal!.Hash
+            + "\",\"stepIndex\":0,\"actionIndex\":0,\"actionModule\":\"test\",\"actionName\":\"test\",\"id\":\"ID\"}");
+    }
+
     [Test]
     public async Task Call_Capture_IncludesStepIndexAndActionIndex()
     {

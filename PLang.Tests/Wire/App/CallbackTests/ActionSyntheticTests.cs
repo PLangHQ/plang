@@ -36,7 +36,7 @@ public class ActionSyntheticTests
 
         await using var s1 = app.actor.list.User.CallStack.Push(synthetic);
         await Assert.That(s1.Action!.Synthetic).IsTrue();
-        await Assert.That(s1.IsResumable).IsFalse();
+        await Assert.That(s1.IsResumable.Value).IsFalse();
     }
 
     [Test] public async Task SnapshotWireSerializer_DropsSyntheticFrames()

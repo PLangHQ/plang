@@ -256,7 +256,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
         foreach (var d in stream)
             if (d.At > t) yield return d;
 
-        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var seen = new HashSet<call.@this>(ReferenceEqualityComparer.Instance);
 
         // Per-Call Diffs (populated when Flags.Diff was on at Push time).
         for (var node = _current.Value; node != null; node = node.Caller)
@@ -268,9 +268,9 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
                 yield return diff;
     }
 
-    private static IEnumerable<Diff> WalkTree(call.@this node, DateTimeOffset t, HashSet<string> seen)
+    private static IEnumerable<Diff> WalkTree(call.@this node, DateTimeOffset t, HashSet<call.@this> seen)
     {
-        if (!seen.Add(node.Id))
+        if (!seen.Add(node))
             yield break;
         foreach (var diff in DiffsOf(node, t))
             yield return diff;

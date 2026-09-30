@@ -27,14 +27,14 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         global::app.View mode, global::app.actor.context.@this? context)
     {
         writer.BeginObject();
-        writer.Name("id"); writer.String(Id);
-        writer.Name("depth"); writer.Long(Depth);
+        writer.Name("id"); writer.String(_id);
+        writer.Name("depth"); writer.Long(_depth);
         if (Goal?.Address is { } address) { writer.Name("goal"); writer.String(address); }
         if (Step != null) { writer.Name("step"); writer.String(Step.Text); }
         if (Action != null) { writer.Name("action"); writer.String($"{Action.Module.Name}.{Action.Name}"); }
-        if (StartedAt != default) { writer.Name("startedAt"); writer.DateTimeOffset(StartedAt); }
-        if (Duration is { } duration) { writer.Name("duration"); writer.TimeSpan(duration); }
-        writer.Name("handled"); writer.Bool(Handled);
+        if (_startedAt is { } started) { writer.Name("startedAt"); writer.DateTimeOffset(started); }
+        if (_stopwatch is { } watch) { writer.Name("duration"); writer.TimeSpan(watch.Elapsed); }
+        writer.Name("handled"); writer.Bool(_handled);
         if (Tags.CountRaw > 0) { writer.Name("tags"); await Tags.Output(writer, mode, context); }
         if (Errors.Count > 0)
         {
@@ -43,12 +43,12 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             foreach (var error in Errors) error.Write(writer);
             writer.EndArray();
         }
-        if (Caller != null) { writer.Name("caller"); writer.String(Caller.Id); }
+        if (Caller != null) { writer.Name("caller"); writer.String(Caller._id); }
         if (Children.Count > 0)
         {
             writer.Name("children");
             writer.BeginArray(Children.Count);
-            foreach (var child in Children) writer.String(child.Id);
+            foreach (var child in Children) writer.String(child._id);
             writer.EndArray();
         }
         if (Diffs is { Count: > 0 } diffs)
@@ -75,10 +75,18 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     private readonly bool _deep;
     private Dictionary<global::System.Type, object>? _items;
 
+    // The frame's facts as it holds them — a frame is pushed per action, so its plang faces below are made
+    // when read, never at push.
+    private readonly string _id;
+    internal readonly int _depth;
+    private bool _handled;
+    private readonly DateTimeOffset? _startedAt;
+    private DateTimeOffset? _completedAt;
+
     /// <summary>
     /// Unique identifier for this Call. 8 hex chars — short enough for log lines.
     /// </summary>
-    public string Id { get; }
+    public global::app.type.item.text.@this Id => _id;
 
     /// <summary>The goal in play at this frame — the goal a goal's frame runs, or the one its step or action is in.
     /// Null for an action composed in C#, which holds no step.</summary>
@@ -113,13 +121,13 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// Flipped <c>true</c> by on.error's Wrap on recovery success. Renderers use this to
     /// show "errored — recovered" vs "errored — uncaught."
     /// </summary>
-    public bool Handled { get; set; }
+    public global::app.type.item.@bool.@this Handled { get => _handled; set => _handled = value.Value; }
 
     /// <summary>The error in play AT THIS FRAME — its newest observation, unless recovery has
     /// already succeeded here. <see cref="Handled"/> is what stops it: "recovered, stop being
     /// <c>%!error%</c>". Null when this frame never failed, or failed and was recovered.
     /// <see cref="app.callstack.@this.Error"/> walks <see cref="Caller"/> asking each frame this.</summary>
-    public global::app.error.Error? Error => Handled ? null : Errors.Newest;
+    public global::app.error.Error? Error => _handled ? null : Errors.Newest;
 
     /// <summary>
     /// Live siblings under this Call. Owns its own lock + FIFO eviction policy — see
@@ -128,16 +136,16 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// </summary>
     public child.list.@this Children { get; }
 
-    // --- Timing tier (default(DateTimeOffset) when Flags.Timing off) ---
-    /// <summary>UTC timestamp at Push. <c>default(DateTimeOffset)</c> when Timing flag off.</summary>
-    public DateTimeOffset StartedAt { get; }
+    // --- Timing tier (null when Flags.Timing off) ---
+    /// <summary>When it was pushed. Null when the Timing flag was off at Push.</summary>
+    public global::app.type.item.datetime.@this? StartedAt => _startedAt is { } started ? new(started) : null;
 
-    /// <summary>UTC timestamp at Pop. Null while in flight.</summary>
-    public DateTimeOffset? CompletedAt { get; private set; }
+    /// <summary>When it was popped. Null while in flight, and when the Timing flag was off.</summary>
+    public global::app.type.item.datetime.@this? CompletedAt => _completedAt is { } completed ? new(completed) : null;
 
     /// <summary>Wall time this frame has run — while in flight (an after-binding runs inside the frame) and, once
     /// popped, its whole duration. Null when the Timing flag was off at Push.</summary>
-    public TimeSpan? Duration => _stopwatch?.Elapsed;
+    public global::app.type.item.duration.@this? Duration => _stopwatch is { } watch ? new(watch.Elapsed) : null;
 
     // --- Diff tier (null when Flags.Diff off) ---
     /// <summary>
@@ -170,12 +178,12 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         @this? previousCurrent,
         Variables? diffSource)
     {
-        Id = Guid.NewGuid().ToString("N")[..8];
+        _id = Guid.NewGuid().ToString("N")[..8];
         Goal = goal;
         Step = step;
         Action = action;
         Caller = caller;
-        Depth = (caller?.Depth ?? 0) + 1;
+        _depth = (caller?._depth ?? 0) + 1;
         _stack = stack;
         _previousCurrent = previousCurrent;
         _diffSource = diffSource;
@@ -183,7 +191,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
         if (stack.Timing.Value)
         {
-            StartedAt = DateTimeOffset.UtcNow;
+            _startedAt = DateTimeOffset.UtcNow;
             _stopwatch = Stopwatch.StartNew();
         }
 
@@ -268,7 +276,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// (only itself), <c>Root.Children[0].Depth == 2</c>, etc. A birth fact: one more than its
     /// caller's. PLang tests can <c>assert %!callStack.Current.Depth% equals 2</c>.
     /// </summary>
-    public int Depth { get; }
+    public global::app.type.item.number.@this Depth => _depth;
 
     /// <summary>The frame records an error against itself — the one door. Stamps what the error does
     /// not carry yet: the failing chain, the context of the run it met here, and — when the error keeps
@@ -288,17 +296,20 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         _stack.Audit.Add(error);
     }
 
+    // Where the action stands in its step; -1 when the frame runs no action, or its step doesn't hold it.
+    private int Place => Action != null && Step != null ? Step.Code.IndexOf(Action) : -1;
+
     /// <summary>The action's index in its step; -1 when the frame runs no action, or its step doesn't hold it.</summary>
-    public int Index => Action != null && Step != null ? Step.Code.IndexOf(Action) : -1;
+    public global::app.type.item.number.@this Index => Place;
 
     /// <summary>A resume point: an action its step holds. A goal's or a step's frame is not one, nor an action
     /// composed in C#, which no step holds — the resumed run makes those again.</summary>
-    public bool IsResumable => Index >= 0;
+    public global::app.type.item.@bool.@this IsResumable => Place >= 0;
 
     /// <summary>This frame's action where it stands, with this frame's Id — the snapshot surrogate; null in a
     /// goal's or a step's frame.</summary>
     public Position? Position => Action is { } action
-        ? new Position(action, Goal!, Step?.Index ?? -1, Index, Id)
+        ? new Position(action, Goal!, Step?.Index ?? -1, Place, _id)
         : null;
 
     /// <summary>Its line in a stack trace: <c>Start.set (step 3) in /Start.goal</c>.</summary>
@@ -320,7 +331,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         if (_stopwatch != null)
         {
             _stopwatch.Stop();
-            CompletedAt = DateTimeOffset.UtcNow;
+            _completedAt = DateTimeOffset.UtcNow;
         }
 
         if (Diffs != null) _stack.Close(this);

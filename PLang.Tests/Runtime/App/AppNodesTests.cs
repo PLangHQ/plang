@@ -58,14 +58,14 @@ public class AppNodesTests
         var written = await user.Format("application/json").Encode(ms, user.Ok(user.CallStack), user);
         await written.IsSuccess();
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
-        await Assert.That(json).Contains(frame.Id);
+        await Assert.That(json).Contains(frame.Id.ToString()!);
         await Assert.That(json).Contains("it failed here");
         await Assert.That(json).DoesNotContain("s3cr3t-value");
         await Assert.That(json.ToLowerInvariant()).DoesNotContain("\"variables\"");
         await Assert.That(json.ToLowerInvariant()).DoesNotContain("\"params\"");
 
         var dumped = await user.CallStack.Debug(user);
-        await Assert.That(dumped).Contains(frame.Id);
+        await Assert.That(dumped).Contains(frame.Id.ToString()!);
     }
 
     // The call stack writes one flat form, the same in every view.
