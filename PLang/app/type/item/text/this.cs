@@ -264,32 +264,45 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override void Write(global::app.type.format.IWriter w) => w.String(_value);
 
     // What the characters stand for, as their kind opens them (a text of kind json: the json value) — opened at the
-    // first navigation, not before, and kept; the text stays the text it is.
+    // first navigation, not before, and kept; the text stays the text it is. Only what opened is kept: it holds no
+    // context, so every asker navigates it with their own.
     private global::app.type.item.@this? _opened;
+
+    // The characters opened by their kind, for this asker: what was kept, else opened now (and kept when it opened);
+    // a failed Data when they don't read as their kind says; null when the kind opens nothing.
+    private global::app.data.@this? Opened(global::app.actor.context.@this? context)
+    {
+        if (_opened is { } kept) return new global::app.data.@this("", kept, context: context);
+        var opened = Format(context).Open(_value, context!);
+        if (opened is { Success: true }) _opened = opened.Peek();
+        return opened;
+    }
 
     /// <summary>
     /// A text navigates as its kind opens its characters: a text of kind json (<c>%x.a%</c>) is walked as the json
-    /// its characters are, parsed only then, and stays text. A text whose kind opens nothing has no by-key
-    /// structure — navigating it (<c>%x.port%</c>) is an authoring error. Method calls (<c>%x.grep("..")%</c>)
-    /// are text's own methods, not this, so they are unaffected.
+    /// its characters are, parsed only then, and stays text; characters that don't read as json answer why
+    /// (MaterializeFailed). A text whose kind opens nothing has no by-key structure — navigating it
+    /// (<c>%x.port%</c>) is an authoring error. Method calls (<c>%x.grep("..")%</c>) are text's own methods, not
+    /// this, so they are unaffected.
     /// </summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
         => Get(parent, key, isIndex: false);
 
     /// <summary>A text iterates as its kind opens its characters — a text of kind json holding an array yields its
-    /// elements; any other text is one value, yielded once, never its characters.</summary>
+    /// elements; any other text is one value, yielded once, never its characters. Characters that don't read as their
+    /// kind stop the loop with why.</summary>
     public override System.Collections.Generic.IEnumerable<(global::app.data.@this key, global::app.data.@this value)>
         EnumerateItems(global::app.actor.context.@this? context)
-        => (_opened ??= Format(context).Open(_value, context!)) is { } opened
-            ? opened.EnumerateItems(context)
+        => Opened(context) is { } opened
+            ? opened.Success ? opened.Peek().EnumerateItems(context) : throw new global::app.error.AppException(opened.Error!)
             : base.EnumerateItems(context);
 
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key, bool isIndex)
     {
-        if ((_opened ??= Format(parent.Context).Open(_value, parent.Context)) is { } opened)
-            return opened.Get(parent, key, isIndex);
+        if (Opened(parent.Context) is { } opened)
+            return opened.Success ? opened.Peek().Get(parent, key, isIndex) : System.Threading.Tasks.ValueTask.FromResult(opened);
         var who = string.IsNullOrEmpty(parent.Name) ? "value" : $"%{parent.Name}%";
         var err = parent.Context.Error(new global::app.error.Error(
             $"cannot navigate .{key}: {who} is text", "CantNavigateText", 400));

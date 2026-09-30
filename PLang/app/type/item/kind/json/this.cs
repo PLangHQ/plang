@@ -137,6 +137,14 @@ public sealed class @this : global::app.type.kind.@this
             : global::app.type.item.@this.Create(Scalar(e), ctx);
     }
 
+    /// <summary>json characters opened: the json value they are, or why they don't read — MaterializeFailed, naming
+    /// where; never a throw.</summary>
+    public override global::app.data.@this? Open(string characters, global::app.actor.context.@this context)
+    {
+        try { return context.Ok(Parse(characters, context)); }
+        catch (JsonException shape) { return context.Error(Unread(shape, "a json value").Error); }
+    }
+
     // Materialize this json content INTO the CLR host target asks for. json owns the format
     // bridge — its element becomes a reader — and the `*` kind owns the shape (the [Store] host
     // walk driven off that reader). The door a clr(json) delegates to instead of terminal-lowering.
