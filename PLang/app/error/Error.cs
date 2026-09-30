@@ -75,12 +75,6 @@ public class Error : global::app.type.item.@this
     /// can hand the causes in whole: <c>new ActionError(…) { Action = this, list = causes }</c>.</summary>
     public List<Error> list { get; init; } = new();
 
-    /// <summary>The error renders itself — its flattened wire shape, written straight
-    /// to the wire (no intermediate value). $type discriminates the subtype; the
-    /// recursive causing list lets each nested error write itself. The live
-    /// back-references that can't round-trip (Exception, Step, Goal, CallFrames) are
-    /// dropped — the snapshot's CallStack section carries the chain. Symmetric with the
-    /// read side (<c>ErrorWire</c>).</summary>
     /// <summary>An error writes its own flat form (<see cref="Write"/>) in every view.</summary>
     public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
@@ -89,10 +83,13 @@ public class Error : global::app.type.item.@this
         return System.Threading.Tasks.ValueTask.CompletedTask;
     }
 
+    /// <summary>The error renders itself — its flat wire shape: what it is (id, message, key, status, when, its
+    /// fix and links) and the errors that caused it, each writing itself. What kind of error it is, its key says.
+    /// The live back-references that can't round-trip (Exception, Step, Goal, CallFrames) are dropped — the
+    /// snapshot's CallStack section carries the chain. Its reader (<c>error/serializer/Reader</c>) reads it back.</summary>
     public override void Write(global::app.type.format.IWriter writer)
     {
         writer.BeginObject();
-        writer.Name("$type");       writer.String(GetType().Name);
         writer.Name("id");          writer.String(Id);
         writer.Name("message");     writer.String(Message);
         writer.Name("key");         writer.String(Key);
@@ -179,12 +176,12 @@ public class Error : global::app.type.item.@this
     }
 
     /// <summary>
-    /// Snapshot-restore ctor — reconstructs an Error from wire with its original
+    /// Read-back ctor — reconstructs an Error from the wire with its original
     /// <see cref="Id"/> and <see cref="CreatedUtc"/> preserved (both are otherwise
     /// set only at first construction). The live back-references (Step, Goal,
     /// CallFrames, Exception) are intentionally NOT restored: the CallStack
     /// section already carries the frame chain, and a live Exception / Goal
-    /// object graph cannot round-trip. Used by <see cref="ErrorWire"/>.
+    /// object graph cannot round-trip.
     /// </summary>
     private Error(string id, string message, string key, int statusCode, DateTime createdUtc)
     {
@@ -196,15 +193,16 @@ public class Error : global::app.type.item.@this
     }
 
     /// <summary>
-    /// Factory mirror of the snapshot-restore ctor that also re-applies the
-    /// init-only advisory fields. See <see cref="ErrorWire"/>.
+    /// An error read back from its written form — the read-back ctor with the init-only advisory fields and
+    /// the errors that caused it.
     /// </summary>
     internal static Error Restore(string id, string message, string key, int statusCode,
-        DateTime createdUtc, string? fixSuggestion, string? helpfulLinks)
+        DateTime createdUtc, string? fixSuggestion, string? helpfulLinks, List<Error>? causes = null)
         => new Error(id, message, key, statusCode, createdUtc)
         {
             FixSuggestion = fixSuggestion,
             HelpfulLinks = helpfulLinks,
+            list = causes ?? new(),
         };
 
     /// <summary>

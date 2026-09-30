@@ -37,7 +37,9 @@ public class SelfWritingItemsTests : System.IAsyncDisposable
         await Assert.That(await Json(hops[1])).IsEqualTo("{\"property\":\"b\"}");
 
         var error = await Json(new global::app.error.ServiceError("boom", "Boom", 500));
-        await Assert.That(error).StartsWith("{\"$type\":\"ServiceError\",\"id\":\"");
+        // what kind of error it is, its key says — never its C# class
+        await Assert.That(error).StartsWith("{\"id\":\"");
+        await Assert.That(error).DoesNotContain("ServiceError");
         await Assert.That(error).Contains("\"message\":\"boom\",\"key\":\"Boom\",\"statusCode\":500");
     }
 }
