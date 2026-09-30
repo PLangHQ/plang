@@ -17,10 +17,13 @@ public partial class Read : IContext
     public Task<data.@this> Start() => Path.Use(path => ResolveVariables.Use(resolve => path.Read(Context, resolve)));
 
     /// <summary>A literal path's reference type, for the step that captures it — and a warning when it isn't
-    /// there now; a path holding a variable is known only at run.</summary>
+    /// there now, unless a step before this one in the goal writes it; a path holding a variable is known only
+    /// at run.</summary>
     public async Task<data.@this> Build() => Path.HasVariable ? Context.Ok() : await Path.Use(async path =>
     {
-        if (await path.Absence(Context) is { } why) await __action.Warn(why, Context);
+        if (await path.Absence(Context) is { } why
+            && !(__action.Step is { } step && await step.IsWrittenBefore(path, Context)))
+            await __action.Warn(why, Context);
         return await path.Expect(Context);
     });
 }

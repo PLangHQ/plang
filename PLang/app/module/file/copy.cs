@@ -3,10 +3,12 @@ using app.type;
 namespace app.module.file;
 
 [Action("copy", Cacheable = false)]
-public partial class Copy : IContext
+public partial class Copy : IContext, IWrite
 {
     public partial data.@this<path> Source { get; init; }
     public partial data.@this<path> Destination { get; init; }
+
+    data.@this<path> IWrite.Target => Destination;
 
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Overwrite { get; init; }
