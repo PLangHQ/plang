@@ -1,1 +1,0 @@
-Stop a running browser

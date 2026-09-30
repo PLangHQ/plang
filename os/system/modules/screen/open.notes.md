@@ -1,4 +1,0 @@
-- The screen is a window that shows frames drawn into it (`draw %!data% on %screen%`); it is not a browser and not a terminal.
-- OnInput gets every mouse and keyboard event as one JSON line in `%!data%` — pass it on as-is (`send %!data% to %browser%`, `send %!data% to %container%`).
-- OnClose runs when the window is closed; stop what feeds it there.
-- Windows only for now.

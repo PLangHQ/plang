@@ -228,10 +228,10 @@ public sealed class @this
         if (Writes() is { } written && !every.Any(a => a.Module.Name == "variable" && a.Name == "set"
                 && string.Equals(a["Name"]?.Value?.ToString()?.Trim('%', '"'), written.Trim('%'), StringComparison.OrdinalIgnoreCase)))
             refused.Add($"step {i} says it writes {written}, but no action writes it: end the step with variable.set(Name={written}, Value=%!data%)");
-        // every goal the step's words call is called by the code — by an action that calls goals
-        // (goal.call, browser.callGoal: [CallsGoal]); a name may be written as its full address:
-        // /system/builder/X calls X
-        var called = every.Select(a => a.CallsGoal).OfType<string>()
+        // every goal the step's words call is called by the code (a name may be written as its full
+        // address: /system/builder/X calls X)
+        var called = every.Where(a => a.Module.Name == "goal" && a.Name == "call")
+            .Select(a => a["Name"]?.Value?.ToString()?.Trim('"')).OfType<string>()
             .Select(n => "/" + n.TrimStart('/').Replace('\\', '/')).ToList();
         foreach (var goal in Calls.Matches(Quoted.Replace(_step.Text, "")).Select(m => m.Groups[1].Value.TrimEnd('.', ',')).Distinct())
         {

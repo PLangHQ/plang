@@ -1,4 +1,0 @@
-- The browser has no window: its picture arrives frame by frame through OnFrame (`%!data%` is one line of JSON). Show it with a screen (`draw %!data% on %screen%`), or pass it on (`write out %!data%`).
-- Only the newest frame is delivered; a slow OnFrame goal skips frames rather than falling behind.
-- Input goes in with `send %x% to %browser%` (browser.send), one JSON line per event — the same lines a screen's `on input` gives.
-- `send … to %browser%` is browser.send; `send … to %container%` (a running program from terminal.open) is terminal.send; `send … to %screen%` is screen.send. Tell them apart by what the variable holds.
