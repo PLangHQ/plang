@@ -122,6 +122,11 @@ public sealed partial class Chromium : IBrowser
         // on 127.0.0.1 inside PlangOS, lets the page talk to plang: plang(text) → OnMessage,
         // browser.post → the page's message event.
         var url = (await action.Url.Value())!.Clr<string>()!;
+        // a Chromium that was killed (PlangOS closed hard) leaves its profile's lock naming its process;
+        // in a new PlangOS another process can have that number, and the new Chromium would hand its
+        // page to "the running one" and exit. None of ours runs yet: the lock is stale.
+        foreach (var name in new[] { "SingletonLock", "SingletonSocket", "SingletonCookie" })
+            await FilePath.Resolve(PathHelper.Combine(context.App.AbsolutePath, ".browser", name), context).Delete(false, true, context);
         var chrome = Process.Start(Chrome(chromium, screen, context, "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=0", "--app=" + url))!;
         chrome.StandardInput.Close();
         _ = Drain(chrome.StandardOutput);
@@ -188,6 +193,15 @@ public sealed partial class Chromium : IBrowser
             "--disable-features=SpareRendererForSitePerProcess,WebUIOmniboxPopup,WebUIOmniboxAimPopup",
             $"--user-data-dir={PathHelper.Combine(context.App.AbsolutePath, ".browser")}" }.Concat(args))
             info.ArgumentList.Add(arg);
+        // sound: PulseAudio finds its server in XDG_RUNTIME_DIR unless PULSE_SERVER names one — and
+        // XDG_RUNTIME_DIR is the screen's now, where there is none. WSL's own (WSLg's server) is named.
+        var sound = Environment.GetEnvironmentVariable("PULSE_SERVER");
+        if (string.IsNullOrEmpty(sound))
+        {
+            var runtime = Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR");
+            sound = string.IsNullOrEmpty(runtime) ? "unix:/mnt/wslg/PulseServer" : $"unix:{runtime}/pulse/native";
+        }
+        info.Environment["PULSE_SERVER"] = sound;
         info.Environment["XDG_RUNTIME_DIR"] = screen.Runtime;   // where the screen's socket is
         info.Environment["WAYLAND_DISPLAY"] = screen.Socket;
         return info;
