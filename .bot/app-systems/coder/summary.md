@@ -133,9 +133,28 @@ One commit per owner, each name-diffed (no regressions), each bug's test its pin
   The app's clr-leak inventory is empty.
 - **Deterministic tests:** the parallel run (a gate), the timeout tests (a sleep only the deadline ends).
 
-## Next / held (all with Ingi)
-- 304 (a bare text/binary whose raw it owns is born at once; `set.cs:197–202`'s throwaway birth to delete; the
-  saved patch was lost in a session restart — rebuild it from this shape), the file reference's Out face, the
+## The channel reads, the formatter shows (decisions 335–344, all pushed)
+- **`reference` → `content`** (946cfe085).
+- **The channel opens the value** (6f191412a): `item.Open(context)` (content samples, directory lists, image loads);
+  the stream channel opens the value it writes just before its format encodes; nothing loads inside `Output`;
+  Store/Debug/goal channel never open. Only the top value opens — a nested one writes unread (an unread image
+  writes its path). `write out %file%` prints its content.
+- **The writer rule** (f986aed8a) in `item.Write`'s doc, `object_pattern_formal.md`, `obp-smells.md` (*format peek*):
+  a value writes WHAT it is through primitives; the writer decides HOW. Sweep: image writes `Bytes` (text shows
+  `[n bytes]`, json/plang the full base64 — 88ac52572); list/dict/clr text arms deleted (ca5767f28);
+  `IWriter.Variable(name)` for variable/source (ef75ff3a9).
+- **304** (edb6afa1a): a raw string/bytes a bare type owns is born its value (`type.Owns`); `set`'s throwaway kind
+  birth deleted and the declared type is handed the value unlowered, so its own lift derives the kind.
+- **Baseline: 19** (`baseline-failures.txt`).
+
+## Next / held
+- **The `set … as <type>` one-liner** (Ingi): shape sent — `type.Create` must pass through "already me" with no
+  birth, image takes strict at birth, `Made` maps a failed conversion, one lookup door answers NotFound; open: the
+  UnknownType key, Properties riding the born Data.
+- **The Data envelope into the writers** (with Ingi): `Data.Output` builds the plang envelope by hand on
+  `EmitsSchema`; `IWriter.BeginRecord/EndRecord` are dead. Until it's ruled the formal list arm stays.
+- 335 (4): `save %x% to "file"` and the http body through channels — shape first.
+- With Ingi: the file reference's Out face, the
   half-written stream on a failed encode, the Out-view template leak (drop the row's `mode == Debug &&`),
   `%!callStack%/%!variables%/%!trace%` beside `%!app.…%` (0d), a value's `_history`/`_on` on shared instances,
   json narrowing (also the two Roundtrip decodes), the legacy `os/system/modules/` goals. The snapshot read-back
