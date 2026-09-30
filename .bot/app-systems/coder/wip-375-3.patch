@@ -108,6 +108,27 @@ index a2650fff1..7725ccaa4 100644
      [Arguments("!app.actor[\"user\"].channel[\"output\"]")]
      [Arguments("!channels.output")]
      [Arguments("!channels[\"output\"]")]
+diff --git a/PLang.Tests/Runtime/App/Settings/ConceptSettingTests.cs b/PLang.Tests/Runtime/App/Settings/ConceptSettingTests.cs
+index 1cd1d84ba..1864d1352 100644
+--- a/PLang.Tests/Runtime/App/Settings/ConceptSettingTests.cs
++++ b/PLang.Tests/Runtime/App/Settings/ConceptSettingTests.cs
+@@ -53,13 +53,14 @@ public class ConceptSettingTests : System.IAsyncDisposable
+         await Assert.That(context.Setting.Of<global::app.test.setting.@this>().Format.Value.ToString()).IsEqualTo("json");
+     }
+ 
++    // The goal concept names no settings: past its own members a dot is the running goal's member, and outside a
++    // goal that is unset. The goal list's settings are its list's.
+     [Test] public async Task GoalsTypeNamesNoSettings_ItsListDoes()
+     {
+         await using var app = new global::app.@this("/test").Testing();
+         var context = app.actor.list.User.Context;
+         var none = await Read("%!app.goal.setting%", context);
+-        await none.IsFailure();
+-        await Assert.That(none.Error!.Key).IsEqualTo("NotFound");
++        await Assert.That(none.IsInitialized).IsFalse();
+         await (await Read("%!app.goal.list.setting.os%", context)).IsSuccess();
+     }
+ }
 diff --git a/PLang.Tests/Runtime/App/Settings/SettingOwnerTests.cs b/PLang.Tests/Runtime/App/Settings/SettingOwnerTests.cs
 index 4495bee33..5544444c1 100644
 --- a/PLang.Tests/Runtime/App/Settings/SettingOwnerTests.cs
@@ -319,6 +340,19 @@ index a892052d8..4b8353e76 100644
 -    }
 +    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
  }
+diff --git a/PLang/app/goal/this.cs b/PLang/app/goal/this.cs
+index 7141c5428..2d77b6762 100644
+--- a/PLang/app/goal/this.cs
++++ b/PLang/app/goal/this.cs
+@@ -324,7 +324,7 @@ public sealed partial class @this
+     private static async Task<data.@this> Read(global::app.type.item.path.@this pr, global::app.@this app)
+     {
+         var context = app.actor.list.System.Context;
+-        var before = app.goal.on.load.before;
++        var before = app.type.list[typeof(@this)].on.load.before;
+         if (before.Count > 0 && await before.Start(pr, context.Ok(), context) is { } answer
+             && (!answer.Success || answer.Handled))
+             return answer;
 diff --git a/PLang/app/module/this.cs b/PLang/app/module/this.cs
 index 6c75b2109..d2503269b 100644
 --- a/PLang/app/module/this.cs
@@ -370,7 +404,7 @@ index 6c75b2109..d2503269b 100644
      /// <summary>This module's settings — <c>%!llm.setting%</c>: its own class, or the options its actions take.</summary>
      protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
 diff --git a/PLang/app/this.cs b/PLang/app/this.cs
-index bc811abbd..3cb161936 100644
+index bc811abbd..981b6a5e6 100644
 --- a/PLang/app/this.cs
 +++ b/PLang/app/this.cs
 @@ -153,7 +153,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
@@ -406,20 +440,21 @@ index bc811abbd..3cb161936 100644
  
      // The types a step and an action start through, and a channel writes, reads and asks through — the type
      // list's own entries, held because every start and every channel write reaches their events and a walk of
-@@ -284,11 +290,13 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
+@@ -284,12 +290,9 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
          module = new(this);
          goal = new(this);
          test = new(this);
 +        error = new(this);
          variable = new(this);
-         // each concept's type is the list's entry of its name, as app.type is — %!app.goal% and the type goal
-         // are one object
-         type.list.Replace(goal);
-         type.list.Replace(test);
-+        type.list.Replace(error);
-         type.list.Replace(variable);
+-        // each concept's type is the list's entry of its name, as app.type is — %!app.goal% and the type goal
+-        // are one object
+-        type.list.Replace(goal);
+-        type.list.Replace(test);
+-        type.list.Replace(variable);
++        // a concept (%!app.goal%) and its type (%!app.type.goal%: its facts, its events) are two objects
          step = type.list["step"];
          action = type.list["action"];
+         channel = type.list["channel"];
 diff --git a/PLang/app/type/current/this.cs b/PLang/app/type/current/this.cs
 new file mode 100644
 index 000000000..88861f083
@@ -490,7 +525,7 @@ index 401893e57..7a9e3c290 100644
  {
      public static string Example => "%user%";
 diff --git a/PLang/app/type/this.Generic.cs b/PLang/app/type/this.Generic.cs
-index 22d1fff6c..f56415319 100644
+index 22d1fff6c..01538740f 100644
 --- a/PLang/app/type/this.Generic.cs
 +++ b/PLang/app/type/this.Generic.cs
 @@ -1,13 +1,14 @@
@@ -523,7 +558,7 @@ index 22d1fff6c..f56415319 100644
  
      /// <summary>
      /// A collected type's face in the Out view is a summary — the names of its list (a type plang
-@@ -77,30 +78,43 @@ public sealed class @this<T, L> : @this
+@@ -77,30 +78,33 @@ public sealed class @this<T, L> : @this
      public System.Threading.Tasks.Task<data.@this> Load(string location)
          => T.Load(item.path.@this.Resolve(location, _app.actor.list.System.Context), _app);
  
@@ -541,7 +576,7 @@ index 22d1fff6c..f56415319 100644
 +    /// The answer takes its context from the parent.
      /// </summary>
      public override async System.Threading.Tasks.ValueTask<data.@this> Get(data.@this parent, string key)
-+        => await Own(parent, key) ?? await Fact(parent, key) ?? await Named(parent, key);
++        => await Own(parent, key) ?? await Named(parent, key);
 +
 +    /// <summary>Brackets pick one X by name, on every node (<c>%!app.actor["user"]%</c>, <c>%!goal["Show"]%</c>).</summary>
 +    public override async System.Threading.Tasks.ValueTask<data.@this> Get(data.@this parent, string key, bool isIndex)
@@ -558,16 +593,9 @@ index 22d1fff6c..f56415319 100644
          // the concept's own settings (%!app.test.setting%), as the asker's settings build them
          if (_setting is { } @class && string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase))
              return await parent.Context.Setting.Of(@class);
-+        return null;
-+    }
-+
-+    // The type's own facts for key (its name, its kind, …); null when the key is none of them. A node with a
-+    // current reads its current's members instead.
-+    private async System.Threading.Tasks.ValueTask<data.@this?> Fact(data.@this parent, string key)
-+    {
-         // a miss is NotFound — a Data that holds nothing (not initialized), so the next door asks
-         if (await new clr.@this(this, parent.Context).Get(parent, key) is { Success: true, IsInitialized: true } member) return member;
-         if (await base.Get(parent, key) is { Success: true, IsInitialized: true } fact) return fact;
+-        // a miss is NotFound — a Data that holds nothing (not initialized), so the next door asks
+-        if (await new clr.@this(this, parent.Context).Get(parent, key) is { Success: true, IsInitialized: true } member) return member;
+-        if (await base.Get(parent, key) is { Success: true, IsInitialized: true } fact) return fact;
 -        // a concept selected by key answers it the way its slots do (a goal from the calling goal)
 +        return null;
 +    }
