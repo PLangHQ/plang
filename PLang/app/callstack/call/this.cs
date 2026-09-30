@@ -9,10 +9,77 @@ namespace app.callstack.call;
 /// Tree shape: navigate up via <see cref="Caller"/>, down via <see cref="Children"/>.
 ///
 /// Render-agnostic: same data folds into a stack (Caller walk), flamegraph (Children walk),
-/// or timeline (sort by StartedAt).
+/// or timeline (sort by StartedAt). A plang value: it writes itself as <see cref="Output"/> says.
 /// </summary>
-public sealed partial class @this : IAsyncDisposable
+public sealed partial class @this : global::app.type.item.@this, IAsyncDisposable
 {
+    /// <summary>A structure — navigated by its members.</summary>
+    public override bool IsLeaf => false;
+
+    /// <summary>
+    /// The frame writes itself short: its id and depth, where it is (the goal's address, the step's text, the
+    /// action in its formal form — the whole program is one navigation away), when, whether its error was
+    /// handled, its tags and errors, and its caller by id (a back-edge is written by name). The Debug view adds
+    /// the variable changes it saw, the event it runs, and its children by id. Never its variables.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        writer.BeginObject();
+        writer.Name("id"); writer.String(Id);
+        writer.Name("depth"); writer.Long(Depth);
+        if (Goal?.Address is { } address) { writer.Name("goal"); writer.String(address); }
+        if (Step != null) { writer.Name("step"); writer.String(Step.Text); }
+        if (Action != null)
+        {
+            writer.Name("action");
+            if (context == null) writer.String(Action.ToString());
+            else
+            {
+                var formal = new global::app.goal.step.action.formal.Writer();
+                await Action.Output(formal, global::app.View.Store, context);
+                writer.String(formal.ToString());
+            }
+        }
+        if (StartedAt != default) { writer.Name("startedAt"); writer.DateTimeOffset(StartedAt); }
+        if (Duration is { } duration) { writer.Name("duration"); writer.TimeSpan(duration); }
+        writer.Name("handled"); writer.Bool(Handled);
+        if (Tags.CountRaw > 0) { writer.Name("tags"); await Tags.Output(writer, mode, context); }
+        if (Errors.Count > 0)
+        {
+            writer.Name("errors");
+            writer.BeginArray(Errors.Count);
+            foreach (var error in Errors) await error.Output(writer, mode, context);
+            writer.EndArray();
+        }
+        if (Caller != null) { writer.Name("caller"); writer.String(Caller.Id); }
+        if (mode == global::app.View.Debug)
+        {
+            if (Diffs is { Count: > 0 } diffs)
+            {
+                writer.Name("diffs");
+                writer.BeginArray(diffs.Count);
+                foreach (var diff in diffs)
+                {
+                    writer.BeginObject();
+                    writer.Name("name"); writer.String(diff.Name);
+                    writer.Name("at"); writer.DateTimeOffset(diff.At);
+                    writer.EndObject();
+                }
+                writer.EndArray();
+            }
+            if (Event != null) { writer.Name("event"); await Event.Output(writer, mode, context); }
+            if (Children.Count > 0)
+            {
+                writer.Name("children");
+                writer.BeginArray(Children.Count);
+                foreach (var child in Children) writer.String(child.Id);
+                writer.EndArray();
+            }
+        }
+        writer.EndObject();
+    }
+
     private readonly Stopwatch? _stopwatch;
     private readonly app.callstack.@this _stack;
     private readonly @this? _previousCurrent;

@@ -15,9 +15,39 @@ namespace app.callstack;
 ///
 /// AsyncLocal &lt;Call&gt; is the only shared mutable state — fork-safe by construction so
 /// parallel goal.call branches each maintain their own Current without cloning context.
+/// A plang value: it writes itself as <see cref="Output"/> says.
 /// </summary>
-public sealed partial class @this
+public sealed partial class @this : global::app.type.item.@this
 {
+    /// <summary>A structure — navigated by its members.</summary>
+    public override bool IsLeaf => false;
+
+    /// <summary>
+    /// The call stack writes the frame in play, the goal run's frame and every error this run observed. The
+    /// Debug view adds where it is (the goal's address, the step's text), the error and event in play and the
+    /// depth limit. The whole run's tree (<see cref="Root"/>) is one navigation away, never written.
+    /// </summary>
+    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        writer.BeginObject();
+        if (Current is { } current) { writer.Name("current"); await current.Output(writer, mode, context); }
+        if (Scope is { } scope) { writer.Name("scope"); await scope.Output(writer, mode, context); }
+        writer.Name("audit");
+        writer.BeginArray(Audit.Count);
+        foreach (var error in Audit) await error.Output(writer, mode, context);
+        writer.EndArray();
+        if (mode == global::app.View.Debug)
+        {
+            if (Goal?.Address is { } address) { writer.Name("goal"); writer.String(address); }
+            if (Step != null) { writer.Name("step"); writer.String(Step.Text); }
+            if (Error is { } error) { writer.Name("error"); await error.Output(writer, mode, context); }
+            if (Event is { } running) { writer.Name("event"); await running.Output(writer, mode, context); }
+            writer.Name("maxDepth"); writer.Long(MaxDepth);
+        }
+        writer.EndObject();
+    }
+
     // Instance-level — each CallStack has its own AsyncLocal flow. Tests can spin up
     // multiple CallStacks in the same process without polluting each other's Current.
     private readonly AsyncLocal<call.@this?> _current = new();

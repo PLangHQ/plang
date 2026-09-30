@@ -8,6 +8,12 @@
   "app.actor.context.trace": {
     "word": null
   },
+  "app.callstack": {
+    "word": null
+  },
+  "app.callstack.call": {
+    "word": null
+  },
   "app.channel": {
     "word": "channel"
   },

@@ -18,7 +18,54 @@ public class AppNodesTests
         var read = await Read("%!app.callstack%", user);
 
         await Assert.That(read.IsInitialized).IsTrue();
-        await Assert.That(ReferenceEquals(read.Peek().Clr<object>(), user.CallStack)).IsTrue();
+        await Assert.That(ReferenceEquals(read.Peek(), user.CallStack)).IsTrue();
+    }
+
+    // Every way a program reads the call stack still reads through, the stack being a plang value.
+    [Test]
+    public async Task Callstack_ProgramReads_StillReadThrough()
+    {
+        await using var app = NewApp();
+        var user = app.actor.list.User.Context;
+        var goal = new global::app.goal.@this { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", user) };
+        await using var frame = user.CallStack.Push(goal);
+        frame.Tag(new global::app.type.item.dict.@this(new System.Collections.Generic.Dictionary<string, object?> { ["owner"] = "ingi" }), user);
+        frame.Record(new global::app.error.Error("seen", "Seen", 400), user);
+
+        await Assert.That((await (await Read("%!callStack.Current.Depth%", user)).Value())?.ToString()).IsEqualTo("1");
+        await Assert.That((await Read("%!callStack.Scope%", user)).Peek()).IsSameReferenceAs(frame);
+        await Assert.That((await (await Read("%!callStack.Scope.Tags.owner%", user)).Value())?.ToString()).IsEqualTo("ingi");
+        await Assert.That((await (await Read("%!callStack.Audit.Count%", user)).Value())?.ToString()).IsEqualTo("1");
+        await Assert.That((await Read("%!callStack.Audit%", user)).IsInitialized).IsTrue();
+        await Assert.That((await Read("%!callStack.Current.Diffs%", user)).Success).IsTrue();
+        await Assert.That((await Read("%!callStack%", user)).Peek()).IsSameReferenceAs(user.CallStack);
+    }
+
+    // The call stack is a plang value: written, it shows its frame in play and the run's errors — never the
+    // variables or parameters an error keeps; dumped, it completes.
+    [Test]
+    public async Task Callstack_IsAPlangValue_WrittenWithoutVariables_AndDumped()
+    {
+        await using var app = NewApp();
+        var user = app.actor.list.User.Context;
+        var goal = new global::app.goal.@this { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", user) };
+        await user.Variable.Set("secret", user.Ok("s3cr3t-value"));
+        await using var frame = user.CallStack.Push(goal);
+        var error = new global::app.error.Error("it failed here", "Boom", 400) { Variables = user.Variable.Snapshot() };
+        frame.Record(error, user);
+
+        using var ms = new System.IO.MemoryStream();
+        var written = await user.Format("application/json").Encode(ms, user.Ok(user.CallStack), user);
+        await written.IsSuccess();
+        var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        await Assert.That(json).Contains(frame.Id);
+        await Assert.That(json).Contains("it failed here");
+        await Assert.That(json).DoesNotContain("s3cr3t-value");
+        await Assert.That(json.ToLowerInvariant()).DoesNotContain("\"variables\"");
+        await Assert.That(json.ToLowerInvariant()).DoesNotContain("\"params\"");
+
+        var dumped = await user.CallStack.Debug(user);
+        await Assert.That(dumped).Contains(frame.Id);
     }
 
     [Test]
