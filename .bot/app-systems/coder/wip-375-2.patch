@@ -1,0 +1,443 @@
+diff --git a/PLang/Executor.cs b/PLang/Executor.cs
+index 064256381..c9b9defc8 100644
+--- a/PLang/Executor.cs
++++ b/PLang/Executor.cs
+@@ -55,7 +55,7 @@ namespace PLang
+ 			// Each flag's dict is this run's values for its owner's setting class, on the system actor (the
+ 			// user falls back to it): --debug → %!debug%, --test → %!app.test.setting%, --app →
+ 			// %!app.setting%, --callstack → %!app.callstack.setting% (both actors' call stacks read it),
+-			// --build → %!build%. A key that isn't one of the class's options is refused.
++			// --build → %!build.setting%. A key that isn't one of the class's options is refused.
+ 			global::app.data.@this? Flag<TSetting>(string name) where TSetting : global::app.type.item.setting.@this, new()
+ 			{
+ 				if (!parameters.TryGetValue(name, out var value) || value is not IDictionary<string, object?> dict) return null;
+@@ -104,13 +104,12 @@ namespace PLang
+ 					userVars.Set("path", startupDirectory);
+ 				if (Flag<global::app.module.build.setting.@this>("!build") is { } buildError) return (null, buildError);
+ 
+-				// Build-mode-inversion (§6.D, Case A): a cache-off build flows DOWN to llm.query
+-				// as the `llm.cache` setting, so llm.query reads its own `action.Cache`
+-				// (which resolves %!llm.query.cache% → %!llm.cache% → [Default]) instead of sniffing
+-				// the build. The cache-off default reaches every llm.query without threading. The
+-				// run's value is in memory, so the sync Configure sets it at once.
++				// A cache-off build flows DOWN to llm.query as llm's cache setting, so llm.query reads its
++				// own `action.Cache` (which resolves %!llm.query.setting.cache% → %!llm.setting.cache% →
++				// [Default]) instead of sniffing the build. The cache-off default reaches every llm.query
++				// without threading. The run's value is in memory, so the sync Configure sets it at once.
+ 				if (!app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Cache.Value)
+-					app.actor.list.System.Setting.Set("llm.cache", app.actor.list.System.Context.Ok(false))
++					app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this().Path + ".cache", app.actor.list.System.Context.Ok(false))
+ 						.GetAwaiter().GetResult();
+ 			}
+ 
+diff --git a/PLang/app/actor/setting/this.cs b/PLang/app/actor/setting/this.cs
+index bc5c1fbae..089a85f33 100644
+--- a/PLang/app/actor/setting/this.cs
++++ b/PLang/app/actor/setting/this.cs
+@@ -55,19 +55,20 @@ public sealed class @this
+ 
+     /// <summary>
+     /// An action's option as the settings hold it — the action-param seam's rung and
+-    /// <c>%!llm.query.cache%</c>'s: this run's value (the action's key <c>llm.query.cache</c>, then the
+-    /// module's <c>llm.cache</c>), the closest scope first; else the saved rows (the action's row, then the
+-    /// module's own), the user's before the system's. NotFound when none.
++    /// <c>%!llm.query.setting.cache%</c>'s: this run's value (the action's key <c>llm.query.setting.cache</c>,
++    /// then the module's <c>llm.setting.cache</c>), the closest scope first; else the saved rows (the action's
++    /// row, then the module's own), the user's before the system's. NotFound when none.
+     /// </summary>
+     public async ValueTask<data.@this> Get(global::app.goal.step.action.@this action, string option)
+     {
+         await Load();
+-        var module = action.Module.Name;
+-        var run = Run([$"{module}.{action.Name}.{option}", $"{module}.{option}"]);
++        var own = $"{action.Module.Name}.{action.Name}.setting";
++        var module = $"{action.Module.Name}.setting";
++        var run = Run([$"{own}.{option}", $"{module}.{option}"]);
+         if (run.IsInitialized) return run;
+-        if (Saved($"{module}.{action.Name}") is { } row && Option(row, option) is { } saved) return saved;
+-        if (Saved(module) is { } own && Option(own, option) is { } kept) return kept;
+-        return _context.NotFound($"{module}.{action.Name}.{option}");
++        if (Saved(own) is { } row && Option(row, option) is { } saved) return saved;
++        if (Saved(module) is { } held && Option(held, option) is { } kept) return kept;
++        return _context.NotFound($"{own}.{option}");
+     }
+ 
+     // This run's value for the first key that has one, the closest scope first.
+@@ -119,7 +120,7 @@ public sealed class @this
+     public async ValueTask<data.@this> Save(global::app.type.item.setting.@this setting)
+     {
+         var path = setting.Path;
+-        // a node that leads to settings (%!http%, %!llm.query%) is no class: its row could not be read back
++        // a node's settings (%!http.setting%, %!llm.query.setting%) are no class: its row could not be read back
+         if (Class(path) == null)
+             return _context.Error(new global::app.error.Error(
+                 $"'{path}' is not a setting class — save the class that holds the option.", "NotASettingClass", 400));
+@@ -271,20 +272,14 @@ public sealed class @this
+     }
+ 
+     /// <summary>
+-    /// The first setting a <c>!</c> name the memory doesn't bind names (<c>%!llm%</c>, <c>%!http%</c>): the
+-    /// module's settings — its own class when it has one — which answer the next hop themselves (an action,
+-    /// then its options). NotFound when the name is no module's. (An owner's settings are reached through
+-    /// the owner: <c>%!app.goal.list.setting%</c>.)
++    /// <paramref name="module"/>'s settings as this scope sees them — <c>%!llm.setting%</c>, <c>%!http.setting%</c>:
++    /// its own class when it has one, else the module's node, whose options are ones its actions take.
+     /// </summary>
+-    public async ValueTask<data.@this> Get(string name)
++    public async ValueTask<data.@this> Of(global::app.module.@this module)
+     {
+-        // a name that is no module's names no setting: unset, as an unbound %!x% has always read (a
+-        // template leaves it as written, the ask sentinel reads its absence)
+-        if (!(await _context.App.module.Get(name)).Success) return _context.NotFound(name);
+         await Load();
+-        return Class(name) != null
+-            ? Instance(name)
+-            : new data.@this(name, new global::app.type.item.setting.module.@this(name), context: _context);
++        var node = new global::app.type.item.setting.module.@this(module.Name);
++        return Class(node.Path) != null ? Instance(node.Path) : new data.@this(node.Path, node, context: _context);
+     }
+ 
+     // This run's values under path, the closest scope winning, as the options they set — a key deeper than
+diff --git a/PLang/app/goal/step/action/this.Item.cs b/PLang/app/goal/step/action/this.Item.cs
+index 8a8f58511..8d02b20bd 100644
+--- a/PLang/app/goal/step/action/this.Item.cs
++++ b/PLang/app/goal/step/action/this.Item.cs
+@@ -33,6 +33,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
+     /// <summary>A structure, never a single-token leaf — drives the serializer's structure branch.</summary>
+     public override bool IsLeaf => false;
+ 
++    /// <summary>This action's settings — <c>%!llm.query.setting%</c>: its options, as the catalog has them.</summary>
++    protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
++        => string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase)
++            ? new global::app.data.@this(key, new global::app.type.item.setting.action.@this(Module[Name] ?? this), parent: parent)
++            : await base.Setting(parent, key);
++
+     /// <summary>The action writes ITSELF — the bare shape it owns, in every view:
+     /// <c>{module, name, property, default?, child?}</c>. Its module is a reference, written by name,
+     /// never walked. Each property writes its own row (<c>{name, type, value, properties?}</c>);
+diff --git a/PLang/app/goal/step/this.Scope.cs b/PLang/app/goal/step/this.Scope.cs
+index 5d5ae1c32..eaa517a00 100644
+--- a/PLang/app/goal/step/this.Scope.cs
++++ b/PLang/app/goal/step/this.Scope.cs
+@@ -13,7 +13,7 @@ public sealed partial class @this
+     public global::app.type.property.list.@this Typed => _typed;
+ 
+     private List<global::app.type.item.setting.kind.@this> _setting = [];
+-    /// <summary>The classes of settings the step's words name (<c>%!llm.cache%</c> → llm's,
++    /// <summary>The classes of settings the step's words name (<c>%!llm.setting.cache%</c> → llm's,
+     /// <c>%!app.test.setting.parallel%</c> → test's), in the order written — what the builder teaches the
+     /// step's options from. Left by the walk; empty until then. Build-time only.</summary>
+     [JsonIgnore]
+diff --git a/PLang/app/module/build/code/Default.cs b/PLang/app/module/build/code/Default.cs
+index 3ca6e33a9..35a3faf42 100644
+--- a/PLang/app/module/build/code/Default.cs
++++ b/PLang/app/module/build/code/Default.cs
+@@ -53,7 +53,7 @@ public class Default : IBuilder
+         if (files == null || files.Count == 0)
+             return context.Ok(new global::app.type.item.list.@this<Goal>());
+ 
+-        // Filter by build's files setting if set (--build={"files":[...]}, %!build.files%)
++        // Filter by build's files setting if set (--build={"files":[...]}, %!build.setting.files%)
+         // Honor the user's specified order — building has bootstrapping concerns
+         // (e.g., system/builder rebuilding itself: BuildGoal must come LAST so
+         // earlier iterations use the previous in-memory build pipeline).
+diff --git a/PLang/app/module/build/setting/this.cs b/PLang/app/module/build/setting/this.cs
+index 2947125c2..27dd2515c 100644
+--- a/PLang/app/module/build/setting/this.cs
++++ b/PLang/app/module/build/setting/this.cs
+@@ -1,7 +1,7 @@
+ namespace app.module.build.setting;
+ 
+ /// <summary>
+-/// The build module's own settings — <c>%!build.cache%</c>, <c>%!build.files%</c>: what the builder reads.
++/// The build module's own settings — <c>%!build.setting.cache%</c>, <c>%!build.setting.files%</c>: what the builder reads.
+ /// <c>--build={…}</c> is this run's values for them.
+ /// </summary>
+ public sealed class @this : global::app.type.item.setting.module.@this
+diff --git a/PLang/app/module/build/this.cs b/PLang/app/module/build/this.cs
+index 05ce5c11c..ee8f9e966 100644
+--- a/PLang/app/module/build/this.cs
++++ b/PLang/app/module/build/this.cs
+@@ -11,7 +11,7 @@ namespace app.module.build;
+ /// so the builder can validate SQL against real schema without creating files.
+ /// Activated by: plang p build
+ /// </summary>
+-public sealed partial class @this
++public sealed partial class @this : global::app.type.item.setting.ISetting<setting.@this>
+ {
+     private readonly actor.context.@this _context;
+ 
+diff --git a/PLang/app/module/llm/setting/this.cs b/PLang/app/module/llm/setting/this.cs
+index e61548adc..6ec737e6d 100644
+--- a/PLang/app/module/llm/setting/this.cs
++++ b/PLang/app/module/llm/setting/this.cs
+@@ -1,7 +1,7 @@
+ namespace app.module.llm.setting;
+ 
+ /// <summary>
+-/// The llm module's own settings — <c>%!llm.cache%</c>: what every llm action takes when neither the step
++/// The llm module's own settings — <c>%!llm.setting.cache%</c>: what every llm action takes when neither the step
+ /// nor the action's own setting says.
+ /// </summary>
+ public sealed class @this : global::app.type.item.setting.module.@this
+diff --git a/PLang/app/module/this.cs b/PLang/app/module/this.cs
+index 2ea5147e2..e579ecbeb 100644
+--- a/PLang/app/module/this.cs
++++ b/PLang/app/module/this.cs
+@@ -179,6 +179,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
+         return _root == null && Named(key) is { } module ? new global::app.data.@this(key, module, parent: parent) : member;
+     }
+ 
++    /// <summary>This module's settings — <c>%!llm.setting%</c>: its own class, or the options its actions take.</summary>
++    protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
++        => _root != null && string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase)
++            ? await parent.Context.Setting.Of(this)
++            : await base.Setting(parent, key);
++
+     /// <summary>Select the catalog element that holds <paramref name="clr"/> — the module and the name registration
+     /// gave the class; the app's module asks each of its modules. Null when no module holds it.</summary>
+     internal global::app.goal.step.action.@this? this[System.Type clr]
+diff --git a/PLang/app/module/variable/set.cs b/PLang/app/module/variable/set.cs
+index d739ab4f0..76f2fbbdd 100644
+--- a/PLang/app/module/variable/set.cs
++++ b/PLang/app/module/variable/set.cs
+@@ -124,7 +124,7 @@ public partial class Set : IContext, IScope, IKeep
+             return Context.Error(Name.Error
+                 ?? new global::app.error.Error("variable.set: Name did not resolve to a variable.", "CreateVariableDeclined", 400));
+ 
+-        // `set default` writes only where nothing is — a setting included (%!build.cache% holds its
++        // `set default` writes only where nothing is — a setting included (%!build.setting.cache% holds its
+         // class's default, or this run's value).
+         if (await AsDefault.ToBooleanAsync())
+         {
+@@ -303,8 +303,8 @@ public partial class Set : IContext, IScope, IKeep
+         // name as-is, without inspecting or computing it (no .Value). A reference
+         // or template resolves/renders on its own door at read; a literal is itself. A self-write
+         // (`set %a%=%a%`) is dropped at build, never handled here. The variable writes itself: a
+-        // bare name rebinds, `%x.a%` sets a member, `%x!cost%` the binding's Properties, `%!llm.cache%` a
+-        // setting's option for this run.
++        // bare name rebinds, `%x.a%` sets a member, `%x!cost%` the binding's Properties, `%!llm.setting.cache%`
++        // a setting's option for this run.
+         return await name.Set(Value, Context);
+     }
+ 
+diff --git a/PLang/app/type/clr/this.cs b/PLang/app/type/clr/this.cs
+index 7b918e644..3a467d920 100644
+--- a/PLang/app/type/clr/this.cs
++++ b/PLang/app/type/clr/this.cs
+@@ -112,7 +112,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
+ 
+     /// <summary>The host's settings, when <paramref name="key"/> is <c>setting</c> and the host names a
+     /// setting class — the carrier answers for what it carries.</summary>
+-    private new async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
++    protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
+         => string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase)
+             ? await parent.Context.Setting.Of(Value)
+             : null;
+diff --git a/PLang/app/type/item/setting/action/this.cs b/PLang/app/type/item/setting/action/this.cs
+index 4637caa6e..1c83342a1 100644
+--- a/PLang/app/type/item/setting/action/this.cs
++++ b/PLang/app/type/item/setting/action/this.cs
+@@ -1,16 +1,17 @@
+ namespace app.type.item.setting.action;
+ 
+ /// <summary>
+-/// An action's settings — <c>%!llm.query%</c>: its options are its properties (<c>%!llm.query.cache%</c>),
+-/// each as the action-param seam reads it (this run's — the action's, then the module's — the saved rows),
+-/// else the action's default. What <c>save %!llm.query%</c> stores is the action with them.
++/// An action's settings — <c>%!llm.query.setting%</c>: its options are its properties
++/// (<c>%!llm.query.setting.cache%</c>), each as the action-param seam reads it (this run's — the action's, then
++/// the module's — the saved rows), else the action's default. What <c>save %!llm.query.setting%</c> stores is the
++/// action with them.
+ /// </summary>
+ public sealed class @this : global::app.type.item.setting.@this
+ {
+     private readonly global::app.goal.step.action.@this _action;
+ 
+     /// <param name="action">The action as the catalog has it.</param>
+-    public @this(global::app.goal.step.action.@this action) : base($"{action.Module.Name}.{action.Name}") => _action = action;
++    public @this(global::app.goal.step.action.@this action) : base($"{action.Module.Name}.{action.Name}.setting") => _action = action;
+ 
+     /// <summary>One of the action's options, as this run and the saved rows set it, else its default.</summary>
+     protected override async System.Threading.Tasks.ValueTask<global::app.data.@this> Next(global::app.data.@this parent, string key)
+@@ -20,7 +21,7 @@ public sealed class @this : global::app.type.item.setting.@this
+         return set.IsInitialized ? set : new global::app.data.@this(key, option.Default, parent: parent);
+     }
+ 
+-    /// <summary>This run's value for one of the action's options (<c>set %!http.request.timeout% = 5</c>),
++    /// <summary>This run's value for one of the action's options (<c>set %!http.request.setting.timeout% = 5</c>),
+     /// where the action-param seam reads it.</summary>
+     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex,
+         object? value, global::app.actor.context.@this context)
+diff --git a/PLang/app/type/item/setting/module/this.cs b/PLang/app/type/item/setting/module/this.cs
+index ae8e63a5d..f3b2e86ec 100644
+--- a/PLang/app/type/item/setting/module/this.cs
++++ b/PLang/app/type/item/setting/module/this.cs
+@@ -1,38 +1,34 @@
+ namespace app.type.item.setting.module;
+ 
+ /// <summary>
+-/// A module's settings — <c>%!llm%</c>, <c>%!http%</c>: its own options (a module with a setting class of
+-/// its own derives this, <c>module/action/llm/setting</c>) and its actions by name (<c>%!llm.query%</c>).
++/// A module's settings — <c>%!llm.setting%</c>, <c>%!http.setting%</c>: its own options (a module with a setting
++/// class of its own derives this, <c>module/llm/setting</c>), and an option any of its actions takes
++/// (<c>%!http.setting.timeout%</c>). An action's own settings are the action's (<c>%!llm.query.setting%</c>).
+ /// </summary>
+ public class @this : global::app.type.item.setting.@this
+ {
++    private const string Own = ".setting";
++
+     /// <summary>A module with no setting class of its own.</summary>
+-    public @this(string module) : base(module) { }
++    public @this(string module) : base(module + Own) { }
+ 
+-    /// <summary>A module's own class — its path is the module's name.</summary>
++    /// <summary>A module's own class — its path is the module's, then <c>.setting</c>.</summary>
+     protected @this() { }
+ 
+-    /// <summary>An action of this module, as its settings (<c>%!llm.query%</c>).</summary>
+-    protected override async System.Threading.Tasks.ValueTask<global::app.data.@this> Next(global::app.data.@this parent, string key)
+-    {
+-        var module = await parent.Context.App.module.Get(Path);
+-        if (!module.Success) return module;
+-        return (await module.Value())![key] is { } action
+-            ? new global::app.data.@this(key, new global::app.type.item.setting.action.@this(action), parent: parent)
+-            : parent.Context.NotFound(key);
+-    }
++    /// <summary>The module these settings configure — the path before <c>.setting</c>.</summary>
++    private string Module => Path[..^Own.Length];
+ 
+     /// <summary>This run's value for an option of the module: one of its own class's, else one any of its
+-    /// actions takes (<c>set %!http.timeout% = 5</c> → <c>http.timeout</c>, which each of those actions
+-    /// reads after its own key).</summary>
++    /// actions takes (<c>set %!http.setting.timeout% = 5</c> → <c>http.setting.timeout</c>, which each of those
++    /// actions reads after its own key).</summary>
+     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex,
+         object? value, global::app.actor.context.@this context)
+     {
+         if (Option(key) != null) return await base.Set(key, isIndex, value, context);
+-        var module = await context.App.module.Get(Path);
++        var module = await context.App.module.Get(Module);
+         if (!module.Success || await module.Value() is not { } found
+             || !found.ActionNames.Any(name => found[name]?.Property[key] != null))
+-            throw new System.NotSupportedException($"module '{Path}' has no option '{key}'");
++            throw new System.NotSupportedException($"module '{Module}' has no option '{key}'");
+         await Write(key, value, context);
+         return this;
+     }
+diff --git a/PLang/app/type/item/setting/this.cs b/PLang/app/type/item/setting/this.cs
+index b3fdd91a1..8541a2040 100644
+--- a/PLang/app/type/item/setting/this.cs
++++ b/PLang/app/type/item/setting/this.cs
+@@ -3,11 +3,11 @@ namespace app.type.item.setting;
+ /// <summary>
+ /// A setting — what an owner lets be set: a class of options (its public settable properties) whose
+ /// initializers are the defaults (<c>app.goal.list.setting</c>'s <c>Os</c>, llm's <c>Cache</c>). Each class
+-/// is a kind of this type, named by its path: its namespace, which is its owner's path in plang
+-/// (<c>%!app.goal.list.setting%</c>); a module's own class is read by the module's name
+-/// (<c>app.module.llm.setting</c> → <c>llm</c>, <c>%!llm.cache%</c>). A bare setting is a node — a
+-/// path that leads to settings (a module, an action's <c>llm.query</c>). The asker's settings build one,
+-/// the saved row and this run's values on it.
++/// is a kind of this type, named by its path — the path a program reads it by, its owner's then
++/// <c>.setting</c>: its namespace (<c>%!app.goal.list.setting%</c>), a module's read from the module
++/// (<c>app.module.llm.setting</c> → <c>llm.setting</c>, <c>%!llm.setting.cache%</c>). A bare setting is a
++/// node — the settings of a module or an action with no class of its own (<c>%!llm.query.setting%</c>). The
++/// asker's settings build one, the saved row and this run's values on it.
+ /// </summary>
+ [global::app.Attributes.PlangType("setting")]
+ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
+@@ -15,16 +15,17 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
+     /// <summary>A node: the path it stands for.</summary>
+     public @this(string path) => Path = path;
+ 
+-    /// <summary>A class of options: its path is its namespace, a module's own class read as the module's
+-    /// name.</summary>
++    /// <summary>A class of options: its path is its namespace — a module's read from the module, so
++    /// <c>app.module.llm.setting</c> is <c>llm.setting</c>.</summary>
+     protected @this()
+     {
+         var path = GetType().Namespace!;
+-        const string module = "app.module.", own = ".setting";
+-        Path = path.StartsWith(module) && path.EndsWith(own) ? path[module.Length..^own.Length] : path;
++        const string module = "app.module.";
++        Path = path.StartsWith(module) ? path[module.Length..] : path;
+     }
+ 
+-    /// <summary>The path this setting is read by — <c>%!app.goal.list.setting%</c> is <c>app.goal.list.setting</c>.</summary>
++    /// <summary>The path this setting is read by — <c>%!app.goal.list.setting%</c> is <c>app.goal.list.setting</c>,
++    /// <c>%!llm.setting%</c> is <c>llm.setting</c>.</summary>
+     [Out] public string Path { get; }
+ 
+     /// <summary>A setting is built by the asker's settings, never made from a value.</summary>
+@@ -55,13 +56,13 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
+         return await Next(parent, key);
+     }
+ 
+-    /// <summary>What a key that isn't one of this class's options names — a module's settings answer an
+-    /// action (<c>%!llm.query%</c>), an action's its options; a class has nothing past its options.</summary>
++    /// <summary>What a key that isn't one of this class's options names — an action's settings answer its
++    /// options (<c>%!llm.query.setting.cache%</c>); a class has nothing past its options.</summary>
+     protected virtual System.Threading.Tasks.ValueTask<global::app.data.@this> Next(global::app.data.@this parent, string key)
+         => System.Threading.Tasks.ValueTask.FromResult(parent.Context.NotFound(key));
+ 
+     /// <summary>Writes an option for this run: the value lands in the writer's settings under this class's
+-    /// path (<c>set %!app.goal.list.setting.os% = true</c> → <c>goal.list.setting.os</c>), where the next read
++    /// path (<c>set %!app.goal.list.setting.os% = true</c> → <c>app.goal.list.setting.os</c>), where the next read
+     /// builds it from — and on this instance.</summary>
+     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex,
+         object? value, global::app.actor.context.@this context)
+diff --git a/PLang/app/type/item/this.cs b/PLang/app/type/item/this.cs
+index abe6eadea..9abe231b2 100644
+--- a/PLang/app/type/item/this.cs
++++ b/PLang/app/type/item/this.cs
+@@ -242,8 +242,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
+ 
+     /// <summary>This owner's settings as the asker sees them, when <paramref name="key"/> is
+     /// <c>setting</c> and this owner names a setting class (<see cref="setting.ISetting{T}"/>):
+-    /// <c>%!app.goal.list.setting%</c>. Null otherwise.</summary>
+-    protected async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
++    /// <c>%!app.goal.list.setting%</c>. Null otherwise. An owner whose settings are not one class (a module,
++    /// an action) answers its own.</summary>
++    protected virtual async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
+         => string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase)
+             ? await parent.Context.Setting.Of(this)
+             : null;
+diff --git a/PLang/app/type/item/variable/code/Variable.cs b/PLang/app/type/item/variable/code/Variable.cs
+index 7721f71f0..13f051526 100644
+--- a/PLang/app/type/item/variable/code/Variable.cs
++++ b/PLang/app/type/item/variable/code/Variable.cs
+@@ -13,14 +13,20 @@ public sealed class Variable : Hop
+ 
+     protected override void Piece(global::app.type.format.IWriter writer) => writer.String(Name);
+ 
+-    /// <summary>What the name holds; a <c>!</c> name the memory doesn't bind (<c>%!goal.list.setting%</c>)
+-    /// is the asker's settings' — the bindings (<c>!app</c>, <c>!data</c>, …) answer first.</summary>
++    /// <summary>What the name holds. A <c>!</c> name the memory doesn't bind is the app's member
++    /// (<c>%!goal%</c>, <c>%!build%</c> while building), else the module by that name (<c>%!llm%</c>) — a member
++    /// holding nothing is not the app's. The bindings (<c>!app</c>, <c>!data</c>, …) answer first.</summary>
+     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
+         global::app.data.@this? previous, global::app.actor.context.@this context)
+     {
+         var bound = await context.Variable.Get(Name);
+         if (bound.IsInitialized || !Name.StartsWith('!')) return bound;
+-        return await context.Setting.Get(Name[1..]);
++        var name = Name[1..];
++        var app = await context.Variable.Get("!app");
++        var member = await app.Peek().Get(app, name);
++        if (member.IsInitialized && !member.Peek().IsNull) return member;
++        var module = await context.App.module.Get(name);
++        return module.Success ? new global::app.data.@this(name, await module.Value(), context: context) : context.NotFound(name);
+     }
+ 
+     /// <summary>The variable rebinds to <paramref name="value"/>.</summary>
+@@ -30,8 +36,8 @@ public sealed class Variable : Hop
+ 
+     /// <summary>What the name holds, or — when it holds nothing — an empty dict stored under it,
+     /// so a write deeper in (<c>set %x.a% = 1</c> on a new <c>%x%</c>) has a place to land. A <c>!</c>
+-    /// name the memory doesn't bind that names a setting (<c>%!http.request.timeout%</c>) is the asker's
+-    /// settings, which take the write themselves.</summary>
++    /// name the memory doesn't bind that is the app's or a module (<c>%!http.request.setting.timeout%</c>) is
++    /// that, which takes the write itself.</summary>
+     internal async System.Threading.Tasks.ValueTask<global::app.data.@this> Ensure(global::app.actor.context.@this context)
+     {
+         if (Name.StartsWith('!') && await Start(null, context) is { IsInitialized: true } held) return held;
