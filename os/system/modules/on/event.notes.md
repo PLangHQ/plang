@@ -11,3 +11,5 @@
 `When` is `before` or `after`.
 
 The called goal reads `%!event%` (the event), `%!event!item%` (what it fired for) and `%!event!result%` (the result so far, after it). A call bound before an event can cancel it with `on.cancel`.
+
+`on input call X` — "input" with no channel, event or "before/after" — is `on.input` (listen to this app's input line by line), not this.

@@ -32,6 +32,14 @@ public partial class @this
                ?.Capabilities.Select(c => new global::app.type.item.text.@this(c))
            ?? Enumerable.Empty<global::app.type.item.text.@this>();
 
+    /// <summary>The goal this action calls, as written — when its handler declares that it calls one
+    /// (<c>[CallsGoal]</c>: goal.call, browser.callGoal); null for every other action.</summary>
+    [JsonIgnore]
+    internal string? CallsGoal
+        => Handler?.GetCustomAttribute<global::app.Attributes.CallsGoalAttribute>() is { } calls
+            ? this[calls.Property]?.Value?.ToString()?.Trim('"')
+            : null;
+
     private global::app.type.@this? _return;
     private bool _returnComputed;
 
