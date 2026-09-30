@@ -1,0 +1,181 @@
+diff --git a/PLang/app/goal/step/pick/list/this.cs b/PLang/app/goal/step/pick/list/this.cs
+index 1ccfd3122..6d7eff705 100644
+--- a/PLang/app/goal/step/pick/list/this.cs
++++ b/PLang/app/goal/step/pick/list/this.cs
+@@ -201,7 +201,7 @@ public sealed class @this
+         _moduleAsked = Asked(context).Select(m => _modules[m]).ToList();
+         IsCondition = Tests;
+         IsUnsure = Unsure(context);
+-        _listed = Listing();
++        _listed = Listing(context);
+         Formal = Prefill(context);
+         Known = await Code(context.App.module.list, context);
+     }
+@@ -273,8 +273,11 @@ public sealed class @this
+ 
+     // ---------------------------------------------------------------- what the prompt shows
+ 
+-    private List<listed.@this> Listing()
++    private List<listed.@this> Listing(global::app.actor.context.@this context)
+     {
++        // how sure stage 1 was of each module stage 2 asked about — shown beside an action picked through one
++        var modules = string.Join(", ", Asked(context).Select(m =>
++            $"{m} {((double)(_module.GetValueOrDefault(m) ?? (number)0.0)).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)}"));
+         var shown = new List<(string Name, number Score)>();
+         foreach (var p in _items)
+             if (p.Score is { } s && s >= (number)Possible) shown.Add((p.Name, s));
+@@ -293,6 +296,8 @@ public sealed class @this
+                  : popular.ContainsKey(p.Name) && !(_items.FirstOrDefault(i => i.Name == p.Name)?.Score is { } own && own >= (number)Possible)
+                      ? listed.Mark.Popular
+                  : listed.Mark.Possible,
++            Module = modules.Length > 0 && _items.FirstOrDefault(i => i.Name == p.Name)?.From is From.YesNo or From.Choice
++                ? modules : null,
+         }).ToList();
+     }
+ 
+diff --git a/PLang/app/goal/step/pick/listed/this.cs b/PLang/app/goal/step/pick/listed/this.cs
+index 3ba12416e..7b63dc175 100644
+--- a/PLang/app/goal/step/pick/listed/this.cs
++++ b/PLang/app/goal/step/pick/listed/this.cs
+@@ -24,4 +24,9 @@ public sealed class @this
+     public string Shown => ((double)Score).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
+ 
+     public Mark Mark { get; init; }
++
++    /// <summary>For an action picked through its module: how sure stage 1 was of each module stage 2 asked about,
++    /// as the prompt prints it (<c>file 0.56, variable 0.36</c>) — the action's score is its certainty within its
++    /// module, not the module's. Null for any other action.</summary>
++    public string? Module { get; init; }
+ }
+diff --git a/os/system/builder/llm/Properties.llm b/os/system/builder/llm/Properties.llm
+index 766aef329..be8aa6fe2 100644
+--- a/os/system/builder/llm/Properties.llm
++++ b/os/system/builder/llm/Properties.llm
+@@ -5,7 +5,7 @@ Before you, a decider (a separate model) read each step and scored the actions i
+   [5] - build.load, write to %app% => decider: build.load 1.00, variable.set 0.85 (write to) => formal: build.load(); variable.set(Name=%app%, Value=%!data%)
+ 
+ - the step, as the programmer wrote it;
+-- after `=> decider:`, the decider's actions with their scores: 0.90 or more is certain; below that is marked (possible). (write to) marks the variable.set of a `write to %x%`, already filled in. (possible, popular) is its best guess on a step it was unsure of;
++- after `=> decider:`, the decider's actions with their scores: 0.90 or more is certain; below that is marked (possible). (write to) marks the variable.set of a `write to %x%`, already filled in. (possible, popular) is its best guess on a step it was unsure of. An action picked through its module shows how sure the decider was of the module itself: `file.delete 0.99 (module file 0.56, variable 0.36)`. The action's score is its certainty within that module; when the module itself is unsure (below 0.90), the step's words and the actions' notes decide which module's action the step uses — even over the starting line;
+ - after `=> formal:`, your starting line: the certain actions, with `?` where a value is still needed. There is no `=> formal:` when nothing is certain.
+ 
+ A step ending in `=> cached` is already built: don't answer it; it is there for the steps around it.
+diff --git a/os/system/builder/llm/templates/properties.template b/os/system/builder/llm/templates/properties.template
+index 10ef445ed..e3bd4f870 100644
+--- a/os/system/builder/llm/templates/properties.template
++++ b/os/system/builder/llm/templates/properties.template
+@@ -37,7 +37,7 @@ Needs: goal (its steps' Pick taken), modules (%!app.module.list%).
+   [{{ s.Index }}] {{ indent }}- {{ s.Text }}
+ {%- if s.IsCached or s.IsFormal %} => cached{% continue %}{% endif %} => decider: {% if s.Pick.Listed.size == 0 %}(nothing it is sure of){% endif -%}
+ {%- for l in s.Pick.Listed -%}
+-{{ l.Name }} {{ l.Shown }}{% case l.Mark %}{% when "Possible" %} (possible){% when "WriteTo" %} (write to){% when "Popular" %} (possible, popular){% endcase %}{% unless forloop.last %}, {% endunless %}
++{{ l.Name }} {{ l.Shown }}{% if l.Module %} (module {{ l.Module }}){% endif %}{% case l.Mark %}{% when "Possible" %} (possible){% when "WriteTo" %} (write to){% when "Popular" %} (possible, popular){% endcase %}{% unless forloop.last %}, {% endunless %}
+ {%- assign mark = "|" | append: l.Name | append: "|" -%}
+ {%- unless shown contains mark -%}{%- assign shown = shown | append: l.Name | append: "|" -%}{%- endunless -%}
+ {%- endfor -%}
+diff --git a/os/system/modules/file/delete.notes.md b/os/system/modules/file/delete.notes.md
+new file mode 100644
+index 000000000..fd5f44bad
+--- /dev/null
++++ b/os/system/modules/file/delete.notes.md
+@@ -0,0 +1,2 @@
++Only when the step names a file or a folder to delete: `delete file %x%`, `remove file 'a.txt'`, `delete the folder 'tmp'`. A bare `remove %x%` removes the variable (variable.remove), even when %x% holds a file — the file stays on disk.
++Path — the file or folder to delete, as the step writes it.
+diff --git a/os/system/modules/variable/remove.notes.md b/os/system/modules/variable/remove.notes.md
+new file mode 100644
+index 000000000..7e286d59a
+--- /dev/null
++++ b/os/system/modules/variable/remove.notes.md
+@@ -0,0 +1 @@
++`remove %x%` removes the variable %x%, whatever it holds — a file it holds stays on disk. Deleting the file itself needs the word: `delete file %x%` is file.delete.
+diff --git a/tools/decider/bootstrap.py b/tools/decider/bootstrap.py
+index 2ce4aaa66..1f55616dc 100644
+--- a/tools/decider/bootstrap.py
++++ b/tools/decider/bootstrap.py
+@@ -83,7 +83,8 @@ def parse(text):
+ def picks_of(decided):
+     """A step's picks as c_eval reads them from decider_eval.one."""
+     return {s['index']: {**{a: v['score'] for a, v in s['pick'].items()},
+-                         **({'@popular': s['popular']} if s.get('popular') else {})} for s in decided['steps']}
++                         **({'@popular': s['popular']} if s.get('popular') else {}),
++                         **({'@module': c.module_shares(s)} if c.module_shares(s) else {})} for s in decided['steps']}
+ 
+ def build(rel, goal, cat):
+     """One goal: the decider, prompt C, the check, one retry. The answers, or why the goal was refused."""
+diff --git a/tools/decider/c_eval.py b/tools/decider/c_eval.py
+index eff8a27d0..e0a82dd87 100644
+--- a/tools/decider/c_eval.py
++++ b/tools/decider/c_eval.py
+@@ -283,7 +283,8 @@ if __name__ == '__main__':
+                                ex.map(lambda case: d.one(case, cat, os.path.join(SHARED, case['id'], 'decider')), GOLDEN)))
+         # a step's picks; an unsure step also carries '@popular': the top 3 of the decider's popular-action choice
+         picks = {cid: {s['index']: {**{a: v['score'] for a, v in s['pick'].items()},
+-                                    **({'@popular': s['popular']} if s.get('popular') else {})} for s in r['steps']}
++                                    **({'@popular': s['popular']} if s.get('popular') else {}),
++                                    **({'@module': c.module_shares(s)} if c.module_shares(s) else {})} for s in r['steps']}
+                  for cid, r in decided.items()}
+         json.dump({'picks': {k: {str(i): p for i, p in v.items()} for k, v in picks.items()},
+                    'decider': {cid: {'stage1': r['stage1'], 'stage2': r['stage2']} for cid, r in decided.items()}},
+diff --git a/tools/decider/decider_eval.py b/tools/decider/decider_eval.py
+index e6972b3c0..75fcc9de5 100644
+--- a/tools/decider/decider_eval.py
++++ b/tools/decider/decider_eval.py
+@@ -115,7 +115,8 @@ def one(case, cat, folder=None):
+         steps.append({'index': i, 'text': s['text'], 'expected': case.get('menu', {}).get(str(i), []),
+                       'popular': dict(popular) if (i, '@popular') in acts else None,
+                       'main': h.main_module(probs[i], cat),
+-                      'modules': {m: p for m, p in probs[i].items() if m in cat}, 'pick': pick})
++                      'modules': {m: p for m, p in probs[i].items() if m in cat}, 'pick': pick,
++                      'asked': list(chosen.get(i, []))})
+     return {'goal': case['id'], 'steps': steps, 'skipped': skipped,
+             'stage1': {'secs': s1, 'bytes': b1, 'questions': q1, 'usage': u1},
+             'stage2': {'secs': s2, 'bytes': b2, 'questions': q2, 'usage': u2}}
+diff --git a/tools/decider/pick_fixture.py b/tools/decider/pick_fixture.py
+index a9b940451..b6afad4e8 100644
+--- a/tools/decider/pick_fixture.py
++++ b/tools/decider/pick_fixture.py
+@@ -75,11 +75,15 @@ for case in e.GOLDEN:
+     for s in goal['steps']:
+         i = s['index']
+         pick = {a: p for a, p in split.get(i, ({}, [], []))[0].items()}
++        through = []   # the actions picked through their module: the prompt shows the modules' shares beside them
+         for m in chosen.get(i, []):
+             if (i, m) not in acts: continue
+             name = f'{m}.{acts[(i, m)][0]}'
+             if name in pick: continue
+             pick[name] = acts.get((i, f'@also.{m}'), (None, None))[1] if m in runners.get(i, []) else probs[i][m]
++            through.append(name)
++        if through:
++            pick['@module'] = {a: {m: probs[i].get(m) or 0.0 for m in chosen[i]} for a in through}
+         for a in h.BRANCHES:
+             if (i, a) in acts: pick[a] = acts[(i, a)][1]
+         if (i, '@popular') in acts:
+diff --git a/tools/decider/prompt_c.py b/tools/decider/prompt_c.py
+index 97a5ad863..f65d727af 100644
+--- a/tools/decider/prompt_c.py
++++ b/tools/decider/prompt_c.py
+@@ -80,6 +80,12 @@ def destination(text):
+     found = ref.read(text, m.end()) if m else None
+     return found['text'] if found else None
+ 
++def module_shares(step):
++    """{action: {module: share}} for the actions a decided step picked through a module (stage 2): how sure stage 1
++    was of each module stage 2 asked about — the prompt shows it beside the action (the C# listed.Module)."""
++    asked = {m: step['modules'].get(m) or 0.0 for m in step.get('asked', [])}
++    return {a: asked for a, v in step['pick'].items() if v['from'].startswith('stage 2')} if asked else {}
++
+ def listed(picks_i, text=''):
+     """The step's picks shown to the LLM: ≥ 0.5, most certain first. A step that says `write to %x%`
+     has variable.set whatever the decider scored it: that is a known value, not a guess. An unsure step
+@@ -281,7 +287,10 @@ def user_message_c(goal, picks):
+         step_picks = listed(picks.get(s['index'], {}), s['text'])
+         known = destination(s['text'])
+         pop = popular_only(picks.get(s['index'], {}))
+-        decider = ', '.join(f'{a} {p:.2f}' + ('' if p >= CERTAIN else ' (write to)' if a == 'variable.set' and known
++        shares = picks.get(s['index'], {}).get('@module', {})
++        decider = ', '.join(f'{a} {p:.2f}'
++                            + (' (module ' + ', '.join(f'{m} {x:.2f}' for m, x in shares[a].items()) + ')' if a in shares else '')
++                            + ('' if p >= CERTAIN else ' (write to)' if a == 'variable.set' and known
+                                               else ' (possible, popular)' if a in pop else ' (possible)')
+                             for a, p in step_picks)
+         # one line per step: the step as written, => its picks, => the pre-filled formal (after a multi-line
