@@ -1,0 +1,38 @@
+{
+  "branch": "docs/module-reference-from-source",
+  "sessions": [
+    {
+      "id": "c8ea35df-bc01-42eb-8425-7b8853e528e3",
+      "bot": "docs",
+      "timestamp_start": "2026-09-30T00:00:00Z",
+      "timestamp_end": "2026-09-30T00:00:00Z",
+      "intent": "Spec learner module-reference generation from source (.md + handler attributes); golden sample for file module.",
+      "before": {
+        "assumptions": "Learner pages hand-written and drift from handlers; app-systems already carries per-property prose in notes.md.",
+        "risk": "Tagged notes.md leaks tag text into build prompts if committed before compile-teaching strips tags."
+      },
+      "plan": ".bot/docs-module-reference-from-source/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["Documentation/v0.2/module-reference-generation.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Generation spec: one-home-per-fact ownership, tagged notes.md format (say:/builder:), type mapping, generation rules, golden output sample for the file module. Data source is the existing descriptor app.goal.step.action.@this, not a C# re-parse."
+        },
+        {
+          "paths": [".bot/docs-module-reference-from-source/docs/v1/plan.md", ".bot/docs-module-reference-from-source/docs/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Plan + summary. Scope split: docs owns format/prose/spec/golden sample; coder owns render pass + tag-stripping in compile teaching."
+        }
+      ],
+      "after": {
+        "status": "spec complete; generator is a coder feature (hand-off written)",
+        "health": "green",
+        "notes": "Interim hand-written column + accuracy fixes live on doc-tree-app-obp; that prose seeds the generator's notes.md enrichment."
+      }
+    }
+  ]
+}
