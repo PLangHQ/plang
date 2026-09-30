@@ -67,6 +67,12 @@ internal sealed class Video : IDisposable
     private readonly IntPtr output = Marshal.AllocHGlobal(32);   // MFT_OUTPUT_DATA_BUFFER
     private int frameWidth, frameHeight, stride;
     private long time;
+    private bool shown;
+    // kept from picture to picture: made again only when the size changes
+    private IntPtr outSample;
+    private int outSize;
+    private byte[] nv12 = [], bgra = [];
+    private static readonly byte[] zeros = new byte[32];
 
     /// <summary>Which stream of PlangOS's this decodes.</summary>
     internal uint Id { get; }
@@ -104,9 +110,13 @@ internal sealed class Video : IDisposable
     }
 
     /// <summary>The next of its bytes (Annex B); the newest picture that came out of them, as BGRA
-    /// <paramref name="width"/> × <paramref name="height"/> — or null when none did (yet).</summary>
-    internal byte[]? Decode(ReadOnlySpan<byte> h264, int width, int height)
+    /// <paramref name="width"/> × <paramref name="height"/> — or null when none did (yet), or when it
+    /// isn't to be <paramref name="shown"/> (a newer one waits: this one is only decoded, which the
+    /// ones after it need). The picture is this decoder's own array, the same each time: copy it out
+    /// before the next.</summary>
+    internal byte[]? Decode(ReadOnlySpan<byte> h264, int width, int height, bool shown)
     {
+        this.shown = shown;
         Check(MFCreateMemoryBuffer(h264.Length, out var buffer), "buffer");
         Check(MFCreateSample(out var sample), "sample");
         byte[]? picture = null;
@@ -145,26 +155,23 @@ internal sealed class Video : IDisposable
         while (true)
         {
             Check(Fn<StreamInfo>(transform, GetOutputStreamInfo)(transform, 0, out var info), "output info");
-            // the decoder gives its own samples (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES), or takes ours
+            // the decoder gives its own samples (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES), or takes ours:
+            // one, made once for the size, kept (not 60 new ones a second)
             var ours = (info.Flags & 0x100) == 0;
-            IntPtr sample = IntPtr.Zero, buffer = IntPtr.Zero;
-            if (ours)
-            {
-                Check(MFCreateSample(out sample), "sample");
-                Check(MFCreateMemoryBuffer(Math.Max(info.Size, stride * frameHeight * 3 / 2), out buffer), "buffer");
-                Fn<CallPtrIn>(sample, AddBuffer)(sample, buffer);
-            }
+            var sample = IntPtr.Zero;
+            if (ours) sample = Out(Math.Max(info.Size, stride * frameHeight * 3 / 2));
+            Marshal.Copy(zeros, 0, output, 32);
+            Marshal.WriteIntPtr(output, 8, sample);
+            var hr = Fn<Output>(transform, ProcessOutput)(transform, 0, 1, output, out _);
+            var events = Marshal.ReadIntPtr(output, 24);
+            if (events != IntPtr.Zero) Let(events);
+            if (!ours) sample = Marshal.ReadIntPtr(output, 8);   // the decoder's: let go of below
             try
             {
-                Marshal.Copy(new byte[32], 0, output, 32);
-                Marshal.WriteIntPtr(output, 8, sample);
-                var hr = Fn<Output>(transform, ProcessOutput)(transform, 0, 1, output, out _);
-                var events = Marshal.ReadIntPtr(output, 24);
-                if (events != IntPtr.Zero) Let(events);
-                if (!ours) sample = Marshal.ReadIntPtr(output, 8);   // released below
                 if (hr == NeedMoreInput) return picture;
                 if (hr == StreamChange) { Typed(); continue; }
                 Check(hr, "H.264 output");
+                if (!shown || sample == IntPtr.Zero) continue;
                 if (Fn<CallPtr>(sample, ConvertToContiguousBuffer)(sample, out var whole) < 0) continue;
                 try
                 {
@@ -176,10 +183,22 @@ internal sealed class Video : IDisposable
             }
             finally
             {
-                if (sample != IntPtr.Zero) Let(sample);
-                if (buffer != IntPtr.Zero) Let(buffer);
+                if (!ours && sample != IntPtr.Zero) Let(sample);
             }
         }
+    }
+
+    /// <summary>The output sample, with a buffer of at least <paramref name="size"/> bytes.</summary>
+    private IntPtr Out(int size)
+    {
+        if (outSample != IntPtr.Zero && outSize >= size) return outSample;
+        if (outSample != IntPtr.Zero) Let(outSample);
+        Check(MFCreateSample(out outSample), "sample");
+        Check(MFCreateMemoryBuffer(size, out var buffer), "buffer");
+        Fn<CallPtrIn>(outSample, AddBuffer)(outSample, buffer);
+        Let(buffer);   // the sample holds it
+        outSize = size;
+        return outSample;
     }
 
     /// <summary>The pictures come out as NV12: the first such type the decoder offers, and the size
@@ -214,15 +233,18 @@ internal sealed class Video : IDisposable
     /// BT.709 video range — the numbers PlangOS encoded with. Rows in parallel bands.</summary>
     private byte[]? Bgra(IntPtr data, int length, int width, int height)
     {
-        if (frameWidth < width || frameHeight < height || length < stride * frameHeight * 3 / 2) return null;
-        var nv12 = new byte[stride * frameHeight * 3 / 2];
-        Marshal.Copy(data, nv12, 0, nv12.Length);
-        var bgra = new byte[width * height * 4];
-        var uv = stride * frameHeight;
-        var s = stride;
-        Parallel.For(0, Math.Min(Environment.ProcessorCount, Math.Max(1, height / 32)), band =>
+        var size = stride * frameHeight * 3 / 2;
+        if (frameWidth < width || frameHeight < height || length < size) return null;
+        if (nv12.Length != size) nv12 = new byte[size];
+        Marshal.Copy(data, nv12, 0, size);
+        if (bgra.Length != width * height * 4) bgra = new byte[width * height * 4];
+        var (yuv, rgb, uv, s) = (nv12, bgra, stride * frameHeight, stride);
+        // half the cores: the other half are PlangOS's (its VM runs on this machine's cores too)
+        var bands = Math.Clamp(Environment.ProcessorCount / 2, 1, Math.Max(1, height / 32));
+        Parallel.For(0, bands, band =>
         {
-            var bands = Math.Min(Environment.ProcessorCount, Math.Max(1, height / 32));
+            var nv12 = yuv;
+            var bgra = rgb;
             for (var y = height * band / bands; y < height * (band + 1) / bands; y++)
             {
                 var o = y * width * 4;
@@ -246,12 +268,17 @@ internal sealed class Video : IDisposable
 
     public void Dispose()
     {
+        if (outSample != IntPtr.Zero) Let(outSample);
         if (transform != IntPtr.Zero) Let(transform);
         Marshal.FreeHGlobal(output);
     }
 
+    // a function of the table, made callable once and kept (it is called for every picture)
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(IntPtr, Type), Delegate> functions = new();
+
     private static T Fn<T>(IntPtr self, int slot) where T : Delegate =>
-        Marshal.GetDelegateForFunctionPointer<T>(Marshal.ReadIntPtr(Marshal.ReadIntPtr(self), slot * IntPtr.Size));
+        (T)functions.GetOrAdd((Marshal.ReadIntPtr(Marshal.ReadIntPtr(self), slot * IntPtr.Size), typeof(T)),
+            key => Marshal.GetDelegateForFunctionPointer<T>(key.Item1));
 
     private static void Let(IntPtr self) => Fn<Call0>(self, Release)(self);
 
