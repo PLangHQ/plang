@@ -6,7 +6,8 @@ namespace app.channel.type.file;
 /// <summary>
 /// A file as a channel. A value written to it is opened at the last moment, encoded in the format the file's
 /// extension names (<c>.pr</c> → goal's, <c>.json</c> → json, <c>.txt</c> → text), and lands in one write, so
-/// a failed encode leaves the file as it was. A file of no format the value has holds its text. Write-only.
+/// a failed encode leaves the file as it was. The file's format writes the value, or asks its type to be born
+/// from it; when nothing can, the write fails with the format's reason. Write-only.
 /// </summary>
 public sealed class @this : global::app.channel.@this
 {
@@ -37,11 +38,6 @@ public sealed class @this : global::app.channel.@this
             if (opened != null) return context.Error(opened);
             using var encoded = new MemoryStream();
             var result = await Path.Kind(context).kind.Encode(encoded, data, context, ct: ct);
-            if (!result.Success && result.Error?.Key == "NoEncoder")
-            {
-                encoded.SetLength(0);
-                result = await context.App.type.list["text"].kind.Encode(encoded, data, context, ct: ct);
-            }
             if (!result.Success) return result;
             return await Path.WriteBytes(encoded.ToArray(), context);
         }
