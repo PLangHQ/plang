@@ -152,6 +152,9 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         // Each read step, checked — every problem it shows, at once — in the goal's order, walked over
         // one scratch store: a step reads the variables the steps before it left.
         using var scratch = Scratch(context);
+        // The steps are checked inside their goal's frame, as they will run: what a step names relative to its
+        // goal (a file 'note.txt') is found where the goal is, not where the builder's own goal is.
+        await using var frame = CountRaw > 0 && this[0].Goal is { } goal ? context.CallStack.Push(goal) : null;
         for (int i = 0; i < CountRaw; i++)
         {
             var step = this[i];
