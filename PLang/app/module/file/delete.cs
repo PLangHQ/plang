@@ -21,7 +21,7 @@ public partial class Delete : IContext
     /// variable is known only at run.</summary>
     public async Task<data.@this> Build() => Path.HasVariable ? Context.Ok() : await Path.Use(path =>
     {
-        if (path is global::app.type.item.path.file.@this file) Context.App.Build?.Files.Delete(file, recursive: true);
+        path.Remove(Context);
         return Task.FromResult(Context.Ok());
     });
 }

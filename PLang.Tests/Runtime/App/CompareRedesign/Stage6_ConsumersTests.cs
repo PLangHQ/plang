@@ -107,7 +107,8 @@ public class Stage6_ConsumersTests
         // phase 2 orders the in-hand keys with a sync comparator
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-sortsize-" + System.Guid.NewGuid().ToString("N")[..8]);
+        // in the app's root: a file's size is read through the gate, which asks for anything outside it
+        var dir = System.IO.Path.Combine(app.AbsolutePath, "sortsize");
         Directory.CreateDirectory(dir);
         try
         {

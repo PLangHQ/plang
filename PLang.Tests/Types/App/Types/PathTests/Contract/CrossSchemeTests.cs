@@ -60,7 +60,7 @@ public class CrossSchemeTests
         await moved.IsSuccess();
         var read = await dst.Touch(context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("move cross");
-        var srcGone = await src.ExistsAsync(context);
+        var srcGone = await src.Exists(context);
         await Assert.That((await srcGone.Value())).IsEqualTo(false);
     }
 }

@@ -203,7 +203,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         return data.@this<global::app.type.item.binary.@this>.From(await Send(HttpMethod.Get, content: null, readBody: true, verb, context));
     }
 
-    public override async Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync(actor.context.@this context)
+    public override async Task<data.@this<global::app.type.item.@bool.@this>> Exists(actor.context.@this context)
     {
         if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.@bool.@this>.From(early);
         try
@@ -239,11 +239,11 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     /// <summary>
     /// Truthiness of an http path is "does the resource exist" — an HTTP HEAD.
-    /// Reuses <see cref="ExistsAsync"/>; a denied or errored probe answers false.
+    /// Reuses <see cref="Exists"/>; a denied or errored probe answers false.
     /// </summary>
     public override async Task<bool> AsBooleanAsync(actor.context.@this context)
     {
-        var existsResult = await ExistsAsync(context);
+        var existsResult = await Exists(context);
         return existsResult.Success && await existsResult.ToBooleanAsync();
     }
 

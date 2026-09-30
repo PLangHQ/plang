@@ -71,11 +71,20 @@ public sealed partial class @this
     public override async Task<global::app.error.Error?> Absence(actor.context.@this context)
     {
         if (!Known(context)) return null;
-        var exists = await ExistsAsync(context);
+        var exists = await Exists(context);
         if (!exists.Success) return exists.Error;
         return await exists.ToBooleanAsync() ? null
             : new global::app.error.Error($"'{this}' does not exist on disk", "NotFound", 404);
     }
+
+    public override void Add(actor.context.@this context, global::app.type.item.path.@this? source = null)
+        => context.FileSystem.Add(source is @this from ? Into(from, context.FileSystem) : this);
+
+    public override void Remove(actor.context.@this context) => context.FileSystem.Remove(this);
+
+    // Where a file sent here lands: under this location when it is a folder, else here.
+    private @this Into(@this source, filesystem.@this files)
+        => files.IsFolder(this) ? new @this(PathHelper.Combine(Absolute, source.FileName)) : this;
 
     // A location whose extension names a format — its kind carries extensions ({binary, xyz} for an unknown one carries none).
     private bool Known(actor.context.@this context) => Kind(context).kind.Extension.Count > 0;
@@ -95,7 +104,7 @@ public sealed partial class @this
         }
     }
 
-    public override async Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync(actor.context.@this context)
+    public override async Task<data.@this<global::app.type.item.@bool.@this>> Exists(actor.context.@this context)
     {
         if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.@bool.@this>.From(early);
         return context.Ok<global::app.type.item.@bool.@this>(context.FileSystem.IsFile(this) || context.FileSystem.IsFolder(this));
@@ -103,14 +112,14 @@ public sealed partial class @this
 
     /// <summary>
     /// Truthiness of a file path is "does it exist". Routes through the gated
-    /// <see cref="ExistsAsync"/> — the same shape as <c>HttpPath.AsBooleanAsync</c>:
+    /// <see cref="Exists"/> — the same shape as <c>HttpPath.AsBooleanAsync</c>:
     /// a denied or errored probe answers false. Keeps the existence check behind
     /// <see cref="@this.AuthGate"/> so an out-of-root probe still needs a Read
     /// grant (in-root is free via IsInRoot).
     /// </summary>
     public override async Task<bool> AsBooleanAsync(actor.context.@this context)
     {
-        var existsResult = await ExistsAsync(context);
+        var existsResult = await Exists(context);
         return existsResult.Success && await existsResult.ToBooleanAsync();
     }
 
@@ -335,7 +344,7 @@ public sealed partial class @this
             }
 
             // File transfer: into the destination when it names a folder ---------
-            var target = files.IsFolder(destination) ? new @this(PathHelper.Combine(destination.Absolute, FileName)) : destination;
+            var target = destination.Into(this, files);
             if (isMove) await files.Move(this, target, overwrite);
             else await files.Copy(this, target, overwrite);
 

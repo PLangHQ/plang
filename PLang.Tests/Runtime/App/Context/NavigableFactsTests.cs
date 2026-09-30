@@ -18,6 +18,11 @@ public class NavigableFactsTests
         "app.this.data",
         "app.this.event",
         "app.type.item.path.this.MimeType",
+        // gated reads: the asker is asked (an http path sends a HEAD); a refusal is the answer
+        "app.type.item.path.this.Exists",
+        "app.type.item.path.file.this.Exists",
+        "app.type.item.path.http.this.Exists",
+        "app.type.item.path.file.this.Size",
     };
 
     [Test] public async Task EveryNavigableMethod_IsAFactReadForIt()

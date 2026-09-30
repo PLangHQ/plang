@@ -44,10 +44,10 @@ public sealed class @this
 
         foreach (var file in candidates)
         {
-            // ExistsAsync routes through AuthGate(Read) — in-root setup probes
+            // Exists routes through AuthGate(Read) — in-root setup probes
             // fast-pass via IsInRoot. Out-of-root would prompt, but setup paths
             // are derived from App.AbsolutePath so this is always in-root.
-            var exists = await file.ExistsAsync(context);
+            var exists = await file.Exists(context);
             if (!exists.Success) return exists;
             if ((await exists.Value())?.Value != true) continue;
 

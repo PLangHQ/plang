@@ -140,11 +140,11 @@ public class HttpPathTests
         await Grant(app, context, absent);
         await new HttpPath(present).WriteText("here", context);
 
-        var existsPresent = await new HttpPath(present).ExistsAsync(context);
+        var existsPresent = await new HttpPath(present).Exists(context);
         await existsPresent.IsSuccess();
         await Assert.That((await existsPresent.Value())).IsEqualTo(true);
 
-        var existsAbsent = await new HttpPath(absent).ExistsAsync(context);
+        var existsAbsent = await new HttpPath(absent).Exists(context);
         await existsAbsent.IsSuccess();
         await Assert.That((await existsAbsent.Value())).IsEqualTo(false);
     }

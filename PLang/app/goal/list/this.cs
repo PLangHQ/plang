@@ -157,7 +157,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     private async Task<goal.@this?> Readable(global::app.type.item.path.@this pr, CancellationToken ct)
     {
         var context = App.actor.list.System.Context!;
-        var exists = await pr.ExistsAsync(context);
+        var exists = await pr.Exists(context);
         if (!exists.Success || !await exists.ToBooleanAsync()) return null;
         var result = await global::app.goal.@this.Load(pr, App);
         return result.Success && await result.Value() is goal.@this goal ? goal : null;
@@ -216,7 +216,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
     private async Task<IReadOnlyList<global::app.type.item.path.@this>> Listed(global::app.type.item.path.@this root)
     {
         var context = App.actor.list.System.Context!;
-        var exists = await root.ExistsAsync(context);
+        var exists = await root.Exists(context);
         if (!exists.Success || !await exists.ToBooleanAsync()) return [];
         var listed = await root.List("*.pr", recursive: true, context);
         if (!listed.Success || await listed.Value() is not { } files) return [];

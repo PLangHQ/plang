@@ -15,7 +15,7 @@ public partial class Save : IContext
     /// is known only at run.</summary>
     public async Task<data.@this> Build() => Path.HasVariable ? Context.Ok() : await Path.Use(path =>
     {
-        if (path is global::app.type.item.path.file.@this file) Context.App.Build?.Files.Add(file);
+        path.Add(Context);
         return Task.FromResult(Context.Ok());
     });
 }

@@ -49,17 +49,14 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     [Out, Store] public override string Scheme => "file";
 
-    // --- Live filesystem state — file-scheme-only ---
-    //
-    // Synchronous and context-less: a navigation (%photo.Path.Exists%) has no caller to gate or to take a
-    // filesystem from, so these read the disk. They live on FilePath so an HttpPath never inherits them.
-    // The gated, cross-scheme liveness query is the async `Stat()`.
-
-    /// <summary>True when a file or directory exists at this path.</summary>
-    [LlmBuilder] public bool Exists => new filesystem.@this() is var disk && (disk.IsFile(this) || disk.IsFolder(this));
-
-    /// <summary>Size in bytes of the file at this path; 0 when absent.</summary>
-    [LlmBuilder] public global::app.type.item.number.@this Size => new filesystem.@this().Stat(this).Length ?? 0;
+    /// <summary>Size in bytes of the file at this path, as its asker may read it — through the gate; 0 when
+    /// nothing is there.</summary>
+    [LlmBuilder] public async Task<data.@this<global::app.type.item.number.@this>> Size(actor.context.@this context)
+    {
+        var stat = await Stat(context);
+        if (!stat.Success || stat.Exits) return data.@this<global::app.type.item.number.@this>.From(stat);
+        return context.Ok<global::app.type.item.number.@this>((await stat.Value())?.Length ?? 0L);
+    }
 
     /// <summary>
     /// FilePath-specific resolve: applies relative-path-to-goal-folder

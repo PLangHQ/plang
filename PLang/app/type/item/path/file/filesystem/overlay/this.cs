@@ -31,10 +31,13 @@ public sealed class @this : filesystem.@this
 
     /// <summary>Puts a file at <paramref name="p"/> — with <paramref name="content"/>, or empty when what it
     /// holds is not known (a file a step will write at run).</summary>
-    public void Add(file.@this p, byte[]? content = null)
+    public override void Add(file.@this p, byte[]? content = null)
     {
         lock (_lock) _files[p.Absolute] = content ?? [];
     }
+
+    /// <summary>Hides what is at <paramref name="p"/>, and all under it, as a delete here does.</summary>
+    public override void Remove(file.@this p) => Delete(p, recursive: true);
 
     public override bool IsFile(file.@this p)
     {

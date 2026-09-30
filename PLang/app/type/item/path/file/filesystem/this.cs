@@ -68,6 +68,14 @@ public class @this
         return Task.CompletedTask;
     }
 
+    /// <summary>A file said to be at <paramref name="p"/> — with <paramref name="content"/>, or empty when what it
+    /// holds is not known yet. The disk holds only what is written: nothing changes here. An overlay holds it.</summary>
+    public virtual void Add(file.@this p, byte[]? content = null) { }
+
+    /// <summary>A file or folder said to be gone from <paramref name="p"/>. The disk loses only what is deleted:
+    /// nothing changes here. An overlay hides it.</summary>
+    public virtual void Remove(file.@this p) { }
+
     /// <summary>What is at the path: a file with its length, a folder, or nothing.</summary>
     public virtual StatInfo Stat(file.@this p)
     {

@@ -25,7 +25,7 @@ public class PathAbstractTests
         (nameof(PLangPath.WriteText), new[] { typeof(string), Ctx }),
         (nameof(PLangPath.WriteBytes), new[] { typeof(byte[]), Ctx }),
         (nameof(PLangPath.Append), new[] { typeof(string), Ctx }),
-        (nameof(PLangPath.ExistsAsync), new[] { Ctx }),
+        (nameof(PLangPath.Exists), new[] { Ctx }),
         (nameof(PLangPath.Stat), new[] { Ctx }),
         (nameof(PLangPath.Mkdir), new[] { Ctx }),
         (nameof(PLangPath.AsBooleanAsync), new[] { Ctx }),

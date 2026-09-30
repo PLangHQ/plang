@@ -822,12 +822,12 @@ public sealed class Default : IHttp
         if (content is global::app.type.item.text.@this)
         {
             var str = content.ToString()!;
-            // Try as file path — gated through path.ExistsAsync (AuthGate(Read)).
+            // Try as file path — gated through path.Exists (AuthGate(Read)).
             // Out-of-root probes prompt or deny; in-root fast-passes. Any failure
             // (including denial) falls through to "treat as a string body" —
             // matches the prior "if not a file, send as string" shape.
             var p = global::app.type.item.path.@this.Resolve(str, context);
-            var exists = await p.ExistsAsync(context);
+            var exists = await p.Exists(context);
             if (exists.Success && await exists.ToBooleanAsync())
                 return await CreateFileContentAsync(app, context, str);
 

@@ -74,6 +74,15 @@ public abstract partial class @this
     /// is not fetched at build) or it is there.</summary>
     public virtual Task<global::app.error.Error?> Absence(actor.context.@this context) => Task.FromResult<global::app.error.Error?>(null);
 
+    /// <summary>Build's face of a write: this location is in its caller's files, for the steps after it. A copy or
+    /// a move names its <paramref name="source"/> — into a folder, the file lands under it. Only a file location
+    /// has a place in a filesystem; any other does nothing.</summary>
+    public virtual void Add(actor.context.@this context, @this? source = null) { }
+
+    /// <summary>Build's face of a delete: this location is gone from its caller's files, for the steps after it.
+    /// Only a file location has a place in a filesystem; any other does nothing.</summary>
+    public virtual void Remove(actor.context.@this context) { }
+
     // The type a reference of this location is: the reference type named, of this location's content kind.
     protected global::app.type.@this Reference(string type, actor.context.@this context)
         => context.App.type.list[new global::app.type.@this(type, Kind(context).kind is { IsEmpty: false } k ? k.Name : null), context];
@@ -82,7 +91,9 @@ public abstract partial class @this
     /// themselves (a reference sampling its content, a request body, an attachment). A program reads a location
     /// through <see cref="Read"/>, which lands a value; this is the bytes, not a value.</summary>
     internal abstract Task<data.@this<global::app.type.item.binary.@this>> Bytes(actor.context.@this context);
-    public abstract Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync(actor.context.@this context);
+    /// <summary>Whether something is at this location, as its asker may see: through the gate — a refusal is the
+    /// answer as it is; nothing there is false.</summary>
+    [LlmBuilder] public abstract Task<data.@this<global::app.type.item.@bool.@this>> Exists(actor.context.@this context);
     public abstract Task<data.@this<StatInfo>> Stat(actor.context.@this context);
 
     // Writes return the path itself wrapped — caller can chain or read .Exists.

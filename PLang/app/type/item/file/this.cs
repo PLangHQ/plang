@@ -49,9 +49,12 @@ public sealed class @this : global::app.type.item.content.@this, global::app.typ
     }
 
     /// <summary>Truthiness of a reference is its location's: does it exist.</summary>
-    public override bool IsTruthy() => Path is global::app.type.item.path.file.@this fp && fp.Exists;
+    public override System.Threading.Tasks.Task<bool> AsBooleanAsync(global::app.actor.context.@this context)
+        => Path.AsBooleanAsync(context);
 
-    /// <summary>Stat byte-size — the file's `!size` (<c>number</c>); never reads content.</summary>
-    public global::app.type.item.number.@this Size =>
-        Path is global::app.type.item.path.file.@this fp ? fp.Size : (global::app.type.item.number.@this)0;
+    /// <summary>Stat byte-size — the file's `!size` (<c>number</c>), as its asker may read it; never reads
+    /// content.</summary>
+    public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.number.@this>> Size(global::app.actor.context.@this context)
+        => Path is global::app.type.item.path.file.@this fp ? await fp.Size(context)
+            : context.Ok<global::app.type.item.number.@this>(0L);
 }

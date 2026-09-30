@@ -57,13 +57,13 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         var p = Authorized(await Fixture.CreateFresh());
         try
         {
-            var before = await p.ExistsAsync(context);
+            var before = await p.Exists(context);
             await Assert.That((await before.Value())?.ToString()).IsEqualTo("false");
             await p.WriteText("now here", context);
-            var after = await p.ExistsAsync(context);
+            var after = await p.Exists(context);
             await Assert.That((await after.Value())?.ToString()).IsEqualTo("true");
             await p.Delete(context);
-            var gone = await p.ExistsAsync(context);
+            var gone = await p.Exists(context);
             await Assert.That((await gone.Value())?.ToString()).IsEqualTo("false");
         }
         finally { await Fixture.Cleanup(p); }
@@ -96,7 +96,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
             await copied.IsSuccess();
             var read = await dst.Touch(context);
             await Assert.That((await read.Value())?.ToString()).IsEqualTo("copy me");
-            var srcStill = await src.ExistsAsync(context);
+            var srcStill = await src.Exists(context);
             await Assert.That((await srcStill.Value())?.ToString()).IsEqualTo("true");
         }
         finally { await Fixture.Cleanup(src); await Fixture.Cleanup(dst); }
@@ -114,7 +114,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
             await moved.IsSuccess();
             var read = await dst.Touch(context);
             await Assert.That((await read.Value())?.ToString()).IsEqualTo("move me");
-            var srcGone = await src.ExistsAsync(context);
+            var srcGone = await src.Exists(context);
             await Assert.That((await srcGone.Value())?.ToString()).IsEqualTo("false");
         }
         finally { await Fixture.Cleanup(src); await Fixture.Cleanup(dst); }

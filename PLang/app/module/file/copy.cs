@@ -24,9 +24,7 @@ public partial class Copy : IContext
     public async Task<data.@this> Build() => Source.HasVariable || Destination.HasVariable ? Context.Ok()
         : await Source.Use(source => Destination.Use(destination =>
         {
-            if (source is global::app.type.item.path.file.@this from && destination is global::app.type.item.path.file.@this to
-                && Context.App.Build?.Files is { } files)
-                files.Add(files.IsFolder(to) ? new global::app.type.item.path.file.@this(to.Combine(from.FileName).Absolute) : to);
+            destination.Add(Context, source);
             return Task.FromResult(Context.Ok());
         }));
 }

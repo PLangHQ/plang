@@ -443,7 +443,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     {
         var context = actor.list.System.Context!;
         var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", context);
-        var exists = await prPath.ExistsAsync(context);
+        var exists = await prPath.Exists(context);
         if (!exists.Success || (await exists.Value())?.Value != true) return context.Ok();
         // app.pr is the app's identity, not a goal: its raw content. Its value would go through the .pr
         // format's goal reader, which refuses a file that isn't a goal.

@@ -363,7 +363,7 @@ public class Fluid : ITemplate
             {
                 if (string.IsNullOrEmpty(candidate)) continue;
                 var resolved = _basePath.Combine(candidate);
-                var exists = await resolved.ExistsAsync(_context);
+                var exists = await resolved.Exists(_context);
                 if (!exists.Success)
                     throw new global::app.error.AppException($"include '{candidate}': {exists.Error?.Message}",
                         exists.Error?.Key ?? "IncludeFailed", exists.Error?.StatusCode ?? 500);
