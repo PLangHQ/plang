@@ -11,7 +11,7 @@ namespace app.module;
 /// </summary>
 [global::app.Attributes.PlangType("module")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
-    global::app.type.item.IMatch<@this>, global::app.type.item.ICurrent<@this>, global::app.type.item.ILoad<@this>
+    global::app.type.item.IMatch<@this>, global::app.type.item.ILoad<@this>
 {
     /// <summary>A module is registered from its actions' classes, never made from a value.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
@@ -168,16 +168,27 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public global::app.goal.step.action.@this? this[string actionName]
         => _action.TryGetValue(actionName, out var action) ? action : null;
 
-    /// <summary>One step down: the module's own members first (<c>.name</c>, <c>.action</c>, …), then one of its
-    /// actions by name — <c>%!app.module.file.read%</c> is the catalog action a program binds events on.</summary>
+    /// <summary>One step by dot: the module's own members first (<c>.name</c>, <c>.list</c>, <c>.action</c>, …), then
+    /// one of its children by name — <c>%!module.file.read%</c> is the catalog action a program binds events on. An
+    /// item's inner members are not the module's: <c>%!module.variable%</c> is the variable module.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
-    {
-        var member = await base.Get(parent, key);
-        if (member.IsInitialized) return member;
-        if (this[key] is { } action) return new global::app.data.@this(key, action, parent: parent);
-        // the app's module holds no actions: a key is one of its modules (%!app.module.file%)
-        return _root == null && Named(key) is { } module ? new global::app.data.@this(key, module, parent: parent) : member;
-    }
+        => !Declares(key) && Child(key) is { } child
+            ? new global::app.data.@this(key, child, parent: parent)
+            : await base.Get(parent, key);
+
+    /// <summary>Brackets pick a child by name — <c>%!module["list"]%</c> is the list module, whose name the app's
+    /// module's own <c>.list</c> takes.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key, bool isIndex)
+        => !isIndex ? await Get(parent, key)
+            : Child(key) is { } child ? new global::app.data.@this(key, child, parent: parent) : parent.Context.NotFound(key);
+
+    // One child by name: the app's module holds modules, a module its actions.
+    private global::app.type.item.@this? Child(string key) => _root == null ? Named(key) : this[key];
+
+    // Whether key is one of the module class's own members.
+    private bool Declares(string key)
+        => GetType().GetProperty(key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
+            | System.Reflection.BindingFlags.IgnoreCase | System.Reflection.BindingFlags.DeclaredOnly) != null;
 
     /// <summary>This module's settings — <c>%!llm.setting%</c>: its own class, or the options its actions take.</summary>
     protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)

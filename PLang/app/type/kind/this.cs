@@ -246,6 +246,12 @@ public class @this
             : global::System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.Error(
                 $"nothing writes {Owner ?? "binary"} content", "NoEncoder", 400)));
 
+    /// <summary>What characters of this kind stand for, opened when they are needed — a text of kind json walked by
+    /// <c>%x.a%</c> is the json its characters are. Null when the characters stand for nothing but themselves (plain
+    /// text, md): the default. Distinct from <see cref="Parse"/>, which a read asks: a kind can keep a text a text when
+    /// it is read, and open it only when it is navigated.</summary>
+    public virtual global::app.type.item.@this? Open(string characters, global::app.actor.context.@this context) => null;
+
     /// <summary>The async face over <see cref="Parse"/> — the materialization rung (<c>source.Value</c>)
     /// asks the kind first; a decline (null) falls to the family's type reader. No second decode
     /// lives here: Load wraps the one <see cref="Parse"/> body.</summary>

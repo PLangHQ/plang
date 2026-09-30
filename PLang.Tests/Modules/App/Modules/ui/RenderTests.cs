@@ -117,6 +117,25 @@ public class RenderTests : IDisposable
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("Hello PLang!");
     }
 
+    // A rendered file is content of the template's own format: a .json template renders a text of kind json; an
+    // inline template renders plain text (the educator's report, blocker 2).
+    [Test]
+    public async Task Render_AJsonFile_IsTextOfKindJson()
+    {
+        WriteTemplateFile("request.json", "{\"deep\": \"{{ model }}\"}");
+        var context = _app.actor.list.User.Context;
+        context.Variable.Set(new Data("model", "m-1", context: context));
+
+        var file = await _provider.Render(new Render(context) { Template = (global::app.type.item.text.@this)"request.json", IsFile = (global::app.type.item.@bool.@this)true });
+        var inline = await _provider.Render(new Render(context) { Template = (global::app.type.item.text.@this)"{\"deep\": \"{{ model }}\"}", IsFile = (global::app.type.item.@bool.@this)false });
+
+        await file.IsSuccess();
+        await Assert.That((await file.Value())?.ToString()).IsEqualTo("{\"deep\": \"m-1\"}");
+        await Assert.That(file.Type.Name).IsEqualTo("text");
+        await Assert.That(file.Type.kind.Name).IsEqualTo("json");
+        await Assert.That(inline.Type.kind.IsEmpty).IsTrue();
+    }
+
     [Test]
     public async Task Render_MissingFile_ReturnsError()
     {

@@ -1,18 +1,9 @@
 namespace app.module.output;
 
 /// <summary>
-/// Payload for an in-flight or resolved ask. The Snapshot rides as
-/// <c>Data.Snapshot</c>; the stateless Message channel populates it for
-/// resume.
-///
-/// <para>Two states ride the same record:</para>
-/// <list type="bullet">
-///   <item><b>Suspend</b> — <see cref="Answer"/> is null. <see cref="ShouldExit"/>
-///         returns true, so the step loop short-circuits.</item>
-///   <item><b>Resolved</b> — <see cref="Answer"/> carries the user's response.
-///         <see cref="ShouldExit"/> returns false; the step loop continues and the
-///         trailing variable.set binds the Ask. Callers read <c>%name.Answer%</c>.</item>
-/// </list>
+/// A pending ask — the question went out and its answer comes later: the goal suspends on it (an
+/// <see cref="global::app.IExitsGoal"/>, so the step loop short-circuits), and the snapshot on its Data resumes the
+/// goal once the user replies (a message channel). An answered ask is never an Ask: it is the answer itself.
 /// </summary>
 [global::app.Attributes.PlangType("ask")]
 public sealed class Ask : global::app.type.item.@this, global::app.type.item.ICreate<Ask>, global::app.IExitsGoal
@@ -21,49 +12,17 @@ public sealed class Ask : global::app.type.item.@this, global::app.type.item.ICr
     /// "output", the owning module, not this value's name).</summary>
     protected internal override global::app.type.@this Type
         => new("ask", typeof(Ask));
-
-    /// <summary>A pending ask — no answer yet; the goal suspends on it.</summary>
-    public Ask() { }
-
-    /// <summary>An answered ask.</summary>
-    public Ask(string? answer) => Answer = answer;
-
-    /// <summary>What answers an ask is an Ask: an Ask is itself; any other answer (a line typed, a goal's
-    /// result, what a binding answered in the channel's place) is its text, answered.</summary>
-    public static Ask? Create(object? raw) => raw switch
-    {
-        null => null,
-        Ask ask => ask,
-        _ => new Ask(raw.ToString()),
-    };
-
-    /// <summary>The user's response on the resume path. Null while the ask is
-    /// pending — short-circuit semantics fire until this is bound.</summary>
-    [Out] public string? Answer { get; init; }
-
-    /// <inheritdoc/>
-    public bool ShouldExit() => Answer == null;
-
-    /// <summary>
-    /// Renders the bound answer for PLang string contexts — `write to %name%`
-    /// followed by `%name% equals "Alice"` compares text against the answer
-    /// without needing `%name.Answer%`. Returns empty string for a pending Ask.
-    /// **Note:** this means ToString() leaks the user's answer; do not use an
-    /// `Ask` value in diagnostic / log paths. Output-channel routing is the
-    /// right path; arbitrary string interpolation in trace dumps is not.
-    /// </summary>
-    public override string ToString() => Answer ?? string.Empty;
 }
 
 /// <summary>
-/// Asks the actor a question via the input channel. Two paths:
-///  - **Stateful channel** (Stream, in-process goal channel): the channel
-///    answers synchronously; the answer flows back through Data.Value.
-///  - **Stateless channel** (Message / HTTP, when wired): the channel returns
-///    a <c>Data&lt;Ask&gt;</c> with Snapshot attached. The engine short-circuits
-///    via the step-loop's ShouldExit. Resume re-runs the goal; the channel
-///    pre-binds the answer under <c>%!ask.answer%</c> so the second call to
-///    output.ask short-circuits to that value.
+/// Asks the actor a question via the input channel, and answers with what the user answered — the user's data
+/// itself (a line typed is text: <c>- ask "what is your name?", write to %name%</c> → <c>%name%</c> is "Ada").
+/// Two paths:
+///  - **Stateful channel** (Stream, in-process goal channel): the channel answers at once; the answer is the
+///    step's result as it came.
+///  - **Stateless channel** (Message / HTTP, when wired): the channel answers a pending <see cref="Ask"/> with
+///    its Snapshot; the step loop suspends on it. Resume re-runs the goal; the channel pre-binds the answer under
+///    <c>%!ask.answer%</c>, so the second call to output.ask answers with that, as it is.
 ///
 /// PLang: <c>- ask user "what's your name?", write to %name%</c>
 /// </summary>
@@ -83,7 +42,8 @@ public partial class ask : IContext
     /// <summary>Resume sentinel — variable name used to inject the answer.</summary>
     public const string AnswerVariableName = "!ask.answer";
 
-    public async Task<data.@this<Ask>> Start()
+    // The answer is whatever the user's data is — relayed, never re-made: a bare Data, not Data<T>.
+    public async Task<data.@this> Start()
     {
         // Resume path: channel pre-bound the answer under !ask.answer.
         var answer = await new global::app.type.item.variable.@this(AnswerVariableName).Start(Context);
@@ -93,14 +53,14 @@ public partial class ask : IContext
             // variable "!ask". Variable.Remove only takes flat keys; removing
             // the root consumes the marker. "!ask" is reserved for this use.
             await Context.Variable.Remove("!ask");
-            return Context.Ok<Ask>(new Ask((await answer.Value())?.ToString()));
+            return answer;
         }
 
-        // Fresh path: the input channel answers as an Ask — answered (a stream's line, a goal's result) or
-        // pending with a Snapshot (a message channel), which the step loop's ShouldExit suspends on.
+        // Fresh path: the input channel answers — the user's data (a stream's line, a goal's result), or a pending
+        // Ask with a Snapshot (a message channel), which the step loop's ShouldExit suspends on.
         // none there: the actor has no input, or its input is a goal channel running its own body
         if (Context.Actor?.Channel.Get(global::app.channel.list.@this.Input) is not { } input)
-            return Context.Error<Ask>(new global::app.error.Error(
+            return Context.Error(new global::app.error.Error(
                 "there is no input channel to ask on — none is registered, or it is busy running its own goal",
                 "NoInputChannel", 400));
         // The wait ends when the run's cancellation says so — the program's timeout on the ask, a test's, Ctrl-C.

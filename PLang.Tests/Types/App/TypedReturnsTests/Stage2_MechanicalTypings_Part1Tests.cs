@@ -34,15 +34,13 @@ public class Stage2_MechanicalTypings_Part1Tests
         await Assert.That(ret).IsEqualTo(expected);
     }
 
-    // output.ask returns Task<Data<Ask>>. Suspend path returns an Ask with
-    // Answer=null (ShouldExit() true); resume path returns Ask with Answer
-    // bound (ShouldExit() false) so the step loop continues.
+    // output.ask relays the answer as it comes — the user's data, or a pending Ask on the suspend path — so it is
+    // a polymorphic forwarder: bare Task<Data>.
     [Test]
-    public async Task OutputAsk_Run_ReturnsTaskDataOfAsk()
+    public async Task OutputAsk_Run_ReturnsBareTaskOfData()
     {
         var ret = StartReturnType<global::app.module.output.ask>();
-        var expected = typeof(Task<global::app.data.@this<global::app.module.output.Ask>>);
-        await Assert.That(ret).IsEqualTo(expected);
+        await Assert.That(ret).IsEqualTo(typeof(Task<Data>));
     }
 
     [Test]
@@ -69,14 +67,13 @@ public class Stage2_MechanicalTypings_Part1Tests
         await Assert.That(row!.Return).IsEqualTo(_app.type.list[new global::app.type.@this("list", "test"), _app.actor.list.User.Context]);
     }
 
-    // Catalog renders output.ask's return as "ask" — the runtime return type
-    // is Data<Ask>, with the user's string reply riding on Ask.Answer.
+    // Catalog renders output.ask's return as "item" — the answer is whatever the user's data is.
     [Test]
-    public async Task ModulesDescribe_OutputAsk_AdvertisesAskReturnType()
+    public async Task ModulesDescribe_OutputAsk_AdvertisesItemReturnType()
     {
         var row = _app.Module("output")["ask"];
         await Assert.That(row).IsNotNull();
-        await Assert.That(row!.Return).IsEqualTo(_app.type.list["ask"]);
+        await Assert.That(row!.Return).IsEqualTo(_app.type.list["item"]);
     }
 
     [Test]

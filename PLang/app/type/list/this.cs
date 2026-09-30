@@ -35,7 +35,21 @@ public sealed partial class @this
     /// it is found as <see cref="Kind(string)"/> finds a name.
     /// </summary>
     public global::app.type.kind.@this Kind(app.type.@this type, actor.context.@this context)
-        => this[type, context].kind is { Owner: not null } held ? held : Kind(type.kind.Name);
+        => Kind(type.Name, type.kind is { IsEmpty: false } spelled ? spelled.Name : null);
+
+    /// <summary>
+    /// The kind the type named <paramref name="type"/> has by the name <paramref name="kind"/>: one it holds, or one
+    /// it coins for the name (text's <c>{text, json}</c>); the type's own empty kind when no kind is named or the name
+    /// is the type's own format. A kind the type has none of is found as <see cref="Kind(string)"/> finds a name. The
+    /// type is found by its name, and no type is made — a value writing itself asks this on every write.
+    /// </summary>
+    public global::app.type.kind.@this Kind(string type, string? kind)
+    {
+        var root = Named.GetValueOrDefault(type)?.kind;
+        var had = string.IsNullOrEmpty(kind) ? root : root?[kind] ?? root?.Coin(kind);
+        return had is { Owner: not null } ? had
+            : string.IsNullOrEmpty(kind) ? new global::app.type.kind.empty.@this(type) : Kind(kind);
+    }
 
     // The kind a type holds that answers to the key — by name, alias, MIME or extension; a type's own
     // format answers as its empty kind. Null when no type holds one. Registration keeps a MIME or an
@@ -80,19 +94,12 @@ public sealed partial class @this
     /// C# class. A spelled kind is not a name: <c>{text, md}</c> is asked by identity. Throws on a miss.
     /// </summary>
     public app.type.@this this[string name]
-    {
-        get
-        {
-            // one walk of the list, no closure — events look their type up here on every start
-            foreach (var type in Types)
-                if (type.Names(name)) return type;
-            throw new KeyNotFoundException($"No PLang type registered under name '{name}'.");
-        }
-    }
+        => name is not null && Named.TryGetValue(name, out var type) ? type
+            : throw new KeyNotFoundException($"No PLang type registered under name '{name}'.");
 
     /// <summary>True when <paramref name="name"/> names a plang type — the presence question
-    /// beside the indexer, which selects and throws on a miss.</summary>
-    public bool Contains(string name) => Types.Any(t => t.Names(name));
+    /// beside the indexer, which selects and throws on a miss. No name names none.</summary>
+    public bool Contains(string name) => name is not null && Named.ContainsKey(name);
 
     /// <summary>
     /// The format content of this MIME is — a kind of the type that reads it: <c>image/png</c> → image's png,
@@ -153,7 +160,7 @@ public sealed partial class @this
     // answering to the name (`{text, txt}`) is the type itself, no kind.
     private app.type.@this Full(app.type.@this type, string? name)
     {
-        var entry = Types.FirstOrDefault(t => t.Names(type.Name));
+        var entry = Named.GetValueOrDefault(type.Name);
         var kind = name == null ? null
             : entry?.kind[name] is { } held ? (held.IsEmpty ? null : held)
             : entry?.kind.Coin(name) ?? new global::app.type.kind.@this(name);

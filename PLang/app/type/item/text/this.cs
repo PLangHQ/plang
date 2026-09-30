@@ -223,7 +223,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// Store view write the raw form verbatim (a <c>.pr</c> keeps the authored <c>%ref%</c>). A
     /// whole-match <c>%ref%</c> is a reference — the bound value writes itself. A partial template
     /// renders to its string form (a template becomes ONE value — its literals+refs can't ride as
-    /// interleaved tokens into a json/plang writer) and writes that.
+    /// interleaved tokens into a json/plang writer) and writes that. Either way the text hands the writer its
+    /// characters with the kind they are in; the writer decides how they look.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
@@ -231,7 +232,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         if (Template == null || mode == global::app.View.Store || context?.Variable == null)
         {
-            writer.String(_value);
+            writer.Content(_value, Format(context));
             return;
         }
         if (IsVariable)
@@ -240,8 +241,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             if (resolved is { IsInitialized: true }) { await resolved.Output(writer, mode, context); return; }
             throw new global::app.error.VariableNotFoundException(resolved!.Name);   // the lookup already carries the name
         }
-        writer.String(await Rendered(context));
+        writer.Content(await Rendered(context), Format(context));
     }
+
+    // The kind these characters are in, as the types hold it — one of text's own (md) or one text coins for another
+    // type's format (json); with no context to ask, the kind by its name alone.
+    private global::app.type.kind.@this Format(global::app.actor.context.@this? context)
+        => context?.App.type.list.Kind("text", Kind) ?? Type.kind;
 
     public override bool IsLeaf => true;
 
@@ -257,16 +263,33 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public override void Write(global::app.type.format.IWriter w) => w.String(_value);
 
+    // What the characters stand for, as their kind opens them (a text of kind json: the json value) — opened at the
+    // first navigation, not before, and kept; the text stays the text it is.
+    private global::app.type.item.@this? _opened;
+
     /// <summary>
-    /// Text has no by-key structure — navigating it (<c>%x.port%</c>) is an authoring
-    /// error. A real input is typed by its mimetype at the boundary (object/json,
-    /// table/csv), so a value reaching navigation is already structured; a bare text
-    /// here means the author navigated a string. Method calls (<c>%x.grep("..")%</c>)
+    /// A text navigates as its kind opens its characters: a text of kind json (<c>%x.a%</c>) is walked as the json
+    /// its characters are, parsed only then, and stays text. A text whose kind opens nothing has no by-key
+    /// structure — navigating it (<c>%x.port%</c>) is an authoring error. Method calls (<c>%x.grep("..")%</c>)
     /// are text's own methods, not this, so they are unaffected.
     /// </summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
+        => Get(parent, key, isIndex: false);
+
+    /// <summary>A text iterates as its kind opens its characters — a text of kind json holding an array yields its
+    /// elements; any other text is one value, yielded once, never its characters.</summary>
+    public override System.Collections.Generic.IEnumerable<(global::app.data.@this key, global::app.data.@this value)>
+        EnumerateItems(global::app.actor.context.@this? context)
+        => (_opened ??= Format(context).Open(_value, context!)) is { } opened
+            ? opened.EnumerateItems(context)
+            : base.EnumerateItems(context);
+
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
+        global::app.data.@this parent, string key, bool isIndex)
     {
+        if ((_opened ??= Format(parent.Context).Open(_value, parent.Context)) is { } opened)
+            return opened.Get(parent, key, isIndex);
         var who = string.IsNullOrEmpty(parent.Name) ? "value" : $"%{parent.Name}%";
         var err = parent.Context.Error(new global::app.error.Error(
             $"cannot navigate .{key}: {who} is text", "CantNavigateText", 400));

@@ -1,10 +1,10 @@
 {
   "name": "Start",
-  "comment": "Stage 11 (decision 129, Ingi yes): one door to an actor. %!app.system% and %!app.user% go; the actor is reached\nthrough the actor type.",
+  "comment": "Stage 11 (decision 129, Ingi yes): one door to an actor. %!app.system% and %!app.user% go; the actor is reached\nthrough the actor type, one picked by name in brackets.",
   "step": [
     {
       "index": 0,
-      "text": "assert %!app.actor.system% is not null",
+      "text": "assert %!app.actor[\"system\"]% is not null",
       "line": {
         "number": 4
       },
@@ -19,10 +19,10 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!app.actor.system%",
+              "value": "%!app.actor[\"system\"]%",
               "variable": [
                 {
-                  "text": "%!app.actor.system%",
+                  "text": "%!app.actor[\"system\"]%",
                   "code": [
                     {
                       "variable": "!app"
@@ -31,7 +31,9 @@
                       "property": "actor"
                     },
                     {
-                      "property": "system"
+                      "index": {
+                        "text": "system"
+                      }
                     }
                   ]
                 }
@@ -44,7 +46,7 @@
     },
     {
       "index": 1,
-      "text": "assert %!app.actor.user% is not null",
+      "text": "assert %!app.actor[\"user\"]% is not null",
       "line": {
         "number": 5
       },
@@ -59,10 +61,10 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!app.actor.user%",
+              "value": "%!app.actor[\"user\"]%",
               "variable": [
                 {
-                  "text": "%!app.actor.user%",
+                  "text": "%!app.actor[\"user\"]%",
                   "code": [
                     {
                       "variable": "!app"
@@ -71,7 +73,9 @@
                       "property": "actor"
                     },
                     {
-                      "property": "user"
+                      "index": {
+                        "text": "user"
+                      }
                     }
                   ]
                 }
@@ -131,7 +135,7 @@
   "visibility": "Public",
   "path": "/plan/app-systems/app/actor/OneDoorToAnActor.test.goal",
   "prPath": "/plan/app-systems/app/actor/.build/onedoortoanactor.test.pr",
-  "hash": "0156fb291edd58d30b778b8505baa7a90fcfcfb44c46276d28ac44ea5e4567a5",
+  "hash": "ee55f78f56bf5db611c2f8bfbc72ff27e6d472d9df897ebcbb92dbdd99d1fe11",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

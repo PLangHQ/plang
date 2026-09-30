@@ -57,6 +57,9 @@ public sealed class Default : IHttp
             : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
         var headers = MergeHeaders(action.Header == null || await action.Header.IsEmpty() ? null
             : (await action.Header.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
+        // One Content-Type: a Content-Type header is the content type, in place of the parameter — it names the
+        // format the body is written in, and it is sent once, never joined with the parameter's.
+        if (headers.Remove("Content-Type", out var named)) contentType = named;
 
         // Build body
         HttpContent? httpContent = null;
@@ -66,7 +69,10 @@ public sealed class Default : IHttp
         var bodyVal = action.Body == null || await action.Body.IsEmpty() ? null : await action.Body.Value();
         if (bodyVal != null)
         {
-            if (contentType.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
+            // the content type as sent: its media type and parameters; the encoding is its charset unless it names one
+            var mediaType = MediaTypeHeaderValue.Parse(contentType);
+            mediaType.CharSet ??= encoding;
+            if (string.Equals(mediaType.MediaType, "application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase)
                 && bodyVal.Clr<Dictionary<string, object>>() is { } formDict)
             {
                 var formValues = new Dictionary<string, string>();
@@ -83,7 +89,7 @@ public sealed class Default : IHttp
                 var serialized = await body.Write(action.Body!);
                 if (!serialized.Success) return serialized;
                 httpContent = new ByteArrayContent(((MemoryStream)body.Stream).ToArray());
-                httpContent.Headers.ContentType = new MediaTypeHeaderValue(contentType) { CharSet = encoding };
+                httpContent.Headers.ContentType = mediaType;
             }
         }
 
@@ -341,7 +347,11 @@ public sealed class Default : IHttp
             // Sanitize CRLF to prevent header injection
             var value = kvp.Value.Replace("\r", "").Replace("\n", "");
             if (IsContentHeader(kvp.Key))
+            {
+                // a content header replaces what the content already carries — one value, never joined
+                request.Content?.Headers.Remove(kvp.Key);
                 request.Content?.Headers.TryAddWithoutValidation(kvp.Key, value);
+            }
             else
                 request.Headers.TryAddWithoutValidation(kvp.Key, value);
         }

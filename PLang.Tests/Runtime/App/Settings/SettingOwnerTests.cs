@@ -18,7 +18,7 @@ public class SettingOwnerTests
         var ctx = app.actor.list.User.Context;
         await Assert.That(app.actor.list.User.CallStack.Timing.Value).IsFalse();
 
-        var set = await new global::app.type.item.variable.parser.@this("%!app.actor.user.callstack.setting.timing%").Variable.Single()
+        var set = await new global::app.type.item.variable.parser.@this("%!app.actor[\"user\"].callstack.setting.timing%").Variable.Single()
             .Set(new global::app.data.@this("timing", true, context: ctx), ctx);
         await set.IsSuccess();
 

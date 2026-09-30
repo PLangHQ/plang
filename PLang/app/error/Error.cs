@@ -18,10 +18,27 @@ namespace app.error;
 /// failure channel on the envelope.</para>
 /// </summary>
 [global::app.Attributes.PlangType("error")]
-public class Error : global::app.type.item.@this
+public class Error : global::app.type.item.@this, global::app.type.item.ICreate<Error>, global::app.type.item.IMatch<Error>,
+    global::app.type.item.ICurrent<Error>, global::app.type.item.ILoad<Error>,
+    global::app.type.item.IList<Error, global::app.error.list.@this>
 {
     /// <summary>Every error, whichever its class, is of the type <c>error</c>.</summary>
     protected internal override global::app.type.@this Type => new(typeof(Error));
+
+    /// <summary>The error in play for the asker (<c>%!app.error.current%</c>) — its call stack's, not yet handled.</summary>
+    public static Error? Current(global::app.actor.context.@this context) => context.CallStack.Error;
+
+    /// <summary>The app holds no errors of its own: every error is an asker's.</summary>
+    public static global::app.error.list.@this List(global::app.@this app) => new();
+
+    /// <summary>The errors the asker sees (<c>%!app.error.list%</c>) — every error on its call stack, handled or not.</summary>
+    public static global::app.error.list.@this? Of(global::app.actor.context.@this context) => context.CallStack.Audit;
+
+    /// <summary>A key names this error by its id or its key (<c>%!app.error["DiskFull"]%</c>).</summary>
+    public System.Threading.Tasks.ValueTask<Error?> Match(string key)
+        => System.Threading.Tasks.ValueTask.FromResult(
+            string.Equals(Id, key, StringComparison.OrdinalIgnoreCase) || string.Equals(Key, key, StringComparison.OrdinalIgnoreCase)
+                ? this : null);
 
     /// <summary>An error is not a payload to convert: asked to become another type, it stays the answer —
     /// primary on the binding, the mismatch on its chain. Asked as what it already is, it passes.</summary>

@@ -102,9 +102,8 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
     public override async Task<global::app.data.@this> Ask(module.output.ask action, CancellationToken ct = default)
     {
         var prompt = action.Context.Ok(action.Question == null ? null : await action.Question.Value());
-        // The goal's result is the answer — an Ask through its own type.
-        var answered = await InvokeGoal(prompt, ct);
-        return answered.Success ? answered.As(await answered.Value<module.output.Ask>()) : answered;
+        // The goal's result is the answer, as it came.
+        return await InvokeGoal(prompt, ct);
     }
 
     private async Task<global::app.data.@this> InvokeGoal(global::app.data.@this data, CancellationToken ct)

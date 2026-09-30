@@ -82,6 +82,25 @@ public class UploadActionTests
         await Assert.That(body).IsEqualTo("Hello upload");
     }
 
+    // A Content-Type header replaces the content's own — one value, never joined (the educator's report, blocker 3).
+    [Test]
+    public async Task Upload_ContentTypeHeader_ReplacesItsOwn()
+    {
+        var action = new upload(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/upload",
+            Content = new global::app.data.@this("", "Hello upload", context: Ctx),
+            As = (global::app.type.item.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
+            Header = new Dictionary<string, object> { ["Content-Type"] = "application/json" }.ToDictData(Ctx),
+            Unsigned = (global::app.type.item.@bool.@this)true
+        };
+
+        await action.Attach(null, Ctx);
+        var result = await action.Start();
+
+        await result.IsSuccess();
+        await Assert.That(_handler.LastRequest!.Content!.Headers.GetValues("Content-Type").ToList())
+            .IsEquivalentTo(new[] { "application/json" });
+    }
+
     [Test]
     public async Task Upload_FileContent_SendsBytes()
     {

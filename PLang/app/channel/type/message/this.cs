@@ -13,10 +13,8 @@ public abstract class @this : Channel
 {
     public override Task<data.@this> Ask(module.output.ask action, CancellationToken ct = default)
     {
-        // Suspend Ask: Value is an Ask with no Answer bound, so IExitsGoal.ShouldExit()
-        // returns true and the step loop short-circuits. Snapshot carries enough
-        // state for the channel to resume the goal once the user replies. Type="ask"
-        // also satisfies the Type-side Exit check.
+        // A pending Ask: an IExitsGoal, so the step loop short-circuits. Snapshot carries enough
+        // state for the channel to resume the goal once the user replies.
         var pending = action.Context.Ok<module.output.Ask>(new module.output.Ask());
         pending.Snapshot = action.Snapshot();
         return Task.FromResult<data.@this>(pending);

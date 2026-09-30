@@ -144,11 +144,7 @@ public class OutAttributeInventoryTests
     // 10. http.Response dissolved (Decision 6) — body is the lazy Data value,
     //     status/headers/duration are Properties; no record [Out] inventory.
 
-    // 11. Ask ----------------------------------------------------------------
-    [Test] public async Task Ask_Answer_HasOut()
-    {
-        await Assert.That(HasOut(typeof(global::app.module.output.Ask), "Answer")).IsTrue();
-    }
+    // 11. Ask — only the pending state; it has no fields to write.
 
     // 13. condition.Operator -------------------------------------------------
     [Test] public async Task ConditionOperator_Value_HasOut()

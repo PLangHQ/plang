@@ -38,7 +38,9 @@ public class OutputAskRoutingTests
         var handler = new ask(context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "name?") };
         var result = await handler.Start();
         await result.IsSuccess();
-        await Assert.That((await result.Value())?.Answer).IsEqualTo("Alice");
+        // the answer as it came — the user's data, not an Ask around it
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("Alice");
+        await Assert.That(result.Peek()).IsNotTypeOf<global::app.module.output.Ask>();
         await Assert.That((await answer.Start(context)).IsInitialized).IsFalse();
     }
 
@@ -77,9 +79,8 @@ public class OutputAskRoutingTests
         await Assert.That(true).IsTrue();
     }
 
-    // The suspend wire shape is a bare Ask (Answer==null) — the question text
-    // rides on the Snapshot and the action.Question parameter, not on Value.
-    // The Ask's IExitsGoal.ShouldExit() returns true while Answer is null.
+    // The suspend wire shape is a bare Ask — the pending state; the question text rides on the Snapshot and the
+    // action.Question parameter, not on Value. An Ask always exits the goal: it is only ever pending.
     [Test] public async Task MessageChannelAsk_ReturnsDataAsk_WithSuspendShape()
     {
         var app = NewApp();
@@ -89,7 +90,7 @@ public class OutputAskRoutingTests
         };
         var result = await ch.Ask(action);
         await Assert.That((await result.Value())).IsTypeOf<global::app.module.output.Ask>();
-        await Assert.That(((global::app.module.output.Ask)(await result.Value())!).Answer).IsNull();
+        await Assert.That(result.ShouldExit()).IsTrue();
         await Assert.That(result.Type?.Name).IsEqualTo("ask");
     }
 

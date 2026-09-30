@@ -40,13 +40,24 @@ public sealed class HttpTestServer : IDisposable
 
     public HttpTestServer()
     {
-        // Bind a free loopback port: probe with a TcpListener, then hand the
-        // port to HttpListener.
-        int port = FreePort();
-        _baseAddress = new Uri($"http://127.0.0.1:{port}/");
-        _listener = new HttpListener();
-        _listener.Prefixes.Add(_baseAddress.ToString());
-        _listener.Start();
+        // HttpListener can't bind port 0, so the OS picks a free port through a TcpListener probe. Between the
+        // probe and Start another listener (a parallel test) may take it — then the OS picks again.
+        for (var attempt = 1; ; attempt++)
+        {
+            int port = FreePort();
+            var address = new Uri($"http://127.0.0.1:{port}/");
+            var listener = new HttpListener();
+            listener.Prefixes.Add(address.ToString());
+            try { listener.Start(); }
+            catch (HttpListenerException) when (attempt < 20)
+            {
+                listener.Close();
+                continue;
+            }
+            _baseAddress = address;
+            _listener = listener;
+            break;
+        }
         _ = Task.Run(AcceptLoop);
     }
 

@@ -34,6 +34,9 @@ public class Fluid : ITemplate
         var templateContent = templateVal.ToString() ?? "";
         var isFile = action.IsFile == null ? null : (await action.IsFile.Value());
         string? sourceFile = null;
+        // What the render is: content of the template file's own format (a .json template renders json); an inline
+        // template, or a file of plain text, renders plain text.
+        string? kind = null;
 
         // Resolve template content: file or inline
         if (isFile?.Value == true || (isFile == null && LooksLikeFilePath(templateContent)))
@@ -44,6 +47,7 @@ public class Fluid : ITemplate
                     $"Template file not found: {templateContent}", "NotFound", 404));
 
             sourceFile = pathData.Relative(action.Context);
+            kind = pathData.Kind(action.Context).kind is { IsEmpty: false } format ? format.Name : null;
             var readResult = await pathData.Read(action.Context);
             var read = readResult.Success ? await readResult.Value() : null;
             if (!readResult.Success)
@@ -122,7 +126,7 @@ public class Fluid : ITemplate
             await includes.Load(fluidTemplate, parser);
             var writer = new StringWriter();
             await fluidTemplate.RenderAsync(writer, NullEncoder.Default, fluidContext);
-            return action.Context.Ok<global::app.type.item.text.@this>(writer.ToString());
+            return action.Context.Ok<global::app.type.item.text.@this>(new global::app.type.item.text.@this(writer.ToString()) { Kind = kind });
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {

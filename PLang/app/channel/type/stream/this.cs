@@ -142,7 +142,8 @@ public sealed class @this : global::app.channel.type.session.@this
             if (line == null)
                 return action.Context.Error(new global::app.error.NoAnswer(
                     $"Channel '{Name}' has no interactive answerer (stream EOF)"));
-            return action.Context.Ok<module.output.Ask>(new module.output.Ask(line));
+            // a line typed is text — the user's data itself
+            return action.Context.Ok(new global::app.type.item.text.@this(line));
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException
                                                  or OperationCanceledException))

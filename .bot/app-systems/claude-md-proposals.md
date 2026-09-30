@@ -104,3 +104,12 @@ The value slot is built via `data.Normalize(View) → IWriter`, so a new domain 
 ```
 - **A value writes what it is; the writer decides how it looks.** A value writes itself through the writer's primitives (`String`, `Number`, `Bytes`, …); the writer (the formatter) decides how each primitive looks in its format. Neither asks about the other: no `writer.Format` in a value (no `switch`, no per-format table), no value type in a writer. A value's content is opened at the last moment by the layer that sends it out (the channel), never inside the value's own write, and never by view (`if (mode == View.Out)` in a value is the wrong structure).
 ```
+
+## architect — v1 — 2026-09-30
+**Target:** CLAUDE.md, the "Action `Run()` returns are typed via the signature" bullet
+**Why:** The bullet says bare `Task<Data>` is "only for actions that produce no value (no `→ returns` line; compile LLM rejects trailing `write to %x%`)", and in the same bullet says polymorphic forwarders (`goal.call`, `llm.query`) stay on bare `Task<Data>`. The two disagree, and the code follows the second: `goal/step/action/this.Schema.cs:61` maps bare `Task<Data>` to the return `item`, so `write to %x%` is valid. Found by the coder building decision 400 (`output.ask` became a forwarder on bare `Task<Data>`; its catalog return line is `item`).
+**Proposed change:**
+```
+- bare `Task<Data>` only for actions that produce no value (no `→ returns` line; compile LLM rejects trailing `write to %x%`).
++ bare `Task<Data>` for forwarders that return a Data produced elsewhere (`goal.call`, `llm.query`, `output.ask`, condition evaluators); the catalog reads it as `→ returns item` (`goal/step/action/this.Schema.cs:61`).
+```

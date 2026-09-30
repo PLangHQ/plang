@@ -50,7 +50,7 @@ public class BindTargetPathTests
         => await Assert.That((await At("!app.module.file.name"))?.ToString()).IsEqualTo("file");
 
     [Test]
-    [Arguments("!app.actor.user.channel.output")]
+    [Arguments("!app.actor[\"user\"].channel.output")]
     [Arguments("!app.actor[\"user\"].channel[\"output\"]")]
     [Arguments("!channels.output")]
     [Arguments("!channels[\"output\"]")]

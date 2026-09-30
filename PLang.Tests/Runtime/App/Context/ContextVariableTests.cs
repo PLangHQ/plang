@@ -45,14 +45,14 @@ public class ContextVariableTests
     }
 
 
+    // %!callStack% is the app's member answering as its asker — not a registration in memory.
     [Test]
     public async Task ContextVar_CallStack_ReturnsCallStack()
     {
-        var vars = _app.actor.list.User.Context.Variable;
-        var value = await vars.GetValue("!callStack");
+        var context = _app.actor.list.User.Context;
+        var read = await new global::app.type.item.variable.parser.@this("%!callStack%").Variable.Single().Start(context);
 
-        await Assert.That(value).IsNotNull();
-        await Assert.That(value).IsTypeOf<global::app.callstack.@this>();
+        await Assert.That(read.Peek()).IsSameReferenceAs(context.CallStack);
     }
 
     [Test]
