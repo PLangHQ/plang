@@ -18,6 +18,31 @@ The builder maps this to:
 
 You don't need to know the module name — just write what you want and the LLM figures it out. But knowing the modules helps you understand what's possible.
 
+## How to Read a Module Page
+
+Most of programming in PLang is knowing **which properties an action has** — the extra words you add to a step to change what it does. Every module page is laid out the same way so you can find them fast:
+
+1. **Find the action for what you want.** Thinking "I want to list files"? That's the `list` action on the [file](file.md) module. The [module reference](#module-reference) table below maps intent → module.
+2. **Read the action's parameter table.** Each row is one property. The columns tell you everything:
+   - **Property** — its real name (what the builder records in the `.pr`).
+   - **How you say it** — the words you actually type in a step to set it.
+   - **Type**, **Required**, **Default** — the shape.
+   - **Description** — what it changes.
+3. **Read left to right.** For example, on [`file.list`](file.md#list):
+
+   | Property | How you say it | Default | What it changes |
+   |----------|----------------|---------|-----------------|
+   | Pattern | `matching '<glob>'` | `"*"` (all files) | which files come back |
+   | Recursive | `recursive` | `false` (top folder only) | whether subfolders are searched |
+
+   So this step uses both:
+
+   ```plang
+   - list files in %folder% matching "*.txt" recursive, write to %files%
+   ```
+
+   `matching "*.txt"` sets **Pattern**; `recursive` sets **Recursive**. Leave a property out and it falls back to its default. That's the whole skill: know the properties, say them.
+
 ## Module Reference
 
 ### Core

@@ -55,7 +55,7 @@ Read a file's contents.
 
 | Property | How you say it | Type | Required | Default | Description |
 |----------|----------------|------|----------|---------|-------------|
-| Path | the path, inline (`read 'config.json'`) | string | yes | — | Path to the file |
+| Path | the path, inline (`read 'config.json'`) | path | yes | — | Path to the file (a `path` value — you write it as a string or URL, the runtime resolves it) |
 | ResolveVariables | `load vars` | bool | no | false | Resolve `%var%` references inside the file content before returning |
 
 **Returns:** The file contents. JSON files are parsed into objects automatically.
@@ -86,10 +86,12 @@ Write content to a file.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Path | string | yes | Path to write to |
-| Value | object | yes | Content to write |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Path | `to file '<path>'` | path | yes | Path to write to |
+| Value | the content, inline (`save 'Hello' …`, `save %data% …`) | object | yes | Content to write |
+
+**Returns:** The `path` that was written.
 
 ### copy
 
@@ -102,12 +104,14 @@ Copy a file or directory.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Source | string | yes | — | Source path |
-| Destination | string | yes | — | Destination path |
-| Overwrite | bool | no | false | Overwrite if destination exists |
-| IncludeSubfolders | bool | no | true | Include subfolders when copying directories |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Source | the first path, inline (`copy 'source.txt' …`) | path | yes | — | Source path |
+| Destination | `to '<path>'` | path | yes | — | Destination path |
+| Overwrite | `overwrite` | bool | no | false | Overwrite if destination exists |
+| IncludeSubfolders | on by default when copying a directory | bool | no | true | Include subfolders when copying directories |
+
+**Returns:** The destination `path`.
 
 ### move
 
@@ -120,11 +124,13 @@ Move (rename) a file or directory.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Source | string | yes | — | Source path |
-| Destination | string | yes | — | Destination path |
-| Overwrite | bool | no | false | Overwrite if destination exists |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Source | the first path, inline (`move 'old.txt' …`) | path | yes | — | Source path |
+| Destination | `to '<path>'` | path | yes | — | Destination path |
+| Overwrite | `overwrite` | bool | no | false | Overwrite if destination exists |
+
+**Returns:** The destination `path`.
 
 ### delete
 
@@ -137,11 +143,11 @@ Delete a file or directory.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Path | string | yes | — | Path to delete |
-| IgnoreIfNotFound | bool | no | false | Don't error if the file doesn't exist |
-| Recursive | bool | no | false | Delete directory contents recursively |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Path | `file '<path>'` | path | yes | — | Path to delete |
+| IgnoreIfNotFound | `ignore if not found` | bool | no | false | Don't error if the file doesn't exist |
+| Recursive | `recursive` | bool | no | false | Delete directory contents recursively |
 
 ### exists
 
@@ -154,11 +160,11 @@ Check if a file or directory exists.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Path | string | yes | Path to check |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Path | `check if '<path>' exists` | path | yes | Path to check |
 
-**Returns:** File metadata including `Exists` (bool), `Path`, `Size`, `Type` (MIME type).
+**Returns:** The `path` itself. Existence is answered by the value's *truthiness*, not a separate flag — `if %configExists% is true` probes the resource (a filesystem stat for local paths, an HTTP HEAD for URLs) at the moment you test it. The path stays live, so re-testing reflects the current state.
 
 ### list
 
@@ -173,11 +179,11 @@ List files in a directory.
 
 | Property | How you say it | Type | Required | Default | Description |
 |----------|----------------|------|----------|---------|-------------|
-| Path | the folder, inline (`list files in 'data/'`) | string | yes | — | Directory to list |
+| Path | the folder, inline (`list files in 'data/'`) | path | yes | — | Directory to list |
 | Pattern | `matching '<glob>'` | string | no | "*" | Glob pattern to filter files |
 | Recursive | `recursive` | bool | no | false | Include subdirectories |
 
-**Returns:** A list of file objects with `Path`, `AbsolutePath`, `Size`, `Type`, and `Exists` properties.
+**Returns:** A list of `path` values, one per matching file. A `path` prints as its root-relative string (`notes/todo.txt`), so `write out %files%` shows plain paths — that's the value stringifying, not a bare string. Each entry also carries `FileName`, `FileNameWithoutExtension`, `Directory`, `Extension`, `MimeType`, `IsFile`, and `IsDirectory` for reading in later steps.
 
 ## Examples
 
