@@ -16,4 +16,12 @@ public partial class Delete : IContext
     public async Task<data.@this<path>> Start() => data.@this<path>.From(
         await Path.Use(path => Recursive.Use(recursive => IgnoreIfNotFound.Use(async ignoreIfNotFound =>
             (data.@this)await path.Delete(recursive, ignoreIfNotFound, Context)))));
+
+    /// <summary>The file or folder is gone from the build's files, for the steps after it; a path holding a
+    /// variable is known only at run.</summary>
+    public async Task<data.@this> Build() => Path.HasVariable ? Context.Ok() : await Path.Use(path =>
+    {
+        if (path is global::app.type.item.path.file.@this file) Context.App.Build?.Files.Delete(file, recursive: true);
+        return Task.FromResult(Context.Ok());
+    });
 }

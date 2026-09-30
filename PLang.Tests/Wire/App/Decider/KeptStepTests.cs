@@ -50,7 +50,7 @@ public class KeptStepTests
     [Test]
     public async Task ARebuild_AsksOnlyTheChangedStep_AndTheKeptCodeIsByteEqual()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
@@ -90,7 +90,7 @@ public class KeptStepTests
     [Test]
     public async Task AKeptStepWhoseCodeNoLongerHolds_IsOpenedAgain_WithAWarning()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
@@ -111,7 +111,7 @@ public class KeptStepTests
     [Test]
     public async Task TheSourceItsPrWasBuiltFrom_IsCached()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
@@ -136,7 +136,7 @@ public class KeptStepTests
     [Test]
     public async Task AStepDeleted_ItsStepsAreCached_TheGoalIsNot()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);
@@ -153,7 +153,7 @@ public class KeptStepTests
     [Test]
     public async Task AStepChanged_NothingIsCached()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var context = os.actor.list.User.Context;
 
         var first = Parse(First, context);

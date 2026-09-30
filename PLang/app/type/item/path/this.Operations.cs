@@ -10,7 +10,7 @@ namespace app.type.item.path;
 /// <see cref="Authorize"/> (the scheme-agnostic Permission gate) internally
 /// from each impl. Cross-scheme <see cref="CopyTo"/>/<see cref="MoveTo"/> stay
 /// virtual on the base with naive read/write defaults; same-scheme subclasses
-/// override for fast paths (FilePath uses <c>System.IO.File.Move</c>, etc.).
+/// override for fast paths (FilePath moves through its caller's filesystem, etc.).
 /// Every verb takes the caller's context: it checks the caller's permission and
 /// its result Data is born with it. The path itself stores none.
 /// </summary>

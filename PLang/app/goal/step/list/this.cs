@@ -152,6 +152,10 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         // Each read step, checked — every problem it shows, at once — in the goal's order, walked over
         // one scratch store: a step reads the variables the steps before it left.
         using var scratch = Scratch(context);
+        // The steps are checked over the build's files, in a context born with them: a file a step saves is there
+        // for a step after it that reads it — in this goal or a later one — and nothing reaches the disk.
+        using var check = new actor.context.@this(context.App, context.Actor, context.Variable.Clone(), context,
+            fileSystem: context.App.Build?.Files ?? throw new System.InvalidOperationException("A goal's steps are read in a build: the app has no Build."));
         // The steps are checked inside their goal's frame, as they will run: what a step names relative to its
         // goal (a file 'note.txt') is found where the goal is, not where the builder's own goal is.
         await using var frame = CountRaw > 0 && this[0].Goal is { } goal ? context.CallStack.Push(goal) : null;
@@ -176,7 +180,7 @@ public sealed class @this : global::app.type.item.list.@this<Step>
                 }
             }
             step.Code = actions;
-            var invalid = await step.Validate(context);
+            var invalid = await step.Validate(check);
             if (invalid != null)
             {
                 key ??= invalid.Key == "ElseWithoutIf" ? invalid.Key : null;
@@ -184,16 +188,16 @@ public sealed class @this : global::app.type.item.list.@this<Step>
             }
             // the answer holds what the step's words say — checked on the answer as written, before the
             // handlers' Build may change it
-            foreach (var uncovered in await step.Cover(context)) Refuse(i, $"step {i} (\"{step.Text}\") — {uncovered}");
+            foreach (var uncovered in await step.Cover(check)) Refuse(i, $"step {i} (\"{step.Text}\") — {uncovered}");
             // a number the words don't write as digits: confirmed by the decider, or asked
             var asked = false;
-            foreach (var number in await step.Unwritten(context))
+            foreach (var number in await step.Unwritten(check))
             {
                 if (confirmed == null) { unconfirmed.Add(number); asked = true; }
-                else if (!await number.Given(confirmed, context)) Refuse(i, $"step {i} (\"{step.Text}\") — {number.Message}");
+                else if (!await number.Given(confirmed, check)) Refuse(i, $"step {i} (\"{step.Text}\") — {number.Message}");
             }
             // only code that judged itself sound is built
-            if (invalid == null && await actions.Build(context) is { } failed)
+            if (invalid == null && await actions.Build(check) is { } failed)
                 foreach (var cause in failed.list) Refuse(i, $"step {i} (\"{step.Text}\") — {cause.Message}");
             // a step written in formal was asked of no decider: there are no picks to agree with
             var (disagree, warnings) = step.IsFormal
