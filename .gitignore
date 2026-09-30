@@ -41,3 +41,4 @@ test/module/cache/**/%*%/
 
 # dev.sh: last successful build
 .devsh-stamp
+.devsh-sweep*

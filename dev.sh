@@ -3,7 +3,10 @@
 #
 # Usage:
 #   ./dev.sh build              # incremental build of all test projects + PlangConsole (analyzers off); skipped when no source changed
-#   ./dev.sh test [filter]      # build, then run C# tests; filter = test-class name (finds the right project), e.g. ./dev.sh test ReturnTests; no filter = all suites in parallel
+#   ./dev.sh test [filter]      # build, then run C# tests; filter = test-class name (finds the right project), e.g. ./dev.sh test ReturnTests
+#   ./dev.sh test               # a sweep: only the suites the C# tree's changes since the last complete sweep touch (none
+#                               # when nothing changed — the stored results stand), at most 3 at once, niced
+#   ./dev.sh test --force       # a sweep of every suite, changed or not (a flake, a machine that was overloaded)
 #   ./dev.sh ptest              # build, then run plang tests (from test/)
 #   ./dev.sh full               # the handoff gate, in its own Gate configuration: analyzers ON (PLNG001/PLNG002, TUnit warnings) + ALL suites + plang tests
 #
@@ -36,15 +39,57 @@ PROJECTS=(Modules Types Wire Data Generator Runtime)
 # ~1000 tests with the count varying by CPU load — untested failures vanished and
 # "failed: N" meant nothing. A hang is minutes, so a generous cap still catches it
 # immediately; the cap is a net, not a budget. The suites run in PARALLEL, where the slowest
-# (Modules) takes ~85s under shared load (2026-09-28) — keep the cap well above that.
+# (Modules) takes ~85s under shared load (2026-09-28) — keep the cap well above that. Niced under a
+# saturated machine (load ~50, 2026-09-30) Types alone took over 4 minutes and Modules ~6, so the cap is 600s.
 # Override via TEST_TIMEOUT=Ns.
-TEST_TIMEOUT="${TEST_TIMEOUT:-240s}"
+TEST_TIMEOUT="${TEST_TIMEOUT:-600s}"
 
 run_bin() { # $1 = configuration (Debug | Gate), $2 = project, rest = args
   # < /dev/null: a test that reads stdin (a stream/ask-channel test) otherwise BLOCKS
   # waiting for input until the whole-suite --timeout cap fires — turning a few-second
   # run into a multi-minute hang. EOF on stdin lets it fail fast instead.
-  "PLang.Tests/$2/bin/$1/net10.0/PLang.Tests.$2" --timeout "$TEST_TIMEOUT" "${@:3}" < /dev/null
+  # nice: the machine is shared (Windows, terminals, other bots) — tests yield to them.
+  nice -n 10 "PLang.Tests/$2/bin/$1/net10.0/PLang.Tests.$2" --timeout "$TEST_TIMEOUT" "${@:3}" < /dev/null
+}
+
+# At most this many suites run at once — six at once took all 8 cores of the shared machine.
+DEVSH_PARALLEL="${DEVSH_PARALLEL:-3}"
+
+# --- No change, no sweep ---
+# A complete sweep stores a snapshot of the C# tree: HEAD, then each file that differs from HEAD or is
+# untracked under the C# roots, with its content hash — and each suite's summary line. The next sweep
+# compares: the same snapshot runs nothing (the stored lines are the answer); changes only under
+# PLang.Tests/<Suite>/ run only those suites; anything else in the C# tree runs them all.
+CS_ROOTS=(PLang PLang.Generators PlangConsole PLang.Tests)
+SWEEP=.devsh-sweep
+snapshot() {
+  git rev-parse HEAD
+  { git diff --name-only HEAD -- "${CS_ROOTS[@]}"; git ls-files --others --exclude-standard -- "${CS_ROOTS[@]}"; } \
+    | grep -vE '/(bin|obj)/' | sort -u | while read -r f; do
+      if [ -f "$f" ]; then echo "$f $(git hash-object "$f")"; else echo "$f deleted"; fi
+    done
+}
+# The files changed since the stored snapshot (one per line): the commits between the two HEADs, and
+# every file whose (path, hash) line differs between the snapshots.
+changed_since_sweep() {
+  local old_head new_head
+  old_head=$(head -1 "$SWEEP"); new_head=$(git rev-parse HEAD)
+  # `|| true`: nothing changed is an empty answer, not a failure (set -e + pipefail would end the script)
+  {
+    if [ "$old_head" != "$new_head" ]; then git diff --name-only "$old_head" "$new_head" -- "${CS_ROOTS[@]}" 2>/dev/null || true; fi
+    diff <(tail -n +2 "$SWEEP") <(snapshot | tail -n +2) | grep -E '^[<>] ' | sed -E 's/^[<>] //; s/ [^ ]+$//' || true
+  } | sort -u
+}
+# The suites a set of changed files touches: every suite when any change is outside PLang.Tests/<Suite>/
+# (the library, the generators, the console, PLang.Tests/Shared, the project files).
+affected_suites() { # stdin = changed files
+  local f s all=0; declare -A hit=()
+  while read -r f; do
+    [ -z "$f" ] && continue
+    s=$(echo "$f" | sed -nE 's|^PLang\.Tests/([^/]+)/.*|\1|p')
+    if [ -n "$s" ] && [[ " ${PROJECTS[*]} " == *" $s "* ]]; then hit[$s]=1; else all=1; fi
+  done
+  if [ "$all" = 1 ]; then echo "${PROJECTS[*]}"; else echo "${!hit[*]}"; fi
 }
 
 # Run every suite IN PARALLEL and report each one's result. Stdin is /dev/null, so no suite blocks
@@ -64,21 +109,26 @@ run_bin() { # $1 = configuration (Debug | Gate), $2 = project, rest = args
 # it stack-overflowed and never reached a summary.
 declare -A SUITE_SECS=( [Generator]=4 [Types]=8 [Runtime]=24 [Wire]=25 [Modules]=43 [Data]=28 )
 
-run_all_suites() { # $1 = configuration, rest = extra args passed to each suite
-  local config="$1" p fail=0; shift
+run_all_suites() { # $1 = configuration, $2 = the suites to run (space-separated; empty = all), rest = extra args
+  local config="$1" p fail=0 running=0; local -a suites
+  read -r -a suites <<< "${2:-${PROJECTS[*]}}"; shift 2
   # Each suite's FULL output is written to a per-suite log — read those for the truth
   # (the live stdout below is only the one-line summary and can be truncated under a pipe).
-  echo "→ full per-suite output: /tmp/devsh_<Suite>.log  (Suite ∈ ${PROJECTS[*]})"
-  echo "→ expected suite times (s, drift signal): $(for p in "${PROJECTS[@]}"; do printf '%s~%s ' "$p" "${SUITE_SECS[$p]:-?}"; done)"
-  # Parallel by default (stdin is /dev/null, so no suite blocks on input); DEVSH_SEQUENTIAL=1 runs one
-  # at a time, to compare total: counts — a suite cut off by --timeout under load reports fewer.
+  echo "→ full per-suite output: /tmp/devsh_<Suite>.log  (Suite ∈ ${suites[*]})"
+  echo "→ expected suite times (s, drift signal): $(for p in "${suites[@]}"; do printf '%s~%s ' "$p" "${SUITE_SECS[$p]:-?}"; done)"
+  # At most DEVSH_PARALLEL at once (stdin is /dev/null, so no suite blocks on input); DEVSH_SEQUENTIAL=1
+  # runs one at a time, to compare total: counts — a suite cut off by --timeout under load reports fewer.
   if [ -z "${DEVSH_SEQUENTIAL:-}" ]; then
-    for p in "${PROJECTS[@]}"; do run_bin "$config" "$p" "$@" > "/tmp/devsh_$p.log" 2>&1 & done
+    for p in "${suites[@]}"; do
+      run_bin "$config" "$p" "$@" > "/tmp/devsh_$p.log" 2>&1 &
+      running=$((running + 1))
+      if [ "$running" -ge "$DEVSH_PARALLEL" ]; then wait -n || true; running=$((running - 1)); fi
+    done
     wait || true
   else
-    for p in "${PROJECTS[@]}"; do run_bin "$config" "$p" "$@" > "/tmp/devsh_$p.log" 2>&1 || true; done
+    for p in "${suites[@]}"; do run_bin "$config" "$p" "$@" > "/tmp/devsh_$p.log" 2>&1 || true; done
   fi
-  for p in "${PROJECTS[@]}"; do
+  for p in "${suites[@]}"; do
     local n dur
     # Anchored to the SUMMARY block's own lines ("  failed: 44"), never a substring of
     # assertion text — a message reading 'Data failed: ...' was being read as the count.
@@ -87,15 +137,19 @@ run_all_suites() { # $1 = configuration, rest = extra args passed to each suite
     # every later suite silently never ran and the NO SUMMARY branch below was dead code.
     n=$(grep -aE '^[[:space:]]*failed: [0-9]+[[:space:]]*$' "/tmp/devsh_$p.log" | tail -1 | grep -oE '[0-9]+' || true)
     dur=$(grep -aoE 'duration: [0-9smh ]+' "/tmp/devsh_$p.log" | tail -1 | sed 's/duration: //' || true)
-    local tag="${dur:-?} vs ~${SUITE_SECS[$p]:-?}s"
+    local tag="${dur:-?} vs ~${SUITE_SECS[$p]:-?}s" line
     if grep -aq "Canceling the test session" "/tmp/devsh_$p.log"; then
-      echo "=== $p === CUT OFF by --timeout $TEST_TIMEOUT — counts are partial — see /tmp/devsh_$p.log [$tag]"; fail=1
-    elif [ -z "$n" ]; then echo "=== $p === NO SUMMARY (crash before summary?) — see /tmp/devsh_$p.log [$tag]"; fail=1
-    elif [ "$n" != 0 ]; then echo "=== $p === FAILED: $n ($(grep -aoE 'total: [0-9]+' /tmp/devsh_$p.log | tail -1)) [$tag]"; fail=1
-    else echo "=== $p === green ($(grep -aoE 'total: [0-9]+' /tmp/devsh_$p.log | tail -1)) [$tag]"; fi
+      line="=== $p === CUT OFF by --timeout $TEST_TIMEOUT — counts are partial — see /tmp/devsh_$p.log [$tag]"; fail=1; SWEEP_COMPLETE=0
+    elif [ -z "$n" ]; then line="=== $p === NO SUMMARY (crash before summary?) — see /tmp/devsh_$p.log [$tag]"; fail=1; SWEEP_COMPLETE=0
+    elif [ "$n" != 0 ]; then line="=== $p === FAILED: $n ($(grep -aoE 'total: [0-9]+' /tmp/devsh_$p.log | tail -1)) [$tag]"; fail=1
+    else line="=== $p === green ($(grep -aoE 'total: [0-9]+' /tmp/devsh_$p.log | tail -1)) [$tag]"; fi
+    echo "$line"
+    # a complete result is what an unchanged sweep answers with next time; a cut-off one never replaces it
+    [[ "$line" == *"CUT OFF"* || "$line" == *"NO SUMMARY"* ]] || echo "$line" > "$SWEEP.line.$p"
   done
   return $fail
 }
+SWEEP_COMPLETE=1
 
 # Run a build; on ANY compile error, SCREAM (impossible to miss) and hard-STOP before
 # running tests — a non-compiling project leaves a STALE artefact, so any result run
@@ -177,8 +231,26 @@ case "${1:-build}" in
         grep -aiE '^failed |^  (total|failed):' "/tmp/devsh_$p.log" || echo "  (no failures — full output in the log)"
       done
     else
-      run_all_suites Debug
-      exit $?
+      # a sweep: only what changed since the last complete one (--force runs every suite again)
+      if [ "${2:-}" != "--force" ] && [ -f "$SWEEP" ]; then
+        changed=$(changed_since_sweep)
+        if [ -z "$changed" ]; then
+          echo "→ no C# change since the last sweep — its results stand (./dev.sh test --force runs again):"
+          for p in "${PROJECTS[@]}"; do cat "$SWEEP.line.$p" 2>/dev/null || echo "=== $p === (no stored result)"; done
+          [ -n "$(git status --porcelain -- '*.goal')" ] && echo "→ .goal files changed — the plang tests are ./dev.sh ptest"
+          exit 0
+        fi
+        suites=$(echo "$changed" | affected_suites)
+      else
+        suites="${PROJECTS[*]}"
+      fi
+      for p in "${PROJECTS[@]}"; do
+        [[ " $suites " == *" $p "* ]] || echo "$(cat "$SWEEP.line.$p" 2>/dev/null || echo "=== $p ===") (unchanged since the last sweep — not run)"
+      done
+      rc=0; run_all_suites Debug "$suites" || rc=$?
+      # only a complete sweep is the next one's reference (a suite cut off or crashed is run again)
+      [ "$SWEEP_COMPLETE" = 1 ] && snapshot > "$SWEEP"
+      exit $rc
     fi
     ;;
   ptest)
@@ -194,10 +266,10 @@ case "${1:-build}" in
     # only for Debug, so under Gate they run on the library too (PLNG001/PLNG002).
     # Still routed through scream_build so a compile error screams and hard-stops.
     scream_build "test projects + PlangConsole (Gate, analyzers ON)" /tmp/devsh_build.log \
-      dotnet msbuild PLang.Tests/All.proj -t:Build -p:Configuration=Gate -p:RunAnalyzers=true -v:q -nologo
+      nice -n 10 dotnet msbuild PLang.Tests/All.proj -t:Build -p:Configuration=Gate -p:RunAnalyzers=true -v:q -nologo
     fail=0
-    run_all_suites Gate || fail=1
-    (cd test && ../PlangConsole/bin/Gate/net10.0/plang --test) || fail=1
+    run_all_suites Gate "" || fail=1
+    (cd test && nice -n 10 ../PlangConsole/bin/Gate/net10.0/plang --test) || fail=1
     exit $fail
     ;;
   warm)
