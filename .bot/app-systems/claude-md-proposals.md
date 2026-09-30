@@ -113,3 +113,12 @@ The value slot is built via `data.Normalize(View) → IWriter`, so a new domain 
 - bare `Task<Data>` only for actions that produce no value (no `→ returns` line; compile LLM rejects trailing `write to %x%`).
 + bare `Task<Data>` for forwarders that return a Data produced elsewhere (`goal.call`, `llm.query`, `output.ask`, condition evaluators); the catalog reads it as `→ returns item` (`goal/step/action/this.Schema.cs:61`).
 ```
+
+## architect — v2 — 2026-09-30
+**Target:** CLAUDE.md, the "Action prose lives in markdown" bullet under Runtime2 Conventions
+**Why:** The bullet names `MarkdownTeaching.ScanOrphans` and `PLang/app/module/MarkdownTeaching.cs` as the loader and orphan scan. Both were deleted in 2349faf11; the action's docs are now lazy file items on the catalog element (`goal/step/action/this.Schema.cs:69–86`: `Description`, `Notes`, `Examples`), read by the builder's templates (`os/system/builder/llm/templates/properties.template`). Found by the fix bot tracing the generated module pages (decision 411), where the spec said to reuse the scan.
+**Proposed change:**
+```
+- Orphan files surface as warnings via `MarkdownTeaching.ScanOrphans`. Full guide: `Documentation/v0.2/action-catalog.md`; loader: `PLang/app/module/MarkdownTeaching.cs`.
++ The action's docs are lazy file items on its catalog element (`goal/step/action/this.Schema.cs`: `Description`, `Notes`, `Examples`), read by the builder's templates (`os/system/builder/llm/templates/`). Full guide: `Documentation/v0.2/action-catalog.md`.
+```
