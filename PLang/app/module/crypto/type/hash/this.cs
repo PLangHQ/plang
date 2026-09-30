@@ -75,20 +75,41 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public bool DigestEquals(@this other)
         => other != null && Bytes.AsSpan().SequenceEqual(other.Bytes);
 
-    // ---- Comparison (the unified hook — see app.type.compare; discovered via the
-    // value-class fallback, since `hash` lives outside the app.type.* name map) ----
+    // ---- Comparison: the digest reads the other side into a digest and compares bytes ----
 
-    /// <summary>Equality-only: same digest bytes → <c>Equal</c>, else <c>NotEqual</c>;
-    /// a non-hash side compares by its base64 text form, else <c>Incomparable</c>.</summary>
-    public static global::app.data.Comparison Compare(object? a, object? b)
+    /// <summary>A digest drives a comparison with a text, a base64 or a binary: the other side is read into a
+    /// digest (above text 100, base64 200, binary 250).</summary>
+    public override int Rank => 260;
+
+    /// <summary>
+    /// THE PURE CORE — a digest passes through; a text is read as a digest's text: hex (two characters a byte),
+    /// else base64. The algorithm is not in the text, so a digest read from one has none — a comparison asks by
+    /// bytes. Anything else declines.
+    /// </summary>
+    public static @this? Create(object? raw) => Digest(raw, length: null);
+
+    /// <summary>Equality only — a digest has no order: the other side read into a digest (its text as hex when it
+    /// is hex of this digest's length, else as base64), then the bytes compared. A text that is neither, or any
+    /// other value, is <c>Incomparable</c>.</summary>
+    protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(
+        global::app.type.item.@this other, global::app.actor.context.@this context)
+        => new(Digest(other, Bytes.Length) is { } digest
+            ? DigestEquals(digest) ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual
+            : global::app.data.Comparison.Incomparable);
+
+    // The digest a value stands for: a digest is itself; a text is its hex when it is hex (of `length` bytes, when the
+    // length is known), else its base64; null when it is neither, or no text.
+    private static @this? Digest(object? raw, int? length)
     {
-        var ha = a as @this;
-        var hb = b as @this;
-        if (ha != null && hb != null)
-            return ha.DigestEquals(hb)
-                ? global::app.data.Comparison.Equal
-                : global::app.data.Comparison.NotEqual;
-        return global::app.data.Comparison.Incomparable;
+        if (raw is @this digest) return digest;
+        if (raw is not global::app.type.item.text.@this text) return null;
+        var characters = text.ToString();
+        if (characters.Length > 0 && characters.Length % 2 == 0 && (length is null || characters.Length == length * 2)
+            && characters.All(System.Uri.IsHexDigit))
+            return new @this(System.Convert.FromHexString(characters), "");
+        return System.Buffers.Text.Base64.IsValid(characters) && characters.Length > 0
+            ? new @this(System.Convert.FromBase64String(characters), "")
+            : null;
     }
 
     public static implicit operator string(@this h) => h.ToBase64();
