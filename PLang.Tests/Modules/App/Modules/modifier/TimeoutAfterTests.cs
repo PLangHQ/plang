@@ -54,12 +54,8 @@ public class TimeoutAfterTests
     [Test]
     public async Task After_ActionExceedsTimeout_Returns408Error()
     {
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
-        {
-            Module = _app.actor.list.User.Context.App.Module("timer"),
-            Name = "sleep",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: Ctx) })
-        }, TimeoutModifier(50));
+        // held far past the timeout, so a loaded machine can't let the action win the race
+        var action = global::PLang.Tests.Shared.Make.With(Held(), TimeoutModifier(50));
 
         var result = await action.Start(Ctx);
 
