@@ -1,4 +1,5 @@
 using app.error;
+using app.Utils;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using Text = app.type.item.text.@this;
@@ -36,10 +37,20 @@ public sealed class Default : IScreen
         if (failed != null)
             return data.@this<Screen>.From(context.Error(new ActionError("Could not open the screen: " + failed, "ScreenOpenFailed", 500)));
 
+        // the window's numbers (once a second) also go to stats.jsonl in the app's folder: watched from
+        // outside (the os bot); started anew now and then, so it stays small
+        var stats = PathHelper.Combine(context.App.AbsolutePath, "stats.jsonl");
+        var recorded = 0;
         _ = Task.Run(async () =>
         {
             await foreach (var e in events.Reader.ReadAllAsync())
             {
+                if (e.StartsWith("{\"stats\":", StringComparison.Ordinal))
+                {
+                    var line = "{\"at\":\"" + DateTime.Now.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "\"," + e[1..] + "\n";
+                    var file = global::app.type.item.path.file.@this.Resolve(stats, context);
+                    await (recorded++ % 10_000 == 0 ? file.WriteText(line, context) : file.Append(line, context));
+                }
                 var closed = e == "{\"closed\":true}";
                 var call = closed ? onClose : onInput;
                 if (call != null)
