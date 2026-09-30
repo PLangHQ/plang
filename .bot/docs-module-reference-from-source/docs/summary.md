@@ -22,13 +22,20 @@ source plus the handler C# attributes, so nothing can drift.
 - **File-module prose enriched** in the spec (ready-to-apply `notes.md` for all 7
   file actions), grounded in the real `app-systems` handlers.
 
-## Not done / next (coder)
-- The render pass: a second consumer of `app.goal.step.action.@this` (parallel to
-  the compile-teaching render) that writes `docs/modules/<module>.md`.
-- Teach the compile-teaching loader to strip `· say:` / `· builder:` tags so they
-  never reach build prompts. **The tagged `notes.md` files must land in the same
-  change as the stripping** — do not commit tagged `notes.md` before it, or tag
-  text leaks into build prompts.
+## Not done / next (coder — routed via architect plang-21)
+Architect reviewed and reshaped (spec updated to match):
+- Generator = **plang goal + Fluid template** over the catalog, parallel to
+  `os/system/builder/llm/templates/properties.template` — not a C# render pass.
+- Notes line **parsed once** into `{name, prose, say, builder}`; learner template
+  shows `name/prose/say`, compile template shows `name/prose/builder`. Nothing
+  rendered raw, so no tag leaks. Tagged `notes.md` land atomically with the parse.
+- Type column uses **plang type names** from the catalog (`text`, `item`, …) — no
+  string/object mapping scheme.
+- Reuse `MarkdownTeaching.ScanOrphans`; don't mirror it.
+- `file/delete.notes.md` must **merge** with the coder's pending pick-scoring change
+  (`remove %x%` → `file.delete`), not land separately.
+
+Architect is taking shape + priority to Ingi; will say who builds it and when.
 
 ## Interim work on the other branch
 `doc-tree-app-obp` got a hand-written "How you say it" column across all module
