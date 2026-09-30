@@ -1,0 +1,263 @@
+# Module Reference Generation
+
+The learner-facing module pages (`docs/modules/<module>.md`) are **generated** from
+the same source the builder already uses — never hand-written. Every fact on a page
+has exactly one home, so a page can never disagree with the code.
+
+This document is the spec: the source format, where each fact comes from, the
+generation rules, and a golden output sample for the `file` module.
+
+## Why generated
+
+Hand-written module tables drift. Real examples found on `doc-tree-app-obp`:
+`condition` documented `Condition / GoalIfTrue / GoalIfFalse` while the handler is
+`Left / Operator / Right / Negate`; `error handle` documented `Goal` while the
+param is `Actions`; `output write` documented an `Actor` param that does not exist.
+A table generated from the handler cannot drift from the handler.
+
+## One home per fact
+
+| Fact on the page | Single source |
+|---|---|
+| Module intro | `<module>/module.description.md` + optional `module.notes.md` |
+| Action summary line | `<module>/<action>.description.md` |
+| Example steps | `<module>/<action>.examples.md` (the `Step text:` lines) |
+| Property name, "what it changes", "how you say it" | `<module>/<action>.notes.md` |
+| Type / Required / Default | handler C# attributes (`data.@this<T>`, `[Default]`, nullability / `[IsNotNull]`) |
+| Returns (type) | handler `Start()` / `Run()` signature — `Data<T>` → T |
+| Returns (meaning) | a `Returns —` line in `<action>.notes.md` |
+
+The generator reads all of this off the descriptor `app.goal.step.action.@this`,
+which already exposes `.Description` / `.Notes` / `.Examples` and the handler type;
+property shape comes from the same attribute metadata the builder catalog uses.
+
+## Source format: `notes.md`, one line per property, tagged
+
+One line per property. The prose before the first `·` is the learner description.
+Optional tags follow, each introduced by `·`:
+
+- `· say:` — how you type it in a step (fills the "How you say it" column).
+- `· builder:` — the compile-only directive (when the planner should emit it).
+
+A line whose property name is `Returns` documents the return value's meaning.
+
+```
+Pattern — which files come back, as a glob. · say: matching '<glob>' · builder: only when the step names one
+```
+
+**Two render passes strip the tag the audience doesn't need:**
+
+| Consumer | Keeps | Strips |
+|---|---|---|
+| Learner page (`docs/modules/*.md`) | prose + `· say:` | `· builder:` |
+| Compile teaching (build prompt) | prose + `· builder:` | `· say:` |
+
+> The compile teaching renders `notes.md` **raw** today. Adding tags therefore lands
+> **together with** the tag-stripping in the teaching loader — do not commit tagged
+> `notes.md` before the loader strips `· say:`, or the tag text leaks into build prompts.
+
+## Type display mapping
+
+The Type column shows the CLR `data.@this<T>` mapped to a learner-friendly name:
+
+| `T` | Type shown |
+|---|---|
+| `path` | `path` |
+| `app.type.item.text` | `string` |
+| `app.type.item.@bool` | `bool` |
+| `app.type.item.number` | `number` |
+| `app.type.item.list<X>` | `list` |
+| `app.variable` | `variable` (a variable name, not its value) |
+| bare `data.@this` | `object` |
+
+**Required** = non-nullable `data.@this<T>` with no `[Default]` (the generator emits a
+missing-parameter guard for these), or an explicit `[IsNotNull]`. **Default** = the
+`[Default(x)]` value, or `—` when required.
+
+## Enriched `notes.md` — file module (ready to apply with the loader)
+
+`file/list.notes.md`
+```
+Path — the folder to list. · say: the folder, inline
+Pattern — which files come back, as a glob. · say: matching '<glob>' · builder: only when the step names one
+Recursive — whether sub-folders are searched too. · say: recursive · builder: true only when the step says to include sub-folders
+```
+
+`file/read.notes.md`
+```
+Path — the file to read. · say: the path, inline
+ResolveVariables — fill in %variables% inside the file's text before returning. · say: load vars · builder: true only when the step asks for the file's %variables% to be filled in
+Returns — the file's content (JSON is parsed into an object automatically).
+```
+
+`file/save.notes.md`
+```
+Path — the file to write. · say: to file '<path>'
+Value — what to write. · say: the content, inline
+Returns — the path that was written.
+```
+
+`file/exists.notes.md`
+```
+Path — the file or folder to check for. · say: check if '<path>' exists
+Returns — the path itself; whether it exists is the value's truthiness, so `if %x% is true` probes it (a filesystem stat, or an HTTP HEAD for a URL) at the moment you test it.
+```
+
+`file/copy.notes.md`
+```
+Source — the file or folder to copy from. · say: the first path, inline
+Destination — where the copy goes. · say: to '<path>'
+Overwrite — replace the destination if it already exists. · say: overwrite
+IncludeSubfolders — when copying a folder, copy its sub-folders too (on by default). · builder: false only when the step says to copy the top folder only
+Returns — the destination path.
+```
+
+`file/move.notes.md`
+```
+Source — the file or folder to move from. · say: the first path, inline
+Destination — where it moves to (this renames it). · say: to '<path>'
+Overwrite — replace the destination if it already exists. · say: overwrite
+Returns — the destination path.
+```
+
+`file/delete.notes.md`
+```
+Path — the file or folder to delete. · say: file '<path>'
+IgnoreIfNotFound — don't error if it isn't there. · say: ignore if not found
+Recursive — delete a folder's contents too. · say: recursive
+Returns — the deleted path.
+```
+
+Module-level learner prose that is not per-action (e.g. "a `Path` can be a URL")
+belongs in `file/module.notes.md`, rendered as the page intro after
+`module.description.md`.
+
+## Golden output — generated `docs/modules/file.md`
+
+This is the exact target the generator must produce for the `file` module. Each
+part is annotated with its source; the annotations are not emitted.
+
+```markdown
+# File Module
+<!-- module.description.md -->
+Read, write, copy, move, delete, and list files through the configured filesystem
+abstraction.
+<!-- module.notes.md, if present: the "Paths can be URLs" section, etc. -->
+
+## read
+<!-- read.description.md -->
+Read a file's content; optionally resolve %var% patterns in the text before returning.
+
+<!-- read.examples.md -->
+- read file.txt, write to %content%
+- read 'config/settings.json'
+
+<!-- notes.md prose + say:, attributes for Type/Required/Default -->
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Path | the path, inline | path | yes | — | the file to read |
+| ResolveVariables | `load vars` | bool | no | false | fill in %variables% inside the file's text before returning |
+
+**Returns:** the file's content (JSON is parsed into an object automatically).
+
+## save
+Write Value to a file at Path, creating directories as needed.
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Path | `to file '<path>'` | path | yes | — | the file to write |
+| Value | the content, inline | object | yes | — | what to write |
+
+**Returns:** the path that was written.
+
+## copy
+Copy a file or folder from Source to Destination, optionally overwriting and
+including subfolders.
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Source | the first path, inline | path | yes | — | the file or folder to copy from |
+| Destination | `to '<path>'` | path | yes | — | where the copy goes |
+| Overwrite | `overwrite` | bool | no | false | replace the destination if it already exists |
+| IncludeSubfolders | (on by default) | bool | no | true | when copying a folder, copy its sub-folders too |
+
+**Returns:** the destination path.
+
+## move
+Move or rename a file from Source to Destination, optionally overwriting the target.
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Source | the first path, inline | path | yes | — | the file or folder to move from |
+| Destination | `to '<path>'` | path | yes | — | where it moves to (this renames it) |
+| Overwrite | `overwrite` | bool | no | false | replace the destination if it already exists |
+
+**Returns:** the destination path.
+
+## delete
+Delete a file or directory at Path, optionally recursively or ignoring missing targets.
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Path | `file '<path>'` | path | yes | — | the file or folder to delete |
+| IgnoreIfNotFound | `ignore if not found` | bool | no | false | don't error if it isn't there |
+| Recursive | `recursive` | bool | no | false | delete a folder's contents too |
+
+**Returns:** the deleted path.
+
+## exists
+Check whether a file or directory exists at Path.
+
+- check if file.txt exists, write to %fileInfo%
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Path | `check if '<path>' exists` | path | yes | — | the file or folder to check for |
+
+**Returns:** the path itself; whether it exists is the value's truthiness, so
+`if %x% is true` probes it (a filesystem stat, or an HTTP HEAD for a URL) at the
+moment you test it.
+
+## list
+List files in a directory matching an optional glob pattern, optionally recursing
+into subdirectories.
+
+- list files in docs/ recursive, write to %files%
+- list files in %folder%
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Path | the folder, inline | path | yes | — | the folder to list |
+| Pattern | `matching '<glob>'` | string | no | * | which files come back, as a glob |
+| Recursive | `recursive` | bool | no | false | whether sub-folders are searched too |
+
+**Returns:** a list of `path` values.
+```
+
+## Generation rules
+
+1. **Discover** modules/actions from the module registry (`app.Module`), skipping
+   internal-only actions the builder catalog already hides.
+2. **Intro** = `module.description.md` then `module.notes.md` (learner render:
+   `· builder:` stripped) if present.
+3. **Per action, in catalog order:** heading = action name; summary =
+   `<action>.description.md`; examples = the `Step text:` lines of
+   `<action>.examples.md` (drop the `Properties:` mapping lines — those are builder
+   data); the parameter table from the handler's properties (`say:` from `notes.md`,
+   "what it changes" = the notes prose, Type/Required/Default from attributes);
+   `**Returns:**` from the `Returns —` notes line, or a default derived from the
+   return type when absent.
+4. **Property order** follows the handler declaration order.
+5. **Orphans:** a `notes.md` property line with no matching handler property, or a
+   handler property with no `notes.md` line, is a warning (mirror
+   `MarkdownTeaching`'s orphan scan) — surfaces missing or stale prose.
+
+## Hand-off
+
+- **Docs (owned here):** this spec, the tagged `notes.md` format, the file-module
+  enriched prose above, the golden sample.
+- **Coder / architect:** the render pass (a second consumer of
+  `app.goal.step.action.@this`, parallel to the compile-teaching render) that emits
+  `docs/modules/<module>.md`; and teaching the compile-teaching loader to strip the
+  `· say:` / `· builder:` tags so they never reach build prompts. The tagged
+  `notes.md` files land in the same change as the stripping.
