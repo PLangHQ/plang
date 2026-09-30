@@ -4,32 +4,38 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace app.module.browser;
+namespace app.module.window;
 
 /// <summary>
-/// One of the app's own pages (a file under the app's folder) in a window of its own, which plang
-/// talks with like the desktop: the page calls <c>plang(text)</c>, heard by OnMessage with its
-/// window's id added (<c>"from"</c>), and <c>browser.post</c> / <c>browser.callGoal</c> with that Window
-/// reach it. Every call is checked: a page that has since gone somewhere else (a website) is not heard.
+/// The page a window shows, over a DevTools connection of its own. It goes where it is sent,
+/// evaluates, and gives a message event. When it is one of the app's own pages (a file under the
+/// app's folder), it also gets <c>plang(text)</c>: what it says is heard with its window's id added
+/// (<c>"from"</c>). Every call is checked: a page that has since gone somewhere else (a website) is
+/// not heard.
 /// </summary>
-internal sealed class Talk(long window, string page, string root)
+internal sealed class Page(string target, int port, string root)
 {
     private readonly ClientWebSocket socket = new();
     private readonly SemaphoreSlim sending = new(1, 1);
     private readonly ConcurrentDictionary<int, TaskCompletionSource<JsonElement>> waiting = new();
     private int next;
 
-    internal long Window { get; } = window;
+    /// <summary>DevTools' id for this page.</summary>
+    internal string Target { get; } = target;
 
-    /// <summary>Connects to the page (on its own DevTools connection) and gives it <c>plang(text)</c>;
-    /// what it says goes to <paramref name="hear"/>.</summary>
-    internal async Task Open(int port, Func<string, Task> hear)
+    /// <summary>Connects. Given <paramref name="hear"/>, the page gets <c>plang(text)</c> and what it
+    /// says goes there, <c>"from"</c> <paramref name="window"/>.</summary>
+    internal async Task Open(long window, Func<string, Task>? hear)
     {
-        await socket.ConnectAsync(new Uri($"ws://127.0.0.1:{port}/devtools/page/{page}"), CancellationToken.None);
-        _ = Task.Run(() => Listen(hear));
+        await socket.ConnectAsync(new Uri($"ws://127.0.0.1:{port}/devtools/page/{Target}"), CancellationToken.None);
+        _ = Task.Run(() => Listen(window, hear));
+        if (hear == null) return;
         await Ask("Runtime.enable", new JsonObject());
         await Ask("Runtime.addBinding", new JsonObject { ["name"] = "plang" });
     }
+
+    /// <summary>Goes to <paramref name="url"/>.</summary>
+    internal Task Navigate(string url) => Ask("Page.navigate", new JsonObject { ["url"] = url });
 
     /// <summary>A message to the page: a <c>message</c> event, origin <c>"plang"</c>.</summary>
     internal Task Post(string text) => Ask("Runtime.evaluate", new JsonObject
@@ -43,12 +49,16 @@ internal sealed class Talk(long window, string page, string root)
         ["expression"] = expression, ["awaitPromise"] = true, ["returnByValue"] = true,
     });
 
+    /// <summary>The page closes (and the window it is in).</summary>
+    internal Task Shut() => Ask("Page.close", new JsonObject());
+
+    /// <summary>The connection goes.</summary>
     internal void Close()
     {
         try { socket.Abort(); } catch { }
     }
 
-    private async Task Listen(Func<string, Task> hear)
+    private async Task Listen(long window, Func<string, Task>? hear)
     {
         var buffer = new byte[1 << 16];
         var message = new MemoryStream();
@@ -68,14 +78,14 @@ internal sealed class Talk(long window, string page, string root)
                     answer.TrySetResult(root.Clone());
                     continue;
                 }
-                if (!root.TryGetProperty("method", out var m) || m.GetString() != "Runtime.bindingCalled") continue;
+                if (hear == null || !root.TryGetProperty("method", out var m) || m.GetString() != "Runtime.bindingCalled") continue;
                 var p = root.GetProperty("params");
                 var said = p.GetProperty("payload").GetString() ?? "";
                 var context = p.GetProperty("executionContextId").GetInt32();
-                // not awaited: the goal may post back here, whose answer this loop reads
+                // not awaited: the goal may talk back here, whose answer this loop reads
                 _ = Task.Run(async () =>
                 {
-                    if (await Ours(context)) await hear(WithWindow(said));
+                    if (await Ours(context)) await hear(From(window, said));
                 });
             }
         }
@@ -96,13 +106,13 @@ internal sealed class Talk(long window, string page, string root)
     }
 
     /// <summary>What the page said, with its window's id: a json object gets <c>"from"</c>; anything else stays as it is.</summary>
-    private string WithWindow(string said)
+    private static string From(long window, string said)
     {
         try
         {
             if (JsonNode.Parse(said) is JsonObject o)
             {
-                o["from"] = Window;
+                o["from"] = window;
                 return o.ToJsonString();
             }
         }
