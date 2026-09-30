@@ -142,6 +142,7 @@ internal sealed class Window
             decode = _ => null;
             new Thread(Decode) { IsBackground = true, Name = "screen decode: " + title }.Start();
         }
+        if (update is byte[] m && IsVideo(m)) Interlocked.Increment(ref videosWaiting);
         patches.Enqueue(update);
         offer.Set();
     }
@@ -164,10 +165,13 @@ internal sealed class Window
             at += 20 + n;
         }
         var decoded = new byte[]?[count];
-        // a video's pictures in order, one stream at a time; the lossless ones on all cores
+        // a video's pictures in order, one stream at a time; the lossless ones on all cores. When a
+        // newer video picture waits behind this one, this one is only decoded (the newer needs it),
+        // not shown: behind, the window catches up instead of falling further behind.
+        var newest = !IsVideo(m) || Interlocked.Decrement(ref videosWaiting) == 0;
         for (var i = 0; i < count; i++)
             if (parts[i].n > 8 && m.AsSpan(parts[i].at, 4).SequenceEqual("h264"u8))
-                decoded[i] = Picture(BitConverter.ToUInt32(m, parts[i].at + 4), m.AsSpan(parts[i].at + 8, parts[i].n - 8), parts[i].w, parts[i].h);
+                decoded[i] = Picture(BitConverter.ToUInt32(m, parts[i].at + 4), m.AsSpan(parts[i].at + 8, parts[i].n - 8), parts[i].w, parts[i].h, newest);
         Parallel.For(0, count, i =>
         {
             if (decoded[i] == null && !m.AsSpan(parts[i].at, 4).SequenceEqual("h264"u8))
@@ -195,11 +199,16 @@ internal sealed class Window
 
     private Video? video;
     private bool noVideo;
+    private int videosWaiting;   // video pictures in the queue, not yet decoded
+
+    /// <summary>A frame message that is a video's picture (PlangOS sends each as a frame of its own).</summary>
+    // [1][u16 count] then the first region's [x y w h n] (20 bytes): its bytes start at 23
+    private static bool IsVideo(byte[] m) => m.Length > 31 && m[0] == 1 && m.AsSpan(23, 4).SequenceEqual("h264"u8);
 
     /// <summary>The next picture of video stream <paramref name="id"/> (a new number: a new stream,
-    /// decoded anew). When Windows can't decode H.264 (an N edition), PlangOS is told once, and sends
-    /// its videos losslessly from then on.</summary>
-    private byte[]? Picture(uint id, ReadOnlySpan<byte> h264, int w, int h)
+    /// decoded anew), or null when it isn't the <paramref name="newest"/>. When Windows can't decode
+    /// H.264 (an N edition), PlangOS is told once, and sends its videos losslessly from then on.</summary>
+    private byte[]? Picture(uint id, ReadOnlySpan<byte> h264, int w, int h, bool newest)
     {
         if (noVideo) return null;
         try
@@ -210,7 +219,7 @@ internal sealed class Window
                 video = null;
                 video = new Video(id, w, h);
             }
-            return video.Decode(h264, w, h);
+            return video.Decode(h264, w, h, newest);
         }
         catch (Exception ex)
         {
