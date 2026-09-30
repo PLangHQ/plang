@@ -10,10 +10,10 @@ namespace app.module.window;
 /// is <c>%!data%</c>.
 /// </summary>
 [Action("callGoal", Cacheable = false)]
-[app.Attributes.CallsGoal(nameof(Name))]
 public partial class callGoal : IContext
 {
     /// <summary>The page's goal: the name of a function the page has.</summary>
+    [app.Attributes.Goal]
     public partial data.@this<global::app.type.item.text.@this> Name { get; init; }
 
     /// <summary>The arguments — one named row each, as for <c>goal.call</c>; the function gets them as
@@ -32,12 +32,16 @@ public partial class callGoal : IContext
         if (await global::app.module.window.Window.Of(Window, browser, Context) is not { } window)
             return Context.Error(new global::app.error.ActionError($"No such window: {Window.Peek()}", "WindowNotFound", 404));
         var name = (await Name.Value())?.Clr<string>() ?? "";
-        // the arguments as one object: a dict writes itself as json
+        // the arguments as one object: a dict writes itself as json. They leave for the page here, so
+        // each is opened to what it holds (a file reference to its content), as a channel does
         var arguments = new global::app.type.item.dict.@this();
         if (Parameter != null && await Parameter.Value() is global::app.type.item.list.@this list)
             foreach (var argument in list.Items(Context))
                 if (argument.Peek() is { IsNull: false })
-                    arguments.Set((await argument.Follow(Context)).Copy(argument.Name));
+                {
+                    var named = await argument.Follow(Context);
+                    arguments.Set(new data.@this(argument.Name, await named.Value(), context: Context));
+                }
         using var written = new MemoryStream();
         await global::app.type.item.text.@this.Encode(written, new data.@this("arguments", arguments, context: Context), Context, null, null, CancellationToken.None);
         JsonElement reply;

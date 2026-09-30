@@ -54,7 +54,18 @@ public sealed class Wayland : IScreen
 
         var onWindow = action.OnWindow == null ? null : await action.OnWindow.Value();
         if (onWindow != null)
-            display.Told += e => global::app.module.on.code.Gate.Call(onWindow, Payload(e, context), context);
+        {
+            // what happens to windows goes to OnWindow in order, but the display never waits for it:
+            // a goal running now (one at a time per app) may itself wait for a window to be shown,
+            // and showing it is the display's next event
+            var told = System.Threading.Channels.Channel.CreateUnbounded<System.Text.Json.Nodes.JsonObject>();
+            _ = Task.Run(async () =>
+            {
+                await foreach (var e in told.Reader.ReadAllAsync())
+                    await global::app.module.on.code.Gate.Call(onWindow, Payload(e, context), context);
+            });
+            display.Told += e => { told.Writer.TryWrite(e); return Task.CompletedTask; };
+        }
         display.Start();
 
         var screen = new Screen
