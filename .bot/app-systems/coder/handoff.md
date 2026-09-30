@@ -15,4 +15,6 @@ step goes and short names become dynamic variables set in /system/on/create.goal
 380 (4) `system.on.create` (shape first); 380 (5) read-as-text verbatim.
 
 Waiting on Ingi: the http `response` reshape (387) — http/ belongs to the fix branch `app-systems-http` until it
-comes back. Not urgent: make `After_ActionExceedsTimeout_Returns408Error` deterministic (a held gate).
+comes back. Not urgent, tests to make deterministic (not baseline entries):
+- `After_ActionExceedsTimeout_Returns408Error` — a timing race under load; a held gate, like the TimeoutAfter ones.
+- `Exists_2xx_True_4xx_False` — `HttpTestServer` collides on a port in the parallel run; listen on a port the OS picks (0).

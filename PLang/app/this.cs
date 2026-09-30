@@ -114,7 +114,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
     /// <summary>The event in play for <paramref name="context"/> — <c>%!app.event%</c> answers as its asker: the running
     /// bound call's Data, its value the event, its properties what it fired for (<c>%!app.event!item%</c>) and the
-    /// result so far (<c>%!app.event!result%</c>). Unset outside one. The event's type is <c>%!app.type.event%</c>.</summary>
+    /// result so far (<c>%!app.event!result%</c>). Unset outside one.</summary>
     [global::app.LlmBuilder]
     public global::app.data.@this @event(global::app.actor.context.@this context)
         => context.CallStack.Event ?? context.NotFound("event");
