@@ -29,8 +29,12 @@ The split is Ingi's call:
 - `voice/Key`, `voice/Scene` and `voice/Line` handle voicing; each take is cached per line id with a hash of what made it.
 - `page/Write` inlines the engine, fonts, lesson and art through `ui.render`.
 
+**Brand (Ingi: keep coder's logo.png and plang logo):** `film.puffin` (logo.png cut into a paper puppet), `film.logo` (ransom-letter wordmark, teal sunburst card), `film.image` (inlined pictures). Used in the title card, the hook, the run chapter and the end card.
+
+**Music:** tuned by listening through Gemini (`studio/check/listen.js`): the bass and brush layer read as "groovy electronic", now level 4 and unused; levels 1-3 rate 10/10 warm and storybook-like.
+
 **The lesson:**
-- Script: `studio/lesson/what-is-plang/lesson.json` (8 chapters, 15 lines, every claim with its source in the speaker notes).
+- Script: `studio/lesson/what-is-plang/lesson.json` (9 chapters, 15 lines, every claim with its source in the speaker notes).
 - Drawings: `studio/lesson/what-is-plang/art.js`.
 - Written by `plang Draft topic=what-is-plang` to `/shared/educator/animations/what-is-plang/index.html`.
 - Checked with `node studio/check/shots.js what-is-plang` (24 shots, no errors).
