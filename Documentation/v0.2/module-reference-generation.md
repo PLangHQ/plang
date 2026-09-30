@@ -143,45 +143,28 @@ belongs in `file/module.notes.md`, rendered as the page intro after
 
 ## Golden output — generated `docs/modules/file.md`
 
-This is the exact target the generator must produce for the `file` module. Each
-part is annotated with its source; the annotations are not emitted.
+This is the exact literal the generator must produce for the `file` module —
+actions in catalog order, `*.description.md` verbatim (no added periods, second
+sentences kept), one line per source passage. The `ModulePageTests` render diffs
+against this. (Sources per part: see the fact-ownership table above.)
 
 ```markdown
 # File Module
-<!-- module.description.md -->
-Read, write, copy, move, delete, and list files through the configured filesystem
-abstraction.
-<!-- module.notes.md, if present: the "Paths can be URLs" section, etc. -->
+Read, write, copy, move, delete, and list files through the configured filesystem abstraction. A `%!x.setting%` is a setting, never a file: `save %!llm.setting%` saves a setting, which is the setting module.
 
-## read
-<!-- read.description.md -->
-Read a file's content; optionally resolve %var% patterns in the text before returning.
-
-<!-- read.examples.md -->
-- read file.txt, write to %content%
-- read 'config/settings.json'
-
-<!-- notes.md prose + say:, attributes for Type/Required/Default -->
-| Property | How you say it | Type | Required | Default | What it changes |
-|----------|----------------|------|----------|---------|-----------------|
-| Path | the path, inline | path | yes | — | the file to read |
-| ResolveVariables | `load vars` | bool | no | false | fill in %variables% inside the file's text before returning |
-
-**Returns:** the file's content. A JSON file is navigable; it is parsed when first navigated.
-
-## save
-Write Value to a file at Path, creating directories as needed.
+## delete
+Delete a file or directory at Path, optionally recursively or ignoring missing targets
 
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
-| Path | `to file '<path>'` | path | yes | — | the file to write |
-| Value | the content, inline | item | yes | — | what to write |
+| Path | `file '<path>'` | path | yes | — | the file or folder to delete |
+| IgnoreIfNotFound | `ignore if not found` | bool | no | false | don't error if it isn't there |
+| Recursive | `recursive` | bool | no | false | delete a folder's contents too |
 
-**Returns:** the path that was written.
+**Returns:** the deleted path.
 
 ## copy
-Copy a file or folder from Source to Destination, optionally overwriting and
-including subfolders.
+Copy a file or folder from Source to Destination, optionally overwriting and including subfolders
 
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
@@ -192,30 +175,21 @@ including subfolders.
 
 **Returns:** the destination path.
 
-## move
-Move or rename a file from Source to Destination, optionally overwriting the target.
+## read
+Read a file's content; optionally resolve %var% patterns in the text before returning
+
+- read file.txt, write to %content%
+- read 'config/settings.json'
 
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
-| Source | the first path, inline | path | yes | — | the file or folder to move from |
-| Destination | `to '<path>'` | path | yes | — | where it moves to (this renames it) |
-| Overwrite | `overwrite` | bool | no | false | replace the destination if it already exists |
+| Path | the path, inline | path | yes | — | the file to read |
+| ResolveVariables | `load vars` | bool | no | false | fill in %variables% inside the file's text before returning |
 
-**Returns:** the destination path.
-
-## delete
-Delete a file or directory at Path, optionally recursively or ignoring missing targets.
-
-| Property | How you say it | Type | Required | Default | What it changes |
-|----------|----------------|------|----------|---------|-----------------|
-| Path | `file '<path>'` | path | yes | — | the file or folder to delete |
-| IgnoreIfNotFound | `ignore if not found` | bool | no | false | don't error if it isn't there |
-| Recursive | `recursive` | bool | no | false | delete a folder's contents too |
-
-**Returns:** the deleted path.
+**Returns:** the file's content. A JSON file is navigable; it is parsed when first navigated.
 
 ## exists
-Check whether a file or directory exists at Path.
+Check whether a file or directory exists at Path and return file info
 
 - check if file.txt exists, write to %fileInfo%
 
@@ -223,13 +197,20 @@ Check whether a file or directory exists at Path.
 |----------|----------------|------|----------|---------|-----------------|
 | Path | `check if '<path>' exists` | path | yes | — | the file or folder to check for |
 
-**Returns:** the path itself; whether it exists is the value's truthiness, so
-`if %x% is true` probes it (a filesystem stat, or an HTTP HEAD for a URL) at the
-moment you test it.
+**Returns:** the path itself; whether it exists is the value's truthiness, so `if %x% is true` probes it (a filesystem stat, or an HTTP HEAD for a URL) at the moment you test it.
+
+## save
+Write Value to a file at Path, creating directories as needed. Saving a `%!x.setting%` setting (`save %!llm.setting%`) is not this: that is setting.save.
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Path | `to file '<path>'` | path | yes | — | the file to write |
+| Value | the content, inline | item | yes | — | what to write |
+
+**Returns:** the path that was written.
 
 ## list
-List files in a directory matching an optional glob pattern, optionally recursing
-into subdirectories.
+List files in a directory matching an optional glob pattern, optionally recursing into subdirectories
 
 - list files in docs/ recursive, write to %files%
 - list files in %folder%
@@ -241,6 +222,17 @@ into subdirectories.
 | Recursive | `recursive` | bool | no | false | whether sub-folders are searched too |
 
 **Returns:** a list of `path` values.
+
+## move
+Move or rename a file from Source to Destination, optionally overwriting the target
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Source | the first path, inline | path | yes | — | the file or folder to move from |
+| Destination | `to '<path>'` | path | yes | — | where it moves to (this renames it) |
+| Overwrite | `overwrite` | bool | no | false | replace the destination if it already exists |
+
+**Returns:** the destination path.
 ```
 
 ## Generation rules
