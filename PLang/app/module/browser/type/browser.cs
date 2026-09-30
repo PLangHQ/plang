@@ -3,13 +3,22 @@ using app.Attributes;
 namespace app.module.browser;
 
 /// <summary>
-/// A browser started with <c>browser.start</c>: it renders a page off-screen and delivers each new
-/// frame through OnFrame as <c>%!data%</c>; <c>browser.send</c> gives it mouse, keyboard and
-/// navigation; <c>browser.stop</c> ends it.
+/// A browser started with <c>browser.start</c>. On a screen (PlangOS's display) its pages are
+/// windows — the first one the desktop (<c>%browser.desktop%</c>), more with <c>window.open</c>.
+/// Without one it renders a page off-screen and delivers each new frame through OnFrame as
+/// <c>%!data%</c>. <c>browser.send</c> gives it mouse, keyboard and navigation; <c>browser.stop</c> ends it.
 /// </summary>
 [PlangType("browser")]
 public sealed class Browser : global::app.type.item.@this, global::app.type.item.ICreate<Browser>
 {
+    private global::app.module.window.Windows? windows;
+
+    /// <summary>The desktop: the first page, the whole screen (on a screen).</summary>
+    [LlmBuilder, Out] public global::app.module.window.Window Desktop => Windows.Desktop;
+
+    /// <summary>Its windows on the screen.</summary>
+    internal global::app.module.window.Windows Windows => windows ??= new(this);
+
     /// <summary>The page it opened first.</summary>
     [LlmBuilder, Out] public string Url { get; set; } = "";
 
@@ -27,20 +36,17 @@ public sealed class Browser : global::app.type.item.@this, global::app.type.item
     internal global::app.type.item.path.file.@this? Program { get; set; }
     /// <summary>DevTools' port, on 127.0.0.1: the pages of its windows.</summary>
     internal int Port { get; set; }
-    /// <summary>Which page each window shows.</summary>
-    internal Pages Pages { get; } = new();
     /// <summary>DevTools for the whole browser (its pages and windows), beside Page (the first page).</summary>
     internal System.Net.WebSockets.ClientWebSocket? Control { get; set; }
     /// <summary>The desktop's browser window: a page that lands in it was opened as a tab.</summary>
     internal int DesktopWindow { get; set; }
-    /// <summary>Hands what the first page says (<c>plang(text)</c>) to OnMessage.</summary>
+    /// <summary>Hands what a page of the app's own says (<c>plang(text)</c>) to OnMessage.</summary>
     internal Func<string, Task>? Message { get; set; }
     /// <summary>The app's own pages (<c>file://</c> under this folder) may talk with plang; no other page.</summary>
     internal string Root { get; set; } = "";
-    /// <summary>The windows showing one of the app's own pages, by window id: plang talks with them.</summary>
-    internal System.Collections.Concurrent.ConcurrentDictionary<long, Talk> Talks { get; } = new();
     /// <summary>The screen Chromium draws onto (PlangOS's display), from <c>screen.open</c>.</summary>
     internal global::app.module.screen.Screen? Screen { get; set; }
+    /// <summary>The page, off-screen (no screen): its frames and input go over this.</summary>
     internal System.Net.WebSockets.ClientWebSocket? Page { get; set; }
     internal SemaphoreSlim Sending { get; } = new(1, 1);
     internal int MessageId;
