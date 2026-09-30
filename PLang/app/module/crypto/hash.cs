@@ -5,7 +5,8 @@ namespace app.module.crypto;
 [Action("hash", Cacheable = false)]
 public partial class Hash : IContext
 {
-    [IsNotNull]
+    /// <summary>The data to hash — as it is: a failed result hashes its error, the face it writes.</summary>
+    [IsNotNull, Whole]
     public partial data.@this Data { get; init; }
 
     [Default("keccak256")]

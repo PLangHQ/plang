@@ -22,8 +22,8 @@ public class Default : ICrypto
         var value = data.Peek();
         // A null/absent value has nothing to hash — the digest would be of the
         // empty wire shape, which silently verifies against any other empty.
-        // Surface the missing input instead.
-        if (value is null || await value.IsEmpty())
+        // Surface the missing input instead. A failed result is not empty: it writes its error.
+        if (data.Error == null && (value is null || await value.IsEmpty()))
             return action.Context.Error<global::app.module.crypto.type.hash.@this>(new ActionError(
                 "Hash requires a value to hash", "ValueRequired", 400));
         if (value is global::app.type.item.binary.@this bin)

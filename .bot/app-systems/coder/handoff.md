@@ -1,21 +1,24 @@
-# handoff — 375 (1) mid-flight
+# handoff — 375 (1) done; http plang-response path open
 
-Committed: data reader births a received error as a failed Data; error reader IsEager; FailedWriteTests pin (green). Gate + ptest NOT yet run on this commit.
+375 (1) is committed: a Data read holding an error is born failed with that error. Pinned between two real-signing
+apps (`FailedWriteTests.AFailedResult_SignedBetweenActors_ArrivesAsTheSameFailure`). Underneath: `crypto.hash`
+took its Data unwhole, so under a real signer a failed Data could not be encoded to plang at all — `Hash.Data`
+is `[Whole]` now (like `sign.Data`) and a failed Data hashes its error.
 
-Open: http pin `AResponseCarryingAFailure_FailsTheRequest_WithThatError` fails with NoSignature.
-Remote app must sign for real (plain app, not .Testing()); receiver's verify now says NoSignature — next: trace how verify finds the signature on a Data read back failed (the failed Data may lose the signature layer).
+## Open — waiting on the architect
+
+`http.request` reading an `application/plang` response (`http/code/Default.cs` ParsePlangResponseAsync) fails
+for any really-signed body (only `"{}"` stubs test it today):
+
+1. It decodes a transport response in the **Store** view → verify rehashes in Store (adds `name`), the sender
+   signed in Out → `DataHashMismatch`.
+2. `Decode` already verifies and peels the signature layer; the function verifies again on the peeled Data →
+   `NoSignature`.
+3. `!ServiceIdentity` reads the signature layer off the already-peeled Data → always null.
+
+The pin that exposes it (not committed — it fails until the path is reshaped):
 
 ```diff
-diff --git a/PLang.Tests/Modules/App/Modules/http/RequestActionTests.cs b/PLang.Tests/Modules/App/Modules/http/RequestActionTests.cs
-index 3dd7dd2d4..be98c2954 100644
---- a/PLang.Tests/Modules/App/Modules/http/RequestActionTests.cs
-+++ b/PLang.Tests/Modules/App/Modules/http/RequestActionTests.cs
-@@ -175,6 +175,33 @@ public class RequestActionTests
-         await Assert.That(sent).DoesNotContain("note.txt");
-     }
- 
-+    // A remote failure: another app answers with its failed result, written in plang. The request that reads it
-+    // fails with that error — the step fails and its on error runs.
 +    [Test]
 +    public async Task AResponseCarryingAFailure_FailsTheRequest_WithThatError()
 +    {
@@ -23,8 +26,9 @@ index 3dd7dd2d4..be98c2954 100644
 +            "plang_remote_" + Guid.NewGuid().ToString("N")[..8]));
 +        var remoteCtx = remote.actor.list.User.Context;
 +        using var body = new System.IO.MemoryStream();
-+        await remoteCtx.Format("application/plang").Encode(body,
++        var encoded = await remoteCtx.Format("application/plang").Encode(body,
 +            remoteCtx.Error(new global::app.error.Error("the disk is full", "DiskFull", 507)), remoteCtx);
++        await encoded.IsSuccess();
 +        var bytes = body.ToArray();
 +        _handler.Handler = _ =>
 +        {
@@ -40,8 +44,4 @@ index 3dd7dd2d4..be98c2954 100644
 +        await Assert.That(result.Error!.Key).IsEqualTo("DiskFull");
 +        await Assert.That(result.Error.Message).IsEqualTo("the disk is full");
 +    }
-+
-     [Test]
-     public async Task Post_FormUrlEncoded_SendsCorrectContentType()
-     {
 ```
