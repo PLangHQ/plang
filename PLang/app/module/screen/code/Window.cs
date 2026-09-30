@@ -164,7 +164,15 @@ internal sealed class Window
             at += 20 + n;
         }
         var decoded = new byte[]?[count];
-        Parallel.For(0, count, i => decoded[i] = Qoi(m.AsSpan(parts[i].at, parts[i].n).ToArray(), parts[i].w * parts[i].h));
+        // a video's pictures in order, one stream at a time; the lossless ones on all cores
+        for (var i = 0; i < count; i++)
+            if (parts[i].n > 8 && m.AsSpan(parts[i].at, 4).SequenceEqual("h264"u8))
+                decoded[i] = Picture(BitConverter.ToUInt32(m, parts[i].at + 4), m.AsSpan(parts[i].at + 8, parts[i].n - 8), parts[i].w, parts[i].h);
+        Parallel.For(0, count, i =>
+        {
+            if (decoded[i] == null && !m.AsSpan(parts[i].at, 4).SequenceEqual("h264"u8))
+                decoded[i] = Qoi(m.AsSpan(parts[i].at, parts[i].n).ToArray(), parts[i].w * parts[i].h);
+        });
         Interlocked.Add(ref statBytes, m.Length);
         var areas = new List<RECT>(count + 1);
         lock (gate)
@@ -181,6 +189,37 @@ internal sealed class Window
                 InvalidateArea(hwnd, ref a, false);
             }
         return areas.Count > 0;
+    }
+
+    // ---- a video playing in PlangOS: an H.264 stream for its part of the screen ----------------
+
+    private Video? video;
+    private bool noVideo;
+
+    /// <summary>The next picture of video stream <paramref name="id"/> (a new number: a new stream,
+    /// decoded anew). When Windows can't decode H.264 (an N edition), PlangOS is told once, and sends
+    /// its videos losslessly from then on.</summary>
+    private byte[]? Picture(uint id, ReadOnlySpan<byte> h264, int w, int h)
+    {
+        if (noVideo) return null;
+        try
+        {
+            if (video?.Id != id)
+            {
+                video?.Dispose();
+                video = null;
+                video = new Video(id, w, h);
+            }
+            return video.Decode(h264, w, h);
+        }
+        catch (Exception ex)
+        {
+            noVideo = true;
+            video?.Dispose();
+            video = null;
+            onEvent("{\"video\":false,\"why\":" + JsonSerializer.Serialize(ex.Message) + "}");
+            return null;
+        }
     }
 
     // {"rects":[[x,y,w,h,"<qoi>"],…]} (one frame) or {"rect":[x,y,w,h],"qoi":"…"} (one rectangle)
