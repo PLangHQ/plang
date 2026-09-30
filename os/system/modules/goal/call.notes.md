@@ -1,4 +1,4 @@
-Name — the goal to call, copied exactly as the step writes it: `Goal`, `Folder/Goal`, `/system/builder/Goal`. Never an action name like `goal.call`.
+Name — the goal to call, copied exactly as the step writes it, as a quoted text: `goal.call(Name="Finalize")`, `goal.call(Name="Folder/Goal")`, `goal.call(Name="/system/builder/EmitBuildEvent")` — never bare (`Name=Finalize`). Never an action name like `goal.call`.
 Parameter — the arguments: every `name=value` after the goal name is one argument, its value as written. Left out when the step passes none.
 Actor — the actor the goal runs on, only when the step names one (`on actor "system"`, `as user`). Not because the goal is a system goal, a sub-goal or a recovery.
 Parallel — true only when the step says the call may run beside others.
