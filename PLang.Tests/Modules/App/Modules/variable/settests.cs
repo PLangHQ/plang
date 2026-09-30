@@ -87,6 +87,25 @@ public class SetTests
     }
 
     [Test]
+    public async Task Create_SourceAlreadyTheType_IsHeldUnread_NoBirth()
+    {
+        var context = _app.actor.list.User.Context;
+        var births = new List<string>();
+        var number = _app.type.list["number"];
+        number.Own().Bind("create", global::app.@event.When.after,
+            (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); },
+            _app.actor.list.User, global::app.@event.binding.Scope.actor);
+        var unread = number.Make("42", context);
+
+        var result = await number.Create(unread, context, "n");
+
+        await result.IsSuccess();
+        await Assert.That(ReferenceEquals(result.Peek(), unread)).IsTrue();
+        await Assert.That(result.RawUntouched).IsTrue();
+        await Assert.That(births).IsEmpty();
+    }
+
+    [Test]
     public async Task Set_ReturnsOk()
     {
         var context = _app.actor.list.User.Context;

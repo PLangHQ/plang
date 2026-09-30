@@ -259,12 +259,30 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public System.Threading.Tasks.ValueTask<global::app.data.@this> Create(object? raw,
         global::app.actor.context.@this context, string name, global::app.type.item.path.@this? origin = null)
     {
+        // a value that already is this type is no birth: it is answered as it is, nothing fired, nothing read
+        if (Held(raw) is { } held) return new(new global::app.data.@this(name, held, context: context));
         // nothing bound: the value, made — nothing awaited, nothing else allocated
         var events = on.create;
         return events.IsBound(this, context)
             ? Born(events, raw, context, name, origin)
             : new(Made(raw, context, name, origin));
     }
+
+    // What a value that already is this type is, as it is — a source declared this type (unread), a value of this
+    // type with its kind, a value whose history is this type (an image is-a path), a structure this type doesn't
+    // take; null when making it into this type is a birth. A strict declaration always checks and a template is a
+    // birth fact, so either holds nothing.
+    private item.@this? Held(object? raw) => Strict || Template != null ? null : raw switch
+    {
+        item.source src when Same(src.Type) => src,
+        item.@this { IsLeaf: true } leaf when Same(leaf.Type) || (!Names(leaf.Type.Name) && leaf.Is(this)) => leaf,
+        item.@this { IsLeaf: false } native when !Takes(native.Type) => native,
+        _ => null,
+    };
+
+    // This type by name, with a kind that agrees (none declared, or the same one).
+    private bool Same(@this other) => Names(other.Name)
+        && (kind.IsEmpty || string.Equals(other.kind.Name, kind.Name, System.StringComparison.OrdinalIgnoreCase));
 
     // The birth with something bound: before is handed the raw, after the value.
     private async System.Threading.Tasks.ValueTask<global::app.data.@this> Born(global::app.@event.on.create events,

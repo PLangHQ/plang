@@ -895,7 +895,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
                 if (await element.Compare(k) == global::app.data.Comparison.Equal) { seen = true; break; }
             if (!seen) kept.Add(element);
         }
-        return await context.App.type.list["list"].Create(new @this(kept), context);
+        return await context.App.type.list["list"].Create(kept, context);
     }
 
     /// <summary>The elements with every nested list's elements lifted in its place, however deep; any other

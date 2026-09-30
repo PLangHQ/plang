@@ -175,10 +175,10 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// and I/O come at first touch, through the reference's own value. A template read marks it, as a file's.</summary>
     public override async Task<data.@this> Read(actor.context.@this context, global::app.type.item.@bool.@this? template = null)
     {
-        // born with its template: the reference is made whole, then born through its type
+        // born with its template: the url type makes the reference from this location, as it declares
         var marked = Marked(template);
         return await context.App.type.list[new global::app.type.@this("url", (string?)null, template: marked), context]
-            .Create(new global::app.type.item.url.@this(this, context, marked), context, "url");
+            .Create(this, context, "url");
     }
 
     /// <summary>The URL's own extension: its path's, without the query or fragment (<c>…/data.json?v=2</c> is
