@@ -458,9 +458,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return counted.Success ? counted.As<global::app.type.item.number.@this>() : global::app.data.@this<global::app.type.item.number.@this>.From(counted);
     }
 
-    /// <summary>The item membership hook — substring, same policy as below.</summary>
-    public override System.Threading.Tasks.ValueTask<bool> Contains(global::app.data.@this needle)
-        => System.Threading.Tasks.ValueTask.FromResult(Contains(needle.ToString()));
+    /// <summary>The item membership hook — substring, same policy as below. The needle is read
+    /// through its value door: a literal operand can still be lazy, and its ToString() (Peek)
+    /// would then read "(null)", making every contains false.</summary>
+    public override async System.Threading.Tasks.ValueTask<bool> Contains(global::app.data.@this needle)
+        => Contains((await needle.Value())?.ToString());
 
     /// <summary>A re-kinded copy — same content, the declared kind stamped
     /// (values immutable, never restamped in place).</summary>

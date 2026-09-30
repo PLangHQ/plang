@@ -1,0 +1,1 @@
+Close a screen window

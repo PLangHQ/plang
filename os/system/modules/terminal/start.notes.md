@@ -1,0 +1,8 @@
+- `App` is only the program: a name on the OS PATH (`wsl.exe`, `git`) or a path. Everything after the program name goes into `Parameter`, one list item per argument. Arguments are passed as-is, never through a shell, so quotes, `|`, `>` and `&&` are not shell syntax here.
+- The result's value is the program's stdout as text. Read the rest as properties: `%result!exitCode%` (0 = success), `%result!error%` (stderr), `%result!duration%` (seconds), `%result!program%` (the full path that ran), `%result!timedOut%`.
+- A non-zero exit code is not a plang error: the step succeeds and the goal decides with `if %result!exitCode% is not 0`.
+- `OnOutput` / `OnError` call a goal for each line as it arrives, the line as `%!data%`. The calls run one at a time, in order.
+- `Interactive`: the program takes over the console until it exits (for `wsl -d PlangOS`, `ssh`, editors). Nothing is captured.
+- `Administrator`: Windows asks through UAC. Output is not captured and `Environment` is not passed; only `!exitCode` returns.
+- A program outside the app root asks the user first: "Allow User to execute <path>? (y/n/a)".
+- Defaults for every run live in `%!terminal%`: `environment`, `encoding`, `timeoutInSec` (0 = none), `maxOutputSize`, `echo` (also write output to plang's output as it arrives). `save %!terminal%` keeps them.
