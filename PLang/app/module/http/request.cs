@@ -8,7 +8,8 @@ namespace app.module.http;
 /// <summary>
 /// Sends an HTTP request and returns the parsed response.
 /// Supports JSON, XML, text, binary, and application/plang responses.
-/// When signing is enabled (default), attaches X-Signature header and verifies signed responses.
+/// The request itself is not signed. An application/plang response is a signed Data: its signature is verified
+/// when it is read, and it is refused when the request is <see cref="Unsigned"/>.
 /// </summary>
 [Action("request")]
 [RequiresCapability("network")]
@@ -42,7 +43,8 @@ public partial class request : IContext, IAddressed
     [Default(30)]
     public partial data.@this<global::app.type.item.number.@this> TimeoutInSec { get; init; }
 
-    /// <summary>When true, skips request signing. Default: false (requests are signed).</summary>
+    /// <summary>When true, an application/plang response is refused (UnsignedPlang). Default: false. The request is
+    /// not signed either way.</summary>
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Unsigned { get; init; }
 

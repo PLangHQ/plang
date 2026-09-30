@@ -34,7 +34,8 @@ public partial class upload : IContext, IAddressed
     [Default(30)]
     public partial data.@this<global::app.type.item.number.@this> TimeoutInSec { get; init; }
 
-    /// <summary>When true, skips request signing. Default: false.</summary>
+    /// <summary>When true, an application/plang response is refused (UnsignedPlang). Default: false. The upload is
+    /// not signed either way.</summary>
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Unsigned { get; init; }
 

@@ -8,11 +8,11 @@ How a request's body and its `Content-Type` go out, as the code does it today. E
 
 | line | parameter | slot | what the handler gets |
 |---|---|---|---|
-| 27 | `Body` | plain `data.@this?` | the step's property as a Data, **unread**: the generator copies the `.pr` row (`__Copy`, `PLang.Generators/Emission/Action/this.cs:438-440`; the plain-Data branch `PLang.Generators/Emission/Property/Data/this.cs:133-143`). A plain slot has no typed door, so nothing renders or converts it on the way in. |
-| 30 | `Header` | `data<dict>?` | read through the typed door (`__View<dict>`, `Emission/Action/this.cs:442-445`), so a template dict renders its `%variables%` when its value is read. |
-| 34-35 | `ContentType` | `data<text>`, `[Default("application/json")]` | the content type; a `Content-Type` header replaces it (see the flow, `Default.cs:62`). |
-| 38-39 | `Encoding` | `data<text>`, `[Default("utf-8")]` | the charset put on the content type, unless the content type names one. |
-| 60 | `DefaultHeaders` | `data<dict>?` | merged under `Header`. |
+| 28 | `Body` | plain `data.@this?` | the step's property as a Data, **unread**: the generator copies the `.pr` row (`__Copy`, `PLang.Generators/Emission/Action/this.cs:438-440`; the plain-Data branch `PLang.Generators/Emission/Property/Data/this.cs:133-143`). A plain slot has no typed door, so nothing renders or converts it on the way in. |
+| 31 | `Header` | `data<dict>?` | read through the typed door (`__View<dict>`, `Emission/Action/this.cs:442-445`), so a template dict renders its `%variables%` when its value is read. |
+| 35-36 | `ContentType` | `data<text>`, `[Default("application/json")]` | the content type; a `Content-Type` header replaces it (see the flow, `Default.cs:62`). |
+| 39-40 | `Encoding` | `data<text>`, `[Default("utf-8")]` | the charset put on the content type, unless the content type names one. |
+| 62 | `DefaultHeaders` | `data<dict>?` | merged under `Header`. |
 
 The `.pr` value of `Body` decides what item the Data holds (`PLang/app/type/this.cs:423-447`, the one door for a row's value). A slice is made in one place, `Make` (`type/this.cs:413-415`): a `template` when the row's type is marked one, else a plain `wire`.
 
@@ -104,5 +104,3 @@ A text's kind is found by `type.list.Kind("text", kind)` (`type/list/this.cs:46-
 ## What the channel opens
 
 `stream/this.cs:62` opens `data.Peek()`: the item the Body Data itself holds. For a body written `%var%`, that item is the reference (a `source`), whose `Open` is the default no-op. The bound value is reached later, through `source.Output` (`source.cs:296-300`), and nothing opens it there. A `%file%` body still sends its content only because `Default.cs:69` read the body's value first and the file reference kept the sampled bytes. A value nested inside the body (a file inside a dict) is never opened: it writes its location (`content/this.cs:115`).
-
-`request.cs:11` says requests are signed with `X-Signature`; they are not (since a13fd386a).
