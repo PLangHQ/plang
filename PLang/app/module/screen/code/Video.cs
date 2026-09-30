@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
 
 namespace app.module.screen.code;
 
@@ -243,25 +244,52 @@ internal sealed class Video : IDisposable
         var bands = Math.Clamp(Environment.ProcessorCount / 2, 1, Math.Max(1, height / 32));
         Parallel.For(0, bands, band =>
         {
-            var nv12 = yuv;
-            var bgra = rgb;
             for (var y = height * band / bands; y < height * (band + 1) / bands; y++)
-            {
-                var o = y * width * 4;
-                var row = y * s;
-                var colour = uv + y / 2 * s;
-                for (var x = 0; x < width; x++, o += 4)
-                {
-                    int c = 298 * (nv12[row + x] - 16);
-                    int u = nv12[colour + (x & ~1)] - 128, v = nv12[colour + (x & ~1) + 1] - 128;
-                    bgra[o] = Clamp((c + 541 * u + 128) >> 8);
-                    bgra[o + 1] = Clamp((c - 55 * u - 136 * v + 128) >> 8);
-                    bgra[o + 2] = Clamp((c + 459 * v + 128) >> 8);
-                    bgra[o + 3] = 255;
-                }
-            }
+                Row(yuv.AsSpan(y * s, width), yuv.AsSpan(uv + y / 2 * s, width),
+                    MemoryMarshal.Cast<byte, uint>(rgb.AsSpan(y * width * 4, width * 4)));
         });
         return bgra;
+    }
+
+    /// <summary>One row: its lumas, the colours of its row of blocks (U and V interleaved), into BGRA
+    /// pixels — 16 at a time with vectors (8 to a vector: the 8 colour pairs of 16 pixels read at once,
+    /// each given to its two pixels), the rest one by one.</summary>
+    internal static void Row(ReadOnlySpan<byte> luma, ReadOnlySpan<byte> colour, Span<uint> bgra)
+    {
+        var width = bgra.Length;
+        var x = 0;
+        if (Vector256.IsHardwareAccelerated)
+        {
+            var low = Vector256.Create(0, 0, 1, 1, 2, 2, 3, 3);
+            var high = Vector256.Create(4, 4, 5, 5, 6, 6, 7, 7);
+            for (; x + 16 <= width; x += 16)
+            {
+                var (y0, y1) = Vector256.Widen(Vector256.WidenLower(Vector128.Create(luma.Slice(x, 16)).ToVector256()));
+                var pairs = Vector256.WidenLower(Vector128.Create(colour.Slice(x, 16)).ToVector256()).AsUInt32();   // u | v << 16
+                var u = ((pairs & Vector256.Create(0xFFFFu)).AsInt32()) - Vector256.Create(128);
+                var v = (pairs >> 16).AsInt32() - Vector256.Create(128);
+                Pixels(y0.AsInt32(), Vector256.Shuffle(u, low), Vector256.Shuffle(v, low)).CopyTo(bgra.Slice(x, 8));
+                Pixels(y1.AsInt32(), Vector256.Shuffle(u, high), Vector256.Shuffle(v, high)).CopyTo(bgra.Slice(x + 8, 8));
+            }
+        }
+        for (; x < width; x++)
+        {
+            int c = 298 * (luma[x] - 16);
+            int u = colour[x & ~1] - 128, v = colour[(x & ~1) + 1] - 128;
+            bgra[x] = Clamp((c + 541 * u + 128) >> 8) | (uint)Clamp((c - 55 * u - 136 * v + 128) >> 8) << 8
+                | (uint)Clamp((c + 459 * v + 128) >> 8) << 16 | 0xFF000000u;
+        }
+    }
+
+    private static Vector256<uint> Pixels(Vector256<int> y, Vector256<int> u, Vector256<int> v)
+    {
+        var c = (y - Vector256.Create(16)) * 298 + Vector256.Create(128);
+        var zero = Vector256<int>.Zero;
+        var full = Vector256.Create(255);
+        var b = Vector256.Min(Vector256.Max((c + u * 541) >> 8, zero), full);
+        var g = Vector256.Min(Vector256.Max((c - u * 55 - v * 136) >> 8, zero), full);
+        var r = Vector256.Min(Vector256.Max((c + v * 459) >> 8, zero), full);
+        return (b | (g << 8) | (r << 16)).AsUInt32() | Vector256.Create(0xFF000000u);
     }
 
     private static byte Clamp(int v) => (byte)(v < 0 ? 0 : v > 255 ? 255 : v);

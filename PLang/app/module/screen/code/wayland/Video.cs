@@ -123,21 +123,25 @@ internal sealed class Video : IDisposable
 }
 
 /// <summary>
-/// Watches what is presented for a video: the same big rectangle changing again and again at a
-/// video's pace. Half a second of it (30 pictures at 60 a second) and it is one. Scrolling or an
-/// animation changes other rectangles, or not for long.
+/// Watches what is presented for a video: the same big rectangle changing again and again — ten
+/// times, each within a quarter second of the last (10 a second or more: a busy machine's video is
+/// still one, and a slow one is the most in need of it). Where a video played in the last ten
+/// seconds, three times is enough: a pause, an ad, a buffering moment ends a stream, and the video
+/// must not stay lossless after it (lossless it is heavy, heavy it stays slow, slow it wouldn't be
+/// seen as a video again).
 /// </summary>
 internal sealed class Motion
 {
-    private const int Pictures = 30, MinWidth = 200, MinHeight = 120;
-    private const long Gap = 100;   // ms: more between two pictures and it isn't playing
+    private const int Pictures = 10, Again = 3, MinWidth = 200, MinHeight = 120;
+    private const long Gap = 250;       // ms: more between two changes and it isn't playing
+    private const long Remember = 10_000;   // ms a video's place is remembered after its stream ended
 
-    private Rect seen;
+    private Rect seen, played;
     private int count;
-    private long last;
+    private long last, playedAt = long.MinValue / 2;
 
     /// <summary>A rectangle presented; true when it has become a video's place (and again every
-    /// half second it goes on being one).</summary>
+    /// few changes it goes on being one).</summary>
     internal bool Playing(Rect r)
     {
         if (r.Width < MinWidth || r.Height < MinHeight) return false;
@@ -145,8 +149,10 @@ internal sealed class Motion
         count = r == seen && now - last < Gap ? count + 1 : 1;
         seen = r;
         last = now;
-        if (count < Pictures) return false;
+        if (count < (r == played && now - playedAt < Remember ? Again : Pictures)) return false;
         count = 0;
+        played = r;
+        playedAt = now;
         return true;
     }
 }
