@@ -9,6 +9,7 @@ namespace app.module.goal;
 /// context the goal runs under.
 /// </summary>
 [Action("call")]
+[app.Attributes.CallsGoal(nameof(Name))]
 public partial class Call : IContext
 {
     /// <summary>The goal to call — a bare name (a child or a goal in the caller's folder), a
