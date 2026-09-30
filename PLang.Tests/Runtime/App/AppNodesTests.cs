@@ -37,6 +37,8 @@ public class AppNodesTests
         await Assert.That((await (await Read("%!callStack.Scope.Tags.owner%", user)).Value())?.ToString()).IsEqualTo("ingi");
         await Assert.That((await (await Read("%!callStack.Audit.Count%", user)).Value())?.ToString()).IsEqualTo("1");
         await Assert.That((await Read("%!callStack.Audit%", user)).IsInitialized).IsTrue();
+        await Assert.That((await (await Read("%!callStack.Audit[0].Message%", user)).Value())?.ToString()).IsEqualTo("seen");
+        await Assert.That((await (await Read("%!callStack.Current.Errors.Count%", user)).Value())?.ToString()).IsEqualTo("1");
         await Assert.That((await Read("%!callStack.Current.Diffs%", user)).Success).IsTrue();
         await Assert.That((await Read("%!callStack%", user)).Peek()).IsSameReferenceAs(user.CallStack);
     }

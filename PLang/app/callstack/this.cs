@@ -34,9 +34,7 @@ public sealed partial class @this : global::app.type.item.@this
         if (Current is { } current) { writer.Name("current"); await current.Output(writer, mode, context); }
         if (Scope is { } scope) { writer.Name("scope"); await scope.Output(writer, mode, context); }
         writer.Name("audit");
-        writer.BeginArray(Audit.Count);
-        foreach (var error in Audit) error.Write(writer);
-        writer.EndArray();
+        Audit.Write(writer);
         writer.EndObject();
     }
 
@@ -60,10 +58,10 @@ public sealed partial class @this : global::app.type.item.@this
     public number MaxFrames => Setting.MaxFrames;
 
     /// <summary>
-    /// Run-wide accumulator of every error observed (handled or unhandled). Survives Pop.
-    /// See <see cref="audit.@this"/> for thread-safety + lifecycle.
+    /// Every error observed this run at every frame (handled or unhandled). Survives Pop.
+    /// See <see cref="global::app.error.list.@this"/> for thread-safety + lifecycle.
     /// </summary>
-    public audit.@this Audit { get; } = new();
+    public global::app.error.list.@this Audit { get; } = new();
 
     /// <summary>
     /// Optional Variables source for diff capture — the store a Call captures when pushed with none of its own

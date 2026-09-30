@@ -36,13 +36,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         if (_stopwatch is { } watch) { writer.Name("duration"); writer.TimeSpan(watch.Elapsed); }
         writer.Name("handled"); writer.Bool(_handled);
         if (Tags.CountRaw > 0) { writer.Name("tags"); await Tags.Output(writer, mode, context); }
-        if (Errors.Count > 0)
-        {
-            writer.Name("errors");
-            writer.BeginArray(Errors.Count);
-            foreach (var error in Errors) error.Write(writer);
-            writer.EndArray();
-        }
+        if (Errors.Newest != null) { writer.Name("errors"); Errors.Write(writer); }
         if (Caller != null) { writer.Name("caller"); writer.String(Caller._id); }
         if (Children.Count > 0)
         {
@@ -115,7 +109,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// the error stays in the list either way (audit trail). See <see cref="error.@this"/>
     /// for thread-safety semantics.
     /// </summary>
-    public error.@this Errors { get; } = new();
+    public global::app.error.list.@this Errors { get; } = new();
 
     /// <summary>
     /// Flipped <c>true</c> by on.error's Wrap on recovery success. Renderers use this to
