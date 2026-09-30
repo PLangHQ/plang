@@ -52,3 +52,15 @@ AsT_PlainDataTarget (Follow; AsCanonical deleted), Cut1 (json content relays ver
 - Run_ParallelExecution_RespectsSemaphoreLimit — was flaky; made deterministic (f54e2cee8).
 - After_EachRetry_IsAFreshAttempt_WithAFreshDeadline, After_ZeroMsTimeout_ImmediateTimeout — were flaky; the deadline
   firing first is now arranged (a 30 s sleep only the deadline ends), not raced (4890508f1).
+
+## Found when built, not this plan's (plang tests; the goals stay unbuilt)
+Building the rest of `test/` (buildersanity, cut4_runtimeloadandrender, permission, simple, typekindstrict, root
+`Cut1`) and running `plang --test` gives 22 pass, 8 fail. For whoever builds that tree:
+- typekindstrict ×5 (SetAsImageStrictNoKind, SetAsTextSlashMarkdownNormalises, SetAsTextSlashMarkdownStrictUnverifiable,
+  SetAsTextUppercase, SetAsTextWithMdExtension): `%x.Type.Name%` renders as written — stale goal text (the type is
+  reached through `!type`).
+- LoadDllOverwritesBuiltIn: `%loadFailed%` true — the DLL load fails in that test.
+- PluginTypeJoinsTheApp (passes when cut4 isn't built): "assembly with same name is already loaded" — cut4's tests load
+  `TypeProvider.dll` earlier in the same process, a cross-test leak.
+- BuilderSanity: `set %label% = '%label%-and-done'` binds the template unrendered, so reading `%label%` is a
+  VarResolveCycle (before 1ee8f5969 a stack overflow). Whether `set` renders a template at once is with Ingi.
