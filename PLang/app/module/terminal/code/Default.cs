@@ -45,6 +45,7 @@ public sealed class Default : ITerminal
         info.UseShellExecute = false;
         var watch = Stopwatch.StartNew();
         using var process = System.Diagnostics.Process.Start(info)!;
+        Children.Adopt(process);
         var stopped = await WaitAsync(process, ct);
         return Result(context, "", "", stopped ? -1 : process.ExitCode, watch.Elapsed, program, stopped);
     }
@@ -88,6 +89,7 @@ public sealed class Default : ITerminal
 
         var watch = Stopwatch.StartNew();
         using var process = System.Diagnostics.Process.Start(info)!;
+        Children.Adopt(process);
         if (input != null) await process.StandardInput.WriteAsync(input);
         process.StandardInput.Close();
 
@@ -130,6 +132,7 @@ public sealed class Default : ITerminal
         var onError = action.OnError == null ? null : await action.OnError.Value();
 
         var os = System.Diagnostics.Process.Start(info)!;
+        Children.Adopt(os);   // it ends with this plang, however this plang ends
         var running = new Process { Program = program.Absolute, Id = os.Id, Os = os };
 
         // binary messages when asked — or when the output goes to a screen, which takes nothing else
