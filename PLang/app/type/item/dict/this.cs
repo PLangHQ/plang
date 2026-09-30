@@ -158,25 +158,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         foreach (var k in _value.Keys) yield return Slot(k, context);
     }
 
-    /// <summary>Writes itself to the wire as a JSON object — each entry's value bare
-    /// (entries are type-inferred on read), resolved lazily as it's reached.</summary>
-    // The dict owns its per-format serializers — instantiated directly (no reflection, no
-    // registry), keyed by format. Only formats that DIVERGE from the default token form are
-    // listed; text is here because a dict has no plain-text form (renders as json).
-    private static readonly System.Collections.Generic.Dictionary<string, global::app.type.format.IOutput> _formats
-        = new() { ["text"] = new format.text() };
-
+    /// <summary>Writes itself as an object whose entries each write themselves, resolved lazily as they're
+    /// reached; the writer decides how an object looks (json on a json channel, json text on a text one).</summary>
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
     {
-        if (_formats.TryGetValue(writer.Format, out var serializer))
-        {
-            await serializer.Output(this, writer, mode, context);
-            return;
-        }
-        // default (json/plang): an object whose entries each self-describe (@schema/type),
-        // so types round-trip. No reaching for the inner item; the entry owns its output.
         writer.BeginObject();
         foreach (var entry in Entries(context!))
         {

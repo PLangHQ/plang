@@ -181,27 +181,12 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         obj is Clr other ? Equals(Value, other.Value) : Equals(Value, obj);
     public override int GetHashCode() => Value.GetHashCode();
 
-    // The carrier owns its per-format serializers — instantiated directly (no reflection, no
-    // registry), keyed by format. Only formats that DIVERGE from the default reflection are
-    // listed; text is here because a foreign host has no plain-text form (renders as json).
-    private static readonly System.Collections.Generic.Dictionary<string, global::app.type.format.IOutput> _formats
-        = new() { ["text"] = new format.text() };
-
     /// <summary>
-    /// The carrier writes its HOST to the wire by asking its <see cref="Kind"/> — the json
-    /// kind emits raw json (no <c>valueKind</c> BCL leak), the <c>*</c> kind reflects a POCO's
-    /// <c>[Out]</c> fields. A divergent channel format (text) still uses that format's own
-    /// serializer (a foreign host has no plain-text form — renders as a json string).
+    /// The carrier writes its HOST by asking its <see cref="Kind"/> — the json kind emits raw json
+    /// (no <c>valueKind</c> BCL leak), the <c>*</c> kind reflects a POCO's <c>[Out]</c> fields.
     /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(
+    public override System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? context)
-    {
-        if (_formats.TryGetValue(writer.Format, out var serializer))
-        {
-            await serializer.Output(this, writer, mode, context);
-            return;
-        }
-        await Kind.Output(Value, writer, mode, context);
-    }
+        => Kind.Output(Value, writer, mode, context);
 }

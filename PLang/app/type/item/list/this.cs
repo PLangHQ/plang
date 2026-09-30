@@ -237,9 +237,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// (rides its own Data envelope, so a signed/typed element keeps it), resolved lazily.</summary>
     // The list owns its per-format serializers — instantiated directly (no reflection, no
     // registry), keyed by format. Only formats that DIVERGE from the default token form are
-    // listed; text is here because a list has no plain-text form (renders as json).
+    // listed.
     private static readonly System.Collections.Generic.Dictionary<string, global::app.type.format.IOutput> _formats
-        = new() { ["text"] = new format.text(), [global::app.goal.step.action.formal.Writer.Token] = new format.formal() };
+        = new() { [global::app.goal.step.action.formal.Writer.Token] = new format.formal() };
 
     public override async System.Threading.Tasks.ValueTask Output(
         global::app.type.format.IWriter writer, global::app.View mode,
