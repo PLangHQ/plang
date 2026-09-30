@@ -1,0 +1,4 @@
+- `terminal.open` vs `terminal.start`: the step says the program keeps running ("keep running", "in the background", "open … and keep it") → `open`; otherwise the step waits for the program → `start`.
+- The result is the running program (type `process`); later steps talk to it: `send %x% to %container%` (terminal.send), `wait for %container%` (terminal.wait), `stop %container%` (terminal.stop).
+- Each line the program writes calls the OnOutput goal (stdout) or OnError goal (stderr), the line as `%!data%`. Calls run one at a time.
+- A plang app ends when its goal ends: keep it alive with `wait for %container%` as the last step when the program should run until it exits.

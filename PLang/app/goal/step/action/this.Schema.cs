@@ -49,6 +49,14 @@ public partial class @this
     [JsonIgnore]
     public global::app.type.property.@this? Input => Property.FirstOrDefault(p => p.IsInput);
 
+    /// <summary>The goal this action calls, as written — when its handler declares that it calls one
+    /// (<c>[CallsGoal]</c>: goal.call, browser.callGoal); null for every other action.</summary>
+    [JsonIgnore]
+    internal string? CallsGoal
+        => Handler?.GetCustomAttribute<global::app.Attributes.CallsGoalAttribute>() is { } calls
+            ? this[calls.Property]?.Value?.ToString()?.Trim('"')
+            : null;
+
     private global::app.type.@this? _return;
     private bool _returnComputed;
 
