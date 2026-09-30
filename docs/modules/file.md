@@ -53,10 +53,10 @@ Read a file's contents.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Path | string | yes | — | Path to the file |
-| ResolveVariables | bool | no | false | Resolve `%var%` references inside the file content before returning |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Path | the path, inline (`read 'config.json'`) | string | yes | — | Path to the file |
+| ResolveVariables | `load vars` | bool | no | false | Resolve `%var%` references inside the file content before returning |
 
 **Returns:** The file contents. JSON files are parsed into objects automatically.
 
@@ -171,11 +171,11 @@ List files in a directory.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Path | string | yes | — | Directory to list |
-| Pattern | string | no | "*" | Glob pattern to filter files |
-| Recursive | bool | no | false | Include subdirectories |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Path | the folder, inline (`list files in 'data/'`) | string | yes | — | Directory to list |
+| Pattern | `matching '<glob>'` | string | no | "*" | Glob pattern to filter files |
+| Recursive | `recursive` | bool | no | false | Include subdirectories |
 
 **Returns:** A list of file objects with `Path`, `AbsolutePath`, `Size`, `Type`, and `Exists` properties.
 
