@@ -185,6 +185,7 @@ internal sealed class Display
             else if (e.ContainsKey("text")) Panel?.Type(S("text"));
             else if (e.ContainsKey("clipboard")) Clipboard.Copied(S("clipboard"));
             else if (e.ContainsKey("stats")) Tell(e);   // the host's numbers: the desktop's taskbar shows them
+            else if (e.ContainsKey("video")) Frame.Lossless("the host can't show H.264: " + S("why"));
             else if (e.ContainsKey("window")) Windows.ById(N("id"))?.Command(S("window"), e);
             Frame.Send();
             Flush();
