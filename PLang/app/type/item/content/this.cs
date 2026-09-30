@@ -113,7 +113,9 @@ public abstract class @this : global::app.type.item.@this
     public override void Write(global::app.type.format.IWriter writer)
     {
         if (!IsLoaded) { writer.String(ToString()); return; }
-        if (_format is { IsText: true }) writer.String(ContentText());
+        // content already in the writer's own format (json into json) is a token of it, relayed verbatim
+        if (_format != null && _format.Owns(writer)) writer.Raw(Bytes);
+        else if (_format is { IsText: true }) writer.String(ContentText());
         else writer.Bytes(Bytes);
     }
 

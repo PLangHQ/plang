@@ -182,43 +182,12 @@ public sealed partial class @this
     /// </summary>
     public override async Task<data.@this<global::app.type.item.path.@this>> Save(data.@this? value, actor.context.@this context)
     {
-        if (await AuthGate(Verb.Write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-
-        try
-        {
-            EnsureParentDir();
-            var raw = value == null ? null : await value.Value();
-            // Raw bytes ride straight to disk — a binary value IS its byte form, and the text
-            // writer would base64 it (bytes are bytes at the System.IO edge, no serializer).
-            if (raw is global::app.type.item.binary.@this binv)
-                await System.IO.File.WriteAllBytesAsync(Absolute, binv.Value);
-            else
-            {
-                // The file's extension is the format that writes the value (a goal to .pr its program
-                // form, a text value to .json json-quoted, to .txt bare). A format that doesn't write this
-                // value (an unknown extension, one of binary's) falls to text — a leaf bare, a container as
-                // its json content: this door's own rule for a file of no known format.
-                using var encoded = new System.IO.MemoryStream();
-                var result = await Kind(context).kind.Encode(encoded, value!, context);
-                if (!result.Success && result.Error?.Key == "NoEncoder")
-                {
-                    encoded.SetLength(0);
-                    result = await context.App.type.list["text"].kind.Encode(encoded, value!, context);
-                }
-                if (!result.Success)
-                    return context.Error<global::app.type.item.path.@this>(result.Error!);
-                await System.IO.File.WriteAllBytesAsync(Absolute, encoded.ToArray());
-            }
-            return context.Ok<global::app.type.item.path.@this>(this);
-        }
-        catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
-        {
-            return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
-        }
-        catch (System.Exception ex) when (ex is System.Text.Json.JsonException or System.NotSupportedException)
-        {
-            return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError(ex.Message, "SerializationError", 500));
-        }
+        // The file is the channel the value is written to — it opens the value, its extension's format writes it.
+        var written = await new global::app.channel.type.file.@this(this, context)
+            .Write(value ?? new data.@this("", context: context));
+        return written.Success && !written.Exits
+            ? context.Ok<global::app.type.item.path.@this>(this)
+            : data.@this<global::app.type.item.path.@this>.From(written);
     }
 
     public override async Task<data.@this<global::app.type.item.path.@this>> WriteBytes(byte[] content, actor.context.@this context)

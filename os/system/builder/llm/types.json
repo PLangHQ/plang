@@ -11,6 +11,9 @@
   "app.channel.list": {
     "word": null
   },
+  "app.channel.type.file": {
+    "word": null
+  },
   "app.channel.type.goal": {
     "word": null
   },
