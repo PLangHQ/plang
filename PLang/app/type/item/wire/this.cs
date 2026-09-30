@@ -29,6 +29,12 @@ public sealed class @this : global::app.type.item.source
         : base(slice, type, variable ?? [])   // an encoded slice is never parsed for its variables
         => _reader = reader ?? throw new System.ArgumentNullException(nameof(reader));
 
+    /// <summary>The text as written: a string slice is the text it holds (unquoted, as a source's is); any other
+    /// slice is its raw form.</summary>
+    public override string? RawText => Raw is string slice && slice.StartsWith('"')
+        ? System.Text.Json.JsonSerializer.Deserialize<string>(slice)
+        : base.RawText;
+
     private protected override global::app.type.item.@this Read(actor.context.@this context)
         => _reader.Read(this, new global::app.type.reader.ReadContext(context, Type.Template, Variable: Variable));
 

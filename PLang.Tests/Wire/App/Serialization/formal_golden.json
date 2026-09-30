@@ -171,7 +171,7 @@
         {
          "name": "Name",
          "type": {
-          "name": "text"
+          "name": "goal"
          },
          "value": "BuilderChannel"
         }
@@ -181,7 +181,7 @@
     ]
    }
   ],
-  "formal": "channel.set(Name: text = \"builder\", Goal: action = goal.call(Name: text = \"BuilderChannel\"))",
+  "formal": "channel.set(Name: text = \"builder\", Goal: action = goal.call(Name: goal = \"BuilderChannel\"))",
   "untyped": "channel.set(Name=\"builder\", Goal=goal.call(Name=\"BuilderChannel\"))"
  },
  {
@@ -196,7 +196,7 @@
      {
       "name": "Name",
       "type": {
-       "name": "text"
+       "name": "goal"
       },
       "value": "EmitBuildEvent"
      },
@@ -236,7 +236,7 @@
     ]
    }
   ],
-  "formal": "goal.call(Name: text = \"EmitBuildEvent\", Parameter: list = {kind: text = \"build-path\", path: item = %path%})",
+  "formal": "goal.call(Name: goal = \"EmitBuildEvent\", Parameter: list = {kind: text = \"build-path\", path: item = %path%})",
   "untyped": "goal.call(Name=\"EmitBuildEvent\", Parameter={kind: \"build-path\", path: %path%})"
  },
  {
@@ -380,7 +380,7 @@
      {
       "name": "Name",
       "type": {
-       "name": "text"
+       "name": "goal"
       },
       "value": "EmitBuildEvent"
      },
@@ -420,7 +420,7 @@
     ]
    }
   ],
-  "formal": "goal.call(Name: text = \"EmitBuildEvent\", Parameter: list = {kind: text = \"goals-found\", goals: item = %goals%})",
+  "formal": "goal.call(Name: goal = \"EmitBuildEvent\", Parameter: list = {kind: text = \"goals-found\", goals: item = %goals%})",
   "untyped": "goal.call(Name=\"EmitBuildEvent\", Parameter={kind: \"goals-found\", goals: %goals%})"
  },
  {
@@ -459,7 +459,7 @@
      {
       "name": "Name",
       "type": {
-       "name": "text"
+       "name": "goal"
       },
       "value": "BuildGoal"
      },
@@ -492,7 +492,7 @@
     ]
    }
   ],
-  "formal": "loop.foreach(Collection: item = %goals%); goal.call(Name: text = \"BuildGoal\", Parameter: list = {goal: item = %item%})",
+  "formal": "loop.foreach(Collection: item = %goals%); goal.call(Name: goal = \"BuildGoal\", Parameter: list = {goal: item = %item%})",
   "untyped": "loop.foreach(Collection=%goals%); goal.call(Name=\"BuildGoal\", Parameter={goal: %item%})"
  },
  {
@@ -645,7 +645,7 @@
      {
       "name": "Name",
       "type": {
-       "name": "text"
+       "name": "goal"
       },
       "value": "/system/builder/EmitBuildEvent"
      },
@@ -685,7 +685,7 @@
     ]
    }
   ],
-  "formal": "goal.call(Name: text = \"/system/builder/EmitBuildEvent\", Parameter: list = {kind: text = \"goalHeader\", goal: item = %goal%})",
+  "formal": "goal.call(Name: goal = \"/system/builder/EmitBuildEvent\", Parameter: list = {kind: text = \"goalHeader\", goal: item = %goal%})",
   "untyped": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"goalHeader\", goal: %goal%})"
  },
  {
@@ -825,7 +825,7 @@
      {
       "name": "Name",
       "type": {
-       "name": "text"
+       "name": "goal"
       },
       "value": "Compile"
      }
@@ -849,7 +849,7 @@
          {
           "name": "Name",
           "type": {
-           "name": "text"
+           "name": "goal"
           },
           "value": "HandleBuildFailure"
          }
@@ -860,7 +860,7 @@
     ]
    }
   ],
-  "formal": "goal.call(Name: text = \"Compile\"); on.error(Recovery: list<action> = [goal.call(Name: text = \"HandleBuildFailure\")])",
+  "formal": "goal.call(Name: goal = \"Compile\"); on.error(Recovery: list<action> = [goal.call(Name: goal = \"HandleBuildFailure\")])",
   "untyped": "goal.call(Name=\"Compile\"); on.error(Recovery=[goal.call(Name=\"HandleBuildFailure\")])"
  },
  {
@@ -952,7 +952,7 @@
      {
       "name": "Name",
       "type": {
-       "name": "text"
+       "name": "goal"
       },
       "value": "BuildSubGoal"
      },
@@ -985,7 +985,7 @@
     ]
    }
   ],
-  "formal": "loop.foreach(Collection: item = %parentGoal.Child%); goal.call(Name: text = \"BuildSubGoal\", Parameter: list = {subGoal: item = %item%})",
+  "formal": "loop.foreach(Collection: item = %parentGoal.Child%); goal.call(Name: goal = \"BuildSubGoal\", Parameter: list = {subGoal: item = %item%})",
   "untyped": "loop.foreach(Collection=%parentGoal.Child%); goal.call(Name=\"BuildSubGoal\", Parameter={subGoal: %item%})"
  },
  {
@@ -1432,7 +1432,7 @@
          {
           "name": "Name",
           "type": {
-           "name": "text"
+           "name": "goal"
           },
           "value": "HandleBuildFailure"
          }
@@ -1443,7 +1443,7 @@
     ]
    }
   ],
-  "formal": "build.fold(Goal: goal = %goal%); on.error(Recovery: list<action> = [goal.call(Name: text = \"HandleBuildFailure\")])",
+  "formal": "build.fold(Goal: goal = %goal%); on.error(Recovery: list<action> = [goal.call(Name: goal = \"HandleBuildFailure\")])",
   "untyped": "build.fold(Goal=%goal%); on.error(Recovery=[goal.call(Name=\"HandleBuildFailure\")])"
  },
  {
@@ -1669,7 +1669,7 @@
      {
       "name": "Name",
       "type": {
-       "name": "text"
+       "name": "goal"
       },
       "value": "AddStepToState"
      },
@@ -1702,7 +1702,7 @@
     ]
    }
   ],
-  "formal": "loop.foreach(Collection: item = %goal.Step%); goal.call(Name: text = \"AddStepToState\", Parameter: list = {step: item = %item%})",
+  "formal": "loop.foreach(Collection: item = %goal.Step%); goal.call(Name: goal = \"AddStepToState\", Parameter: list = {step: item = %item%})",
   "untyped": "loop.foreach(Collection=%goal.Step%); goal.call(Name=\"AddStepToState\", Parameter={step: %item%})"
  },
  {
@@ -1741,7 +1741,7 @@
      {
       "name": "Name",
       "type": {
-       "name": "text"
+       "name": "goal"
       },
       "value": "AddModuleToState"
      },
@@ -1774,7 +1774,7 @@
     ]
    }
   ],
-  "formal": "loop.foreach(Collection: item = %modules%); goal.call(Name: text = \"AddModuleToState\", Parameter: list = {module: item = %item%})",
+  "formal": "loop.foreach(Collection: item = %modules%); goal.call(Name: goal = \"AddModuleToState\", Parameter: list = {module: item = %item%})",
   "untyped": "loop.foreach(Collection=%modules%); goal.call(Name=\"AddModuleToState\", Parameter={module: %item%})"
  },
  {
@@ -2099,7 +2099,7 @@
      {
       "name": "Name",
       "type": {
-       "name": "text"
+       "name": "goal"
       },
       "value": "/system/builder/EmitBuildEvent"
      },
@@ -2139,7 +2139,7 @@
     ]
    }
   ],
-  "formal": "goal.call(Name: text = \"/system/builder/EmitBuildEvent\", Parameter: list = {kind: text = \"goal-decided\", goal: item = %goal%})",
+  "formal": "goal.call(Name: goal = \"/system/builder/EmitBuildEvent\", Parameter: list = {kind: text = \"goal-decided\", goal: item = %goal%})",
   "untyped": "goal.call(Name=\"/system/builder/EmitBuildEvent\", Parameter={kind: \"goal-decided\", goal: %goal%})"
  },
  {
@@ -2576,7 +2576,7 @@
          {
           "name": "Name",
           "type": {
-           "name": "text"
+           "name": "goal"
           },
           "value": "ApplyCoupon"
          },
@@ -2634,7 +2634,7 @@
     ]
    }
   ],
-  "formal": "condition.if(Left: item = %order.coupon%, Operator: choice<operator> = \"isnotempty\") { goal.call(Name: text = \"ApplyCoupon\", Parameter: list = {code: item = %order.coupon%, order: item = %order%}) }",
+  "formal": "condition.if(Left: item = %order.coupon%, Operator: choice<operator> = \"isnotempty\") { goal.call(Name: goal = \"ApplyCoupon\", Parameter: list = {code: item = %order.coupon%, order: item = %order%}) }",
   "untyped": "condition.if(Left=%order.coupon%, Operator=\"isnotempty\") { goal.call(Name=\"ApplyCoupon\", Parameter={code: %order.coupon%, order: %order%}) }"
  },
  {
@@ -3224,7 +3224,7 @@
      {
       "name": "Name",
       "type": {
-       "name": "text"
+       "name": "goal"
       },
       "value": "ScanFile"
      },
@@ -3257,7 +3257,7 @@
     ]
    }
   ],
-  "formal": "loop.foreach(Collection: item = %files%); goal.call(Name: text = \"ScanFile\", Parameter: list = {file: item = %item%})",
+  "formal": "loop.foreach(Collection: item = %files%); goal.call(Name: goal = \"ScanFile\", Parameter: list = {file: item = %item%})",
   "untyped": "loop.foreach(Collection=%files%); goal.call(Name=\"ScanFile\", Parameter={file: %item%})"
  },
  {
@@ -3548,7 +3548,7 @@
      {
       "name": "Name",
       "type": {
-       "name": "text"
+       "name": "goal"
       },
       "value": "SendReport"
      },
@@ -3594,7 +3594,7 @@
          {
           "name": "Name",
           "type": {
-           "name": "text"
+           "name": "goal"
           },
           "value": "LogFailure"
          }
@@ -3605,7 +3605,7 @@
     ]
    }
   ],
-  "formal": "goal.call(Name: text = \"SendReport\", Parameter: list = {to: text = \"ops@example.com\", subject: text = \"Weekly report\"}); on.error(Recovery: list<action> = [goal.call(Name: text = \"LogFailure\")])",
+  "formal": "goal.call(Name: goal = \"SendReport\", Parameter: list = {to: text = \"ops@example.com\", subject: text = \"Weekly report\"}); on.error(Recovery: list<action> = [goal.call(Name: goal = \"LogFailure\")])",
   "untyped": "goal.call(Name=\"SendReport\", Parameter={to: \"ops@example.com\", subject: \"Weekly report\"}); on.error(Recovery=[goal.call(Name=\"LogFailure\")])"
  },
  {
@@ -3785,7 +3785,7 @@
          {
           "name": "Name",
           "type": {
-           "name": "text"
+           "name": "goal"
           },
           "value": "Fallback"
          }
@@ -3837,7 +3837,7 @@
     ]
    }
   ],
-  "formal": "ui.render(Template: text = \"%template%\", Parameter: list = {error: item = %error%}); on.error(StatusCode: number = 404, RetryCount: number = 1, Order: choice<errororder> = \"GoalFirst\", Recovery: list<action> = [goal.call(Name: text = \"Fallback\")]); variable.set(Name: variable = %text%, Value: item = %!data%)",
+  "formal": "ui.render(Template: text = \"%template%\", Parameter: list = {error: item = %error%}); on.error(StatusCode: number = 404, RetryCount: number = 1, Order: choice<errororder> = \"GoalFirst\", Recovery: list<action> = [goal.call(Name: goal = \"Fallback\")]); variable.set(Name: variable = %text%, Value: item = %!data%)",
   "untyped": "ui.render(Template=\"%template%\", Parameter={error: %error%}); on.error(StatusCode=404, RetryCount=1, Order=\"GoalFirst\", Recovery=[goal.call(Name=\"Fallback\")]); variable.set(Name=%text%, Value=%!data%)"
  },
  {

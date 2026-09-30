@@ -11,6 +11,10 @@ public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyn
     public @this(global::app.@this app) : base(new List<object?>())
     {
         System = new actor.@this("System", app, app.ShutdownToken);
+        // the runtime's shared os folder is the system's to write: every actor reads and runs there, only it writes
+        System.Permission.Stand(
+            global::app.type.item.permission.Verb.Read, global::app.type.item.permission.Verb.Execute,
+            global::app.type.item.permission.Verb.Write, global::app.type.item.permission.Verb.Delete);
         User = new actor.@this("User", app, System.CancellationToken, fallback: System);
         Add(System);
         Add(User);

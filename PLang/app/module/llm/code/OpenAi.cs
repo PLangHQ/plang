@@ -1015,7 +1015,8 @@ public sealed class OpenAi : ILlm
         {
             if (row.Peek() is not global::app.goal.step.action.@this held) continue;
             if ((await held.Bind(action.Context)).Handler is not global::app.module.goal.Call call) continue;
-            var goal = (await call.Name.Value())?.RawText ?? "";
+            // a tool goes by its goal's name as written, the leaf of an address
+            var goal = held["Name"]?.Value?.RawText ?? "";
             tools.Add(new Tool(held, call, goal[(goal.LastIndexOf('/') + 1)..]));
         }
         return tools;

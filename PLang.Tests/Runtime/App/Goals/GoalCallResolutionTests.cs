@@ -57,6 +57,33 @@ public class GoalCallResolutionTests
     private PLangGoal CallerAt(string callerGoalPath)
         => new() { Name = "Caller", Path = global::app.type.item.path.@this.Resolve(callerGoalPath, _app.actor.list.User.Context) };
 
+    // A goal's name in a goal slot (a call's Name) selects the goal that exists — here one only on disk, loaded by
+    // the selection — and selecting is no birth: nothing bound on goal create fires. %!app.goal["…"]% selects the
+    // same goal the same way. A goal read from its .pr is a birth.
+    [Test]
+    public async Task AGoalSlot_SelectsTheGoalOnDisk_FiresNoCreate_AndTheAppSelectsTheSame()
+    {
+        await WritePr(".build/target.pr", "Target");
+        var ctx = _app.actor.list.User.Context;
+        var births = new List<string>();
+        _app.type.list["goal"].Own().Bind("create", global::app.@event.When.after,
+            (_, data, c) => { births.Add(data.Type.Name); return Task.FromResult(data); },
+            _app.actor.list.User, global::app.@event.binding.Scope.actor);
+
+        var slot = new global::app.data.@this("", new global::app.type.item.text.@this("Target"), context: ctx).As<PLangGoal>();
+        var selected = await slot.Value();
+        var byApp = await new global::app.type.item.variable.@this("!app.goal[\"Target\"]").Start(ctx);
+
+        await Assert.That(selected?.Name).IsEqualTo("Target");
+        await Assert.That(births).IsEmpty();
+        await Assert.That(byApp.Peek()).IsSameReferenceAs(selected);
+
+        // the binding is live: a goal born from its .pr fires it
+        var pr = await ctx.Pr(new PLangGoal { Name = "Born", Path = global::app.type.item.path.@this.Resolve("/Born.goal", ctx) });
+        await _app.type.list["goal"].Create(System.Text.Encoding.UTF8.GetBytes(pr), ctx);
+        await Assert.That(births.Count).IsEqualTo(1);
+    }
+
     [Test]
     public async Task SlashName_Resolved_ByCallerAncestorWalk()
     {

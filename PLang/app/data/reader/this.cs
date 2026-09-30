@@ -109,8 +109,12 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         {
             // One arm: goal.call (eager), a content source, or a wire — all items. A value Data is
             // born WITH the read context: source/wire materialization renders templates and
-            // resolves %refs% against data.Context. CleanName handles the name.
-            var d = new Data(name, value, context: born);
+            // resolves %refs% against data.Context. CleanName handles the name. A Data received holding
+            // an error is that failure (a failed result written out writes its error), so the step that
+            // reads it fails and its on error runs.
+            var d = value is global::app.error.Error received
+                ? new Data(name, context: born) { Error = received }
+                : new Data(name, value, context: born);
             if (properties != null) d.Properties = properties;
             return d;
         }

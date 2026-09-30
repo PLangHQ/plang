@@ -100,6 +100,9 @@ public sealed class @this<T, L> : @this
         // a miss is NotFound — a Data that holds nothing (not initialized), so the next door asks
         if (await new clr.@this(this, parent.Context).Get(parent, key) is { Success: true, IsInitialized: true } member) return member;
         if (await base.Get(parent, key) is { Success: true, IsInitialized: true } fact) return fact;
+        // a concept selected by key answers it the way its slots do (a goal from the calling goal)
+        if (await T.Select(new global::app.type.item.text.@this(key), parent.Context) is { } selected)
+            return new data.@this(key, selected, parent: parent);
         var found = await Find(Of(parent.Context).Walk(null, parent.Context), key);
         if (!found.Success) return found;
         return new data.@this(key, (await found.Value())!, parent: parent);

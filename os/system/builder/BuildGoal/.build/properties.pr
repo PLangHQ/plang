@@ -380,7 +380,7 @@
             {
               "name": "Name",
               "type": {
-                "name": "text"
+                "name": "goal"
               },
               "value": "/system/builder/EmitBuildEvent"
             },
@@ -406,7 +406,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 4 uses goal.call, which the decider was not sure of (0.50)"
+          "message": "step 4 uses goal.call, which the decider was not sure of (0.67)"
         }
       ],
       "waitForExecution": true

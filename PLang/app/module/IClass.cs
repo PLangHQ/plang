@@ -46,15 +46,4 @@ public interface IClass
     System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<global::app.error.Error>> Check()
         => System.Threading.Tasks.Task.FromResult<System.Collections.Generic.IReadOnlyList<global::app.error.Error>>(
             System.Array.Empty<global::app.error.Error>());
-
-    /// <summary>The goal this handler calls, as its properties name it now — selected the way its run
-    /// selects it, on the bound handler (typed views, unresolved). A %var% name is only known at run,
-    /// so it answers none. None — the default — for a handler that calls no goal.</summary>
-    System.Threading.Tasks.Task<global::app.goal.@this?> Callee()
-        => System.Threading.Tasks.Task.FromResult<global::app.goal.@this?>(null);
-
-    /// <summary>True when this handler calls a goal its properties name only at run (a %var% name): its
-    /// <see cref="Callee"/> answers none, yet it calls one. False — the default — for a handler whose goal,
-    /// if any, is known now.</summary>
-    bool IsDynamic => false;
 }
