@@ -56,6 +56,19 @@ public class FormalReaderTests : System.IAsyncDisposable
         await Read("channel.set(Name=\"builder\", Goal=goal.call(Name=\"BuilderChannel\"))", out _).IsSuccess();
     }
 
+    // An http header's name holds a hyphen: a dict's key written bare may hold one (the educator's `X-Probe: "x"`),
+    // and it writes back quoted, which reads again byte for byte.
+    [Test]
+    public async Task ADictKeyWrittenBare_MayHoldAHyphen_AndWritesBackQuoted()
+    {
+        var read = Read("http.request(Url=\"https://httpbin.org/anything\", Header={X-Probe: \"x\", Authorization: \"Bearer 1\"})", out _);
+
+        await read.IsSuccess();
+        var written = await Written(read);
+        await Assert.That(written).Contains("\"X-Probe\": \"x\"");
+        await Assert.That(await Written(Read(written, out _))).IsEqualTo(written);
+    }
+
     [Test]
     public async Task Clauses_AreTheActionsSiblings_InTheOrderWritten_AndWriteBackSo()
     {
