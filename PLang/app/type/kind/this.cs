@@ -29,11 +29,18 @@ public class @this
     // How the owning type writes this format — its class's IEncode, bound when the kind was made; null for a
     // type that writes none of its formats.
     private readonly Encoder? _encode;
+    // How the owning type reads this format — its class's IDecode, bound when the kind was made; null for a type
+    // whose content is born lazily.
+    private readonly Decoder? _decode;
 
     /// <summary>How a type writes its formats: the value a Data holds onto a stream, in a view.</summary>
     public delegate global::System.Threading.Tasks.Task<global::app.data.@this> Encoder(System.IO.Stream stream,
         global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct);
+
+    /// <summary>How a type reads its formats: content of one, made into a value of the type.</summary>
+    public delegate global::System.Threading.Tasks.Task<global::app.data.@this> Decoder(byte[] raw,
+        global::app.actor.context.@this context, string name, global::app.type.item.path.@this? origin);
 
     public @this(string name)
     {
@@ -41,8 +48,9 @@ public class @this
     }
 
     /// <summary>A format of <paramref name="owner"/> — a kind its class declares with <c>[Format]</c>: the
-    /// MIMEs and extensions it answers to, whether its content compresses, and how its type writes it.</summary>
-    public @this(global::app.Attributes.FormatAttribute format, string owner, Encoder? encode = null) : this(format.Name)
+    /// MIMEs and extensions it answers to, whether its content compresses, and how its type writes and reads it.</summary>
+    public @this(global::app.Attributes.FormatAttribute format, string owner, Encoder? encode = null, Decoder? decode = null)
+        : this(format.Name)
     {
         _owner = owner;
         _mime = format.Mime is { } mime ? [mime] : [];
@@ -50,6 +58,7 @@ public class @this
         _compressible = format.Compressible;
         _text = format.Text;
         _encode = encode;
+        _decode = decode;
     }
 
     /// <summary>The MIMEs content of this kind arrives as — each a bare media type.</summary>
@@ -215,7 +224,9 @@ public class @this
         global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,
         System.Threading.CancellationToken ct = default, string? template = null, global::app.type.item.path.@this? origin = null)
     {
-        // content decoded into a new value is a birth: it comes through its type's on.create
+        // a type that reads this format itself makes the value now (a .pr into a goal)
+        if (_decode != null && template == null) return await _decode(raw, context, name, origin);
+        // else content decoded into a new value is a birth: it comes through its type's on.create, unread until used
         var type = context.App.type.list[new global::app.type.@this(Owner ?? "binary", IsEmpty ? null : Name, template: template), context];
         return await type.Create(raw, context, name, origin);
     }

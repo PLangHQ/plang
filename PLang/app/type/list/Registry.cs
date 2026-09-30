@@ -258,6 +258,17 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private global::app.type.kind.@this.Encoder Bound<T>() where T : global::app.type.item.@this, global::app.type.item.IEncode<T>
         => T.Encode;
 
+    // How a type's class reads its formats — its IDecode, bound once into a delegate; null when its content is
+    // born lazily.
+    private global::app.type.kind.@this.Decoder? Decoder(System.Type clr)
+        => clr.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.IDecode<>))
+            ? (global::app.type.kind.@this.Decoder)GetType().GetMethod(nameof(Reading), BindingFlags.NonPublic | BindingFlags.Instance)!
+                .MakeGenericMethod(clr).Invoke(this, null)!
+            : null;
+
+    private global::app.type.kind.@this.Decoder Reading<T>() where T : global::app.type.item.@this, global::app.type.item.IDecode<T>
+        => T.Decode;
+
     // The kinds an assembly brings onto their types: every kind class (born from nothing), and the
     // closed set every choice<T> in it draws on, each with its reader. A set is only identifiable
     // by its usage, so this reflects the assembly's property types. Answers what it refuses (a choice over a
@@ -273,13 +284,15 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 var kind = (global::app.type.kind.@this)Activator.CreateInstance(t)!;
                 if (kind.Owner is { } owner && Items().Any(type => type.Names(owner))) Hold(kind);
             }
-            // each format a type's class declares, a kind of that type — written by the class's own encode
+            // each format a type's class declares, a kind of that type — written by the class's own encode, read by
+            // its own decode when it has one
             if (t.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false)
                 && global::app.type.item.@this.NameOf(t) is { } reads && Items().Any(type => type.Names(reads)))
             {
                 var encode = Encoder(t);
+                var decode = Decoder(t);
                 foreach (var format in t.GetCustomAttributes<global::app.Attributes.FormatAttribute>(inherit: false))
-                    Hold(new global::app.type.kind.@this(format, reads, encode));
+                    Hold(new global::app.type.kind.@this(format, reads, encode, decode));
             }
             // a list's element kinds, made as a list names its element (list<path>)
             if (t == typeof(global::app.type.item.list.@this) && Items().Any(type => type.Names(global::app.type.item.@this.NameOf(t))))

@@ -5,13 +5,11 @@ namespace app.goal.serializer;
 /// payload materializing back into a <see cref="app.goal.@this"/>. The read-side mirror of
 /// <see cref="app.goal.@this.Output"/>.
 ///
-/// <para>The goal is the <b>binary→json content boundary</b>: a <c>.pr</c> arrives as raw content
-/// (a scalar <c>value.Reader</c> over the file bytes — <c>binary/pr</c>), not a pre-tokenized wire
-/// reader. The goal owns the fact that "a .pr is json", so it parses its own content into a json
-/// reader ONCE here, then <see cref="Walk"/> walks it in place — each step via the sibling
-/// <see cref="app.goal.step.serializer.Reader"/>, each sub-goal via <see cref="Walk"/>'s own
-/// recursion (no per-level re-parse). The Goal backref + Synthetic are stamped by the caller
-/// (goal.list load).</para>
+/// <para>It reads real tokens only: an object is a goal written whole (a <c>.pr</c> — goal's own
+/// decode hands it the file through a json reader), a string is a goal written by its name (a call's
+/// row), read as that name and selected when its slot reads it. <see cref="Walk"/> walks the object in
+/// place — each step via the sibling <see cref="app.goal.step.serializer.Reader"/>, each sub-goal via its
+/// own recursion.</para>
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
@@ -24,16 +22,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         where TReader : global::app.type.format.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("goal", kind);
-        var raw = reader.RawValue();
-        // a goal is written whole (an object — a .pr file arrives as its text) or by its name (a call's row): the
-        // name is the goal's name, selected when its slot reads it
-        if (System.Text.Encoding.UTF8.GetString(raw) is var written && !written.TrimStart().StartsWith('{'))
-            return new global::app.type.item.text.@this(written);
-        if (raw.Length == 0) return new global::app.type.item.@null.@this("goal", kind);
-        var utf8 = new System.Text.Json.Utf8JsonReader(raw);
-        utf8.Read();
-        var json = new global::app.type.item.kind.json.Reader(utf8, raw);
-        return Walk(ref json, ctx);
+        // a goal written by its name is that name
+        if (reader.Peek() == global::app.type.format.TokenKind.String)
+            return new global::app.type.item.text.@this(reader.String());
+        return Walk(ref reader, ctx);
     }
 
     // Walks a goal object off the parsed json reader in place; sub-goals recurse through the SAME
@@ -42,8 +34,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     // then its own scalars are filled as they arrive. `parent` is null for the root goal in a .pr
     // file (it has none) and the enclosing goal for every sub-goal — a birth fact either way, so
     // nothing repairs Parent afterwards.
-    private global::app.goal.@this Walk(ref global::app.type.item.kind.json.Reader reader,
+    private global::app.goal.@this Walk<TReader>(ref TReader reader,
         global::app.type.reader.ReadContext ctx, global::app.goal.@this? parent = null)
+        where TReader : global::app.type.format.IReader, allows ref struct
     {
         var goal = new global::app.goal.@this { Parent = parent };
         var step = new global::app.goal.step.serializer.Reader(goal);   // born holding this goal
