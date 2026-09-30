@@ -23,9 +23,9 @@ public sealed partial class @this : global::app.type.item.@this
     public override bool IsLeaf => false;
 
     /// <summary>
-    /// The call stack writes the frame in play, the goal run's frame and every error this run observed. The
-    /// Debug view adds where it is (the goal's address, the step's text), the error and event in play and the
-    /// depth limit. The whole run's tree (<see cref="Root"/>) is one navigation away, never written.
+    /// The call stack writes one flat form in every view: the frame in play, the goal run's frame and every error
+    /// this run observed. Where it is, the error and event in play, the depth limit and the whole run's tree
+    /// (<see cref="Root"/>) are one navigation away, never written.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
@@ -35,16 +35,8 @@ public sealed partial class @this : global::app.type.item.@this
         if (Scope is { } scope) { writer.Name("scope"); await scope.Output(writer, mode, context); }
         writer.Name("audit");
         writer.BeginArray(Audit.Count);
-        foreach (var error in Audit) await error.Output(writer, mode, context);
+        foreach (var error in Audit) error.Write(writer);
         writer.EndArray();
-        if (mode == global::app.View.Debug)
-        {
-            if (Goal?.Address is { } address) { writer.Name("goal"); writer.String(address); }
-            if (Step != null) { writer.Name("step"); writer.String(Step.Text); }
-            if (Error is { } error) { writer.Name("error"); await error.Output(writer, mode, context); }
-            if (Event is { } running) { writer.Name("event"); await running.Output(writer, mode, context); }
-            writer.Name("maxDepth"); writer.Long(MaxDepth);
-        }
         writer.EndObject();
     }
 

@@ -68,6 +68,27 @@ public class AppNodesTests
         await Assert.That(dumped).Contains(frame.Id);
     }
 
+    // The call stack writes one flat form, the same in every view.
+    [Test]
+    public async Task Callstack_WritesOneForm_InEveryView()
+    {
+        await using var app = NewApp();
+        var user = app.actor.list.User.Context;
+        var goal = new global::app.goal.@this { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", user) };
+        await using var frame = user.CallStack.Push(goal);
+        frame.Record(new global::app.error.Error("seen", "Seen", 400), user);
+
+        async Task<string> In(global::app.View view)
+        {
+            using var ms = new System.IO.MemoryStream();
+            await using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
+                await user.CallStack.Output(new global::app.type.item.kind.json.Writer(utf8, view), view, user);
+            return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        }
+
+        await Assert.That(await In(global::app.View.Debug)).IsEqualTo(await In(global::app.View.Out));
+    }
+
     [Test]
     public async Task Trace_IsTheAskersTrace()
     {
