@@ -209,8 +209,9 @@ public sealed class Operator
         // THE comparison entry; the equality boundary: Equal → true, Less/Greater/
         // NotEqual → false, Incomparable → error (dict == number has no honest answer).
         var c = await left.Compare(right);
+        // named by what the values are — a slot's declared type (`item`) says nothing of what met
         if (c == global::app.data.Comparison.Incomparable)
-            return Refused(context, $"'{left.Type.Name}' and '{right.Type.Name}' values cannot be compared with '=='", "EvaluationError");
+            return Refused(context, $"'{lv!.Type.Name}' and '{rv!.Type.Name}' values cannot be compared with '=='", "EvaluationError");
         return Answer(context, c == global::app.data.Comparison.Equal);
     }
 
