@@ -4053,5 +4053,209 @@
   ],
   "formal": "error.throw(Data: item = %!error%, FixSuggestion: text = \"%hint%\")",
   "untyped": "error.throw(Data=%!error%, FixSuggestion=\"%hint%\")"
+ },
+ {
+  "goal": "compare",
+  "index": 0,
+  "text": "if %name% is \"Ingi\", write out \"hi Ingi\"",
+  "pr": [
+   {
+    "module": "condition",
+    "name": "if",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item",
+       "template": "plang"
+      },
+      "value": "%name%",
+      "variable": [
+       {
+        "text": "%name%",
+        "code": [
+         {
+          "variable": "name"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "Operator",
+      "type": {
+       "name": "choice",
+       "kind": "operator"
+      },
+      "value": "=="
+     },
+     {
+      "name": "Right",
+      "type": {
+       "name": "text"
+      },
+      "value": "Ingi"
+     }
+    ],
+    "child": [
+     {
+      "text": "write out \"hi Ingi\"",
+      "code": [
+       {
+        "module": "output",
+        "name": "write",
+        "property": [
+         {
+          "name": "Data",
+          "type": {
+           "name": "text"
+          },
+          "value": "hi Ingi"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "condition.if(Left: item = %name%, Operator: choice<operator> = \"==\", Right: text = \"Ingi\") { output.write(Data: text = \"hi Ingi\") }",
+  "untyped": "condition.if(Left=%name%, Operator=\"==\", Right=\"Ingi\") { output.write(Data=\"hi Ingi\") }"
+ },
+ {
+  "goal": "compare",
+  "index": 1,
+  "text": "if %name% equals \"Ingi\", write out \"equal\"",
+  "pr": [
+   {
+    "module": "condition",
+    "name": "if",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item",
+       "template": "plang"
+      },
+      "value": "%name%",
+      "variable": [
+       {
+        "text": "%name%",
+        "code": [
+         {
+          "variable": "name"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "Operator",
+      "type": {
+       "name": "choice",
+       "kind": "operator"
+      },
+      "value": "=="
+     },
+     {
+      "name": "Right",
+      "type": {
+       "name": "text"
+      },
+      "value": "Ingi"
+     }
+    ],
+    "child": [
+     {
+      "text": "write out \"equal\"",
+      "code": [
+       {
+        "module": "output",
+        "name": "write",
+        "property": [
+         {
+          "name": "Data",
+          "type": {
+           "name": "text"
+          },
+          "value": "equal"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "condition.if(Left: item = %name%, Operator: choice<operator> = \"==\", Right: text = \"Ingi\") { output.write(Data: text = \"equal\") }",
+  "untyped": "condition.if(Left=%name%, Operator=\"==\", Right=\"Ingi\") { output.write(Data=\"equal\") }"
+ },
+ {
+  "goal": "compare",
+  "index": 2,
+  "text": "if %name% is not \"Ada\", write out \"not Ada\"",
+  "pr": [
+   {
+    "module": "condition",
+    "name": "if",
+    "property": [
+     {
+      "name": "Left",
+      "type": {
+       "name": "item",
+       "template": "plang"
+      },
+      "value": "%name%",
+      "variable": [
+       {
+        "text": "%name%",
+        "code": [
+         {
+          "variable": "name"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "Operator",
+      "type": {
+       "name": "choice",
+       "kind": "operator"
+      },
+      "value": "!="
+     },
+     {
+      "name": "Right",
+      "type": {
+       "name": "text"
+      },
+      "value": "Ada"
+     }
+    ],
+    "child": [
+     {
+      "text": "write out \"not Ada\"",
+      "code": [
+       {
+        "module": "output",
+        "name": "write",
+        "property": [
+         {
+          "name": "Data",
+          "type": {
+           "name": "text"
+          },
+          "value": "not Ada"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "condition.if(Left: item = %name%, Operator: choice<operator> = \"!=\", Right: text = \"Ada\") { output.write(Data: text = \"not Ada\") }",
+  "untyped": "condition.if(Left=%name%, Operator=\"!=\", Right=\"Ada\") { output.write(Data=\"not Ada\") }"
  }
 ]

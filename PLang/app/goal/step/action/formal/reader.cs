@@ -533,7 +533,7 @@ public sealed class Reader
                 Attach(held, Action());
                 return new Literal { Action = held[0] };
             }
-            if (Match(@"[A-Za-z_][\w./-]*") is { } bare) Fail($"a text is quoted: \"{bare}\"");
+            if (Match(@"[A-Za-z_/][\w./-]*") is { } bare) Fail($"a text must be in quotes: write \"{bare}\", not {bare}");
             if (_text[_pos] == '?') Fail("a `?` is still there: fill it with the value the step gives");
             Fail("expected a value: \"text\", a number, true, false, null, %variable%, [list], {dict} or an action");
             return null!;

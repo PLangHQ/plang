@@ -370,8 +370,8 @@ class _Reader:
             held = []
             self.attach(held, self.action())
             return held[0]
-        if (m := re.compile(r'[A-Za-z_][\w./-]*').match(t, p)):
-            self.fail(f'a text is quoted: "{m.group()}"')
+        if (m := re.compile(r'[A-Za-z_/][\w./-]*').match(t, p)):
+            self.fail(f'a text must be in quotes: write "{m.group()}", not {m.group()}')
         if t[p] == '?': self.fail('a `?` is still there: fill it with the value the step gives')
         self.fail('expected a value: "text", a number, true, false, null, %variable%, [list], {dict} or an action')
 
