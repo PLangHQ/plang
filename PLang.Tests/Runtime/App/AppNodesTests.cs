@@ -29,7 +29,25 @@ public class AppNodesTests
 
         var read = await Read("%!app.trace%", user);
 
-        await Assert.That(ReferenceEquals(read.Peek().Clr<object>(), user.Trace)).IsTrue();
+        await Assert.That(ReferenceEquals(read.Peek(), user.Trace)).IsTrue();
+    }
+
+    // The trace is a plang value: its id reads through both spellings, and it writes and dumps as its id and start.
+    [Test]
+    public async Task Trace_IsAPlangValue_ReadWrittenAndDumped()
+    {
+        await using var app = NewApp();
+        var user = app.actor.list.User.Context;
+        var id = user.Trace.Id.ToString();
+
+        await Assert.That((await (await Read("%!trace.id%", user)).Value())?.ToString()).IsEqualTo(id);
+        await Assert.That((await (await Read("%!app.trace.id%", user)).Value())?.ToString()).IsEqualTo(id);
+
+        using var ms = new System.IO.MemoryStream();
+        var written = await user.Format("application/json").Encode(ms, user.Ok(user.Trace), user);
+        await written.IsSuccess();
+        await Assert.That(System.Text.Encoding.UTF8.GetString(ms.ToArray())).Contains(id);
+        await Assert.That(await user.Trace.Debug(user)).Contains(id);
     }
 
     [Test]

@@ -5,6 +5,9 @@
   "app.actor": {
     "word": "actor"
   },
+  "app.actor.context.trace": {
+    "word": null
+  },
   "app.channel": {
     "word": "channel"
   },
