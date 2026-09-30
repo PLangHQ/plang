@@ -44,7 +44,7 @@ Optional tags follow, each introduced by `·`:
 A line whose property name is `Returns` documents the return value's meaning.
 
 ```
-Pattern — which files come back, as a glob. · say: matching '<glob>' · builder: only when the step names one
+Pattern — which files come back, as a glob · say: `matching '<glob>'` · builder: only when the step names one
 ```
 
 **Parsed once, not stripped twice.** A `notes.md` file is read as its lines, each
@@ -74,55 +74,66 @@ missing-parameter guard for these), or an explicit `[IsNotNull]`. **Default** = 
 
 ## Enriched `notes.md` — file module (ready to apply with the loader)
 
+**Authoring contract (the generator is pure pass-through):** a line is
+`Name — <prose> · say: <say> · builder: <builder>`. The generator strips only the
+`Name — ` prefix and the ` · tag:` markers, then emits `<prose>` and `<say>`
+**verbatim** — it adds no backticks and strips no punctuation. So:
+- Backticks live in the source `say:` — a literal you type (`` `recursive` ``,
+  `` `matching '<glob>'` ``) is backticked; a descriptive phrase ("the folder,
+  inline") is not.
+- Property `<prose>` is a short label with **no** trailing period.
+- A `Returns —` line is a full sentence and keeps its terminal period.
+
 `file/list.notes.md`
 ```
-Path — the folder to list. · say: the folder, inline
-Pattern — which files come back, as a glob. · say: matching '<glob>' · builder: only when the step names one
-Recursive — whether sub-folders are searched too. · say: recursive · builder: true only when the step says to include sub-folders
+Path — the folder to list · say: the folder, inline
+Pattern — which files come back, as a glob · say: `matching '<glob>'` · builder: only when the step names one
+Recursive — whether sub-folders are searched too · say: `recursive` · builder: true only when the step says to include sub-folders
+Returns — a list of `path` values.
 ```
 
 `file/read.notes.md`
 ```
-Path — the file to read. · say: the path, inline
-ResolveVariables — fill in %variables% inside the file's text before returning. · say: load vars · builder: true only when the step asks for the file's %variables% to be filled in
+Path — the file to read · say: the path, inline
+ResolveVariables — fill in %variables% inside the file's text before returning · say: `load vars` · builder: true only when the step asks for the file's %variables% to be filled in
 Returns — the file's content. A JSON file is navigable; it is parsed when first navigated.
 ```
 
 `file/save.notes.md`
 ```
-Path — the file to write. · say: to file '<path>'
-Value — what to write. · say: the content, inline
+Path — the file to write · say: `to file '<path>'`
+Value — what to write · say: the content, inline
 Returns — the path that was written.
 ```
 
 `file/exists.notes.md`
 ```
-Path — the file or folder to check for. · say: check if '<path>' exists
+Path — the file or folder to check for · say: `check if '<path>' exists`
 Returns — the path itself; whether it exists is the value's truthiness, so `if %x% is true` probes it (a filesystem stat, or an HTTP HEAD for a URL) at the moment you test it.
 ```
 
 `file/copy.notes.md`
 ```
-Source — the file or folder to copy from. · say: the first path, inline
-Destination — where the copy goes. · say: to '<path>'
-Overwrite — replace the destination if it already exists. · say: overwrite
-IncludeSubfolders — when copying a folder, copy its sub-folders too (on by default). · builder: false only when the step says to copy the top folder only
+Source — the file or folder to copy from · say: the first path, inline
+Destination — where the copy goes · say: `to '<path>'`
+Overwrite — replace the destination if it already exists · say: `overwrite`
+IncludeSubfolders — when copying a folder, copy its sub-folders too · say: (on by default) · builder: false only when the step says to copy the top folder only
 Returns — the destination path.
 ```
 
 `file/move.notes.md`
 ```
-Source — the file or folder to move from. · say: the first path, inline
-Destination — where it moves to (this renames it). · say: to '<path>'
-Overwrite — replace the destination if it already exists. · say: overwrite
+Source — the file or folder to move from · say: the first path, inline
+Destination — where it moves to (this renames it) · say: `to '<path>'`
+Overwrite — replace the destination if it already exists · say: `overwrite`
 Returns — the destination path.
 ```
 
 `file/delete.notes.md`
 ```
-Path — the file or folder to delete. · say: file '<path>'
-IgnoreIfNotFound — don't error if it isn't there. · say: ignore if not found
-Recursive — delete a folder's contents too. · say: recursive
+Path — the file or folder to delete · say: `file '<path>'`
+IgnoreIfNotFound — don't error if it isn't there · say: `ignore if not found`
+Recursive — delete a folder's contents too · say: `recursive`
 Returns — the deleted path.
 ```
 
