@@ -28,8 +28,10 @@ A table generated from the handler cannot drift from the handler.
 | Returns (meaning) | a `Returns —` line in `<action>.notes.md` |
 
 The generator reads all of this off the descriptor `app.goal.step.action.@this`,
-which already exposes `.Description` / `.Notes` / `.Examples` and the handler type;
-property shape comes from the same attribute metadata the builder catalog uses.
+which already exposes `.Description` / `.Notes` / `.Examples` (lazy file items,
+`action/this.Schema.cs:69-86`) and the handler type; property shape and the return
+plang-type come from the same catalog metadata the builder uses
+(`action/this.Schema.cs:44-66`).
 
 ## Source format: `notes.md`, one line per property, tagged
 
@@ -45,30 +47,26 @@ A line whose property name is `Returns` documents the return value's meaning.
 Pattern — which files come back, as a glob. · say: matching '<glob>' · builder: only when the step names one
 ```
 
-**Two render passes strip the tag the audience doesn't need:**
+**Parsed once, not stripped twice.** A `notes.md` file is read as its lines, each
+parsed into `{name, prose, say, builder}`. Each template then shows only the fields
+its audience needs — nothing is rendered raw, so no tag can leak:
 
-| Consumer | Keeps | Strips |
-|---|---|---|
-| Learner page (`docs/modules/*.md`) | prose + `· say:` | `· builder:` |
-| Compile teaching (build prompt) | prose + `· builder:` | `· say:` |
-
-> The compile teaching renders `notes.md` **raw** today. Adding tags therefore lands
-> **together with** the tag-stripping in the teaching loader — do not commit tagged
-> `notes.md` before the loader strips `· say:`, or the tag text leaks into build prompts.
-
-## Type display mapping
-
-The Type column shows the CLR `data.@this<T>` mapped to a learner-friendly name:
-
-| `T` | Type shown |
+| Consumer | Shows |
 |---|---|
-| `path` | `path` |
-| `app.type.item.text` | `string` |
-| `app.type.item.@bool` | `bool` |
-| `app.type.item.number` | `number` |
-| `app.type.item.list<X>` | `list` |
-| `app.variable` | `variable` (a variable name, not its value) |
-| bare `data.@this` | `object` |
+| Learner page (`docs/modules/*.md`) | `name`, `prose`, `say` |
+| Compile teaching (build prompt) | `name`, `prose`, `builder` |
+
+> Because the compile teaching reads `notes.md` today, the tagged `notes.md` files
+> and the parse-into-fields change land **atomically** — do not commit tagged
+> `notes.md` ahead of the parse, or the tag text reaches build prompts.
+
+## Type column
+
+The Type column shows **the plang type name straight from the catalog** — no second
+naming scheme. Property types and the return type are already plang types on the
+descriptor (`action/this.Schema.cs:44-66`): `path`, `text`, `bool`, `number`,
+`list`, `item` (the base type — a bare `Data` return is `item`, not "object"),
+`variable` (a variable *name*, not its value), `duration`, `dictionary`.
 
 **Required** = non-nullable `data.@this<T>` with no `[Default]` (the generator emits a
 missing-parameter guard for these), or an explicit `[IsNotNull]`. **Default** = the
@@ -87,7 +85,7 @@ Recursive — whether sub-folders are searched too. · say: recursive · builder
 ```
 Path — the file to read. · say: the path, inline
 ResolveVariables — fill in %variables% inside the file's text before returning. · say: load vars · builder: true only when the step asks for the file's %variables% to be filled in
-Returns — the file's content (JSON is parsed into an object automatically).
+Returns — the file's content. A JSON file is navigable; it is parsed when first navigated.
 ```
 
 `file/save.notes.md`
@@ -158,7 +156,7 @@ Read a file's content; optionally resolve %var% patterns in the text before retu
 | Path | the path, inline | path | yes | — | the file to read |
 | ResolveVariables | `load vars` | bool | no | false | fill in %variables% inside the file's text before returning |
 
-**Returns:** the file's content (JSON is parsed into an object automatically).
+**Returns:** the file's content. A JSON file is navigable; it is parsed when first navigated.
 
 ## save
 Write Value to a file at Path, creating directories as needed.
@@ -166,7 +164,7 @@ Write Value to a file at Path, creating directories as needed.
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
 | Path | `to file '<path>'` | path | yes | — | the file to write |
-| Value | the content, inline | object | yes | — | what to write |
+| Value | the content, inline | item | yes | — | what to write |
 
 **Returns:** the path that was written.
 
@@ -228,7 +226,7 @@ into subdirectories.
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
 | Path | the folder, inline | path | yes | — | the folder to list |
-| Pattern | `matching '<glob>'` | string | no | * | which files come back, as a glob |
+| Pattern | `matching '<glob>'` | text | no | * | which files come back, as a glob |
 | Recursive | `recursive` | bool | no | false | whether sub-folders are searched too |
 
 **Returns:** a list of `path` values.
@@ -249,15 +247,34 @@ into subdirectories.
    return type when absent.
 4. **Property order** follows the handler declaration order.
 5. **Orphans:** a `notes.md` property line with no matching handler property, or a
-   handler property with no `notes.md` line, is a warning (mirror
-   `MarkdownTeaching`'s orphan scan) — surfaces missing or stale prose.
+   handler property with no `notes.md` line, is a warning — **reuse the existing
+   orphan scan** (`MarkdownTeaching.ScanOrphans` per CLAUDE.md), do not add a second.
+
+## How it is built
+
+Parallel to the compile teaching, which renders Fluid templates over the catalog
+(`os/system/builder/llm/templates/properties.template` reads `action.Notes`
+straight off `app.goal.step.action.@this`). The learner page is a **second Fluid
+template over the same catalog**, rendered per module by a **plang goal** — not a
+C# render pass. The template shows the learner fields (`name`, `prose`, `say`); the
+existing compile template shows the builder fields (`name`, `prose`, `builder`).
 
 ## Hand-off
 
 - **Docs (owned here):** this spec, the tagged `notes.md` format, the file-module
-  enriched prose above, the golden sample.
-- **Coder / architect:** the render pass (a second consumer of
-  `app.goal.step.action.@this`, parallel to the compile-teaching render) that emits
-  `docs/modules/<module>.md`; and teaching the compile-teaching loader to strip the
-  `· say:` / `· builder:` tags so they never reach build prompts. The tagged
-  `notes.md` files land in the same change as the stripping.
+  enriched prose above, the golden sample. Docs verifies generator output against
+  the golden sample.
+- **Coder / architect:** parse each `notes.md` line into `{name, prose, say, builder}`;
+  the learner Fluid template + the per-module plang goal that emits
+  `docs/modules/<module>.md`; the learner fields on the compile side so the existing
+  builder template shows `builder` (not raw). The tagged `notes.md` files land in the
+  same change as the parse.
+
+## Coordination
+
+- **`file/delete.notes.md` overlaps a pending coder change.** `remove %x%` compiles
+  to `file.delete` (destroys the file); the fix waits on an Ingi ruling about pick
+  scoring, and the coder holds an uncommitted `delete.notes.md`. The enriched
+  `delete.notes.md` here must be **merged** with that change, not landed separately.
+- **`read` returns prose** ("a JSON file is navigable; parsed when first navigated",
+  decisions 398/401) should be re-checked against the code when the generator runs.
