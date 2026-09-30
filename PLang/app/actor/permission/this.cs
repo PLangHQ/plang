@@ -24,6 +24,26 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     public @this(global::app.actor.@this actor)
     {
         _actor = actor;
+        // Every actor's standing grant on the runtime's shared os folder: it reads and runs what is there (the
+        // builder's goals, /system/error/show). Writing there is the system actor's alone (Stand).
+        Stand(Verb.Read, Verb.Execute);
+    }
+
+    /// <summary>
+    /// This actor's standing grant on the runtime's shared os folder — held in memory for the run, never persisted
+    /// or asked; it replaces the one before (the grant store keys by path).
+    /// </summary>
+    internal void Stand(params Verb[] verbs)
+    {
+        var grant = new Grant(_actor.Name,
+            _actor.App.OsAbsolutePath + global::app.Utils.PathHelper.DirectorySeparatorChar + "**",
+            new HashSet<Verb>(verbs), MatchMode.Glob);
+        var held = new global::app.data.@this<Grant>("", grant, context: _actor.Context);
+        lock (_lock)
+        {
+            _inMemory.RemoveAll(d => d.Peek() is Grant g && string.Equals(g.Path, grant.Path, StringComparison.Ordinal));
+            _inMemory.Add(held);
+        }
     }
 
     /// <summary>

@@ -59,9 +59,9 @@ public partial class @this
         permission.@this.Request(actor.Name, Absolute, verb, MatchMode.Exact);
 
     // A child app inherits its parent's filesystem scope: paths under the
-    // parent's root/os-folder are still in-root from a child's perspective.
-    // The os-folder checks cover system-built-in goals (test, build) at any
-    // depth. The MaxDepth cap turns an accidental Parent cycle into a quiet
+    // parent's root are still in-root from a child's perspective. The os folder
+    // is never in-root: its access is the actors' standing grants (permission
+    // list, seeded at boot). The MaxDepth cap turns an accidental Parent cycle into a quiet
     // false (out-of-root) instead of an infinite loop on the Authorize hot
     // path; 16 is well above any legitimate child-app nesting.
     protected bool IsInRoot(actor.context.@this context)
@@ -71,9 +71,10 @@ public partial class @this
         const int MaxDepth = 16;
         for (int depth = 0; app != null && depth < MaxDepth; depth++)
         {
-            if (IsUnder(app.AbsolutePath, RootComparison)
-                || IsUnder(app.OsAbsolutePath, RootComparison))
-                return true;
+            // the runtime's shared os folder is never an actor's own, even when an app is rooted there: what an
+            // actor may do there is its standing grants (every actor reads and runs; only the system writes)
+            if (IsUnder(app.OsAbsolutePath, RootComparison)) return false;
+            if (IsUnder(app.AbsolutePath, RootComparison)) return true;
             app = app.Parent;
         }
         return false;
@@ -81,9 +82,7 @@ public partial class @this
 
     /// <summary>
     /// Returns true when <see cref="Absolute"/> sits under (or equals)
-    /// <paramref name="rootCandidate"/>. The os-folder check covers
-    /// system-built-in goals (test, build) that live outside the actor's root
-    /// — they are runtime-owned files, not user content.
+    /// <paramref name="rootCandidate"/>.
     /// </summary>
     private bool IsUnder(string? rootCandidate, StringComparison cmp)
     {

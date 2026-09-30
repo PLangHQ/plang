@@ -57,12 +57,17 @@ public sealed partial class @this
             if (!consent.Success) return consent;
         }
 
-        // The builder runs under the User actor's context — user code output/channels resolve
-        // through it; no global "current actor" switch needed. Its goal loads through the goal
-        // collection, which registers what it loads.
-        var user = _context.App.actor.list.User.Context;
-        var loaded = await _context.App.goal.Load("/system/builder/.build/build.pr");
+        // The builder runs under the User actor's context — user code output/channels resolve through it; no
+        // global "current actor" switch needed. Building the runtime's own os folder rebuilds the goals only the
+        // system may write, so that build runs as the system — chosen here, at the build's start, never by a
+        // program. Its goal loads through the goal collection, which registers what it loads.
+        var app = _context.App;
+        var separator = global::app.Utils.PathHelper.DirectorySeparatorChar;
+        var builtIsOs = string.Equals(app.AbsolutePath.TrimEnd(separator), app.OsAbsolutePath.TrimEnd(separator),
+            System.OperatingSystem.IsWindows() ? System.StringComparison.OrdinalIgnoreCase : System.StringComparison.Ordinal);
+        var builder = (builtIsOs ? app.actor.list.System : app.actor.list.User).Context;
+        var loaded = await app.goal.Load("/system/builder/.build/build.pr");
         if (!loaded.Success) return loaded;
-        return await ((await loaded.Value()) as global::app.goal.@this)!.Start(user);
+        return await ((await loaded.Value()) as global::app.goal.@this)!.Start(builder);
     }
 }
