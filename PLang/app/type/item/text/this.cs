@@ -86,8 +86,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// An ordinary typed property stamped at creation, never after.</summary>
     public string? Kind { get; init; }
 
+    // The text's type, made once, when it is first asked for (a text's kind and template are stamped at creation, so
+    // it never changes after). A text writes itself by asking its type's kind, so it holds its type, never
+    // rebuilding it on every read.
+    private global::app.type.@this? _type;
+
     protected internal override global::app.type.@this Type
-        => new("text", typeof(@this), Kind, template: Template);
+        => _type ??= new("text", typeof(@this), Kind, template: Template);
 
     /// <summary>
     /// THE PURE CORE — "text, make yourself from this value, or decline." A <c>text</c> passes
@@ -247,7 +252,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // The kind these characters are in, as the types hold it — one of text's own (md) or one text coins for another
     // type's format (json); with no context to ask, the kind by its name alone.
     private global::app.type.kind.@this Format(global::app.actor.context.@this? context)
-        => context?.App.type.list.Kind("text", Kind) ?? Type.kind;
+        => context?.App.type.list.Kind(Type, context) ?? Type.kind;
 
     public override bool IsLeaf => true;
 

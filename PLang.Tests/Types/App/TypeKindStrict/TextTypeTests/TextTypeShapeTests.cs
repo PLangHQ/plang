@@ -24,6 +24,17 @@ public class TextTypeShapeTests
         await Assert.That((string?)prop.GetValue(null)).IsEqualTo("string");
     }
 
+    // A text holds its type, made once: a text writes itself by asking its type's kind, so every write reads it.
+    [Test] public async Task Text_HoldsItsType_MadeOnce()
+    {
+        var text = new TextType("{\"a\": 1}") { Kind = "json" };
+
+        var first = text.Type;
+
+        await Assert.That(ReferenceEquals(text.Type, first)).IsTrue();
+        await Assert.That(first.kind.Name).IsEqualTo("json");
+    }
+
     [Test] public async Task Text_Description_TeachesKindFromExtension()
     {
         var prop = typeof(TextType).GetProperty(

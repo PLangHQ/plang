@@ -90,16 +90,16 @@ What each item held in a body does in `Output`:
 | `source`, no template (`source.cs:260-279`, via `:291-294`) | `:264-268` its declared kind owns the writer (`kind.Owns`) → the raw verbatim; else `:278` a string | `{item, json}` content relays as its bytes |
 | `wire` (`type/item/wire/this.cs:63-71`) | `:67` the wire's reader (plang's own format, `wire/kind/plang/this.cs:129`) owns json and plang writers → the `.pr` slice verbatim; any other writer decodes the slice (`:70`) and the value writes itself | the slice as written in the `.pr`, whitespace included |
 | `template` (`type/item/wire/template.cs:21-35`) | `:27-31` in the Store view (a `.pr`) its slice as authored, as a wire; in any other view `:34` the slice is decoded and its parts write themselves, each rendering its variable | the rendered value: `{"deep":"m-1"}` |
-| native `dict` (`type/item/dict/this.cs:163-174`) | an object; each entry writes itself | entries render (a template entry resolves at `text/this.cs:237-244`) |
-| `text` (`type/item/text/this.cs:229-245`) | `:235` plain content and `:244` a rendered template hand the writer the characters with their kind (`IWriter.Content`, `type/format/IWriter.cs:71-75`); `:238-242` a whole `%var%` writes the bound value | a text of kind json as it is (`{"deep": "m-1"}`); any other text a json string |
+| native `dict` (`type/item/dict/this.cs:163-174`) | an object; each entry writes itself | entries render (a template entry resolves at `text/this.cs:243-249`) |
+| `text` (`type/item/text/this.cs:234-250`) | `:240` plain content and `:249` a rendered template hand the writer the characters with their kind (`IWriter.Content`, `type/format/IWriter.cs:71-75`); `:243-248` a whole `%var%` writes the bound value | a text of kind json as it is (`{"deep": "m-1"}`); any other text a json string |
 | file / url reference (`type/item/content/this.cs:113-136`) | sampled → its content (`:117` json into json verbatim, `:118` text as a string, `:119` bytes); unsampled → `:115` its location | the content if sampled, else the path as a string |
 
 ## A text of a format's kind
 
-A text's kind is found by `type.list.Kind("text", kind)` (`type/list/this.cs:46-52`; text's `Format`, `text/this.cs:249-250`): one of text's own kinds (md, xml, …), or one text coins for a text format another type holds (json is item's, csv table's, html code's) — `type/item/text/kind/this.cs` coins it, `type/item/text/kind/format/this.cs` is it. The coined kind:
+A text's kind is found by asking the types with the text's own type (`type.list.Kind(type, context)` → `Kind(name, kind)`, `type/list/this.cs:37-52`; text's `Format`, `text/this.cs:254-255`; the text holds its type, made once, `:92-95`): one of text's own kinds (md, xml, …), or one text coins for a text format another type holds (json is item's, csv table's, html code's) — `type/item/text/kind/this.cs` coins it, `type/item/text/kind/format/this.cs` is it. The coined kind:
 - owns its format's writer only where that writer's envelope doesn't carry the value's type (`format/this.cs`, `Owns`): the plain json writer takes the characters as they are; plang's envelope, which says `{text, json}`, takes the string, and it reads back as that text;
 - declines `Parse`/`Load`, so a read keeps it text;
-- answers `Open` (the json parse), which only navigation asks: `%x.a%` and `foreach %x%` open the characters at the first navigation and keep what they opened (`text/this.cs:268`, `:276-298`). The text stays text and writes its characters. A text whose kind opens nothing answers `CantNavigateText`.
+- answers `Open` (the json parse), which only navigation asks: `%x.a%` and `foreach %x%` open the characters at the first navigation and keep what they opened (`text/this.cs:274-285`, `:287-317`). The text stays text and writes its characters. Characters that don't read as json answer `MaterializeFailed` (json's `Open`). A text whose kind opens nothing answers `CantNavigateText`.
 
 ## What the channel opens
 
