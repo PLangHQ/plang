@@ -88,6 +88,28 @@ public class RenderTests : IDisposable
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("a.x=yes-a;b.y=yes-b;|p1,p2");
     }
 
+    // `{{ x | json }}` writes the value as json through plang's json format: a dict as its entries, not the C#
+    // object behind it (the educator's report: it dumped IsSequence, RawBytes, …); a text is a json string, its
+    // %…% characters as written; compact, `json: true` or not.
+    [Test]
+    public async Task Render_JsonFilter_WritesTheValueAsJson()
+    {
+        var context = _app.actor.list.User.Context;
+        await context.Variable.Set("d", new Dictionary<string, object?> { ["a"] = 1, ["b"] = "Þór" });
+        await context.Variable.Set("s", new global::app.type.item.text.@this("50% of %x%"));
+        var action = new Render(context)
+        {
+            Template = (global::app.type.item.text.@this)"{{ d | json }}|{{ s | json }}|{{ d.b | json }}|{{ d | json: true }}",
+            IsFile = (global::app.type.item.@bool.@this)false
+        };
+
+        var result = await _provider.Render(action);
+
+        await result.IsSuccess();
+        await Assert.That((await result.Value())?.ToString())
+            .IsEqualTo("{\"a\":1,\"b\":\"Þór\"}|\"50% of %x%\"|\"Þór\"|{\"a\":1,\"b\":\"Þór\"}");
+    }
+
     // --- Batch 1: Core Render Behavior ---
 
     [Test]
