@@ -353,11 +353,11 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         if (!actor.Channel.Contains(global::app.channel.list.@this.Output))
             actor.Channel.Register(new global::app.channel.type.stream.@this(
                 global::app.channel.list.@this.Output, Console.OpenStandardOutput(),
-                global::app.channel.ChannelDirection.Output, ownsStream: false));
+                global::app.channel.ChannelDirection.Output, ownsStream: false) { Framed = true });
         if (!actor.Channel.Contains(global::app.channel.list.@this.Error))
             actor.Channel.Register(new global::app.channel.type.stream.@this(
                 global::app.channel.list.@this.Error, Console.OpenStandardError(),
-                global::app.channel.ChannelDirection.Output, ownsStream: false));
+                global::app.channel.ChannelDirection.Output, ownsStream: false) { Framed = true });
         if (!actor.Channel.Contains(global::app.channel.list.@this.Input))
             actor.Channel.Register(interactiveInput
                 // The one terminal owner (CLI) reads real stdin.

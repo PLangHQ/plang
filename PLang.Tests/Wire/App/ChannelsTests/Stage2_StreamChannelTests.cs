@@ -306,7 +306,7 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
         var capture = new MemoryStream();
         var ch = new StreamChannel("c", capture, ChannelDirection.Output, ownsStream: false)
-        { Mime = "text/plain", Encoding = "iso-8859-1" };
+        { Mime = "text/plain", Encoding = "iso-8859-1", Framed = true };
         app.actor.list.User.Channel.Register(ch);
 
         // 'é' is one byte in latin-1 (0xE9) but two bytes in UTF-8.
@@ -315,6 +315,20 @@ public class Stage2_StreamChannelTests : System.IAsyncDisposable
         var expected = global::System.Text.Encoding.Latin1.GetBytes("é" + global::System.Environment.NewLine);
         await Assert.That(capture.ToArray()).IsEquivalentTo(expected);
         await Assert.That(capture.ToArray()[0]).IsEqualTo((byte)0xE9);
+    }
+
+    // A stream that carries one value (a file, a request body) ends where the value ends.
+    [Test]
+    public async Task StreamChannel_Unframed_WritesNoNewline()
+    {
+        await using var app = new global::app.@this("/test", autoWireConsoleChannels: false).Testing();
+        var capture = new MemoryStream();
+        var ch = new StreamChannel("c", capture, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" };
+        app.actor.list.User.Channel.Register(ch);
+
+        await ch.WriteText("value");
+
+        await Assert.That(global::System.Text.Encoding.UTF8.GetString(capture.ToArray())).IsEqualTo("value");
     }
 
     // A text write fires the channel's on.write, as any write does.

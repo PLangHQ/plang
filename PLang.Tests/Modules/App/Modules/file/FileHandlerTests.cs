@@ -479,7 +479,7 @@ public class FileHandlerTests : IDisposable
         _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { Mime = "text/plain" });
+        { Mime = "text/plain", Framed = true });
 
         var context = _app.actor.list.User.Context;
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "TestFileExistsFlow",
@@ -516,7 +516,7 @@ public class FileHandlerTests : IDisposable
         _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: true)
-        { Mime = "text/plain" });
+        { Mime = "text/plain", Framed = true });
 
         var context = _app.actor.list.User.Context;
         var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "TestFileNotExistsFlow",

@@ -77,7 +77,7 @@ public class IfHandlerTests : IDisposable
         _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: false)
-        { Mime = "text/plain" });
+        { Mime = "text/plain", Framed = true });
 
         var result = await RunStep(text, actions);
         await result.IsSuccess();

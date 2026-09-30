@@ -61,7 +61,7 @@ public class ConditionHandlerTests : IDisposable
         _app.actor.list.User.Channel.Register(new StreamChannel(
             global::app.channel.list.@this.Output, captureStream,
             ChannelDirection.Output, ownsStream: false)
-        { Mime = "text/plain" });
+        { Mime = "text/plain", Framed = true });
 
         var step = new Step { Index = 0, Text = text };
         foreach (var action in actions) step.Code.Add(action.In(step));

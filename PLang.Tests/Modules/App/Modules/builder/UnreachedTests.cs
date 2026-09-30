@@ -15,7 +15,7 @@ public class UnreachedTests : System.IAsyncDisposable
         System.IO.Directory.CreateDirectory(root);
         app = new global::app.@this(root).Testing();
         app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(
-            "builder", warnings, global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
+            "builder", warnings, global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain", Framed = true });
     }
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();

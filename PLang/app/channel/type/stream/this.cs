@@ -39,6 +39,10 @@ public sealed class @this : global::app.channel.type.session.@this
     public static @this Memory(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
         => new(name, new MemoryStream(), direction, ownsStream: true);
 
+    /// <summary>Each text message ends with a newline — console and pipe ergonomics (NDJSON). A stream that
+    /// carries one value (a file, a request body) is not framed.</summary>
+    [global::app.Debug] public bool Framed { get; init; }
+
     public override bool CanRead => IsOpen && Direction.Value != ChannelDirection.Output && Stream.CanRead;
     public override bool CanWrite => IsOpen && Direction.Value != ChannelDirection.Input && Stream.CanWrite;
 
@@ -59,10 +63,9 @@ public sealed class @this : global::app.channel.type.session.@this
             if (opened != null) return context.Error(opened);
             var format = context.App.type.list.Mime(Mime.ToString());
             var result = await format.Encode(Stream, data, context, encoding: ResolveEncoding(), ct: ct);
-            // Line framing is the channel's job (console/pipe ergonomics, NDJSON):
-            // delimit each text message with a newline. Binary and the self-describing plang
+            // A framed channel delimits each text message with a newline. Binary and the self-describing plang
             // envelope are not framed.
-            if (result.Success && format.IsText)
+            if (result.Success && Framed && format.IsText)
                 await Stream.WriteAsync(ResolveEncoding().GetBytes(System.Environment.NewLine), ct);
             return result;
         }
