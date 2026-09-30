@@ -74,6 +74,11 @@ internal sealed class H264 : IDisposable
             Marshal.WriteInt32(param, 872, 14);         // iMinQp
             Marshal.WriteInt16(param, 892, (short)threads);   // iMultipleThreadIdc
             Marshal.WriteByte(param, 908, 0);           // bEnableDenoise
+            // the cheapest search, no picture analysis: the CPU is shared with Chromium decoding the
+            // video, and at this bitrate what they would save isn't seen
+            Marshal.WriteInt32(param, 832, 0);          // iComplexityMode: LOW_COMPLEXITY
+            Marshal.WriteByte(param, 909, 0);           // bEnableBackgroundDetection
+            Marshal.WriteByte(param, 910, 0);           // bEnableAdaptiveQuant
             // the one layer
             var layer = param + Layer;
             Marshal.WriteInt32(layer, 0, width);
