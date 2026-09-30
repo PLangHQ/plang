@@ -43,11 +43,13 @@ internal sealed class Page(string target, int port, string root)
         ["expression"] = "window.dispatchEvent(new MessageEvent('message',{data:" + JsonSerializer.Serialize(text) + ",origin:'plang'}))",
     });
 
-    /// <summary>Runs <paramref name="expression"/> in the page, a promise awaited; DevTools' answer.</summary>
-    internal Task<JsonElement> Evaluate(string expression) => Ask("Runtime.evaluate", new JsonObject
+    /// <summary>Runs <paramref name="expression"/> in the page, a promise awaited (as long as
+    /// <paramref name="within"/> allows: a page's goal may wait for the person, a question's answer);
+    /// DevTools' answer.</summary>
+    internal Task<JsonElement> Evaluate(string expression, TimeSpan? within = null) => Ask("Runtime.evaluate", new JsonObject
     {
         ["expression"] = expression, ["awaitPromise"] = true, ["returnByValue"] = true,
-    });
+    }, within);
 
     /// <summary>The page closes (and the window it is in).</summary>
     internal Task Shut() => Ask("Page.close", new JsonObject());
@@ -120,7 +122,7 @@ internal sealed class Page(string target, int port, string root)
         return said;
     }
 
-    private async Task<JsonElement> Ask(string method, JsonObject parameters)
+    private async Task<JsonElement> Ask(string method, JsonObject parameters, TimeSpan? within = null)
     {
         var id = Interlocked.Increment(ref next);
         var answer = new TaskCompletionSource<JsonElement>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -129,7 +131,7 @@ internal sealed class Page(string target, int port, string root)
         await sending.WaitAsync();
         try { await socket.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None); }
         finally { sending.Release(); }
-        try { return await answer.Task.WaitAsync(TimeSpan.FromSeconds(5)); }
+        try { return await answer.Task.WaitAsync(within ?? TimeSpan.FromSeconds(5)); }
         finally { waiting.TryRemove(id, out _); }
     }
 }

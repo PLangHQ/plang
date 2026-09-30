@@ -53,13 +53,14 @@ public sealed partial class Window : global::app.type.item.@this, global::app.ty
     internal async Task Post(string text) => await (await Page()).Post(text);
 
     /// <summary>Runs the page's goal <paramref name="name"/> with <paramref name="arguments"/> (one
-    /// json object); what it returned, or threw, as DevTools answers it.</summary>
+    /// json object); what it returned, or threw, as DevTools answers it. A page's goal may wait for the
+    /// person (a question on the screen): it has ten minutes, as a goal would.</summary>
     internal async Task<JsonElement> Call(string name, string arguments)
     {
         var goal = JsonSerializer.Serialize(name);
         return await (await Page()).Evaluate(
             $"(async()=>{{const goal=window[{goal}];if(typeof goal!=='function')throw new Error('The page has no goal '+{goal});" +
-            $"return await goal({arguments});}})()");
+            $"return await goal({arguments});}})()", TimeSpan.FromMinutes(10));
     }
 
     /// <summary>Closes: its page closes, and with it the window.</summary>
