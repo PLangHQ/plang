@@ -146,10 +146,12 @@ internal sealed class WebM : Container
                 var relative = BinaryPrimitives.ReadInt16BigEndian(v[n..]);
                 var flags = v[n + 2];
                 var time = (cluster + relative) * scale + Offset;
-                // a Block (in a BlockGroup) counts as a key frame; SimpleBlock says so in its flags
-                var key = id != SimpleBlock || (flags & 0x80) != 0;
+                var frame = value[(n + 3)..];
+                // a SimpleBlock says in its flags; a Block (in a BlockGroup) doesn't: the VP9 frame's own
+                // header does (a decoder started at a frame that isn't one can't decode it)
+                var key = id == SimpleBlock ? (flags & 0x80) != 0 : Vp9Key(frame.Span);
                 Flush(time, frames);
-                pending = (time, key, value[(n + 3)..]);
+                pending = (time, key, frame);
                 break;
             }
         }
@@ -165,6 +167,18 @@ internal sealed class WebM : Container
         frames.Add(new Coded(p.time, duration, p.key, p.bytes));
         pending = null;
         blockDuration = null;
+    }
+
+    /// <summary>Whether a VP9 frame is a key frame, from its uncompressed header: frame_marker (2 bits),
+    /// the profile's two bits (and a reserved one for profile 3), show_existing_frame, frame_type (0: key).</summary>
+    private static bool Vp9Key(ReadOnlySpan<byte> frame)
+    {
+        if (frame.Length < 2 || frame[0] >> 6 != 2) return false;
+        var bits = frame[0] << 8 | frame[1];
+        var profile = (bits >> 13 & 1) | (bits >> 12 & 1) << 1;
+        var at = profile == 3 ? 10 : 11;   // the bit after the profile (and the reserved one), counting from the top of 16
+        if ((bits >> at & 1) == 1) return false;   // show_existing_frame: shows an earlier frame
+        return (bits >> (at - 1) & 1) == 0;         // frame_type 0: a key frame
     }
 
     /// <summary>An EBML variable-length number at <paramref name="at"/>: an element's id (its length

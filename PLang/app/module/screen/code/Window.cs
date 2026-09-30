@@ -277,6 +277,7 @@ internal sealed class Window
         var painted = MemoryMarshal.Cast<byte, uint>(layer.Painted.AsSpan());
         // the box's columns on the screen, and the picture's within them
         int left = Math.Max(0, -bx), right = Math.Min(bw, frameWidth - bx);
+        if (right <= left) { layer.Painted.AsSpan().Clear(); return; }   // off the screen sideways
         int pl = Math.Clamp(ix - bx, left, right), pr = Math.Clamp(ix + iw - bx, pl, right);
         for (var y = 0; y < bh; y++)
         {
@@ -671,6 +672,12 @@ internal sealed class Window
             DispatchMessageW(ref msg);
         }
         Closed = true;
+        // the videos go with the window: their threads, decoders and the finer timer
+        lock (players)
+        {
+            foreach (var player in players.Values) player.Dispose();
+            players.Clear();
+        }
         onClosed();
     }
 
