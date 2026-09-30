@@ -130,10 +130,11 @@ public sealed class @this
         }
         return null;
     }
-    // a goal the step's words call — plang's own `call X`, X a name or a /path/Name — and the quoted
-    // texts, whose words are not the step's
+    // a goal the step's words call — plang's own `call X` or `call goal X`, X a name or a /path/Name (the word
+    // goal is plang's, never the name; a %variable% names no goal the build knows) — and the quoted texts,
+    // whose words are not the step's
     private static readonly System.Text.RegularExpressions.Regex Calls =
-        new(@"\bcall\s+(/?[A-Za-z_][\w./]*)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        new(@"\bcall\s+(?:goal\s+)?(?!goal\b)(/?[A-Za-z_][\w./]*)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
     private static readonly System.Text.RegularExpressions.Regex Quoted = new(@"""(?:[^""\\]|\\.)*""|'[^']*'");
 
     // Every action in the code, wherever it sits: the step's actions, the actions they hold, their

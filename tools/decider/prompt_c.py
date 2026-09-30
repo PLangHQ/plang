@@ -161,7 +161,7 @@ def assigned(text):
 def bare_names(text):
     """The bare names the step's words write: %name% — not a setting, not a way in (step.Scope)."""
     return [v['code'][0]['variable'] for v in ref.parse(text) if ref.is_bare(v)]
-CALLS = re.compile(r'\bcall\s+(/?[A-Za-z_][\w./]*)', re.I)   # a goal the step's words call (pick.list Calls)
+CALLS = re.compile(r'\bcall\s+(?:goal\s+)?(?!goal\b)(/?[A-Za-z_][\w./]*)', re.I)   # a goal the step's words call (pick.list Calls)
 QUOTED = re.compile(r'"(?:[^"\\]|\\.)*"|\'[^\']*\'')
 
 def every_action(rows):

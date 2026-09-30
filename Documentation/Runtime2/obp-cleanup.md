@@ -309,3 +309,11 @@ hold the path itself; the snapshot writes and reloads it as a path.
 again (`app.module.Get`) to judge an option its actions take — though `actor.setting.Of(module)` had the module in
 hand. Holding the module would be a late stamp for the module setting classes made by `new()` (llm's, build's), so
 it stays until a setting class is born from its owner.
+
+## A variable store's Clone deep-copies a goal graph [logged 2026-09-30, 412 regression]
+
+`type/item/variable/list/this.cs` `Clone()` deep-copies every variable (`kvp.Value.Clone()`). A goal is a cyclic
+graph (a sub-goal and its parent reach each other), so cloning a store that holds one — the builder's, while a
+sub-goal builds — recurses until the stack overflows: the process segfaults with no .NET message. The step check
+no longer clones the builder's store, but the trap stays for the next caller. Clone should stop at items that hold
+a graph by reference (a goal, a step, an action are shared, not copied), or not deep-copy structural items at all.
