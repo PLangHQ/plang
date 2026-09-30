@@ -251,11 +251,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// on the first binding.</summary>
     public override bool Cacheable => false;
 
-    /// <summary>Its text, with its % signs — bare in formal (<c>Name: variable = %content%</c>), a
-    /// string everywhere else.</summary>
-    public override void Write(global::app.type.format.IWriter w)
-    {
-        if (w.Format == global::app.goal.step.action.formal.Writer.Token) w.Raw(Text);
-        else w.String(Text);
-    }
+    /// <summary>A variable writes itself as the variable it names; the writer shows it.</summary>
+    public override void Write(global::app.type.format.IWriter w) => w.Variable(Name);
 }

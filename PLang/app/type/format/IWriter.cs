@@ -64,6 +64,10 @@ public interface IWriter
     /// writers that have no verbatim concept.</summary>
     void Raw(byte[] value) => Bytes(value);
 
+    /// <summary>A variable, named as itself — <paramref name="name"/> without its % signs. Default: the
+    /// text <c>%name%</c> as a string; a writer with a bare variable form (formal) writes that.</summary>
+    void Variable(string name) => String($"%{name}%");
+
     /// <summary>
     /// Begin an array bracket. <paramref name="count"/> is -1 when the writer
     /// cannot determine the length up front; format encoders that need a

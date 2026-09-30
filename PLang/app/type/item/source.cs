@@ -268,12 +268,11 @@ public class source : @this
             return;
         }
         if (_value is byte[] b) { w.Bytes(b); return; }
-        // In formal, a whole %ref% in a slot not typed text is the variable itself, written bare
-        // (`Value: item = %!data%`); inside a text it stays the text it is (`"Total: %x%"`).
-        if (w.Format == global::app.goal.step.action.formal.Writer.Token && _type.Template != null && IsVariable
-            && !string.Equals(_type.Name, "text", System.StringComparison.OrdinalIgnoreCase) && _value is string reference)
+        // A whole %ref% in a slot not typed text is the variable itself (`Value: item = %!data%`); inside a
+        // text it stays the text it is (`"Total: %x%"`).
+        if (_type.Template != null && IsVariable && !_type.Is("text"))
         {
-            w.Raw(reference);
+            _variable[0].Write(w);
             return;
         }
         w.String(_value.ToString() ?? "");
