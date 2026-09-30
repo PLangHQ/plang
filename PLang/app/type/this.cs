@@ -381,12 +381,11 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             // The value's type history already contains this type (an image born from a path
             // satisfies a path slot) → hold it, don't downgrade.
             if (leaf.Is(this)) return leaf;
-            // A different type → unwrap to the leaf's raw CLR form, then re-type EAGERLY via the family
-            // courier (kind-aware build — path parses a string, number parses a token). A decline lands
+            // A different type → re-typed EAGERLY via the family courier, handed the leaf whole (kind-aware
+            // build — path parses a text, number parses a token, binary takes a text's bytes). A decline lands
             // its reason on the carrier's Error — this door is the throw boundary (rides MaterializeFailed).
-            var lowered = leaf.Clr<object>();
             var carrier = new global::app.data.@this("", context: context);
-            if (Make(lowered, carrier) is { } made) return made;
+            if (Make(leaf, carrier) is { } made) return made;
             if (carrier.Error != null) throw Failed(carrier.Error);
             // Nothing in this type builds it from that value (`set %x% as dict = "hello"`): the type refuses the
             // conversion, as its own answer.

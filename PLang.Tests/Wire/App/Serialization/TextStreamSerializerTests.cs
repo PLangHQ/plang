@@ -177,12 +177,11 @@ public class TextStreamSerializerTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Deserialize_ByteArray_DecodesBase64()
+    public async Task Deserialize_ByteArray_IsTheTextsBytes()
     {
-        // Born-native: byte payloads are the `binary` value type, whose text form is base64.
+        // A text read as binary is its bytes in its encoding (UTF-8).
         var expected = Encoding.UTF8.GetBytes("hello");
-        var base64 = System.Convert.ToBase64String(expected);
-        var result = (await Text.Deserialize<global::app.type.item.binary.@this>(base64, Ctx).Value())!;
+        var result = (await Text.Deserialize<global::app.type.item.binary.@this>("hello", Ctx).Value())!;
 
         await Assert.That(result).IsNotNull();
         await Assert.That(result.Value.SequenceEqual(expected)).IsTrue();

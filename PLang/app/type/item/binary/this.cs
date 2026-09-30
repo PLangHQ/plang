@@ -128,15 +128,23 @@ namespace app.type.item.binary;
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.IEncode<@this>
 {
-    /// <summary>Binary's formats written: a binary value is its bytes. Any other value is no content of these
-    /// formats — an error, never a guessed writer.</summary>
+    /// <summary>Binary's formats written: a binary value is its bytes. Any other value asks binary to be born
+    /// from it (a text is its UTF-8 bytes; a binding on binary create may answer); when nothing makes binary of
+    /// it, an error — never a guessed writer.</summary>
     public static async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
         global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
     {
-        if (await data.Value() is not @this bytes)
-            return context.Error(new global::app.error.Error(
-                $"%{data.Name}% holds a {data.Type?.Name ?? "value"}, not bytes — nothing writes it as binary content", "NoEncoder", 400));
+        var value = await data.Value();
+        if (!data.Success) return context.Error(data.Error!);
+        if (value is not @this bytes)
+        {
+            var born = await context.App.type.list[typeof(@this)].Create(value, context, data.Name);
+            if (born.Success && !born.Exits && born.Peek() is @this made) bytes = made;
+            else return born.Success ? context.Error(new global::app.error.Error(
+                $"%{data.Name}% holds a {data.Type?.Name ?? "value"}, not bytes — nothing writes it as binary content", "NoEncoder", 400))
+                : born;
+        }
         await stream.WriteAsync(bytes.Value, ct);
         await stream.FlushAsync(ct);
         return context.Ok();
@@ -157,12 +165,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public @this(byte[] value) { Value = value ?? System.Array.Empty<byte>(); }
 
-    /// <summary>THE PURE CORE — a <c>binary</c> passes through; a raw <c>byte[]</c> passes; a base64
-    /// string decodes; anything else (or non-base64) declines (<c>null</c>). Shared by the ICreate
-    /// courier and comparison coercion.</summary>
+    /// <summary>THE PURE CORE — a <c>binary</c> passes through; a raw <c>byte[]</c> passes; a text is its UTF-8
+    /// bytes (text is bytes in an encoding); a raw base64 string (binary's wire form) decodes; anything else (or
+    /// non-base64) declines (<c>null</c>). Shared by the ICreate courier and comparison coercion.</summary>
     public static @this? Create(object? raw)
     {
         if (raw is @this self) return self;
+        if (raw is global::app.type.item.text.@this text) return (@this)System.Text.Encoding.UTF8.GetBytes(text.Clr<string>() ?? "");
         object? value = raw is global::app.type.item.@this rit ? rit.Clr<object>() : raw;
         switch (value)
         {

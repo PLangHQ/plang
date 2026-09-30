@@ -28,7 +28,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     global::app.type.item.IEncode<@this>
 {
     /// <summary>Image's formats written: an image value is its bytes (a path-backed one reads them first,
-    /// through its own door). Any other value is no content of these formats — an error.</summary>
+    /// through its own door). Any other value asks image to be born from it (a binding on image create or a
+    /// provider may answer); when nothing makes an image of it, an error.</summary>
     public static async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
         global::app.data.@this data, global::app.actor.context.@this context, global::app.View? view,
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
@@ -36,8 +37,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         var value = await data.Value();
         if (!data.Success) return context.Error(data.Error!);
         if (value is not @this image)
-            return context.Error(new global::app.error.Error(
-                $"%{data.Name}% holds a {data.Type?.Name ?? "value"}, not an image — nothing writes it as image content", "NoEncoder", 400));
+        {
+            var born = await context.App.type.list[typeof(@this)].Create(value, context, data.Name);
+            if (born.Success && !born.Exits && born.Peek() is @this made) image = made;
+            else return born.Success ? context.Error(new global::app.error.Error(
+                $"%{data.Name}% holds a {data.Type?.Name ?? "value"}, not an image — nothing writes it as image content", "NoEncoder", 400))
+                : born;
+            // an image born from a location reads its bytes before they are written
+            if (await image.Open(context) is { } unread) return context.Error(unread);
+        }
         await stream.WriteAsync(image.Bytes, ct);
         await stream.FlushAsync(ct);
         return context.Ok();

@@ -33,12 +33,24 @@ public class ImageFormatTests
         await Assert.That(capture.ToArray()).IsEquivalentTo(Png);
     }
 
-    [Test] public async Task AnImageFormat_RefusesAValueThatIsNoImage()
+    // A value that isn't an image asks image to be born from it; nothing makes an image of a dict.
+    [Test] public async Task AnImageFormat_RefusesAValueNothingMakesAnImageOf()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        var ctx = app.actor.list.User.Context;
+        var dict = ctx.Ok(new System.Collections.Generic.Dictionary<string, object?> { ["a"] = 1L });
+        var result = await app.type.list.Stamp("image/png", ctx).kind.Encode(new System.IO.MemoryStream(), dict, ctx);
+        await Assert.That(result.Success).IsFalse();
+        await Assert.That(result.Error!.Key).IsEqualTo("NoEncoder");
+    }
+
+    // A text is an image's location; one that names nothing there is refused for that.
+    [Test] public async Task AnImageFormat_GivenATextNamingNothing_IsNotFound()
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var result = await app.type.list.Stamp("image/png", ctx).kind.Encode(new System.IO.MemoryStream(), ctx.Ok("not an image"), ctx);
         await Assert.That(result.Success).IsFalse();
-        await Assert.That(result.Error!.Key).IsEqualTo("NoEncoder");
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
 }
