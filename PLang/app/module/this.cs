@@ -179,6 +179,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return _root == null && Named(key) is { } module ? new global::app.data.@this(key, module, parent: parent) : member;
     }
 
+    /// <summary>This module's settings — <c>%!llm.setting%</c>: its own class, or the options its actions take.</summary>
+    protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
+        => _root != null && string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase)
+            ? await parent.Context.Setting.Of(this)
+            : await base.Setting(parent, key);
+
     /// <summary>Select the catalog element that holds <paramref name="clr"/> — the module and the name registration
     /// gave the class; the app's module asks each of its modules. Null when no module holds it.</summary>
     internal global::app.goal.step.action.@this? this[System.Type clr]

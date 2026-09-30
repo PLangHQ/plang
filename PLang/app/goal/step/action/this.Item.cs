@@ -33,6 +33,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>A structure, never a single-token leaf — drives the serializer's structure branch.</summary>
     public override bool IsLeaf => false;
 
+    /// <summary>This action's settings — <c>%!llm.query.setting%</c>: its options, as the catalog has them.</summary>
+    protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
+        => string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase)
+            ? new global::app.data.@this(key, new global::app.type.item.setting.action.@this(Module[Name] ?? this), parent: parent)
+            : await base.Setting(parent, key);
+
     /// <summary>The action writes ITSELF — the bare shape it owns, in every view:
     /// <c>{module, name, property, default?, child?}</c>. Its module is a reference, written by name,
     /// never walked. Each property writes its own row (<c>{name, type, value, properties?}</c>);

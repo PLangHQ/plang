@@ -1,7 +1,7 @@
 namespace app.module.build.setting;
 
 /// <summary>
-/// The build module's own settings — <c>%!build.cache%</c>, <c>%!build.files%</c>: what the builder reads.
+/// The build module's own settings — <c>%!build.setting.cache%</c>, <c>%!build.setting.files%</c>: what the builder reads.
 /// <c>--build={…}</c> is this run's values for them.
 /// </summary>
 public sealed class @this : global::app.type.item.setting.module.@this

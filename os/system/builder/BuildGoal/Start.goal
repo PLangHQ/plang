@@ -45,7 +45,7 @@ Compile
 FixSteps
 - call /system/builder/EmitBuildEvent kind="properties-rejected", errorMessage=%!error.Message%
 - set %fixMessages% = [{"Role":"user", "Content":"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal."}]
-- llm.query Message=%fixMessages%, Model="gpt-5.4-nano", cache=%!build.cache%, continuePreviousConversation=true, write to %answer%
+- llm.query Message=%fixMessages%, Model="gpt-5.4-nano", cache=%!build.setting.cache%, continuePreviousConversation=true, write to %answer%
 - build.match(Goal=%goal%, Answer=%answer%); on.error(Key="UnwrittenNumber", Recovery=[goal.call(Name="ConfirmNumbers")])
 
 
@@ -78,7 +78,7 @@ BuildSubGoal
 SourceError
 - render template "/system/builder/llm/SourceFix.llm", write to %sourceFixSystem%
 - set %sourceFixMessages% = [{"Role":"system", "Content":"%sourceFixSystem%"}, {"Role":"user", "Content":"%!error.Key%: %!error.Message%\n\nThe goal:\n%goal%"}]
-- llm.query Message=%sourceFixMessages%, Model="gpt-5.4-nano", cache=%!build.cache%, write to %sourceFix%
+- llm.query Message=%sourceFixMessages%, Model="gpt-5.4-nano", cache=%!build.setting.cache%, write to %sourceFix%
 - throw %!error%, fix suggestion %sourceFix%
 
 

@@ -1,6 +1,6 @@
 / Stage 12 (decision 87): setting.Set throws NotSupportedException, which drops the error's key and status. An unknown
 / option is an error result that keeps them.
 Start
-- set %!llm.nosuchoption% = 1, on error set %key% = %!error.key%
+- set %!llm.setting.nosuchoption% = 1, on error set %key% = %!error.key%
 - assert %key% is not null
 - assert %key% is not "ServiceError", "the error keeps its own key"

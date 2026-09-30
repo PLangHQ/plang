@@ -218,7 +218,7 @@
     },
     {
       "index": 3,
-      "text": "llm.query Message=%messages%, Model=\"gpt-5.4-nano\", cache=%!build.cache%, write to %answer%",
+      "text": "llm.query Message=%messages%, Model=\"gpt-5.4-nano\", cache=%!build.setting.cache%, write to %answer%",
       "line": {
         "number": 16
       },
@@ -259,13 +259,16 @@
                 "name": "bool",
                 "template": "plang"
               },
-              "value": "%!build.cache%",
+              "value": "%!build.setting.cache%",
               "variable": [
                 {
-                  "text": "%!build.cache%",
+                  "text": "%!build.setting.cache%",
                   "code": [
                     {
                       "variable": "!build"
+                    },
+                    {
+                      "property": "setting"
                     },
                     {
                       "property": "cache"
@@ -406,7 +409,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 4 uses goal.call, which the decider was not sure of (0.67)"
+          "message": "step 4 uses goal.call, which the decider was not sure of (0.52)"
         }
       ],
       "waitForExecution": true
@@ -416,7 +419,7 @@
   "visibility": "Public",
   "path": "/system/builder/BuildGoal/Properties.goal",
   "prPath": "/system/builder/BuildGoal/.build/properties.pr",
-  "hash": "426d93328fb419b3304cc780a37a6d8f65e38c7a7f2aea0c2953188409d1f398",
+  "hash": "7dc10560680a024aba0a130d39e3d0526e3259135286760e73b90290d3a938bc",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

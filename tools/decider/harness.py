@@ -364,7 +364,8 @@ def picks(probs_i, cat, threshold=0.5):
     RUNNER_UP — a step whose work two modules share — each unless one of its common actions is
     near-certain, which is then its answer. The choice asks which module is the MAIN one, so a
     runner-up's share says nothing about whether it is used: stage 2 asks that of it by name."""
-    common = {a: probs_i.get(a) for a in COMMON if probs_i.get(a) is not None}
+    # in the order the answer gives them, as the C# pick list takes them (its twin)
+    common = {a: p for a, p in probs_i.items() if a in COMMON_CRITERIA and p is not None}
     settled = {a.split('.', 1)[0] for a, p in common.items() if p >= NEAR_CERTAIN}
     ranked = sorted(((m, p) for m, p in probs_i.items() if m in cat and p is not None), key=lambda mp: -mp[1])
     runner = [m for m, p in ranked[1:2] if p >= RUNNER_UP and m not in settled]

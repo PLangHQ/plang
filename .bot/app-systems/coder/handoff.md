@@ -1,19 +1,18 @@
 # handoff — app-systems coder
 
-386 landed: a Data read in plang is born holding the signature it arrived in (`Data.Signature`, read as
-`%x!signature.identity%`); `PendingVerification` is gone. http reads a plang response in its transport view with
-the one verify `Decode` owns; `!ServiceIdentity` and `TryExtractSignedErrorIdentity` are gone; each NDJSON line's
-read is that chunk's answer to the callback.
+375 (2) landed (decisions 389, 392): a `!x` root the memory doesn't bind is the app's member, else the module by
+that name; a setting is always under `.setting` — `%!llm.setting.cache%`, `%!llm.query.setting.cache%`,
+`%!build.setting.cache%`. A setting class's path is its read path (`llm.setting`); the module and the action answer
+`.setting` themselves (item's `Setting` is virtual). Rows saved as `user!llm` are no longer read (no migration).
 
-## Next — waiting on Ingi (decision 387)
+A module whose name is an app member (goal, module, test, variable, cache, code) is shadowed in the short form;
+its file path `%!module.variable.set.setting.x%` is 375 (3)'s to make work. When 380 (4) lands, the module-by-name
+step goes and short names become dynamic variables set in /system/on/create.goal.
 
-The http response reshape: `ReadErrorResponseAsync` / `BuildProperties` / `ReadLimitedBytes/StringAsync` are stray
-helpers over the raw `HttpResponseMessage` (verb+noun, raw hand-off of the facts at 5 exits, a `.Clr` string round
-trip, `Status` + `StatusCode` stored twice). Proposed: `app/module/http/response/this.cs` — `Body(cap)` and one
-`Answer(cap)`; the architect adds that the facts can be the response's own members read through the `!` hop
-instead of a Properties bag. Build after Ingi's yes.
+## Next
 
-## Then
+375 (3) the current-node rule (+ `%!module.x…%`); (4) the event node (shape first); (5) the registrations sweep.
+380 (4) `system.on.create` (shape first); 380 (5) read-as-text verbatim.
 
-375 (2) the `!` rule with `.setting`; (3) the current-node rule; (4) the event node (shape first); (5) the
-registrations sweep. 380 (4) `system.on.create` (shape first); 380 (5) read-as-text verbatim.
+Waiting on Ingi: the http `response` reshape (387) — http/ belongs to the fix branch `app-systems-http` until it
+comes back. Not urgent: make `After_ActionExceedsTimeout_Returns408Error` deterministic (a held gate).

@@ -2,8 +2,9 @@
 namespace PLang.Tests.App.Settings;
 
 /// <summary>
-/// <c>%!path%</c> reads a setting: a ! name the memory doesn't bind goes to the asker's settings, and the
-/// path steps down classes (their options), nodes and actions (their options).
+/// A setting is read from what it configures, always under <c>.setting</c>: a ! name the memory doesn't bind
+/// is the app's member, else the module by that name; <c>.setting</c> on an owner (the app's, a module, an
+/// action) is its settings, whose path steps down to the options.
 /// </summary>
 public class SettingReadTests
 {
@@ -36,20 +37,21 @@ public class SettingReadTests
         await Assert.That(read.Peek()).IsTypeOf<global::app.goal.list.setting.@this>();
     }
 
-    // A module's own class is read by the module's name; the system's run value reaches the user.
+    // A module's own class is read from the module; the system's run value reaches the user.
     [Test] public async Task ModuleOption_FallsBackToTheSystem()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await app.actor.list.System.Setting.Set("llm.cache", app.actor.list.System.Context.Ok(false));
+        await app.actor.list.System.Setting.Set("llm.setting.cache", app.actor.list.System.Context.Ok(false));
 
-        var read = await Read("%!llm.cache%", app.actor.list.User.Context);
+        var read = await Read("%!llm.setting.cache%", app.actor.list.User.Context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
     }
 
+    // Outside a build the app holds no build: %!build% is the module, its settings the build's class.
     [Test] public async Task BuildCache_IsTrueByDefault()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var read = await Read("%!build.cache%", app.actor.list.User.Context);
+        var read = await Read("%!build.setting.cache%", app.actor.list.User.Context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("true");
     }
 
@@ -58,28 +60,41 @@ public class SettingReadTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        await Assert.That((await (await Read("%!llm.query.cache%", ctx)).Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("true");
 
-        await ctx.Setting.Set("llm.cache", ctx.Ok(false));
-        await Assert.That((await (await Read("%!llm.query.cache%", ctx)).Value())?.ToString()).IsEqualTo("false");
+        await ctx.Setting.Set("llm.setting.cache", ctx.Ok(false));
+        await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("false");
 
-        await ctx.Setting.Set("llm.query.cache", ctx.Ok(true));
-        await Assert.That((await (await Read("%!llm.query.cache%", ctx)).Value())?.ToString()).IsEqualTo("true");
+        await ctx.Setting.Set("llm.query.setting.cache", ctx.Ok(true));
+        await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("true");
     }
 
-    // A module's settings answer an action; an action's answer its options.
-    [Test] public async Task ModuleAndAction_AreNodes()
+    // %!llm% is the module itself; its settings and its actions' are each one .setting away.
+    [Test] public async Task Module_IsTheModule_ItsSettingsUnderSetting()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var http = await Read("%!http%", app.actor.list.User.Context);
+        var ctx = app.actor.list.User.Context;
+        var llm = await Read("%!llm%", ctx);
+        await llm.IsSuccess();
+        await Assert.That(llm.Peek()).IsTypeOf<global::app.module.@this>();
+
+        var http = await Read("%!http.setting%", ctx);
         await http.IsSuccess();
         await Assert.That(http.Peek()).IsTypeOf<global::app.type.item.setting.module.@this>();
-        foreach (var path in new[] { "%!http.request%", "%!llm.query%" })
+        foreach (var path in new[] { "%!http.request.setting%", "%!llm.query.setting%" })
         {
-            var read = await Read(path, app.actor.list.User.Context);
+            var read = await Read(path, ctx);
             await read.IsSuccess();
             await Assert.That(read.Peek()).IsTypeOf<global::app.type.item.setting.action.@this>();
         }
+    }
+
+    // A setting is always under .setting: the module's name alone reaches no option.
+    [Test] public async Task OptionWithoutSetting_IsNoSetting()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        var read = await Read("%!llm.cache%", app.actor.list.User.Context);
+        await Assert.That(read.IsInitialized).IsFalse();
     }
 
     // Writing an option a setting doesn't have is an error result, not a crash.
@@ -92,13 +107,21 @@ public class SettingReadTests
         await set.IsFailure();
     }
 
-    // An action's option named like an action member (variable.set's Name) reads the option, not the action.
+    // An action's option named like an action member (identity.get's Name) reads the option, not the action.
     [Test] public async Task ActionOption_NotTheActionsMember()
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        await ctx.Setting.Set("variable.set.name", ctx.Ok("%x%"));
-        await Assert.That((await (await Read("%!variable.set.name%", ctx)).Value())?.ToString()).IsEqualTo("%x%");
+        await ctx.Setting.Set("identity.get.setting.name", ctx.Ok("alice"));
+        await Assert.That((await (await Read("%!identity.get.setting.name%", ctx)).Value())?.ToString()).IsEqualTo("alice");
+    }
+
+    // A module that shares its name with one of the app's members is shadowed: %!variable% is the app's.
+    [Test] public async Task AppMember_AnswersBeforeTheModule()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        var read = await Read("%!variable%", app.actor.list.User.Context);
+        await Assert.That(read.Peek()).IsNotTypeOf<global::app.module.@this>();
     }
 
     // An owner's option written through its own path lands in this run's settings, where the next read
@@ -118,7 +141,7 @@ public class SettingReadTests
     [Test] public async Task UnknownPath_IsNotFound()
     {
         await using var app = new global::app.@this("/test").Testing();
-        // a name that is no module's names no setting: unset, not an error
+        // a name that is neither the app's nor a module's: unset, not an error
         var read = await Read("%!nothing.here%", app.actor.list.User.Context);
         await Assert.That(read.IsInitialized).IsFalse();
     }

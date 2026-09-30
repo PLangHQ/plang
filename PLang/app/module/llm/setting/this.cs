@@ -1,7 +1,7 @@
 namespace app.module.llm.setting;
 
 /// <summary>
-/// The llm module's own settings — <c>%!llm.cache%</c>: what every llm action takes when neither the step
+/// The llm module's own settings — <c>%!llm.setting.cache%</c>: what every llm action takes when neither the step
 /// nor the action's own setting says.
 /// </summary>
 public sealed class @this : global::app.type.item.setting.module.@this

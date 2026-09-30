@@ -12,13 +12,13 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, '..', '..', 'PLang.Tests', 'Wire', 'App', 'Decider', 'settings_golden.json')
 
 CASES = [
-    ('Named', ['set default %!build.cache% = true',
-               'read notes.txt, cache=%!llm.cache%, write to %notes%',
+    ('Named', ['set default %!build.setting.cache% = true',
+               'read notes.txt, cache=%!llm.setting.cache%, write to %notes%',
                'set %!app.test.setting.parallel% = 1',
-               'set %!build.files% = ["a.goal"]']),
+               'set %!build.setting.files% = ["a.goal"]']),
     ('NoneNamed', ['write out %!data%', 'set %x% = %!goal.Name%']),
     ('Keyed', ['write out %!app.goal["/checkout"].path%', 'set %m% = %!app.module["file"]%']),
-    ('SettingAndKeyed', ['set %!llm.cache% = false', 'write out %!app.goal["/checkout"].name%']),
+    ('SettingAndKeyed', ['set %!llm.setting.cache% = false', 'write out %!app.goal["/checkout"].name%']),
 ]
 
 cases = []

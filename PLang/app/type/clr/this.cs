@@ -112,7 +112,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     /// <summary>The host's settings, when <paramref name="key"/> is <c>setting</c> and the host names a
     /// setting class — the carrier answers for what it carries.</summary>
-    private new async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
+    protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
         => string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase)
             ? await parent.Context.Setting.Of(Value)
             : null;

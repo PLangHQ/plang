@@ -42,7 +42,7 @@ public class SettingOwnerTests
         app.Debug = new global::app.module.debug.@this(app.actor.list.System.Context);
         await Assert.That(app.Debug.Setting.MaxLength.ToInt32()).IsEqualTo(500);
 
-        await app.actor.list.System.Setting.Set("debug", new Dictionary<string, object?> { ["maxLength"] = 10 }).IsSuccess();
+        await app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["maxLength"] = 10 }).IsSuccess();
         await Assert.That(app.Debug.Setting.MaxLength.ToInt32()).IsEqualTo(10);
     }
 

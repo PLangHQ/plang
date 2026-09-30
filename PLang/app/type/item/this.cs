@@ -242,8 +242,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
 
     /// <summary>This owner's settings as the asker sees them, when <paramref name="key"/> is
     /// <c>setting</c> and this owner names a setting class (<see cref="setting.ISetting{T}"/>):
-    /// <c>%!app.goal.list.setting%</c>. Null otherwise.</summary>
-    protected async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
+    /// <c>%!app.goal.list.setting%</c>. Null otherwise. An owner whose settings are not one class (a module,
+    /// an action) answers its own.</summary>
+    protected virtual async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)
         => string.Equals(key, "setting", System.StringComparison.OrdinalIgnoreCase)
             ? await parent.Context.Setting.Of(this)
             : null;

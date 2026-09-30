@@ -99,7 +99,7 @@
       "default": "[]"
     }
   ],
-  "build": [
+  "build.setting": [
     {
       "name": "cache",
       "type": "bool",
@@ -111,7 +111,7 @@
       "default": "[]"
     }
   ],
-  "debug": [
+  "debug.setting": [
     {
       "name": "goal",
       "type": "text",
@@ -153,14 +153,14 @@
       "default": null
     }
   ],
-  "identity": [
+  "identity.setting": [
     {
       "name": "identity",
       "type": "list<identity>",
       "default": "[]"
     }
   ],
-  "llm": [
+  "llm.setting": [
     {
       "name": "cache",
       "type": "bool",

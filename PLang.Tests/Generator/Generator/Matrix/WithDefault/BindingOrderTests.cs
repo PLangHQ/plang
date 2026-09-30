@@ -11,7 +11,7 @@ namespace PLang.Tests.Generator.Matrix.WithDefault;
 public class BindingOrderTests
 {
     // The setting key the settings build for this fixture's option: {module}.{action}.{option}.
-    private const string Key = "matrix.withdefault.intwithdefault.count";
+    private const string Key = "matrix.withdefault.intwithdefault.setting.count";
 
     private static async Task<long?> Count(global::app.@this app,
         (string, object?)[]? step = null, (string, object?)[]? frozen = null)

@@ -51,7 +51,7 @@
     },
     {
       "index": 1,
-      "text": "set default %!build.cache% = true",
+      "text": "set default %!build.setting.cache% = true",
       "line": {
         "number": 7
       },
@@ -65,13 +65,16 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%!build.cache%",
+              "value": "%!build.setting.cache%",
               "variable": [
                 {
-                  "text": "%!build.cache%",
+                  "text": "%!build.setting.cache%",
                   "code": [
                     {
                       "variable": "!build"
+                    },
+                    {
+                      "property": "setting"
                     },
                     {
                       "property": "cache"
@@ -100,7 +103,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 1 uses variable.set, which the decider was not sure of (0.70)"
+          "message": "step 1 uses variable.set, which the decider was not sure of (0.73)"
         }
       ],
       "waitForExecution": true
@@ -245,7 +248,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 4 uses goal.call, which the decider was not sure of (0.73)"
+          "message": "step 4 uses goal.call, which the decider was not sure of (0.80)"
         }
       ],
       "waitForExecution": true
@@ -448,7 +451,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 7 uses goal.call, which the decider was not sure of (0.75)"
+          "message": "step 7 uses goal.call, which the decider was not sure of (0.85)"
         }
       ],
       "waitForExecution": true
@@ -625,7 +628,7 @@
   "visibility": "Public",
   "path": "/system/builder/Build.goal",
   "prPath": "/system/builder/.build/build.pr",
-  "hash": "76692d8f918f4bcdea3cc0235d2ac7a03c3d792adfc1f9de4eee83040fcf417e",
+  "hash": "66899595e3622b5a9d92854ed8663235dbf4ef23852d107e5f0fb4570e8cc894",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

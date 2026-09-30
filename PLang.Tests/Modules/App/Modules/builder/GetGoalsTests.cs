@@ -182,7 +182,7 @@ public class GetGoalsTests
             "Other\n- write out 'other'");
 
         // Set files filter to only build Start.goal
-        _app.actor.list.System.Setting.Set("build", new Dictionary<string, object?> { ["files"] = new List<object?> { "Start.goal" } });
+        _app.actor.list.System.Setting.Set("build.setting", new Dictionary<string, object?> { ["files"] = new List<object?> { "Start.goal" } });
 
         var action = new goals(_app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.actor.list.User.Context)) };
         var result = await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);
@@ -202,7 +202,7 @@ public class GetGoalsTests
             "MyGoal\n- step one");
 
         // Filter with different casing
-        _app.actor.list.System.Setting.Set("build", new Dictionary<string, object?> { ["files"] = new List<object?> { "mygoal.goal" } });
+        _app.actor.list.System.Setting.Set("build.setting", new Dictionary<string, object?> { ["files"] = new List<object?> { "mygoal.goal" } });
 
         var action = new goals(_app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.actor.list.User.Context)) };
         var result = await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);
@@ -222,7 +222,7 @@ public class GetGoalsTests
             "Start\n- write out 'hello'");
 
         // Filter for a file that doesn't exist
-        _app.actor.list.System.Setting.Set("build", new Dictionary<string, object?> { ["files"] = new List<object?> { "NonExistent.goal" } });
+        _app.actor.list.System.Setting.Set("build.setting", new Dictionary<string, object?> { ["files"] = new List<object?> { "NonExistent.goal" } });
 
         var action = new goals(_app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.actor.list.User.Context)) };
         var result = await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);
@@ -240,7 +240,7 @@ public class GetGoalsTests
         System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "Other.goal"), "Other\n- write out 'other'");
 
         // as typed at the app's root: no leading slash
-        _app.actor.list.System.Setting.Set("build", new Dictionary<string, object?> { ["files"] = new List<object?> { "Sanity/AddItem.goal" } });
+        _app.actor.list.System.Setting.Set("build.setting", new Dictionary<string, object?> { ["files"] = new List<object?> { "Sanity/AddItem.goal" } });
 
         var action = new goals(_app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.actor.list.User.Context)) };
         var result = await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);
@@ -263,7 +263,7 @@ public class GetGoalsTests
             System.IO.Path.Combine(_tempDir, "Third.goal"),
             "Third\n- step three");
 
-        _app.actor.list.System.Setting.Set("build", new Dictionary<string, object?> { ["files"] = new List<object?> { "First.goal", "Third.goal" } });
+        _app.actor.list.System.Setting.Set("build.setting", new Dictionary<string, object?> { ["files"] = new List<object?> { "First.goal", "Third.goal" } });
 
         var action = new goals(_app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(".", _app.actor.list.User.Context)) };
         var result = await new global::app.goal.step.action.@this(action, _app.actor.list.User.Context).Start(_app.actor.list.User.Context);

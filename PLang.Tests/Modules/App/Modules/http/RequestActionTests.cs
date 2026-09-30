@@ -374,7 +374,7 @@ public class RequestActionTests
     [Test]
     public async Task Get_RelativeUrlWithBaseUrl_CombinesCorrectly()
     {
-        await _app.actor.list.System.Setting.Set("http.BaseUrl", Ctx.Ok("https://api.example.com"));
+        await _app.actor.list.System.Setting.Set("http.setting.BaseUrl", Ctx.Ok("https://api.example.com"));
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"/users/1", Unsigned = (global::app.type.item.@bool.@this)true };
         var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
@@ -409,7 +409,7 @@ public class RequestActionTests
     [Test]
     public async Task BuildAndStart_AgreeOnARelativeUrlWithABase()
     {
-        await _app.actor.list.System.Setting.Set("http.BaseUrl", Ctx.Ok("https://api.example.com/v1"));
+        await _app.actor.list.System.Setting.Set("http.setting.BaseUrl", Ctx.Ok("https://api.example.com/v1"));
         // the build walk: the program action binds its handler (its settings read) and publishes Build's answer
         var program = Make.Action(Ctx, "http", "request", ("Url", "/api/x.json"), ("Unsigned", true));
         await Assert.That(await program.Build(Ctx)).IsNull();
@@ -773,7 +773,7 @@ public class RequestActionTests
     public async Task Get_DefaultAndStepHeaders_BothApplied()
     {
         var defaults = new Dictionary<string, object> { ["X-Api-Key"] = "default-key", ["X-Shared"] = "default" };
-        await _app.actor.list.System.Setting.Set("http.DefaultHeaders", Ctx.Ok(defaults));
+        await _app.actor.list.System.Setting.Set("http.setting.DefaultHeaders", Ctx.Ok(defaults));
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/merged",
             Header = new Dictionary<string, object> { ["X-Custom"] = "step-value", ["X-Shared"] = "overridden" }.ToDictData(Ctx),
@@ -816,7 +816,7 @@ public class RequestActionTests
     public async Task Get_OversizedResponse_ReturnsResponseTooLarge()
     {
         // Configure a tiny max response size
-        await _app.actor.list.System.Setting.Set("http.MaxResponseSize", Ctx.Ok(50L));
+        await _app.actor.list.System.Setting.Set("http.setting.MaxResponseSize", Ctx.Ok(50L));
 
         // Return a response larger than 50 bytes
         _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
@@ -835,7 +835,7 @@ public class RequestActionTests
     [Test]
     public async Task Get_OversizedBinaryResponse_ReturnsResponseTooLarge()
     {
-        await _app.actor.list.System.Setting.Set("http.MaxResponseSize", Ctx.Ok(50L));
+        await _app.actor.list.System.Setting.Set("http.setting.MaxResponseSize", Ctx.Ok(50L));
 
         _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -855,7 +855,7 @@ public class RequestActionTests
     [Test]
     public async Task Get_WithinSizeLimit_Succeeds()
     {
-        await _app.actor.list.System.Setting.Set("http.MaxResponseSize", Ctx.Ok(1000L));
+        await _app.actor.list.System.Setting.Set("http.setting.MaxResponseSize", Ctx.Ok(1000L));
 
         _handler.Handler = _ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -872,7 +872,7 @@ public class RequestActionTests
     public async Task Stream_SSE_OversizedBuffer_StreamContinues()
     {
         // Configure a tiny SSE buffer (50 bytes)
-        await _app.actor.list.System.Setting.Set("http.MaxSSEBufferSize", Ctx.Ok(50L));
+        await _app.actor.list.System.Setting.Set("http.setting.MaxSSEBufferSize", Ctx.Ok(50L));
 
         // SSE with one message that exceeds the buffer, followed by a normal-sized message
         var sseContent = "data: " + new string('x', 100) + "\n\ndata: ok\n\n";
