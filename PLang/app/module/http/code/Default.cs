@@ -76,14 +76,13 @@ public sealed class Default : IHttp
             }
             else
             {
-                // The content-type is a format, and the format writes the body value into the request
-                // (a dict/list/item writes itself) — never raw STJ on the value, which would reflect the base
-                // item property bag.
-                var ms = new MemoryStream();
-                var context = action.Context;
-                var serialized = await context.App.type.list.Mime(contentType).Encode(ms, action.Body!, context);
+                // The body is a channel the value is written to: it opens the value (a file sends its content)
+                // and the content-type's format writes it; one value, so no line framing.
+                await using var body = new global::app.channel.type.stream.@this("body", new MemoryStream(),
+                    global::app.channel.ChannelDirection.Output, ownsStream: true) { Mime = contentType };
+                var serialized = await body.Write(action.Body!);
                 if (!serialized.Success) return serialized;
-                httpContent = new ByteArrayContent(ms.ToArray());
+                httpContent = new ByteArrayContent(((MemoryStream)body.Stream).ToArray());
                 httpContent.Headers.ContentType = new MediaTypeHeaderValue(contentType) { CharSet = encoding };
             }
         }

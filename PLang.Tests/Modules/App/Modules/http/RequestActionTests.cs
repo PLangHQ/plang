@@ -141,6 +141,41 @@ public class RequestActionTests
     }
 
     [Test]
+    public async Task Post_JsonBody_IsExactlyItsJson()
+    {
+        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/users",
+            Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
+            Body = new global::app.data.@this("", new Dictionary<string, object> { ["name"] = "Alice" }, context: Ctx),
+            Unsigned = (global::app.type.item.@bool.@this)true
+        };
+        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That(await _handler.LastRequest!.Content!.ReadAsStringAsync()).IsEqualTo("{\"name\":\"Alice\"}");
+    }
+
+    // The body is written through a channel, which reads the value: a file sends what it holds.
+    [Test]
+    public async Task Post_FileBody_SendsItsContent_NotItsPath()
+    {
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_tempDir, "note.txt"), "the note");
+        var file = await global::app.type.item.path.@this.Resolve(System.IO.Path.Combine(_tempDir, "note.txt"), Ctx).Read(Ctx);
+        await file.IsSuccess();
+
+        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/notes",
+            Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
+            Body = file,
+            Unsigned = (global::app.type.item.@bool.@this)true
+        };
+        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+
+        await result.IsSuccess();
+        var sent = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        await Assert.That(sent).Contains("the note");
+        await Assert.That(sent).DoesNotContain("note.txt");
+    }
+
+    [Test]
     public async Task Post_FormUrlEncoded_SendsCorrectContentType()
     {
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/login",
