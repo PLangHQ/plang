@@ -29,6 +29,10 @@ public partial class @this
     /// the variable's read counts it, and a chain past its limit is a cycle.</summary>
     internal System.Threading.AsyncLocal<int> Resolving { get; } = new();
 
+    /// <summary>The values this flow is writing into templates — one reached again while it is written (a
+    /// variable holding a template that names it) is a cycle.</summary>
+    internal System.Threading.AsyncLocal<System.Collections.Immutable.ImmutableHashSet<object>?> Rendering { get; } = new();
+
     /// <summary>True when the current flow's frame was pushed for <paramref name="call"/> and its
     /// runner supplied <paramref name="name"/> — the supplied value wins over the call's own row.</summary>
     public bool Supplies(global::app.goal.step.action.@this call, string name)

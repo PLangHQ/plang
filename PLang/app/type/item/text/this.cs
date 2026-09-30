@@ -174,7 +174,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                 if (found.Code.Root.Name.StartsWith('!')) { w.String(found.Text); at = pos - 1; continue; }
                 throw await Unreachable(found, context);
             }
-            await bound.Output(w, global::app.View.Out, context);
+            // a value reached again while it is being written into a template (`set %label% = '%label%-and-done'`,
+            // read later: %label% holds the template that names it) is a cycle
+            var rendering = context.Variable.Rendering;
+            var outer = rendering.Value ?? System.Collections.Immutable.ImmutableHashSet.Create<object>(
+                System.Collections.Generic.ReferenceEqualityComparer.Instance);
+            var value = bound.Peek();
+            if (outer.Contains(value))
+                throw new global::app.error.AppException($"variable resolve cycle: {found.Text} holds a template that renders {found.Text}", "VarResolveCycle", 400);
+            rendering.Value = outer.Add(value);
+            try { await bound.Output(w, global::app.View.Out, context); }
+            finally { rendering.Value = outer; }
             at = pos - 1;
         }
         w.String(_value[pos..]);
