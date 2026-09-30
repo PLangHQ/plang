@@ -96,3 +96,11 @@ with
 ```
 The value slot is built via `data.Normalize(View) → IWriter`, so a new domain type ships by tagging the members that should show: `[Out]` (the wire), `[Store]` (persisted), `[Debug]` (a dump). An `item` structure is then written as that tagged bag by the base `Output` — no override, and **do not** add a `JsonConverter`. A type that writes its own flat form (a path's location, an error's shape) states `Output => Write` once on its base. A type from the assembly that tags nothing for a view is refused on the wire (`NoWireContract`) and written by its name in a dump — a runtime structure (actor, binding) is never walked.
 ```
+
+## architect — app-systems — 2026-09-30
+**Target:** /CLAUDE.md (Runtime2 Conventions, a new bullet after "Data is not enveloped")
+**Why:** Ingi, 2026-09-30, reviewing image's `Write` (`switch (writer.Format) { case "text": … case "protobuf": … default: base64 }`) and 317's `if (mode == View.Out)` load inside a value's own `Output`: "you can see immediately that something is wrong when Writer has case statement, that is a serializer. also when there is an if statement, that usually means wrong structure." The old line in `item.Write`'s doc ("OBP Rule 9: the value owns its wire shape, the writer never type-switches") let a value serialize itself per format. He approved the replacement below (decision 335). Filed on his explicit instruction ("do that new rule and update the doc").
+**Proposed change:**
+```
+- **A value writes what it is; the writer decides how it looks.** A value writes itself through the writer's primitives (`String`, `Number`, `Bytes`, …); the writer (the formatter) decides how each primitive looks in its format. Neither asks about the other: no `writer.Format` in a value (no `switch`, no per-format table), no value type in a writer. A value's content is opened at the last moment by the layer that sends it out (the channel), never inside the value's own write, and never by view (`if (mode == View.Out)` in a value is the wrong structure).
+```
