@@ -16,6 +16,7 @@ public class NavigableFactsTests
         "app.this.callstack",
         "app.this.trace",
         "app.this.data",
+        "app.this.event",
         "app.type.item.path.this.MimeType",
     };
 
