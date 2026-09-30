@@ -181,6 +181,58 @@ public class RequestActionTests
             .Contains("\"value\": {\"deep\": \"%lesson.voice.model%\", \"fixed\": \"pcm\"}");
     }
 
+    // A text of kind json (a rendered .json template) is json content: a json body sends it as itself, byte for
+    // byte (the educator's report, blocker 2).
+    [Test]
+    public async Task Post_TextOfKindJson_IsSentVerbatim()
+    {
+        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/speech",
+            Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
+            Body = new global::app.data.@this("", new global::app.type.item.text.@this("{\"deep\": \"m-1\", \"fixed\": \"pcm\"}") { Kind = "json" }, context: Ctx),
+            Unsigned = (global::app.type.item.@bool.@this)true
+        };
+        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That(await _handler.LastRequest!.Content!.ReadAsStringAsync()).IsEqualTo("{\"deep\": \"m-1\", \"fixed\": \"pcm\"}");
+    }
+
+    // A plain text (no kind) is text, not json: a json body sends it as a json string (decision 380).
+    [Test]
+    public async Task Post_PlainText_AsJson_IsAJsonString()
+    {
+        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/speech",
+            Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
+            Body = new global::app.data.@this("", new global::app.type.item.text.@this("a note"), context: Ctx),
+            Unsigned = (global::app.type.item.@bool.@this)true
+        };
+        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That(await _handler.LastRequest!.Content!.ReadAsStringAsync()).IsEqualTo("\"a note\"");
+    }
+
+    // One Content-Type (the educator's report, blocker 3): a Content-Type header replaces the content type
+    // parameter — sent once, never joined — and it names the format the body is written in.
+    [Test]
+    public async Task Post_ContentTypeHeader_ReplacesTheContentType()
+    {
+        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/speech",
+            Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
+            Body = new global::app.data.@this("", "hello", context: Ctx),
+            ContentType = (global::app.type.item.text.@this)"text/plain",
+            Header = new Dictionary<string, object> { ["Content-Type"] = "application/json" }.ToDictData(Ctx),
+            Unsigned = (global::app.type.item.@bool.@this)true
+        };
+        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That(_handler.LastRequest!.Content!.Headers.GetValues("Content-Type").ToList())
+            .IsEquivalentTo(new[] { "application/json; charset=utf-8" });
+        // the header's format writes the body: a plain text in json is a json string
+        await Assert.That(await _handler.LastRequest!.Content!.ReadAsStringAsync()).IsEqualTo("\"hello\"");
+    }
+
     // The body is written through a channel, which reads the value: a file sends what it holds.
     [Test]
     public async Task Post_FileBody_SendsItsContent_NotItsPath()

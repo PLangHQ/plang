@@ -21,13 +21,16 @@ public partial class request : IContext, IAddressed
     [Default(HttpMethod.GET)]
     public partial data.@this<global::app.type.item.choice.@this<HttpMethod>> Method { get; init; }
 
-    /// <summary>Request body. Strings sent as-is; objects JSON-serialized. Null for bodyless methods (GET, HEAD).</summary>
+    /// <summary>Request body, written by the content type's format: a text of that format's kind as it is (a rendered
+    /// .json template), a plain text as text (a json string in a json body), any other value as the format writes it.
+    /// Null for bodyless methods (GET, HEAD).</summary>
     public partial data.@this? Body { get; init; }
 
     /// <summary>Per-request headers. Merged with Config.DefaultHeaders (step-level wins on conflict).</summary>
     public partial data.@this<global::app.type.item.dict.@this>? Header { get; init; }
 
-    /// <summary>Content-Type for the request body. Default: "application/json".</summary>
+    /// <summary>Content-Type for the request body. Default: "application/json". A Content-Type header replaces it, and
+    /// names the format the body is written in.</summary>
     [Default("application/json")]
     public partial data.@this<global::app.type.item.text.@this> ContentType { get; init; }
 

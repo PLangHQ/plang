@@ -64,6 +64,16 @@ public interface IWriter
     /// writers that have no verbatim concept.</summary>
     void Raw(byte[] value) => Bytes(value);
 
+    /// <summary>
+    /// Characters that are content of a format — a text of kind <paramref name="kind"/> (json, md, …). A writer the
+    /// kind owns takes them as a token of its own format, as they are; any other writes them as text.
+    /// </summary>
+    void Content(string value, global::app.type.kind.@this kind)
+    {
+        if (kind.Owns(this)) Raw(value);
+        else String(value);
+    }
+
     /// <summary>A variable, named as itself — <paramref name="name"/> without its % signs. Default: the
     /// text <c>%name%</c> as a string; a writer with a bare variable form (formal) writes that.</summary>
     void Variable(string name) => String($"%{name}%");

@@ -57,6 +57,27 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         }
     }
 
+    // Every name a type answers to — its word, its namespace, its aliases, case aside (type.Names) — to the type,
+    // the first that answers, as the walk found it. The guard keeps a name to one class. Made on first ask and made
+    // again after the set changes (the scan, an added type, a replaced one), so it always answers as the walk would.
+    private volatile IReadOnlyDictionary<string, global::app.type.@this>? _named;
+
+    private IReadOnlyDictionary<string, global::app.type.@this> Named => _named ?? Index();
+
+    private IReadOnlyDictionary<string, global::app.type.@this> Index()
+    {
+        lock (_lock)
+        {
+            Load();
+            if (_named is { } made) return made;
+            var named = new Dictionary<string, global::app.type.@this>(StringComparer.OrdinalIgnoreCase);
+            foreach (var type in Items())
+                foreach (var claim in type.Claims)
+                    named.TryAdd(claim, type);
+            return _named = named;
+        }
+    }
+
     // The startup scan: every item class in Assemblies comes in under its name, then each gets its
     // facts once every name is known (a fact names its property types), then each type takes its
     // kinds. A clash here is plang's own.
@@ -76,6 +97,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             foreach (var assembly in Assemblies)
                 if (Enlist(assembly) is { } refused) throw new InvalidOperationException(refused.Message);
             if (Guard() is { } clash) throw new InvalidOperationException(clash.Message);
+            _named = null;   // the set changed: the names are made again on the next ask
             _loaded = true;
         }
     }
@@ -136,9 +158,11 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             if (Clash(named) is { } clash) return context.Error(clash);
             // Its own name first, so its facts can name a property of its own type.
             base.Add(named);
+            _named = null;   // the set changed: the names are made again on the next ask
             var added = new global::app.type.@this(claimed, clr, this);
             RemoveAt(CountRaw - 1);
             base.Add(added);
+            _named = null;
             return context.Ok(added);
         }
     }
@@ -202,6 +226,7 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 RemoveAt(index);
             }
             base.Add(type);
+            _named = null;   // the set changed: the names are made again on the next ask
         }
     }
 
@@ -297,6 +322,9 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
             // a list's element kinds, made as a list names its element (list<path>)
             if (t == typeof(global::app.type.item.list.@this) && Items().Any(type => type.Names(global::app.type.item.@this.NameOf(t))))
                 Hold(new global::app.type.item.list.kind.@this(this));
+            // text's kinds for the text formats other types hold ({text, json}), made as a text names one
+            if (t == typeof(global::app.type.item.text.@this) && Items().Any(type => type.Names(global::app.type.item.@this.NameOf(t))))
+                Hold(new global::app.type.item.text.kind.@this(this));
             // each class of settings, a kind of setting by its path (one of it says the path)
             if (t != typeof(global::app.type.item.setting.@this) && typeof(global::app.type.item.setting.@this).IsAssignableFrom(t)
                 && t is { IsAbstract: false } && t.GetConstructor(System.Type.EmptyTypes) != null
