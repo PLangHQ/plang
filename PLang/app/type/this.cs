@@ -269,14 +269,13 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     }
 
     // What a value that already is this type is, as it is — a source declared this type (unread), a value of this
-    // type with its kind, a value whose history is this type (an image is-a path), a structure this type doesn't
-    // take; null when making it into this type is a birth. A strict declaration always checks and a template is a
-    // birth fact, so either holds nothing.
+    // type with its kind, a value whose history is this type (an image is-a path); null when making it into this
+    // type is a birth (a structure this type doesn't take is a birth attempt). A strict declaration always checks
+    // and a template is a birth fact, so either holds nothing.
     private item.@this? Held(object? raw) => Strict || Template != null ? null : raw switch
     {
         item.source src when Same(src.Type) => src,
         item.@this { IsLeaf: true } leaf when Same(leaf.Type) || (!Names(leaf.Type.Name) && leaf.Is(this)) => leaf,
-        item.@this { IsLeaf: false } native when !Takes(native.Type) => native,
         _ => null,
     };
 
