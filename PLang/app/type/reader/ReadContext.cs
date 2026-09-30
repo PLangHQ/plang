@@ -26,10 +26,9 @@ public sealed record ReadContext(
     // Defer the (async) verify to the async caller instead of running it sync inside the
     // `ref`-struct reader. The plang serializer sets this — it has an async boundary
     // (DeserializeAsync) where it can `await` verify after the sync read, so it never
-    // sync-waits (no threadpool starvation under parallel reads). When false (HTTP
-    // transport, nested), verify runs inline as before. The reader stamps the unverified
-    // signature layer onto the peeled Data via Data.PendingVerification; the async caller
-    // verifies and clears it.
+    // sync-waits (no threadpool starvation under parallel reads). When false, verify runs
+    // inline. The peeled Data is born holding its signature layer (Data.Signature); the async
+    // caller verifies it and answers a fresh error when it fails.
     bool DeferVerify = false,
     // The variables the row being read holds, as its .pr "variable" list says — each template
     // born under this read takes the ones written in it, so loading never parses. Null outside a

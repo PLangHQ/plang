@@ -175,6 +175,77 @@ public class RequestActionTests
         await Assert.That(sent).DoesNotContain("note.txt");
     }
 
+    // Another app, signing for real, answers in plang: each Data it sends is one line. Returns its public key.
+    private async Task<string> RemoteAnswers(params Func<global::app.actor.context.@this, global::app.data.@this>[] sent)
+    {
+        await using var remote = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang_remote_" + Guid.NewGuid().ToString("N")[..8]));
+        var remoteCtx = remote.actor.list.User.Context;
+        using var body = new System.IO.MemoryStream();
+        foreach (var d in sent)
+        {
+            var encoded = await remoteCtx.Format("application/plang").Encode(body, d(remoteCtx), remoteCtx);
+            await encoded.IsSuccess();
+            body.WriteByte((byte)'\n');
+        }
+        var bytes = body.ToArray();
+        _handler.Handler = _ =>
+        {
+            var content = new ByteArrayContent(bytes);
+            content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/plang");
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = content });
+        };
+        var identity = await new global::app.goal.step.action.@this(new global::app.module.identity.Get(remoteCtx), remoteCtx).Start(remoteCtx);
+        return ((global::app.module.identity.Identity)(await identity.Value())!).PublicKey;
+    }
+
+    // A remote failure: another app answers with its failed result, written in plang. The request that reads it
+    // fails with that error — the step fails and its on error runs.
+    [Test]
+    public async Task AResponseCarryingAFailure_FailsTheRequest_WithThatError()
+    {
+        await RemoteAnswers(ctx => ctx.Error(new global::app.error.Error("the disk is full", "DiskFull", 507)));
+
+        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/disk" };
+        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("DiskFull");
+        await Assert.That(result.Error.Message).IsEqualTo("the disk is full");
+    }
+
+    // A signed answer reads as the value sent, and knows who signed it.
+    [Test]
+    public async Task ASignedResponse_ReadsItsValue_WithItsSignerKnown()
+    {
+        var remoteKey = await RemoteAnswers(ctx => ctx.Ok("hello"));
+
+        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/hello" };
+        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That((await result.Value())?.ToString()).IsEqualTo("hello");
+        await Assert.That(result.Signature).IsNotNull();
+        await Assert.That(result.Signature!.Identity.ToString()).IsEqualTo(remoteKey);
+    }
+
+    // A streamed line carrying a failure is that chunk's answer: the callback is handed it, failed.
+    [Test]
+    public async Task AStreamedFailure_ReachesTheCallback_AsThatFailure()
+    {
+        await RemoteAnswers(ctx => ctx.Error(new global::app.error.Error("the disk is full", "DiskFull", 507)));
+
+        var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/plang-stream",
+            OnStream = Make.Call(Ctx, "HandleChunk") };
+        var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
+
+        await result.IsSuccess();
+        var chunk = await Ctx.Variable.Get("chunk");
+        await Assert.That(chunk).IsNotNull();
+        await chunk!.IsFailure();
+        await Assert.That(chunk.Error!.Key).IsEqualTo("DiskFull");
+    }
+
     [Test]
     public async Task Post_FormUrlEncoded_SendsCorrectContentType()
     {

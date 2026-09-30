@@ -144,8 +144,7 @@ public sealed class Default : IHttp
 
         if (!response.IsSuccessStatusCode)
         {
-            var (err, _) = await ReadErrorResponseAsync(response, requestMessage, action.Context, cts.Token);
-            return err;
+            return await ReadErrorResponseAsync(response, requestMessage, action.Context, cts.Token);
         }
 
         var totalBytes = response.Content.Headers.ContentLength;
@@ -373,21 +372,7 @@ public sealed class Default : IHttp
 
         if (!response.IsSuccessStatusCode)
         {
-            var (errorData, errorBody) = await ReadErrorResponseAsync(response, request, context);
-
-            if (!unsigned && !string.IsNullOrEmpty(errorBody))
-            {
-                // A failure reading the signed identity is a cause of the error it came with — never masking it,
-                // never dropped.
-                try { await TryExtractSignedErrorIdentity(errorBody, app, context); }
-                catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
-                {
-                    errorData.Error?.list.Add(new ServiceError(
-                        $"the signed identity in the error response couldn't be read: {ex.Message}", "SignedIdentityUnreadable", 500) { Exception = ex });
-                }
-            }
-
-            return errorData;
+            return await ReadErrorResponseAsync(response, request, context);
         }
 
         // application/plang response — keeps the historic shape (deserialized
@@ -430,13 +415,9 @@ public sealed class Default : IHttp
     }
 
     /// <summary>
-    /// Parses application/plang response: read the wire as data.@this (with Signature via [In]),
-    /// verify signature, set %!ServiceIdentity%.
-    ///
-    /// The read routes through the registered transport (application/plang's own serializer) —
-    /// its read door owns the [In] signature inflow, the buffer path, and deferred verify, so
-    /// the module no longer duplicates a private Wire+options rig. Same door serves
-    /// <c>StreamPlangAsync</c>'s per-line NDJSON read and the signed-error-body probe.
+    /// An application/plang response is a whole Data, read by plang's own format: it verifies the
+    /// signature it arrived in, so the answer is the Data sent — or the failure it carries, or why it
+    /// couldn't be trusted. Same door serves <c>StreamPlangAsync</c>'s per-line NDJSON read.
     /// </summary>
     private async Task<data.@this> ParsePlangResponseAsync(
         HttpResponseMessage response,
@@ -453,65 +434,17 @@ public sealed class Default : IHttp
         }
         var body = (await bodyRead.Value())!.Clr<string>()!;
 
-        // plang's own format reads the body — the whole Data, its signature layer verified ([In]
-        // signature inflow). Store view = an exact copy of the inbound message, not the Out wire view. A
-        // parse failure surfaces as a keyed Error (PlangDeserializeError), not a throw.
-        var read = await context.App.type.list["wire"].kind["plang"]!.Decode(Encoding.UTF8.GetBytes(body), context, view: global::app.View.Store);
-        if (!read.Success)
-        {
-            BuildProperties(read, request, response);
-            return read;
-        }
-        var data = read;
-
-        // Data.Signature is populated from the wire via [In] — pass straight to verify
-        var verifyAction = new signing.verify(context)
-        {
-            Data = data
-        };
-
-        var verifyResult = await new global::app.goal.step.action.@this(verifyAction, context).Start(context);
-        if (!verifyResult.Success)
-        {
-            BuildProperties(verifyResult, request, response);
-            return verifyResult;
-        }
-
-        await context.Variable.Set("!ServiceIdentity", (data?.Peek() as global::app.type.item.signature.@this)?.Identity?.ToString());
-
-        BuildProperties(data, request, response);
-        return data;
-    }
-
-    /// <summary>
-    /// Tries to extract identity from a signed error response body.
-    /// The error body may be a Data with Signature, or have a "signature" field.
-    /// </summary>
-    private async Task TryExtractSignedErrorIdentity(
-        string errorBody, AppType app, actor.context.@this context)
-    {
-        // Try deserializing as data.@this with transport options (may have Signature via [In])
-        // A non-plang error body reads back as a failure — data stays null and the legacy-format
-        // fallback below takes over.
-        var read = await context.App.type.list["wire"].kind["plang"]!.Decode(Encoding.UTF8.GetBytes(errorBody), context, view: global::app.View.Store);
-        data.@this? data = read.Success ? read : null;
-
-        // A signed response body reads back as a `signature` layer wrapping the
-        // inner data (the read boundary auto-verifies; verify peels it).
-        if (data?.Peek() is global::app.type.item.signature.@this layer)
-        {
-            var verifyAction = new signing.verify(context) { Data = data };
-            var verifyResult = await new global::app.goal.step.action.@this(verifyAction, context).Start(context);
-            if (verifyResult.Success)
-                await context.Variable.Set("!ServiceIdentity", layer.Identity.ToString());
-        }
+        // Read in the transport's own view — the sender signed what it sent in Out. A parse failure is a
+        // keyed Error (PlangDeserializeError), not a throw.
+        var read = await context.App.type.list["wire"].kind["plang"]!.Decode(Encoding.UTF8.GetBytes(body), context);
+        BuildProperties(read, request, response);
+        return read;
     }
 
     /// <summary>
     /// Reads an error HTTP response and builds a Data error with properties.
-    /// Returns the error Data and the raw error body (for signed error extraction).
     /// </summary>
-    private static async Task<(data.@this Error, string Body)> ReadErrorResponseAsync(
+    private static async Task<data.@this> ReadErrorResponseAsync(
         HttpResponseMessage response, HttpRequestMessage request, actor.context.@this context, CancellationToken ct = default)
     {
         var errorBody = "";
@@ -533,7 +466,7 @@ public sealed class Default : IHttp
             "HttpError", (int)response.StatusCode));
         if (unread != null) err.Error!.list.Add(unread);
         BuildProperties(err, request, response);
-        return (err, errorBody);
+        return err;
     }
 
     // --- Response metadata ---
@@ -594,8 +527,7 @@ public sealed class Default : IHttp
         {
             using (response)
             {
-                var (err, _) = await ReadErrorResponseAsync(response, request, context, ct);
-                return err;
+                return await ReadErrorResponseAsync(response, request, context, ct);
             }
         }
 
@@ -766,29 +698,10 @@ public sealed class Default : IHttp
             if (line == null) break;
             if (string.IsNullOrEmpty(line)) continue;
 
-            // Each NDJSON line is a whole Data in plang's own format, its Signature populated via [In].
-            var data = await context.App.type.list["wire"].kind["plang"]!.Decode(Encoding.UTF8.GetBytes(line), context, view: global::app.View.Store, ct: ct);
-            if (!data.Success)
-            {
-                await app.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(
-                    context.Error(new ServiceError("Malformed NDJSON line in application/plang stream", "PlangStreamError", 400)));
-                continue;
-            }
-
-            // Verify signature — pass Data straight to verify
-            var verifyAction = new signing.verify(context)
-            {
-                Data = data
-            };
-
-            var verifyResult = await new global::app.goal.step.action.@this(verifyAction, context).Start(context);
-            if (!verifyResult.Success)
-            {
-                await RunCallbackAsync(onStream, verifyResult, null, "chunk", app, context, ct);
-                continue;
-            }
-
-            await context.Variable.Set("!ServiceIdentity", (data?.Peek() as global::app.type.item.signature.@this)?.Identity?.ToString());
+            // Each NDJSON line is a whole Data in plang's own format, its signature verified. What the read
+            // answers is that chunk's answer — the Data sent, the failure it carries, or why it couldn't be
+            // read or trusted — so the callback's on error sees every one.
+            var data = await context.App.type.list["wire"].kind["plang"]!.Decode(Encoding.UTF8.GetBytes(line), context, ct: ct);
             await RunCallbackAsync(onStream, data, null, "chunk", app, context, ct);
         }
     }
