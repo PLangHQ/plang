@@ -6,17 +6,17 @@
 
 `IExitsGoal` is the marker the engine queries via `result.ShouldExit()` to decide "stop here, capture a Snapshot, return through the channel". `ShouldExit()` is **virtual with default `true`** — the marker alone is enough for a type that always means "suspend".
 
-A type that rides both states on one record (suspending **and** resolved) overrides:
+A value that could be either state would override it — but no type rides both: a pending state and its
+resolution are two values. `Ask` is only the pending state:
 
 ```csharp
-public sealed class Ask : IExitsGoal
-{
-    public string? Answer { get; init; }
-    public bool ShouldExit() => Answer == null; // resolved Ask flows through
-}
+public sealed class Ask : IExitsGoal { }   // pending — ShouldExit() is the default true
 ```
 
-`output.ask` returns `Data<Ask>`. On the suspend path `Answer == null` → `ShouldExit()` returns true, the step loop short-circuits, the Snapshot rides as `Data.Snapshot`. On the resume path the channel has pre-bound the answer, `Answer != null` → `ShouldExit()` returns false, the step loop continues and the trailing `variable.set` binds the Ask. Callers read `%name.Answer%` for the structured form; `Ask.ToString() => Answer ?? ""` covers `%name% equals "Alice"` string-context comparisons.
+`output.ask` returns the answer as it comes. On the suspend path a message channel answers a pending `Ask` with the
+Snapshot on its Data → `ShouldExit()` is true, the step loop short-circuits. Answered — a stream's line, or the
+resume path's pre-bound answer — the result is the user's data itself (a line typed is text), so `write to %name%`
+binds "Ada" and `%name% equals "Ada"` compares it directly.
 
 The carve-out: `Data` with only `Type` set (no Value) still triggers the **Type-side** exit check. The Value-side `ShouldExit()` only fires when a Value is present.
 

@@ -175,10 +175,10 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     /// <summary>
     /// Public ask entry, through the channel's <c>on.ask</c> — as <see cref="WriteAsync"/>, in the asking
     /// action's context. After fires when the ask completes (Session: post-answer; Message: pre-suspend — the
-    /// channel kind decides timing). The answer is an Ask, born through its type — whether the channel's kind
-    /// answered or a binding answered in its place.
+    /// channel kind decides timing). The answer rides as it came — the user's data, a pending Ask with its
+    /// Snapshot, a failure, or what a binding answered in the channel's place.
     /// </summary>
-    public virtual async Task<global::app.data.@this<module.output.Ask>> AskAsync(module.output.ask action, CancellationToken ct = default)
+    public virtual async Task<global::app.data.@this> AskAsync(module.output.ask action, CancellationToken ct = default)
     {
         var context = action.Context;
         var answer = await on.ask.Before(this, context);
@@ -193,13 +193,7 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
                     $"Channel '{Name}' ask failed: {ex.Message}", "AskError") { Exception = ex });
             }
         }
-        var asked = await on.ask.After(this, result, context);
-        // An Ask the kind answered rides whole (a pending one keeps its Snapshot); a failure carries across;
-        // any other answer — a test channel's text, a binding's — is made an Ask by the Ask type, here, so
-        // every reader of the ask's result reads an Ask.
-        if (asked is global::app.data.@this<module.output.Ask> answered) return answered;
-        if (!asked.Success) return global::app.data.@this<module.output.Ask>.From(asked);
-        return asked.As(await asked.Value<module.output.Ask>());
+        return await on.ask.After(this, result, context);
     }
 
     // What a before-binding answered in place of the channel's own work — the operation's answer. A cancel is

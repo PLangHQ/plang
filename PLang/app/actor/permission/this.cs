@@ -71,8 +71,8 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
                 return context.Error(new global::app.error.PermissionDenied(request) { list = [asked.Error] });
             if (asked.ShouldExit() || !asked.Success) return asked;
 
-            // an ask answers as an Ask (every input channel's answer is one) — opened through its typed door
-            var answer = (await global::app.data.@this<global::app.module.output.Ask>.From(asked).Value())?.Answer?.Trim();
+            // an answered ask is the user's answer itself — its text
+            var answer = (await asked.Value())?.ToString()?.Trim();
             switch (answer)
             {
                 case "a": return await granted(true);

@@ -1,1 +1,1 @@
-Ask the input channel a question. Stateful: synchronous answer. Stateless: Data<Ask> + Snapshot for suspend/resume.
+Ask the input channel a question; its result is the user's answer itself (a line typed is text: `write to %name%` holds "Ada"). A stateless channel suspends the goal on a pending ask and resumes it with the answer.
