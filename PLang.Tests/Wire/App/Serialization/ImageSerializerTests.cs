@@ -3,11 +3,8 @@ using image = global::app.type.item.image.@this;
 
 namespace PLang.Tests.App.Serialization;
 
-// plang-types — Stage 5 (the format-asymmetric proof)
-// An image writes itself by the writer's Format token:
-// text → path placeholder; protobuf → raw bytes (stub until protobuf writer ships);
-// anything else → base64 (covers json + plang).
-// One Image instance, three wire shapes.
+// An image writes its bytes through the writer's Bytes primitive; each writer decides
+// how bytes look. An image not read yet writes its path.
 
 public class ImageSerializerTests
 {
@@ -43,50 +40,38 @@ public class ImageSerializerTests
         public void Value(object? n) { }
     }
 
-    [Test] public async Task Image_TextFormat_RendersPathPlaceholder()
+    // The image states what it has; the format is not its question.
+    [Test] public async Task Image_Loaded_WritesItsBytes_WhateverTheFormat()
+    {
+        foreach (var format in new[] { "text", "json", "plang", "protobuf" })
+        {
+            var w = new CaptureWriter(format);
+            new image(PngBytes, "image/png").Write(w);
+            await Assert.That(w.LastMethod).IsEqualTo("Bytes");
+            await Assert.That(w.Last).IsEqualTo(PngBytes);
+        }
+    }
+
+    [Test] public async Task Image_LoadedWithPath_StillWritesItsBytes()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-imgs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/some/photo.png", app.actor.list.User.Context);
-        var img = new image(PngBytes, p!, app.actor.list.User.Context);
         var w = new CaptureWriter("text");
-        img.Write(w);
-        await Assert.That(w.LastMethod).IsEqualTo("String");
-        await Assert.That(((string)w.Last!).Contains("photo.png") || ((string)w.Last!).Contains("image:")).IsTrue();
-    }
-
-    [Test] public async Task Image_TextFormat_Base64Source_PlaceholderIsBareLabel()
-    {
-        // No Path → text writer falls back to the bare label.
-        var img = new image(PngBytes, "image/png");
-        var w = new CaptureWriter("text");
-        img.Write(w);
-        await Assert.That(((string)w.Last!).Contains("[image:")).IsTrue();
-    }
-
-    [Test] public async Task Image_JsonFormat_DefaultFallback_RendersBase64()
-    {
-        var img = new image(PngBytes, "image/png");
-        var w = new CaptureWriter("json");
-        img.Write(w);
-        await Assert.That(w.LastMethod).IsEqualTo("String");
-        await Assert.That(w.Last).IsEqualTo(System.Convert.ToBase64String(PngBytes));
-    }
-
-    [Test] public async Task Image_PlangFormat_DefaultFallback_RendersBase64()
-    {
-        // plang Format takes the portable default → base64.
-        var w = new CaptureWriter("plang");
-        new image(PngBytes, "image/png").Write(w);
-        await Assert.That(w.Last).IsEqualTo(System.Convert.ToBase64String(PngBytes));
-    }
-
-    [Test] public async Task Image_ProtobufFormat_RendersRawBytes_StubInPlace()
-    {
-        var w = new CaptureWriter("protobuf");
-        new image(PngBytes, "image/png").Write(w);
+        new image(PngBytes, p!, app.actor.list.User.Context).Write(w);
         await Assert.That(w.LastMethod).IsEqualTo("Bytes");
         await Assert.That(w.Last).IsEqualTo(PngBytes);
+    }
+
+    [Test] public async Task Image_UnreadPathBacked_WritesItsPath()
+    {
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-imgs-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+        var p = global::app.type.item.path.@this.Resolve("/some/photo.png", app.actor.list.User.Context);
+        var w = new CaptureWriter("json");
+        new image(p!, app.actor.list.User.Context).Write(w);
+        await Assert.That(w.LastMethod).IsEqualTo("String");
+        await Assert.That((string)w.Last!).Contains("photo.png");
     }
 
     [Test] public async Task Image_RoundTrip_JsonBase64_PreservesBytesAndMime()

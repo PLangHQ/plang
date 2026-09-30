@@ -55,7 +55,8 @@ public sealed class Writer : global::app.type.format.IWriter
     public void TimeSpan(System.TimeSpan value) { if (_depth > 0) Structural().TimeSpan(value); else Bare(value.ToString("c")); }
     public void Guid(System.Guid value) { if (_depth > 0) Structural().Guid(value); else Bare(value.ToString()); }
     public void Enum(System.Enum value) { if (_depth > 0) Structural().Enum(value); else Bare(value.ToString()); }
-    public void Bytes(byte[] value) { if (_depth > 0) Structural().Bytes(value); else Bare(System.Convert.ToBase64String(value)); }
+    // Bytes read as text are noise: the text form of a byte payload is its size.
+    public void Bytes(byte[] value) { if (_depth > 0) Structural().String($"[{value.Length} bytes]"); else Bare($"[{value.Length} bytes]"); }
 
     // Structure: always json; flush the buffered json when the outermost closes.
     public void BeginArray(int count) { Structural().BeginArray(count); _depth++; }

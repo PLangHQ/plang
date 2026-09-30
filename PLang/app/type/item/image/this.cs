@@ -99,28 +99,14 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     /// <summary>
-    /// The image renders itself, per wire format. The portable form is base64
-    /// (json/plang/any). A text stream can't carry base64 readably — it emits
-    /// the source location when wired, else a scannable label. A protobuf
-    /// stream carries the raw bytes.
+    /// The image writes its bytes; each writer shows them in its own way. An image not read yet writes its
+    /// path.
     /// </summary>
     public override void Write(global::app.type.format.IWriter writer)
     {
         // An image not read writes where it is — never empty bytes.
         if (_bytes == null && Path != null) { Path.Write(writer); return; }
-        switch (writer.Format)
-        {
-            case "text":
-                // The source location as typed; a pure in-memory image shows a scannable label.
-                writer.String(Path != null ? Path.ToString() : $"[image: {Mime} {Bytes.Length}B]");
-                return;
-            case "protobuf":
-                writer.Bytes(Bytes);
-                return;
-            default:
-                writer.String(System.Convert.ToBase64String(Bytes));
-                return;
-        }
+        writer.Bytes(Bytes);
     }
 
     /// <summary>An image's entity: name "image", kind = the canonical kind named at birth.</summary>

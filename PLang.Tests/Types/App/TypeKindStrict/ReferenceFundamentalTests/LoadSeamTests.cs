@@ -119,6 +119,18 @@ public class LoadSeamTests
         await Assert.That(Written(channel)).Contains("iVBOR");
     }
 
+    [Test] public async Task WrittenThroughTextChannel_PathBackedImage_ShowsItsSize()
+    {
+        // The console is a text channel: bytes there show as their size.
+        var img = PathBackedPng("console.png");
+        await using var channel = new global::app.channel.type.stream.@this("out", new System.IO.MemoryStream());
+
+        var result = await channel.Write(_app.actor.list.User.Context.Ok(img));
+        await result.IsSuccess();
+
+        await Assert.That(Written(channel).TrimEnd()).IsEqualTo($"[{Png1x1.Length} bytes]");
+    }
+
     [Test] public async Task EncodedWithoutChannel_PathBackedImage_NeverLoads()
     {
         // A format writes what the value holds; only a channel opens it.

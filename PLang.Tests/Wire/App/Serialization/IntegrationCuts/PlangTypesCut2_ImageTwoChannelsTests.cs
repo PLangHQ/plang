@@ -4,9 +4,9 @@ using image = global::app.type.item.image.@this;
 namespace PLang.Tests.App.Serialization.IntegrationCuts;
 
 // plang-types — Integration cut 2: same value, two channels, two wire shapes.
-// One image instance, driven through two writers — text and json — gives a path
-// placeholder and a base64 string respectively. The channel never branches on type;
-// the type never knows about channels. The bridge is IWriter.Format.
+// One image instance, driven through two writers — text and json — gives its size
+// and a base64 string respectively. The image writes its bytes; each writer decides
+// how bytes look.
 
 public class PlangTypesCut2_ImageTwoChannelsTests
 {
@@ -42,17 +42,16 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         public void Value(object? n) { }
     }
 
-    [Test] public async Task SameImage_TextWriter_GivesPathPlaceholder()
+    [Test] public async Task SameImage_TextWriter_GivesItsSize()
     {
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cut2t-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var p = global::app.type.item.path.@this.Resolve("/srv/photo.png", app.actor.list.User.Context);
         var img = new image(PngBytes, p!, app.actor.list.User.Context);
 
-        var w = new CaptureWriter("text");
-        img.Write(w);
-        await Assert.That(w.LastMethod).IsEqualTo("String");
-        await Assert.That(((string)w.Last!).Contains("photo.png") || ((string)w.Last!).Contains("image:")).IsTrue();
+        using var ms = new System.IO.MemoryStream();
+        img.Write(new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8));
+        await Assert.That(System.Text.Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo($"[{PngBytes.Length} bytes]");
     }
 
     [Test] public async Task SameImage_JsonWriter_GivesBase64String()

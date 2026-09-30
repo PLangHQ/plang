@@ -244,6 +244,24 @@ public class Stage3_PathDemolitionTests
     }
 
     [Test]
+    public async Task BinaryFileWriteOut_TextChannelShowsSize_PlangChannelCarriesBytes()
+    {
+        var (app, context, dir) = MakeApp();
+        await using var _ = app;
+        var bytes = new byte[] { 0, 1, 2, 250, 251, 252, 253 };
+        File.WriteAllBytes(Path.Combine(dir, "blob.bin"), bytes);
+
+        await using var console = new global::app.channel.type.stream.@this("out", new System.IO.MemoryStream());
+        var toConsole = await console.Write(await Read(context, new PLangFilePath(Path.Combine(dir, "blob.bin")) {}));
+        await toConsole.IsSuccess();
+        await Assert.That(Encoding.UTF8.GetString(((System.IO.MemoryStream)console.Stream).ToArray()).TrimEnd())
+            .IsEqualTo($"[{bytes.Length} bytes]");
+
+        var json = await WriteOut(await Read(context, new PLangFilePath(Path.Combine(dir, "blob.bin")) {}));
+        await Assert.That(json).Contains(System.Convert.ToBase64String(bytes));
+    }
+
+    [Test]
     public async Task PathWriteOut_LocationOnly_NotContent()
     {
         // a `path` value has one face — it writes itself as the location string
