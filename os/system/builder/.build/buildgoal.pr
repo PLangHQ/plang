@@ -16,7 +16,7 @@
             {
               "name": "Name",
               "type": {
-                "name": "text"
+                "name": "goal"
               },
               "value": "/system/builder/BuildGoal/Start"
             },
