@@ -83,7 +83,8 @@ def parse(text):
 def picks_of(decided):
     """A step's picks as c_eval reads them from decider_eval.one."""
     return {s['index']: {**{a: v['score'] for a, v in s['pick'].items()},
-                         **({'@popular': s['popular']} if s.get('popular') else {})} for s in decided['steps']}
+                         **({'@popular': s['popular']} if s.get('popular') else {}),
+                         **({'@module': c.module_shares(s)} if c.module_shares(s) else {})} for s in decided['steps']}
 
 def build(rel, goal, cat):
     """One goal: the decider, prompt C, the check, one retry. The answers, or why the goal was refused."""

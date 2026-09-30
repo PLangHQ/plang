@@ -80,6 +80,18 @@ def destination(text):
     found = ref.read(text, m.end()) if m else None
     return found['text'] if found else None
 
+def is_certain(a, p, picks_i):
+    """A listed action is certain at 0.90 or more — and, picked through its module, only when stage 1 was that sure
+    of its module too (the C# pick.list Listing's Sure)."""
+    shares = (picks_i.get('@module') or {}).get(a)
+    return p >= CERTAIN and (shares is None or (shares.get(a.split('.', 1)[0]) or 0.0) >= CERTAIN)
+
+def module_shares(step):
+    """{action: {module: share}} for the actions a decided step picked through a module (stage 2): how sure stage 1
+    was of each module stage 2 asked about — the prompt shows it beside the action (the C# listed.Module)."""
+    asked = {m: step['modules'].get(m) or 0.0 for m in step.get('asked', [])}
+    return {a: asked for a, v in step['pick'].items() if v['from'].startswith('stage 2')} if asked else {}
+
 def listed(picks_i, text=''):
     """The step's picks shown to the LLM: ≥ 0.5, most certain first. A step that says `write to %x%`
     has variable.set whatever the decider scored it: that is a known value, not a guess. An unsure step
@@ -281,14 +293,17 @@ def user_message_c(goal, picks):
         step_picks = listed(picks.get(s['index'], {}), s['text'])
         known = destination(s['text'])
         pop = popular_only(picks.get(s['index'], {}))
-        decider = ', '.join(f'{a} {p:.2f}' + ('' if p >= CERTAIN else ' (write to)' if a == 'variable.set' and known
+        shares = picks.get(s['index'], {}).get('@module', {})
+        decider = ', '.join(f'{a} {p:.2f}'
+                            + (' (module ' + ', '.join(f'{m} {x:.2f}' for m, x in shares[a].items()) + ')' if a in shares else '')
+                            + ('' if is_certain(a, p, picks.get(s['index'], {})) else ' (write to)' if a == 'variable.set' and known
                                               else ' (possible, popular)' if a in pop else ' (possible)')
                             for a, p in step_picks)
         # one line per step: the step as written, => its picks, => the pre-filled formal (after a multi-line
         # step's last line)
         out += f' => decider: {decider or "(nothing it is sure of)"}'
         # the certain picks pre-filled; a known value (write to) pre-fills its variable.set, last
-        certain = sorted([a for a, p in step_picks if p >= CERTAIN and not (a == 'variable.set' and known)],
+        certain = sorted([a for a, p in step_picks if is_certain(a, p, picks.get(s['index'], {})) and not (a == 'variable.set' and known)],
                          key=link)   # a certain condition chain leads (action.Link); the rest by score
         # each certain pick takes its own place (action.Prefill, pick.line): a step action after the ones before
         # it (or where a clause left `?`), a clause right after the first action where the step's actions go; a
@@ -306,7 +321,7 @@ def user_message_c(goal, picks):
             else: line.add(call, link(a) == 0, link(a) == 3 and b.returns(*a.split('.', 1)) != 'item')   # a condition's verdict is never kept
         if known: line.append(prefill('variable.set', s['text']))
         if line.written(): out += ' => formal: ' + line.written()
-        types = scope(store, known_code([a for a, p in step_picks if p >= CERTAIN], s['text']), s['text'])
+        types = scope(store, known_code([a for a, p in step_picks if is_certain(a, p, picks.get(s['index'], {}))], s['text']), s['text'])
         if types: out += ' => types: ' + ', '.join(f'%{n}% {t}' for n, t in types)
         shown += [a for a, _ in step_picks]
     shown = list(dict.fromkeys(shown))
@@ -369,7 +384,7 @@ def disagreements(i, rows, picks_i, text=''):
     # a certain action may sit anywhere in the step: `on error set %x% = …` sets inside the recovery
     anywhere = set(used) | set(held_actions(rows))
     refused = [f'step {i} leaves out {a}, which the decider is certain of ({p:.2f})'
-               for a, p in shown.items() if p >= CERTAIN and a not in anywhere]
+               for a, p in shown.items() if is_certain(a, p, picks_i) and a not in anywhere]
     refused += unlisted(i, used, picks_i, text)
     # an action listed only through the popular-action choice builds with a warning of its own
     popular = [a for a in dict.fromkeys(used) if a in popular_only(picks_i)]
@@ -409,7 +424,7 @@ def disagreements(i, rows, picks_i, text=''):
     # is not a guess, so it carries no warning
     known = {'variable.set'} if destination(text) else set()
     warnings = [f'step {i} uses {a}, which the decider was not sure of ({shown[a]:.2f})'
-                for a in dict.fromkeys(used) if a in shown and shown[a] < CERTAIN and a not in known and a not in popular]
+                for a in dict.fromkeys(used) if a in shown and not is_certain(a, shown[a], picks_i) and a not in known and a not in popular]
     warnings += [f'step {i} uses {a} from the decider\'s popular-action choice ({shown[a]:.2f}): unsure' for a in popular]
     return refused, warnings
 

@@ -115,7 +115,8 @@ def one(case, cat, folder=None):
         steps.append({'index': i, 'text': s['text'], 'expected': case.get('menu', {}).get(str(i), []),
                       'popular': dict(popular) if (i, '@popular') in acts else None,
                       'main': h.main_module(probs[i], cat),
-                      'modules': {m: p for m, p in probs[i].items() if m in cat}, 'pick': pick})
+                      'modules': {m: p for m, p in probs[i].items() if m in cat}, 'pick': pick,
+                      'asked': list(chosen.get(i, []))})
     return {'goal': case['id'], 'steps': steps, 'skipped': skipped,
             'stage1': {'secs': s1, 'bytes': b1, 'questions': q1, 'usage': u1},
             'stage2': {'secs': s2, 'bytes': b2, 'questions': q2, 'usage': u2}}

@@ -201,7 +201,7 @@ public sealed class @this
         _moduleAsked = Asked(context).Select(m => _modules[m]).ToList();
         IsCondition = Tests;
         IsUnsure = Unsure(context);
-        _listed = Listing();
+        _listed = Listing(context);
         Formal = Prefill(context);
         Known = await Code(context.App.module.list, context);
     }
@@ -273,8 +273,11 @@ public sealed class @this
 
     // ---------------------------------------------------------------- what the prompt shows
 
-    private List<listed.@this> Listing()
+    private List<listed.@this> Listing(global::app.actor.context.@this context)
     {
+        // how sure stage 1 was of each module stage 2 asked about — shown beside an action picked through one
+        var modules = string.Join(", ", Asked(context).Select(m =>
+            $"{m} {((double)(_module.GetValueOrDefault(m) ?? (number)0.0)).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)}"));
         var shown = new List<(string Name, number Score)>();
         foreach (var p in _items)
             if (p.Score is { } s && s >= (number)Possible) shown.Add((p.Name, s));
@@ -284,15 +287,21 @@ public sealed class @this
         var popular = Popular();
         foreach (var (name, score) in popular)
             if (shown.All(p => p.Name != name)) shown.Add((name, score));
+        // an action picked through its module is certain only when its module is too: its score is its certainty
+        // within the module, and a module the decider is unsure of leaves the step's words to decide
+        bool Through(string name) => _items.FirstOrDefault(i => i.Name == name)?.From is From.YesNo or From.Choice;
+        bool Sure(string name) => !Through(name)
+            || (_module.GetValueOrDefault(name.Split('.')[0]) ?? (number)0.0) >= (number)Near;
         // most certain first; equal scores keep their order
         return shown.OrderByDescending(p => p.Score).Select(p => new listed.@this
         {
             Name = p.Name, Score = p.Score,
-            Mark = p.Score >= (number)Near ? listed.Mark.Certain
+            Mark = p.Score >= (number)Near && Sure(p.Name) ? listed.Mark.Certain
                  : p.Name == "variable.set" && known ? listed.Mark.WriteTo
                  : popular.ContainsKey(p.Name) && !(_items.FirstOrDefault(i => i.Name == p.Name)?.Score is { } own && own >= (number)Possible)
                      ? listed.Mark.Popular
                  : listed.Mark.Possible,
+            Module = modules.Length > 0 && Through(p.Name) ? modules : null,
         }).ToList();
     }
 
