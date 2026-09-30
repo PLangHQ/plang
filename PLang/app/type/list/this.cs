@@ -227,8 +227,6 @@ public sealed partial class @this
         // the item classes, which would answer a plain "list" with no element.
         if (typeof(app.type.item.list.@this).IsAssignableFrom(type) && ContainerFamily(type) is { } node)
             return (node.Family, Face(PlangName(node.Element)));
-        if (Array.Find(types, t => t.Owned.Any(o => !o.Assignable && o.Clr == type)) is { } owner)
-            return (owner.Name, null);
         // A collected type (type<goal>, type<type>) is a type.
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.@this<,>)) return ("type", null);
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
@@ -238,6 +236,9 @@ public sealed partial class @this
         // a kind of a family: the family, with the kind whose values are this class (a setting class)
         if (typeof(app.type.item.@this).IsAssignableFrom(type) && FamilyName(type) is { } family)
             return (family, Array.Find(types, t => t.Names(family))?.kind[type]?.Name);
+        // An item class is named by its own class above; a raw C# shape by the type that owns it.
+        if (Array.Find(types, t => t.Owns(type)) is { } owner)
+            return (owner.Name, null);
         if (ContainerFamily(type) is { } fam) return (fam.Family, Face(PlangName(fam.Element)));
         return ("clr", null);
     }

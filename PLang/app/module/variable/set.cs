@@ -187,24 +187,13 @@ public partial class Set : IContext, IScope, IKeep
             // content would force the parse the verbatim fast-path below exists to
             // avoid. Content is read (door opened) only for a value that isn't the declared type.
             object? sourceValue = incoming.RawUntouched ? null : await incoming.Value();
-            // The kind hooks and the strict probe below reason over the raw CLR
-            // face (ctor matching, magic-byte/extension sniffing) — a born-typed
-            // text/binary leaf presents its backing here. Minting re-lifts, so
-            // the stored value stays born-typed either way.
+            // The value as it is — what the declared type is handed to make itself from.
+            object? heldValue = sourceValue;
+            // The strict probe below reasons over the raw CLR face (ctor matching, magic-byte
+            // sniffing) — a born-typed text/binary leaf presents its backing to it.
             if (sourceValue is global::app.type.item.text.@this st) sourceValue = st.Clr<string>();
             else if (sourceValue is global::app.type.item.binary.@this sb) sourceValue = sb.Value;
 
-            // Stamp kind from the value by building through the family's eager door and
-            // reading the kind off the built value (image parses its path's extension → jpg;
-            // number reads the literal's precision → int). `text` has no kind for a literal
-            // (a spelling is not a kind), so a text literal naturally derives nothing. A decline
-            // (null / error on the throwaway carrier) → no kind.
-            if (type.kind.IsEmpty && targetType != null)
-            {
-                var carrier = new global::app.data.@this("", new global::app.type.item.@null.@this(typeName), context: Context);
-                if (Context.App.type.list[typeName].Make(sourceValue, carrier)?.Type.kind is { IsEmpty: false } derivedKind)
-                    type = Context.App.type.list[new global::app.type.@this(type.Name, derivedKind.Name, type.Strict, type.Template), Context];
-            }
             if (targetType == null)
             {
                 return Context.Error(
@@ -247,8 +236,8 @@ public partial class Set : IContext, IScope, IKeep
                 return await Context.Variable.Set(Value);
             }
 
-            if (Value.RawUntouched) sourceValue = await Value.Value();
-            object? converted = sourceValue;
+            if (Value.RawUntouched) heldValue = await Value.Value();
+            object? converted = heldValue;
 
             // The incoming value composes the declared type as a facet under a DIFFERENT
             // name (an image has-a path, so an image bound to a `path` slot satisfies `path`)

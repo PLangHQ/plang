@@ -56,7 +56,8 @@ public class ChannelReadBoundaryTests
 
     // Independent #15 — an octet-stream Mime stamps `{binary, null}` (no decode
     // hint) *and* `_raw` is `byte[]`.
-    [Test] public async Task ChannelRead_OctetStreamMime_StampsBinaryNullKindAndRawIsByteArray()
+    // Bytes a bare binary owns have nothing to read: the body is born a binary holding them.
+    [Test] public async Task ChannelRead_OctetStreamMime_IsBornBinaryHoldingTheBytes()
     {
         await using var app = NewApp();
         byte[] body = { 1, 2, 3, 4 };
@@ -64,7 +65,8 @@ public class ChannelReadBoundaryTests
         var d = await ch.Read();
         await Assert.That(d.Type.Name).IsEqualTo("binary");
         await Assert.That(d.Type.kind.IsEmpty).IsTrue();
-        await Assert.That(d.Raw is byte[]).IsTrue();
+        await Assert.That(d.Peek() is global::app.type.item.binary.@this).IsTrue();
+        await Assert.That(((global::app.type.item.binary.@this)d.Peek()).Value).IsEquivalentTo(body);
     }
 
     // An application/json body stamps `{item, json}`. The key invariant: stamping does NOT

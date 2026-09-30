@@ -318,6 +318,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                 .Read(ref reader, null, new global::app.type.reader.ReadContext(context));
         }
 
+        // A raw this bare type owns (text ← string, binary ← byte[]) has nothing to read: no kind to
+        // parse it as, no template to render. It is its value now, through the family's lift.
+        if (raw is string or byte[] && kind.IsEmpty && Template == null && Owns(raw.GetType())
+            && Make(raw, new global::app.data.@this("", context: context)) is { } owned)
+            return owned;
+
         // Wire-raw (string / byte[]) → defer through a source declared as THIS type, parsed lazily on
         // first use. The source carries the type's Name/Kind/Strict/template and reads its own raw —
         // knowing where the raw came from, when it was read off a file.
@@ -599,6 +605,11 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     [JsonIgnore]
     internal IReadOnlyList<global::app.type.convert.OwnedClr> Owned { get => Family._owned; init => _owned = value; }
     private IReadOnlyList<global::app.type.convert.OwnedClr> _owned = [];
+
+    /// <summary>Whether a raw C# value of <paramref name="clr"/> is a value of this type — one of its
+    /// <see cref="Owned"/> shapes, an assignable one owning every subclass too.</summary>
+    internal bool Owns(System.Type clr)
+        => Owned.Any(o => o.Assignable ? o.Clr.IsAssignableFrom(clr) : o.Clr == clr);
 
     /// <summary>True for a type plang's own machinery uses but a program never names (a wire slice,
     /// a C# host carrier), declared by its class as a static <c>Internal</c>. It stays in the types —

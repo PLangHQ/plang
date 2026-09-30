@@ -42,7 +42,7 @@ public sealed partial class @this : ISnapshot
         {
             var bag = GetBag(outer.Name);
             foreach (var inner in (await outer.Value<global::app.type.item.dict.@this>()).Entries(context))
-                bag[inner.Name] = inner.Peek();
+                bag[inner.Name] = await inner.Value();
         }
     }
 
