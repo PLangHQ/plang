@@ -50,6 +50,15 @@ public class Stage3_PathDemolitionTests
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }
 
+    // Written out through a plang-formatted stream channel — the channel opens the value before its format writes it.
+    private static async Task<string> WriteOut(Data data)
+    {
+        await using var channel = new global::app.channel.type.stream.@this("out", new System.IO.MemoryStream()) { Mime = "application/plang" };
+        var written = await channel.Write(data);
+        await written.IsSuccess();
+        return System.Text.Encoding.UTF8.GetString(((System.IO.MemoryStream)channel.Stream).ToArray());
+    }
+
     [Test]
     public async Task Path_NoLongerCarriesContent_NoSourceField()
     {
@@ -161,12 +170,12 @@ public class Stage3_PathDemolitionTests
         File.WriteAllText(Path.Combine(dir, "docs", "a.txt"), "TOP-SECRET-CONTENT");
 
         var result = await Read(context, new PLangFilePath(Path.Combine(dir, "docs")) {});
-        var json = await SerializePlang(app, result);
+        var json = await WriteOut(result);
         await Assert.That(json).Contains("a.txt");
         await Assert.That(json).DoesNotContain("TOP-SECRET-CONTENT");
     }
 
-    // Only the Out view lists: a store keeps the location, a dump does no I/O.
+    // Only a channel opens a directory: a store keeps the location, a dump does no I/O.
     [Test]
     public async Task Directory_StoreAndDebug_NeverList()
     {
@@ -228,9 +237,9 @@ public class Stage3_PathDemolitionTests
         File.WriteAllText(Path.Combine(dir, "note.txt"), "the raw note");
 
         var result = await Read(context, new PLangFilePath(Path.Combine(dir, "note.txt")) {});
-        var json = await SerializePlang(app, result);
+        var json = await WriteOut(result);
         await Assert.That(json).Contains("the raw note");
-        // serialization loads but never narrows — still the file headline
+        // the channel opens but never narrows — still the file headline
         await Assert.That(result.Type!.Name).IsEqualTo("file");
     }
 

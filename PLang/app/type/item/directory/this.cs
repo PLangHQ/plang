@@ -98,21 +98,21 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     public override string ToString() => Path.ToString();
 
-    /// <summary>
-    /// The directory writes itself: in the Out view it lists through its own door (as the writer, past the
-    /// path's auth gate) and writes the listing. The Store and Debug views never list — a dump or a store
-    /// does no I/O — and a write with no context can't; they write what <see cref="Write"/> has.
-    /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+    /// <summary>A directory writes its own form (<see cref="Write"/>) in every view; it never lists while it
+    /// writes.</summary>
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        if (mode == global::app.View.Out && context != null)
-        {
-            var listing = new global::app.data.@this("", this, context: context);
-            await Value(listing);
-            if (listing.Error != null) throw new global::app.error.AppException(listing.Error);
-        }
         Write(writer);
+        return System.Threading.Tasks.ValueTask.CompletedTask;
+    }
+
+    /// <summary>Opened to be written out: the directory lists its children (as the writer, past the path's auth
+    /// gate).</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.error.Error?> Open(global::app.actor.context.@this context)
+    {
+        var listed = await List(context);
+        return listed.Success ? null : listed.Error;
     }
 
     /// <summary>

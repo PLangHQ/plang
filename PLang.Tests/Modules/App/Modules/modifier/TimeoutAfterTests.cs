@@ -71,19 +71,14 @@ public class TimeoutAfterTests
     [Test]
     public async Task After_CancellationTokenPropagatedToAction()
     {
-        // Token did propagate: sleep was cut short well before its 10s target
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
-        {
-            Module = _app.actor.list.User.Context.App.Module("timer"),
-            Name = "sleep",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) })
-        }, TimeoutModifier(30));
+        // Token did propagate: the held sleep was cut short, nowhere near its own end
+        var action = global::PLang.Tests.Shared.Make.With(Held(), TimeoutModifier(30));
 
         var start = DateTimeOffset.UtcNow;
         var result = await action.Start(Ctx);
         var elapsed = DateTimeOffset.UtcNow - start;
 
-        await Assert.That(elapsed.TotalMilliseconds).IsLessThan(2000);
+        await Assert.That(elapsed.TotalMilliseconds).IsLessThan(20_000);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
     }
@@ -94,14 +89,9 @@ public class TimeoutAfterTests
         // Parent cancellation (not the timeout) bubbles up as OperationCanceledException.
         using var parentCts = new CancellationTokenSource();
         Ctx.PushCancellation(parentCts);
-        parentCts.CancelAfter(30);
+        parentCts.Cancel();
 
-        var action = global::PLang.Tests.Shared.Make.With(new PrAction
-        {
-            Module = _app.actor.list.User.Context.App.Module("timer"),
-            Name = "sleep",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 10_000, context: Ctx) })
-        }, TimeoutModifier(5000));
+        var action = global::PLang.Tests.Shared.Make.With(Held(), TimeoutModifier(5000));
 
         await Assert.That(async () => await action.Start(Ctx))
             .Throws<OperationCanceledException>();

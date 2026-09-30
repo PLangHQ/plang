@@ -117,6 +117,14 @@ public abstract class @this : global::app.type.item.@this
         else writer.Bytes(Bytes);
     }
 
+    /// <summary>Opened to be written out: the content is sampled through the location's gate, so its write is
+    /// the content, not the location.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.error.Error?> Open(global::app.actor.context.@this context)
+    {
+        var sample = await Content(context);
+        return sample.Success ? null : sample.Error;
+    }
+
     /// <summary>A reference writes its own form (<see cref="Write"/>) in every view.</summary>
     public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)

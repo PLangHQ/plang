@@ -6,13 +6,10 @@ using image = global::app.type.item.image.@this;
 
 namespace PLang.Tests.App.TypeKindStrict.ReferenceFundamentalTests;
 
-// The materialize seam: a path-backed image is lazy through set + navigation, but
-// a SYNC consumer (the serializer renderers) sees only empty bytes until the
-// content is pulled into memory. That pull is `data.Value()` — the uniform async
-// materialization every reference fundamental answers; the serializer runs it
-// per-leaf at output time (no separate Load pass). A load/strict failure rides
-// ONTO the data binding (data.Fail), it does not throw. These tests drive the
-// real consumer-facing flow the goal tests punt on.
+// The materialize seam: a path-backed image is lazy through set + navigation, and a
+// sync writer sees only what it holds. The pull is `data.Value()`, or `Open` when a
+// stream channel is about to send it — the format never loads. A load/strict failure
+// rides ONTO the data binding (data.Fail), it does not throw.
 public class LoadSeamTests
 {
     private global::app.@this _app = null!;
@@ -61,19 +58,21 @@ public class LoadSeamTests
         await Assert.That(img.Bytes).IsEquivalentTo(Png1x1); // sync view now real
     }
 
-    [Test] public async Task Serialize_WalksNestedImage_InsideDictionary()
+    [Test] public async Task WrittenThroughStreamChannel_NestedImage_WritesItsPath_Unread()
     {
-        // materialization is per-leaf at output time — serializing a dict emits the
-        // nested image's real bytes (base64), proving the walk reaches nested leaves.
+        // The channel opens only the value it writes; an image nested inside it is written unread — as where it
+        // is, never empty bytes.
         var img = PathBackedPng("nested.png");
         var dict = new System.Collections.Generic.Dictionary<string, object?> { ["avatar"] = img };
-        using var ms = new System.IO.MemoryStream();
+        await using var channel = PlangChannel();
 
-        var result = await Plang.Encode(ms, _app.actor.list.User.Context.Ok(dict), Ctx);
+        var result = await channel.Write(_app.actor.list.User.Context.Ok(dict));
         await result.IsSuccess();
 
-        var json = Encoding.UTF8.GetString(ms.ToArray());
-        await Assert.That(json).Contains("iVBOR"); // nested png base64 emitted
+        var json = Written(channel);
+        await Assert.That(img.RawBytes).IsNull();
+        await Assert.That(json).Contains("nested.png");
+        await Assert.That(json).DoesNotContain("iVBOR");
     }
 
     [Test] public async Task Value_StrictMismatch_FailsOntoBinding_NoThrow()
@@ -100,22 +99,40 @@ public class LoadSeamTests
         await scalar.IsSuccess();
     }
 
-    [Test] public async Task Serialize_PathBackedImage_EmitsRealBytes_NotEmpty()
+    // A plang-formatted stream channel over memory — the door a value leaves the program through.
+    private static global::app.channel.type.stream.@this PlangChannel() =>
+        new("out", new System.IO.MemoryStream()) { Mime = "application/plang" };
+
+    private static string Written(global::app.channel.type.stream.@this channel) =>
+        Encoding.UTF8.GetString(((System.IO.MemoryStream)channel.Stream).ToArray());
+
+    [Test] public async Task WrittenThroughStreamChannel_PathBackedImage_EmitsRealBytes()
     {
-        // The chokepoint: serialization runs Load() above the STJ wall, so the
-        // sync renderer reads real bytes. Without the fix the base64 is "".
+        // The channel opens the value at the last moment: the image's bytes are read, then the format writes them.
         var img = PathBackedPng("out.png");
+        await using var channel = PlangChannel();
+
+        var result = await channel.Write(_app.actor.list.User.Context.Ok(img));
+        await result.IsSuccess();
+
+        // PNG base64 starts with "iVBOR"; an unopened image would emit "" instead.
+        await Assert.That(Written(channel)).Contains("iVBOR");
+    }
+
+    [Test] public async Task EncodedWithoutChannel_PathBackedImage_NeverLoads()
+    {
+        // A format writes what the value holds; only a channel opens it.
+        var img = PathBackedPng("unopened.png");
         using var ms = new System.IO.MemoryStream();
 
         var result = await Plang.Encode(ms, _app.actor.list.User.Context.Ok(img), Ctx);
         await result.IsSuccess();
 
-        var json = Encoding.UTF8.GetString(ms.ToArray());
-        // PNG base64 starts with "iVBOR"; an unloaded image would emit "" instead.
-        await Assert.That(json).Contains("iVBOR");
+        await Assert.That(img.RawBytes).IsNull();
+        await Assert.That(Encoding.UTF8.GetString(ms.ToArray())).DoesNotContain("iVBOR");
     }
 
-    // Only the Out view loads: a store keeps the reference, a dump does no I/O.
+    // A store keeps the reference, a dump does no I/O — neither opens the value.
     [Test] public async Task StoreAndDebug_PathBackedImage_NeverLoad()
     {
         var img = PathBackedPng("kept.png");
@@ -130,16 +147,16 @@ public class LoadSeamTests
         await Assert.That(dumped).DoesNotContain("iVBOR");
     }
 
-    [Test] public async Task Serialize_StrictMismatch_FailsCleanly_BeforeStreamWrite()
+    [Test] public async Task WrittenThroughStreamChannel_StrictMismatch_FailsCleanly_BeforeStreamWrite()
     {
         var img = PathBackedPng("bad.png");
         img.RequireStrictKind("gif");
-        using var ms = new System.IO.MemoryStream();
+        await using var channel = PlangChannel();
 
-        var result = await Plang.Encode(ms, _app.actor.list.User.Context.Ok(img), Ctx);
+        var result = await channel.Write(_app.actor.list.User.Context.Ok(img));
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("StrictKindMismatch");
-        await Assert.That(ms.Length).IsEqualTo(0); // nothing written
+        await Assert.That(channel.Stream.Length).IsEqualTo(0); // nothing written
     }
 }

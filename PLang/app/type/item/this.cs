@@ -482,6 +482,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual System.Threading.Tasks.ValueTask<bool> IsEmpty()
         => System.Threading.Tasks.ValueTask.FromResult(false);
 
+    /// <summary>Reads what this value stands for, as the one writing it out asks — at the last moment, by the
+    /// channel about to send it; the value never loads itself while it writes. A value that holds all it is
+    /// has nothing to read. The reason it couldn't be read, else null.</summary>
+    public virtual System.Threading.Tasks.ValueTask<global::app.error.Error?> Open(global::app.actor.context.@this context)
+        => default;
+
     /// <summary>Whether this value, asked to become a <paramref name="asked"/> for <paramref name="data"/>,
     /// refuses — answering on <paramref name="data"/> itself. A value refuses nothing: the birth goes on.</summary>
     public virtual bool Refuses(global::app.type.@this asked, global::app.data.@this data) => false;

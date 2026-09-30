@@ -53,6 +53,10 @@ public sealed class @this : global::app.channel.type.session.@this
             // The channel's Mime is a format, and the format writes the data (a text value on a text channel
             // is its characters, in the channel's encoding).
             var context = Context ?? data.Context;
+            // What leaves through the stream is what the value stands for: it is read now, as the writer, at the
+            // last moment — the format then decides how it looks.
+            var opened = await data.Peek().Open(context);
+            if (opened != null) return context.Error(opened);
             var format = context.App.type.list.Mime(Mime.ToString());
             var result = await format.Encode(Stream, data, context, encoding: ResolveEncoding(), ct: ct);
             // Line framing is the channel's job (console/pipe ergonomics, NDJSON):

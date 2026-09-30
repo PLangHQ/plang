@@ -80,22 +80,22 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     [global::app.Out, global::app.Store]
     public string Mime => _mime ?? "application/octet-stream";
 
-    /// <summary>
-    /// The image writes itself: in the Out view a path-backed image loads its bytes through its own door (as
-    /// the writer, past the path's auth gate, its strict kind checked) and writes them. The Store and Debug
-    /// views never load — a dump or a store does no I/O — and a write with no context can't; they write what
-    /// <see cref="Write"/> has.
-    /// </summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+    /// <summary>An image writes its own form (<see cref="Write"/>) in every view; it never loads while it
+    /// writes.</summary>
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        if (mode == global::app.View.Out && context != null)
-        {
-            var loading = new global::app.data.@this("", this, context: context);
-            await Value(loading);
-            if (loading.Error != null) throw new global::app.error.AppException(loading.Error);
-        }
         Write(writer);
+        return System.Threading.Tasks.ValueTask.CompletedTask;
+    }
+
+    /// <summary>Opened to be written out: a path-backed image loads its bytes through its own door (as the
+    /// writer, past the path's auth gate, its strict kind checked).</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.error.Error?> Open(global::app.actor.context.@this context)
+    {
+        var loading = new global::app.data.@this("", this, context: context);
+        await Value(loading);
+        return loading.Error;
     }
 
     /// <summary>
@@ -106,6 +106,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// </summary>
     public override void Write(global::app.type.format.IWriter writer)
     {
+        // An image not read writes where it is — never empty bytes.
+        if (_bytes == null && Path != null) { Path.Write(writer); return; }
         switch (writer.Format)
         {
             case "text":
