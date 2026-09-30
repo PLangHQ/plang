@@ -192,7 +192,9 @@ public static class @this
                     isName = true;
                 }
             }
-            return new DataProperty(prop.Name, typeNameStr, isNullable, isPlainData, innerType, defaultValue, isSensitive, isName);
+            // [Whole] — the parameter takes its Data as it is, a failed one included.
+            var isWhole = prop.GetAttributes().Any(a => a.AttributeClass?.Name == "WholeAttribute");
+            return new DataProperty(prop.Name, typeNameStr, isNullable, isPlainData, innerType, defaultValue, isSensitive, isName, isWhole);
         }
 
         // No leaf matches — PLNG001 has already flagged this property; emit nothing

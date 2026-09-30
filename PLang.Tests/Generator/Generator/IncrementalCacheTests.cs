@@ -66,13 +66,13 @@ public class IncrementalCacheTests
     {
         var propsA = new PropertyBase[]
         {
-            new DataProperty("First", "global::app.data.@this<global::app.type.item.text.@this>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsName: false),
-            new DataProperty("Second", "global::app.data.@this<global::app.type.item.number.@this>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsName: false),
+            new DataProperty("First", "global::app.data.@this<global::app.type.item.text.@this>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsName: false, IsWhole: false),
+            new DataProperty("Second", "global::app.data.@this<global::app.type.item.number.@this>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsName: false, IsWhole: false),
         };
         var propsB = new PropertyBase[]
         {
-            new DataProperty("First", "global::app.data.@this<global::app.type.item.text.@this>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsName: false),
-            new DataProperty("Second", "global::app.data.@this<global::app.type.item.number.@this>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsName: false),
+            new DataProperty("First", "global::app.data.@this<global::app.type.item.text.@this>", IsNullable: false, IsPlainData: false, InnerType: "string", DefaultValue: null, IsSensitive: false, IsName: false, IsWhole: false),
+            new DataProperty("Second", "global::app.data.@this<global::app.type.item.number.@this>", IsNullable: false, IsPlainData: false, InnerType: "int", DefaultValue: null, IsSensitive: false, IsName: false, IsWhole: false),
         };
 
         var a = MakeInfo("X", propsA);
@@ -85,8 +85,8 @@ public class IncrementalCacheTests
     [Test]
     public async Task ActionClassInfo_DifferentPropertyOrder_AreNotEqual()
     {
-        var p1 = new DataProperty("A", "global::app.data.@this<global::app.type.item.text.@this>", false, false, "string", null, false, false);
-        var p2 = new DataProperty("B", "global::app.data.@this<global::app.type.item.number.@this>", false, false, "int", null, false, false);
+        var p1 = new DataProperty("A", "global::app.data.@this<global::app.type.item.text.@this>", false, false, "string", null, false, false, false);
+        var p2 = new DataProperty("B", "global::app.data.@this<global::app.type.item.number.@this>", false, false, "int", null, false, false, false);
 
         var a = MakeInfo("X", p1, p2);
         var b = MakeInfo("X", p2, p1);

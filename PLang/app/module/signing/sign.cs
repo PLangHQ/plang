@@ -8,8 +8,8 @@ namespace app.module.signing;
 [Action("sign", Cacheable = false)]
 public partial class sign : IContext
 {
-    /// <summary>The data to sign.</summary>
-    [IsInitiated]
+    /// <summary>The data to sign — as it is: a failed result is signed with its error, like any Data.</summary>
+    [IsInitiated, Whole]
     public partial data.@this? Data { get; init; }
 
     /// <summary>Contracts for this signature. Default: ["C0"].</summary>

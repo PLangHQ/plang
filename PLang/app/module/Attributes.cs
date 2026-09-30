@@ -60,3 +60,10 @@ public sealed class IsInitiatedAttribute : Attribute { }
 /// </summary>
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
 public sealed class IsNotNullAttribute : Attribute { }
+
+/// <summary>
+/// Marks a Data parameter the action takes whole — a failed Data included. Without it a failed parameter is the
+/// action's answer before it starts; with it the failure is what the action works on (signing a failed result).
+/// </summary>
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = false)]
+public sealed class WholeAttribute : Attribute { }

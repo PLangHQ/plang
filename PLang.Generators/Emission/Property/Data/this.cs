@@ -18,7 +18,8 @@ public sealed record @this(
     string? InnerType,    // T inside Data<T>; null for plain Data
     string? DefaultValue, // [Default(...)] literal expression; null when absent
     bool IsSensitive,    // [Sensitive] — masks PrValue/FinalValue in __SnapshotParams
-    bool IsName)  // T : app.type.item.variable.IName — emit MissingRequiredProperty guard on null .Value
+    bool IsName,  // T : app.type.item.variable.IName — emit MissingRequiredProperty guard on null .Value
+    bool IsWhole) // [Whole] — the Data is taken as it is, a failed one included (no short-circuit on failure)
     : Base(Name, TypeName)
 {
     public override void EmitProperty(StringBuilder sb)
@@ -136,7 +137,9 @@ public sealed record @this(
             // so the action decides (variable.set stores verbatim; a reader renders). Data flows.
             // A C#-composed Seed's set value passes through untouched.
             sb.AppendLine($"        {TypeName} {Local} = (__seed?.{Name} is {{ IsInitialized: true }} __sv{Name}) ? __sv{Name} : __Copy(action, \"{ParamName}\", context);");
-            sb.AppendLine($"        if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
+            // A [Whole] slot takes the Data as it is — its failure is what the action works on, not its answer.
+            if (!IsWhole)
+                sb.AppendLine($"        if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
             return;
         }
 

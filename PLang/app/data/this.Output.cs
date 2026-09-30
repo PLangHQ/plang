@@ -66,6 +66,9 @@ public partial class @this
             finally { _outputDepth.Value--; }
         }
 
+        // What this Data holds: its value, or — when it failed — its error, which writes its own face.
+        global::app.type.item.@this held = Error ?? _item;
+
         // Only the self-describing wire (application/plang) opens the type envelope around
         // the value; a bare format (json, text) writes the value alone (type inferred on
         // read). The value-write below is the SAME either way.
@@ -88,13 +91,14 @@ public partial class @this
                 writer.Name("name");
                 writer.String(Name);
             }
-            if (!Type.IsNull)
+            var type = Error?.Type ?? Type;
+            if (!type.IsNull)
             {
                 // The type slot is the type's identity — {name, kind?, strict?, template?}, written by
                 // the type itself (app.type.@this.Write) in every view; its face is for a type held
                 // as a value.
                 writer.Name("type");
-                Type.Write(writer);
+                type.Write(writer);
             }
             writer.Name("value");
         }
@@ -109,7 +113,7 @@ public partial class @this
         // The value writes ITSELF (OBP: each item owns its render) — no pre-materialise through
         // Value. An untouched source relays its raw verbatim; a materialised template renders
         // itself; a leaf writes itself. Store vs Out rides in `mode`, honoured by each item.
-        await _item.Output(writer, mode, context);
+        await held.Output(writer, mode, context);
 
         if (writer.EmitsSchema)
         {
