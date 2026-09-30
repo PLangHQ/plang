@@ -1,0 +1,36 @@
+{
+  "branch": "educator-lesson",
+  "sessions": [
+    {
+      "id": "36c1cd91-f5c1-4cf8-a890-c1ec7b21743a",
+      "bot": "educator",
+      "timestamp_start": "2026-09-30T11:40:00Z",
+      "intent": "Design an OBP animation library (PLang app + JS runtime) distilled from aniva/rafbokin/coder animations, then a beginner PLang lesson built with it",
+      "before": {
+        "assumptions": "Three bots built near-identical canvas animation engines; the reusable core can be one OBP library. PLang builds/assembles; only the browser player/draw engine is JS.",
+        "risk": "OpenRouter account has no credits (TTS/music blocked); committing on the architect branch app-systems may collide"
+      },
+      "plan": ".bot/educator-lesson/educator/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "/shared/educator/studio/film/"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "OBP JS engine: root film.this, context film.frame, lesson data sealed; ported best-of aniva/rafbokin/coder with origin comments; offline-baked soundtrack (music+cues+voice+ducking) played from offset; code blocks as real DOM text; smoke test in chromium: no errors, voice intelligible over music (verified by transcription), peak -0.5 dBFS"
+        },
+        {
+          "paths": [
+            "/shared/educator/voices/"
+          ],
+          "type": "create",
+          "category": "config",
+          "confidence": "high",
+          "context": "12+4 Gemini 3.8 TTS samples; found instructions field + lowercase plang needed; Ingi chose Achird on flash-lite"
+        }
+      ]
+    }
+  ]
+}
