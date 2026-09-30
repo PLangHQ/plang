@@ -67,8 +67,9 @@ film.scene.art.variable = frame => {
 ```
 
 ## v2: lesson 2 (hands-on)
-- The lesson text is `/shared/educator/course/02-first-program/lesson.md`, with its examples as real goals in `code/NN-*/Start.goal`. Each is built and run on this branch; real output in `output.txt`.
-- 01 hello, 02 variable, 05 list/foreach, 07 goal with a value and 08 shopping list work.
-- 03 ask, 04 condition and 06 file read are blocked by PLang bugs, reported in `/shared/architect/educator-beginner-steps.md`. The architect has queued them after http 2 and 3.
-- Install and editor screens and facts were asked of the os bot (`/shared/educator/os/first-program/`, stills and videos). Nothing has arrived yet.
-- Engine: `film.video` and `film.paper.photo` are started but not wired or tested. They are parked until the lesson text is settled.
+- The lesson text is `/shared/educator/course/02-first-program/lesson.md`; the examples are `code/01..07`, each built and run on this branch, with real output in `output.txt`. All 7 work.
+- Ingi: don't wait for fixes. `ask` moved to `later/ask`; the condition uses a set value; the file step writes the read value out on its own.
+- Ingi: Writer gets new/open and build-and-run (assumed in the text; screens after he says). The button rebuilds only what changed, verified in the build trace (`=> cached`).
+- Ingi: commands are shown bare (`plang build`, `plang`), never with a prompt sign. Removed from lesson 1, smoke, lesson 2 and the outputs.
+- PLang bugs reported in `/shared/architect/educator-beginner-steps.md` (ask, compare, `is`, read-in-text, the builder's file warning).
+- Engine: `film.video` and `film.paper.photo` are parked until the lesson text is settled; animation comes last.
