@@ -665,11 +665,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual bool IsNull => false;
 
     /// <summary>
-    /// Render this value's bare wire form into the format-neutral
-    /// <see cref="global::app.type.format.IWriter"/> — the leaf-serializer
-    /// behavior (OBP Rule 9: the value owns its wire shape, the writer never
-    /// type-switches). Only leaves are asked (Normalize routes non-leaves through
-    /// their own branches); the default throws so a missing override is loud.
+    /// Write this value into the format-neutral <see cref="global::app.type.format.IWriter"/>.
+    /// A value writes WHAT it is through the writer's primitives (String, Number, Bytes, …);
+    /// the writer — the formatter — decides HOW each primitive looks in its format.
+    /// Neither asks about the other: no <c>writer.Format</c> in a value, no value type in a writer.
+    /// Only leaves are asked (Normalize routes non-leaves through their own branches);
+    /// the default throws so a missing override is loud.
     /// </summary>
     public virtual void Write(global::app.type.format.IWriter writer)
         => throw new System.NotSupportedException(

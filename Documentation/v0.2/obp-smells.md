@@ -87,6 +87,8 @@ The tell: you `await X.Value()` an operand only to pass the raw inside to someth
 
 **clr leak** — lowering to CLR (`.Clr`) anywhere except a real boundary (.NET/3rd-party API, sqlite, STJ). Work in plang types end to end; high `.Clr` density means the design is CLR-centric and wrong at the root.
 
+**format peek** — a value asks which format it is being written in (`switch (writer.Format)`, a per-format table keyed by `writer.Format`, a check for the formal writer's token), or a writer checks which value type it holds. A value writes WHAT it is through the writer's primitives; the writer decides HOW each looks. Fix: the value writes the primitive (`writer.Bytes(Bytes)`), and the per-format look moves into that format's writer. Grep: `writer\.Format` outside `app/type/format/` and the writers themselves.
+
 **late stamp** — construct-then-stamp: `new X(...) { Context = ... }` or `Context ??=` instead of born-with-context. A context-less instance exists for a window, and in that window it mis-types, can't navigate, and forces null checks on everyone downstream. Context is a private non-nullable field set at construction.
 
 ### Design alarms

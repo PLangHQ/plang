@@ -183,6 +183,20 @@ A registry's whole job is selection and lifecycle. All behavior lives on the ele
 
 A method contains its logic inline. Extract a helper only when a second caller actually exists. A handful of lines inline beats a private helper the reader must jump to — when you read the method, you have the full answer in one place. Extraction also tends to hide a dispatch that belongs on an object: the helper's body is often a type-switch that should be a virtual member on the value.
 
+### A value says what it is; the writer says how it looks
+
+A value writes WHAT it is through the writer's primitives (String, Number, Bytes, …); the writer — the formatter — decides HOW each primitive looks in its format. Neither asks about the other: no `writer.Format` in a value, no value type in a writer.
+
+```csharp
+// Wrong: the value asks which format it is in
+switch (writer.Format) { case "text": writer.String(label); break; default: writer.String(Convert.ToBase64String(Bytes)); break; }
+
+// Correct: the value states its bytes; the text writer labels them, the json writer encodes them
+writer.Bytes(Bytes);
+```
+
+A value may still write different primitives for different states of its own (an image not yet read writes its path) — that is the value stating what it has, not asking where it is going.
+
 ### Cost never justifies decomposing
 
 Performance and allocation arguments never license opening the box — storing a raw value instead of the carrier, stripping the envelope for speed. The cost is real; the answer is always a non-decomposing one: make the carrier itself lighter, or find a structural model that stores it whole.
