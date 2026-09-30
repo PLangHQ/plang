@@ -15,10 +15,10 @@ Hash data using a cryptographic algorithm.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Data | object | yes | — | Data to hash. Byte arrays hash directly; everything else is JSON-serialized first |
-| Algorithm | string | no | keccak256 | Hash algorithm to use |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Data | the data, inline (`hash %content%`) | object | yes | — | Data to hash. Byte arrays hash directly; everything else is JSON-serialized first |
+| Algorithm | `with sha256` | string | no | keccak256 | Hash algorithm to use |
 
 **Returns:** A hashed data object with:
 
@@ -41,11 +41,11 @@ Verify data against a known hash.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Data | object | yes | — | Data to verify |
-| Hash | string | yes | — | Expected hash (hex string) |
-| Algorithm | string | no | keccak256 | Hash algorithm to use |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Data | the data, inline (`verify %content% …`) | object | yes | — | Data to verify |
+| Hash | `against %expectedHash%` | string | yes | — | Expected hash (hex string) |
+| Algorithm | `with sha256` | string | no | keccak256 | Hash algorithm to use |
 
 **Returns:** `true` if the data matches the hash, `false` otherwise.
 

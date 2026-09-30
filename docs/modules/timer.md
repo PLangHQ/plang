@@ -19,9 +19,9 @@ The delay honours the context cancellation token, so a parent `timeout after` or
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Ms | int | yes | — | Duration in milliseconds |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Ms | `ms=<n>` or `<n> ms` (`sleep 250 ms`) | int | yes | — | Duration in milliseconds |
 
 ### start
 
@@ -37,10 +37,10 @@ Record the start time of a named (or default) stopwatch.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Name | string | no | `"default"` | Timer identifier |
-| Scope | string | no | `"goal"` | Reserved for future scoping — currently informational |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Name | `name='<name>'` | string | no | `"default"` | Timer identifier |
+| Scope | `scope='<scope>'` | string | no | `"goal"` | Reserved for future scoping — currently informational |
 
 ### end
 
@@ -59,9 +59,9 @@ Stop a started timer and return the elapsed `TimeSpan`.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Name | string | no | last started | Timer identifier |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Name | `name='<name>'` | string | no | last started | Timer identifier |
 
 **Errors:**
 

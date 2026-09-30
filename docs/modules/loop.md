@@ -19,12 +19,12 @@ ProcessItem
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Collection | object | yes | List or dictionary to iterate |
-| GoalName | goal | yes | Goal to call for each item |
-| ItemName | string | no | Variable name for the current item (default: `%item%`) |
-| KeyName | string | no | Variable name for the current key/index |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Collection | the collection, inline (`foreach %items%, …`) | object | yes | List or dictionary to iterate |
+| GoalName | `call <Goal>` (`foreach %items%, call ProcessItem`) | goal | yes | Goal to call for each item |
+| ItemName | `item=%name%` (`call ProcessItem item=%item%`) | string | no | Variable name for the current item (default: `%item%`) |
+| KeyName | the key/index variable name | string | no | Variable name for the current key/index |
 
 ## Syntax
 

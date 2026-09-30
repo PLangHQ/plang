@@ -15,10 +15,10 @@ Load an action handler library from an assembly file.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Path | string | yes | Path to the assembly (.dll) file |
-| Namespace | string | no | Limit handler discovery to this namespace |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Path | the path, inline (`add module 'plugins/MyHandlers.dll'`) | path | yes | Path to the assembly (.dll) file |
+| Namespace | `namespace '<ns>'` | string | no | Limit handler discovery to this namespace |
 
 **Returns:** A record with:
 
@@ -39,9 +39,9 @@ Unload a previously loaded module by name.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Name | string | yes | Module name to unregister |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Name | the name, inline (`remove module 'MyHandlers'`) | string | yes | Module name to unregister |
 
 Returns 404 if the module is not found.
 

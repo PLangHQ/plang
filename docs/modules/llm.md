@@ -23,22 +23,22 @@ Send a query to an LLM.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Messages | list | yes | — | Conversation messages with Role (system/user/assistant) and Text |
-| Tools | list | no | — | Goals available as tools for the LLM to call |
-| OnToolCall | goal | no | — | Callback fired before/after each tool execution |
-| OnValidateResponse | goal | no | — | Callback to validate the response. Return error to retry |
-| OnStream | goal | no | — | Callback fired for each streaming chunk |
-| Schema | string | no | — | JSON schema the response must conform to |
-| Format | string | no | — | Response format: json, md, python, yaml, etc. |
-| Model | string | no | gpt-4.1-mini | Model override |
-| ContinuePreviousConversation | bool | no | false | Prepend stored conversation history from previous queries |
-| Temperature | double | no | 0.0 | Sampling temperature (0.0 = deterministic) |
-| MaxTokens | int | no | 4000 | Maximum tokens in the response |
-| MaxToolCalls | int | no | 10 | Maximum total individual tool calls before stopping |
-| MaxValidationRetries | int | no | 3 | Maximum validation retries before returning error |
-| Cache | bool | no | true | Cache the response. Skipped when Tools is non-null |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Messages | `system: …` / `user: …` lines | list | yes | — | Conversation messages with Role (system/user/assistant) and Text |
+| Tools | `tools:` block | list | no | — | Goals available as tools for the LLM to call |
+| OnToolCall | `onToolCall call <Goal>` | goal | no | — | Callback fired before/after each tool execution |
+| OnValidateResponse | `onValidateResponse call <Goal>` | goal | no | — | Callback to validate the response. Return error to retry |
+| OnStream | `onStream call <Goal>` | goal | no | — | Callback fired for each streaming chunk |
+| Schema | `schema: {…}` | object | no | — | JSON schema the response must conform to |
+| Format | `format: python` | string | no | — | Response format: json, md, python, yaml, etc. |
+| Model | `model: gpt-4o` | string | no | gpt-4.1-mini | Model override |
+| ContinuePreviousConversation | `continuePreviousConversation` | bool | no | false | Prepend stored conversation history from previous queries |
+| Temperature | `temperature 0.2` | double | no | 0.0 | Sampling temperature (0.0 = deterministic) |
+| MaxTokens | the max tokens for the response | int | no | 16000 | Maximum tokens in the response |
+| MaxToolCalls | the cap on tool calls | int | no | 10 | Maximum total individual tool calls before stopping |
+| MaxValidationRetries | the retry cap | int | no | 0 | Maximum validation retries before returning error |
+| Cache | `cache false` | bool | no | true | Cache the response. Skipped when Tools is non-null |
 
 **Returns:** The LLM's response — parsed JSON object when format is json, extracted text for other formats, or raw text when no format is set.
 

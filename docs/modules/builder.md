@@ -40,9 +40,9 @@ Finds and parses `.goal` files from a directory. Merges existing `.pr` build dat
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Path | string | no | "." | Directory to search for `.goal` files recursively |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Path | `from '<dir>'` (`get goals from '.'`) | path | no | "." | Directory to search for `.goal` files recursively |
 
 **Returns:** `List<Goal>` — parsed goals with merged `.pr` data. File read errors appear as warnings, not failures.
 
@@ -56,9 +56,9 @@ Serializes goals to a `.pr` file. All goals from one `.goal` file share the same
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Goals | list | yes | Goals to serialize (must have Path set) |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Goals | the list, inline (`save goals %goals%`) | list | yes | Goals to serialize (must have Path set) |
 
 **Returns:** `true` on success.
 
@@ -72,9 +72,9 @@ Validates that LLM-returned actions exist in the module registry, resolves `goal
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Actions | Actions | yes | Action collection to validate |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Actions | the collection, inline (`validate actions %actions%`) | Actions | yes | Action collection to validate |
 
 **Returns:** `true` if all actions are valid. Error listing unknown actions if any are not found.
 
@@ -88,10 +88,10 @@ Merges LLM-derived fields from one step onto another. Structural fields (Text, I
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Step | Step | yes | Target step (structural data from parser) |
-| StepFromLlm | Step | yes | Source step (LLM-derived data) |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Step | the first step, inline (`merge step %step% …`) | Step | yes | Target step (structural data from parser) |
+| StepFromLlm | `with %stepFromLlm%` | Step | yes | Source step (LLM-derived data) |
 
 **Returns:** The merged step.
 
@@ -105,9 +105,9 @@ Loads application metadata from `.build/app.pr`.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Path | string | no | "." | Base directory containing `.build/app.pr` |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Path | the base dir, inline (`get app`; defaults to `.`) | path | no | "." | Base directory containing `.build/app.pr` |
 
 **Returns:** `AppData` if the file exists and is valid, `null` otherwise.
 
@@ -121,10 +121,10 @@ Saves application metadata to `.build/app.pr`.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| App | AppData | yes | — | Application metadata to save |
-| Path | string | no | ".build/app.pr" | Output file path |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| App | the metadata, inline (`save app %app%`) | AppData | yes | — | Application metadata to save |
+| Path | the output path, inline (defaults to `.build/app.pr`) | string | no | ".build/app.pr" | Output file path |
 
 **Returns:** The saved `AppData`.
 

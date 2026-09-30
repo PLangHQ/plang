@@ -34,11 +34,11 @@ Execute a goal conditionally.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Condition | bool | yes | The condition to evaluate |
-| GoalIfTrue | goal | no | Goal to call if condition is true |
-| GoalIfFalse | goal | no | Goal to call if condition is false |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Condition | the condition, inline (`if %age% > 18 …`) | bool | yes | The condition to evaluate |
+| GoalIfTrue | `then call <Goal>` | goal | no | Goal to call if condition is true |
+| GoalIfFalse | `else call <Goal>` | goal | no | Goal to call if condition is false |
 
 **Returns:** The condition value (true or false).
 

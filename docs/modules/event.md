@@ -18,15 +18,15 @@ Register an event binding. All event types use this single action with a `Type` 
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Type | string | yes | — | Event type (see below) |
-| GoalToCall | goal | yes | — | Goal to execute when event fires |
-| GoalPattern | string | no | — | Glob or regex pattern to match goal names (null = all goals) |
-| StepPattern | string | no | — | Glob or regex pattern to match step text (step-level events only) |
-| ActionPattern | string | no | — | Glob or regex pattern to match action names, e.g., `http.*` (action-level events only) |
-| IsRegex | bool | no | false | Treat patterns as regular expressions |
-| Priority | int | no | 0 | Execution priority (higher = runs first) |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Type | the leading phrase (`before each goal`, `after goal`, `before step`, `before action`) | string | yes | — | Event type (see below) |
+| GoalToCall | `call <GoalName>` (`call Cleanup`) | goal | yes | — | Goal to execute when event fires |
+| GoalPattern | `on goal pattern '<glob>'` | string | no | — | Glob or regex pattern to match goal names (null = all goals) |
+| StepPattern | pattern to match step text, inline | string | no | — | Glob or regex pattern to match step text (step-level events only) |
+| ActionPattern | `on action pattern '<glob>'` (`… 'http.*'`) | string | no | — | Glob or regex pattern to match action names, e.g., `http.*` (action-level events only) |
+| IsRegex | `is regex` | bool | no | false | Treat patterns as regular expressions |
+| Priority | priority number, inline | int | no | 0 | Execution priority (higher = runs first) |
 
 **Event types:**
 
@@ -51,9 +51,9 @@ Remove a registered event binding by ID.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| EventId | string | yes | The binding ID returned when the event was registered |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| EventId | `remove event <id>` (`remove event %eventId%`) | string | yes | The binding ID returned when the event was registered |
 
 ### skipAction
 
@@ -66,9 +66,9 @@ Skip the current action and return a custom value instead. Use this inside a `Be
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Value | object | no | Value to return instead of the action's real result |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Value | `with value <x>` or `value = <x>` | object | no | Value to return instead of the action's real result |
 
 ## Examples
 

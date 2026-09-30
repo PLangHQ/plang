@@ -31,12 +31,12 @@ Store a value in a variable.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Name | string | yes | — | Variable name |
-| Value | object | no | — | Value to store |
-| Type | string | no | — | Type hint (int, string, bool, etc.) |
-| AsDefault | bool | no | false | When true, only sets if the variable doesn't already exist; existing value wins |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Name | the `%var%` before `=` (`set %name% = …`) | string | yes | — | Variable name |
+| Value | after the `=`, inline (`set %x% = 5`) | object | no | — | Value to store |
+| Type | `as <type>` or `(<type>)` (`set %n% = "42" as int`) | string | no | — | Type hint (int, string, bool, etc.) |
+| AsDefault | `set default %x% = …` | bool | no | false | When true, only sets if the variable doesn't already exist; existing value wins |
 
 #### `set default`
 
@@ -73,9 +73,9 @@ Retrieve a variable's value. Usually you just reference `%varName%` directly —
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Name | string | yes | Variable name to retrieve |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Name | the `%var%`, inline (`get %name%`) | string | yes | Variable name to retrieve |
 
 ### exists
 
@@ -88,9 +88,9 @@ Check if a variable exists in the current scope.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Name | string | yes | Variable name to check |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Name | `check if %var% exists` | string | yes | Variable name to check |
 
 **Returns:** `true` if the variable exists, `false` otherwise.
 
@@ -104,9 +104,9 @@ Remove a variable from the memory stack.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Name | string | yes | Variable name to remove |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Name | `remove variable %var%` | string | yes | Variable name to remove |
 
 ### clear
 

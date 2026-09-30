@@ -14,9 +14,9 @@ Retrieve a setting by key.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Key | string | yes | Setting key |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Key | `get setting '<key>'` | string | yes | Setting key |
 
 If the setting doesn't exist, PLang will prompt the user to enter a value (returns an `AskError` that triggers the ask flow).
 
@@ -31,10 +31,10 @@ Store a setting.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Key | string | yes | Setting key |
-| Value | object | no | Value to store |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Key | `set setting '<key>'` | string | yes | Setting key |
+| Value | `to <value>` (`… to 'sk-abc123'`, `… to 3`) | object | no | Value to store |
 
 ### remove
 
@@ -46,9 +46,9 @@ Delete a setting.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Key | string | yes | Setting key to remove |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Key | `remove setting '<key>'` | string | yes | Setting key to remove |
 
 ## Examples
 

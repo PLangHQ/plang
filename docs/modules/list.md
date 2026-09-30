@@ -23,11 +23,11 @@ Add an item to a list. Creates the list if it doesn't exist.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| ListName | string | yes | — | Variable name of the list |
-| Value | object | no | — | Item to add |
-| AtIndex | int | no | -1 | Insert at this index (-1 = append) |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| ListName | `to %fruits%` | variable | yes | — | Variable name of the list |
+| Value | the item, inline (`add 'apple' …`) | object | no | — | Item to add |
+| AtIndex | `at index 0` / `at position 0` | int | no | -1 | Insert at this index (-1 = append) |
 
 ### remove
 
@@ -43,11 +43,11 @@ Remove an item from a list by value or index.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| ListName | string | yes | — | Variable name of the list |
-| Value | object | no | — | Value to remove |
-| AtIndex | int | no | -1 | Index to remove (-1 = use Value) |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| ListName | `from %fruits%` | variable | yes | — | Variable name of the list |
+| Value | the value, inline (`remove 'banana' …`) | object | no | — | Value to remove |
+| AtIndex | `item at index 0` | int | no | -1 | Index to remove (-1 = use Value) |
 
 ### get
 
@@ -59,10 +59,10 @@ Get an item at a specific index.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| ListName | string | yes | Variable name of the list |
-| Index | int | yes | Zero-based index |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| ListName | `from %fruits%` | variable | yes | Variable name of the list |
+| Index | `item at index 2` | int | yes | Zero-based index |
 
 ### set
 
@@ -74,11 +74,11 @@ Replace an item at a specific index.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| ListName | string | yes | Variable name of the list |
-| Index | int | yes | Zero-based index |
-| Value | object | no | New value |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| ListName | `in %fruits%` | variable | yes | Variable name of the list |
+| Index | `item at index 0` | int | yes | Zero-based index |
+| Value | `to 'mango'` | object | no | New value |
 
 ### count
 
@@ -90,9 +90,9 @@ Get the number of items in a list or dictionary.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| ListName | string | yes | Variable name of the collection |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| ListName | `count items in %fruits%` | variable | yes | Variable name of the collection |
 
 **Returns:** Integer count. Returns 0 if not a collection.
 
@@ -146,10 +146,10 @@ Sort a list in place.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| ListName | string | yes | — | Variable name of the list |
-| Descending | bool | no | false | Sort in descending order |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| ListName | the list, inline (`sort %numbers%`) | variable | yes | — | Variable name of the list |
+| Descending | `descending` | bool | no | false | Sort in descending order |
 
 ### reverse
 
@@ -172,10 +172,10 @@ Join list items into a string.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| ListName | string | yes | — | Variable name of the list |
-| Separator | string | no | "," | Separator between items |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| ListName | the list, inline (`join %fruits% …`) | variable | yes | — | Variable name of the list |
+| Separator | `with ', '` | string | no | "," | Separator between items |
 
 ### split
 
@@ -188,11 +188,11 @@ Split a string into a list.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Value | string | yes | — | String to split |
-| Separator | string | no | "," | Delimiter |
-| RemoveEmpty | bool | no | false | Remove empty entries |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Value | the string, inline (`split 'a,b,c' …`) | string | yes | — | String to split |
+| Separator | `by ','` | string | no | "," | Delimiter |
+| RemoveEmpty | drop empty entries | bool | no | false | Remove empty entries |
 
 ### flatten
 
@@ -226,11 +226,11 @@ Generate a list of numbers.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Start | int | yes | — | Start value (inclusive) |
-| End | int | yes | — | End value (inclusive) |
-| Step | int | no | 1 | Increment between values |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Start | `from 1` | int | yes | — | Start value (inclusive) |
+| End | `to 10` | int | yes | — | End value (inclusive) |
+| Step | `step 2` | int | no | 1 | Increment between values |
 
 ## Examples
 

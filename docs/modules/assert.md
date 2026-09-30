@@ -15,11 +15,11 @@ Assert two values are equal.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Expected | object | yes | Expected value |
-| Actual | object | yes | Actual value |
-| Message | string | no | Custom error message |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Expected | the value after `equals` (`assert %result% equals 42`) | object | yes | Expected value |
+| Actual | the `%var%` before `equals` (`assert %result% equals …`) | object | yes | Actual value |
+| Message | the trailing message (`, 'Name should be John'`) | string | no | Custom error message |
 
 Handles numeric type coercion — `42` (int) equals `42` (long).
 

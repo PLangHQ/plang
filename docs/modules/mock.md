@@ -24,12 +24,12 @@ Create a mock that intercepts matching actions.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| ActionPattern | string | yes | Action pattern to mock (supports `*` wildcard) |
-| ReturnValue | object | no | Value to return (null = spy mode) |
-| GoalToCall | goal | no | Goal to call instead of the action |
-| Parameters | dictionary | no | Parameter matchers |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| ActionPattern | `mock action '<pattern>'` | string | yes | Action pattern to mock (supports `*` wildcard) |
+| ReturnValue | `return <value>` | object | no | Value to return (null = spy mode) |
+| GoalToCall | `call !<Goal>` | goal | no | Goal to call instead of the action |
+| Parameters | `with parameters {…}` | dictionary | no | Parameter matchers |
 
 **Returns:** A `MockHandle` with:
 
@@ -52,11 +52,11 @@ Check that a mock was called the expected number of times.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Mock | MockHandle | yes | The mock to verify |
-| ExpectedCount | int | yes | Expected number of calls |
-| Message | string | no | Custom error message |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Mock | the handle, inline (`verify %mockHandle%`) | MockHandle | yes | The mock to verify |
+| ExpectedCount | `was called <n> times` | int | yes | Expected number of calls |
+| Message | the message, inline (`, '<message>'`) | string | no | Custom error message |
 
 **Error:** Returns `AssertionError` if the actual call count doesn't match.
 
@@ -74,9 +74,9 @@ Remove a mock and clear its call history.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Mock | MockHandle | no | Specific mock to reset (null = reset all) |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Mock | `reset mock %handle%` (or `reset all mocks`) | MockHandle | no | Specific mock to reset (null = reset all) |
 
 ## Examples
 

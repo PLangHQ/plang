@@ -23,11 +23,11 @@ Send content to an output channel.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Content | object | yes | — | The content to write |
-| Actor | string | no | "user" | Which actor to write to |
-| Channel | string | no | "default" | Output channel name |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Content | the value, inline (`write out %message%`) | object | yes | — | The content to write |
+| Actor | rarely set; the user by default | string | no | "user" | Which actor to write to |
+| Channel | `to <name> channel` (`write "hi" to logger channel`) | string | no | "default" | Output channel name |
 
 ### ask
 
@@ -41,10 +41,10 @@ Ask the actor a question. PLang treats every ask as a *suspend point* — the go
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Question | string | yes | — | The question shown to the user |
-| Variables | list | no | empty | Names of variables that survive the suspend (see below) |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Question | the question, inline (`ask 'What is your name?'`) | string | yes | — | The question shown to the user |
+| Variables | `vars: %x%` (`ask '…', vars: %userId%`) | list | no | empty | Names of variables that survive the suspend (see below) |
 
 #### Carrying state across the suspend — `vars:`
 

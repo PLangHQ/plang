@@ -15,10 +15,10 @@ Load code from a .NET assembly.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Path | string | yes | Path to the .dll file |
-| Name | string | no | Display name (the implementation supplies its own name by default) |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Path | the path, inline (`load code 'plugins/my-crypto.dll'`) | path | yes | Path to the .dll file |
+| Name | `as '<name>'` | string | no | Display name (the implementation supplies its own name by default) |
 
 The loaded assembly is scanned for three kinds of contribution:
 
@@ -43,10 +43,10 @@ Remove a registered implementation by name.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Name | string | yes | Implementation name to remove |
-| Type | string | no | Type filter (e.g., "signing", "crypto", "identity", "key") |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Name | the name, inline (`remove code 'custom-crypto'`) | string | yes | Implementation name to remove |
+| Type | `from <type>` (`remove code 'custom-crypto' from signing`) | string | no | Type filter (e.g., "signing", "crypto", "identity", "key") |
 
 Cannot remove the default — set a different default first via `setDefault`.
 
@@ -61,9 +61,9 @@ List registered implementations.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Type | string | no | Type to filter by. Omit to list everything |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Type | the type before `code` (`list signing code`) | string | no | Type to filter by. Omit to list everything |
 
 ### setDefault
 
@@ -75,10 +75,10 @@ Switch which registered implementation is the default for a type.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Name | string | yes | Implementation name to promote to default |
-| Type | string | yes | Type the default applies to (e.g., "signing", "crypto") |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Name | `to '<name>'` (`set default signing code to 'custom-signing'`) | string | yes | Implementation name to promote to default |
+| Type | the type before `code` (`set default signing code`) | string | yes | Type the default applies to (e.g., "signing", "crypto") |
 
 ## Code Types
 

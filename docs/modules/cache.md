@@ -29,11 +29,11 @@ On a cache **hit**, the wrapped action is skipped entirely and the stored result
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| DurationMs | long | yes | — | Cache lifetime in milliseconds |
-| Sliding | bool | no | false | If true, each access resets the TTL |
-| Key | string | no | auto | Explicit cache key. Defaults to `step:{goalPath}:{stepIndex}` |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| DurationMs | `cache for <duration>` (`cache for 10 minutes`) | long | yes | — | Cache lifetime in milliseconds |
+| Sliding | `sliding` | bool | no | false | If true, each access resets the TTL |
+| Key | `key='<key>'` | string | no | auto | Explicit cache key. Defaults to `step:{goalPath}:{stepIndex}` |
 
 ### Default cache key
 

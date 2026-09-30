@@ -24,9 +24,9 @@ Execute another goal.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| GoalName | goal | yes | Goal to call (prefix with `!` for same-file goals) |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| GoalName | the goal, inline (`call !Greet` / `call helpers/Utilities`) | goal | yes | Goal to call (prefix with `!` for same-file goals) |
 
 ## Goal Naming
 

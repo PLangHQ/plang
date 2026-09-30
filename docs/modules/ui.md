@@ -24,11 +24,11 @@ Render a Liquid template — inline content or a file.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Template | string | yes | — | Liquid template content (inline) or file path |
-| Parameters | list | no | — | Explicit variables that override memory stack values in the template |
-| IsFile | bool | no | null | `true` = file path, `false` = inline content, `null` = auto-detect |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Template | the template, inline (`render 'email.html'`) | string | yes | — | Liquid template content (inline) or file path |
+| Parameters | `with <name>=<value>` (`render 'page.html' with title=%pageTitle%`) | list | no | — | Explicit variables that override memory stack values in the template |
+| IsFile | `render file '<path>'` (force file) / `as inline` (force inline) | bool | no | null | `true` = file path, `false` = inline content, `null` = auto-detect |
 
 **Returns:** The rendered string.
 

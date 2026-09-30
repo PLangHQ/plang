@@ -29,9 +29,9 @@ The error flows into any outer `on error` modifier just like any other failure.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Ms | int | yes | — | Deadline in milliseconds |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Ms | `timeout after <duration>` (`timeout after 500 ms`) | int | yes | — | Deadline in milliseconds |
 
 ## Semantics
 

@@ -231,11 +231,11 @@ Walks a directory for test files and decides which ones are `Ready`.
 - test.discover tests in 'Tests/Foo' recursive=false, pattern='*.fixture.goal', write to %tests%
 ```
 
-| Name | Type | Default | Description |
-|---|---|---|---|
-| `Path` | string | `.` | Directory to walk. Resolved under the app root; traversal outside is rejected and returns an empty list. |
-| `Pattern` | string | `*.test.goal` | Filename glob. Override for fixture discovery. |
-| `Recursive` | bool | `true` | Walk subdirectories. |
+| Property | How you say it | Type | Default | Description |
+|---|---|---|---|---|
+| `Path` | `tests in '<dir>'` (`discover tests in 'Tests/Foo'`) | path | `.` | Directory to walk. Resolved under the app root; traversal outside is rejected and returns an empty list. |
+| `Pattern` | `pattern='<glob>'` | string | `*.test.goal` | Filename glob. Override for fixture discovery. |
+| `Recursive` | `recursive` / `recursive=false` | bool | `true` | Walk subdirectories. |
 
 **Returns:** a `List<TestFile>`. Each entry carries `Path`, `Directory`, `PrPath`, `Goal`, `EntryGoalName`, `GoalHash`, `BuilderVersion`, `Tags`, `Status`, `StatusReason`. `Status` is `Ready`, `Stale`, or `Skipped` after include/exclude filtering.
 
@@ -248,11 +248,11 @@ Runs the discovered tests in isolated child Apps, returns the run-wide `Results`
 - test.run tests %tests%, parallel=1, timeout=5, write to %results%
 ```
 
-| Name | Type | Default | Description |
-|---|---|---|---|
-| `Tests` | list of `TestFile` | required | Output of `test.discover`. |
-| `Parallel` | int | `Testing.Parallel` (= `ProcessorCount`) | Concurrent test slot count. Bumped to 1 if less. |
-| `Timeout` | int | `Testing.TimeoutSeconds` (= 30) | Per-test timeout in seconds. |
+| Property | How you say it | Type | Default | Description |
+|---|---|---|---|---|
+| `Tests` | `tests %var%` (`test.run tests %tests%`) | list of `TestFile` | required | Output of `test.discover`. |
+| `Parallel` | `parallel=<n>` | int | `Testing.Parallel` (= `ProcessorCount`) | Concurrent test slot count. Bumped to 1 if less. |
+| `Timeout` | `timeout=<seconds>` | int | `Testing.TimeoutSeconds` (= 30) | Per-test timeout in seconds. |
 
 **Returns:** `Results` — an enumerable of `TestRun` objects (thread-safe; backed by `ConcurrentQueue`). Does not throw for child-test failures; failure is data.
 
@@ -265,9 +265,9 @@ Declares user tags for the running test. Read at discovery time to build the tag
 - tag this test 'fast', 'slow'
 ```
 
-| Name | Type | Default | Description |
-|---|---|---|---|
-| `Tags` | string or list | required | One or more tag strings. |
+| Property | How you say it | Type | Default | Description |
+|---|---|---|---|---|
+| `Tags` | the tag(s), inline (`tag this test 'http', 'fast'`) | string or list | required | One or more tag strings. |
 
 **Returns:** the current tag set as a list (empty outside test mode). Outside `--test` the action no-ops rather than erroring, so shared goals that tag themselves still work when reused in production.
 
@@ -280,10 +280,10 @@ Writes the console summary + coverage tables + a file artefact.
 - test.report results %results%, format='junit', write to %report%
 ```
 
-| Name | Type | Default | Description |
-|---|---|---|---|
-| `Results` | `Results` | `Testing.Results` on the current App | Run collection to render. Defaults so `test.report` with no args works inside `system/test.goal`. |
-| `Format` | string | `Testing.Format` (default `json`) | `json` → `.test/results.json`; `junit` → `.test/junit.xml`. |
+| Property | How you say it | Type | Default | Description |
+|---|---|---|---|---|
+| `Results` | `results %var%` (`test.report results %results%`) | `Results` | `Testing.Results` on the current App | Run collection to render. Defaults so `test.report` with no args works inside `system/test.goal`. |
+| `Format` | `format='<json\|junit>'` | string | `Testing.Format` (default `json`) | `json` → `.test/results.json`; `junit` → `.test/junit.xml`. |
 
 **Returns:** a `Data` result with the following observable properties:
 

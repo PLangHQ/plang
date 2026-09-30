@@ -18,18 +18,18 @@ Send an HTTP request.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Url | string | yes | — | URL (absolute, relative to BaseUrl, or bare domain) |
-| Method | string | no | GET | HTTP method (GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS) |
-| Body | object | no | — | Request body. Strings sent as-is, objects JSON-serialized |
-| Headers | dictionary | no | — | Per-request headers (merged with defaults) |
-| ContentType | string | no | application/json | Request content type |
-| Encoding | string | no | utf-8 | Character encoding |
-| TimeoutInSec | int | no | 30 | Request timeout in seconds |
-| Unsigned | bool | no | false | Skip request signing |
-| OnStream | goal | no | — | Goal to call for each streamed chunk |
-| StreamAs | string | no | — | Stream format: Line, SSE, or Bytes |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Url | the URL, inline (`get 'https://...'`) | string | yes | — | URL (absolute, relative to BaseUrl, or bare domain) |
+| Method | the verb you use (`get`, `post`, `put`, `delete`) | string | no | GET | HTTP method (GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS) |
+| Body | `with body %item%` | object | no | — | Request body. Strings sent as-is, objects JSON-serialized |
+| Headers | the headers to send | dictionary | no | — | Per-request headers (merged with defaults) |
+| ContentType | the content type | string | no | application/json | Request content type |
+| Encoding | the encoding | string | no | utf-8 | Character encoding |
+| TimeoutInSec | `timeout 30 seconds` | int | no | 30 | Request timeout in seconds |
+| Unsigned | `unsigned` | bool | no | false | Skip request signing |
+| OnStream | `on stream call <Goal>` | goal | no | — | Goal to call for each streamed chunk |
+| StreamAs | `stream as Line` | string | no | — | Stream format: Line, SSE, or Bytes |
 
 **Returns:** Parsed response body as the appropriate type (object for JSON, string for text, etc.).
 
@@ -44,15 +44,15 @@ Download a file.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Url | string | yes | — | URL to download from |
-| SaveTo | string | yes | — | Local file path to save to |
-| IfExists | string | no | Error | What to do if file exists: Error, Overwrite, or Skip |
-| Headers | dictionary | no | — | Per-request headers |
-| TimeoutInSec | int | no | 30 | Request timeout in seconds |
-| Unsigned | bool | no | false | Skip request signing |
-| OnProgress | goal | no | — | Goal called with transfer progress updates |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Url | the URL, inline (`download 'https://...'`) | string | yes | — | URL to download from |
+| SaveTo | `save to '<path>'` | string | yes | — | Local file path to save to |
+| IfExists | `if exists overwrite` | string | no | Error | What to do if file exists: Error, Overwrite, or Skip |
+| Headers | the headers to send | dictionary | no | — | Per-request headers |
+| TimeoutInSec | `timeout 30 seconds` | int | no | 30 | Request timeout in seconds |
+| Unsigned | `unsigned` | bool | no | false | Skip request signing |
+| OnProgress | `on progress call <Goal>` | goal | no | — | Goal called with transfer progress updates |
 
 **Returns:** The saved file path.
 
@@ -67,17 +67,17 @@ Upload content to a URL.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Url | string | yes | — | URL to upload to |
-| Content | object | yes | — | Content to upload (see content detection below) |
-| Method | string | no | POST | HTTP method |
-| Headers | dictionary | no | — | Per-request headers |
-| Encoding | string | no | utf-8 | Character encoding |
-| TimeoutInSec | int | no | 30 | Request timeout in seconds |
-| Unsigned | bool | no | false | Skip request signing |
-| As | string | no | — | Force content format: File, Base64, Form, or Text |
-| OnProgress | goal | no | — | Goal called with transfer progress updates |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Url | `to '<url>'` | string | yes | — | URL to upload to |
+| Content | the content, inline (`upload 'report.pdf' …`) | object | yes | — | Content to upload (see content detection below) |
+| Method | the method to use | string | no | POST | HTTP method |
+| Headers | the headers to send | dictionary | no | — | Per-request headers |
+| Encoding | the encoding | string | no | utf-8 | Character encoding |
+| TimeoutInSec | `timeout 30 seconds` | int | no | 30 | Request timeout in seconds |
+| Unsigned | `unsigned` | bool | no | false | Skip request signing |
+| As | the format to force (`File`, `Base64`, `Form`, `Text`) | string | no | — | Force content format: File, Base64, Form, or Text |
+| OnProgress | `on progress call <Goal>` | goal | no | — | Goal called with transfer progress updates |
 
 **Content auto-detection** (when `As` is not set):
 
@@ -99,17 +99,17 @@ Set default HTTP configuration for the current scope.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| BaseUrl | string | no | — | Base URL for relative request URLs |
-| TimeoutInSec | int | no | — | Default timeout in seconds |
-| DefaultHeaders | dictionary | no | — | Default headers merged into every request |
-| ContentType | string | no | — | Default content type |
-| Encoding | string | no | — | Default encoding |
-| Unsigned | bool | no | — | Disable signing by default |
-| FollowRedirects | bool | no | — | Whether to follow HTTP redirects |
-| MaxRedirects | int | no | — | Maximum redirects to follow |
-| Default | bool | no | false | Apply to all requests app-wide (not just current scope) |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| BaseUrl | `base url '<url>'` | string | no | — | Base URL for relative request URLs |
+| TimeoutInSec | `timeout 60 seconds` | int | no | — | Default timeout in seconds |
+| DefaultHeaders | the default headers | dictionary | no | — | Default headers merged into every request |
+| ContentType | the default content type | string | no | — | Default content type |
+| Encoding | the default encoding | string | no | — | Default encoding |
+| Unsigned | `unsigned` | bool | no | — | Disable signing by default |
+| FollowRedirects | whether to follow redirects | bool | no | — | Whether to follow HTTP redirects |
+| MaxRedirects | the max redirects to follow | int | no | — | Maximum redirects to follow |
+| Default | `as default` | bool | no | false | Apply to all requests app-wide (not just current scope) |
 
 Only non-null values are written. Existing settings for omitted parameters are preserved.
 

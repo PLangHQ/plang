@@ -21,9 +21,9 @@ Verify the callback's signature, then dispatch it.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Callback | Data | yes | The callback envelope to run. The wrapped value must be a callback record |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Callback | the envelope, inline (`run %callback%`) | Data | yes | The callback envelope to run. The wrapped value must be a callback record |
 
 **Returns:** the `Data` produced by the resumed action — same as if the original suspending action had returned it directly.
 

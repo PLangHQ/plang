@@ -75,10 +75,10 @@ Raise a number to a power.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Base | number | yes | The base number |
-| Exponent | number | yes | The exponent |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Base | `raise 2 …` | number | yes | The base number |
+| Exponent | `to power 10` | number | yes | The exponent |
 
 ### sqrt
 
@@ -109,10 +109,10 @@ Round a number.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Value | number | yes | — | Number to round |
-| Decimals | int | no | 0 | Decimal places |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Value | the number, inline (`round 3.7`) | number | yes | — | Number to round |
+| Decimals | `to 2 decimals` | int | no | 0 | Decimal places |
 
 ### floor
 
@@ -160,10 +160,10 @@ Generate a random integer.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Min | int | no | 0 | Minimum value (inclusive) |
-| Max | int | no | 100 | Maximum value (inclusive) |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Min | `between 1 …` | int | no | 0 | Minimum value (inclusive) |
+| Max | `… and 6` | int | no | 100 | Maximum value (inclusive) |
 
 ## Type Preservation
 

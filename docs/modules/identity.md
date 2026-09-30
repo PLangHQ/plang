@@ -15,10 +15,10 @@ Create a new identity with an Ed25519 key pair.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Name | string | no | "default" | Identity name |
-| SetAsDefault | bool | no | false | Make this the default identity |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Name | the name, inline (`create identity 'alice'`) | string | no | "default" | Identity name |
+| SetAsDefault | `set as default` | bool | no | false | Make this the default identity |
 
 Names are case-insensitive and must be unique (including archived identities).
 
@@ -33,9 +33,9 @@ Get an identity by name, or the default identity.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Name | string | no | Identity name. Omit to get the default (auto-creates if none exist) |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Name | the name, inline (`get identity 'alice'`) | string | no | Identity name. Omit to get the default (auto-creates if none exist) |
 
 **Returns:** An identity object with:
 
@@ -69,9 +69,9 @@ Soft-delete an identity. Cannot archive the default — set a different default 
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Name | string | yes | Identity name to archive |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Name | the name, inline (`archive identity 'alice'`) | string | yes | Identity name to archive |
 
 Idempotent — archiving an already-archived identity is a no-op.
 
@@ -85,9 +85,9 @@ Restore an archived identity.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Name | string | yes | Identity name to restore |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Name | the name, inline (`unarchive identity 'alice'`) | string | yes | Identity name to restore |
 
 ### rename
 
@@ -99,10 +99,10 @@ Rename an identity. Keys are preserved.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Name | string | yes | Current identity name |
-| NewName | string | yes | New identity name |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Name | the name, inline (`rename identity 'alice' …`) | string | yes | Current identity name |
+| NewName | `to 'alice-prod'` | string | yes | New identity name |
 
 If the renamed identity is the default, `%MyIdentity%` updates automatically.
 
@@ -116,9 +116,9 @@ Set an identity as the default. Only one identity can be the default at a time.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Name | string | yes | Identity name to make default |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Name | `set default identity to 'alice'` | string | yes | Identity name to make default |
 
 Cannot set an archived identity as default.
 
@@ -132,9 +132,9 @@ Export an identity's full data including the private key.
 
 **Parameters:**
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| Name | string | no | Identity name. Omit to export the default |
+| Property | How you say it | Type | Required | Description |
+|----------|----------------|------|----------|-------------|
+| Name | the name, inline (`export identity 'alice'`) | string | no | Identity name. Omit to export the default |
 
 Returns the full identity data including the private key.
 

@@ -15,12 +15,12 @@ Sign data and attach a signature envelope.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Data | object | yes | — | Data to sign |
-| Contracts | list | no | ["C0"] | Contract identifiers attached to the signature |
-| Headers | dictionary | no | — | Optional headers included in the envelope |
-| Expires | TimeSpan | no | — | Signature TTL (e.g., `PT5M` ISO 8601 duration). When set, `signature.Expires = Created + this`. |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Data | the payload, inline (`sign %data%`) | object | yes | — | Data to sign |
+| Contracts | `with contracts ['A', 'B']` | list | no | ["C0"] | Contract identifiers attached to the signature |
+| Headers | headers, inline | dictionary | no | — | Optional headers included in the envelope |
+| Expires | `expires in <duration>` (`expires in 60000ms`) | duration | no | — | Signature TTL (e.g., `PT5M` ISO 8601 duration). When set, `signature.Expires = Created + this`. |
 
 **Returns:** The data with a `.Signature` property containing the signed envelope (nonce, timestamp, identity, hash, and cryptographic signature).
 
@@ -35,12 +35,12 @@ Verify a signed data envelope.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Data | object | yes | — | Signed data to verify (must have `.Signature`) |
-| Contracts | list | no | — | Expected contracts to match |
-| Headers | dictionary | no | — | Expected headers to match |
-| TimeoutMs | long | no | — | Override the default timeout (5 minutes) |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Data | the signed value, inline (`verify %signed%`) | object | yes | — | Signed data to verify (must have `.Signature`) |
+| Contracts | `with contracts ['A', 'B']` | list | no | — | Expected contracts to match |
+| Headers | headers, inline | dictionary | no | — | Expected headers to match |
+| TimeoutMs | timeout override, inline | long | no | — | Override the default timeout (5 minutes) |
 
 **Returns:** `true` on success. On failure, returns an error with a specific key:
 

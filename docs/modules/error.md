@@ -20,11 +20,11 @@ Throw an error that stops execution of the current goal.
 
 **Parameters:**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| Message | string | yes | — | Error message |
-| StatusCode | int | no | 500 | HTTP-style status code |
-| Key | string | no | "UserError" | Error key for matching |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| Message | the message, inline (`throw error 'Something went wrong'`) | string | yes | — | Error message |
+| StatusCode | `status code <n>` (`… status code 404`) | int | no | 500 | HTTP-style status code |
+| Key | `key '<name>'` (`… key 'ValidationError'`) | string | no | "UserError" | Error key for matching |
 
 ## Error Handling — `on error`
 
@@ -98,16 +98,16 @@ Final fallback: `on error ignore` clears whatever error remains after retry and 
 
 **Parameters (on the underlying `error.handle` action):**
 
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| StatusCode | int | no | — | Match errors with this status code |
-| Key | string | no | — | Match errors with this key (case-insensitive) |
-| Message | string | no | — | Match errors whose message contains this substring |
-| Goal | goal.call | no | — | Goal to call when a matched error occurs |
-| RetryCount | int | no | — | Maximum retry attempts |
-| RetryOverMs | int | no | — | Total retry budget — `RetryOverMs / RetryCount` between attempts |
-| Order | enum | no | RetryFirst | `RetryFirst` or `GoalFirst` |
-| IgnoreError | bool | no | false | Consume the error after retry/goal are exhausted |
+| Property | How you say it | Type | Required | Default | Description |
+|----------|----------------|------|----------|---------|-------------|
+| StatusCode | `on error status <n>` | int | no | — | Match errors with this status code |
+| Key | `on error key '<name>'` | string | no | — | Match errors with this key (case-insensitive) |
+| Message | `on error message '<text>'` | string | no | — | Match errors whose message contains this substring |
+| Goal | `on error call <Goal>` | goal.call | no | — | Goal to call when a matched error occurs |
+| RetryCount | `on error retry <n> times` | int | no | — | Maximum retry attempts |
+| RetryOverMs | the retry time budget, in ms | int | no | — | Total retry budget — `RetryOverMs / RetryCount` between attempts |
+| Order | `retry first` / `goal first` | enum | no | RetryFirst | `RetryFirst` or `GoalFirst` |
+| IgnoreError | `on error ignore` | bool | no | false | Consume the error after retry/goal are exhausted |
 
 ## Error Propagation
 
