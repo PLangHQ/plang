@@ -51,6 +51,21 @@ public sealed class Browser : global::app.type.item.@this, global::app.type.item
     internal string[] Roots { get; set; } = [];
     /// <summary>The page at <paramref name="address"/> is one of plang's own.</summary>
     internal bool Own(string address) => Roots.Any(root => address.StartsWith(root, StringComparison.Ordinal));
+
+    /// <summary>The address as a person reads it: one of plang's own pages as its plang path — in the app
+    /// from its root (<c>/Desktop/notes.txt</c>), in the os folder under <c>/os/</c> — never
+    /// <c>file://</c>; a website as it is.</summary>
+    internal string Shown(string address)
+    {
+        if (Roots.Length > 0 && address.StartsWith(Roots[0], StringComparison.Ordinal))
+            return "/" + Uri.UnescapeDataString(address[Roots[0].Length..]);
+        if (Roots.Length > 1 && address.StartsWith(Roots[1], StringComparison.Ordinal))
+            return "/os/" + Uri.UnescapeDataString(address[Roots[1].Length..]);
+        return address;
+    }
+
+    /// <summary>A page's address for its window: what the globe shows (<see cref="Shown"/>), and the page itself.</summary>
+    internal global::app.module.screen.code.wayland.Address AddressOf(string address) => new(Shown(address), address);
     /// <summary>The screen Chromium draws onto (PlangOS's display), from <c>screen.open</c>.</summary>
     internal global::app.module.screen.Screen? Screen { get; set; }
     /// <summary>The page, off-screen (no screen): its frames and input go over this.</summary>

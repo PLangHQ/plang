@@ -52,7 +52,8 @@ internal sealed class Window : ISurfaceRole
     internal Size Size { get; private set; }           // the page's size
     internal Picture Picture { get; private set; } = Picture.None;
     internal Shown Shown { get; private set; } = Shown.Normal;
-    internal string Url { get; set; } = "";            // the page it shows (for the address field)
+    internal Address Address { get; set; } = Address.None;   // where it is: what the globe shows, and where that really is
+    internal IReadOnlyList<string> Tools { get; private set; } = [];   // the app's own, in the title bar (in place of back, forward)
     internal Rect? Above { get; private set; }         // the desktop's part above the windows (its start menu)
 
     internal Window(Display display, XdgToplevel toplevel, int id, bool desktop, Point at, Size size)
@@ -333,7 +334,8 @@ internal sealed class Window : ISurfaceRole
     }
 
     /// <summary>A command from PLang (the taskbar): focus, minimize, maximize, restore, close; the
-    /// page it shows (url); the desktop's part above the windows (above).</summary>
+    /// page it shows (url); the app's tools in its title bar (tools); the desktop's part above the
+    /// windows (above).</summary>
     internal void Command(string what, JsonObject e)
     {
         int N(string k) => e[k] is JsonValue v && v.TryGetValue<double>(out var d) ? (int)d : 0;
@@ -344,7 +346,14 @@ internal sealed class Window : ISurfaceRole
             case "maximize": Maximize(); break;
             case "restore": Restore(); break;
             case "close": Toplevel.Close(); break;
-            case "url": Url = e["url"]?.GetValue<string>() ?? ""; break;
+            case "url": Address = Address.Of(e["url"]); break;
+            case "tools":
+                Tools = e["tools"] is JsonArray names
+                    ? names.Select(n => n is JsonValue v && v.TryGetValue<string>(out var s) ? s : null).OfType<string>().Take(8).ToList()
+                    : [];
+                Bar?.Arrange();
+                if (!Picture.Empty) Bar?.Draw();
+                break;
             case "above" when Desktop:
                 var old = Above ?? default;
                 var now = new Rect(N("x"), N("y"), N("w"), N("h"));
@@ -375,6 +384,9 @@ internal sealed class Window : ISurfaceRole
     /// <summary>Asks PLang to send this window somewhere (the address field, the menu's pages).</summary>
     internal void Navigate(string where) => Display.Tell(new JsonObject { ["navigate"] = where, ["id"] = Id });
 
+    /// <summary>One of the app's tools was clicked: PLang hands it to the page.</summary>
+    internal void Tool(string name) => Display.Tell(new JsonObject { ["tool"] = name, ["id"] = Id });
+
     /// <summary>Asks PLang to open a window of its own (the menu's New window).</summary>
-    internal void OpenAnother() => Display.Tell(new JsonObject { ["open"] = Url, ["id"] = Id });
+    internal void OpenAnother() => Display.Tell(new JsonObject { ["open"] = Address.Source, ["id"] = Id });
 }

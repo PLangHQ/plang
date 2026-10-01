@@ -186,7 +186,8 @@ internal sealed class Display
             else if (e.ContainsKey("clipboard")) Clipboard.Copied(S("clipboard"));
             else if (e.ContainsKey("stats")) Tell(e);   // the host's numbers: the desktop's taskbar shows them
             else if (e.ContainsKey("video")) Frame.Lossless("the host can't show H.264: " + S("why"));
-            else if (e.ContainsKey("window")) Windows.ById(N("id"))?.Command(S("window"), e);
+            // the window by its id — or, from a window's own page, the one it is in ("from")
+            else if (e.ContainsKey("window")) Windows.ById(e.ContainsKey("id") ? N("id") : N("from"))?.Command(S("window"), e);
             Frame.Send();
             Flush();
         }
@@ -250,10 +251,10 @@ internal sealed class Display
     }
 
     /// <summary>The page window <paramref name="id"/> shows (for its address field).</summary>
-    internal void Url(int id, string url)
+    internal void Url(int id, Address address)
     {
         lock (Gate)
-            if (Windows.ById(id) is { } window) window.Url = url;
+            if (Windows.ById(id) is { } window) window.Address = address;
     }
 
     internal void Stop()

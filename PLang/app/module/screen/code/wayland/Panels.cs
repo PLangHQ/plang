@@ -49,7 +49,8 @@ internal abstract class Panel(Window owner) : IPart
 /// <summary>
 /// The address field that drops down under a title bar: the window's address, all of it selected
 /// (typing replaces it). Enter asks PLang to go there; Esc closes. A copy button at its right end
-/// puts the address on the host's clipboard.
+/// copies the address — the address copies itself (<see cref="Address.Copy"/>); what was typed
+/// instead is copied as typed.
 /// </summary>
 internal sealed class AddressField : Panel, IPart
 {
@@ -62,7 +63,7 @@ internal sealed class AddressField : Panel, IPart
 
     internal AddressField(Window owner) : base(owner)
     {
-        text = owner.Url;
+        text = owner.Address.Path;
         caret = text.Length;
     }
 
@@ -85,9 +86,11 @@ internal sealed class AddressField : Panel, IPart
     {
         if (!copyHover) return;
         copied = true;
-        Display.Frame.Clipboard(text);
+        Copy();
         Draw();
     }
+
+    private void Copy() => Display.Frame.Clipboard(text == Owner.Address.Path ? Owner.Address.Copy() : text);
 
     internal override bool Key(uint scancode, bool extended, int mods, bool down)
     {
@@ -95,9 +98,9 @@ internal sealed class AddressField : Panel, IPart
         var ctrl = (mods & 2) != 0;
         switch (scancode, extended)
         {
-            case (0x1C, _):   // Enter
+            case (0x1C, _):   // Enter: somewhere else — the address as it is goes nowhere new
                 Close();
-                if (text.Trim().Length > 0) Owner.Navigate(text.Trim());
+                if (text.Trim().Length > 0 && text != Owner.Address.Path) Owner.Navigate(text.Trim());
                 return true;
             case (0x01, false): Close(); return true;   // Esc
             case (0x0E, false): Backspace(); break;
@@ -108,7 +111,7 @@ internal sealed class AddressField : Panel, IPart
             case (0x4F, true): selected = false; caret = text.Length; break;
             case (0x1E, false) when ctrl: selected = true; break;                                   // Ctrl+A
             case (0x2F, false) when ctrl: Type(Display.Clipboard.Host.Replace("\r", " ").Replace("\n", " ")); return true;   // Ctrl+V
-            case (0x2E, false) when ctrl: Display.Frame.Clipboard(text); return true;              // Ctrl+C
+            case (0x2E, false) when ctrl: Copy(); return true;                                      // Ctrl+C
             default: return true;
         }
         Draw();
