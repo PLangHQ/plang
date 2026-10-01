@@ -80,11 +80,11 @@ public class KeepsItsKeyTests : System.IAsyncDisposable
         await Assert.That(thrown!.Error.Key).IsEqualTo("OutputGetterThrew");
     }
 
-    // A path whose location is a template resolves when read: a scheme no path kind holds is the read's answer.
+    // A path template (as the build marks one) resolves when read: a scheme no path kind holds is the read's answer.
     [Test] public async Task ATemplatePathToAnUnknownScheme_ReadsAsSchemeNotRegistered()
     {
-        await Ctx.Variable.Set("where", Ctx.Ok("s3://bucket/x"));
-        var path = new global::app.data.@this("p", global::app.type.item.path.@this.Resolve("%where%", Ctx), context: Ctx);
+        await Ctx.Variable.Set("where", Ctx.Ok("s3://bucket"));
+        var path = Make.Built(Ctx, "p", "%where%/x", new global::app.type.@this("path", template: "plang"));
 
         await path.Value();
 

@@ -33,9 +33,37 @@ Only the two readers of the build's own bytes, through `ReadContext.IsBuilt` (`t
 - the build reading its own answer — `goal/step/action/formal/reader.cs:379`
 
 It rides to the birth: `type.Read` (`type/this.cs:444–450`) hands it to the source and to `Make(slice, …)` → the
-wire (`wire/this.cs:30–35`). A read inside the bytes keeps it: the source's own read (`source.cs:231`), the wire's
-(`wire/this.cs:46`), and a row nested in a container (`serializer/json.cs:95`, `:191`; a goal call's parameters
-are such rows). Re-declaring keeps it (`source.cs:238`, `wire/this.cs:89`). Every other `ReadContext` is outside.
+wire (`wire/this.cs:30–35`). A read inside the bytes keeps it: the source's own read (`source.cs:247`), the wire's
+(`wire/this.cs:49`), and a row nested in a container (`serializer/json.cs:95`, `:191`; a goal call's parameters
+are such rows). Re-declaring keeps it (`source.cs:254`, `wire/this.cs:92`). Every other `ReadContext` is outside.
+
+## A partial template renders through text, then the type makes itself
+
+A source holding variables in its own text (`"%dir%/x.json"`, not a whole `%ref%`) is rendered by text, the one
+renderer, and the declared type is made from what it rendered:
+
+```
+source.Value(data)                                              source.cs:130
+├─ IsVariable (a whole %ref%) → the variable's own door         :148
+├─ Text is { } template                                         :168
+│    template.Value(data) → a plain text                        text/this.cs:164  (an unset own variable throws
+│                                                                 "…is not set" :187; an unset %!x% stays :186)
+│    _type.Make(rendered, ctx) → this type from that text       type/this.cs:374  (text: itself, its kind kept;
+│                                                                 path: path.Create → Resolve; a decline →
+│                                                                 DeclinedException → data.Fail, source.cs:206)
+│    made.Value(data)
+└─ else: kind-first decode, else the type's reader               :180–203
+```
+
+- **`Text` vs `RawText`.** `RawText` (`source.cs:85`) is the raw's CLR string face, for relay and display.
+  `Text` (`source.cs:232`) is a **text item** — `text.@this` holding the template and the variables this source
+  holds — and text renders it; the source only hands it over. Read off `Peek()`, so a byte raw declared text
+  (load vars content) renders the same way. Null for a plain source and a whole `%ref%`.
+- **A wire is no text** (`wire/this.cs:44`): a still-encoded slice is decoded and its parts render themselves (a
+  `%ref%` leaf is the value it names); rendering the json slice as one text would inline the values as text.
+- What a variable held is filled once: the rendered text is plain, and the value made from it holds no template
+  (a path's location is never one — `path/this.code.md`).
+- Still lazy: nothing renders until `Value`, and a source holding variables is never kept (`Cacheable`, `:128`).
 
 ## How outside content reaches the door
 
@@ -69,6 +97,9 @@ a peer's Data (plang wire, http, url/channel application/plang, the store)
 - `PLang.Tests/Data/App/VariablesTests/VariableOwnTests.cs` — `IsOwn` per hop.
 - `PLang.Tests/Shared/Make.cs` `Built` — a test authoring what the builder marks births it through the build's door;
   a template made straight from a raw string is outside content and holds nothing.
+- `PLang.Tests/Types/App/Types/PathTests/OutsideTextTests.cs` — a listed file, a wire value (marked or not) and a
+  string taken as a path stay as written; a developer's `read %dir%/x.txt` fills and reads; what `%dir%` held is
+  not filled again; a built path holding `%!…%` renders; an unset variable fails "not set".
 
 ## Known faults
 
@@ -79,9 +110,10 @@ a peer's Data (plang wire, http, url/channel application/plang, the store)
   the builder hands over actions the formal reader made, which are granted).
 - **A test making a template from a raw string** (`new Data(name, "%x%", textTemplate)`) makes outside content, which
   holds nothing. Tests birth what the builder marks through `Make.Built`.
-- **Paths hold their own template.** A path marks its own location a template (`path/this.cs:82`, `:168`) and
-  renders it (`:133–142`), outside this door: a listed file named `%!x%.txt` still renders. Next stage: a path made
-  from outside text is plain; a developer path template is a built source rendered through text.
+- **A plain `.pr` path slot with a bad scheme throws** out of `Value` (the path reader calls `Resolve`, which throws
+  `SchemeNotRegistered`; the reader doesn't decline), where a template path's lands on the Data. Logged, not fixed.
+- **A json-kinded text template** (a string token typed `text/json` holding a variable) renders as text before it
+  is made, so the kind-first decode is skipped; no build writes one today.
 - **Json content fills nothing** with `load vars` (its owner is `item`, `kind/json/this.cs:17`, so the raw stays
   bytes and parses as `clr(json)`). A separate ask.
 - **The Out view writes the template mark** (`data/this.Output.cs:95–101`) though a template has already rendered
