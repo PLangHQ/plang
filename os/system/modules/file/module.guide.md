@@ -22,3 +22,44 @@ The last one works whether `%source%` holds a local path or a URL — the progra
 **Errors come back as data.** A non-2xx response is not an exception — it arrives the way a permission denial or a disk-full error does, and you handle it with `on error`. The status maps to an error key: 404 is `NotFound`, 405 is `MethodNotAllowed`, and a network failure is `NetworkError`. See the [http](http.md) module for the full mapping.
 
 **When to use which.** `read %url%` is the shorthand for "GET this and give me the body." Reach for the [http](http.md) module (`- get %url%, write to %x%`) when you need to set the method, headers, or a request body — it exposes the full verb surface; this module is the one-liner.
+
+## Examples
+
+### Read, modify, save
+
+```plang
+Start
+- read 'data.json', write to %data%
+- set %data.processed% = true
+- save %data% to file 'data.json'
+- write out "processed: %data.processed%"
+```
+
+`data.json` was `{"name": "orders", "processed": false}`. Printed `processed: true`; the file is now `{"name":"orders","processed":true}`.
+
+### Copy with backup
+
+```plang
+Start
+- copy 'config.json' to 'config.backup.json', overwrite
+- set %newConfig% = {"version": 2}
+- save %newConfig% to file 'config.json'
+- read 'config.backup.json', write to %old%
+- write out "backup is version %old.version%, config is now version %newConfig.version%"
+```
+
+`config.json` was `{"version": 1}`. Printed `backup is version 1, config is now version 2`.
+
+### List and process files
+
+```plang
+Start
+- list files in 'inbox' matching "*.csv", write to %files%
+- foreach %files%, call ProcessFile file=%item%
+
+ProcessFile
+- read %file%, write to %content%
+- write out "Processing: %file%"
+```
+
+`inbox/` held `a.csv`, `b.csv` and `notes.txt`. Printed `Processing: inbox/a.csv`, `Processing: inbox/b.csv` — `notes.txt` is skipped, so you can see `matching "*.csv"` doing its work.
