@@ -150,7 +150,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// template renders, a scalar answers itself). Loud: a variable that holds nothing throws — a
     /// referenced value that isn't there is a bug at the reference. Boolean questions (conditions)
     /// tolerate absence through their own path (condition.code.Default), never here. A chain of
-    /// references deeper than the memory allows is a cycle.</summary>
+    /// references deeper than the memory allows is a cycle: the crash net for this door. Unreachable today —
+    /// a set stores what a reference names, never the reference (data.Settle), so no stored chain exists — kept
+    /// so a future binding that stores a reference fails as a plang error instead of overflowing the stack.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         var resolving = data.Context.Variable.Resolving;

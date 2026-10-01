@@ -39,3 +39,4 @@ Collected by the architect from the coder's eval rounds, the educator's probes a
 ## Added later on 2026-10-01
 
 - **19. `sleep 1 second` refused** (the educator, `/shared/educator/course/B-deciding-and-repeating/code/B6-waiting`): "1 is in the step but not in your answer; … your answer writes 1000". The cause is the action: `timer.sleep` takes `Ms` as `data<number>` milliseconds (`PLang/app/module/timer/sleep.cs:11`), and `sleep.examples.md` teaches `{"Ms": 2000}` for "sleep 2 seconds". Fix: `Duration` as `data<duration>` ("1s"); first a list of every action option holding a time as a number. With the builder bot.
+- **20. `read x as text` drops `as text`** (the os bot, 2026-10-01): the builder types the read `file/md` instead of text, so a markdown file comes back parsed rather than as its text. With the builder bot.
