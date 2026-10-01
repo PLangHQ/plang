@@ -20,9 +20,9 @@ public partial class download : IContext, IAddressed
     /// <summary>Per-request headers. Merged with Config.DefaultHeaders.</summary>
     public partial data.@this<global::app.type.item.dict.@this>? Header { get; init; }
 
-    /// <summary>Download timeout in seconds. Default: 30.</summary>
-    [Default(30)]
-    public partial data.@this<global::app.type.item.number.@this> TimeoutInSec { get; init; }
+    /// <summary>How long the download may take. Default: 30s.</summary>
+    [Default("30s")]
+    public partial data.@this<global::app.type.item.duration.@this> Timeout { get; init; }
 
     /// <summary>When true, skips request signing. Default: false.</summary>
     [Default(false)]
@@ -38,13 +38,8 @@ public partial class download : IContext, IAddressed
     /// <summary>Header merged into every request; per-request <see cref="Header"/> win on conflict.</summary>
     public partial data.@this<global::app.type.item.dict.@this>? DefaultHeaders { get; init; }
 
-    /// <summary>Whether to follow HTTP redirects. Default: true.</summary>
-    [Default(true)]
-    public partial data.@this<global::app.type.item.@bool.@this> FollowRedirects { get; init; }
-
-    /// <summary>Maximum redirects to follow. Default: 10.</summary>
-    [Default(10)]
-    public partial data.@this<global::app.type.item.number.@this> MaxRedirects { get; init; }
+    /// <summary>How redirects are followed — whether, and how many at most. Left out, up to ten are followed.</summary>
+    public partial data.@this<global::app.module.http.type.redirect.@this>? Redirect { get; init; }
 
     /// <summary>Max download size in bytes. Default 100MB.</summary>
     [Default(100 * 1024 * 1024)]

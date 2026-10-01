@@ -11,4 +11,4 @@ Step text: `add {goal: %goal.Name%, index: %step.Index%, response: %compileResul
 Properties: `{"ListName": "%trace.stepPasses%", "Value": {"goal": "%goal.Name%", "index": "%step.Index%", "response": "%compileResult%"}}` — variables inside an object keep their % signs.
 
 Step text: `insert 'first' at position 0 in %items%`
-Properties: `{"ListName": "%items%", "Value": "first", "AtIndex": 0}`
+Properties: `{"ListName": "%items%", "Value": "first", "At": 0}`

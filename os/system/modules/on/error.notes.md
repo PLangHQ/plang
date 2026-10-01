@@ -5,7 +5,7 @@ StatusCode — handle only errors with this status code.
 Key — handle only errors with this key (`on error key "NotFound"`).
 Message — handle only errors whose message contains this text.
 RetryCount — how many times to run the action again ("retry 3 times"); each retry is a fresh attempt.
-RetryOver — the time the retries are spread over, a duration ("over 30 seconds" → "PT30S").
+RetryOver — the time the retries are spread over, a duration ("over 30 seconds" → "30s").
 Order — GoalFirst when the step runs the recovery before retrying ("call X, then retry"); left out for the default, retrying first ("retry 3 times, then call X").
 Ignore — true when the step says to carry on past the error ("on error ignore", "on error 'NotFound' ignore").
 

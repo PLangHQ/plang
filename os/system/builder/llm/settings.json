@@ -85,7 +85,7 @@
     {
       "name": "timeout",
       "type": "duration",
-      "default": "PT30S"
+      "default": "30s"
     },
     {
       "name": "parallel",

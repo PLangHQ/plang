@@ -23,7 +23,7 @@ public class ErrorHandleTests
         PrAction[]? modifiers = null)
     {
         var parameters = new List<global::app.data.@this> { new("message", message, context: _app.actor.list.User.Context) };
-        if (statusCode != null) parameters.Add(new("statusCode", statusCode.Value, context: _app.actor.list.User.Context));
+        if (statusCode != null) parameters.Add(new("status", statusCode.Value, context: _app.actor.list.User.Context));
         if (key != null) parameters.Add(new("key", key, context: _app.actor.list.User.Context));
         return global::PLang.Tests.Shared.Make.With(new PrAction
         {

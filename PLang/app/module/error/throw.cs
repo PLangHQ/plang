@@ -19,8 +19,9 @@ public partial class Throw : IContext
     /// </summary>
     public partial data.@this? Data { get; init; }
 
+    /// <summary>The error's status — a number, as HTTP has them. Default: 400.</summary>
     [Default(400)]
-    public partial data.@this<global::app.type.item.number.@this> StatusCode { get; init; }
+    public partial data.@this<global::app.type.item.number.@this> Status { get; init; }
 
     [Default("error")]
     public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
@@ -59,7 +60,7 @@ public partial class Throw : IContext
         // Key carries its own [Default] — the unset case is answered there, once, where the
         // builder can also read it. A second fallback here would be the default stored twice.
         string key = (await Key.Value())!.Clr<string>()!;
-        int status = (await StatusCode.Value())!.ToInt32();
+        int status = (await Status.Value())!.ToInt32();
         string message = Message == null ? "" : (await Message.Value())?.Clr<string>() ?? "";
 
         // Normalize the attached values to a list so 1..N is uniform: an already-list

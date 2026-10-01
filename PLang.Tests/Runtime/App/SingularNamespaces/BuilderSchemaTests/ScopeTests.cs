@@ -152,8 +152,8 @@ public class ScopeTests
         var item = loop.Default["item"];
         await Assert.That(item).IsNotNull();
         await Assert.That(item!.Type.Name).IsEqualTo("variable");
-        await Assert.That(loop.Default["asdefault"]).IsNull();
-        await Assert.That(goal.Step[0].Code.Items().Single().Default["asdefault"]?.Type.Name).IsEqualTo("bool");
+        await Assert.That(loop.Default["default"]).IsNull();
+        await Assert.That(goal.Step[0].Code.Items().Single().Default["default"]?.Type.Name).IsEqualTo("bool");
     }
 
     [Test]

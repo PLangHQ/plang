@@ -23,7 +23,7 @@ public class ThrowTests : System.IAsyncDisposable
     {
         var (context, _) = CreateContext();
 
-        var action = new Throw(context) { Message = (Text)"Something went wrong", StatusCode = (global::app.type.item.number.@this)500 };
+        var action = new Throw(context) { Message = (Text)"Something went wrong", Status = (global::app.type.item.number.@this)500 };
         var result = await action.Start();
 
         await result.IsFailure();
@@ -36,7 +36,7 @@ public class ThrowTests : System.IAsyncDisposable
     {
         var (context, _) = CreateContext();
 
-        var action = new Throw(context) { Message = (Text)"Not found", StatusCode = (global::app.type.item.number.@this)404, Key = (Text)"NotFound" };
+        var action = new Throw(context) { Message = (Text)"Not found", Status = (global::app.type.item.number.@this)404, Key = (Text)"NotFound" };
         var result = await action.Start();
 
         await result.IsFailure();

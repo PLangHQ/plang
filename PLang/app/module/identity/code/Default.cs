@@ -45,11 +45,11 @@ public sealed class Default : IIdentity
         if (items.Exists(i => string.Equals(i.Name, __an, StringComparison.OrdinalIgnoreCase)))
             return action.Context.Error<Identity>(new ActionError($"Identity '{await action.Name.Value()}' already exists", "DuplicateName", 409));
 
-        var genResult = await GenerateIdentity(action, (await action.Name.Value())!.Clr<string>()!, (await action.SetAsDefault.Value())!.Value, (action.Provider == null ? null : (await action.Provider.Value())?.Clr<string>()));
+        var genResult = await GenerateIdentity(action, (await action.Name.Value())!.Clr<string>()!, (await action.Default.Value())!.Value, (action.Provider == null ? null : (await action.Provider.Value())?.Clr<string>()));
         if (!genResult.Success) return genResult;
         var identity = (await genResult.Value())!;
 
-        if (await action.SetAsDefault.ToBooleanAsync())
+        if (await action.Default.ToBooleanAsync())
         {
             foreach (var existing in items.Where(i => i.IsDefault))
             {
@@ -62,7 +62,7 @@ public sealed class Default : IIdentity
         var result = await SaveAsync(action, identity);
         if (!result.Success) return data.@this<Identity>.From(result);
 
-        if (await action.SetAsDefault.ToBooleanAsync())
+        if (await action.Default.ToBooleanAsync())
             app.actor.list.System.Identity = identity;
 
         return action.Context.Ok<Identity>(identity);

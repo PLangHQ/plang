@@ -220,7 +220,7 @@ public class RequestActionTests
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/speech",
             Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
             Body = new global::app.data.@this("", "hello", context: Ctx),
-            ContentType = (global::app.type.item.text.@this)"text/plain",
+            Content = new global::app.module.http.type.entity.@this("text/plain", "utf-8"),
             Header = new Dictionary<string, object> { ["Content-Type"] = "application/json" }.ToDictData(Ctx),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
@@ -330,7 +330,7 @@ public class RequestActionTests
     {
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/login",
             Method = (global::app.type.item.choice.@this<global::app.module.http.HttpMethod>)HttpMethod.POST,
-            ContentType = (global::app.type.item.text.@this)"application/x-www-form-urlencoded",
+            Content = new global::app.module.http.type.entity.@this("application/x-www-form-urlencoded", "utf-8"),
             Body = new global::app.data.@this("", new Dictionary<string, object> { ["user"] = "alice", ["pass"] = "secret" }, context: Ctx),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
@@ -541,7 +541,7 @@ public class RequestActionTests
         };
 
         var action = new request(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/slow",
-            TimeoutInSec = (global::app.type.item.number.@this)1,
+            Timeout = new global::app.type.item.duration.@this(System.TimeSpan.FromSeconds(1)),
             Unsigned = (global::app.type.item.@bool.@this)true
         };
         var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);

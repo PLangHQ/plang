@@ -7,7 +7,7 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules.llm;
 
 /// <summary>
-/// Tests ContinuePreviousConversation: message history management,
+/// Tests conversation.continue: message history management,
 /// format instruction non-compounding, and schema reuse.
 /// </summary>
 public class QueryConversationTests
@@ -67,7 +67,7 @@ public class QueryConversationTests
             {
                 new LlmMessage { Role = "user", Content = "And 3+3?" }
             }.ToListData<LlmMessage>(Ctx),
-            ContinuePreviousConversation = (global::app.type.item.@bool.@this)true,
+            Conversation = new global::app.module.llm.type.conversation.@this(true),
             Cache = (global::app.type.item.@bool.@this)false
         };
         await action2.Attach(null, Ctx);
@@ -94,12 +94,12 @@ public class QueryConversationTests
         await action1.Attach(null, Ctx);
         await action1.Start();
 
-        // Second query with ContinuePreviousConversation = (global::app.type.item.@bool.@this)false — should clear
+        // Second query with conversation.continue false — should clear
         var action2 = new query(Ctx) { Message = new List<LlmMessage>
             {
                 new LlmMessage { Role = "user", Content = "fresh start" }
             }.ToListData<LlmMessage>(Ctx),
-            ContinuePreviousConversation = (global::app.type.item.@bool.@this)false,
+            Conversation = new global::app.module.llm.type.conversation.@this(false),
             Cache = (global::app.type.item.@bool.@this)false
         };
         await action2.Attach(null, Ctx);
@@ -134,7 +134,7 @@ public class QueryConversationTests
                 new LlmMessage { Role = "user", Content = "again" }
             }.ToListData<LlmMessage>(Ctx),
             Schema = Ctx.Ok("{ok: bool}"),
-            ContinuePreviousConversation = (global::app.type.item.@bool.@this)true,
+            Conversation = new global::app.module.llm.type.conversation.@this(true),
             Cache = (global::app.type.item.@bool.@this)false
         };
         await action2.Attach(null, Ctx);
@@ -170,7 +170,7 @@ public class QueryConversationTests
             {
                 new LlmMessage { Role = "user", Content = "again" }
             }.ToListData<LlmMessage>(Ctx),
-            ContinuePreviousConversation = (global::app.type.item.@bool.@this)true,
+            Conversation = new global::app.module.llm.type.conversation.@this(true),
             Cache = (global::app.type.item.@bool.@this)false
         };
         await action2.Attach(null, Ctx);
@@ -203,7 +203,7 @@ public class QueryConversationTests
                 new LlmMessage { Role = "user", Content = "test2" }
             }.ToListData<LlmMessage>(Ctx),
             Schema = Ctx.Ok("{newSchema: int}"),
-            ContinuePreviousConversation = (global::app.type.item.@bool.@this)true,
+            Conversation = new global::app.module.llm.type.conversation.@this(true),
             Cache = (global::app.type.item.@bool.@this)false
         };
         await action2.Attach(null, Ctx);

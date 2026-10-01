@@ -24,7 +24,7 @@ public sealed class Default : IHttp
     public string? Source { get; set; }
 
     private readonly HttpMessageHandler? _handler;
-    private readonly Dictionary<(global::app.type.item.@bool.@this follow, global::app.type.item.number.@this max), HttpClient> _clients = new();
+    private readonly Dictionary<global::app.module.http.type.redirect.@this, HttpClient> _clients = new();
 
     public Default() { }
 
@@ -42,11 +42,12 @@ public sealed class Default : IHttp
         var app = action.Context.App;
         // T? convention — plang-null pass converts these !/Clr reads (value-door-plang-null branch)
         var unsigned = (await action.Unsigned.Value())!.Value;
-        var timeout = (await action.TimeoutInSec.Value())!.ToDouble();
-        var contentType = (await action.ContentType.Value())!.Clr<string>()!;
-        var encoding = (await action.Encoding.Value())!.Clr<string>()!;
-        var followRedirects = (await action.FollowRedirects.Value())!;
-        var maxRedirects = (await action.MaxRedirects.Value())!;
+        System.TimeSpan timeout = (await action.Timeout.Value())!;
+        // a record the step leaves out is the record's own defaults
+        var content = (action.Content == null ? null : await action.Content.Value()) ?? new global::app.module.http.type.entity.@this();
+        var contentType = content.Mime.ToString();
+        var encoding = content.Encoding.ToString();
+        var redirect = (action.Redirect == null ? null : await action.Redirect.Value()) ?? new global::app.module.http.type.redirect.@this();
 
         // the url the action goes to — the one its build expected
         var target = await ((global::app.module.http.IAddressed)action).Target();
@@ -102,9 +103,9 @@ public sealed class Default : IHttp
             : HttpCompletionOption.ResponseContentRead;
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
-        cts.CancelAfter(TimeSpan.FromSeconds(timeout));
+        cts.CancelAfter(timeout);
 
-        var response = await SendHttpAsync(requestMessage, completionOption, followRedirects, maxRedirects, cts.Token);
+        var response = await SendHttpAsync(requestMessage, completionOption, redirect, cts.Token);
 
         if ((action.OnStream == null ? null : await action.OnStream.Value()) != null)
         {
@@ -127,9 +128,8 @@ public sealed class Default : IHttp
         var app = action.Context.App;
         // T? convention — plang-null pass converts these (value-door-plang-null branch)
         var unsigned = (await action.Unsigned.Value())!.Value;
-        var timeout = (await action.TimeoutInSec.Value())!.ToDouble();
-        var followRedirects = (await action.FollowRedirects.Value())!;
-        var maxRedirects = (await action.MaxRedirects.Value())!;
+        System.TimeSpan timeout = (await action.Timeout.Value())!;
+        var redirect = (action.Redirect == null ? null : await action.Redirect.Value()) ?? new global::app.module.http.type.redirect.@this();
 
         // the url the action goes to — the one its build expected
         var target = await ((global::app.module.http.IAddressed)action).Target();
@@ -144,9 +144,9 @@ public sealed class Default : IHttp
         ApplyHeaders(requestMessage, headers);
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
-        cts.CancelAfter(TimeSpan.FromSeconds(timeout));
+        cts.CancelAfter(timeout);
 
-        using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, followRedirects, maxRedirects, cts.Token);
+        using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseHeadersRead, redirect, cts.Token);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -170,10 +170,9 @@ public sealed class Default : IHttp
         var app = action.Context.App;
         // T? convention — plang-null pass converts these (value-door-plang-null branch)
         var unsigned = (await action.Unsigned.Value())!.Value;
-        var timeout = (await action.TimeoutInSec.Value())!.ToDouble();
+        System.TimeSpan timeout = (await action.Timeout.Value())!;
         var encoding = (await action.Encoding.Value())!.Clr<string>()!;
-        var followRedirects = (await action.FollowRedirects.Value())!;
-        var maxRedirects = (await action.MaxRedirects.Value())!;
+        var redirect = (action.Redirect == null ? null : await action.Redirect.Value()) ?? new global::app.module.http.type.redirect.@this();
 
         // the url the action goes to — the one its build expected
         var target = await ((global::app.module.http.IAddressed)action).Target();
@@ -193,9 +192,9 @@ public sealed class Default : IHttp
         ApplyHeaders(requestMessage, headers);
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
-        cts.CancelAfter(TimeSpan.FromSeconds(timeout));
+        cts.CancelAfter(timeout);
 
-        using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseContentRead, followRedirects, maxRedirects, cts.Token);
+        using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseContentRead, redirect, cts.Token);
 
         var maxResponseSize = (await action.MaxResponseSize.Value())!.ToInt64();
         return await ParseResponseAsync(response, requestMessage, unsigned, app, action.Context, maxResponseSize, sw.Elapsed);
@@ -287,8 +286,8 @@ public sealed class Default : IHttp
 
     private Task<HttpResponseMessage> SendHttpAsync(
         HttpRequestMessage request, HttpCompletionOption completionOption,
-        global::app.type.item.@bool.@this followRedirects, global::app.type.item.number.@this maxRedirects, CancellationToken ct)
-        => Client(followRedirects, maxRedirects).SendAsync(request, completionOption, ct);
+        global::app.module.http.type.redirect.@this redirect, CancellationToken ct)
+        => Client(redirect).SendAsync(request, completionOption, ct);
 
     public void Dispose()
     {
@@ -296,24 +295,23 @@ public sealed class Default : IHttp
         _clients.Clear();
     }
 
-    // One HttpClient per distinct (followRedirects, maxRedirects) — the whole plang values are the
-    // key (both value-equal). Redirect policy is baked into the handler at construction, so a client
-    // is reused across requests with the same policy (socket reuse / pooling) while each request
-    // still picks its own. The only lowering to CLR is at the SocketsHttpHandler (BCL) boundary.
-    private HttpClient Client(global::app.type.item.@bool.@this followRedirects, global::app.type.item.number.@this maxRedirects)
+    // One HttpClient per distinct redirect policy — the redirect record is the key (value-equal). The
+    // policy is baked into the handler at construction, so a client is reused across requests with the
+    // same policy (socket reuse / pooling) while each request still picks its own. The only lowering to
+    // CLR is at the SocketsHttpHandler (BCL) boundary.
+    private HttpClient Client(global::app.module.http.type.redirect.@this redirect)
     {
-        var key = (followRedirects, maxRedirects);
-        if (!_clients.TryGetValue(key, out var client))
+        if (!_clients.TryGetValue(redirect, out var client))
         {
             client = _handler != null
                 ? new HttpClient(_handler, disposeHandler: false)
                 : new HttpClient(new SocketsHttpHandler
                 {
                     PooledConnectionLifetime = TimeSpan.FromMinutes(2),
-                    AllowAutoRedirect = followRedirects.Value,
-                    MaxAutomaticRedirections = maxRedirects.ToInt32()
+                    AllowAutoRedirect = redirect.Follow.Value,
+                    MaxAutomaticRedirections = redirect.Max.ToInt32()
                 });
-            _clients[key] = client;
+            _clients[redirect] = client;
         }
         return client;
     }

@@ -1,0 +1,343 @@
+{
+  "name": "Start",
+  "comment": "A duration is born with the standard its text is written in, and stays in it: 30s is short, PT5M is iso.",
+  "step": [
+    {
+      "index": 0,
+      "text": "variable.set(Name=%short%, Value=\"30s\", Type=\"duration\")",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%short%",
+              "variable": [
+                {
+                  "text": "%short%",
+                  "code": [
+                    {
+                      "variable": "short"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "30s"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "text"
+              },
+              "value": "duration"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "variable.set(Name=%iso%, Value=\"PT5M\", Type=\"duration\")",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%iso%",
+              "variable": [
+                {
+                  "text": "%iso%",
+                  "code": [
+                    {
+                      "variable": "iso"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "PT5M"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "text"
+              },
+              "value": "duration"
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"30s\", Actual=%short.text%, Message=\"30s stays 30s\")",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "30s"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%short.text%",
+              "variable": [
+                {
+                  "text": "%short.text%",
+                  "code": [
+                    {
+                      "variable": "short"
+                    },
+                    {
+                      "property": "text"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "30s stays 30s"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=\"short\", Actual=%short!type.kind.name%, Message=\"its kind is short\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "short"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%short!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%short!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "short"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "its kind is short"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert.equals(Expected=\"PT5M\", Actual=%iso.text%, Message=\"PT5M stays PT5M\")",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "PT5M"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%iso.text%",
+              "variable": [
+                {
+                  "text": "%iso.text%",
+                  "code": [
+                    {
+                      "variable": "iso"
+                    },
+                    {
+                      "property": "text"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "PT5M stays PT5M"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert.equals(Expected=\"iso\", Actual=%iso!type.kind.name%, Message=\"its kind is iso\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "iso"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%iso!type.kind.name%",
+              "variable": [
+                {
+                  "text": "%iso!type.kind.name%",
+                  "code": [
+                    {
+                      "variable": "iso"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "kind"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "its kind is iso"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/app-systems/type/duration/KeepsItsKind.test.goal",
+  "prPath": "/plan/app-systems/type/duration/.build/keepsitskind.test.pr",
+  "hash": "c82923cc8a03f4e96002cd8e5caec0fadfeba9a5b98cca657e22860614d70d8d",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

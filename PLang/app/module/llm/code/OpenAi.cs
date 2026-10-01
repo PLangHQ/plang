@@ -118,7 +118,9 @@ public sealed class OpenAi : ILlm
         async System.Threading.Tasks.Task<string?> FormatOf(query a)
             => a.Format == null || await a.Format.IsEmpty() ? null : (await a.Format.Value())?.ToString();
 
-        if (await action.ContinuePreviousConversation.ToBooleanAsync())
+        // a conversation the step leaves out is the record's own default: a fresh one
+        var conversation = (action.Conversation == null ? null : await action.Conversation.Value()) ?? new global::app.module.llm.type.conversation.@this();
+        if (conversation.Continue.Value)
         {
             var prev = context.Get<List<LlmMessage>>(ConversationKey);
             if (prev != null)
@@ -229,7 +231,7 @@ public sealed class OpenAi : ILlm
                 Body = new data.@this("", body, context: context),
                 Header = new data.@this<global::app.type.item.dict.@this>("", (global::app.type.item.dict.@this)global::app.type.item.@this.Create(headers, context)),
                 Unsigned = new data.@this<global::app.type.item.@bool.@this>("", true),
-                TimeoutInSec = new data.@this<global::app.type.item.number.@this>("", 120),
+                Timeout = new data.@this<global::app.type.item.duration.@this>("", new global::app.type.item.duration.@this(System.TimeSpan.FromMinutes(2))),
                 OnStream = action.OnStream,
                 StreamAs = (action.OnStream == null ? null : await action.OnStream.Value()) != null ? new data.@this<global::app.type.item.choice.@this<StreamFormat>>("", StreamFormat.SSE) : default
             };
