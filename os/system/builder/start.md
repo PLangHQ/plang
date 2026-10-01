@@ -41,8 +41,8 @@ BuildGoal/Decide.goal   the two decider exchanges (+ Decide.code.md)
 BuildGoal/Properties.goal  the writer llm.query
 BuilderChannel.goal     the redirectable "builder" output channel sink
 EmitBuildEvent.goal     one-call build-time output
-llm/                    Properties.llm, SourceFix.llm, decider.json, settings.json,
-                        types.json, and templates/ (the rendered prompts)
+llm/                    Properties.llm, SourceFix.llm, decider.json, and templates/
+                        (the rendered prompts)
 templates/output/       build-output.template (the progress/error lines)
 web/                    the trace viewer (index.html + server.py)
 ```

@@ -143,8 +143,6 @@ The prompts and their data live in `os/system/builder/llm/`:
 | `Properties.llm` | the writer's **system prompt** (formal grammar + rules) |
 | `SourceFix.llm` | system prompt for `SourceError` (rewrite the programmer's bad PLang) |
 | `decider.json` | the **common** actions (stage 1 yes/no) and **popular** actions (stage 2) |
-| `settings.json` | snapshot of the app's setting classes, rendered into the writer's user message |
-| `types.json` | CLR-type-path → PLang word map (e.g. `app.type.item.path` → `path`) |
 | `templates/decider.state.template` | the decider's State (how PLang is structured + the goal's steps + the modules) |
 | `templates/decider1.template` / `decider2.template` | stage 1 / stage 2 questions |
 | `templates/properties.template` | the writer's user message (goal, each step's `=> decider:`/`=> formal:`/`=> types:`, the Types / Settings / Keys blocks, then each listed action once) |
