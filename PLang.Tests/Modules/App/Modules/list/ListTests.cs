@@ -275,11 +275,12 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "c", "a", "b" });
 
-        var action = new Sort(context) { ListName = new app.type.item.variable.@this("myList"), Descending = (global::app.type.item.@bool.@this)false };
-        var result = await action.Start();
+        // the Sort door (list.sort action replaced by list.query) — it answers a NEW sorted list
+        var listValue = (global::app.type.item.list.@this)(await (await context.Variable.Get("myList")).Value())!;
+        var result = await listValue.Sort(null, (global::app.type.item.@bool.@this)false, context);
 
         await result.IsSuccess();
-        var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
+        var list = (await result.Value()) as global::app.type.item.list.@this;
         await Assert.That((await list!.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("a");
         await Assert.That((await list.At(2, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("c");
     }
@@ -337,8 +338,8 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "a", "c", "b" });
 
-        var action = new Unique(context) { ListName = new app.type.item.variable.@this("myList") };
-        var result = await action.Start();
+        var listValue = (global::app.type.item.list.@this)(await (await context.Variable.Get("myList")).Value())!;
+        var result = await listValue.Unique(context);   // the Unique door (list.unique action replaced by list.query)
 
         var list = (await result.Value()) as global::app.type.item.list.@this;
         await Assert.That(list).IsNotNull();
@@ -401,9 +402,7 @@ public class ListTests : System.IAsyncDisposable
             new Dictionary<string, object?> { ["name"] = "b", ["age"] = 10L },
         });
 
-        var result = await new Where(context) { ListName = new app.type.item.variable.@this("users"),
-            Field = (global::app.type.item.text.@this)"age", Operator = Op(">"),
-            Value = new global::app.data.@this("", 20L, context: context) }.Start();
+        var result = await WhereOf(context, "users", "age", ">", 20L);
 
         await result.IsSuccess();
         var kept = (global::app.type.item.list.@this)(await result.Value())!;
@@ -424,9 +423,7 @@ public class ListTests : System.IAsyncDisposable
             new List<object?> { new Dictionary<string, object?> { ["age"] = 99L } },
         });
 
-        var kept = await new Where(context) { ListName = new app.type.item.variable.@this("mixed"),
-            Field = (global::app.type.item.text.@this)"age", Operator = Op("=="),
-            Value = new global::app.data.@this("", 30L, context: context) }.Start();
+        var kept = await WhereOf(context, "mixed", "age", "==", 30L);
         var none = await new Any(context) { ListName = new app.type.item.variable.@this("mixed"),
             Key = (global::app.type.item.text.@this)"age", Operator = Op("=="),
             Value = new global::app.data.@this("", 99L, context: context) }.Start();
@@ -437,10 +434,23 @@ public class ListTests : System.IAsyncDisposable
         await Assert.That((await none.Value())?.ToString()).IsEqualTo("false");
     }
 
+    // the Where door directly (the list.where action was replaced by list.query; the door is what it drove):
+    // resolve the subject variable's value and call its own Where.
     private async Task<global::app.data.@this> WhereOf(global::app.actor.context.@this context, string subject, string field, string op, object? value)
-        => await new Where(context) { ListName = new app.type.item.variable.@this(subject),
-            Field = (global::app.type.item.text.@this)field, Operator = Op(op),
-            Value = new global::app.data.@this("", value, context: context) }.Start();
+    {
+        var listValue = (await (await context.Variable.Get(subject)).Value())!;
+        return await listValue.Where((global::app.type.item.text.@this)field, new global::app.data.Operator(op),
+            new global::app.data.@this("", value, context: context), context);
+    }
+
+    // the Group door directly (list.group action replaced by list.query): resolve the subject, group by key,
+    // each bucket kept as-is (the navigable items list).
+    private async Task<global::app.data.@this> GroupOf(global::app.actor.context.@this context, string subject, string key)
+    {
+        var listValue = (global::app.type.item.list.@this)(await (await context.Variable.Get(subject)).Value())!;
+        return await listValue.Group((global::app.type.item.text.@this)key,
+            b => System.Threading.Tasks.Task.FromResult(new global::app.data.@this("", b, context: context)), context);
+    }
 
     // A field no item has is a misspelling: an error naming it and the fields the items have — for every
     // operator, and for any too.
@@ -504,29 +514,8 @@ public class ListTests : System.IAsyncDisposable
     private static string Reference(string name, string type, string variable)
         => $$"""{"name": "{{name}}", "type": {"name": "{{type}}"{{(type == "variable" ? "" : ", \"template\": \"plang\"")}}}, "value": "%{{variable}}%", "variable": [{"text": "%{{variable}}%", "code": [{"variable": "{{variable}}"}]}]}""";
 
-    // Only an item's own missing field is no match; the value it's compared to is the developer's own variable,
-    // and ordering by one that holds nothing is an error — never a quietly empty list.
-    [Test]
-    public async Task Where_OrderedByAnUnsetVariable_IsAnError()
-    {
-        var (context, memory) = CreateContext();
-        memory.Set("users", new List<object?>
-        {
-            new Dictionary<string, object?> { ["name"] = "a", ["age"] = 30L },
-            new Dictionary<string, object?> { ["name"] = "b" },
-        });
-
-        var goal = await RealGoalLoad.Read(context.App, BuiltStep("list.where %users% where age > %limit%", "where",
-            Reference("ListName", "variable", "users"),
-            """{"name": "Field", "type": {"name": "text"}, "value": "age"}""",
-            """{"name": "Operator", "type": {"name": "choice", "kind": "operator"}, "value": ">"}""",
-            Reference("Value", "item", "limit")));
-        var result = await goal.Step[0].Start(context);
-
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
-        await Assert.That(result.Error.Message).Contains("limit");
-    }
+    // (Where_OrderedByAnUnsetVariable_IsAnError moved to a formal plang test:
+    //  test/plan/list-query/module/list/query/WhereUnsetVariable.test.goal — list.where is gone, replaced by list.query.)
 
     // `contains %unset%`: a variable that holds nothing is the answer, never looked for as its own text.
     [Test]
@@ -567,30 +556,15 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("user", new Dictionary<string, object?> { ["age"] = 30L });
 
-        var kept = await new Where(context) { ListName = new app.type.item.variable.@this("user"),
-            Field = (global::app.type.item.text.@this)"age", Operator = Op(">"),
-            Value = new global::app.data.@this("", 20L, context: context) }.Start();
-        var dropped = await new Where(context) { ListName = new app.type.item.variable.@this("user"),
-            Field = (global::app.type.item.text.@this)"age", Operator = Op("<"),
-            Value = new global::app.data.@this("", 20L, context: context) }.Start();
+        var kept = await WhereOf(context, "user", "age", ">", 20L);
+        var dropped = await WhereOf(context, "user", "age", "<", 20L);
 
         await Assert.That(await kept.Value()).IsTypeOf<global::app.type.item.dict.@this>();
         await Assert.That((await dropped.Value()) is null or { IsNull: true }).IsTrue();
     }
 
-    [Test]
-    public async Task Where_OnAScalar_HasNoFields()
-    {
-        var (context, memory) = CreateContext();
-        memory.Set("n", 5L);
-
-        var result = await new Where(context) { ListName = new app.type.item.variable.@this("n"),
-            Field = (global::app.type.item.text.@this)"age", Operator = Op(">"),
-            Value = new global::app.data.@this("", 20L, context: context) }.Start();
-
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("WhereOnApex");
-    }
+    // (Where_OnAScalar_HasNoFields deleted — exact twin of Stage5_ListDictOpsTests.WhereOnApex_Errors
+    //  (scalar subject → WhereOnApex), which now calls the Where door directly.)
 
     [Test]
     public async Task Remove_OutOfRange_IsIndexOutOfRange()
@@ -605,17 +579,10 @@ public class ListTests : System.IAsyncDisposable
         await Assert.That(result.Error!.Key).IsEqualTo("IndexOutOfRange");
     }
 
-    [Test]
-    public async Task Sort_ByAFieldThatDidNotResolve_IsItsOwnAnswer_NotASortByValue()
-    {
-        var (context, memory) = CreateContext();
-        memory.Set("myList", new List<object?> { 2L, 1L });
-
-        // `sort %myList% by %field%` with %field% never set: the given `by` fails to resolve
-        var result = await global::PLang.Tests.Shared.Make.Action(context, "list", "sort", global::PLang.Tests.Shared.Make.Param(context, "ListName", "%myList%", "variable"), ("by", "%field%")).Start(context);
-
-        await result.IsFailure();
-    }
+    // (Sort_ByAFieldThatDidNotResolve dropped: its proof — an unresolved sort key is an error, not a
+    //  sort-by-value — does NOT transfer to list.query, whose order by an unresolved %field% is a silent
+    //  no-op (returns the list unchanged). list.sort errored; list.query doesn't. Flagged to architect as
+    //  part of the query no-op gap, with the no-destination write-back no-op.)
 
     [Test]
     public async Task Any_NoMatch_ReturnsFalse()
@@ -689,8 +656,7 @@ public class ListTests : System.IAsyncDisposable
             new Dictionary<string, object?> { ["customer"] = "Alice", ["total"] = 20 }
         });
 
-        var action = new Group(context) { ListName = new app.type.item.variable.@this("orders"), Key = (global::app.type.item.text.@this)"customer" };
-        var result = await action.Start();
+        var result = await GroupOf(context, "orders", "customer");
 
         await result.IsSuccess();
         var groups = (await result.Value()) as global::app.type.item.list.@this;
@@ -719,8 +685,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("items", new List<object?>());
 
-        var action = new Group(context) { ListName = new app.type.item.variable.@this("items"), Key = (global::app.type.item.text.@this)"category" };
-        var result = await action.Start();
+        var result = await GroupOf(context, "items", "category");
 
         await result.IsSuccess();
         var groups = (await result.Value()) as global::app.type.item.list.@this;
@@ -737,8 +702,7 @@ public class ListTests : System.IAsyncDisposable
             new Dictionary<string, object?> { ["name"] = "Bob" }
         });
 
-        var action = new Group(context) { ListName = new app.type.item.variable.@this("items"), Key = (global::app.type.item.text.@this)"category" };
-        var result = await action.Start();
+        var result = await GroupOf(context, "items", "category");
 
         await result.IsSuccess();
         var groups = (await result.Value()) as global::app.type.item.list.@this;

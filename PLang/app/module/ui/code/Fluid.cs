@@ -69,7 +69,7 @@ public class Fluid : ITemplate
         var options = new TemplateOptions();
         options.MaxSteps = 100_000; // Defense-in-depth: prevent pathological templates from running indefinitely
         options.MaxRecursion = 100; // Prevent deeply recursive includes
-        // A plang value navigates by its OWN door (Data.Get — the same navigation list.where /
+        // A plang value navigates by its OWN door (Data.Get — the same navigation list.query /
         // condition use), not by C# reflection. Reflection reads a clr HOST carrier's surface
         // (Kind/Value/Context), never the host's own members — so `{{ module.Name }}` over a
         // carried host reads blank. The strategy routes member access on any plang item through
@@ -202,7 +202,7 @@ public class Fluid : ITemplate
     }
 
     /// <summary>Navigates a plang item by member name through its <c>Data.Get</c> door — the same
-    /// navigation <c>list.where</c>/<c>condition</c> use, so templates and predicates read a value
+    /// navigation <c>list.query</c>/<c>condition</c> use, so templates and predicates read a value
     /// the one way. Async because a door can be I/O (a path's existence, a computed value).</summary>
     private sealed class PlangDoorAccessor(global::app.actor.context.@this context) : IAsyncMemberAccessor
     {

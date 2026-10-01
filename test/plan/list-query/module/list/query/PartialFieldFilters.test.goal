@@ -1,0 +1,10 @@
+/ A field only some items have is optional data: a where keeps the items that have it and hold (age > 20
+/ keeps "a"), and "is empty" keeps the items without it ("b" has no age — an absent field reads as empty).
+Start
+- variable.set(Name=%users%, Value=[{"name": "a", "age": 30}, {"name": "b"}])
+- list.query(List=%users%, Query={where: {field: "age", op: ">", value: 20}}); variable.set(Name=%old%, Value=%!data%)
+- assert.equals(Expected=1, Actual=%old.Count%, Message="only the item with an age over 20")
+- assert.equals(Expected="a", Actual=%old[0].name%)
+- list.query(List=%users%, Query={where: {field: "age", op: "isempty"}}); variable.set(Name=%ageless%, Value=%!data%)
+- assert.equals(Expected=1, Actual=%ageless.Count%, Message="the item without an age")
+- assert.equals(Expected="b", Actual=%ageless[0].name%)

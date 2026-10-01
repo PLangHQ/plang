@@ -40,7 +40,8 @@ Stage2
 / and holds on any list.query sentence; its dedicated golden lands in stage 3, once sort -> list.query.
 
 Stage3
-/ The four are gone; their behaviours hold through list.query.
-/ The two old where tests, rewritten as queries, pass: partial-field filters and a misspelled field
+/ The four are gone; their behaviours hold through list.query (where/sort/group/unique via the doors that stay).
+/ The old where tests, rewritten as queries: partial-field filters (optional data + "is empty"), and a where
+/ compared to an unset %variable% is an error. (A misspelled field is already proven by UnknownField.)
 - call goal /module/list/query/PartialFieldFilters
-- call goal /module/list/query/MisspelledFieldIsAnError
+- call goal /module/list/query/WhereUnsetVariable

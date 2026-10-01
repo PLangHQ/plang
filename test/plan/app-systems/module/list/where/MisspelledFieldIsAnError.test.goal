@@ -1,9 +1,0 @@
-/ A where on a field no item has is a misspelling: an error with its own key, naming the field — never a
-/ silently empty list.
-Start
-- set %users% = [{"name": "a", "age": 30}, {"name": "b", "age": 10}]
-- list.where %users% where agee > 20, write to %old%, on error key "FieldNotFound" call Caught
-- assert %caught% contains "agee", "the error names the misspelled field"
-
-Caught
-- set %caught% = %!error.Message%

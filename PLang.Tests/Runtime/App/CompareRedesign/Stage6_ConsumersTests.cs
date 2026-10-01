@@ -133,8 +133,8 @@ public class Stage6_ConsumersTests
     [Test]
     public async Task ComparerObjectDefault_NotUsedAnywhere_GrepGate()
     {
-        // list.sort and the list it sorts don't order through Comparer<object>.Default — the typed Compare pipeline
-        foreach (var type in new[] { typeof(global::app.module.list.Sort), typeof(global::app.type.item.list.@this) })
+        // the list and its sort door don't order through Comparer<object>.Default — the typed Compare pipeline
+        foreach (var type in new[] { typeof(global::app.type.item.list.@this) })
         {
             var file = SourceOf(type);
             await Assert.That(File.Exists(file)).IsTrue();
@@ -186,9 +186,7 @@ public class Stage6_ConsumersTests
         list.Add(new Data("", dict, context: ctx));
         list.Add(new Data("", 5, context: ctx));
         list.Add(new Data("", 5, context: ctx));
-        await ctx.Variable.Set("items", list);
-        var result = await new global::app.goal.step.action.@this(new global::app.module.list.Unique(ctx) { ListName = new global::app.data.@this<global::app.type.item.variable.@this>("", new global::app.type.item.variable.@this("items")),
-        }, ctx).Start(ctx);
+        var result = await list.Unique(ctx);   // the Unique door (list.unique action replaced by list.query)
         await result.IsSuccess();
     }
 

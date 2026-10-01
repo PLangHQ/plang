@@ -2,58 +2,50 @@ using app.type.item.variable;
 using ListV = global::app.type.item.list.@this;
 using DictV = global::app.type.item.dict.@this;
 using Op = global::app.data.Operator;
-using Where = global::app.module.list.Where;
-using Sort = global::app.module.list.Sort;
-using Unique = global::app.module.list.Unique;
-using Group = global::app.module.list.Group;
 
 namespace PLang.Tests.App.CollectionsAreData;
 
 // Stage 5 — list/dict ops as exposure. `where` is a dict+list capability; sort/group
-// stay list-only and route through the one typed-compare path (Stage 4). No
-// test-designer C# batch for this stage — these pin the new handler behavior so the
-// thin-dispatch handlers are verifiable without the (LLM-built) PLang layer.
+// stay list-only and route through the one typed-compare path (Stage 4). These pin the
+// DOOR behavior (item.Where / list.Sort / list.Unique / list.Group) that list.query now
+// drives — the four list.where/sort/group/unique actions were replaced by list.query, so
+// the proofs target the doors directly, same data, same assertions.
 public class Stage5_ListDictOpsTests
 {
     private global::app.@this _app = null!;
     [Before(Test)] public void Setup() => _app = new global::app.@this("/app").Testing();
     [After(Test)] public async Task TearDown() { await _app.DisposeAsync(); }
-    private (global::app.actor.context.@this ctx, Variables vars) Ctx() => (_app.actor.list.User.Context, _app.actor.list.User.Context.Variable);
+    private global::app.actor.context.@this Ctx() => _app.actor.list.User.Context;
     private Data D(object? v) => _app.Data("", v);
     private DictV Person(string field, object? val) { var d = new DictV(); d.Set(_app.Data(field, val)); return d; }
-
-    private Where WhereAction(global::app.actor.context.@this ctx, string var, string field, string op, object? value)
-        => new(ctx) {  ListName = new app.type.item.variable.@this(var), Field = new global::app.data.@this<global::app.type.item.text.@this>("", field, context: ctx),
-                   Operator = new global::app.data.@this<global::app.type.item.choice.@this<Op>>("", new Op(op), context: ctx), Value = D(value) };
+    private global::app.type.item.text.@this Text(string s) => new(s);
+    private global::app.type.item.@bool.@this Desc(bool b) => new(b);
 
     [Test]
     public async Task WhereOnList_FiltersByPredicate()
     {
-        var (ctx, vars) = Ctx();
+        var ctx = Ctx();
         var users = new ListV();
         users.Add(_app.Data("", Person("age", 25L)));
         users.Add(_app.Data("", Person("age", 15L)));
         users.Add(_app.Data("", Person("age", 40L)));
-        vars.Set("users", users);
 
-        var result = await WhereAction(ctx, "users", "age", ">", 20L).Start();
+        var result = await users.Where(Text("age"), new Op(">"), D(20L), ctx);
         await result.IsSuccess();
         var filtered = (ListV)(await result.Value())!;
         await Assert.That(filtered.Count).IsEqualTo(2);
-        await Assert.That(((global::app.type.item.number.@this)(await (await filtered.At(0, _app.actor.list.User.Context)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(25L);
+        await Assert.That(((global::app.type.item.number.@this)(await (await filtered.At(0, ctx)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(25L);
     }
 
     [Test]
     public async Task WhereOnDict_KeepsOrDrops()
     {
-        var (ctx, vars) = Ctx();
-        vars.Set("user", Person("age", 25L));
-        var kept = await WhereAction(ctx, "user", "age", ">", 20L).Start();
+        var ctx = Ctx();
+        var kept = await Person("age", 25L).Where(Text("age"), new Op(">"), D(20L), ctx);
         await kept.IsSuccess();
         await Assert.That((await kept.Value())).IsTypeOf<DictV>();
 
-        vars.Set("user2", Person("age", 10L));
-        var dropped = await WhereAction(ctx, "user2", "age", ">", 20L).Start();
+        var dropped = await Person("age", 10L).Where(Text("age"), new Op(">"), D(20L), ctx);
         await dropped.IsSuccess();
         await Assert.That(await (await dropped.Value())!.IsEmpty()).IsTrue();
     }
@@ -61,9 +53,9 @@ public class Stage5_ListDictOpsTests
     [Test]
     public async Task WhereOnApex_Errors()
     {
-        var (ctx, vars) = Ctx();
-        vars.Set("x", 5L);
-        var result = await WhereAction(ctx, "x", "age", ">", 20L).Start();
+        var ctx = Ctx();
+        var apex = (await _app.Data("", 5L).Value())!;      // a number apex — no fields to scope into
+        var result = await apex.Where(Text("age"), new Op(">"), D(20L), ctx);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("WhereOnApex");
     }
@@ -71,18 +63,17 @@ public class Stage5_ListDictOpsTests
     [Test]
     public async Task SortByField_OrdersNumerically()
     {
-        var (ctx, vars) = Ctx();
+        var ctx = Ctx();
         var people = new ListV();
         people.Add(_app.Data("", Person("age", 30L)));
         people.Add(_app.Data("", Person("age", 10L)));
         people.Add(_app.Data("", Person("age", 20L)));
-        vars.Set("people", people);
 
-        var action = new Sort(ctx) { ListName = new app.type.item.variable.@this("people"), By = new global::app.data.@this<global::app.type.item.text.@this>("", "age", context: ctx) };
-        await (await action.Start()).IsSuccess();
-        var sorted = (ListV)(await (await vars.Get("people")).Value())!;
-        await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(0, _app.actor.list.User.Context)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(10L);
-        await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(2, _app.actor.list.User.Context)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(30L);
+        var result = await people.Sort(Text("age"), Desc(false), ctx);
+        await result.IsSuccess();
+        var sorted = (ListV)(await result.Value())!;
+        await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(0, ctx)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(10L);
+        await Assert.That(((global::app.type.item.number.@this)(await (await sorted.At(2, ctx)!.Get("age")).Value())!).Clr<long>()).IsEqualTo(30L);
     }
 
     [Test]
@@ -91,13 +82,11 @@ public class Stage5_ListDictOpsTests
         // dict is equality-only — sorting a list of dicts (no field) is unorderable. In PLang
         // that's an EXPECTED data condition, so sort RETURNS a Data error (it does not throw —
         // a thrown exception would escape the `on error` handler pipeline).
-        var (ctx, vars) = Ctx();
+        var ctx = Ctx();
         var dicts = new ListV();
         dicts.Add(_app.Data("", Person("city", "Reyk")));
         dicts.Add(_app.Data("", Person("city", "Oslo")));
-        vars.Set("dicts", dicts);
-        var action = new Sort(ctx) { ListName = new app.type.item.variable.@this("dicts") };
-        var result = await action.Start();
+        var result = await dicts.Sort(null, Desc(false), ctx);
         await result.IsFailure();
         await Assert.That(result.Error!.Message).Contains("order");
     }
@@ -105,14 +94,12 @@ public class Stage5_ListDictOpsTests
     [Test]
     public async Task UniqueUsesCompareEquality()
     {
-        var (ctx, vars) = Ctx();
+        var ctx = Ctx();
         var values = new ListV();
         values.Add(_app.Data("", Person("city", "Reyk")));
         values.Add(_app.Data("", Person("city", "Reyk")));   // structurally equal
         values.Add(_app.Data("", Person("city", "Oslo")));
-        vars.Set("values", values);
-        var action = new Unique(ctx) { ListName = new app.type.item.variable.@this("values") };
-        var result = await action.Start();
+        var result = await values.Unique(ctx);
         await result.IsSuccess();
         await Assert.That((await result.Value()) as ListV).IsNotNull();
         await Assert.That(((ListV)(await result.Value())!).Count).IsEqualTo(2);
@@ -121,19 +108,18 @@ public class Stage5_ListDictOpsTests
     [Test]
     public async Task GroupByField_BucketsAreNavigableLists()
     {
-        var (ctx, vars) = Ctx();
+        var ctx = Ctx();
         var people = new ListV();
         people.Add(_app.Data("", Person("city", "Reyk")));
         people.Add(_app.Data("", Person("city", "Oslo")));
         people.Add(_app.Data("", Person("city", "Reyk")));
-        vars.Set("people", people);
-        var action = new Group(ctx) { ListName = new app.type.item.variable.@this("people"), Key = new global::app.data.@this<global::app.type.item.text.@this>("", "city", context: ctx) };
-        var result = await action.Start();
+        // each group's items as-is — the navigable bucket (list.query's group-then-order orders here instead)
+        var result = await people.Group(Text("city"), b => System.Threading.Tasks.Task.FromResult(_app.Data("", b)), ctx);
         await result.IsSuccess();
         var groups = (ListV)(await result.Value())!;
         await Assert.That(groups.Count).IsEqualTo(2);
-        var reyk = (DictV)(await groups.At(0, _app.actor.list.User.Context)!.Value())!;
-        await Assert.That((await (reyk.Get("key", _app.actor.list.User.Context))!.Value())?.ToString()).IsEqualTo("Reyk");
-        await Assert.That(((ListV)(await (reyk.Get("items", _app.actor.list.User.Context))!.Value())!).Count).IsEqualTo(2); // navigable bucket
+        var reyk = (DictV)(await groups.At(0, ctx)!.Value())!;
+        await Assert.That((await (reyk.Get("key", ctx))!.Value())?.ToString()).IsEqualTo("Reyk");
+        await Assert.That(((ListV)(await (reyk.Get("items", ctx))!.Value())!).Count).IsEqualTo(2); // navigable bucket
     }
 }
