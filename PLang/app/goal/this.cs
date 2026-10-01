@@ -69,6 +69,10 @@ public sealed partial class @this
         return sb.ToString();
     }
 
+    /// <summary>Where it runs, when that is another app's (<c>%!app.parent.goal["Claude"]%</c>): its run goes
+    /// there with the call's arguments, and what comes back is its result. Null for a goal of this app — its steps run.</summary>
+    internal global::app.parent.@this? Elsewhere { get; init; }
+
     [Store, Debug]
     public global::app.type.item.path.@this? Path { get; set; }
 
@@ -390,9 +394,10 @@ public sealed partial class @this
         return await on.start.After(this, result, context);
     }
 
-    // Starts the steps, and folds a return that ends here.
+    // Starts the steps, and folds a return that ends here — or, for a goal of another app, runs it there.
     private async Task<data.@this> Enter(actor.context.@this context)
     {
+        if (Elsewhere is { } app) return await app.Run(Name, context);
         var result = await Step.Start(context);
         if (result.Returned)
         {

@@ -27,8 +27,24 @@ public partial class listen : IContext
         while (await reader.ReadLineAsync() is { } line)
         {
             lines++;
+            // the host answering a call to one of its goals ({"reply": …}) goes to the call waiting on it
+            if (line.StartsWith("{\"reply\"", StringComparison.Ordinal) && Reply(line) is { } reply)
+            {
+                Context.App.parent.Answered(reply);
+                continue;
+            }
             display.Input(line);
         }
         return Context.Ok<global::app.type.item.number.@this>(lines);
+    }
+
+    private static System.Text.Json.JsonElement? Reply(string line)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(line);
+            return doc.RootElement.TryGetProperty("reply", out var reply) ? reply.Clone() : null;
+        }
+        catch (System.Text.Json.JsonException) { return null; }
     }
 }

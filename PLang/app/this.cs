@@ -231,6 +231,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// </summary>
     public global::app.type.root.@this type { get; }
 
+    /// <summary>The app that started this plang — <c>%!app.parent%</c>: its goals are called like this app's
+    /// (<c>call goal Claude in %!app.parent%</c>), and run there.</summary>
+    public global::app.parent.@this parent { get; } = new();
+
     /// <summary>
     /// The type named <c>actor</c> — <c>%!app.actor%</c>: its <c>list</c> is the app's two actors, System
     /// and User; <c>Get(name)</c> is one as a result, <c>current</c> the one the asker acts as.
