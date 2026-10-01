@@ -30,11 +30,12 @@ public partial class upload : IContext, IAddressed
     [Default("utf-8")]
     public partial data.@this<global::app.type.item.text.@this> Encoding { get; init; }
 
-    /// <summary>Upload timeout in seconds. Default: 30.</summary>
-    [Default(30)]
-    public partial data.@this<global::app.type.item.number.@this> TimeoutInSec { get; init; }
+    /// <summary>How long the upload may take. Default: 30s.</summary>
+    [Default("30s")]
+    public partial data.@this<global::app.type.item.duration.@this> Timeout { get; init; }
 
-    /// <summary>When true, skips request signing. Default: false.</summary>
+    /// <summary>When true, an application/plang response is refused (UnsignedPlang). Default: false. The upload is
+    /// not signed either way.</summary>
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Unsigned { get; init; }
 
@@ -51,13 +52,8 @@ public partial class upload : IContext, IAddressed
     /// <summary>Header merged into every request; per-request <see cref="Header"/> win on conflict.</summary>
     public partial data.@this<global::app.type.item.dict.@this>? DefaultHeaders { get; init; }
 
-    /// <summary>Whether to follow HTTP redirects. Default: true.</summary>
-    [Default(true)]
-    public partial data.@this<global::app.type.item.@bool.@this> FollowRedirects { get; init; }
-
-    /// <summary>Maximum redirects to follow. Default: 10.</summary>
-    [Default(10)]
-    public partial data.@this<global::app.type.item.number.@this> MaxRedirects { get; init; }
+    /// <summary>How redirects are followed — whether, and how many at most. Left out, up to ten are followed.</summary>
+    public partial data.@this<global::app.module.http.type.redirect.@this> Redirect { get; init; }
 
     /// <summary>Max response body size in bytes. Default 100MB.</summary>
     [Default(100 * 1024 * 1024)]

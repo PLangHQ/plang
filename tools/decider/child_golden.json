@@ -31,9 +31,9 @@
     "10": ["build.appSave"]
    },
    "expect": {
-    "0": [{"module": "variable", "name": "set", "property": {"Name": "%path%", "Value": "/", "AsDefault": true}}],
-    "1": [{"module": "variable", "name": "set", "property": {"Name": "%!build.cache%", "Value": true, "AsDefault": true}}],
-    "2": [{"module": "variable", "name": "set", "property": {"Name": "%!build.summary%", "Value": true, "AsDefault": true}}],
+    "0": [{"module": "variable", "name": "set", "property": {"Name": "%path%", "Value": "/", "Default": true}}],
+    "1": [{"module": "variable", "name": "set", "property": {"Name": "%!build.cache%", "Value": true, "Default": true}}],
+    "2": [{"module": "variable", "name": "set", "property": {"Name": "%!build.summary%", "Value": true, "Default": true}}],
     "3": [{"module": "channel", "name": "set", "property": {"Name": "builder",
            "Goal": {"module": "goal", "name": "call", "property": {"Name": "BuilderChannel"}}}}],
     "4": [{"module": "goal", "name": "call", "property": {"Name": "EmitBuildEvent",
@@ -283,6 +283,25 @@
     "1": [{"module": "condition", "name": "if", "property": {"Left": "%items%"},
            "child": [{"text": "write out \"There are items\"", "action": [{"module": "output", "name": "write", "property": {"Data": "There are items"}}]}]}],
     "2": [{"module": "error", "name": "throw", "property": {"Data": "%!error%", "FixSuggestion": "%hint%"}}]
+   }
+  },
+  {
+   "id": "compare",
+   "covers": "a value after `is` / `equals` is `==`, after `is not` is `!=` — the Operator written as a quoted text after one `=` (never `Operator==\"==\"`)",
+   "goal": "Compare",
+   "steps": [
+    {"text": "if %name% is \"Ingi\", write out \"hi Ingi\"", "indent": 0},
+    {"text": "if %name% equals \"Ingi\", write out \"equal\"", "indent": 0},
+    {"text": "if %name% is not \"Ada\", write out \"not Ada\"", "indent": 0}
+   ],
+   "menu": {"0": ["condition.if", "output.write"], "1": ["condition.if", "output.write"], "2": ["condition.if", "output.write"]},
+   "expect": {
+    "0": [{"module": "condition", "name": "if", "property": {"Left": "%name%", "Operator": "==", "Right": "Ingi"},
+           "child": [{"text": "write out \"hi Ingi\"", "action": [{"module": "output", "name": "write", "property": {"Data": "hi Ingi"}}]}]}],
+    "1": [{"module": "condition", "name": "if", "property": {"Left": "%name%", "Operator": "==", "Right": "Ingi"},
+           "child": [{"text": "write out \"equal\"", "action": [{"module": "output", "name": "write", "property": {"Data": "equal"}}]}]}],
+    "2": [{"module": "condition", "name": "if", "property": {"Left": "%name%", "Operator": "!=", "Right": "Ada"},
+           "child": [{"text": "write out \"not Ada\"", "action": [{"module": "output", "name": "write", "property": {"Data": "not Ada"}}]}]}]
    }
   }
  ]

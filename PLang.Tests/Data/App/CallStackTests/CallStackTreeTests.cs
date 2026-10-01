@@ -91,7 +91,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     public async Task MaxFrames_FifoEvictsOldestSibling_WhenHistoryTrue()
     {
         var stack = new CallStack { Setting = new() {
-            History = true, MaxFrames = 2
+            History = true, Frame = new() { Max = 2 }
         } };
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
 

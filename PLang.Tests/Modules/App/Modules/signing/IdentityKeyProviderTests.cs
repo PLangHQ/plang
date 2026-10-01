@@ -45,7 +45,7 @@ public class IdentityKeyProviderTests
         _app.Code.Register<IKey>(mockProvider);
         _app.Code.SetDefault<IKey>("mock");
 
-        var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"test-identity", SetAsDefault = (global::app.type.item.@bool.@this)true };
+        var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"test-identity", Default = (global::app.type.item.@bool.@this)true };
         await action.Attach(null, Ctx);
         var result = await action.Start();
 
@@ -59,7 +59,7 @@ public class IdentityKeyProviderTests
     [Test]
     public async Task Create_DefaultEd25519_WhenNoOverride()
     {
-        var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"test-identity", SetAsDefault = (global::app.type.item.@bool.@this)true };
+        var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"test-identity", Default = (global::app.type.item.@bool.@this)true };
         await action.Attach(null, Ctx);
         var result = await action.Start();
 
@@ -81,7 +81,7 @@ public class IdentityKeyProviderTests
         _app.Code.Register<IKey>(throwingProvider);
         _app.Code.SetDefault<IKey>("throwing");
 
-        var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"test-identity", SetAsDefault = (global::app.type.item.@bool.@this)true };
+        var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"test-identity", Default = (global::app.type.item.@bool.@this)true };
         await action.Attach(null, Ctx);
         var result = await action.Start();
 
@@ -96,7 +96,7 @@ public class IdentityKeyProviderTests
         _app.Code.Register<IKey>(mockProvider);
         _app.Code.SetDefault<IKey>("mock");
 
-        var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"stored-test", SetAsDefault = (global::app.type.item.@bool.@this)true };
+        var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"stored-test", Default = (global::app.type.item.@bool.@this)true };
         await action.Attach(null, Ctx);
         var result = await action.Start();
         await result.IsSuccess();
@@ -119,7 +119,7 @@ public class IdentityKeyProviderTests
         var mock = new MockKeyProvider();
         _app.Code.Register<IKey>(mock);
 
-        var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"named-test", SetAsDefault = (global::app.type.item.@bool.@this)true, Provider = (global::app.type.item.text.@this)"mock" };
+        var action = new Create(Ctx) { Name = (global::app.type.item.text.@this)"named-test", Default = (global::app.type.item.@bool.@this)true, Provider = (global::app.type.item.text.@this)"mock" };
         await action.Attach(null, Ctx);
         var result = await action.Start();
 

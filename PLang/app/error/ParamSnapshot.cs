@@ -16,7 +16,7 @@ public sealed record ParamSnapshot
     /// <summary>What the .pr provided as the raw value before any resolution. Often a "%var%" string.</summary>
     public object? PrValue { get; init; }
 
-    /// <summary>What the .pr declared as the type for this parameter (e.g. "list&lt;llmmessage&gt;").</summary>
+    /// <summary>What the .pr declared as the type for this parameter (e.g. "list&lt;message&gt;").</summary>
     public string? PrType { get; init; }
 
     /// <summary>The final value the property holds after lazy resolution. Null if the property was never accessed or resolved to null.</summary>

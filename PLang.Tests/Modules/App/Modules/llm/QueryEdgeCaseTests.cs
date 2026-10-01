@@ -82,19 +82,19 @@ public class QueryEdgeCaseTests
                 Make.Call(Ctx, "ToolB"),
                 Make.Call(Ctx, "ToolC")
             }.ToListData(Ctx),
-            MaxToolCalls = (global::app.type.item.number.@this)5
+            Limit = new global::app.module.llm.type.limit.@this(16000, 5, 0)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
 
-        // MaxToolCalls = (global::app.type.item.number.@this)5, 3 tools/round (with batch-slice fix):
+        // limit.tool = 5, 3 tools/round (with batch-slice fix):
         // Round 1 (HTTP #1): remaining=5, all 3 tools execute, toolCallCount=3, continue
         // Round 2 (HTTP #2): remaining=2, sliced to 2 tools, toolCallCount=5, continue
-        // Round 3 (HTTP #3): toolCallCount >= MaxToolCalls → break
+        // Round 3 (HTTP #3): toolCallCount >= limit.tool → break
         await Assert.That(result).IsNotNull();
         await Assert.That(_handler.CallCount).IsEqualTo(3);
         await Assert.That(callIndex).IsEqualTo(3);
-        // Loop exited via MaxToolCalls — result carries metadata
+        // Loop exited via limit.tool — result carries metadata
         await Assert.That((await result.Properties.Value("Truncated"))).IsEqualTo(true);
     }
 

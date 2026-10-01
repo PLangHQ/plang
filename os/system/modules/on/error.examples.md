@@ -16,10 +16,13 @@ Step text: `http get %url%, on error retry 3 times`
 Properties: `{"RetryCount": 3}` — retry with no recovery.
 
 Step text: `http get %url%, on error retry 3 times over 30 seconds`
-Properties: `{"RetryCount": 3, "RetryOver": "PT30S"}` — the retries are spread evenly over that time.
+Properties: `{"RetryCount": 3, "RetryOver": "30s"}` — the retries are spread evenly over that time.
 
 Step text: `write out "hi", on error ignore`
-Properties: `{"IgnoreError": true}`
+Properties: `{"Ignore": true}`
+
+Step text: `delete file 'old.txt', on error 'NotFound' ignore`
+Properties: `{"Key": "NotFound", "Ignore": true}` — a file that isn't there is NotFound; the step carries on past it.
 
 Step text: `call Save, on error retry 2 times, then call Rollback`
 Properties: `{"RetryCount": 2, "Recovery": [goal.call(Name="Rollback")]}` — retry first, then the recovery: the default order, so `Order` is left out.

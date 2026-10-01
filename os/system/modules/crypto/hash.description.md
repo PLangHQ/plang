@@ -1,1 +1,1 @@
-Hash data using the specified algorithm (default keccak256) and return the hex digest
+Hash data using the specified algorithm (default keccak256) and return the digest; it shows as base64

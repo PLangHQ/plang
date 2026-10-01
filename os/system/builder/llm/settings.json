@@ -14,13 +14,8 @@
     },
     {
       "name": "diff",
-      "type": "bool",
-      "default": "false"
-    },
-    {
-      "name": "deepDiff",
-      "type": "bool",
-      "default": "false"
+      "type": "setting",
+      "default": "{\"deep\":false,\"path\":\"app.callstack.setting.diff\",\"enabled\":false}"
     },
     {
       "name": "tags",
@@ -33,7 +28,21 @@
       "default": "false"
     },
     {
-      "name": "maxFrames",
+      "name": "frame",
+      "type": "setting",
+      "default": "{\"max\":1000,\"path\":\"app.callstack.setting.frame\",\"enabled\":true}"
+    }
+  ],
+  "app.callstack.setting.diff": [
+    {
+      "name": "deep",
+      "type": "bool",
+      "default": "false"
+    }
+  ],
+  "app.callstack.setting.frame": [
+    {
+      "name": "max",
       "type": "number",
       "default": "1000"
     }
@@ -47,7 +56,7 @@
     {
       "name": "visibility",
       "type": "list<choice<visibility>>",
-      "default": "[Public]"
+      "default": "[\"Public\"]"
     }
   ],
   "app.setting": [
@@ -74,9 +83,9 @@
       "default": "user"
     },
     {
-      "name": "timeoutSeconds",
-      "type": "number",
-      "default": "30"
+      "name": "timeout",
+      "type": "duration",
+      "default": "30s"
     },
     {
       "name": "parallel",
@@ -128,9 +137,9 @@
       "default": "[]"
     },
     {
-      "name": "maxLength",
-      "type": "number",
-      "default": "500"
+      "name": "length",
+      "type": "setting",
+      "default": "{\"max\":500,\"path\":\"debug.setting.length\",\"enabled\":true}"
     },
     {
       "name": "grep",
@@ -149,8 +158,37 @@
     },
     {
       "name": "llm",
-      "type": "clr",
+      "type": "setting",
       "default": null
+    }
+  ],
+  "debug.setting.length": [
+    {
+      "name": "max",
+      "type": "number",
+      "default": "500"
+    }
+  ],
+  "debug.setting.llm": [
+    {
+      "name": "system",
+      "type": "bool",
+      "default": "false"
+    },
+    {
+      "name": "user",
+      "type": "bool",
+      "default": "false"
+    },
+    {
+      "name": "response",
+      "type": "bool",
+      "default": "false"
+    },
+    {
+      "name": "schema",
+      "type": "bool",
+      "default": "false"
     }
   ],
   "identity.setting": [

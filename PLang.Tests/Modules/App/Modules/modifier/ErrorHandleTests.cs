@@ -23,7 +23,7 @@ public class ErrorHandleTests
         PrAction[]? modifiers = null)
     {
         var parameters = new List<global::app.data.@this> { new("message", message, context: _app.actor.list.User.Context) };
-        if (statusCode != null) parameters.Add(new("statusCode", statusCode.Value, context: _app.actor.list.User.Context));
+        if (statusCode != null) parameters.Add(new("status", statusCode.Value, context: _app.actor.list.User.Context));
         if (key != null) parameters.Add(new("key", key, context: _app.actor.list.User.Context));
         return global::PLang.Tests.Shared.Make.With(new PrAction
         {
@@ -61,7 +61,7 @@ public class ErrorHandleTests
             {
                 new("name", "%ok%", new global::app.type.@this("variable"), context: _app.actor.list.User.Context), new("value", "v", context: _app.actor.list.User.Context)
             })
-        }, ErrorHandler(("ignoreError", true)));
+        }, ErrorHandler(("ignore", true)));
 
         var result = await action.Start(Ctx);
 
@@ -70,10 +70,10 @@ public class ErrorHandleTests
     }
 
     [Test]
-    public async Task Handle_IgnoreError_SwallowsErrorReturnsOk()
+    public async Task Handle_Ignore_SwallowsErrorReturnsOk()
     {
         var action = Throw("boom",
-            modifiers: new PrAction[] { ErrorHandler(("ignoreError", true)) });
+            modifiers: new PrAction[] { ErrorHandler(("ignore", true)) });
 
         var result = await action.Start(Ctx);
 
@@ -94,12 +94,12 @@ public class ErrorHandleTests
     }
 
     [Test]
-    public async Task Handle_IgnoreError_StaysInAudit_PrintedUnderDebug()
+    public async Task Handle_Ignore_StaysInAudit_PrintedUnderDebug()
     {
         var capture = CaptureDebug();
         _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
         var action = Throw("boom", key: "Oops",
-            modifiers: new PrAction[] { ErrorHandler(("ignoreError", true)) });
+            modifiers: new PrAction[] { ErrorHandler(("ignore", true)) });
 
         var result = await action.Start(Ctx);
 
@@ -111,11 +111,11 @@ public class ErrorHandleTests
     }
 
     [Test]
-    public async Task Handle_IgnoreError_WithoutDebug_PrintsNothing()
+    public async Task Handle_Ignore_WithoutDebug_PrintsNothing()
     {
         var capture = CaptureDebug();
         var action = Throw("boom", key: "Oops",
-            modifiers: new PrAction[] { ErrorHandler(("ignoreError", true)) });
+            modifiers: new PrAction[] { ErrorHandler(("ignore", true)) });
 
         var result = await action.Start(Ctx);
 
@@ -130,7 +130,7 @@ public class ErrorHandleTests
         var action = Throw("not found", statusCode: 404,
             modifiers: new PrAction[]
             {
-                ErrorHandler(("statusCode", 404), ("ignoreError", true))
+                ErrorHandler(("statusCode", 404), ("ignore", true))
             });
 
         var result = await action.Start(Ctx);
@@ -144,7 +144,7 @@ public class ErrorHandleTests
         var action = Throw("server error", statusCode: 500,
             modifiers: new PrAction[]
             {
-                ErrorHandler(("statusCode", 404), ("ignoreError", true))
+                ErrorHandler(("statusCode", 404), ("ignore", true))
             });
 
         var result = await action.Start(Ctx);
@@ -159,7 +159,7 @@ public class ErrorHandleTests
         var action = Throw("broken", key: "NotFound",
             modifiers: new PrAction[]
             {
-                ErrorHandler(("key", "notfound"), ("ignoreError", true))
+                ErrorHandler(("key", "notfound"), ("ignore", true))
             });
 
         var result = await action.Start(Ctx);
@@ -173,7 +173,7 @@ public class ErrorHandleTests
         var action = Throw("connection refused on port 443",
             modifiers: new PrAction[]
             {
-                ErrorHandler(("message", "connection"), ("ignoreError", true))
+                ErrorHandler(("message", "connection"), ("ignore", true))
             });
 
         var result = await action.Start(Ctx);
@@ -187,7 +187,7 @@ public class ErrorHandleTests
         var action = Throw("broken", key: "Timeout",
             modifiers: new PrAction[]
             {
-                ErrorHandler(("key", "NotFound"), ("ignoreError", true))
+                ErrorHandler(("key", "NotFound"), ("ignore", true))
             });
 
         var result = await action.Start(Ctx);
@@ -202,7 +202,7 @@ public class ErrorHandleTests
         var action = Throw("disk full",
             modifiers: new PrAction[]
             {
-                ErrorHandler(("message", "connection"), ("ignoreError", true))
+                ErrorHandler(("message", "connection"), ("ignore", true))
             });
 
         var result = await action.Start(Ctx);
@@ -215,7 +215,7 @@ public class ErrorHandleTests
     public async Task Handle_NoFilter_MatchesAllErrors()
     {
         var action = Throw("anything", statusCode: 418,
-            modifiers: new PrAction[] { ErrorHandler(("ignoreError", true)) });
+            modifiers: new PrAction[] { ErrorHandler(("ignore", true)) });
 
         var result = await action.Start(Ctx);
 

@@ -81,7 +81,7 @@ public class BootstrapTests
     [Test]
     public async Task EveryBuilderStep_TakesItsCode_WhereAndOnlyWherePythonAccepted()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
         var differ = new List<string>();
         var files = Files();
         foreach (var rel in files)

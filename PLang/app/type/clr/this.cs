@@ -103,6 +103,14 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
         global::app.data.@this parent, string key, bool isIndex)
     {
         var (found, node) = Kind.Descend(Value, key, isIndex, parent.Context);
+        // a member that answers asynchronously (a gated read) is what its task completes with — a result, a
+        // refusal included, is the answer as it is
+        if (node is System.Threading.Tasks.Task task)
+        {
+            await task;
+            node = task.GetType().GetProperty("Result")?.GetValue(task);
+            if (node is global::app.data.@this answered) return answered;
+        }
         if (!found)
             // a host that names its settings (the app: %!app.setting%) answers .setting with them
             return !isIndex && await Setting(parent, key) is { } setting ? setting : parent.Context.NotFound(key);

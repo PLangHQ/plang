@@ -10,8 +10,8 @@ public sealed class @this : global::app.type.item.setting.@this
     /// <summary>The actor the run's session opens on — the user, unless it says system.</summary>
     [Out, Store] public global::app.type.item.choice.@this<global::app.actor.Name> Actor { get; set; } = global::app.actor.Name.user;
 
-    /// <summary>Per-test wall-clock timeout in seconds. Default 30.</summary>
-    [Out, Store] public global::app.type.item.number.@this TimeoutSeconds { get; set; } = 30;
+    /// <summary>Per-test wall-clock timeout. Default 30s.</summary>
+    [Out, Store] public global::app.type.item.duration.@this Timeout { get; set; } = System.TimeSpan.FromSeconds(30);
 
     /// <summary>How many tests run at once; 0 (the default) is one per processor — a default the same on every
     /// machine, so it reads (and is taught) the same everywhere.</summary>

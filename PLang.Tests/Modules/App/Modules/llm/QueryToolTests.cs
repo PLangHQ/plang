@@ -10,7 +10,7 @@ namespace PLang.Tests.App.Modules.llm;
 
 /// <summary>
 /// Tests the tool execution loop: single/multiple tool calls, parallel execution,
-/// error handling, MaxToolCalls limit, and parameter schema generation.
+/// error handling, limit.tool limit, and parameter schema generation.
 /// </summary>
 public class QueryToolTests
 {
@@ -261,9 +261,9 @@ public class QueryToolTests
     #region Limits
 
     [Test]
-    public async Task Query_MaxToolCallsReached_StopsLoop()
+    public async Task Query_ToolLimitReached_StopsLoop()
     {
-        // Always return tool calls — should stop at MaxToolCalls
+        // Always return tool calls — should stop at limit.tool
         _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(
             LlmTestHelper.MakeToolCallResponse(("call_x", "InfiniteTool", "{}"))));
 
@@ -275,19 +275,19 @@ public class QueryToolTests
             {
                 Make.Call(Ctx, "InfiniteTool")
             }.ToListData(Ctx),
-            MaxToolCalls = (global::app.type.item.number.@this)3
+            Limit = new global::app.module.llm.type.limit.@this(16000, 3, 0)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
 
-        // MaxToolCalls = (global::app.type.item.number.@this)3, 1 tool/round:
+        // limit.tool = 3, 1 tool/round:
         // Round 1: execute 1 tool (count=1), continue
         // Round 2: execute 1 tool (count=2), continue
         // Round 3: execute 1 tool (count=3), continue
         // Round 4: toolCallCount >= 3 → break
         await Assert.That(_handler.CallCount).IsEqualTo(4);
         await result.IsSuccess();
-        // Loop exited via MaxToolCalls — result carries Truncated property
+        // Loop exited via limit.tool — result carries Truncated property
         await Assert.That((await result.Properties.Value("Truncated"))).IsEqualTo(true);
         await Assert.That((await result.Properties.Value("ToolCallCount"))).IsNotNull();
     }

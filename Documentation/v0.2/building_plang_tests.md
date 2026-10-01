@@ -188,9 +188,9 @@ plang --build={"cache":false}                                          # Build w
 plang --test                                                           # Run tests from current directory
 plang --debug=true                                                     # Debug all steps
 plang --debug={"goal":"GoalName","step":3}                             # Debug specific step
-plang --debug={"goal":"BuildGoal","step":3,"maxLength":0}              # No truncation
+plang --debug={"goal":"BuildGoal","step":3,"length":{"max":0}}              # No truncation
 plang --debug={"goal":"BuildGoal","step":3,"grep":"condition"}         # Filter output (regex)
-plang --debug={"goal":"BuildGoal","step":3,"maxLength":0,"grep":"if"}  # Full content, filtered
+plang --debug={"goal":"BuildGoal","step":3,"length":{"max":0},"grep":"if"}  # Full content, filtered
 plang --build --debug={"goal":"BuildGoal"}                             # Build with debug
 ```
 
@@ -200,10 +200,10 @@ plang --build --debug={"goal":"BuildGoal"}                             # Build w
 |--------|---------|-------------|
 | `goal` | `*` (all) | Only debug steps in this goal |
 | `step` | all | Only debug this step index |
-| `maxLength` | 500 | Max characters per line in output. `0` = no truncation |
+| `length.max` | 500 | Max characters per line in output. `0` = no truncation |
 | `grep` | none | Regex filter — only show lines matching the pattern |
 
-**Order matters**: grep runs on full (untrimmed) content first, then maxLength truncation applies. This ensures grep matches aren't lost to truncation.
+**Order matters**: grep runs on full (untrimmed) content first, then length.max truncation applies. This ensures grep matches aren't lost to truncation.
 
 ## LLM Cache
 

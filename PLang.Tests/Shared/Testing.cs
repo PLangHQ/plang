@@ -15,6 +15,14 @@ public static class AppTesting
         return app.TestSigning();
     }
 
+    /// <summary>This app building, as <c>plang build</c> starts it: born with its Build — the goals' steps are
+    /// checked over its files (<c>app.Build.Files</c>), where a test adds a mock.</summary>
+    public static global::app.@this Building(this global::app.@this app)
+    {
+        app.Build = new global::app.module.build.@this(app.actor.list.System.Context);
+        return app;
+    }
+
     /// <summary>
     /// Signing through the no-crypto <see cref="global::PLang.Tests.Shared.TestSigning"/> mock, through the code
     /// door — for an app kept on disk (its own store) that doesn't test crypto. Real ed25519 keygen + keccak256 +

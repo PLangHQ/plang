@@ -9,7 +9,7 @@
  },
  {
   "input": "file.read(Pth=\"x\")",
-  "message": "line 1, column 11: `file.read` has no property `Pth` (it has Path, ResolveVariables)"
+  "message": "line 1, column 11: `file.read` has no property `Pth` (it has Path, Template)"
  },
  {
   "input": "file.read(Path: text = \"x\")",
@@ -69,7 +69,7 @@
  },
  {
   "input": "output.write(Data=hello)",
-  "message": "line 1, column 19: a text is quoted: \"hello\""
+  "message": "line 1, column 19: a text must be in quotes: write \"hello\", not hello"
  },
  {
   "input": "file.read(Path=%?)",
@@ -101,7 +101,7 @@
  },
  {
   "input": "file.read(Path=\"x\"); on.timeout(After=PT5X)",
-  "message": "line 1, column 39: a text is quoted: \"PT5X\""
+  "message": "line 1, column 39: a text must be in quotes: write \"PT5X\", not PT5X"
  },
  {
   "input": "",

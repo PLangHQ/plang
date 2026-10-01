@@ -1,0 +1,8 @@
+/ A duration is born with the standard its text is written in, and stays in it: 30s is short, PT5M is iso.
+Start
+- variable.set(Name=%short%, Value="30s", Type="duration")
+- variable.set(Name=%iso%, Value="PT5M", Type="duration")
+- assert.equals(Expected="30s", Actual=%short.text%, Message="30s stays 30s")
+- assert.equals(Expected="short", Actual=%short!type.kind.name%, Message="its kind is short")
+- assert.equals(Expected="PT5M", Actual=%iso.text%, Message="PT5M stays PT5M")
+- assert.equals(Expected="iso", Actual=%iso!type.kind.name%, Message="its kind is iso")

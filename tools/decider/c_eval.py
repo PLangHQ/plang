@@ -283,7 +283,8 @@ if __name__ == '__main__':
                                ex.map(lambda case: d.one(case, cat, os.path.join(SHARED, case['id'], 'decider')), GOLDEN)))
         # a step's picks; an unsure step also carries '@popular': the top 3 of the decider's popular-action choice
         picks = {cid: {s['index']: {**{a: v['score'] for a, v in s['pick'].items()},
-                                    **({'@popular': s['popular']} if s.get('popular') else {})} for s in r['steps']}
+                                    **({'@popular': s['popular']} if s.get('popular') else {}),
+                                    **({'@module': c.module_shares(s)} if c.module_shares(s) else {})} for s in r['steps']}
                  for cid, r in decided.items()}
         json.dump({'picks': {k: {str(i): p for i, p in v.items()} for k, v in picks.items()},
                    'decider': {cid: {'stage1': r['stage1'], 'stage2': r['stage2']} for cid, r in decided.items()}},

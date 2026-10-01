@@ -2107,3 +2107,21 @@ check caught it: coverage reads plang's own markers (%vars%, quoted literals, nu
 bare word. A general "every word" rule would misfire on prose. Options: the action checks its own words
 (output.write knows "to <channel>"), or the author writes the step in formal. Tests/Channels/
 GoalChannelRecursion stays unbuilt until then.
+
+## 2026-10-01 — llm.query's cache answers a property JSON-quoted
+
+`Query_CacheHit_PropertiesPreserved` (PLang.Tests/Modules/App/Modules/llm/QueryCacheTests.cs) fails in the
+coder's environment 2/2: a property kept on a cached llm.query result comes back as `"\"preserved\""` instead
+of `"preserved"` — the value written to the store's LLM cache is read back as its JSON text. It passes in the
+architect's sweep, so environment or cache state decides it; it stays on the coder's baseline, noted. Look at
+how the cache writes a property and reads it back (one serialize too many, or a text read where a value is).
+
+**Resolved 2026-10-01:** a cache hit kept each property as its undecoded wire (the raw JSON); RestoreFromCache
+now reads each through its Data. The test is green and off the baseline.
+
+## 2026-10-01 — one flaky step sinks a whole goal's eval round
+
+In the decider eval (`tools/decider/c_eval.py`), the `build` goal failed all 11 of its steps in one round because
+step 3 (`set channel "builder" call BuilderChannel` → `channel.set Goal=`) was refused twice: a goal whose answer
+can't be read fails whole, so one flaky step scores as eleven failures. The eval (and the builder) could keep the
+steps that read and fail only the refused one, so a round measures steps, not the worst step of a goal.

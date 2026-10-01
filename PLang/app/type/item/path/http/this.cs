@@ -203,7 +203,7 @@ public sealed partial class @this : global::app.type.item.path.@this
         return data.@this<global::app.type.item.binary.@this>.From(await Send(HttpMethod.Get, content: null, readBody: true, verb, context));
     }
 
-    public override async Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync(actor.context.@this context)
+    public override async Task<data.@this<global::app.type.item.@bool.@this>> Exists(actor.context.@this context)
     {
         if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.@bool.@this>.From(early);
         try
@@ -239,11 +239,11 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     /// <summary>
     /// Truthiness of an http path is "does the resource exist" — an HTTP HEAD.
-    /// Reuses <see cref="ExistsAsync"/>; a denied or errored probe answers false.
+    /// Reuses <see cref="Exists"/>; a denied or errored probe answers false.
     /// </summary>
     public override async Task<bool> AsBooleanAsync(actor.context.@this context)
     {
-        var existsResult = await ExistsAsync(context);
+        var existsResult = await Exists(context);
         return existsResult.Success && await existsResult.ToBooleanAsync();
     }
 
@@ -327,10 +327,10 @@ public sealed partial class @this : global::app.type.item.path.@this
     // --- Destructive ---------------------------------------------------------
 
     /// <summary>
-    /// HTTP DELETE. <paramref name="recursive"/> / <paramref name="ignoreIfNotFound"/>
-    /// are filesystem-only — no-ops here; the server decides.
+    /// HTTP DELETE. <paramref name="recursive"/> is filesystem-only — a no-op here; the server decides, and a
+    /// missing resource is its 404.
     /// </summary>
-    public override async Task<data.@this<global::app.type.item.path.@this>> Delete(global::app.type.item.@bool.@this recursive, global::app.type.item.@bool.@this ignoreIfNotFound, actor.context.@this context)
+    public override async Task<data.@this<global::app.type.item.path.@this>> Delete(global::app.type.item.@bool.@this recursive, actor.context.@this context)
     {
         var verb = Verb.Delete;
         if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);

@@ -234,7 +234,7 @@ public class PickListTests
                 await step.Pick.Take(first, Popular(), context);
                 await step.Pick.Take(second, Popular(), context);
                 var at = $"{entry.GetProperty("goal").GetString()}[{step.Index}]";                var python = entry.GetProperty("picks").GetProperty(step.Index.ToString());
-                var theirs = python.EnumerateObject().Where(p => p.Name != "@popular")
+                var theirs = python.EnumerateObject().Where(p => !p.Name.StartsWith('@'))
                     .Select(p => $"{p.Name} {(p.Value.ValueKind == System.Text.Json.JsonValueKind.Null ? "null" : p.Value.GetDouble().ToString("R"))}");
                 var ours = step.Pick.Item.Select(p => $"{p.Name} {(p.Score is { } s ? ((double)s).ToString("R") : "null")}");
                 if (!ours.SequenceEqual(theirs)) differ.Add($"{at}\n  ours:   {string.Join(", ", ours)}\n  python: {string.Join(", ", theirs)}");

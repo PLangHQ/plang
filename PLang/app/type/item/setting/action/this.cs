@@ -36,9 +36,15 @@ public sealed class @this : global::app.type.item.setting.@this
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex,
         object? value, global::app.actor.context.@this context)
     {
-        if (_action.Property[key] == null)
+        if (_action.Property[key] is not { } option)
             throw new System.NotSupportedException($"action '{Path}' has no option '{key}'");
-        await Write(key, value, context);
+        // born as the option's type — a record from its dict, the members it leaves out at their defaults; a value
+        // the option can't take is refused before this run holds it
+        var raw = value is global::app.data.@this held ? await held.Value() : value;
+        var binding = new global::app.data.@this(key, raw, context: context);
+        if (option.Type.Make(raw, binding) is not { } made)
+            throw new global::app.error.AppException(binding.Error!);
+        await Write(key, made, context);
         return this;
     }
 }

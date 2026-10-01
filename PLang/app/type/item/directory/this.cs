@@ -92,9 +92,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return false;
     }
 
-    /// <summary>Truthiness — does the directory exist.</summary>
-    public override bool IsTruthy() =>
-        Path is global::app.type.item.path.file.@this fp && fp.Exists;
+    /// <summary>Truthiness — does the directory exist, as its asker may see.</summary>
+    public override System.Threading.Tasks.Task<bool> AsBooleanAsync(global::app.actor.context.@this context)
+        => Path.AsBooleanAsync(context);
 
     public override string ToString() => Path.ToString();
 

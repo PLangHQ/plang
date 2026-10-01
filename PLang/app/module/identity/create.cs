@@ -12,8 +12,9 @@ public partial class Create : IContext
     [Default("default")]
     public partial data.@this<global::app.type.item.text.@this> Name { get; init; }
 
+    /// <summary>Whether the new identity becomes the default one.</summary>
     [Default(false)]
-    public partial data.@this<global::app.type.item.@bool.@this> SetAsDefault { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> Default { get; init; }
 
     /// <summary>Optional provider name override. Uses default IKey if not specified.</summary>
     public partial data.@this<global::app.type.item.text.@this>? Provider { get; init; }

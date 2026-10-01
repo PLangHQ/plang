@@ -24,14 +24,14 @@ public sealed class @this : IReadOnlyList<CallEntity>
 
     /// <summary>
     /// Append a child under the lock. Evicts the oldest entry when History is on and
-    /// the post-add count exceeds MaxFrames.
+    /// the post-add count exceeds the setting's frame.max.
     /// </summary>
     public void Add(CallEntity child)
     {
         lock (_lock)
         {
             _entries.Add(child);
-            if (_stack.History.Value && _entries.Count > _stack.MaxFrames.ToInt32())
+            if (_stack.History.Value && _entries.Count > _stack.Setting.Frame.Max.ToInt32())
                 _entries.RemoveAt(0);
         }
     }

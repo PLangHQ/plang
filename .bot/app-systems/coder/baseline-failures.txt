@@ -8,7 +8,6 @@ MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal
 NavigateAndEditCapturedVariable_ThenResumeToSuccess
 Navigation_ReadsValueWhichMaterialises
 PlangPath_AsSnapshotConvert_EditSurvivesResume
-Query_CacheHit_PropertiesPreserved
 Roundtrip_PreservesData
 Roundtrip_StreamBased_PreservesData
 SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess
@@ -17,3 +16,4 @@ ThrowTimeSnapshot_EditSurvivesResume
 Trace_HandleReportsConceptName_NotNamespaceTail
 TypedSnapshotString_NavigateEditResume_PersistsEdit
 Variables_HandleReportsConceptName_NotNamespaceTail
+# Query_CacheHit_PropertiesPreserved: off the baseline (2026-10-01) — a cache hit kept each property as its undecoded wire (its raw JSON, "\"preserved\""); RestoreFromCache now reads each through its Data

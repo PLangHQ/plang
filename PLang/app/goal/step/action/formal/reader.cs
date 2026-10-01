@@ -137,6 +137,16 @@ public sealed class Reader
             return name;
         }
 
+        // A dict's key written bare: a name, which may hold a hyphen after its first letter (an http header,
+        // `X-Probe: "x"`). A key holding anything else is written quoted.
+        private string Key()
+        {
+            var key = Match(@"[A-Za-z_][\w-]*");
+            if (key == null) Fail("expected a key");
+            _pos += key!.Length;
+            return key;
+        }
+
         private bool AtAction() => Match(@"[A-Za-z_]\w*\.[A-Za-z_]\w*\s*\(") != null;
 
         // ---------------------------------------------------------------- actions
@@ -303,12 +313,13 @@ public sealed class Reader
                 _pos += text.Length;
                 value = Scalar(System.Text.Json.JsonSerializer.Serialize(text), System.Text.Json.JsonValueKind.String);
             }
-            else if (declared.Type.Name == "duration" && Match(@"-?P[0-9A-Za-z.]+(?![\w.(%])") is { } iso
-                     && global::app.type.item.duration.@this.Resolve(iso, _context) != null)
+            else if (declared.Type.Name == "duration" && Match(@"-?(?:P[0-9A-Za-z.]+|\d+(?:\.\d+)?(?:ms|s|m|h|d))(?![\w.(%])") is { } span
+                     && global::app.type.item.duration.@this.Resolve(span, _context) != null)
             {
-                // a duration reads its own literal bare, as a choice reads its option: After=PT5S is After="PT5S"
-                _pos += iso.Length;
-                value = Scalar(System.Text.Json.JsonSerializer.Serialize(iso), System.Text.Json.JsonValueKind.String);
+                // a duration reads its own literal bare, as a choice reads its option: After=5s is After="5s",
+                // After=PT5S is After="PT5S" — each in its own standard
+                _pos += span.Length;
+                value = Scalar(System.Text.Json.JsonSerializer.Serialize(span), System.Text.Json.JsonValueKind.String);
             }
             else value = Value(declared.Type.Name);
 
@@ -503,7 +514,7 @@ public sealed class Reader
                         var k = Value(null);
                         key = System.Text.Json.JsonSerializer.Deserialize<string>(k.Json!)!;
                     }
-                    else key = Ident();
+                    else key = Key();
                     Take(":");
                     Space();
                     // `key: type = value` is a typed argument row
@@ -533,7 +544,7 @@ public sealed class Reader
                 Attach(held, Action());
                 return new Literal { Action = held[0] };
             }
-            if (Match(@"[A-Za-z_][\w./-]*") is { } bare) Fail($"a text is quoted: \"{bare}\"");
+            if (Match(@"[A-Za-z_/][\w./-]*") is { } bare) Fail($"a text must be in quotes: write \"{bare}\", not {bare}");
             if (_text[_pos] == '?') Fail("a `?` is still there: fill it with the value the step gives");
             Fail("expected a value: \"text\", a number, true, false, null, %variable%, [list], {dict} or an action");
             return null!;

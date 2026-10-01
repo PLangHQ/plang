@@ -89,11 +89,26 @@
   "app.module.crypto.type.hash": {
     "word": "hash"
   },
+  "app.module.http.type.entity": {
+    "word": "entity"
+  },
+  "app.module.http.type.redirect": {
+    "word": "redirect"
+  },
   "app.module.identity.identity": {
     "word": "identity"
   },
-  "app.module.llm.llmmessage": {
-    "word": "llmmessage"
+  "app.module.list.type.query": {
+    "word": "query"
+  },
+  "app.module.llm.type.conversation": {
+    "word": "conversation"
+  },
+  "app.module.llm.type.limit": {
+    "word": "limit"
+  },
+  "app.module.llm.type.message": {
+    "word": "message"
   },
   "app.module.output.ask": {
     "word": "ask"

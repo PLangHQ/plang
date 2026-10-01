@@ -91,6 +91,31 @@ public class Fluid : ITemplate
         options.ValueConverters.Add(value =>
             value is global::app.type.item.@this { IsLeaf: false } container ? Item.Liquid(container, action.Context, options) : null);
 
+        // `{{ x | json }}` writes the value through plang's json format, as the json writer shows it, compact
+        // (liquid's `json: true` indent is not honoured). Liquid's own json filter reflects the C# object behind
+        // the value (IsSequence, RawBytes, …). The value is taken as it is: a text holding %…% is those characters.
+        options.Filters.AddFilter("json", async (input, _, _) =>
+        {
+            var value = new global::app.data.@this("", global::app.type.item.@this.Create(input.ToObjectValue(), action.Context),
+                context: action.Context);
+            using var json = new MemoryStream();
+            var written = await action.Context.App.type.list.Mime("application/json").Encode(json, value, action.Context);
+            if (!written.Success) throw new AppException(written.Error!);
+            return new StringValue(System.Text.Encoding.UTF8.GetString(json.ToArray()));
+        });
+
+        // `{{ x | text }}` writes the value as plang's text format writes it — a leaf bare, a container as its json:
+        // the value's own text form, never the C# object's ToString.
+        options.Filters.AddFilter("text", async (input, _, _) =>
+        {
+            var held = input.ToObjectValue();
+            var value = new global::app.data.@this("",
+                held as global::app.type.item.@this ?? global::app.type.item.@this.Create(held, action.Context), context: action.Context);
+            using var text = new MemoryStream();
+            var written = await action.Context.App.type.list.Mime("text/plain").Encode(text, value, action.Context);
+            if (!written.Success) throw new AppException(written.Error!);
+            return new StringValue(System.Text.Encoding.UTF8.GetString(text.ToArray()));
+        });
 
         // Configure file provider for {% include %} / {% render %} tags
         var includes = new PlangFileProvider(GetTemplateBaseDir(action), action.Context);
@@ -190,7 +215,8 @@ public class Fluid : ITemplate
             // its AUTHORED form is never member-accessed here — it's embedded via the `store` filter,
             // which drives the value's own Store writer (%refs% literal) instead of this resolve door.
             var resolved = await (await new global::app.data.@this("", obj, context: context).Get(name)).Value();
-            return (resolved is global::app.type.item.@this value ? value.Backing : resolved)!;
+            // A span stays the plang value: Fluid has no span of its own and would read it as a 1970 date.
+            return (resolved is global::app.type.item.@this value ? (value.Backing is TimeSpan ? value : value.Backing) : resolved)!;
         }
 
         // The value door is async (a path stat, a computed render). Templates render via
@@ -237,7 +263,7 @@ public class Fluid : ITemplate
         private global::app.data.@this Parent => new("", item, context: context);
 
         private static FluidValue Lowered(object? value, TemplateOptions options)
-            => FluidValue.Create(value is global::app.type.item.@this reached ? reached.Backing : value, options);
+            => FluidValue.Create(value is global::app.type.item.@this reached ? (reached.Backing is TimeSpan ? reached : reached.Backing) : value, options);
     }
 
     /// <summary>
@@ -351,7 +377,7 @@ public class Fluid : ITemplate
             {
                 if (string.IsNullOrEmpty(candidate)) continue;
                 var resolved = _basePath.Combine(candidate);
-                var exists = await resolved.ExistsAsync(_context);
+                var exists = await resolved.Exists(_context);
                 if (!exists.Success)
                     throw new global::app.error.AppException($"include '{candidate}': {exists.Error?.Message}",
                         exists.Error?.Key ?? "IncludeFailed", exists.Error?.StatusCode ?? 500);

@@ -115,7 +115,7 @@ public class MoveCopyBundledConsentTests
         var src = new Path(srcFile);
         var dst = new Path(dstFile);
 
-        var result = await src.CopyTo(dst, overwrite: true, includeSubfolders: true, app.actor.list.User.Context);
+        var result = await src.CopyTo(dst, overwrite: true, subfolder: true, app.actor.list.User.Context);
         await result.IsSuccess();
         await Assert.That(ch.AskCount).IsEqualTo(1);
         await Assert.That(System.IO.File.Exists(srcFile)).IsTrue(); // copy keeps source
@@ -239,7 +239,7 @@ public class MoveCopyBundledConsentTests
         var src = new Path(srcFile);
         var dst = new Path(dstFile);
 
-        var result = await src.CopyTo(dst, overwrite: true, includeSubfolders: true, app.actor.list.User.Context);
+        var result = await src.CopyTo(dst, overwrite: true, subfolder: true, app.actor.list.User.Context);
         await result.IsFailure();
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
         await Assert.That(System.IO.File.Exists(srcFile)).IsTrue();

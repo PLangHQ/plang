@@ -74,9 +74,9 @@ public partial class query : IContext
     /// <summary>Model override (e.g., "gpt-4o"). Falls back to provider settings default.</summary>
     public partial data.@this<global::app.type.item.text.@this>? Model { get; init; }
 
-    /// <summary>When true, prepends stored conversation history from previous queries.</summary>
-    [Default(false)]
-    public partial data.@this<global::app.type.item.@bool.@this> ContinuePreviousConversation { get; init; }
+    /// <summary>How the query stands to the conversation before it — <c>{continue: %answer%}</c> prepends the
+    /// messages of the conversation that response answered. Left out, a fresh conversation.</summary>
+    public partial data.@this<global::app.module.llm.type.conversation.@this> Conversation { get; init; }
 
     /// <summary>Sampling temperature. 0.0 = deterministic.</summary>
     [Default(0.0)]
@@ -85,17 +85,9 @@ public partial class query : IContext
     /// <summary>Top-p (nucleus sampling). 0.0 = greedy, 1.0 = full distribution.</summary>
     public partial data.@this<global::app.type.item.number.@this>? TopP { get; init; }
 
-    /// <summary>Maximum tokens in the response.</summary>
-    [Default(16000)]
-    public partial data.@this<global::app.type.item.number.@this> MaxTokens { get; init; }
-
-    /// <summary>Maximum total individual tool calls before stopping the loop.</summary>
-    [Default(10)]
-    public partial data.@this<global::app.type.item.number.@this> MaxToolCalls { get; init; }
-
-    /// <summary>Maximum validation retries before returning error.</summary>
-    [Default(0)]
-    public partial data.@this<global::app.type.item.number.@this> MaxValidationRetries { get; init; }
+    /// <summary>How far the query may go — <c>{token, tool, retry}</c>: the tokens in its answer, the tool calls it
+    /// makes, the retries of an answer that fails validation. Left out, the limit's defaults.</summary>
+    public partial data.@this<global::app.module.llm.type.limit.@this> Limit { get; init; }
 
     /// <summary>Whether to cache the response. Skipped when Tool is non-null.</summary>
     [Default(true)]

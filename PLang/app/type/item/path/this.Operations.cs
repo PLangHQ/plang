@@ -10,7 +10,7 @@ namespace app.type.item.path;
 /// <see cref="Authorize"/> (the scheme-agnostic Permission gate) internally
 /// from each impl. Cross-scheme <see cref="CopyTo"/>/<see cref="MoveTo"/> stay
 /// virtual on the base with naive read/write defaults; same-scheme subclasses
-/// override for fast paths (FilePath uses <c>System.IO.File.Move</c>, etc.).
+/// override for fast paths (FilePath moves through its caller's filesystem, etc.).
 /// Every verb takes the caller's context: it checks the caller's permission and
 /// its result Data is born with it. The path itself stores none.
 /// </summary>
@@ -52,7 +52,7 @@ public abstract partial class @this
     // The option-bearing verbs (Delete/List/CopyTo/MoveTo/Save) live here, on
     // the base — so a file action handler calls them through the abstract
     // `path` reference and never downcasts to a concrete scheme. Filesystem-only
-    // options (recursive, includeSubfolders, overwrite, pattern) are honoured by
+    // options (recursive, subfolder, overwrite, pattern) are honoured by
     // FilePath and documented as no-ops by non-FS schemes — the no-op lives
     // inside the scheme, not as a branch the handler picks.
 
@@ -74,6 +74,15 @@ public abstract partial class @this
     /// is not fetched at build) or it is there.</summary>
     public virtual Task<global::app.error.Error?> Absence(actor.context.@this context) => Task.FromResult<global::app.error.Error?>(null);
 
+    /// <summary>Build's face of a write: this location is in its caller's files, for the steps after it. A copy or
+    /// a move names its <paramref name="source"/> — into a folder, the file lands under it. Only a file location
+    /// has a place in a filesystem; any other does nothing.</summary>
+    public virtual void Add(actor.context.@this context, @this? source = null) { }
+
+    /// <summary>Build's face of a delete: this location is gone from its caller's files, for the steps after it.
+    /// Only a file location has a place in a filesystem; any other does nothing.</summary>
+    public virtual void Remove(actor.context.@this context) { }
+
     // The type a reference of this location is: the reference type named, of this location's content kind.
     protected global::app.type.@this Reference(string type, actor.context.@this context)
         => context.App.type.list[new global::app.type.@this(type, Kind(context).kind is { IsEmpty: false } k ? k.Name : null), context];
@@ -82,7 +91,9 @@ public abstract partial class @this
     /// themselves (a reference sampling its content, a request body, an attachment). A program reads a location
     /// through <see cref="Read"/>, which lands a value; this is the bytes, not a value.</summary>
     internal abstract Task<data.@this<global::app.type.item.binary.@this>> Bytes(actor.context.@this context);
-    public abstract Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync(actor.context.@this context);
+    /// <summary>Whether something is at this location, as its asker may see: through the gate — a refusal is the
+    /// answer as it is; nothing there is false.</summary>
+    [LlmBuilder] public abstract Task<data.@this<global::app.type.item.@bool.@this>> Exists(actor.context.@this context);
     public abstract Task<data.@this<StatInfo>> Stat(actor.context.@this context);
 
     // Writes return the path itself wrapped — caller can chain or read .Exists.
@@ -103,8 +114,9 @@ public abstract partial class @this
         Task.FromResult(context.Error(
             new error.ServiceError($"Scheme '{Scheme}' does not support assembly loading.", "NotSupported", 400)));
 
-    /// <summary>Delete with file-action options. Non-FS schemes ignore both.</summary>
-    public abstract Task<data.@this<@this>> Delete(global::app.type.item.@bool.@this recursive, global::app.type.item.@bool.@this ignoreIfNotFound, actor.context.@this context);
+    /// <summary>Delete what is at this location — a folder with what it holds when <paramref name="recursive"/>
+    /// (non-FS schemes ignore it). Nothing there is NotFound (404).</summary>
+    public abstract Task<data.@this<@this>> Delete(global::app.type.item.@bool.@this recursive, actor.context.@this context);
 
     /// <summary>List entries with a glob pattern. Non-FS schemes ignore both options.</summary>
     public abstract Task<data.@this<global::app.type.item.list.@this<@this>>> List(global::app.type.item.text.@this pattern, global::app.type.item.@bool.@this recursive, actor.context.@this context);
@@ -113,7 +125,7 @@ public abstract partial class @this
     public abstract Task<data.@this<@this>> Save(data.@this? value, actor.context.@this context);
 
     /// <summary>Convenience — same defaults the file actions carried.</summary>
-    public Task<data.@this<@this>> Delete(actor.context.@this context) => Delete(recursive: false, ignoreIfNotFound: false, context);
+    public Task<data.@this<@this>> Delete(actor.context.@this context) => Delete(recursive: false, context);
 
     /// <summary>Convenience — all entries, shallow.</summary>
     public Task<data.@this<global::app.type.item.list.@this<@this>>> List(actor.context.@this context) => List(pattern: "*", recursive: false, context);
@@ -122,13 +134,13 @@ public abstract partial class @this
 
     /// <summary>
     /// Cross-scheme copy default: the bytes from this, WriteBytes to destination.
-    /// <paramref name="overwrite"/> / <paramref name="includeSubfolders"/> are
+    /// <paramref name="overwrite"/> / <paramref name="subfolder"/> are
     /// filesystem-only — a byte-stream copy has no folder tree and no in-place
     /// target, so they are no-ops here. Authorization is performed by the
     /// underlying verb impls. Subclasses (e.g. FilePath) override for
     /// same-scheme fast paths that honour the options.
     /// </summary>
-    public virtual async Task<data.@this<@this>> CopyTo(@this destination, global::app.type.item.@bool.@this overwrite, global::app.type.item.@bool.@this includeSubfolders, actor.context.@this context)
+    public virtual async Task<data.@this<@this>> CopyTo(@this destination, global::app.type.item.@bool.@this overwrite, global::app.type.item.@bool.@this subfolder, actor.context.@this context)
     {
         var read = await Bytes(context);
         if (!read.Success || read.Exits) return data.@this<@this>.From(read);
@@ -144,7 +156,7 @@ public abstract partial class @this
     /// </summary>
     public virtual async Task<data.@this<@this>> MoveTo(@this destination, global::app.type.item.@bool.@this overwrite, actor.context.@this context)
     {
-        var copy = await CopyTo(destination, overwrite, includeSubfolders: true, context);
+        var copy = await CopyTo(destination, overwrite, subfolder: true, context);
         if (!copy.Success || copy.Exits) return copy;
         return await Delete(context);
     }

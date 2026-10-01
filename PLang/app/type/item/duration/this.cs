@@ -19,19 +19,37 @@ namespace app.type.item.duration;
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
-    public static string Example => "PT5M";
-    public static string Description => "A length of time, written in ISO 8601 (PT5M is five minutes).";
+    public static string Example => "5m";
+    public static string Description => "A length of time: a number and its unit (200ms, 30s, 5m, 1h, 1d), or ISO 8601 (PT5M).";
     public static string Shape => "string";
 
     public System.TimeSpan Value { get; }
 
+    // the standard it is written in (short, iso, dotnet), born with it; and its type, {duration, <kind>}, made once
+    private readonly kind.@this _kind;
+    private readonly global::app.type.@this _type;
+
     /// <summary>The CLR exit door — the type hands its own backing.</summary>
     internal override object? Clr(System.Type target) => ClrConvert(Value, target);
     public override bool IsLeaf => true;
-    public override void Write(global::app.type.format.IWriter w) => w.TimeSpan(Value);
-    protected internal override global::app.type.@this Type => new(typeof(@this));
 
-    public @this(System.TimeSpan value) { Value = value; }
+    /// <summary>Its text in its kind — <c>30s</c>, <c>PT5M</c>; <c>%d.text%</c>.</summary>
+    public string Text => _kind.Text(Value);
+
+    /// <summary>A duration writes its text in its own kind: <c>30s</c> stays <c>30s</c>, <c>PT5M</c> stays <c>PT5M</c>.</summary>
+    public override void Write(global::app.type.format.IWriter w) => w.Content(Text, _kind);
+    protected internal override global::app.type.@this Type => _type;
+
+    /// <summary>A span made with no text (a C# span, an elapsed time) — written short, the form a step reads.</summary>
+    public @this(System.TimeSpan value) : this(value, new kind.@short.@this()) { }
+
+    /// <summary>A span in <paramref name="kind"/>'s standard.</summary>
+    public @this(System.TimeSpan value, kind.@this kind)
+    {
+        Value = value;
+        _kind = kind;
+        _type = new global::app.type.@this("duration", typeof(@this), kind.Name);
+    }
 
     /// <summary>THE PURE CORE — a <c>duration</c> passes through; a TimeSpan or a string (ISO-8601
     /// <c>PT30S</c> or .NET <c>00:00:30</c>, via <see cref="Resolve"/> whose context is unused)
@@ -53,9 +71,16 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// on <paramref name="data"/> (a bad string vs a wrong type).</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, global::app.data.@this data)
     {
-        if (Create(value) is { } built) return built;
+        if (Create(value) is { } built)
+        {
+            // asked for in a standard (`as iso`): the same span, written in that one
+            if (declared?.kind is { IsEmpty: false } asked && !string.Equals(asked.Name, built._kind.Name, System.StringComparison.OrdinalIgnoreCase)
+                && data.Context?.App.type.list["duration"].kind[asked.Name] is kind.@this standard)
+                return new @this(built.Value, standard);
+            return built;
+        }
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
-            ? new global::app.error.Error($"Cannot parse '{s}' as duration — expected ISO-8601 (e.g. PT30S) or .NET format (e.g. 00:00:30).", "DurationParseFailed", 400)
+            ? new global::app.error.Error($"Cannot parse '{s}' as duration — expected a number and its unit (30s, 200ms, 5m), ISO-8601 (PT30S) or .NET format (00:00:30).", "DurationParseFailed", 400)
             : new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to duration.", "DurationConversionFailed", 400));
         return null;
     }
@@ -82,8 +107,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public double TotalSeconds => Value.TotalSeconds;
     public double TotalMilliseconds => Value.TotalMilliseconds;
 
-    /// <summary>Bare ISO-8601 duration form (e.g. <c>PT1H30M</c>) — the serializer renders this.</summary>
-    public override string ToString() => System.Xml.XmlConvert.ToString(Value);
+    /// <summary>Its text in its kind (<see cref="Text"/>).</summary>
+    public override string ToString() => Text;
 
     // ---- Truthiness (item): zero is falsy ----
     public override bool IsTruthy() => Value != System.TimeSpan.Zero;

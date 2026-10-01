@@ -1,1 +1,1 @@
-Delete a file or directory at Path, optionally recursively or ignoring missing targets
+Delete a file or directory at Path, optionally recursively; nothing there is NotFound

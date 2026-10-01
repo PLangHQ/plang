@@ -161,7 +161,7 @@ public class QueryCallbackTests
     public async Task Query_OnValidateResponse_Passes_ReturnsNormally()
     {
         // When OnValidateResponse goal doesn't exist, app.Start returns error
-        // which triggers retry. With MaxValidationRetries = (global::app.type.item.number.@this)0, it returns error immediately.
+        // which triggers retry. With limit.retry = 0, it returns error immediately.
         // To test "passes" scenario, we need the validation goal to actually exist.
         // For unit test: no OnValidateResponse set → result returns normally
         _handler.Handler = _ => Task.FromResult(
@@ -188,7 +188,7 @@ public class QueryCallbackTests
                 new LlmMessage { Role = "user", Content = "validate me" }
             }.ToListData<LlmMessage>(Ctx),
             OnValidateResponse = Make.Call(Ctx, "NonExistentValidator"),
-            MaxValidationRetries = (global::app.type.item.number.@this)0
+            Limit = new global::app.module.llm.type.limit.@this(16000, 10, 0)
         };
         await action.Attach(null, Ctx);
         await action.Start();
@@ -214,12 +214,12 @@ public class QueryCallbackTests
                 new LlmMessage { Role = "user", Content = "validate me" }
             }.ToListData<LlmMessage>(Ctx),
             OnValidateResponse = Make.Call(Ctx, "NonExistentValidator"),
-            MaxValidationRetries = (global::app.type.item.number.@this)2
+            Limit = new global::app.module.llm.type.limit.@this(16000, 10, 2)
         };
 
         await action.Attach(null, Ctx);
         var result = await action.Start();
-        // After MaxValidationRetries, should return error
+        // After limit.retry, should return error
         await result.IsFailure();
         await Assert.That(result.Error?.Key).IsEqualTo("ValidationFailed");
     }
@@ -240,7 +240,7 @@ public class QueryCallbackTests
                 new LlmMessage { Role = "user", Content = "validate" }
             }.ToListData<LlmMessage>(Ctx),
             OnValidateResponse = Make.Call(Ctx, "AlwaysFails"),
-            MaxValidationRetries = (global::app.type.item.number.@this)3
+            Limit = new global::app.module.llm.type.limit.@this(16000, 10, 3)
         };
 
         await action.Attach(null, Ctx);
@@ -275,12 +275,12 @@ public class QueryCallbackTests
                 Make.Call(Ctx, "TestTool")
             }.ToListData(Ctx),
             OnValidateResponse = Make.Call(Ctx, "Validator"),
-            MaxValidationRetries = (global::app.type.item.number.@this)1
+            Limit = new global::app.module.llm.type.limit.@this(16000, 10, 1)
         };
 
         // Tool round should not trigger validation
         // Final content round will trigger validation (which fails since goal doesn't exist)
-        // But with MaxValidationRetries = (global::app.type.item.number.@this)1, we get one retry then error
+        // But with limit.retry = 1, we get one retry then error
         await action.Attach(null, Ctx);
         var result = await action.Start();
         // The key thing: it should have made it past the tool round to the validation phase

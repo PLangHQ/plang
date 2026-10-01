@@ -35,9 +35,7 @@ Send a query to an LLM.
 | Model | string | no | gpt-4.1-mini | Model override |
 | ContinuePreviousConversation | bool | no | false | Prepend stored conversation history from previous queries |
 | Temperature | double | no | 0.0 | Sampling temperature (0.0 = deterministic) |
-| MaxTokens | int | no | 4000 | Maximum tokens in the response |
-| MaxToolCalls | int | no | 10 | Maximum total individual tool calls before stopping |
-| MaxValidationRetries | int | no | 3 | Maximum validation retries before returning error |
+| Limit | limit | no | `{token: 16000, tool: 10, retry: 0}` | How far the query may go: tokens in the answer, tool calls, retries of an answer that fails validation. A member left out keeps its default |
 | Cache | bool | no | true | Cache the response. Skipped when Tools is non-null |
 
 **Returns:** The LLM's response — parsed JSON object when format is json, extracted text for other formats, or raw text when no format is set.
@@ -94,7 +92,7 @@ Define goals as tools the LLM can call. Each tool has a name, description, typed
   write to %answer%
 ```
 
-The LLM decides which tools to call based on the descriptions. Tool results are sent back to the LLM automatically. The loop continues until the LLM responds with content (no more tool calls) or `MaxToolCalls` is reached.
+The LLM decides which tools to call based on the descriptions. Tool results are sent back to the LLM automatically. The loop continues until the LLM responds with content (no more tool calls) or `limit.tool` is reached.
 
 ### Parallel tool execution
 
@@ -114,7 +112,7 @@ DisplayToolStatus
 
 ## Validation
 
-Use `OnValidateResponse` to validate the LLM's response. If the validation goal returns an error, the error message is sent back to the LLM for a retry, up to `MaxValidationRetries`.
+Use `OnValidateResponse` to validate the LLM's response. If the validation goal returns an error, the error message is sent back to the LLM for a retry, up to `limit.retry`.
 
 ```plang
 - system: generate a haiku

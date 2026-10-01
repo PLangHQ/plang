@@ -28,15 +28,15 @@ public class SetTests
     [Test]
     public async Task Set_BangPath_WritesSetting_NotVariable()
     {
-        // `set %!http.request.setting.timeoutInSec% = 5` lands on context.Setting (where the generator seam
+        // `set %!http.request.setting.timeout% = 5s` lands on context.Setting (where the generator seam
         // reads it) — the write side of the setting front door — not on the variable store.
         var context = _app.actor.list.User.Context;
-        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%!http.request.setting.timeoutInSec%", "variable"), ("value", 5));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%!http.request.setting.timeout%", "variable"), ("value", "5s"));
         var result = await action.Start(context);
 
         await result.IsSuccess();
-        await Assert.That((await context.Setting.Get(_app.Module("http")["request"]!, "timeoutInSec")).Success).IsTrue();
-        await Assert.That((await context.Variable.GetValue("!http.request.setting.timeoutInSec"))).IsNull();
+        await Assert.That((await context.Setting.Get(_app.Module("http")["request"]!, "timeout")).Success).IsTrue();
+        await Assert.That((await context.Variable.GetValue("!http.request.setting.timeout"))).IsNull();
     }
 
     // Build.goal's `set default %!build.setting.cache% = true` leaves --build={"cache":false} standing: a
@@ -47,7 +47,7 @@ public class SetTests
         var context = _app.actor.list.User.Context;
         await _app.actor.list.System.Setting.Set("build.setting.cache", _app.actor.list.System.Context.Ok(false));
 
-        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%!build.setting.cache%", "variable"), ("value", true), ("asDefault", true));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%!build.setting.cache%", "variable"), ("value", true), ("default", true));
         var result = await action.Start(context);
 
         await result.IsSuccess();
@@ -140,12 +140,12 @@ public class SetTests
         await setAction.Start(context);
 
         // Try to set default — should not overwrite
-        var defaultAction = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%x%", "variable"), ("value", "default"), ("asdefault", true));
+        var defaultAction = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%x%", "variable"), ("value", "default"), ("default", true));
         var result = await defaultAction.Start(context);
 
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("x"))).IsEqualTo("original");
-        // F3-1: when AsDefault hits an existing var, handler returns the existing Data,
+        // F3-1: when Default hits an existing var, handler returns the existing Data,
         // not an empty Data.Ok(). Reverting that branch would surface here.
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("original");
     }
@@ -154,7 +154,7 @@ public class SetTests
     public async Task Set_AsDefault_SetsWhenNotExists()
     {
         var context = _app.actor.list.User.Context;
-        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%y%", "variable"), ("value", "default"), ("asdefault", true));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%y%", "variable"), ("value", "default"), ("default", true));
         var result = await action.Start(context);
 
         await result.IsSuccess();

@@ -56,6 +56,19 @@ public class FormalReaderTests : System.IAsyncDisposable
         await Read("channel.set(Name=\"builder\", Goal=goal.call(Name=\"BuilderChannel\"))", out _).IsSuccess();
     }
 
+    // An http header's name holds a hyphen: a dict's key written bare may hold one (the educator's `X-Probe: "x"`),
+    // and it writes back quoted, which reads again byte for byte.
+    [Test]
+    public async Task ADictKeyWrittenBare_MayHoldAHyphen_AndWritesBackQuoted()
+    {
+        var read = Read("http.request(Url=\"https://httpbin.org/anything\", Header={X-Probe: \"x\", Authorization: \"Bearer 1\"})", out _);
+
+        await read.IsSuccess();
+        var written = await Written(read);
+        await Assert.That(written).Contains("\"X-Probe\": \"x\"");
+        await Assert.That(await Written(Read(written, out _))).IsEqualTo(written);
+    }
+
     [Test]
     public async Task Clauses_AreTheActionsSiblings_InTheOrderWritten_AndWriteBackSo()
     {
@@ -90,7 +103,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task AClause_LeadingTheStep_IsRefused()
     {
-        var read = Read("on.error(IgnoreError=true)", out _);
+        var read = Read("on.error(Ignore=true)", out _);
 
         await read.IsFailure();
         await Assert.That(read.Error!.Message).Contains("is a clause of the action before it");
@@ -193,7 +206,7 @@ public class FormalReaderTests : System.IAsyncDisposable
         var read = Read("file.read(Pth=\"x\")", out _);
         await Assert.That(read.Success).IsFalse();
         await Assert.That(read.Error!.Key).IsEqualTo("FormalInvalid");
-        await Assert.That(read.Error.FixSuggestion).IsEqualTo("`file.read` has no property `Pth` (it has Path, ResolveVariables)");
+        await Assert.That(read.Error.FixSuggestion).IsEqualTo("`file.read` has no property `Pth` (it has Path, Template)");
     }
 
     [Test]

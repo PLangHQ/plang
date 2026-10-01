@@ -38,13 +38,19 @@
               "value": "."
             },
             {
-              "name": "AsDefault",
+              "name": "Default",
               "type": {
                 "name": "bool"
               },
               "value": true
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set default %path% = '.'': variable.set: 'AsDefault' is not a property of this action. Its properties are: Name, Value, Type, Default."
         }
       ],
       "waitForExecution": true

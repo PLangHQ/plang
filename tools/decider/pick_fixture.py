@@ -75,11 +75,15 @@ for case in e.GOLDEN:
     for s in goal['steps']:
         i = s['index']
         pick = {a: p for a, p in split.get(i, ({}, [], []))[0].items()}
+        through = []   # the actions picked through their module: the prompt shows the modules' shares beside them
         for m in chosen.get(i, []):
             if (i, m) not in acts: continue
             name = f'{m}.{acts[(i, m)][0]}'
             if name in pick: continue
             pick[name] = acts.get((i, f'@also.{m}'), (None, None))[1] if m in runners.get(i, []) else probs[i][m]
+            through.append(name)
+        if through:
+            pick['@module'] = {a: {m: probs[i].get(m) or 0.0 for m in chosen[i]} for a in through}
         for a in h.BRANCHES:
             if (i, a) in acts: pick[a] = acts[(i, a)][1]
         if (i, '@popular') in acts:

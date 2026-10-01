@@ -59,6 +59,17 @@ public class Base64Tests : System.IAsyncDisposable
         await Assert.That(ready.ToString()).IsEqualTo(System.Convert.ToBase64String(PngBytes));
     }
 
+    // A base64 written in place in a template encodes its source there — the template writes it through its Output,
+    // not its Value door (educator: "pcm:%b64%" wrote "pcm:").
+    [Test] public async Task AsBase64_InATemplate_WritesItsPayload()
+    {
+        var ctx = app.actor.list.User.Context;
+        var given = ctx.Ok(new text("hello"));
+        await ctx.Variable.Set("b64", base64.Create(new text("hello"), given.Type, given));
+        var line = new global::app.data.@this("line", new text("pcm:%b64%", "plang"), context: ctx);
+        await Assert.That((await line.Value())?.ToString()).IsEqualTo("pcm:aGVsbG8=");
+    }
+
     // --- byte face + cross-type ---
 
     [Test] public async Task Base64_ToBinary_Decodes()

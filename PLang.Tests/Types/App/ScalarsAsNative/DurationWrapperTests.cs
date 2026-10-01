@@ -52,13 +52,13 @@ public class DurationWrapperTests
     }
 
     [Test]
-    public async Task Duration_BareSerialize_IsoOrFormattedOnApplicationJson()
+    public async Task Duration_BareSerialize_InItsKind_RoundTrips()
     {
-        // Bare ISO-8601 duration form, not enveloped, round-trippable.
+        // A span made with no text is short, written bare in its largest whole unit, and reads back as itself.
         var d = new Duration(System.TimeSpan.FromMinutes(90));
-        var iso = d.ToString();
-        await Assert.That(iso).IsEqualTo("PT1H30M");
-        await Assert.That(System.Xml.XmlConvert.ToTimeSpan(iso)).IsEqualTo(d.Value);
+        var text = d.ToString();
+        await Assert.That(text).IsEqualTo("90m");
+        await Assert.That(Duration.Resolve(text, null!)!.Value).IsEqualTo(d.Value);
     }
 
     [Test]

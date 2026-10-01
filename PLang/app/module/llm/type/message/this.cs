@@ -1,15 +1,15 @@
 using app;
 using app.Attributes;
 
-namespace app.module.llm;
+namespace app.module.llm.type.message;
 
 /// <summary>
-/// Message in an LLM conversation. Role + Text + optional Images for multimodal.
-/// ToolCallId and ToolCalls are internal — used by the provider during tool conversations,
-/// never set by the builder.
+/// PLang <c>message</c> value — one message in an LLM conversation: Role + Content + optional Images for multimodal.
+/// ToolCallId and ToolCalls are internal — used by the provider during tool conversations, never set by the builder.
+/// The llm module's own.
 /// </summary>
-[PlangType("llmmessage")]
-public class LlmMessage : global::app.type.item.@this, global::app.type.item.ICreate<LlmMessage>
+[PlangType("message")]
+public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     [Store, LlmBuilder]
     public string Role { get; set; } = "";

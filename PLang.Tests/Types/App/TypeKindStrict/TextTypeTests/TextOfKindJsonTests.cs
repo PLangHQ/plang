@@ -67,6 +67,19 @@ public class TextOfKindJsonTests
         await Assert.That(items).IsEquivalentTo(new[] { "1", "2", "3" });
     }
 
+    // Characters that don't read as json answer why — keyed, naming where — never a throw.
+    [Test] public async Task NavigatingCharactersThatArentJson_AnswersMaterializeFailed()
+    {
+        var (app, data, _) = await Json("{\"a\": 1,");
+        await using var _app = app;
+
+        var a = await data.Get("a");
+
+        await a.IsFailure();
+        await Assert.That(a.Error!.Key).IsEqualTo("MaterializeFailed");
+        await Assert.That(a.Error.Message).Contains("line");
+    }
+
     [Test] public async Task APlainText_StillCantBeNavigated()
     {
         await using var app = new global::app.@this("/app").Testing();

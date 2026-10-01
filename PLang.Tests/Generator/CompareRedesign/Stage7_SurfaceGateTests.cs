@@ -153,18 +153,21 @@ public class Stage7_SurfaceGateTests
     [Test]
     public async Task FileSize_ReturnsNumber_NotLong()
     {
-        await using var app = new global::app.@this("/app").Testing();
-        var tmp = Path.Combine(Path.GetTempPath(), "plang_st7size_" + Guid.NewGuid().ToString("N") + ".txt");
+        var root = Path.Combine(Path.GetTempPath(), "plang_st7size_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        await using var app = new global::app.@this(root).Testing();
+        var context = app.actor.list.User.Context;
+        var tmp = Path.Combine(root, "size.txt");
         File.WriteAllText(tmp, "12345");
         try
         {
             var fp = new global::app.type.item.path.file.@this(tmp);
-            object size = fp.Size;
+            object? size = await (await fp.Size(context)).Value();
             await Assert.That(size).IsTypeOf<global::app.type.item.number.@this>();
-            await Assert.That(size.ToString()).IsEqualTo("5");
-            object fileSize = new global::app.type.item.file.@this(fp, app.actor.list.User.Context).Size;
+            await Assert.That(size!.ToString()).IsEqualTo("5");
+            object? fileSize = await (await new global::app.type.item.file.@this(fp, context).Size(context)).Value();
             await Assert.That(fileSize).IsTypeOf<global::app.type.item.number.@this>();
         }
-        finally { File.Delete(tmp); }
+        finally { Directory.Delete(root, recursive: true); }
     }
 }

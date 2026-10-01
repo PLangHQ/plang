@@ -120,7 +120,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
             ?? new global::app.goal.@this { Path = file };
 
         if (source.PrPath is not global::app.type.item.path.file.@this pr) return Stale(source, "no PrPath derivable from goal source");
-        var prExists = await pr.ExistsAsync(context);
+        var prExists = await pr.Exists(context);
         if (!prExists.Success || (await prExists.Value())?.Value != true) return Stale(source, "no .pr");
 
         // The .pr lands as a file reference; its value is what its format (.pr → goal) decodes. A .pr the reader

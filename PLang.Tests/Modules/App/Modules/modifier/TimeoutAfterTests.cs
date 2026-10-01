@@ -116,7 +116,7 @@ public class TimeoutAfterTests
             Module = _app.actor.list.User.Context.App.Module("timer"),
             Name = "sleep",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: Ctx) })
-        }, global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error", ("IgnoreError", true)),
+        }, global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error", ("Ignore", true)),
                 TimeoutModifier(50));
 
         var result = await action.Start(Ctx);

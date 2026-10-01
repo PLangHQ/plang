@@ -67,7 +67,7 @@ public class ModuleProseDoorTests
     public async Task Prose_AbsentFile_IsFalsy_WithoutReading()
     {
         // No file staged — the handle exists but its location doesn't; truthiness is existence.
-        await Assert.That(Notes().IsTruthy()).IsFalse();
+        await Assert.That(await Notes().AsBooleanAsync(_app.actor.list.System.Context!)).IsFalse();
         await Assert.That(Notes().IsLoaded).IsFalse();
     }
 
@@ -77,7 +77,7 @@ public class ModuleProseDoorTests
         Stage(FixtureAction1 + ".notes.md", "Action rule.");
 
         var handle = Notes();
-        await Assert.That(handle.IsTruthy()).IsTrue();   // existence, no content read yet
+        await Assert.That(await handle.AsBooleanAsync(_app.actor.list.System.Context!)).IsTrue();   // existence, no content read yet
         await Assert.That(handle.IsLoaded).IsFalse();
 
         var content = await new data("prose", handle, context: _app.actor.list.System.Context).Value();

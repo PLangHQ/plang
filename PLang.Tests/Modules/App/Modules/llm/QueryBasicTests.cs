@@ -84,7 +84,7 @@ public class QueryBasicTests
     }
 
     [Test]
-    public async Task Query_TemperatureAndMaxTokens_SentToApi()
+    public async Task Query_TemperatureAndTokenLimit_SentToApi()
     {
         _handler.Handler = _ => Task.FromResult(
             LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
@@ -94,7 +94,7 @@ public class QueryBasicTests
                 new LlmMessage { Role = "user", Content = "test" }
             }.ToListData<LlmMessage>(Ctx),
             Temperature = (global::app.type.item.number.@this)0.7,
-            MaxTokens = (global::app.type.item.number.@this)2000
+            Limit = new global::app.module.llm.type.limit.@this(2000, 10, 0)
         };
         await action.Attach(null, Ctx);
         var result = await action.Start();
@@ -103,6 +103,25 @@ public class QueryBasicTests
         var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         await Assert.That(reqBody).Contains("0.7");
         await Assert.That(reqBody).Contains("2000");
+    }
+
+    // A query that leaves its limit out sends the limit's own default.
+    [Test]
+    public async Task Query_LimitLeftOut_SendsItsDefaultTokens()
+    {
+        _handler.Handler = _ => Task.FromResult(
+            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("ok")));
+
+        var action = new query(Ctx) { Message = new List<LlmMessage>
+            {
+                new LlmMessage { Role = "user", Content = "test" }
+            }.ToListData<LlmMessage>(Ctx) };
+        await action.Attach(null, Ctx);
+        var result = await action.Start();
+
+        await result.IsSuccess();
+        var reqBody = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        await Assert.That(reqBody).Contains("\"max_completion_tokens\":16000");
     }
 
     #endregion

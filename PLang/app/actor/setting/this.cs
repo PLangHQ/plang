@@ -122,7 +122,9 @@ public sealed class @this
     public async ValueTask<data.@this> Save(global::app.type.item.setting.@this setting)
     {
         var path = setting.Path;
-        // a node's settings (%!http.setting%, %!llm.query.setting%) are no class: its row could not be read back
+        // a node's settings (%!http.setting%, %!llm.query.setting%) are no class: its row could not be read back.
+        // An action's settings are not storable yet; when they are, their row is a dict of the set options,
+        // read by Option(), and Option()'s action-row branch goes.
         if (Class(path) == null)
             return _context.Error(new global::app.error.Error(
                 $"'{path}' is not a setting class — save the class that holds the option.", "NotASettingClass", 400));
@@ -285,13 +287,15 @@ public sealed class @this
     }
 
     // This run's values under path, the closest scope winning, as the options they set — a key deeper than
-    // an option (path.llm.system) nests under it. An actor's own class stops at that actor's scope.
+    // an option (path.llm.system) nests under it. A node set both as a whole and by its members (diff = true,
+    // diff.deep = true) keeps its own value as its enabled. An actor's own class stops at that actor's scope.
     private Dictionary<string, object?> Under(string path)
     {
         var under = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
         var prefix = path + ".";
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var own = Own(path);
+        const string enabled = "enabled";
         for (@this? s = this; s != null; s = own && s._actor != null ? null : s._parent)
             foreach (var (key, value) in s._values)
             {
@@ -301,10 +305,16 @@ public sealed class @this
                 for (var i = 0; i < names.Length - 1; i++)
                 {
                     if (!at.TryGetValue(names[i], out var inner) || inner is not Dictionary<string, object?> deeper)
-                        at[names[i]] = deeper = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                    {
+                        deeper = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                        if (inner != null) deeper[enabled] = inner;
+                        at[names[i]] = deeper;
+                    }
                     at = deeper;
                 }
-                at.TryAdd(names[^1], value.Peek());
+                if (at.TryGetValue(names[^1], out var node) && node is Dictionary<string, object?> members)
+                    members.TryAdd(enabled, value.Peek());
+                else at.TryAdd(names[^1], value.Peek());
             }
         return under;
     }

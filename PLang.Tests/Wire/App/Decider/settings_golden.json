@@ -7,7 +7,7 @@
       "set %!app.test.setting.parallel% = 1",
       "set %!build.setting.files% = [\"a.goal\"]"
     ],
-    "block": "\n\nSettings\n- %!build.setting%(cache: bool = true, files: list = [])\n- %!llm.setting%(cache: bool = true)\n- %!app.test.setting%(actor: choice<actor> = user, timeoutSeconds: number = 30, parallel: number = 0, format: choice<format> = json, include: list<text> = [], exclude: list<text> = [])"
+    "block": "\n\nSettings\n- %!build.setting%(cache: bool = true, files: list = [])\n- %!llm.setting%(cache: bool = true)\n- %!app.test.setting%(actor: choice<actor> = user, timeout: duration = 30s, parallel: number = 0, format: choice<format> = json, include: list<text> = [], exclude: list<text> = [])"
   },
   {
     "goal": "NoneNamed",

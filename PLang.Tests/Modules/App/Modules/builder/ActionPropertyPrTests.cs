@@ -30,7 +30,7 @@ public class ActionPropertyPrTests
 
     private global::app.goal.@this Sample() => Make.Goal(_app.actor.list.User.Context, "Start",
         Make.Step("read a file",
-            Make.WithDefaults(_app.actor.list.User.Context, Make.Action(_app.actor.list.User.Context, "file", "read", ("Path", "notes.txt")), ("ResolveVariables", false))));
+            Make.WithDefaults(_app.actor.list.User.Context, Make.Action(_app.actor.list.User.Context, "file", "read", ("Path", "notes.txt")), ("Template", false))));
 
     [Test] public async Task WrittenPr_ReadsBackAndWritesAgain_ByteIdentical()
     {
@@ -87,5 +87,35 @@ public class ActionPropertyPrTests
 
         await Assert.That(verdict).IsNotNull();
         await Assert.That(verdict!.list!.Select(c => c.Key)).Contains("MissingProperty");
+    }
+
+    // A built step whose frozen default names an option the action no longer has is reopened.
+    [Test] public async Task Validate_ADefaultFrozenForAGoneOption_Fails()
+    {
+        var context = _app.actor.list.User.Context;
+        var action = Make.WithDefaults(context, Make.Action(context, "file", "read", ("Path", "notes.txt")), ("IgnoreIfMissing", true));
+
+        var verdict = await action.Validate(context);
+
+        await Assert.That(verdict).IsNotNull();
+        await Assert.That(verdict!.list!.Select(c => c.Key)).Contains("UnknownDefault");
+    }
+
+    // A built step whose property was born of a kind its slot no longer takes is reopened.
+    [Test] public async Task Validate_APropertyOfAKindTheSlotNoLongerTakes_Fails()
+    {
+        var context = _app.actor.list.User.Context;
+        var action = Make.Action(context, "llm", "query");
+        action.Property.Add(new global::app.type.property.@this
+        {
+            Name = "Message",
+            Type = new global::app.type.@this("list", typeof(global::app.type.item.list.@this), "oldmessage"),
+            Value = new global::app.type.item.list.@this(),
+        });
+
+        var verdict = await action.Validate(context);
+
+        await Assert.That(verdict).IsNotNull();
+        await Assert.That(verdict!.list!.Select(c => c.Key)).Contains("KindChanged");
     }
 }

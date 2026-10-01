@@ -11,10 +11,10 @@ public sealed class @this : global::app.type.kind.@this
     private readonly string _owner;
     private readonly System.Collections.Generic.List<global::app.type.kind.@this> _kinds = new();
     // The held kinds by every key each answers to (Names): its name, its aliases, its MIMEs, its extensions without
-    // the dot — the first kind that answers, in the order they came. Made again as a kind comes in (Add), so a key
-    // finds its kind in one look, never by asking each kind in turn.
-    private System.Collections.Generic.Dictionary<string, global::app.type.kind.@this> _keys
-        = new(System.StringComparer.OrdinalIgnoreCase);
+    // the dot — the first kind that answers, in the order they came. Made as a kind comes in (Add), so a key finds its
+    // kind in one look, never by asking each kind in turn; none while the type holds no kind (a type object made
+    // for a value, the common case, never pays for one).
+    private System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>? _keys;
     private readonly object _gate = new();
     // The type's own format — its class's [Format("", …)]: plain text is {text}, opaque bytes {binary}.
     private global::app.type.kind.@this? _format;
@@ -63,9 +63,9 @@ public sealed class @this : global::app.type.kind.@this
             // as Names reads a key: as it is, as a MIME without its parameters, as an extension without its dot
             var semicolon = name.IndexOf(';');
             lock (_gate)
-                return _keys.GetValueOrDefault(name)
-                       ?? (semicolon >= 0 ? _keys.GetValueOrDefault(name[..semicolon].Trim()) : null)
-                       ?? _keys.GetValueOrDefault(name.TrimStart('.'));
+                return _keys?.GetValueOrDefault(name)
+                       ?? (semicolon >= 0 ? _keys?.GetValueOrDefault(name[..semicolon].Trim()) : null)
+                       ?? _keys?.GetValueOrDefault(name.TrimStart('.'));
         }
     }
 

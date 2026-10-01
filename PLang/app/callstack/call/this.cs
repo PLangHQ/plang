@@ -65,7 +65,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     private readonly app.callstack.@this _stack;
     private readonly @this? _previousCurrent;
     private readonly Variables? _diffSource;
-    // A diff keeps a deep copy of the value before (the DeepDiff setting when pushed), else a summary.
+    // A diff keeps a deep copy of the value before (the diff.deep setting when pushed), else a summary.
     private readonly bool _deep;
     private Dictionary<global::System.Type, object>? _items;
 
@@ -192,7 +192,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         if (stack.Diff.Value && diffSource != null)
         {
             Diffs = new diff.@this();
-            _deep = stack.DeepDiff.Value;
+            _deep = stack.Setting.Diff.Deep.Value;
             stack.Open(this);
         }
     }
@@ -342,7 +342,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
     /// <summary>
     /// Capture rule for diff Before values. Scalars (int/bool/decimal/DateTimeOffset/short
-    /// strings) pass through; non-scalars become summary strings unless DeepDiff is on,
+    /// strings) pass through; non-scalars become summary strings unless diff.deep is on,
     /// in which case they're deep-cloned. Default-scalar capture mitigates the OOM scenario
     /// observed under tight loops with large lists.
     /// </summary>

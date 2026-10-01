@@ -18,7 +18,8 @@ public sealed class @this : global::app.type.kind.@this
     }
 
     /// <summary>The class's options as the builder teaches them — each by the name a <c>%!path%</c> writes
-    /// (<c>cache</c>), its type, and its default as its own text (<c>true</c>, <c>30</c>, <c>[]</c>).</summary>
+    /// (<c>cache</c>), its type, and its default — the value itself, which writes its own text (<c>true</c>,
+    /// <c>30</c>, <c>[]</c>, a node's members).</summary>
     public global::app.type.property.list.@this Property => _property.Value;
 
     // The option rows, read off a fresh one of the class (its defaults).
@@ -34,7 +35,7 @@ public sealed class @this : global::app.type.kind.@this
                 Name = char.ToLowerInvariant(option.Name[0]) + option.Name[1..],
                 Type = reflected.Type,
                 Nullable = reflected.Nullable,
-                Default = option.GetValue(fresh) is global::app.type.item.@this { IsNull: false } value ? value.ToString() : null,
+                Default = option.GetValue(fresh) is global::app.type.item.@this { IsNull: false } value ? value : null,
             });
         }
         return rows;

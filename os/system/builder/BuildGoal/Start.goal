@@ -45,7 +45,7 @@ Compile
 FixSteps
 - call /system/builder/EmitBuildEvent kind="properties-rejected", errorMessage=%!error.Message%
 - set %fixMessages% = [{"Role":"user", "Content":"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal."}]
-- llm.query Message=%fixMessages%, Model="gpt-5.4-nano", cache=%!build.setting.cache%, continuePreviousConversation=true, write to %answer%
+- llm.query(Message=%fixMessages%, Model="gpt-5.4-nano", Cache=%!build.setting.cache%, Conversation={continue: %answer%}); variable.set(Name=%answer%, Value=%!data%)
 - build.match(Goal=%goal%, Answer=%answer%); on.error(Key="UnwrittenNumber", Recovery=[goal.call(Name="ConfirmNumbers")])
 
 

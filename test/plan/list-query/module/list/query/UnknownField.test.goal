@@ -1,0 +1,9 @@
+/ A field the elements don't have is an error naming the part and the field — never a silently empty list.
+Start
+- variable.set(Name=%users%, Value=[{name: "a", age: 30}, {name: "b", age: 10}])
+- list.query(List=%users%, Query={where: {field: "agee", op: ">", value: 20}}); on.error(Key="FieldNotFound", Recovery=[goal.call(Name="Caught")]); variable.set(Name=%old%, Value=%!data%)
+- assert.contains(Value="where: ", Container=%caught%, Message="the error names the part")
+- assert.contains(Value="agee", Container=%caught%, Message="and the misspelled field")
+
+Caught
+- variable.set(Name=%caught%, Value=%!error.Message%)

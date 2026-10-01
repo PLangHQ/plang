@@ -309,3 +309,42 @@ hold the path itself; the snapshot writes and reloads it as a path.
 again (`app.module.Get`) to judge an option its actions take — though `actor.setting.Of(module)` had the module in
 hand. Holding the module would be a late stamp for the module setting classes made by `new()` (llm's, build's), so
 it stays until a setting class is born from its owner.
+
+## A kind is a CLR object, not a plang item [logged 2026-10-01, duration kinds]
+
+`type.kind.@this` is a CLR class, so navigation reaches it through the clr carrier: `%d!type.kind%` on a
+duration born `30s` answers the kind object (an `item/*` host whose text is `short`), and
+`assert.equals("short", %d!type.kind%)` fails — a text never equals a host. `%d!type.kind.name%` answers
+`short`. The type writes itself `{name, kind}` with the kind as its name, yet navigating it lands on the object.
+A kind should be a plang item: it writes itself as its name, compares with a text by its name (its own Order,
+as hash compares to its text), and keeps its members (`.name`, `.mime`, `.extension`) — then
+`%d!type.kind% == "short"` holds and `%d!type.kind.mime%` still navigates. Every kind's base changes.
+
+## A type's text form isn't its name [logged 2026-10-01, catalog text]
+
+A type entity (`type.@this`) writes itself as its descriptor bag (`{"name":"app.type.item.bool","word":"bool",…}`);
+its name (`bool`, `list<message>`) is only its `ToString`. Templates print `{{ p.Type }}` and the catalog leans on
+that `ToString`. Rendering a type through the text writer, as `| text` does a value, gives the bag. How a type
+writes itself as text belongs to the kind-is-a-type talk (`.bot/app-systems/architect/plan/kind-is-a-type-brief.md`).
+
+## An action's settings can't be saved, yet the seam reads an action row [logged 2026-10-01, llm limit]
+
+`actor/setting/this.cs` `Save` refuses `%!llm.query.setting%` (`NotASettingClass`), so no action option (cache,
+limit, …) is storable; only setting classes are. Its `Option()` still reads a row whose value is an action
+(Property rows), a shape nothing writes. An action's settings become storable with the `.data` move (decision 432):
+the row is a dict of the set options, read by `Option()`, and the action-row branch goes. One row shape, not two.
+
+## Every action carries a method named Resolve [logged 2026-10-01, settings slice 2]
+
+The generator gives every action `ICodeGenerated.Resolve(action, context)` — the bind of an action's properties.
+"Resolve" names the mechanism, not what a caller wants of it, and it takes the name from every action: no
+action can have an option called `resolve` (file.read's became `Template`, which is the better name anyway).
+The bind should be named for what it answers, so action options are free to use the word.
+
+## A variable store's Clone deep-copies a goal graph [logged 2026-09-30, 412 regression]
+
+`type/item/variable/list/this.cs` `Clone()` deep-copies every variable (`kvp.Value.Clone()`). A goal is a cyclic
+graph (a sub-goal and its parent reach each other), so cloning a store that holds one — the builder's, while a
+sub-goal builds — recurses until the stack overflows: the process segfaults with no .NET message. The step check
+no longer clones the builder's store, but the trap stays for the next caller. Clone should stop at items that hold
+a graph by reference (a goal, a step, an action are shared, not copied), or not deep-copy structural items at all.

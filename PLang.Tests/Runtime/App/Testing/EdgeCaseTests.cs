@@ -41,14 +41,14 @@ public class EdgeCaseTests
 
     private string CapturedOutput() => System.Text.Encoding.UTF8.GetString(_captureStream.ToArray());
 
-    // --test={"timeoutSeconds":-5} → accepted (the type has no positive-bound). The value is
-    // a sentinel, not an error: test.start reads TimeoutSeconds ≤ 0 as "no timeout".
+    // --test={"timeout":"-5s"} → accepted (the type has no positive-bound). The value is
+    // a sentinel, not an error: test.start reads a timeout ≤ 0 as "no timeout".
     [Test]
-    public async Task Config_TimeoutSeconds_NonPositive_AcceptedAsSentinel()
+    public async Task Config_Timeout_NonPositive_AcceptedAsSentinel()
     {
-        var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["timeoutSeconds"] = -5 });
+        var result = _app.actor.list.System.Setting.Set("app.test.setting", new Dictionary<string, object?> { ["timeout"] = "-5s" });
         await result.IsSuccess();
-        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToInt32()).IsEqualTo(-5);
+        await Assert.That(_app.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Timeout.Value.TotalSeconds).IsEqualTo(-5);
     }
 
     // --test={"parallel":0} or {"parallel":-1} → accepted. Zero/negative is the "auto" sentinel:

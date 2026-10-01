@@ -32,6 +32,11 @@ public sealed class @this : global::app.type.kind.@this
 
     public override System.Type? ClrForm => typeof(JsonElement);
 
+    // Every character written as itself (Icelandic letters, "—"); the ones a page reads as markup (< > & ' +)
+    // still escaped, as json in an HTML page needs.
+    private readonly System.Text.Encodings.Web.JavaScriptEncoder _encoder
+        = System.Text.Encodings.Web.JavaScriptEncoder.Create(System.Text.Unicode.UnicodeRanges.All);
+
     /// <summary>json content written: the value alone, as json — no Data around it (the type is inferred on
     /// read). The value writes itself through the json writer.</summary>
     public override async System.Threading.Tasks.Task<global::app.data.@this> Encode(System.IO.Stream stream,
@@ -41,7 +46,7 @@ public sealed class @this : global::app.type.kind.@this
         try
         {
             var face = view ?? global::app.View.Out;
-            await using var utf8 = new Utf8JsonWriter(stream);
+            await using var utf8 = new Utf8JsonWriter(stream, new JsonWriterOptions { Encoder = _encoder });
             await data.Output(new global::app.type.item.kind.json.Writer(utf8, face, emitsSchema: false), face, context);
             await utf8.FlushAsync(ct);
             return context.Ok();
@@ -135,6 +140,14 @@ public sealed class @this : global::app.type.kind.@this
         return e.ValueKind is JsonValueKind.Object or JsonValueKind.Array
             ? new global::app.type.clr.@this(e.Clone(), ctx, this)
             : global::app.type.item.@this.Create(Scalar(e), ctx);
+    }
+
+    /// <summary>json characters opened: the json value they are, or why they don't read — MaterializeFailed, naming
+    /// where; never a throw.</summary>
+    public override global::app.data.@this? Open(string characters, global::app.actor.context.@this context)
+    {
+        try { return context.Ok(Parse(characters, context)); }
+        catch (JsonException shape) { return context.Error(Unread(shape, "a json value").Error); }
     }
 
     // Materialize this json content INTO the CLR host target asks for. json owns the format

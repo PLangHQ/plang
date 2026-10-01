@@ -14,6 +14,23 @@ Working mode (Ingi): the architect hands intent; the coder proposes and starts i
 a real design fork, and reports each pushed slice for review. Plan tests are intent: each must fail with its
 change reverted.
 
+## Latest (2026-09-30, all pushed)
+- **375 (1–5)** — a received error is born failed (`crypto.hash` takes its Data whole); a Data read in plang
+  holds its verified `Signature`; settings always under `.setting` (`%!llm.setting.cache%`, class path = read
+  path); a concept execution is inside (goal, actor, test, error) is a `type.current` node: dot = own members,
+  the type's facts, then the current's member; brackets pick by name; `%!app.event%` answers the running call's
+  Data; `!callStack`/`!trace`/`!event`/`!data` registrations gone (the app's members answer). `!goal`/`!error`/`!test`
+  stay as shortcuts to the current (398).
+- **400** — an answered `ask` is the user's data itself; `Ask` is only the pending state.
+- **Educator items** — `if … is "x"` teaches `Operator="=="` (golden case `compare`); a goal name is a quoted
+  text (and the refusal says so); a goal's steps are built inside the goal's frame (relative files found).
+- Tests: two parallel-run flakes made deterministic.
+
+**Waiting on Ingi:** (24) `remove %x%` → `file.delete` (decider pick scoring (b); notes held uncommitted in
+`os/system/modules/{file/delete,variable/remove}.notes.md`); item 5 cause 2 (a file the program writes first);
+380 (4) `system.on.create` (bind, the app-wide shortcut list, module names); the http `response` reshape (387).
+**Waiting on the fix bot:** 380 (5) read-as-text, after blocker 2 lands.
+
 ## What was done (v10, all pushed)
 - **9a** — births through types; `data<T>.Use` / `data.Use<TAs>` / `data.Follow`; `path.Read` the one read verb.
 - **9b** — every module action a one-line door: frames keep only the names they bind (`call.Keeper`); the where

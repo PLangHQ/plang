@@ -708,10 +708,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             if (!System.Attribute.IsDefined(prop, typeof(global::app.LlmBuilderAttribute))) continue;
             while (methods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
                 && m.MetadataToken < prop.GetMethod!.MetadataToken)
-                property.Add(types.Property(methods.Dequeue().Name, m.ReturnType));
+                property.Add(types.Property(methods.Dequeue().Name, Answer(m)));
             property.Add(types.Property(prop.Name, prop.PropertyType));
         }
-        while (methods.TryDequeue(out var m)) property.Add(types.Property(m.Name, m.ReturnType));
+        while (methods.TryDequeue(out var m)) property.Add(types.Property(m.Name, Answer(m)));
+
+        // what a one-context method answers — an asynchronous one, what its task completes with
+        System.Type Answer(System.Reflection.MethodInfo m)
+            => m.ReturnType is { IsGenericType: true } task && task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>)
+                ? task.GenericTypeArguments[0] : m.ReturnType;
 
         // A scalar has a constructor, a declared wire shape, or is a named type with no builder
         // properties (a domain wrapper around a primitive); a record has builder properties.

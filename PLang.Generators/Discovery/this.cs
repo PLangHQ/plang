@@ -192,6 +192,14 @@ public static class @this
                     isName = true;
                 }
             }
+            // A type with a default of its own (IDefault<T>) is the slot's default when [Default] gives none.
+            if (defaultValue == null
+                && namedType!.TypeArguments.Length > 0
+                && namedType.TypeArguments[0] is INamedTypeSymbol defaulted
+                && defaulted.AllInterfaces.Any(i =>
+                    i.Name == "IDefault"
+                    && i.ContainingNamespace.ToDisplayString() == "app.type.item"))
+                defaultValue = $"{innerType}.Default";
             // [Whole] — the parameter takes its Data as it is, a failed one included.
             var isWhole = prop.GetAttributes().Any(a => a.AttributeClass?.Name == "WholeAttribute");
             return new DataProperty(prop.Name, typeNameStr, isNullable, isPlainData, innerType, defaultValue, isSensitive, isName, isWhole);

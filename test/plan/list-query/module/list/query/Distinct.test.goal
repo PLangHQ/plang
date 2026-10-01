@@ -1,0 +1,6 @@
+/ Distinct drops repeated elements, the first of each kept.
+Start
+- variable.set(Name=%numbers%, Value=[1, 2, 1, 3, 2])
+- list.query(List=%numbers%, Query={distinct: true}); variable.set(Name=%once%, Value=%!data%)
+- assert.equals(Expected=3, Actual=%once.Count%, Message="1, 2 and 3 once each")
+- assert.equals(Expected=3, Actual=%once[2]%)
