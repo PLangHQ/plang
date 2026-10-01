@@ -310,6 +310,14 @@ again (`app.module.Get`) to judge an option its actions take — though `actor.s
 hand. Holding the module would be a late stamp for the module setting classes made by `new()` (llm's, build's), so
 it stays until a setting class is born from its owner.
 
+## The setting catalog shows a default through ToString [logged 2026-10-01, settings slice 1]
+
+`type/item/setting/kind/this.cs` `Options` writes each option's default as `value.ToString()`. A setting node
+(`callstack.setting.diff`) would show its class name, so `setting.@this` overrides `ToString` to its `Enabled` —
+the catalog's rendering leaning on `ToString`, which writers never use. The default should be written by the
+value's own text form (its writer), so a node shows `false` because that is how it writes itself, and the
+`ToString` override goes.
+
 ## A variable store's Clone deep-copies a goal graph [logged 2026-09-30, 412 regression]
 
 `type/item/variable/list/this.cs` `Clone()` deep-copies every variable (`kvp.Value.Clone()`). A goal is a cyclic

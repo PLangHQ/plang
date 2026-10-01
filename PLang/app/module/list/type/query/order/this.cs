@@ -18,8 +18,6 @@ public sealed class @this : part.@this
             ? keys.Items(context).Select(k => Key(k.Peek(), context)).ToList()
             : [Key(written.Peek(), context)];
 
-    public override string Name => "order";
-
     internal override int Rank => 3;
 
     internal override async System.Threading.Tasks.Task<Data> Apply(List rows, IReadOnlyList<part.@this> rest,

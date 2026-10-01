@@ -904,9 +904,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>The elements grouped by their <paramref name="key"/> field, in first-seen order: a list of
-    /// <c>{key, items}</c>, each <c>items</c> a list of its elements (navigable in turn). A key that didn't
-    /// resolve is its own answer. A new list, born through its type.</summary>
-    public async System.Threading.Tasks.Task<Data> Group(global::app.type.item.text.@this key, actor.context.@this context)
+    /// <c>{key, items}</c>, each <c>items</c> what <paramref name="each"/> answers for the group's elements (they
+    /// as they are, or a query's parts after the group). A key that didn't resolve is its own answer; so is a
+    /// group's failure. A new list, born through its type.</summary>
+    public async System.Threading.Tasks.Task<Data> Group(global::app.type.item.text.@this key,
+        System.Func<@this, System.Threading.Tasks.Task<Data>> each, actor.context.@this context)
     {
         var buckets = new Dictionary<string, @this>();
         var order = new List<string>();
@@ -921,7 +923,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             }
             bucket.Add(element);
         }
-        var groups = order.Select(name => new Dictionary<string, object?> { ["key"] = name, ["items"] = buckets[name] }).ToList();
+        var groups = new List<Dictionary<string, object?>>();
+        foreach (var name in order)
+        {
+            var items = await each(buckets[name]);
+            if (!items.Success) return items;
+            groups.Add(new Dictionary<string, object?> { ["key"] = name, ["items"] = items });
+        }
         return await context.App.type.list["list"].Create(groups, context);
     }
 

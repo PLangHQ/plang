@@ -16,8 +16,6 @@ public sealed class @this : part.@this
     /// this part.</summary>
     internal @this(Data written, global::app.actor.context.@this context) => _condition = Condition(written.Peek(), context);
 
-    public override string Name => "where";
-
     internal override int Rank => 0;
 
     internal override async System.Threading.Tasks.Task<Data> Apply(List rows, IReadOnlyList<part.@this> rest,

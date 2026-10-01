@@ -44,24 +44,24 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var parts = new List<part.@this>();
         try
         {
+            // each key names the part that lives under the query at that name (query/where/), made from what the
+            // key holds
             foreach (var entry in dict.Entries(context))
-                switch (entry.Name.ToLowerInvariant())
+            {
+                var kind = typeof(@this).Assembly.GetType($"{typeof(@this).Namespace}.{entry.Name.ToLowerInvariant()}.this");
+                if (kind == null || kind.IsAbstract || !typeof(part.@this).IsAssignableFrom(kind))
                 {
-                    case "where": parts.Add(new where.@this(entry, context)); break;
-                    case "group": parts.Add(new group.@this(entry)); break;
-                    case "distinct":
-                        if (entry.Peek() is global::app.type.item.@bool.@this { Value: true }) parts.Add(new distinct.@this());
-                        break;
-                    case "order": parts.Add(new order.@this(entry, context)); break;
-                    default:
-                        data.Fail(new global::app.error.Error(
-                            $"'{entry.Name}' is no part of a query — its parts are where, group, distinct, order", "QueryInvalid", 400));
-                        return null;
+                    data.Fail(new global::app.error.Error(
+                        $"'{entry.Name}' is no part of a query — its parts are where, group, distinct, order", "QueryInvalid", 400));
+                    return null;
                 }
+                parts.Add((part.@this)System.Activator.CreateInstance(kind,
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic, null, [entry, context], null)!);
+            }
         }
-        catch (global::app.error.AppException ex)
+        catch (System.Reflection.TargetInvocationException ex) when (ex.InnerException is global::app.error.AppException refused)
         {
-            data.Fail(ex.Error);
+            data.Fail(refused.Error);
             return null;
         }
         if (parts.Count == 0)

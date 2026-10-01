@@ -5,12 +5,14 @@ namespace app.module.list.type.query.part;
 
 /// <summary>
 /// One part of a query — where, group, distinct or order. A part applies itself to the rows it is handed, then
-/// hands what it answers to the parts after it; the query only puts them in order.
+/// hands what it answers to the parts after it; the query only puts them in order. A part lives under the query
+/// at its name (<c>query/where/</c>), and is made from what the query's dict writes under that name.
 /// </summary>
 public abstract class @this
 {
-    /// <summary>The part's name, as the query writes it: <c>where</c>, <c>group</c>, <c>distinct</c>, <c>order</c>.</summary>
-    public abstract string Name { get; }
+    /// <summary>The part's name, as the query writes it — where it lives: <c>where</c>, <c>group</c>,
+    /// <c>distinct</c>, <c>order</c>.</summary>
+    public string Name => GetType().Namespace![(GetType().Namespace!.LastIndexOf('.') + 1)..];
 
     /// <summary>Its place in SQL's order: where, group, distinct, order.</summary>
     internal abstract int Rank { get; }

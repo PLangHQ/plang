@@ -13,7 +13,7 @@ public sealed class @this : part.@this
     private readonly global::app.type.item.text.@this _field;
 
     /// <summary>The group of <paramref name="written"/>: the field to group by.</summary>
-    internal @this(Data written)
+    internal @this(Data written, global::app.actor.context.@this context)
     {
         if (written.Peek()?.ToString() is not { Length: > 0 } field)
             throw new global::app.error.AppException(new global::app.error.Error(
@@ -21,28 +21,14 @@ public sealed class @this : part.@this
         _field = field;
     }
 
-    public override string Name => "group";
-
     internal override int Rank => 1;
 
-    internal override async System.Threading.Tasks.Task<Data> Apply(List rows, IReadOnlyList<part.@this> rest,
+    // each group's items, with the parts after the group applied to them; a part's failure is named by that part
+    internal override System.Threading.Tasks.Task<Data> Apply(List rows, IReadOnlyList<part.@this> rest,
         global::app.actor.context.@this context)
-    {
-        var grouped = await rows.Group(_field, context);
-        if (!grouped.Success || rest.Count == 0) return Named(grouped, context);
-        return await grouped.Use<List>(async groups =>
-        {
-            var each = new List<Dictionary<string, object?>>();
-            foreach (var group in groups.Items(context))
-            {
-                var applied = await (await group.Get("items")).Use<List>(items =>
-                    rest[0].Apply(items, rest.Skip(1).ToList(), context));
-                if (!applied.Success) return applied;
-                each.Add(new() { ["key"] = await group.Get("key"), ["items"] = applied });
-            }
-            return await context.App.type.list["list"].Create(each, context);
-        });
-    }
+        => rows.Group(_field,
+            items => rest.Count == 0 ? System.Threading.Tasks.Task.FromResult<Data>(context.Ok(items))
+                : rest[0].Apply(items, rest.Skip(1).ToList(), context), context);
 
     internal override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this context)
