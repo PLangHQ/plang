@@ -103,6 +103,7 @@ internal sealed class Window : ISurfaceRole
         Picture = picture;
         Display.Grab?.Committed(this);   // resizing from the left or top: the opposite edge stays
         Place();
+        if (first) Display.Note($"window {Id} first picture {picture.Rect}, {(Visible ? "shown" : "not shown: " + Shown)}");
         if (first || resized) Bar?.Draw();
         Display.Panel?.Follow(this);
         if (Visible)
@@ -223,7 +224,13 @@ internal sealed class Window : ISurfaceRole
         if (resizing) states.Add(3);                                  // resizing
         if (Active || Desktop) states.Add(4);                         // activated
         var now = $"{asked.Width}x{asked.Height}:{string.Join(',', states)}";
-        if (!Toplevel.Xdg.Configured || (!force && now == sent)) return;
+        if (!Toplevel.Xdg.Configured)
+        {
+            Display.Note($"window {Id} asked {now}: not yet — its surface isn't configured");
+            return;
+        }
+        if (!force && now == sent) return;
+        Display.Note($"window {Id} asked {now}{(force ? " (first)" : "")}");
         sent = now;
         Toplevel.Configure(asked, states);
     }
@@ -379,6 +386,7 @@ internal sealed class Window : ISurfaceRole
         var e = more ?? new JsonObject();
         e["window"] = what;
         e["id"] = Id;
+        Display.Note($"window {Id} {what}{(more == null ? "" : " " + more.ToJsonString())} at {Frame}, {Shown}, picture {(Picture.Empty ? "none yet" : Picture.Rect.ToString())}");
         Display.Tell(e);
     }
 

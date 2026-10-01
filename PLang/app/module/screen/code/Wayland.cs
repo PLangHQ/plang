@@ -78,6 +78,17 @@ public sealed class Wayland : IScreen
             }
         });
         display.Told += e => { told.Writer.TryWrite(e); return Task.CompletedTask; };
+        // what happens to the windows, when %screen.debug% asks (on under --debug): to the debug output with --debug,
+        // else the error output (stderr) — never a goal (notes aren't errors; the screen's output is its frames)
+        display.Watching = context.App.Debug != null;
+        var watched = System.Threading.Channels.Channel.CreateUnbounded<string>();
+        display.Noted = note => watched.Writer.TryWrite(note);
+        _ = Task.Run(async () =>
+        {
+            await foreach (var note in watched.Reader.ReadAllAsync())
+                if (context.App.Debug is { } debug) await debug.Write(note);
+                else await context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteText(note);
+        });
         display.Start();
         // the screen's output is the pipe to the host plang that started this one: the host is %!app.parent%, and
         // a call to one of its goals goes up beside the frames (its answer comes down the input: screen.listen)
