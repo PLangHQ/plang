@@ -45,6 +45,7 @@ public sealed class @this
                   && value.GetGenericTypeDefinition() == typeof(global::app.type.item.choice.@this<>)
             ? System.Activator.CreateInstance(value, declaredDefault)
             : declaredDefault ?? ownDefault;
+        IsInput = prop.GetCustomAttribute<global::app.Attributes.InputAttribute>() != null;
     }
 
     /// <summary>A property built by hand — a type's field, the synthetic channel property, a .pr row, a builder's.</summary>
@@ -67,6 +68,10 @@ public sealed class @this
     /// <summary>The class declares a default. Asked of the property, not of <see cref="Default"/>: a
     /// template cannot tell a <c>false</c> default from none.</summary>
     public bool HasDefault => Default != null;
+
+    /// <summary>The action reads this property's value and answers a new value of it, changing nothing (its class
+    /// marks it <c>[Input]</c>): a step that names no destination writes the answer back here.</summary>
+    public bool IsInput { get; init; }
 
     /// <summary>A step must write this property: it accepts no null and has no default to fall back on.</summary>
     public bool Required => !Nullable && !HasDefault;

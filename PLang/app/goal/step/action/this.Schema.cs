@@ -32,6 +32,11 @@ public partial class @this
                ?.Capabilities.Select(c => new global::app.type.item.text.@this(c))
            ?? Enumerable.Empty<global::app.type.item.text.@this>();
 
+    /// <summary>The property this action reads and answers a new value of, changing nothing (<c>list.query</c>'s
+    /// <c>List</c>) — where a step with no destination writes the answer; null when the action has none.</summary>
+    [JsonIgnore]
+    public global::app.type.property.@this? Input => Property.FirstOrDefault(p => p.IsInput);
+
     private global::app.type.@this? _return;
     private bool _returnComputed;
 
