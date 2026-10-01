@@ -18,13 +18,51 @@ public class ModulePageTests
     }
 
     // The spec's golden page: the markdown block under "Golden output", without its annotation lines.
-    private static string[] Golden()
+    private static string[] Golden() =>
+        Golden(System.IO.File.ReadAllLines(System.IO.Path.Combine(RepoRoot(), "Documentation", "v0.2", "module-reference-generation.md")));
+
+    // The golden ends at the bare fence that closes the outer ```markdown. A fence with an info string
+    // (```plang, ```markdown) opens a block one level deeper and a bare ``` closes one level, so a code block
+    // inside the golden (a module's ## Examples) does not cut it short.
+    private static string[] Golden(string[] spec)
     {
-        var spec = System.IO.File.ReadAllLines(System.IO.Path.Combine(RepoRoot(), "Documentation", "v0.2", "module-reference-generation.md"));
         var from = System.Array.FindIndex(spec, line => line.StartsWith("## Golden output"));
         var open = System.Array.FindIndex(spec, from, line => line == "```markdown");
-        var close = System.Array.FindIndex(spec, open + 1, line => line == "```");
+        var depth = 1;
+        var close = open + 1;
+        for (; close < spec.Length; close++)
+        {
+            if (spec[close] == "```") { if (--depth == 0) break; }
+            else if (spec[close].StartsWith("```")) depth++;
+        }
         return spec[(open + 1)..close].Where(line => !line.StartsWith("<!--")).ToArray();
+    }
+
+    [Test]
+    public async Task TheGolden_RunsToTheFenceThatClosesTheOuterMarkdown_PastANestedCodeBlock()
+    {
+        var spec = new[]
+        {
+            "## Golden output",
+            "```markdown",
+            "# File Module",
+            "<!-- annotation -->",
+            "## Examples",
+            "```plang",
+            "Start",
+            "- read file.txt, write to %text%",
+            "```",
+            "## After the example",
+            "```",
+            "outside the golden",
+        };
+
+        var golden = Golden(spec);
+
+        await Assert.That(golden).IsEquivalentTo(new[]
+        {
+            "# File Module", "## Examples", "```plang", "Start", "- read file.txt, write to %text%", "```", "## After the example",
+        });
     }
 
     // The page's intro is the module's description and its guide (module.guide.md, the learner's prose); the module's
