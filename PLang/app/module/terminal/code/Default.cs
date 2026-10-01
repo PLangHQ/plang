@@ -133,7 +133,7 @@ public sealed class Default : ITerminal
 
         var os = System.Diagnostics.Process.Start(info)!;
         Children.Adopt(os);   // it ends with this plang, however this plang ends
-        var running = new Process { Program = program.Absolute, Id = os.Id, Os = os };
+        var running = new Process { Program = program.Absolute, Id = os.Id, Os = os, Plang = SpeaksPlang(info, context) };
 
         // binary messages when asked — or when the output goes to a screen, which takes nothing else
         var screen = action.OutputTo == null ? null : await action.OutputTo.Value();
@@ -159,10 +159,18 @@ public sealed class Default : ITerminal
         // Lines are delivered off the step loop, one goal call at a time per app (on.code.Gate).
         running.Reading = Task.Run(async () =>
         {
-            await foreach (var (isError, line) in lines.ReadAllAsync())
+            try
             {
-                var call = isError ? onError : onOutput;
-                if (call != null) await global::app.module.on.code.Gate.Call(call, Line(line, context), context);
+                await foreach (var (isError, line) in lines.ReadAllAsync())
+                {
+                    var call = isError ? onError : onOutput;
+                    if (call != null) await global::app.module.on.code.Gate.Call(call, await Said(line, running.Plang, context), context);
+                }
+            }
+            // what stops the reading is said — a program whose lines stop arriving without a word is a mystery
+            catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+            {
+                await Unread(new global::app.error.ServiceError($"Reading {running.Program} stopped: {ex.Message}", "ReadingStopped") { Exception = ex }, context);
             }
         });
         return context.Ok<Process>(running);
@@ -174,8 +182,22 @@ public sealed class Default : ITerminal
         var running = await action.Process.Value();
         if (running?.Os is not { HasExited: false } os)
             return context.Error(new ActionError($"The program isn't running: {running}", "ProgramNotRunning", 409));
-        var value = await action.Data.Value();
-        var line = value is Text t ? t.Clr<string>() : value?.ToString() ?? "";
+        string line;
+        if (running.Plang)
+        {
+            // to a plang that speaks plang's own format: the Data whole, signed, on one line
+            using var written = new MemoryStream();
+            // what is sent is the value itself (what %answer% names), signed as it is — never the reference
+            var sent = context.Ok(await action.Data.Value());
+            var encoded = await PlangFormat(context).Encode(written, sent, context);
+            if (!encoded.Success) return encoded;
+            line = Encoding.UTF8.GetString(written.ToArray()).TrimEnd('\r', '\n');
+        }
+        else
+        {
+            var value = await action.Data.Value();
+            line = value is Text t ? t.Clr<string>() : value?.ToString() ?? "";
+        }
         await running.Writing.WaitAsync();
         try
         {
@@ -302,6 +324,42 @@ public sealed class Default : ITerminal
 
     private static data.@this Line(string line, actor.context.@this context)
         => new("!data", line, context.App.type.list["text"], context: context);
+
+    // plang's own format — the one a plang started with --app.type.format=application/plang speaks
+    private static global::app.type.kind.@this PlangFormat(actor.context.@this context)
+        => context.App.type.list.Mime("application/plang");
+
+    // The program is a plang told to speak plang's own format (--app.type.format=…, a name of that format).
+    private static bool SpeaksPlang(ProcessStartInfo info, actor.context.@this context)
+    {
+        const string flag = "--app.type.format=";
+        var named = info.ArgumentList.FirstOrDefault(a => a.StartsWith(flag, StringComparison.OrdinalIgnoreCase))?[flag.Length..];
+        return named != null && ReferenceEquals(context.App.type.Named(named), PlangFormat(context));
+    }
+
+    // What the program said, as %!data%: from a plang that speaks plang's own format, a line that is a Data is that
+    // Data whole (an ask is an Ask — `if %!data.type% == "ask"`); any other line is its text.
+    private static async Task<data.@this> Said(string line, bool plang, actor.context.@this context)
+    {
+        if (!plang || !line.TrimStart().StartsWith('{')) return Line(line, context);
+        try
+        {
+            var data = await PlangFormat(context).Decode(Encoding.UTF8.GetBytes(line), context, "!data");
+            // read now, so the goal reading it sees the value itself — an ask from the program is its question,
+            // not this goal's own ask waiting
+            if (data.Success) { await data.Value(); data.Name = "!data"; return data; }
+            await Unread(data.Error!, context);
+        }
+        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        {
+            await Unread(new global::app.error.ServiceError($"plang's own format didn't read: {ex.Message}", "PlangUnread") { Exception = ex }, context);
+        }
+        return Line(line, context);   // what couldn't be read as Data still arrives, as its text
+    }
+
+    // A line from a plang that didn't read as Data: said on the error channel, never swallowed.
+    private static Task Unread(global::app.error.Error why, actor.context.@this context)
+        => context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(context.Error(why));
 
     /// <summary>Runs the held goal call once for one line, the line as <c>%!data%</c>. A failing call is
     /// reported on the error channel and the program keeps running.</summary>
