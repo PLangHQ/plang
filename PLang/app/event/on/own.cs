@@ -19,6 +19,7 @@ public sealed class own : @this
     private read? _read;
     private ask? _ask;
     private error? _error;
+    private click? _click;
 
     internal own() { }
 
@@ -48,6 +49,9 @@ public sealed class own : @this
 
     /// <summary>This item's own ask — the one its indexer answers under <c>ask</c>, held.</summary>
     public override ask ask => _ask ??= (ask)this["ask"]!;
+
+    /// <summary>This item's own click — the one its indexer answers under <c>click</c>, held.</summary>
+    public override click click => _click ??= (click)this["click"]!;
 
     /// <summary>The event named <paramref name="name"/>, this item's own; null when there is no event of that name.</summary>
     public override global::app.@event.@this? this[string name]

@@ -25,7 +25,7 @@ public sealed class @this : global::app.type.item.@this
             ? System.Threading.Tasks.ValueTask.FromResult(new global::app.data.@this(key, new goals(this), parent: parent))
             : base.Get(parent, key);
 
-    /// <summary>Runs the parent's goal <paramref name="goal"/> with the arguments of the call in play: up to the parent,
+    /// <summary>Runs the parent's goal <paramref name="goal"/> with the call's own arguments (not its callers'): up to the parent,
     /// back with its result. A goal call that waits as long as a goal may (ten minutes).</summary>
     internal async Task<global::app.data.@this> Run(string goal, global::app.actor.context.@this context)
     {
@@ -34,9 +34,15 @@ public sealed class @this : global::app.type.item.@this
                 $"There is no parent app to call {goal} in: nothing that started this plang links to it", "NoParent", 404));
         var parameters = new JsonObject();
         if (context.Variable.Calls.Current is { } frame)
-            foreach (var name in frame.Names)
+            foreach (var name in frame.Arguments)
                 if (frame.TryGet(name, out var argument))
-                    parameters[name] = await Json(await argument.Follow(context), context);
+                {
+                    // an argument that can't be written (a %variable% inside it that holds nothing) is the answer:
+                    // half of it must not go up as if it were the whole
+                    var (json, failed) = await Json(await argument.Follow(context), context);
+                    if (failed != null) return failed;
+                    parameters[name] = json;
+                }
         var id = Guid.NewGuid().ToString("N")[..12];
         var answer = new TaskCompletionSource<JsonElement>(TaskCreationOptions.RunContinuationsAsynchronously);
         waiting[id] = answer;
@@ -65,13 +71,14 @@ public sealed class @this : global::app.type.item.@this
     }
 
     // a value as json, for the trip up: what it holds, written by plang's json format
-    private static async Task<JsonNode?> Json(global::app.data.@this value, global::app.actor.context.@this context)
+    private static async Task<(JsonNode?, global::app.data.@this?)> Json(global::app.data.@this value, global::app.actor.context.@this context)
     {
         using var written = new MemoryStream();
-        await context.App.type.list.Mime("application/json").Encode(written, value, context);
+        var encoded = await context.App.type.list.Mime("application/json").Encode(written, value, context);
+        if (!encoded.Success) return (null, encoded);
         var text = System.Text.Encoding.UTF8.GetString(written.ToArray());
-        try { return JsonNode.Parse(text); }
-        catch (JsonException) { return JsonValue.Create(text); }
+        try { return (JsonNode.Parse(text), null); }
+        catch (JsonException) { return (JsonValue.Create(text), null); }
     }
 
     private static string Text(JsonElement e) => e.ValueKind == JsonValueKind.String ? e.GetString() ?? "" : e.ToString();
