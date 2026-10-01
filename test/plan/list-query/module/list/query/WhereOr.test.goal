@@ -1,0 +1,7 @@
+/ A where with or keeps what passes either, in the list's order.
+Start
+- variable.set(Name=%users%, Value=[{name: "a", type: "student", age: 25}, {name: "b", type: "student", age: 18}, {name: "c", type: "teacher", age: 40}])
+- list.query(List=%users%, Query={where: {or: [{field: "age", op: "<", value: 20}, {field: "type", op: "==", value: "teacher"}]}}); variable.set(Name=%kept%, Value=%!data%)
+- assert.equals(Expected=2, Actual=%kept.Count%, Message="the one under 20 and the teacher")
+- assert.equals(Expected="b", Actual=%kept[0].name%)
+- assert.equals(Expected="c", Actual=%kept[1].name%)

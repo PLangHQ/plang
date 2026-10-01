@@ -89,10 +89,10 @@ public class RowModelTests : System.IAsyncDisposable
     {
         var a = Of(30, 10);
         a.Add(Of(20, 5));                       // extend → [30, 10, 20, 5]
-        a.Sort(null, descending: false, app.actor.list.User.Context);       // → [5, 10, 20, 30]
+        var sorted = (global::app.type.item.list.@this)(await (await a.Sort(null, false, app.actor.list.User.Context)).Value())!;   // → [5, 10, 20, 30]
 
-        await Assert.That(a.Count).IsEqualTo(4);
-        await Assert.That((await a.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("5");
-        await Assert.That((await a.At(3, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("30");
+        await Assert.That(sorted.Count).IsEqualTo(4);
+        await Assert.That((await sorted.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("5");
+        await Assert.That((await sorted.At(3, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("30");
     }
 }

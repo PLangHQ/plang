@@ -1,0 +1,476 @@
+{
+  "name": "Start",
+  "comment": "Order by a field, ascending and descending.",
+  "step": [
+    {
+      "index": 0,
+      "text": "variable.set(Name=%users%, Value=[{name: \"a\", age: 25}, {name: \"b\", age: 18}, {name: \"c\", age: 40}])",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%users%",
+              "variable": [
+                {
+                  "text": "%users%",
+                  "code": [
+                    {
+                      "variable": "users"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"a","age":25},{"name":"b","age":18},{"name":"c","age":40}]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "list.query(List=%users%, Query={order: \"age\"}); variable.set(Name=%up%, Value=%!data%)",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "query",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": "%users%",
+              "variable": [
+                {
+                  "text": "%users%",
+                  "code": [
+                    {
+                      "variable": "users"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Query",
+              "type": {
+                "name": "query"
+              },
+              "value": {"order":"age"}
+            }
+          ],
+          "default": [
+            {
+              "name": "execution",
+              "type": {
+                "name": "choice",
+                "kind": "execution"
+              },
+              "value": "sql"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%up%",
+              "variable": [
+                {
+                  "text": "%up%",
+                  "code": [
+                    {
+                      "variable": "up"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"b\", Actual=%up[0].name%, Message=\"youngest first\")",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "b"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%up[0].name%",
+              "variable": [
+                {
+                  "text": "%up[0].name%",
+                  "code": [
+                    {
+                      "variable": "up"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "youngest first"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=\"c\", Actual=%up[2].name%)",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "c"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%up[2].name%",
+              "variable": [
+                {
+                  "text": "%up[2].name%",
+                  "code": [
+                    {
+                      "variable": "up"
+                    },
+                    {
+                      "index": {
+                        "number": 2
+                      }
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "list.query(List=%users%, Query={order: {field: \"age\", desc: true}}); variable.set(Name=%down%, Value=%!data%)",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "query",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": "%users%",
+              "variable": [
+                {
+                  "text": "%users%",
+                  "code": [
+                    {
+                      "variable": "users"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Query",
+              "type": {
+                "name": "query"
+              },
+              "value": {"order":{"field":"age","desc":true}}
+            }
+          ],
+          "default": [
+            {
+              "name": "execution",
+              "type": {
+                "name": "choice",
+                "kind": "execution"
+              },
+              "value": "sql"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%down%",
+              "variable": [
+                {
+                  "text": "%down%",
+                  "code": [
+                    {
+                      "variable": "down"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert.equals(Expected=\"c\", Actual=%down[0].name%, Message=\"oldest first\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "c"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%down[0].name%",
+              "variable": [
+                {
+                  "text": "%down[0].name%",
+                  "code": [
+                    {
+                      "variable": "down"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "oldest first"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert.equals(Expected=\"b\", Actual=%down[2].name%)",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "b"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%down[2].name%",
+              "variable": [
+                {
+                  "text": "%down[2].name%",
+                  "code": [
+                    {
+                      "variable": "down"
+                    },
+                    {
+                      "index": {
+                        "number": 2
+                      }
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/list-query/module/list/query/OrderBy.test.goal",
+  "prPath": "/plan/list-query/module/list/query/.build/orderby.test.pr",
+  "hash": "0e4963faaf2bd25fdd96ecb5bff87028f322c52bfba9f9c73fa17bc2703ba8d3",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

@@ -1,0 +1,6 @@
+/ The input list is unchanged: the query answers a new list.
+Start
+- variable.set(Name=%numbers%, Value=[3, 1, 2])
+- list.query(List=%numbers%, Query={order: {desc: false}}); variable.set(Name=%sorted%, Value=%!data%)
+- assert.equals(Expected=1, Actual=%sorted[0]%, Message="the answer is sorted")
+- assert.equals(Expected=3, Actual=%numbers[0]%, Message="the input is as it was")

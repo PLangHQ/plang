@@ -1,0 +1,7 @@
+/ With %!list.query.setting.execution% = written, the parts run in the order the step says them: ordered by age
+/ first, then grouped — x (age 10) is seen first.
+Start
+- variable.set(Name=%people%, Value=[{name: "y", age: 20}, {name: "x", age: 30}, {name: "x", age: 10}])
+- variable.set(Name=%!list.query.setting.execution%, Value="written")
+- list.query(List=%people%, Query={order: "age", group: "name"}); variable.set(Name=%groups%, Value=%!data%)
+- assert.equals(Expected="x", Actual=%groups[0].key%, Message="ordered before grouping: x is seen first")

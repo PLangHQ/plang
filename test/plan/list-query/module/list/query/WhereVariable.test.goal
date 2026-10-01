@@ -1,0 +1,7 @@
+/ A where value given as a %variable% is read when the step runs.
+Start
+- variable.set(Name=%users%, Value=[{name: "a", age: 25}, {name: "b", age: 18}, {name: "c", age: 40}])
+- variable.set(Name=%min%, Value=30)
+- list.query(List=%users%, Query={where: {field: "age", op: ">", value: %min%}}); variable.set(Name=%kept%, Value=%!data%)
+- assert.equals(Expected=1, Actual=%kept.Count%, Message="only the one over %min%")
+- assert.equals(Expected="c", Actual=%kept[0].name%)

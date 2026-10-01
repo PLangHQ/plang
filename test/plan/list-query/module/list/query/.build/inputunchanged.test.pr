@@ -1,0 +1,271 @@
+{
+  "name": "Start",
+  "comment": "The input list is unchanged: the query answers a new list.",
+  "step": [
+    {
+      "index": 0,
+      "text": "variable.set(Name=%numbers%, Value=[3, 1, 2])",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%numbers%",
+              "variable": [
+                {
+                  "text": "%numbers%",
+                  "code": [
+                    {
+                      "variable": "numbers"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [3,1,2]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "list.query(List=%numbers%, Query={order: {desc: false}}); variable.set(Name=%sorted%, Value=%!data%)",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "query",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": "%numbers%",
+              "variable": [
+                {
+                  "text": "%numbers%",
+                  "code": [
+                    {
+                      "variable": "numbers"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Query",
+              "type": {
+                "name": "query"
+              },
+              "value": {"order":{"desc":false}}
+            }
+          ],
+          "default": [
+            {
+              "name": "execution",
+              "type": {
+                "name": "choice",
+                "kind": "execution"
+              },
+              "value": "sql"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%sorted%",
+              "variable": [
+                {
+                  "text": "%sorted%",
+                  "code": [
+                    {
+                      "variable": "sorted"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=1, Actual=%sorted[0]%, Message=\"the answer is sorted\")",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%sorted[0]%",
+              "variable": [
+                {
+                  "text": "%sorted[0]%",
+                  "code": [
+                    {
+                      "variable": "sorted"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the answer is sorted"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=3, Actual=%numbers[0]%, Message=\"the input is as it was\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%numbers[0]%",
+              "variable": [
+                {
+                  "text": "%numbers[0]%",
+                  "code": [
+                    {
+                      "variable": "numbers"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the input is as it was"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/list-query/module/list/query/InputUnchanged.test.goal",
+  "prPath": "/plan/list-query/module/list/query/.build/inputunchanged.test.pr",
+  "hash": "2195f02a89b7e22b011eeb496b6a4ab7894bb92b1b264637507360d134b0ff8e",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}
