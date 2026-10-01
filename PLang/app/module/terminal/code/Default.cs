@@ -271,11 +271,11 @@ public sealed class Default : ITerminal
         }
 
         var info = new ProcessStartInfo(program.Absolute) { WorkingDirectory = folder?.Absolute ?? context.App.AbsolutePath };
-        var parameters = parameter == null || await parameter.IsEmpty() ? null : (await parameter.Value())!.Clr<List<object?>>();
+        var parameters = parameter == null || !await parameter.ToBooleanAsync() ? null : (await parameter.Value())!.Clr<List<object?>>();
         foreach (var p in parameters ?? []) info.ArgumentList.Add(p?.ToString() ?? "");
 
         var env = setting.Environment.Clr<Dictionary<string, object?>>() ?? new();
-        if (environment != null && !await environment.IsEmpty())
+        if (environment != null && await environment.ToBooleanAsync())
             foreach (var (key, value) in (await environment.Value())!.Clr<Dictionary<string, object?>>() ?? new())
                 env[key] = value;
         foreach (var (key, value) in env) info.Environment[key] = value?.ToString();
