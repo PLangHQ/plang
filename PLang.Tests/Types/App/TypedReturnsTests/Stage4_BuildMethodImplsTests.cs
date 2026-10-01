@@ -74,7 +74,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("file", "read", ("Path", "foo.zzz"));
         await result.IsSuccess();
-        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
     }
 
     [Test]
@@ -82,7 +82,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("file", "read", ("Path", "%p%"));
         await result.IsSuccess();
-        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
     }
 
     [Test]
@@ -143,7 +143,7 @@ public class Stage4_BuildMethodImplsTests
         var result = await Build("llm", "query",
             ("Message", Chat));
         await result.IsSuccess();
-        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
     }
 
     // --- http.request / http.upload .Build() ---
@@ -198,7 +198,7 @@ public class Stage4_BuildMethodImplsTests
             Name = "upload",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
-                new Data("Url", "%endpoint%", _app.type.list[new global::app.type.@this("text", template: "plang"), context], context: context),
+                global::PLang.Tests.Shared.Make.Built(context, "Url", "%endpoint%"),
                 new Data("FilePath", "/tmp/dummy.txt", context: context),
             }),
         };
@@ -209,6 +209,6 @@ public class Stage4_BuildMethodImplsTests
         var result = await ((IClass)handler!).Build();
 
         await result.IsSuccess();
-        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
     }
 }

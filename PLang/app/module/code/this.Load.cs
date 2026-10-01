@@ -32,7 +32,7 @@ public sealed partial class @this
     {
         var providerTypes = assembly.GetExportedTypes()
             .Where(t => typeof(ICode).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract).ToList();
-        if (providerTypes.Count == 0 && await types.IsEmpty())
+        if (providerTypes.Count == 0 && !await types.ToBooleanAsync())
             return context.Error(new ActionError("No ICode or [PlangType] entries found in assembly", "NoProviders", 400));
 
         var registered = new List<ICode>();

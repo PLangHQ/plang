@@ -7,11 +7,12 @@ namespace app.type.item.@null;
 /// type like every other scalar. There is one null in the world; it is never
 /// per-value allocated.
 ///
-/// <para><b>The null value, not the absence of a Data.</b> A <c>Data</c> whose
-/// value is null carries this singleton (a present null). A <em>missing</em>
-/// variable / <c>NotFound</c> / uninitialised read is a null <c>data</c>
-/// <em>reference</em> (no box, <c>IsInitialized = false</c>) — a different axis
-/// that stays a C# null. <c>null.@this</c> must not represent "no Data."</para>
+/// <para><b>The null value, and the absent item.</b> A <c>Data</c> whose value is
+/// null carries this singleton (a present null, <c>IsInitialized = true</c>). A
+/// <em>missing</em> variable / <c>NotFound</c> / uninitialised Data
+/// (<c>IsInitialized = false</c>) holds it too, so the item answers for the absence:
+/// not truthy, empty, <c>== null</c>. Whether the Data was given is Data's own
+/// question (<c>HasValue</c>, <c>IsInitialized</c>), never this item's.</para>
 ///
 /// <para>Always falsy; <c>null == null</c> true and equal to nothing else;
 /// equality-only (no <see cref="global::app.data.IOrderableValue"/> — the
@@ -71,12 +72,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     protected override System.Threading.Tasks.ValueTask<global::app.data.Comparison> Order(global::app.type.item.@this other, global::app.actor.context.@this context)
         => new(other is @this ? global::app.data.Comparison.Equal : global::app.data.Comparison.NotEqual);
 
-    /// <summary>Null is always falsy.</summary>
+    /// <summary>Null is never truthy — so it is empty; that is what a value that doesn't exist answers
+    /// (an absent Data holds this item).</summary>
     public override bool IsTruthy() => false;
 
-    /// <summary>The item emptiness hook — null is empty.</summary>
-    public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
-        => System.Threading.Tasks.ValueTask.FromResult(true);
     public override bool IsLeaf => true;
     public override void Write(global::app.type.format.IWriter w) => w.Null();
 

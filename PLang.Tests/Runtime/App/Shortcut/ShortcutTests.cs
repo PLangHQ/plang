@@ -38,8 +38,8 @@ public class ShortcutTests
             await Ctx.Pr(goal));
     }
 
-    private global::app.data.@this Reference(string variable)
-        => new("value", variable, Ctx.App.type.list[new global::app.type.@this("text", template: "plang"), Ctx], context: Ctx);
+    // a reference the build wrote, born as the build births it
+    private global::app.data.@this Reference(string variable) => Make.Built(Ctx, "value", variable);
 
     private global::app.goal.step.action.@this Set(string name, string value)
         => Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", name, "variable"), ("Value", value));

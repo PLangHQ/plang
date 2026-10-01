@@ -1,0 +1,254 @@
+{
+  "name": "Start",
+  "comment": "A destination-less sort writes its answer back to the list it read. `sort %people% by age` with no\n`write to` builds to list.query plus a builder-appended variable.set(Name=%people%) — otherwise the\nquery answers a new list and the sort is lost. The assert on the order proves the write-back ran.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %people% = [{name: \"a\", age: 40}, {name: \"b\", age: 18}, {name: \"c\", age: 25}]",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%people%",
+              "variable": [
+                {
+                  "text": "%people%",
+                  "code": [
+                    {
+                      "variable": "people"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"a","age":40},{"name":"b","age":18},{"name":"c","age":25}]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "sort %people% by age",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "query",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": "%people%",
+              "variable": [
+                {
+                  "text": "%people%",
+                  "code": [
+                    {
+                      "variable": "people"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Query",
+              "type": {
+                "name": "query"
+              },
+              "value": {"order":"age"}
+            }
+          ],
+          "default": [
+            {
+              "name": "execution",
+              "type": {
+                "name": "choice",
+                "kind": "execution"
+              },
+              "value": "sql"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%people%",
+              "variable": [
+                {
+                  "text": "%people%",
+                  "code": [
+                    {
+                      "variable": "people"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert that %people[0].name% is \"b\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "b"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%people[0].name%",
+              "variable": [
+                {
+                  "text": "%people[0].name%",
+                  "code": [
+                    {
+                      "variable": "people"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert that %people[2].name% is \"a\"",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "a"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%people[2].name%",
+              "variable": [
+                {
+                  "text": "%people[2].name%",
+                  "code": [
+                    {
+                      "variable": "people"
+                    },
+                    {
+                      "index": {
+                        "number": 2
+                      }
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/list-query/module/list/query/build/WriteBack.test.goal",
+  "prPath": "/plan/list-query/module/list/query/build/.build/writeback.test.pr",
+  "hash": "ad5b90033d3b4436d6cd57be9404b52ef238ea081e36d4569a4b0d2db0949226",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

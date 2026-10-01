@@ -409,10 +409,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override System.Threading.Tasks.ValueTask<bool> Contains(Data needle)
         => System.Threading.Tasks.ValueTask.FromResult(Has(needle.ToString()));
 
-    /// <summary>The item emptiness hook — no entries.</summary>
-    public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
-        => System.Threading.Tasks.ValueTask.FromResult(_value.Count == 0);
-
     /// <summary>A dict's field is its entry.</summary>
     public override System.Threading.Tasks.Task<Data?> Field(string name, actor.context.@this context)
         => System.Threading.Tasks.Task.FromResult(Get(name, context));

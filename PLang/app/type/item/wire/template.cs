@@ -10,8 +10,8 @@ namespace app.type.item.wire;
 public sealed class template : @this
 {
     public template(string slice, global::app.type.@this type, kind.plang.@this reader,
-        IReadOnlyList<global::app.type.item.variable.@this> variable)
-        : base(slice, type, reader, variable) { }
+        IReadOnlyList<global::app.type.item.variable.@this> variable, bool built = false)
+        : base(slice, type, reader, variable, built) { }
 
     // A template renders with the caller's context: there is no context-free write of it.
     public override void Write(global::app.type.format.IWriter w)

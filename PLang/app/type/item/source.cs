@@ -21,8 +21,8 @@ public class source : @this
     // directly). Name/Kind/Strict/Template all read off this one object.
     private protected readonly global::app.type.@this _type;
 
-    // The variables a template source holds — the row's, as its .pr list says (or parsed, for a
-    // template born at run). Empty for a plain source.
+    // The variables a template source holds — decided once, at birth, by whose bytes these are (see the
+    // constructor). Empty for a plain source.
     private readonly IReadOnlyList<global::app.type.item.variable.@this> _variable = [];
 
     /// <inheritdoc/>
@@ -40,26 +40,39 @@ public class source : @this
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Get(actor.context.@this ctx)
         => IsVariable ? await _variable[0].Start(ctx) : null;
 
+    /// <summary>Whether its bytes are the build's own — a goal's <c>.pr</c>, or the build reading its own
+    /// answer: only those reads grant it (<see cref="global::app.type.reader.ReadContext.IsBuilt"/>). A birth
+    /// fact; a re-declared source keeps it.</summary>
+    internal bool IsBuilt { get; }
+
     /// <summary>Born from a declared type entity + a raw form — the source-maker the entity's
     /// <c>Create</c> door shares. The source holds the declaration WHOLE (Name/Kind/Strict/Template
     /// all live on it) and reads its own raw through the (type, kind) reader — no format name. It
-    /// stores no context: the load uses the asking Data's. A template source takes the
-    /// <paramref name="variable"/>s its row's list says it holds; without one it parses its raw.</summary>
+    /// stores no context: the load uses the asking Data's. A template source holds the variables
+    /// whose bytes these are allow: the build's own (<paramref name="built"/>) the
+    /// <paramref name="variable"/>s its row lists, content a file or url read handed over
+    /// (<paramref name="origin"/>) only the program's own, anything else none.</summary>
     public source(object value, global::app.type.@this type, IReadOnlyList<global::app.type.item.variable.@this>? variable = null,
-        global::app.type.item.path.@this? origin = null)
+        global::app.type.item.path.@this? origin = null, bool built = false)
     {
         _value = value ?? throw new System.ArgumentNullException(nameof(value));
         _type = type ?? throw new System.ArgumentNullException(nameof(type));
         _origin = origin;
-        // Trust the builder's template flag (on the declaration), not the content: a structural
-        // string the builder did not mark stays literal content. A BUILD-TIME security gate —
-        // content that merely looks like "%x%" must NOT auto-resolve to a variable; only a
-        // builder-marked template does. Decided ONCE at birth.
+        IsBuilt = built;
+        // Only a value marked a template holds variables — the mark is the declaration's, never read off
+        // the content: a string that merely looks like "%x%" stays literal.
         if (type.Template == null) return;
-        // the variables are read off the source's text face (a byte raw declared text is its UTF-8)
+        // the variables written in it are read off its text face (a byte raw declared text is its UTF-8)
         var raw = Peek() as string;
-        _variable = (variable ?? (raw != null ? new global::app.type.item.variable.parser.@this(raw).Variable : []))
-            .DistinctBy(v => v.Text).ToList();
+        IReadOnlyList<global::app.type.item.variable.@this> written()
+            => raw != null ? new global::app.type.item.variable.parser.@this(raw).Variable : [];
+        // THE door for content from outside: what a template holds, by whose bytes these are. Decided ONCE,
+        // here — a variable not held is never resolved; it stays as written everywhere downstream.
+        IEnumerable<global::app.type.item.variable.@this> held =
+            built ? variable ?? written()                           // the build's own .pr: every variable its row lists
+            : origin != null ? written().Where(v => v.IsOwn)        // a file or url read with load vars: the program's own only
+            : [];                                                   // anything else (a peer's value, the store): none
+        _variable = held.DistinctBy(v => v.Text).ToList();
         // A full-match %ref% on ANY declared type is a reference to a binding — resolved at
         // .Value(), never parsed through the type reader.
         IsVariable = _variable is [var only] && only.Text == raw;
@@ -109,9 +122,10 @@ public class source : @this
     /// <summary>Never final — the door parses the raw form into its value on read.</summary>
     internal override bool IsFinal => false;
 
-    /// <summary>A template-bearing source re-resolves every read (its %refs% can change) — never
-    /// cached by the holding Data; a plain source parses once and caches. Mirrors text/dict/list.</summary>
-    public override bool Cacheable => _type.Template == null;
+    /// <summary>A source holding variables re-resolves every read (what they hold can change) — never
+    /// cached by the holding Data; one holding none (a plain source, or a template whose content holds
+    /// none it may fill) parses once and is kept. Mirrors text/dict/list.</summary>
+    public override bool Cacheable => !HasVariable;
 
     public override async System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
     {
@@ -140,7 +154,7 @@ public class source : @this
             if (resolved is null || !resolved.IsInitialized)
             {
                 data.Fail(new global::app.error.Error(
-                    $"%{_value}% is not set — nothing to answer for it.", "VariableNotFound", 404));
+                    $"{_value} is not set — nothing to answer for it.", "VariableNotFound", 404));
                 return Absent;
             }
             return await resolved.Value();
@@ -214,13 +228,14 @@ public class source : @this
         var typeReader = context.App.type.list.Reader.Reader(_type.Name, kind, context);
         var reader = new global::app.type.format.value.Reader(_value);
         return typeReader.Read(ref reader, kind,
-            new global::app.type.reader.ReadContext(context, _type.Template, Variable: _variable, Origin: _origin));
+            new global::app.type.reader.ReadContext(context, _type.Template, Variable: _variable, Origin: _origin, IsBuilt: IsBuilt));
     }
 
     /// <summary>Re-birth under a new declaration — the source owns its own re-typing (kills the
     /// type entity reaching into a source's raw/format). The wire override carries its captured
-    /// serializer across, so a re-declared wire still decodes through its capturer.</summary>
-    internal virtual source Declared(global::app.type.@this type) => new source(_value, type, _variable, _origin);
+    /// serializer across, so a re-declared wire still decodes through its capturer. Whose bytes these
+    /// are rides along.</summary>
+    internal virtual source Declared(global::app.type.@this type) => new source(_value, type, _variable, _origin, IsBuilt);
 
     /// <summary>
     /// Navigation is first-touch: a source is still its raw form (bytes / json text),

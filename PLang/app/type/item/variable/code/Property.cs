@@ -20,6 +20,10 @@ public sealed class Property : Hop
 
     internal bool IsBinding => Name.StartsWith('!');
 
+    /// <summary>A member is the value's own content; a binding (<c>%x!context%</c>) reaches past the value into
+    /// what holds it.</summary>
+    internal override bool IsOwn => !IsBinding;
+
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
         global::app.data.@this? previous, global::app.actor.context.@this context)
     {

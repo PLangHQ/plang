@@ -29,7 +29,7 @@ public class DataAsTResolutionTests
     public async Task AsT_FullVarMatch_ReturnsVariableValue()
     {
         _app.actor.list.User.Context.Variable.Set("path", "/tmp/x.txt");
-        var data = new Data("p", "%path%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "p", "%path%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
@@ -41,7 +41,7 @@ public class DataAsTResolutionTests
     [Test]
     public async Task AsT_FullVarMatch_MissingVariable_ReturnsErrorOrNotFound()
     {
-        var data = new Data("p", "%missing%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "p", "%missing%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
@@ -55,7 +55,7 @@ public class DataAsTResolutionTests
     public async Task AsT_Interpolation_CallsResolve()
     {
         _app.actor.list.User.Context.Variable.Set("name", "world");
-        var data = new Data("greeting", "Hello %name%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "greeting", "Hello %name%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
@@ -123,7 +123,7 @@ public class DataAsTResolutionTests
     public async Task AsT_CalledTwice_FreshResolutionEachCall()
     {
         _app.actor.list.User.Context.Variable.Set("x", "first");
-        var data = new Data("v", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "v", "%x%");
 
         var first = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
         await Assert.That((await first.Value())?.ToString()).IsEqualTo("first");
@@ -141,7 +141,7 @@ public class DataAsTResolutionTests
     public async Task AsT_DoesNotMutateOriginalDataValue()
     {
         _app.actor.list.User.Context.Variable.Set("x", "resolved");
-        var data = new Data("v", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "v", "%x%");
 
         var resolved = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
         await Assert.That((await resolved.Value())?.ToString()).IsEqualTo("resolved");
@@ -160,7 +160,7 @@ public class DataAsTResolutionTests
     {
         _app.actor.list.User.Context.Variable.Set("a", "%b%");
         _app.actor.list.User.Context.Variable.Set("b", "%a%");
-        var data = new Data("ref", "%a%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "ref", "%a%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
@@ -176,7 +176,7 @@ public class DataAsTResolutionTests
     public async Task AsT_StoredSelfRef_ReturnedVerbatim()
     {
         _app.actor.list.User.Context.Variable.Set("x", "%x%");
-        var data = new Data("ref", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "ref", "%x%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
@@ -192,7 +192,7 @@ public class DataAsTResolutionTests
     public async Task AsT_PartialMatchInterpolatesOncesThenStops()
     {
         _app.actor.list.User.Context.Variable.Set("x", "%x%");
-        var data = new Data("greeting", "hello %x%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "greeting", "hello %x%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
@@ -210,7 +210,7 @@ public class DataAsTResolutionTests
     {
         _app.actor.list.User.Context.Variable.Set("a", "X-%b%");
         _app.actor.list.User.Context.Variable.Set("b", "Y-%a%");
-        var data = new Data("ref", "%a%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "ref", "%a%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
@@ -230,7 +230,7 @@ public class DataAsTResolutionTests
         _app.actor.list.User.Context.Variable.Set("c", "%d%");
         _app.actor.list.User.Context.Variable.Set("d", "%e%");
         _app.actor.list.User.Context.Variable.Set("e", "leaf-value");
-        var data = new Data("chain", "%a%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "chain", "%a%");
 
         var result = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
@@ -266,7 +266,7 @@ public class DataAsTResolutionTests
         };
         context.Variable.Set(new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.@this>>("messages", new global::app.type.item.list.@this<global::app.type.item.@this>(System.Linq.Enumerable.Select(stored, d => _app.Data("", d))), context: context));
 
-        var paramData = new Data("Messages", "%messages%", new global::app.type.@this("text", null, false, "plang"), context: context);
+        var paramData = PLang.Tests.Shared.Make.Built(context, "Messages", "%messages%");
         var result = paramData.As<global::app.type.item.list.@this<global::app.type.item.dict.@this>>(await paramData.Value<global::app.type.item.list.@this<global::app.type.item.dict.@this>>());
 
         await result.IsSuccess();
@@ -302,7 +302,7 @@ public class DataAsTResolutionTests
         context.Variable.Set(new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.@this>>("fixerMessages", new global::app.type.item.list.@this<global::app.type.item.@this>(System.Linq.Enumerable.Select(stored, d => _app.Data("", d))), context: context));
 
         // Mirrors how llm.query reads %fixerMessages% — typed slot is List<LlmMessage>.
-        var paramData = new Data("Messages", "%fixerMessages%", new global::app.type.@this("text", null, false, "plang"), context: context);
+        var paramData = PLang.Tests.Shared.Make.Built(context, "Messages", "%fixerMessages%");
         var result = paramData.As<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>(await paramData.Value<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>());
 
         await result.IsSuccess();

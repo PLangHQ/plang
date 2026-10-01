@@ -52,8 +52,8 @@ The base (`app/type/item/this.cs`) defines the full virtual surface; a new type 
 | `ToString()` | The display/text face. | |
 | `Value(Data)` | THE value door — "I am going to use this value, make yourself ready." | A plain scalar answers itself (the default). A lazy value (path-backed image, deferred parse, template) loads/parses/renders **here** — laziness is construction state resolved at this door, never a specially-named method. Failures go `data.Fail(error)` + return `Absent`; the only blessed surface of the `Data` here is `Fail`. |
 | `Cacheable` | May the holding `Data` keep the door's answer? | `false` when the answer depends on outside state (template render, computed). |
-| `IsTruthy()` / `AsBooleanAsync()` | The value's boolean meaning. | Override `AsBooleanAsync` only when truthiness needs I/O (path existence). |
-| `IsEmpty()` / `Contains(needle)` | Emptiness / membership, each type's own answer. | No ToString fallback — a needle never matches a serialization. |
+| `IsTruthy()` / `AsBooleanAsync()` | The value's boolean meaning — and emptiness is its negation (`isempty` is "not truthy"; there is no separate `IsEmpty`). | Override `AsBooleanAsync` only when truthiness needs I/O (path existence). Whitespace is content: `"  "` is truthy. |
+| `Contains(needle)` | Membership, each type's own answer. | No ToString fallback — a needle never matches a serialization. |
 | `Rank` / `Order(other)` | Comparison: higher rank drives; the driver coerces the other side through its own pure `Create` core. | A non-coercible other is `Incomparable`, not an error. |
 | `Kinded(kind)` | A re-kinded **copy** (values are immutable, never restamped in place). | Only for types with a kind axis. |
 | `Get(parent, key)` / `Set(key, isIndex, value)` | Navigation / child write. | Leaves usually keep the defaults (or fail with their own story — see text's `CantNavigateText`). |

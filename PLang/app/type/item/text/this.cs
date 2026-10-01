@@ -449,10 +449,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override System.Threading.Tasks.ValueTask<bool> Contains(global::app.data.@this needle)
         => System.Threading.Tasks.ValueTask.FromResult(Contains(needle.ToString()));
 
-    /// <summary>The item emptiness hook — whitespace-only text is empty.</summary>
-    public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
-        => System.Threading.Tasks.ValueTask.FromResult(string.IsNullOrWhiteSpace(_value));
-
     /// <summary>A re-kinded copy — same content, the declared kind stamped
     /// (values immutable, never restamped in place).</summary>
     public override global::app.type.item.@this Kinded(string? kind) => new @this(this, kind);

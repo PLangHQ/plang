@@ -50,7 +50,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
             var utf8 = new System.Text.Json.Utf8JsonReader(raw);
             utf8.Read();
             var json = new global::app.type.item.kind.json.Reader(utf8, raw);
-            var goal = new serializer.Reader().Read(ref json, null, new global::app.type.reader.ReadContext(context, Origin: origin));
+            // A goal's .pr is the build's own bytes: the one reader that grants their templates every variable
+            // they list (the build, reading its own answer, is the other).
+            var goal = new serializer.Reader().Read(ref json, null, new global::app.type.reader.ReadContext(context, Origin: origin, IsBuilt: true));
             return System.Threading.Tasks.Task.FromResult(new global::app.data.@this(name, goal, context: context));
         }
         catch (global::app.error.AppException refused)

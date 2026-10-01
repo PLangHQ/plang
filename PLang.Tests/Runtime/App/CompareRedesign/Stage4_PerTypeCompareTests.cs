@@ -185,7 +185,7 @@ public class Stage4_PerTypeCompareTests : System.IAsyncDisposable
         var sorted = (global::app.type.item.list.@this)(await (await list.Sort(null, false, app.actor.list.User.Context)).Value())!;
         await Assert.That((await sorted.At(0, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("1");
         await Assert.That((await sorted.At(1, app.actor.list.User.Context)!.Value())?.ToString()).IsEqualTo("3");
-        await Assert.That(await (await sorted.At(2, app.actor.list.User.Context)!.Value())!.IsEmpty()).IsTrue();   // nulls last
+        await Assert.That((await sorted.At(2, app.actor.list.User.Context)!.Value())!.IsTruthy()).IsFalse();   // nulls last
     }
 
     [Test]

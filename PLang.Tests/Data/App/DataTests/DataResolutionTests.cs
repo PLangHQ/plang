@@ -21,7 +21,7 @@ public class DataResolutionTests
     [Test]
     public async Task SharedParameterData_AsTBetweenChanges_YieldsTwoResults()
     {
-        var data = new Data("v", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "v", "%x%");
 
         _app.actor.list.User.Context.Variable.Set("x", "first");
         var first = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
@@ -36,7 +36,7 @@ public class DataResolutionTests
     [Test]
     public async Task LoopIteration_PropertyResolvesPerCall()
     {
-        var data = new Data("v", "%i%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "v", "%i%");
 
         var seen = new List<string?>();
         for (int i = 0; i < 3; i++)
@@ -55,7 +55,7 @@ public class DataResolutionTests
     [Test]
     public async Task SubGoalCall_EachGoalSeesOwnResolvedView()
     {
-        var data = new Data("v", "%scope%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "v", "%scope%");
         _app.actor.list.User.Context.Variable.Set("scope", "parent");
         var parentView = data.As<global::app.type.item.text.@this>(await data.Value<global::app.type.item.text.@this>());
 
@@ -78,7 +78,7 @@ public class DataResolutionTests
     public async Task FullVarMatch_VariableHoldsData_UnwrappedCleanly()
     {
         _app.actor.list.User.Context.Variable.Set("count", 42);
-        var data = new Data("c", "%count%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "c", "%count%");
 
         var result = data.As<global::app.type.item.number.@this>(await data.Value<global::app.type.item.number.@this>());
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("42");
@@ -108,7 +108,7 @@ public class DataResolutionTests
     public async Task ConcurrentAsT_OnSharedParameterData_NoRace()
     {
         _app.actor.list.User.Context.Variable.Set("x", "value");
-        var data = new Data("v", "%x%", new global::app.type.@this("text", null, false, "plang"), context: _app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(_app.actor.list.User.Context, "v", "%x%");
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(async () =>
         {

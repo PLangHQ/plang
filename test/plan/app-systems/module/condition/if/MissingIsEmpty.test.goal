@@ -1,0 +1,23 @@
+/ Decision 463: "is empty" is "not truthy" — a value that doesn't exist, or is empty, is not truthy, and the value
+/ answers for itself. The os bot's report: %event.guest% on {"mouse": …} said not empty, silently.
+Start
+- variable.set(Name=%event%, Value={"mouse": 1})
+- variable.set(Name=%empty%, Value="no")
+- condition.if(Left=%event.guest%, Operator="isempty") { variable.set(Name=%empty%, Value="yes") }
+- assert.equals(Expected="yes", Actual=%empty%, Message="a property its value hasn't is empty")
+- variable.set(Name=%filled%, Value="no")
+- condition.if(Left=%event.guest%, Operator="isnotempty") { variable.set(Name=%filled%, Value="yes") }
+- assert.equals(Expected="no", Actual=%filled%, Message="a property its value hasn't is not 'not empty'")
+- variable.set(Name=%unset%, Value="no")
+- condition.if(Left=%nothere%, Operator="isempty") { variable.set(Name=%unset%, Value="yes") }
+- assert.equals(Expected="yes", Actual=%unset%, Message="an unset variable is empty")
+- variable.set(Name=%list%, Value=[])
+- variable.set(Name=%listEmpty%, Value="no")
+- condition.if(Left=%list%, Operator="isempty") { variable.set(Name=%listEmpty%, Value="yes") }
+- assert.equals(Expected="yes", Actual=%listEmpty%, Message="an empty list is empty")
+- variable.set(Name=%literalEmpty%, Value="no")
+- condition.if(Left={}, Operator="isempty") { variable.set(Name=%literalEmpty%, Value="yes") }
+- assert.equals(Expected="yes", Actual=%literalEmpty%, Message="an empty dict literal is empty")
+- variable.set(Name=%mouseEmpty%, Value="no")
+- condition.if(Left=%event.mouse%, Operator="isempty") { variable.set(Name=%mouseEmpty%, Value="yes") }
+- assert.equals(Expected="no", Actual=%mouseEmpty%, Message="a set value is not empty")

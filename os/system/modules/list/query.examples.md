@@ -20,4 +20,4 @@ Step text: `sort %users% by age, highest first, write to %oldest%`
 Properties: `{"List": "%users%", "Query": {"order": {"field": "age", "desc": true}}}` — "highest/oldest/largest/newest first" is desc: true; plain "sort by age" is ascending.
 
 Step text: `sort %people% by age`
-Properties: `{"List": "%people%", "Query": {"order": "age"}}` — the step names no destination, so the answer is written back to the list it read: add variable.set(Name=%people%, Value=%!data%).
+Properties: `{"List": "%people%", "Query": {"order": "age"}}` — the step names no destination; write only this query, the builder writes the sorted answer back to %people% for you.

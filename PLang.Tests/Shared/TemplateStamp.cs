@@ -32,7 +32,7 @@ public static class TemplateStamp
                     properties.Set(new global::app.type.property.@this
                     {
                         Name = p.Name, Type = declared, Properties = p.Properties,
-                        Value = new global::app.data.@this(p.Name, raw, declared, context: context).Peek(),
+                        Value = PLang.Tests.Shared.Make.Built(context, p.Name, raw, declared).Peek(),
                     });
                 }
                 continue;

@@ -226,7 +226,58 @@ public class Default : IBuilder
         // The goal's steps read and judge the answer; the builder only reacts.
         if (await goal.Step.Read(answer.ToString(), context, confirmed is { IsNull: false } ? confirmed : null) is { } refusal)
             return context.Error(refusal);
+
+        // A result-only action (one with an [Input] property — it reads its input and answers a new value of
+        // it, changing nothing, e.g. list.query's List) whose result goes nowhere is a silent no-op: a query
+        // never changes its input, so `sort %people% by age` with no destination must write the answer back to
+        // %people%. Inserted here, AFTER Read, so Cover's "is it listed?" check (which refuses the writer's own
+        // variable.set) doesn't apply. A literal input has no name to write back to — refused, so FixSteps retries.
+        if (await WriteBack(goal, context) is { } wbRefusal)
+            return context.Error(wbRefusal);
+
         return context.Ok(true);
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex WholeVariable =
+        new(@"^%!?[A-Za-z0-9_.]+%$", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    // Give the deterministic write-back to a destination-less result-only action. The write-back target is
+    // the action's [Input] property's variable (its List, %people%), read from the catalog element — a built
+    // action's own properties don't carry IsInput (the formal reader builds Name/Type/Value only).
+    private async Task<global::app.error.Error?> WriteBack(
+        global::app.goal.@this goal, global::app.actor.context.@this context)
+    {
+        var modules = context.App.module.list;
+        var steps = goal.Step.Items().ToList();
+        for (var s = 0; s < steps.Count; s++)
+        {
+            var step = steps[s];
+            var code = step.Code.Items().ToList();
+            for (var a = 0; a < code.Count; a++)
+            {
+                var act = code[a];
+                var inputDef = act.Module?[act.Name]?.Input;      // the [Input] property, from the catalog element
+                if (inputDef is null) continue;
+                // the result is already taken? only a later action IN THIS STEP can read it — %!data% is the
+                // transient register, clobbered the moment the next step runs its own action, so the next step
+                // reading %!data% is reading its own result, never this one's. Same-step only.
+                if (code.Skip(a + 1).Any(ReadsData)) continue;
+                var target = act[inputDef.Name]?.Value?.ToString()?.Trim() ?? "";
+                if (!WholeVariable.IsMatch(target))
+                    return new global::app.error.ValidationError(
+                        $"step {step.Index}: {act.Module!.Name}.{act.Name} answers a new value and changes nothing — give it a destination (`…, write to %result%`); a literal input has no name to write the answer back to.",
+                        "NoWriteBackTarget");
+                var read = new global::app.goal.step.action.formal.Reader(step, modules)
+                    .Read($"variable.set(Name={target}, Value=%!data%)", context);
+                if (!read.Success) return read.Error;
+                if (await read.Value() is global::app.goal.step.action.list.@this wb)
+                    foreach (var set in wb.Items()) step.Code.Add(set);
+            }
+        }
+        return null;
+
+        static bool ReadsData(global::app.goal.step.action.@this a)
+            => a.Property.Any(p => p.Value?.ToString()?.Contains("%!data%", System.StringComparison.OrdinalIgnoreCase) == true);
     }
 
     // --- Pick ---

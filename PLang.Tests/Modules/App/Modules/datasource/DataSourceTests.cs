@@ -71,7 +71,7 @@ public class DataSourceTests
         using var ds = await CreateDataSource();
         var result = await ds.Get<global::app.type.item.@this>("settings", "NonExistent");
         await result.IsSuccess();
-        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
     }
 
     [Test]
@@ -94,7 +94,7 @@ public class DataSourceTests
         await removeResult.IsSuccess();
 
         var result = await ds.Get<global::app.type.item.@this>("settings", "ApiKey");
-        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
     }
 
     [Test]
@@ -158,7 +158,7 @@ public class DataSourceTests
         await ds.Set("settings", "NullKey", new Data("NullKey", null, context: _app.actor.list.System.Context!));
         var result = await ds.Get<global::app.type.item.@this>("settings", "NullKey");
         await result.IsSuccess();
-        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
     }
 
     [Test]
@@ -361,7 +361,7 @@ public class DataSourceTests
         using var ds2 = global::app.store.sqlite.@this.InMemory("disposable_db", _app.actor.list.User.Context);
         var result = await ds2.Get<global::app.type.item.@this>("data", "key");
         await result.IsSuccess();
-        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
     }
 
     [Test]

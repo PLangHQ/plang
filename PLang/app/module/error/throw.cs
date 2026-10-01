@@ -36,9 +36,9 @@ public partial class Throw : IContext
         // An error is a point-in-time capture (like the callstack snapshot), so the
         // attached values bind at throw, not at display.
         global::app.type.item.@this? thrown = Data == null ? null : await Data.Value();
-        // An absent slot is empty, not C# null — asked through IsEmpty, so an error thrown without a
+        // A fix left out, or empty, is none — asked through its truthiness, so an error thrown without a
         // fix gets none rather than "".
-        string? fix = FixSuggestion == null || await FixSuggestion.IsEmpty() ? null
+        string? fix = FixSuggestion == null || !await FixSuggestion.ToBooleanAsync() ? null
             : (await FixSuggestion.Value())?.Clr<string>();
 
         // Re-raise: `- throw %!error%` hands an existing error straight through rather

@@ -49,7 +49,7 @@ public class DataResultTests : System.IAsyncDisposable
         var result = app.Error(error);
 
         await result.IsFailure();
-        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Message).IsEqualTo("Test error");
     }

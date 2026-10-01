@@ -54,7 +54,7 @@ public class ScopeTests
         var empty = new global::app.data.@this("goals", type.Empty(app.actor.list.System.Context), context: app.actor.list.System.Context);
 
         await Assert.That(empty.Type.ToString()).IsEqualTo("list<goal>");
-        await Assert.That(await empty.IsEmpty()).IsTrue();
+        await Assert.That(await empty.ToBooleanAsync()).IsFalse();
     }
 
     [Test]

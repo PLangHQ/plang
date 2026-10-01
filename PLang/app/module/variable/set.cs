@@ -151,11 +151,11 @@ public partial class Set : IContext, IScope, IKeep
         //   1. Validate (above) — a literal value, at BUILD time.
         //   2. the IKindValidatable probe below — a %var% value resolved at RUN time.
         //   3. the IStrictKindEnforcer load seam below — byte-backed values, at MATERIALIZATION.
-        // An omitted `as` clause is an EMPTY slot, not C# null — the value door
-        // answers the `absent` citizen (non-null, ToString() == ""). Gate on the
-        // value's own emptiness so an absent type skips the conversion block
-        // instead of minting a type with an empty name (UnknownType '').
-        var typeValue = Type == null || await Type.IsEmpty() ? null : await Type.Value();
+        // An omitted `as` clause is an EMPTY slot, not C# null — it holds the null
+        // item, which is not truthy. Gate on the value's own truthiness so an absent
+        // type skips the conversion block instead of minting a type with an empty
+        // name (UnknownType '').
+        var typeValue = Type == null || !await Type.ToBooleanAsync() ? null : await Type.Value();
         if (typeValue != null)
         {
             // The Type value reads through the `type` reader, so it materializes as the type

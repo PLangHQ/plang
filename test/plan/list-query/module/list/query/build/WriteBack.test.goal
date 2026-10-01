@@ -1,0 +1,8 @@
+/ A destination-less sort writes its answer back to the list it read. `sort %people% by age` with no
+/ `write to` builds to list.query plus a builder-appended variable.set(Name=%people%) — otherwise the
+/ query answers a new list and the sort is lost. The assert on the order proves the write-back ran.
+Start
+- set %people% = [{name: "a", age: 40}, {name: "b", age: 18}, {name: "c", age: 25}]
+- sort %people% by age
+- assert that %people[0].name% is "b"
+- assert that %people[2].name% is "a"

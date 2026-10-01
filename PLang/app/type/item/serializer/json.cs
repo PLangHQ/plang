@@ -84,14 +84,15 @@ public partial class json
 
     /// <summary>The container entry <paramref name="utf8"/> is, when it is a typed value (a Data row a
     /// list or dict wrote: <c>{type:{name,…}, value:…}</c>, or <c>@schema:data</c>) — read as that Data, as
-    /// every nested entry reads; null for any other value, which the container's element type reads.</summary>
-    internal global::app.data.@this? Typed(byte[] utf8)
+    /// every nested entry reads; null for any other value, which the container's element type reads. A row
+    /// nested in the build's own bytes (<paramref name="ctx"/>) is the build's too.</summary>
+    internal global::app.data.@this? Typed(byte[] utf8, global::app.type.reader.ReadContext ctx)
     {
         using var doc = System.Text.Json.JsonDocument.Parse(utf8);
         var element = doc.RootElement;
         return element.ValueKind == System.Text.Json.JsonValueKind.Object
                && (global::app.data.@this.IsDataMarked(element) || IsTypedEntry(element))
-            ? new global::app.data.reader.@this().Read(utf8, new global::app.type.reader.ReadContext(_context, Verify: false))
+            ? new global::app.data.reader.@this().Read(utf8, new global::app.type.reader.ReadContext(_context, Verify: false, IsBuilt: ctx.IsBuilt))
             : null;
     }
 
@@ -186,7 +187,8 @@ public partial class json
             System.Text.Json.JsonValueKind.Null => null,
             System.Text.Json.JsonValueKind.Undefined => null,
             System.Text.Json.JsonValueKind.Object => global::app.data.@this.IsDataMarked(element) || IsTypedEntry(element)
-                ? new global::app.data.reader.@this().Read(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()), new global::app.type.reader.ReadContext(_context, Verify: false))
+                ? new global::app.data.reader.@this().Read(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()),
+                    new global::app.type.reader.ReadContext(_context, Verify: false, IsBuilt: ctx?.IsBuilt ?? false))
                 : ObjectLeaf(element, ctx, depth),
             System.Text.Json.JsonValueKind.Array => ArrayLeaf(element, ctx, depth),
             _ => element.GetRawText(),
