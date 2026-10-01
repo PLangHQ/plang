@@ -20,6 +20,9 @@ public sealed class Process : global::app.type.item.@this, global::app.type.item
     [LlmBuilder, Out] public bool Running => Os is { HasExited: false };
 
     internal System.Diagnostics.Process? Os { get; set; }
+    /// <summary>It speaks plang's own format — a plang started with <c>--app.type.format=application/plang</c>: what it
+    /// writes arrives as Data (an ask as an Ask), and what is sent to it goes as Data, signed.</summary>
+    internal bool Plang { get; init; }
     internal SemaphoreSlim Writing { get; } = new(1, 1);
     internal Task? Reading { get; set; }
 
