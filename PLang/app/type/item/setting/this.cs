@@ -152,11 +152,17 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 {
                     var built = global::app.type.item.@this.Create(kvp.Value, context);
                     // a slot the born value doesn't fit (a choice from its text, a list<path> from a list) is
-                    // made by the slot's own type, through the type door
-                    if (!prop.PropertyType.IsInstanceOfType(built)
-                        && context.App.type.list[prop.PropertyType].Make(kvp.Value, new global::app.data.@this(kvp.Key, context: context)) is { } made
-                        && prop.PropertyType.IsInstanceOfType(made))
-                        built = made;
+                    // made by the slot's own type, through the type door; one it refuses with why (a culture no one
+                    // has) is the answer
+                    if (!prop.PropertyType.IsInstanceOfType(built))
+                    {
+                        var asked = new global::app.data.@this(kvp.Key, context: context);
+                        if (context.App.type.list[prop.PropertyType].Make(kvp.Value, asked) is { } made
+                            && prop.PropertyType.IsInstanceOfType(made))
+                            built = made;
+                        else if (!asked.Success)
+                            return context.Error(asked.Error!);
+                    }
                     // a list whose element is itself a closed type (list<choice<visibility>>) the type door can't
                     // close yet — its element kind names no single type — is re-tagged by its CLR form
                     val = prop.PropertyType.IsInstanceOfType(built) ? built : built.Clr(prop.PropertyType);

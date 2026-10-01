@@ -50,7 +50,7 @@ public class PlangTypesCut2_ImageTwoChannelsTests
         var img = new image(PngBytes, p!, app.actor.list.User.Context);
 
         using var ms = new System.IO.MemoryStream();
-        img.Write(new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8));
+        img.Write(new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US")!));
         await Assert.That(System.Text.Encoding.UTF8.GetString(ms.ToArray())).IsEqualTo($"[{PngBytes.Length} bytes]");
     }
 

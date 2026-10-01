@@ -2,7 +2,8 @@ namespace app.type.item.number;
 
 /// <summary>
 /// String → number parse path. Narrowest-fit: no decimal/exponent
-/// → int → long; decimal point → decimal; exponent / NaN / Infinity → double.
+/// → int → long (past long → decimal); a decimal point, an exponent, NaN or Infinity → double. A decimal is
+/// asked for by name (<c>as decimal</c>), never read from a decimal point — every reader agrees (json reads double).
 ///
 /// <para><c>Resolve(string, context)</c> is the source-generator-recognized
 /// factory — the catalog reads it via reflection to render <c>number</c> as
@@ -37,14 +38,6 @@ public sealed partial class @this
                 System.Globalization.CultureInfo.InvariantCulture, out var bigDec))
                 return (@this)(bigDec);
             return null;
-        }
-
-        if (hasDot && !hasExp && !isSpecial)
-        {
-            if (decimal.TryParse(s, System.Globalization.NumberStyles.Number,
-                System.Globalization.CultureInfo.InvariantCulture, out var dec))
-                return (@this)(dec);
-            // Fall through to double on decimal range overflow.
         }
 
         if (double.TryParse(s, System.Globalization.NumberStyles.Float,

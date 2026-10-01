@@ -22,11 +22,15 @@ public sealed class Writer : global::app.type.format.IWriter
     private global::app.type.item.kind.json.Writer? _json;   // started lazily when structure opens
     private Utf8JsonWriter? _utf8;
     private int _depth;                                          // open object/array nesting
+    private readonly global::app.type.item.culture.@this _culture;
 
-    public Writer(Stream stream, Encoding encoding)
+    /// <summary>A writer of text into <paramref name="stream"/>, its numbers read as <paramref name="culture"/>
+    /// reads them (the asker's <c>%!app.setting.culture%</c>).</summary>
+    public Writer(Stream stream, Encoding encoding, global::app.type.item.culture.@this culture)
     {
         _stream = stream;
         _encoding = encoding;
+        _culture = culture;
     }
 
     public string Format => "text";
@@ -45,9 +49,22 @@ public sealed class Writer : global::app.type.format.IWriter
     public void Bool(bool value) { if (_depth > 0) Structural().Bool(value); else Bare(value ? "true" : "false"); }
     public void Int(int value) { if (_depth > 0) Structural().Int(value); else Bare(value.ToString(CultureInfo.InvariantCulture)); }
     public void Long(long value) { if (_depth > 0) Structural().Long(value); else Bare(value.ToString(CultureInfo.InvariantCulture)); }
-    public void Float(float value) { if (_depth > 0) Structural().Float(value); else Bare(value.ToString(CultureInfo.InvariantCulture)); }
-    public void Double(double value) { if (_depth > 0) Structural().Double(value); else Bare(value.ToString(CultureInfo.InvariantCulture)); }
-    public void Decimal(decimal value) { if (_depth > 0) Structural().Decimal(value); else Bare(value.ToString(CultureInfo.InvariantCulture)); }
+    public void Float(float value) { if (_depth > 0) Structural().Float(value); else Bare(Written(value)); }
+    public void Double(double value) { if (_depth > 0) Structural().Double(value); else Bare(Written(value)); }
+    public void Decimal(decimal value) { if (_depth > 0) Structural().Decimal(value); else Bare(Written((double)value, value)); }
+
+    // A number as text, as the culture reads it: at most its decimals (2 for most), trailing zeros dropped, its
+    // separator (7,47 in is-IS), no grouping; a non-zero value keeps its first significant digit (0.001, never 0).
+    // Json and the wire write the number whole, invariant (the structural writer above).
+    private string Written(double value, System.IFormattable? exact = null)
+    {
+        if (!double.IsFinite(value)) return value.ToString(CultureInfo.InvariantCulture);
+        var places = _culture.Number.NumberDecimalDigits;
+        if (value != 0 && -(int)System.Math.Floor(System.Math.Log10(System.Math.Abs(value))) is var first && first > places)
+            places = first;
+        var pattern = places == 0 ? "0" : "0." + new string('#', places);
+        return (exact ?? value).ToString(pattern, _culture.Number);
+    }
     public void String(string value) { if (_depth > 0) Structural().String(value); else Bare(value); }
     public void Raw(string value) { if (_depth > 0) Structural().Raw(value); else Bare(value); }
     public void DateTime(System.DateTime value) { if (_depth > 0) Structural().DateTime(value); else Bare(value.ToString("o", CultureInfo.InvariantCulture)); }

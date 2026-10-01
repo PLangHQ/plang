@@ -25,10 +25,10 @@ public class NumberParseTests
         await Assert.That((long)n).IsEqualTo(3000000000L);
     }
 
-    [Test] public async Task Parse_DecimalPoint_IsDecimal()
+    [Test] public async Task Parse_DecimalPoint_IsDouble()
     {
         var n = number.Parse("5.0");
-        await Assert.That(n!.Kind.Name).IsEqualTo("decimal");
+        await Assert.That(n!.Kind.Name).IsEqualTo("double");
     }
 
     [Test] public async Task Parse_ScientificNotation_IsDouble()
