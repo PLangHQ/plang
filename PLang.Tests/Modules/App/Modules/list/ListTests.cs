@@ -60,7 +60,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "c" });
 
-        var action = new Add(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "b", context: context), AtIndex = (global::app.type.item.number.@this)1 };
+        var action = new Add(context) { ListName = new app.type.item.variable.@this("myList"), Value = new global::app.data.@this("", "b", context: context), At = (global::app.type.item.number.@this)1 };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -121,7 +121,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Remove(context) { ListName = new app.type.item.variable.@this("myList"), AtIndex = (global::app.type.item.number.@this)0 };
+        var action = new Remove(context) { ListName = new app.type.item.variable.@this("myList"), At = (global::app.type.item.number.@this)0 };
         var result = await action.Start();
 
         await result.IsSuccess();
@@ -599,7 +599,7 @@ public class ListTests : System.IAsyncDisposable
         memory.Set("myList", new List<object?> { "a" });
 
         var result = await new Remove(context) { ListName = new app.type.item.variable.@this("myList"),
-            Value = new global::app.data.@this("", null, context: context), AtIndex = (global::app.type.item.number.@this)5 }.Start();
+            Value = new global::app.data.@this("", null, context: context), At = (global::app.type.item.number.@this)5 }.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("IndexOutOfRange");
