@@ -49,9 +49,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
     {
         var characters = encoding ?? System.Text.Encoding.UTF8;
+        // a result that had failed before it was written out is shown — its error is what is written; a value that
+        // fails here, as it is read (a %variable% not set), is the write's own failure, never written as the content
+        var failed = !data.Success;
         var value = await data.Value();
-        // a value that can't be read (a %variable% not set) is the write's failure, never written as the content
-        if (!data.Success) return data;
+        if (!failed && !data.Success) return data;
         if (value is @this text)
             await stream.WriteAsync(characters.GetBytes(text.ToString()), ct);
         else

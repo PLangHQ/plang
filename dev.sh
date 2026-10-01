@@ -236,7 +236,7 @@ case "${1:-build}" in
     grep -aiE '^failed |^  (total|failed):' "/tmp/devsh_$p.log" || echo "  (no failures — full output in the log)"
     ;;
   test)
-    if [ -n "${2:-}" ]; then
+    if [ -n "${2:-}" ] && [ "${2}" != "--force" ]; then
       # find the project whose sources mention the class (Shared holds helpers, not tests); fall back to all.
       # Only those projects build.
       hits=$(grep -rl "class ${2}" PLang.Tests/*/ --include=*.cs 2>/dev/null | grep -v /obj/ | sed 's|PLang.Tests/||;s|/.*||' \
