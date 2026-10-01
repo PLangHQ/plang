@@ -68,6 +68,9 @@ public sealed class Wayland : IScreen
             display.Told += e => { told.Writer.TryWrite(e); return Task.CompletedTask; };
         }
         display.Start();
+        // the screen's output is the pipe to the host plang that started this one: the host is %!app.parent%, and
+        // a call to one of its goals goes up beside the frames (its answer comes down the input: screen.listen)
+        if (output != null) context.App.parent.Link = json => { display.Up(json); return Task.CompletedTask; };
 
         var screen = new Screen
         {

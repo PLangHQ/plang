@@ -63,6 +63,8 @@ internal sealed class Edge(Window window, uint edges) : IPart
 /// <summary>
 /// A title bar button. It acts when the mouse button comes up on it (the one it went down on);
 /// it draws its own icon. Left ones sit at fixed places; right ones count from the bar's end.
+/// Each has an id (<c>#bot</c> is ☰): a click on one PLang bound (<c>on click on #bot</c>) goes to PLang
+/// instead of doing its own.
 /// </summary>
 internal abstract class Button(TitleBar bar) : IPart
 {
@@ -71,6 +73,9 @@ internal abstract class Button(TitleBar bar) : IPart
 
     protected TitleBar Bar { get; } = bar;
     protected Window Window => Bar.Window;
+
+    /// <summary>Its id, as PLang names it after <c>#</c>.</summary>
+    internal abstract string Id { get; }
 
     /// <summary>Where it is in a bar <paramref name="width"/> wide: (x, width).</summary>
     internal abstract (int x, int width) Span(int width);
@@ -103,7 +108,13 @@ internal abstract class Button(TitleBar bar) : IPart
     {
         if (!ReferenceEquals(Window.Display.Pressed, this)) return;
         Window.Display.Pressed = null;
-        Act();
+        if (Window.Display.Bound.Contains(Id))
+        {
+            // PLang bound it: the click is PLang's, with where the button is (its bottom-right on the screen)
+            var (x, w) = Span(Window.Size.Width);
+            Window.Clicked(Id, Window.At.X + x + w, Window.At.Y);
+        }
+        else Act();
     }
 
     public void Over(Point at) => Bar.Hover(this);
@@ -119,6 +130,7 @@ internal abstract class LeftButton(TitleBar bar, int slot) : Button(bar)
 /// <summary>‹ Back: the key Chromium knows for it (Alt+Left).</summary>
 internal sealed class BackButton(TitleBar bar, int slot) : LeftButton(bar, slot)
 {
+    internal override string Id => "back";
     internal override void Paint(Canvas c, float cx, float mid, Color ink)
     {
         c.Line(cx + 2.5f, mid - 5, cx - 2.5f, mid, 1.4f, ink);
@@ -130,6 +142,7 @@ internal sealed class BackButton(TitleBar bar, int slot) : LeftButton(bar, slot)
 /// <summary>› Forward (Alt+Right).</summary>
 internal sealed class ForwardButton(TitleBar bar, int slot) : LeftButton(bar, slot)
 {
+    internal override string Id => "forward";
     internal override void Paint(Canvas c, float cx, float mid, Color ink)
     {
         c.Line(cx - 2.5f, mid - 5, cx + 2.5f, mid, 1.4f, ink);
@@ -147,6 +160,7 @@ internal sealed class ForwardButton(TitleBar bar, int slot) : LeftButton(bar, sl
 internal sealed class ToolButton(TitleBar bar, int slot, string name) : LeftButton(bar, slot)
 {
     internal string Name { get; } = name;
+    internal override string Id => Name;   // a tool is its name: #save
 
     internal override void Paint(Canvas c, float cx, float mid, Color ink)
     {
@@ -199,6 +213,7 @@ internal sealed class ToolButton(TitleBar bar, int slot, string name) : LeftButt
 /// <summary>The globe: drops down the address field.</summary>
 internal sealed class AddressButton(TitleBar bar, int slot) : LeftButton(bar, slot)
 {
+    internal override string Id => "globe";
     internal override void Paint(Canvas c, float cx, float mid, Color ink)
     {
         c.Ring(cx, mid, 7, 7, 1.2f, ink);
@@ -212,6 +227,7 @@ internal sealed class AddressButton(TitleBar bar, int slot) : LeftButton(bar, sl
 /// (<c>{"menu": id, "x", "y"}</c>, the button's bottom-right on the screen).</summary>
 internal sealed class MenuButton(TitleBar bar) : Button(bar)
 {
+    internal override string Id => "bot";
     internal override (int, int) Span(int width) => (width - 3 * Caption - Side - 6, Side);
     internal override void Paint(Canvas c, float cx, float mid, Color ink)
     {
@@ -226,6 +242,7 @@ internal sealed class MenuButton(TitleBar bar) : Button(bar)
 
 internal sealed class MinimizeButton(TitleBar bar) : Button(bar)
 {
+    internal override string Id => "minimize";
     internal override (int, int) Span(int width) => (width - 3 * Caption, Caption);
     internal override void Highlight(Canvas c, int width) { var (x, w) = Span(width); c.Fill(new Rect(x, 0, w, TitleBar.Height), Color.Hover); }
     internal override void Paint(Canvas c, float cx, float mid, Color ink) => c.Line(cx - 5, mid + 0.5f, cx + 5, mid + 0.5f, 1, ink);
@@ -235,6 +252,7 @@ internal sealed class MinimizeButton(TitleBar bar) : Button(bar)
 /// <summary>□ maximize; ⧉ restore when maximized.</summary>
 internal sealed class MaximizeButton(TitleBar bar) : Button(bar)
 {
+    internal override string Id => "maximize";
     internal override (int, int) Span(int width) => (width - 2 * Caption, Caption);
     internal override void Highlight(Canvas c, int width) { var (x, w) = Span(width); c.Fill(new Rect(x, 0, w, TitleBar.Height), Color.Hover); }
     internal override void Paint(Canvas c, float cx, float mid, Color ink)
@@ -253,6 +271,7 @@ internal sealed class MaximizeButton(TitleBar bar) : Button(bar)
 
 internal sealed class CloseButton(TitleBar bar) : Button(bar)
 {
+    internal override string Id => "close";
     internal override (int, int) Span(int width) => (width - Caption, Caption);
     internal override void Highlight(Canvas c, int width) { var (x, w) = Span(width); c.Fill(new Rect(x, 0, w, TitleBar.Height), Color.CloseHover); }
     internal override void Paint(Canvas c, float cx, float mid, Color ink)
