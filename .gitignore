@@ -39,6 +39,6 @@ test/**/workspace/
 test/module/cache/**/%*%/
 
 
-# dev.sh: last successful build
-.devsh-stamp
+# dev.sh: last successful build (whole, and per test project)
+.devsh-stamp*
 .devsh-sweep*

@@ -187,18 +187,34 @@ scream_build() {
 # after a clean build (scream_build exits on failure first), so a failed build is retried next time.
 # Directories count too (-newer on a dir = an entry added or deleted), so a deleted file is a change.
 STAMP=.devsh-stamp
-unchanged() {
-  [ -f "$STAMP" ] && [ -z "$(find PLang PLang.Generators PlangConsole PLang.Tests \
-    -path '*/bin' -prune -o -path '*/obj' -prune -o -newer "$STAMP" -print -quit)" ]
+unchanged() { # $1 = the stamp of what was built
+  [ -f "$1" ] && [ -z "$(find PLang PLang.Generators PlangConsole PLang.Tests \
+    -path '*/bin' -prune -o -path '*/obj' -prune -o -newer "$1" -print -quit)" ]
 }
+# Builds and runs yield to the shared machine (Ingi's terminals, other bots). A compiler server
+# (MSBuild node, VBCSCompiler) started by a niced build is niced too; one already running keeps its
+# priority until `dotnet build-server shutdown`.
+NICE=(nice -n 10)
 # Test projects AND the console in one MSBuild evaluation (PLang.Tests/All.proj holds both) — the
 # console is a dependency of every plang test; a stale plang.exe lies just like a stale dll.
-# Nothing is built when no source changed.
+# Nothing is built when no source changed. A whole build is also every test project's own build.
 build_all() {
-  if unchanged; then echo "→ no source changed since the last build — skipping it"; return 0; fi
+  local started=$SECONDS p
+  if unchanged "$STAMP"; then echo "→ no source changed since the last build — skipping it"; return 0; fi
   scream_build "test projects + PlangConsole (+PLang library)" /tmp/devsh_build.log \
-    dotnet msbuild PLang.Tests/All.proj -t:Build "${DEVFLAGS[@]}"
-  touch "$STAMP"
+    "${NICE[@]}" dotnet msbuild PLang.Tests/All.proj -t:Build "${DEVFLAGS[@]}"
+  touch "$STAMP"; for p in "${PROJECTS[@]}"; do touch "$STAMP.$p"; done
+  echo "→ build: $((SECONDS - started))s"
+}
+# One test project (and what it references: PLang, Shared) — a class filter runs one project, so it
+# builds only that one. Same global properties as All.proj passes, so the incremental state is shared.
+build_project() { # $1 = the suite
+  local started=$SECONDS
+  if unchanged "$STAMP.$1"; then echo "→ no source changed since $1 was built — skipping it"; return 0; fi
+  scream_build "PLang.Tests.$1 (+PLang library)" /tmp/devsh_build.log \
+    "${NICE[@]}" dotnet msbuild "PLang.Tests/$1/PLang.Tests.$1.csproj" -t:Build "${DEVFLAGS[@]}"
+  touch "$STAMP.$1"
+  echo "→ build $1: $((SECONDS - started))s"
 }
 
 case "${1:-build}" in
@@ -220,17 +236,21 @@ case "${1:-build}" in
     grep -aiE '^failed |^  (total|failed):' "/tmp/devsh_$p.log" || echo "  (no failures — full output in the log)"
     ;;
   test)
-    build_all
     if [ -n "${2:-}" ]; then
-      # find the project whose sources mention the class; fall back to all
-      hits=$(grep -rl "class ${2}" PLang.Tests/*/ --include=*.cs 2>/dev/null | grep -v /obj/ | sed 's|PLang.Tests/||;s|/.*||' | sort -u)
-      [ -z "$hits" ] && hits="${PROJECTS[*]}"
+      # find the project whose sources mention the class (Shared holds helpers, not tests); fall back to all.
+      # Only those projects build.
+      hits=$(grep -rl "class ${2}" PLang.Tests/*/ --include=*.cs 2>/dev/null | grep -v /obj/ | sed 's|PLang.Tests/||;s|/.*||' \
+        | grep -xF "$(printf '%s\n' "${PROJECTS[@]}")" | sort -u || true)
+      if [ -z "$hits" ]; then hits="${PROJECTS[*]}"; build_all; else for p in $hits; do build_project "$p"; done; fi
       for p in $hits; do
         echo "=== $p ===  (full output: /tmp/devsh_$p.log)"
+        started=$SECONDS
         run_bin Debug "$p" --treenode-filter "/*/*/*${2}*/*" > "/tmp/devsh_$p.log" 2>&1 || true
         grep -aiE '^failed |^  (total|failed):' "/tmp/devsh_$p.log" || echo "  (no failures — full output in the log)"
+        echo "→ run $p: $((SECONDS - started))s"
       done
     else
+      build_all
       # a sweep: only what changed since the last complete one (--force runs every suite again)
       if [ "${2:-}" != "--force" ] && [ -f "$SWEEP" ]; then
         changed=$(changed_since_sweep)
