@@ -118,8 +118,8 @@ public sealed class OpenAi : ILlm
         async System.Threading.Tasks.Task<string?> FormatOf(query a)
             => a.Format == null || await a.Format.IsEmpty() ? null : (await a.Format.Value())?.ToString();
 
-        // a conversation the step leaves out is the record's own default: a fresh one
-        var conversation = (action.Conversation == null ? null : await action.Conversation.Value()) ?? new global::app.module.llm.type.conversation.@this();
+        var conversation = (await action.Conversation.Value())!;
+        var limit = (await action.Limit.Value())!;
         if (conversation.Continue.Value)
         {
             var prev = context.Get<List<LlmMessage>>(ConversationKey);
@@ -207,7 +207,7 @@ public sealed class OpenAi : ILlm
                 ["model"] = model,
                 ["messages"] = await ToApiMessages(messages, app, context),
                 ["temperature"] = (await action.Temperature.Value())!.ToDouble(),
-                ["max_completion_tokens"] = (await action.MaxTokens.Value())!.ToInt64()
+                ["max_completion_tokens"] = limit.Token.ToInt64()
             };
             if ((action.TopP == null ? null : await action.TopP.Value()) != null)
                 body["top_p"] = (await action.TopP.Value())!.ToDouble();
@@ -307,7 +307,7 @@ public sealed class OpenAi : ILlm
                     _ => "ResponseIncomplete"
                 };
                 var msg = finishReason == "length"
-                    ? $"LLM output hit the max-tokens limit before finishing ({totalCompletionTokens} completion tokens). Raise MaxTokens or shorten the prompt."
+                    ? $"LLM output hit the max-tokens limit before finishing ({totalCompletionTokens} completion tokens). Raise limit.token or shorten the prompt."
                     : finishReason == "content_filter"
                     ? "LLM refused the request via content filter."
                     : $"LLM response ended abnormally (finish_reason={finishReason}).";
@@ -320,7 +320,7 @@ public sealed class OpenAi : ILlm
                         ["Model"] = model,
                         ["PromptTokens"] = totalPromptTokens,
                         ["CompletionTokens"] = totalCompletionTokens,
-                        ["MaxTokens"] = (action.MaxTokens == null ? null : await action.MaxTokens.Value())
+                        ["Limit"] = limit
                     }
                 });
             }
@@ -329,13 +329,13 @@ public sealed class OpenAi : ILlm
             var toolCalls = await ParseToolCalls(response);
             if (toolCalls.Count > 0)
             {
-                if (toolCallCount >= (await action.MaxToolCalls.Value())!.ToInt64())
+                if (toolCallCount >= limit.Tool.ToInt64())
                     break; // hit limit
 
                 lastContent = content;
 
                 // Slice to remaining budget — never execute more tools than the limit allows
-                int remaining = (await action.MaxToolCalls.Value())!.ToInt32() - toolCallCount;
+                int remaining = limit.Tool.ToInt32() - toolCallCount;
                 if (toolCalls.Count > remaining)
                     toolCalls = toolCalls.Take(remaining).ToList();
 
@@ -423,7 +423,7 @@ public sealed class OpenAi : ILlm
                 {
                     var validationError = validationResult.Error?.Message ?? "Unknown validation error";
 
-                    if (validationRetries >= (await action.MaxValidationRetries.Value())!.ToInt64())
+                    if (validationRetries >= limit.Retry.ToInt64())
                     {
                         await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(
                             $"  Validation failed (no retries left): {validationError}");
@@ -434,7 +434,7 @@ public sealed class OpenAi : ILlm
 
                     validationRetries++;
                     await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(
-                        $"  Validation failed (retry {validationRetries}/{(await action.MaxValidationRetries.Value())}): {validationError}");
+                        $"  Validation failed (retry {validationRetries}/{limit.Retry}): {validationError}");
                     messages.Add(new LlmMessage
                     {
                         Role = "user",
@@ -488,7 +488,7 @@ public sealed class OpenAi : ILlm
             SetProp(result, "Model", model);
             SetProp(result, "Messages", messages);
             SetProp(result, "Temperature", (await action.Temperature.Value()));
-            SetProp(result, "MaxTokens", (await action.MaxTokens.Value()));
+            SetProp(result, "Limit", limit);
             SetProp(result, "Cached", false);
             SetProp(result, "PromptTokens", totalPromptTokens);
             SetProp(result, "CompletionTokens", totalCompletionTokens);
@@ -503,7 +503,7 @@ public sealed class OpenAi : ILlm
             return result;
         }
 
-        // Loop exited via break (MaxToolCalls or streaming)
+        // Loop exited via break (limit.tool or streaming)
         var exitResult = context.Ok(lastContent);
         SetProp(exitResult, "Model", model);
         SetProp(exitResult, "ToolCallCount", toolCallCount);

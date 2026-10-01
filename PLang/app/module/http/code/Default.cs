@@ -43,11 +43,10 @@ public sealed class Default : IHttp
         // T? convention — plang-null pass converts these !/Clr reads (value-door-plang-null branch)
         var unsigned = (await action.Unsigned.Value())!.Value;
         System.TimeSpan timeout = (await action.Timeout.Value())!;
-        // a record the step leaves out is the record's own defaults
-        var content = (action.Content == null ? null : await action.Content.Value()) ?? new global::app.module.http.type.entity.@this();
+        var content = (await action.Content.Value())!;
         var contentType = content.Mime.ToString();
         var encoding = content.Encoding.ToString();
-        var redirect = (action.Redirect == null ? null : await action.Redirect.Value()) ?? new global::app.module.http.type.redirect.@this();
+        var redirect = (await action.Redirect.Value())!;
 
         // the url the action goes to — the one its build expected
         var target = await ((global::app.module.http.IAddressed)action).Target();
@@ -129,7 +128,7 @@ public sealed class Default : IHttp
         // T? convention — plang-null pass converts these (value-door-plang-null branch)
         var unsigned = (await action.Unsigned.Value())!.Value;
         System.TimeSpan timeout = (await action.Timeout.Value())!;
-        var redirect = (action.Redirect == null ? null : await action.Redirect.Value()) ?? new global::app.module.http.type.redirect.@this();
+        var redirect = (await action.Redirect.Value())!;
 
         // the url the action goes to — the one its build expected
         var target = await ((global::app.module.http.IAddressed)action).Target();
@@ -172,7 +171,7 @@ public sealed class Default : IHttp
         var unsigned = (await action.Unsigned.Value())!.Value;
         System.TimeSpan timeout = (await action.Timeout.Value())!;
         var encoding = (await action.Encoding.Value())!.Clr<string>()!;
-        var redirect = (action.Redirect == null ? null : await action.Redirect.Value()) ?? new global::app.module.http.type.redirect.@this();
+        var redirect = (await action.Redirect.Value())!;
 
         // the url the action goes to — the one its build expected
         var target = await ((global::app.module.http.IAddressed)action).Target();

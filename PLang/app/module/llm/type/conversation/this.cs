@@ -8,7 +8,7 @@ namespace app.module.llm.type.conversation;
 /// that says nothing starts afresh. The llm module's own.
 /// </summary>
 [global::app.Attributes.PlangType("conversation")]
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.type.item.IDefault<@this>
 {
     public static string Example => "{continue: true}";
     public static string Description => "How a query stands to the conversation before it: whether it continues it.";
@@ -20,9 +20,15 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The default: a fresh conversation.</summary>
     public @this() : this(false) { }
 
+    /// <summary>A query that says nothing of its conversation starts afresh.</summary>
+    public static @this Default => new();
+
     internal @this(global::app.type.item.@bool.@this @continue) => Continue = @continue;
 
     public override bool IsLeaf => false;
+
+    /// <summary>As a step writes it — the catalog shows the default this way.</summary>
+    public override string ToString() => $"{{continue: {(Continue.Value ? "true" : "false")}}}";
 
     /// <summary>A conversation is made from a dict of its members — any left out keeps its default; a member that
     /// is no member of a conversation declines with why.</summary>

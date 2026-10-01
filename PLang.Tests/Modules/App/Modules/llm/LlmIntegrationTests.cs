@@ -58,7 +58,7 @@ public class LlmIntegrationTests
 
         var result = await RunWithSnapshot("SimpleCalculation", messages, new query(Ctx) { Message = messages.ToListData<LlmMessage>(Ctx),
             Temperature = (global::app.type.item.number.@this)0.0,
-            MaxTokens = (global::app.type.item.number.@this)50,
+            Limit = new global::app.module.llm.type.limit.@this(50, 10, 0),
             Cache = (global::app.type.item.@bool.@this)false
         });
         if (result == null) return; // skipped, no API key
@@ -82,7 +82,7 @@ public class LlmIntegrationTests
         var result = await RunWithSnapshot("JsonSchema", messages, new query(Ctx) { Message = messages.ToListData<LlmMessage>(Ctx),
             Schema = Ctx.Ok("{\"sentiment\": \"string\", \"score\": \"number\"}"),
             Temperature = (global::app.type.item.number.@this)0.0,
-            MaxTokens = (global::app.type.item.number.@this)100,
+            Limit = new global::app.module.llm.type.limit.@this(100, 10, 0),
             Cache = (global::app.type.item.@bool.@this)false
         });
         if (result == null) return;
@@ -110,7 +110,7 @@ public class LlmIntegrationTests
         var result = await RunWithSnapshot("PythonFormat", messages, new query(Ctx) { Message = messages.ToListData<LlmMessage>(Ctx),
             Format = (global::app.type.item.text.@this)"python",
             Temperature = (global::app.type.item.number.@this)0.0,
-            MaxTokens = (global::app.type.item.number.@this)200,
+            Limit = new global::app.module.llm.type.limit.@this(200, 10, 0),
             Cache = (global::app.type.item.@bool.@this)false
         });
         if (result == null) return;
@@ -136,7 +136,7 @@ public class LlmIntegrationTests
 
         var result1 = await RunWithSnapshot("ConvPart1", messages1, new query(Ctx) { Message = messages1.ToListData<LlmMessage>(Ctx),
             Temperature = (global::app.type.item.number.@this)0.0,
-            MaxTokens = (global::app.type.item.number.@this)50,
+            Limit = new global::app.module.llm.type.limit.@this(50, 10, 0),
             Cache = (global::app.type.item.@bool.@this)false
         });
         if (result1 == null) return;
@@ -151,7 +151,7 @@ public class LlmIntegrationTests
         var result2 = await RunWithSnapshot("ConvPart2", messages2, new query(Ctx) { Message = messages2.ToListData<LlmMessage>(Ctx),
             Conversation = new global::app.module.llm.type.conversation.@this(true),
             Temperature = (global::app.type.item.number.@this)0.0,
-            MaxTokens = (global::app.type.item.number.@this)50,
+            Limit = new global::app.module.llm.type.limit.@this(50, 10, 0),
             Cache = (global::app.type.item.@bool.@this)false
         });
         if (result2 == null) return;
@@ -260,7 +260,7 @@ public class LlmIntegrationTests
         var action = new query(Ctx) { Message = messages.ToListData<LlmMessage>(Ctx),
             Tool = tools.ToListData(Ctx),
             Temperature = (global::app.type.item.number.@this)0.0,
-            MaxTokens = (global::app.type.item.number.@this)200,
+            Limit = new global::app.module.llm.type.limit.@this(200, 10, 0),
             Cache = (global::app.type.item.@bool.@this)false
         };
 

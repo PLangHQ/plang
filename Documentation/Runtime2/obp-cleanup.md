@@ -320,6 +320,13 @@ A kind should be a plang item: it writes itself as its name, compares with a tex
 as hash compares to its text), and keeps its members (`.name`, `.mime`, `.extension`) — then
 `%d!type.kind% == "short"` holds and `%d!type.kind.mime%` still navigates. Every kind's base changes.
 
+## An action's settings can't be saved, yet the seam reads an action row [logged 2026-10-01, llm limit]
+
+`actor/setting/this.cs` `Save` refuses `%!llm.query.setting%` (`NotASettingClass`), so no action option (cache,
+limit, …) is storable; only setting classes are. Its `Option()` still reads a row whose value is an action
+(Property rows), a shape nothing writes. An action's settings become storable with the `.data` move (decision 432):
+the row is a dict of the set options, read by `Option()`, and the action-row branch goes. One row shape, not two.
+
 ## Every action carries a method named Resolve [logged 2026-10-01, settings slice 2]
 
 The generator gives every action `ICodeGenerated.Resolve(action, context)` — the bind of an action's properties.

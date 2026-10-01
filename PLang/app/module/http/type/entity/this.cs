@@ -9,7 +9,7 @@ namespace app.module.http.type.entity;
 /// request's <c>content</c> (the type name <c>content</c> is a file reference's).
 /// </summary>
 [global::app.Attributes.PlangType("entity")]
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.type.item.IDefault<@this>
 {
     public static string Example => "{mime: \"application/json\", encoding: \"utf-8\"}";
     public static string Description => "What a request's body is: its mime type and its character encoding.";
@@ -24,6 +24,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The defaults: json, in utf-8.</summary>
     public @this() : this("application/json", "utf-8") { }
 
+    /// <summary>A request that says nothing of its body's content sends json, in utf-8.</summary>
+    public static @this Default => new();
+
     internal @this(global::app.type.item.text.@this mime, global::app.type.item.text.@this encoding)
     {
         Mime = mime;
@@ -31,6 +34,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     public override bool IsLeaf => false;
+
+    /// <summary>As a step writes it — the catalog shows the default this way.</summary>
+    public override string ToString() => $"{{mime: \"{Mime}\", encoding: \"{Encoding}\"}}";
 
     /// <summary>A content is made from a dict of its members — any left out keeps its default; a member that is no
     /// member of a content declines with why.</summary>

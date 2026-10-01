@@ -107,6 +107,9 @@
   "app.module.llm.type.conversation": {
     "word": "conversation"
   },
+  "app.module.llm.type.limit": {
+    "word": "limit"
+  },
   "app.module.output.ask": {
     "word": "ask"
   },

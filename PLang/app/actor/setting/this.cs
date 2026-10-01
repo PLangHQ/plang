@@ -122,7 +122,9 @@ public sealed class @this
     public async ValueTask<data.@this> Save(global::app.type.item.setting.@this setting)
     {
         var path = setting.Path;
-        // a node's settings (%!http.setting%, %!llm.query.setting%) are no class: its row could not be read back
+        // a node's settings (%!http.setting%, %!llm.query.setting%) are no class: its row could not be read back.
+        // An action's settings are not storable yet; when they are, their row is a dict of the set options,
+        // read by Option(), and Option()'s action-row branch goes.
         if (Class(path) == null)
             return _context.Error(new global::app.error.Error(
                 $"'{path}' is not a setting class — save the class that holds the option.", "NotASettingClass", 400));
