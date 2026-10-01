@@ -51,7 +51,7 @@ public class FileSystemPermissionFlowTests
     {
         "Read"   => await path.Touch(context),
         "Bytes"  => await path.Bytes(context),
-        "Exists"     => await path.ExistsAsync(context),
+        "Exists"     => await path.Exists(context),
         "List"       => await path.List(context),
         "Stat"       => await path.Stat(context),
         "WriteText"  => await path.WriteText("hello", context),
@@ -156,5 +156,25 @@ public class FileSystemPermissionFlowTests
         var result = await Dispatch(method, path, app.actor.list.User.Context);
         await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
+    }
+
+    // Navigation asks as its asker: %p.Exists% on a file outside the root passes the gate, and a denial is
+    // the answer — never a true read around it.
+    [Test]
+    public async Task Exists_ThroughNavigation_OutOfRoot_IsRefused()
+    {
+        await using var app = NewApp(out _);
+        app.actor.list.User.Channel.Register(new CannedChannel("n"));
+        var context = app.actor.list.User.Context;
+        var outside = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-out-" + System.Guid.NewGuid().ToString("N")[..8] + ".txt");
+        System.IO.File.WriteAllText(outside, "there");
+        try
+        {
+            context.Variable.Set("p", new Path(outside));
+            var exists = await new global::app.type.item.variable.@this("p.Exists").Start(context);
+            await Assert.That(exists.Success).IsFalse();
+            await Assert.That(exists.Error).IsTypeOf<global::app.error.PermissionDenied>();
+        }
+        finally { System.IO.File.Delete(outside); }
     }
 }

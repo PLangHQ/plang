@@ -25,11 +25,11 @@ public class PathAbstractTests
         (nameof(PLangPath.WriteText), new[] { typeof(string), Ctx }),
         (nameof(PLangPath.WriteBytes), new[] { typeof(byte[]), Ctx }),
         (nameof(PLangPath.Append), new[] { typeof(string), Ctx }),
-        (nameof(PLangPath.ExistsAsync), new[] { Ctx }),
+        (nameof(PLangPath.Exists), new[] { Ctx }),
         (nameof(PLangPath.Stat), new[] { Ctx }),
         (nameof(PLangPath.Mkdir), new[] { Ctx }),
         (nameof(PLangPath.AsBooleanAsync), new[] { Ctx }),
-        (nameof(PLangPath.Delete), new[] { typeof(global::app.type.item.@bool.@this), typeof(global::app.type.item.@bool.@this), Ctx }),
+        (nameof(PLangPath.Delete), new[] { typeof(global::app.type.item.@bool.@this), Ctx }),
         (nameof(PLangPath.List), new[] { typeof(global::app.type.item.text.@this), typeof(global::app.type.item.@bool.@this), Ctx }),
         (nameof(PLangPath.Save), new[] { typeof(global::app.data.@this), Ctx }),
     };

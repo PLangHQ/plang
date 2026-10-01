@@ -1,1 +1,1 @@
-Run a list of discovered tests, each in an App of its own, and return them with their outcomes. How many run at once and each test's timeout are test's setting, not parameters of this action: `set %!app.test.setting.parallel% = 1`, `set %!app.test.setting.timeoutSeconds% = 5`.
+Run a list of discovered tests, each in an App of its own, and return them with their outcomes. How many run at once and each test's timeout are test's setting, not parameters of this action: `set %!app.test.setting.parallel% = 1`, `set %!app.test.setting.timeout% = 5s`.

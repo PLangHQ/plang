@@ -9,7 +9,7 @@
  },
  {
   "input": "file.read(Pth=\"x\")",
-  "message": "line 1, column 11: `file.read` has no property `Pth` (it has Path, ResolveVariables)"
+  "message": "line 1, column 11: `file.read` has no property `Pth` (it has Path, Template)"
  },
  {
   "input": "file.read(Path: text = \"x\")",

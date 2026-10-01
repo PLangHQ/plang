@@ -22,7 +22,14 @@ public sealed partial class @this : global::app.type.item.setting.ISetting<setti
     public @this(actor.context.@this context)
     {
         _context = context;
+        Files = new(context.App.FileSystem);
     }
+
+    /// <summary>The files the build checks its goals over, for the whole build: the disk, with what the goals'
+    /// steps write, move and delete held in memory — a file one step saves is there for the step that reads it,
+    /// and nothing reaches the disk. A test adds a mock with <c>Files.Add</c>.</summary>
+    [JsonIgnore]
+    public global::app.type.item.path.file.filesystem.overlay.@this Files { get; }
 
     /// <summary>The context this subsystem was born with (system-scoped).</summary>
     private actor.context.@this Context => _context;
@@ -37,7 +44,7 @@ public sealed partial class @this : global::app.type.item.setting.ISetting<setti
     public async Task<data.@this> Start()
     {
         var appPrPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", _context.App.actor.list.System.Context!);
-        var appPrExists = await appPrPath.ExistsAsync(_context.App.actor.list.System.Context!);
+        var appPrExists = await appPrPath.Exists(_context.App.actor.list.System.Context!);
         // No app marker on disk → confirm creation (or error when headless).
         // Was inverted (fired when the marker DID exist) — that forced every
         // build of an existing app to need --app={"create":true}.

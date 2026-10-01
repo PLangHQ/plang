@@ -33,6 +33,15 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
         await Assert.That(json).IsEqualTo("\"hello\"");
     }
 
+    // Every character as itself — an Icelandic name is not \u-escaped; what a page reads as markup still is.
+    [Test]
+    public async Task Serialize_NonAscii_IsWrittenAsItself_MarkupStillEscaped()
+    {
+        var json = (await Json.Serialize(app.Ok("Þórður — <b>&'+"), Ctx).Value())!.Clr<string>()!;
+
+        await Assert.That(json).IsEqualTo("\"Þórður — \\u003Cb\\u003E\\u0026\\u0027\\u002B\"");
+    }
+
     [Test]
     public async Task Serialize_Number_ReturnsJsonNumber()
     {

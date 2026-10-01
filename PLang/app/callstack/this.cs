@@ -10,8 +10,8 @@ namespace app.callstack;
 ///
 /// Structural data (Action, Caller, Errors) is always populated — the cost of the
 /// thin push/pop is ~50ns per action and means errors get a useful trace without any flag.
-/// Richer capture is fine-grained per-knob (<see cref="Timing"/>, <see cref="Diff"/>,
-/// <see cref="DeepDiff"/>, <see cref="Tags"/>, <see cref="History"/>).
+/// Richer capture is fine-grained per-knob (<see cref="Timing"/>, <see cref="Diff"/> and its <c>deep</c>,
+/// <see cref="Tags"/>, <see cref="History"/>).
 ///
 /// AsyncLocal &lt;Call&gt; is the only shared mutable state — fork-safe by construction so
 /// parallel goal.call branches each maintain their own Current without cloning context.
@@ -51,11 +51,9 @@ public sealed partial class @this : global::app.type.item.@this
     private int _diffScopes;
 
     public @bool  Timing    => Setting.Timing;
-    public @bool  Diff      => Volatile.Read(ref _diffScopes) > 0 ? @bool.True : Setting.Diff;
-    public @bool  DeepDiff  => Setting.DeepDiff;
+    public @bool  Diff      => Volatile.Read(ref _diffScopes) > 0 ? @bool.True : Setting.Diff.Enabled;
     public @bool  Tags      => Setting.Tags;
     public @bool  History   => Setting.History;
-    public number MaxFrames => Setting.MaxFrames;
 
     /// <summary>
     /// Every error observed this run at every frame (handled or unhandled). Survives Pop.

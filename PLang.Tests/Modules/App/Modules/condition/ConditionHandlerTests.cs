@@ -27,6 +27,41 @@ public class ConditionHandlerTests : IDisposable
             System.IO.Directory.Delete(_tempDir, true);
     }
 
+    // Two values that don't compare are named by what they are, not by the slots that held them: the condition's
+    // Left and Right are `%variables%` in slots typed `item` — the educator's "'item' and 'item'", a digest against
+    // a text that is no digest's text.
+    [Test]
+    public async Task Compare_Incomparable_NamesTheValuesTypes_NotTheSlots()
+    {
+        var goal = await RealGoalLoad.Read(_app, """
+            {"name": "Compare", "path": "/Compare.goal", "step": [
+              {"index": 0, "text": "hash abc", "line": {"number": 2}, "code": [
+                {"module": "crypto", "name": "hash", "property": [
+                  {"name": "Data", "type": {"name": "text"}, "value": "abc"},
+                  {"name": "Algorithm", "type": {"name": "text"}, "value": "sha256"}]},
+                {"module": "variable", "name": "set", "property": [
+                  {"name": "Name", "type": {"name": "variable"}, "value": "%digest%", "variable": [{"text": "%digest%", "code": [{"variable": "digest"}]}]},
+                  {"name": "Value", "type": {"name": "item", "template": "plang"}, "value": "%!data%", "variable": [{"text": "%!data%", "code": [{"variable": "!data"}]}]}]}]},
+              {"index": 1, "text": "set word", "line": {"number": 3}, "code": [
+                {"module": "variable", "name": "set", "property": [
+                  {"name": "Name", "type": {"name": "variable"}, "value": "%word%", "variable": [{"text": "%word%", "code": [{"variable": "word"}]}]},
+                  {"name": "Value", "type": {"name": "text"}, "value": "hello"}]}]},
+              {"index": 2, "text": "compare them", "line": {"number": 4}, "code": [
+                {"module": "condition", "name": "compare", "property": [
+                  {"name": "Left", "type": {"name": "item", "template": "plang"}, "value": "%digest%", "variable": [{"text": "%digest%", "code": [{"variable": "digest"}]}]},
+                  {"name": "Operator", "type": {"name": "choice", "kind": "operator"}, "value": "=="},
+                  {"name": "Right", "type": {"name": "item", "template": "plang"}, "value": "%word%", "variable": [{"text": "%word%", "code": [{"variable": "word"}]}]}]}]}]}
+            """);
+        var ctx = _app.actor.list.User.Context;
+
+        await (await goal.Step[0].Start(ctx)).IsSuccess();
+        await (await goal.Step[1].Start(ctx)).IsSuccess();
+        var compared = await goal.Step[2].Start(ctx);
+
+        await compared.IsFailure();
+        await Assert.That(compared.Error!.Message).Contains("'hash' and 'text'");
+    }
+
     // --- Unit tests: no branching ---
 
     [Test]

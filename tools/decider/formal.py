@@ -156,6 +156,15 @@ class _Reader:
         self.pos = m.end()
         return m.group()
 
+    def key(self):
+        # A dict's key written bare: a name, which may hold a hyphen after its first letter (an http header,
+        # `X-Probe: "x"`). A key holding anything else is written quoted.
+        self.space()
+        m = re.compile(r'[A-Za-z_][\w-]*').match(self.text, self.pos)
+        if not m: self.fail('expected a key')
+        self.pos = m.end()
+        return m.group()
+
     def at_action(self):
         self.space()
         return re.compile(r'[A-Za-z_]\w*\.[A-Za-z_]\w*\s*\(').match(self.text, self.pos) is not None
@@ -349,7 +358,7 @@ class _Reader:
                 if self.at_end(): self.fail('a dict is not closed: expected `}`')
                 if d: self.take(',')
                 self.space()
-                key = self.value() if self.text.startswith('"', self.pos) else self.ident()
+                key = self.value() if self.text.startswith('"', self.pos) else self.key()
                 self.take(':')
                 self.space()
                 m = re.compile(r'(\w+(?:<\w+>)?)\s*(\?=|=)').match(self.text, self.pos)

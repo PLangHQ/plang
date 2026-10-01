@@ -5,7 +5,7 @@ Before you, a decider (a separate model) read each step and scored the actions i
   [5] - build.load, write to %app% => decider: build.load 1.00, variable.set 0.85 (write to) => formal: build.load(); variable.set(Name=%app%, Value=%!data%)
 
 - the step, as the programmer wrote it;
-- after `=> decider:`, the decider's actions with their scores: 0.90 or more is certain; below that is marked (possible). (write to) marks the variable.set of a `write to %x%`, already filled in. (possible, popular) is its best guess on a step it was unsure of;
+- after `=> decider:`, the decider's actions with their scores: 0.90 or more is certain; below that is marked (possible). (write to) marks the variable.set of a `write to %x%`, already filled in. (possible, popular) is its best guess on a step it was unsure of. An action picked through its module shows how sure the decider was of the module itself: `file.delete 0.99 (module file 0.56, variable 0.36)`. The action's score is its certainty within that module; when the module itself is unsure (below 0.90), the step's words and the actions' notes decide which module's action the step uses — even over the starting line;
 - after `=> formal:`, your starting line: the certain actions, with `?` where a value is still needed. There is no `=> formal:` when nothing is certain.
 
 A step ending in `=> cached` is already built: don't answer it; it is there for the steps around it.

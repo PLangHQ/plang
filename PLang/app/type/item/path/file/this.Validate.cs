@@ -50,11 +50,11 @@ public sealed partial class @this
                 // /system/ paths fall back to <os>/system/ when absent under the root.
                 var sysPrefix = PathHelper.DirectorySeparatorChar + "system" + PathHelper.DirectorySeparatorChar;
                 if (path.AdjustPathToOs().StartsWith(sysPrefix, StringComparison.OrdinalIgnoreCase)
-                    && !System.IO.File.Exists(resolved) && !System.IO.Directory.Exists(resolved))
+                    && !Present(resolved))
                 {
                     var afterPrefix = path.AdjustPathToOs().Substring(sysPrefix.Length);
                     var osResolved = PathHelper.GetFullPath(PathHelper.Join(osAbsolutePath, "system", afterPrefix));
-                    if (System.IO.File.Exists(osResolved) || System.IO.Directory.Exists(osResolved))
+                    if (Present(osResolved))
                         resolved = osResolved;
                 }
                 path = resolved;
@@ -72,15 +72,18 @@ public sealed partial class @this
         // <root>/system/ → <os>/system/ fallback for non-existent paths.
         var rootSystemDir = rootAbsolutePath + PathHelper.DirectorySeparatorChar + "system" + PathHelper.DirectorySeparatorChar;
         if (path.StartsWith(rootSystemDir, StringComparison.OrdinalIgnoreCase)
-            && !System.IO.File.Exists(path) && !System.IO.Directory.Exists(path))
+            && !Present(path))
         {
             var afterSystem = path.Substring(rootSystemDir.Length);
             var osFallback = PathHelper.GetFullPath(PathHelper.Join(osAbsolutePath, "system", afterSystem));
-            if (System.IO.File.Exists(osFallback) || System.IO.Directory.Exists(osFallback))
+            if (Present(osFallback))
                 path = osFallback;
         }
 
         return path;
+
+        // Where a /system/ path is found is decided on the app's disk: the runtime's own files are never a build's.
+        bool Present(string absolute) => new @this(absolute) is var at && (app.FileSystem.IsFile(at) || app.FileSystem.IsFolder(at));
     }
 
     /// <summary>True for an OS-absolute path — <c>//x</c> on Unix, <c>C:\</c> on Windows.</summary>

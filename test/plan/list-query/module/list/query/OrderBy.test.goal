@@ -1,0 +1,9 @@
+/ Order by a field, ascending and descending.
+Start
+- variable.set(Name=%users%, Value=[{name: "a", age: 25}, {name: "b", age: 18}, {name: "c", age: 40}])
+- list.query(List=%users%, Query={order: "age"}); variable.set(Name=%up%, Value=%!data%)
+- assert.equals(Expected="b", Actual=%up[0].name%, Message="youngest first")
+- assert.equals(Expected="c", Actual=%up[2].name%)
+- list.query(List=%users%, Query={order: {field: "age", desc: true}}); variable.set(Name=%down%, Value=%!data%)
+- assert.equals(Expected="c", Actual=%down[0].name%, Message="oldest first")
+- assert.equals(Expected="b", Actual=%down[2].name%)

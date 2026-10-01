@@ -137,6 +137,16 @@ public sealed class Reader
             return name;
         }
 
+        // A dict's key written bare: a name, which may hold a hyphen after its first letter (an http header,
+        // `X-Probe: "x"`). A key holding anything else is written quoted.
+        private string Key()
+        {
+            var key = Match(@"[A-Za-z_][\w-]*");
+            if (key == null) Fail("expected a key");
+            _pos += key!.Length;
+            return key;
+        }
+
         private bool AtAction() => Match(@"[A-Za-z_]\w*\.[A-Za-z_]\w*\s*\(") != null;
 
         // ---------------------------------------------------------------- actions
@@ -503,7 +513,7 @@ public sealed class Reader
                         var k = Value(null);
                         key = System.Text.Json.JsonSerializer.Deserialize<string>(k.Json!)!;
                     }
-                    else key = Ident();
+                    else key = Key();
                     Take(":");
                     Space();
                     // `key: type = value` is a typed argument row

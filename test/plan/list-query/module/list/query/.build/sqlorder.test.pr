@@ -1,0 +1,285 @@
+{
+  "name": "Start",
+  "comment": "The parts run in SQL's order whatever order the step says them: written order-then-group, the group still\nruns first — the groups in the list's first-seen order (y, then x), each group's items ordered.",
+  "step": [
+    {
+      "index": 0,
+      "text": "variable.set(Name=%people%, Value=[{name: \"y\", age: 20}, {name: \"x\", age: 30}, {name: \"x\", age: 10}])",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%people%",
+              "variable": [
+                {
+                  "text": "%people%",
+                  "code": [
+                    {
+                      "variable": "people"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"y","age":20},{"name":"x","age":30},{"name":"x","age":10}]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "list.query(List=%people%, Query={order: \"age\", group: \"name\"}); variable.set(Name=%groups%, Value=%!data%)",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "query",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": "%people%",
+              "variable": [
+                {
+                  "text": "%people%",
+                  "code": [
+                    {
+                      "variable": "people"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Query",
+              "type": {
+                "name": "query"
+              },
+              "value": {"order":"age","group":"name"}
+            }
+          ],
+          "default": [
+            {
+              "name": "execution",
+              "type": {
+                "name": "choice",
+                "kind": "execution"
+              },
+              "value": "sql"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%groups%",
+              "variable": [
+                {
+                  "text": "%groups%",
+                  "code": [
+                    {
+                      "variable": "groups"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"y\", Actual=%groups[0].key%, Message=\"grouped before ordering: y is seen first\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "y"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%groups[0].key%",
+              "variable": [
+                {
+                  "text": "%groups[0].key%",
+                  "code": [
+                    {
+                      "variable": "groups"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "key"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "grouped before ordering: y is seen first"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=10, Actual=%groups[1].items[0].age%, Message=\"x's items ordered by age\")",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 10
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%groups[1].items[0].age%",
+              "variable": [
+                {
+                  "text": "%groups[1].items[0].age%",
+                  "code": [
+                    {
+                      "variable": "groups"
+                    },
+                    {
+                      "index": {
+                        "number": 1
+                      }
+                    },
+                    {
+                      "property": "items"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "age"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "x's items ordered by age"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/list-query/module/list/query/SqlOrder.test.goal",
+  "prPath": "/plan/list-query/module/list/query/.build/sqlorder.test.pr",
+  "hash": "978b5e0a356b0259ab22c94d7cfd045670ae839c31749e5ed414a74a74ace434",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

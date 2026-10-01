@@ -14,6 +14,7 @@ Smells are named, never numbered. Names carry the diagnosis and can't desync acr
 
 The rule itself is in the pattern doc ("The name is the contract"); these are the operational tells.
 
+- **A name is a path, never glued words.** Write a compound as a dot path, one word per segment (`setting.build.execution.path`, not `buildExecutionPath`), and check that it navigates: each segment an owner whose member is the next. A path that won't navigate shows the real owner (`ListName` → `list.name` doesn't navigate → `list.variable.name`, so take `list`). The rule and its patterns: [obp-dot-case.md](obp-dot-case.md).
 - **Properties and types: one honest noun.** `app.Goal`, `app.Channel`, `app.Cache` — each says what it IS; you navigate there and call methods. Property-shaped knowledge is a property: `Count`, never `GetCount()`.
 - **Methods: one verb naming the caller's intent** — `Open`, `Read`, `Write`, `Close`, `Get`. Never the mechanism: `cache.Get(key)`, not `cache.Resolve(key)` — the caller just wants the thing and doesn't care how it's made.
 - **Boolean questions: `IsX` / `HasX`** — the only sanctioned compound.

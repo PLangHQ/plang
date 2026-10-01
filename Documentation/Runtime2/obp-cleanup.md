@@ -309,3 +309,26 @@ hold the path itself; the snapshot writes and reloads it as a path.
 again (`app.module.Get`) to judge an option its actions take — though `actor.setting.Of(module)` had the module in
 hand. Holding the module would be a late stamp for the module setting classes made by `new()` (llm's, build's), so
 it stays until a setting class is born from its owner.
+
+## Every action carries a method named Resolve [logged 2026-10-01, settings slice 2]
+
+The generator gives every action `ICodeGenerated.Resolve(action, context)` — the bind of an action's properties.
+"Resolve" names the mechanism, not what a caller wants of it, and it takes the name from every action: no
+action can have an option called `resolve` (file.read's became `Template`, which is the better name anyway).
+The bind should be named for what it answers, so action options are free to use the word.
+
+## The setting catalog shows a default through ToString [logged 2026-10-01, settings slice 1]
+
+`type/item/setting/kind/this.cs` `Options` writes each option's default as `value.ToString()`. A setting node
+(`callstack.setting.diff`) would show its class name, so `setting.@this` overrides `ToString` to its `Enabled` —
+the catalog's rendering leaning on `ToString`, which writers never use. The default should be written by the
+value's own text form (its writer), so a node shows `false` because that is how it writes itself, and the
+`ToString` override goes.
+
+## A variable store's Clone deep-copies a goal graph [logged 2026-09-30, 412 regression]
+
+`type/item/variable/list/this.cs` `Clone()` deep-copies every variable (`kvp.Value.Clone()`). A goal is a cyclic
+graph (a sub-goal and its parent reach each other), so cloning a store that holds one — the builder's, while a
+sub-goal builds — recurses until the stack overflows: the process segfaults with no .NET message. The step check
+no longer clones the builder's store, but the trap stays for the next caller. Clone should stop at items that hold
+a graph by reference (a goal, a step, an action are shared, not copied), or not deep-copy structural items at all.

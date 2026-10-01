@@ -8,13 +8,11 @@ using Verb = global::app.type.item.permission.Verb;
 namespace app.type.item.path.file;
 
 /// <summary>
-/// FilePath verb implementations — relocated from the (now abstract) base.
-/// Every method passes through <see cref="@this.AuthGate"/> (defined on the base)
-/// before touching <c>System.IO</c>. Same-scheme MoveTo/CopyTo override the
-/// base's naive default with <c>System.IO.File.Move</c>/<c>Copy</c> and the
-/// bundled-consent prompt for fresh out-of-root pairs. Every verb acts as the
-/// caller: its context carries the actor asked for permission and is the context
-/// the result Data is born with.
+/// FilePath verb implementations. Every method passes through <see cref="@this.AuthGate"/> (defined on the
+/// base) first, then reaches the caller's filesystem (<c>context.FileSystem</c>) — the disk, or the overlay a
+/// build checks its goals over. Same-scheme MoveTo/CopyTo override the base's naive default with the
+/// filesystem's own Move/Copy and the bundled-consent prompt for fresh out-of-root pairs. Every verb acts as the
+/// caller: its context carries the actor asked for permission and is the context the result Data is born with.
 /// </summary>
 public sealed partial class @this
 {
@@ -29,7 +27,7 @@ public sealed partial class @this
     {
         if (await AuthGate(Verb.Execute, context) is { } early)
             return early;
-        if (!System.IO.File.Exists(Absolute))
+        if (!context.FileSystem.IsFile(this))
             return context.Error(new global::app.error.ServiceError($"Not found: {this}", "NotFound", 404));
         try
         {
@@ -40,13 +38,6 @@ public sealed partial class @this
         {
             return context.Error(new global::app.error.ServiceError($"Failed to load assembly: {ex.Message}", "AssemblyLoadFailed", 500));
         }
-    }
-
-    private void EnsureParentDir()
-    {
-        var dir = PathHelper.GetDirectoryName(Absolute);
-        if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir))
-            System.IO.Directory.CreateDirectory(dir);
     }
 
     // --- Reads ---------------------------------------------------------------
@@ -80,11 +71,20 @@ public sealed partial class @this
     public override async Task<global::app.error.Error?> Absence(actor.context.@this context)
     {
         if (!Known(context)) return null;
-        var exists = await ExistsAsync(context);
+        var exists = await Exists(context);
         if (!exists.Success) return exists.Error;
         return await exists.ToBooleanAsync() ? null
             : new global::app.error.Error($"'{this}' does not exist on disk", "NotFound", 404);
     }
+
+    public override void Add(actor.context.@this context, global::app.type.item.path.@this? source = null)
+        => context.FileSystem.Add(source is @this from ? Into(from, context.FileSystem) : this);
+
+    public override void Remove(actor.context.@this context) => context.FileSystem.Remove(this);
+
+    // Where a file sent here lands: under this location when it is a folder, else here.
+    private @this Into(@this source, filesystem.@this files)
+        => files.IsFolder(this) ? new @this(PathHelper.Combine(Absolute, source.FileName)) : this;
 
     // A location whose extension names a format — its kind carries extensions ({binary, xyz} for an unknown one carries none).
     private bool Known(actor.context.@this context) => Kind(context).kind.Extension.Count > 0;
@@ -92,11 +92,11 @@ public sealed partial class @this
     internal override async Task<data.@this<global::app.type.item.binary.@this>> Bytes(actor.context.@this context)
     {
         if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.binary.@this>.From(early);
-        if (!System.IO.File.Exists(Absolute))
+        if (!context.FileSystem.IsFile(this))
             return context.Error<global::app.type.item.binary.@this>(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404));
         try
         {
-            return context.Ok<global::app.type.item.binary.@this>(new global::app.type.item.binary.@this(await System.IO.File.ReadAllBytesAsync(Absolute)));
+            return context.Ok<global::app.type.item.binary.@this>(new global::app.type.item.binary.@this(await context.FileSystem.Read(this)));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {
@@ -104,22 +104,22 @@ public sealed partial class @this
         }
     }
 
-    public override async Task<data.@this<global::app.type.item.@bool.@this>> ExistsAsync(actor.context.@this context)
+    public override async Task<data.@this<global::app.type.item.@bool.@this>> Exists(actor.context.@this context)
     {
         if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.@bool.@this>.From(early);
-        return context.Ok<global::app.type.item.@bool.@this>(System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute));
+        return context.Ok<global::app.type.item.@bool.@this>(context.FileSystem.IsFile(this) || context.FileSystem.IsFolder(this));
     }
 
     /// <summary>
     /// Truthiness of a file path is "does it exist". Routes through the gated
-    /// <see cref="ExistsAsync"/> — the same shape as <c>HttpPath.AsBooleanAsync</c>:
+    /// <see cref="Exists"/> — the same shape as <c>HttpPath.AsBooleanAsync</c>:
     /// a denied or errored probe answers false. Keeps the existence check behind
     /// <see cref="@this.AuthGate"/> so an out-of-root probe still needs a Read
     /// grant (in-root is free via IsInRoot).
     /// </summary>
     public override async Task<bool> AsBooleanAsync(actor.context.@this context)
     {
-        var existsResult = await ExistsAsync(context);
+        var existsResult = await Exists(context);
         return existsResult.Success && await existsResult.ToBooleanAsync();
     }
 
@@ -130,14 +130,13 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> List(global::app.type.item.text.@this pattern, global::app.type.item.@bool.@this recursive, actor.context.@this context)
     {
         if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
-        if (!System.IO.Directory.Exists(Absolute))
+        if (!context.FileSystem.IsFolder(this))
             return context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
         try
         {
-            var option = recursive.Value ? System.IO.SearchOption.AllDirectories : System.IO.SearchOption.TopDirectoryOnly;
-            // Each entry is this folder combined with its place under it — typed text included.
-            var files = System.IO.Directory.GetFiles(Absolute, pattern.ToString(), option)
-                .Select(f => new data.@this("", Combine(f[Absolute.Length..].TrimStart(PathHelper.DirectorySeparatorChar, PathHelper.AltDirectorySeparatorChar)),
+            // Each file is this folder combined with its place under it — typed text included.
+            var files = context.FileSystem.List(this, pattern.ToString(), recursive.Value).Where(context.FileSystem.IsFile)
+                .Select(f => new data.@this("", Combine(f.Absolute[Absolute.Length..].TrimStart(PathHelper.DirectorySeparatorChar, PathHelper.AltDirectorySeparatorChar)),
                     context: context))
                 .ToList();
             return context.Ok<global::app.type.item.list.@this<global::app.type.item.path.@this>>(
@@ -152,17 +151,7 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.path.@this.StatInfo>> Stat(actor.context.@this context)
     {
         if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.path.@this.StatInfo>.From(early);
-        if (System.IO.File.Exists(Absolute))
-        {
-            var info = new System.IO.FileInfo(Absolute);
-            return context.Ok<global::app.type.item.path.@this.StatInfo>(new StatInfo(Exists: true, IsFile: true, Length: info.Length, Modified: info.LastWriteTimeUtc));
-        }
-        if (System.IO.Directory.Exists(Absolute))
-        {
-            var info = new System.IO.DirectoryInfo(Absolute);
-            return context.Ok<global::app.type.item.path.@this.StatInfo>(new StatInfo(Exists: true, IsFile: false, Modified: info.LastWriteTimeUtc));
-        }
-        return context.Ok<global::app.type.item.path.@this.StatInfo>(new StatInfo(Exists: false));
+        return context.Ok<global::app.type.item.path.@this.StatInfo>(context.FileSystem.Stat(this));
     }
 
     // --- Writes --------------------------------------------------------------
@@ -170,8 +159,7 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.path.@this>> WriteText(string content, actor.context.@this context)
     {
         if (await AuthGate(Verb.Write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        EnsureParentDir();
-        await System.IO.File.WriteAllTextAsync(Absolute, content);
+        await context.FileSystem.Write(this, Encoding.UTF8.GetBytes(content));
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
@@ -193,23 +181,21 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.path.@this>> WriteBytes(byte[] content, actor.context.@this context)
     {
         if (await AuthGate(Verb.Write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        EnsureParentDir();
-        await System.IO.File.WriteAllBytesAsync(Absolute, content);
+        await context.FileSystem.Write(this, content);
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
     public override async Task<data.@this<global::app.type.item.path.@this>> Append(string content, actor.context.@this context)
     {
         if (await AuthGate(Verb.Write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        EnsureParentDir();
-        await System.IO.File.AppendAllTextAsync(Absolute, content);
+        await context.FileSystem.Append(this, content);
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
     public override async Task<data.@this<global::app.type.item.path.@this>> Mkdir(actor.context.@this context)
     {
         if (await AuthGate(Verb.Write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
-        System.IO.Directory.CreateDirectory(Absolute);
+        context.FileSystem.Create(this);
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
@@ -217,26 +203,26 @@ public sealed partial class @this
 
     /// <summary>
     /// Delete with file-action options. Non-recursive directory deletes refuse
-    /// non-empty directories with <c>DirectoryNotEmpty</c>; missing targets
-    /// surface <c>NotFound</c> unless <paramref name="ignoreIfNotFound"/> is
-    /// set. Returns the resulting Path (post-delete) wrapped in Data so the
+    /// non-empty directories with <c>DirectoryNotEmpty</c>; a missing target is
+    /// <c>NotFound</c>. Returns the resulting Path (post-delete) wrapped in Data so the
     /// caller can read <see cref="Exists"/> on it.
     /// </summary>
-    public override async Task<data.@this<global::app.type.item.path.@this>> Delete(global::app.type.item.@bool.@this recursive, global::app.type.item.@bool.@this ignoreIfNotFound, actor.context.@this context)
+    public override async Task<data.@this<global::app.type.item.path.@this>> Delete(global::app.type.item.@bool.@this recursive, actor.context.@this context)
     {
         if (await AuthGate(Verb.Delete, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         try
         {
-            if (System.IO.File.Exists(Absolute))
-                System.IO.File.Delete(Absolute);
-            else if (System.IO.Directory.Exists(Absolute))
+            var files = context.FileSystem;
+            if (files.IsFile(this))
+                files.Delete(this, recursive: false);
+            else if (files.IsFolder(this))
             {
-                if (!recursive.Value && System.IO.Directory.GetFileSystemEntries(Absolute).Length > 0)
+                if (!recursive.Value && files.List(this, "*", recursive: false).Any())
                     return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError(
                         $"Directory is not empty: {Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
-                System.IO.Directory.Delete(Absolute, recursive.Value);
+                files.Delete(this, recursive.Value);
             }
-            else if (!ignoreIfNotFound.Value)
+            else
                 return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError($"Not found: {Raw}", "NotFound", 404));
 
             return context.Ok<global::app.type.item.path.@this>(this);
@@ -258,48 +244,25 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.path.@this>> MoveTo(global::app.type.item.path.@this destination, global::app.type.item.@bool.@this overwrite, actor.context.@this context)
     {
         if (destination is not @this fileDest) return await base.MoveTo(destination, overwrite, context);
-        return await BundledTransfer(fileDest, isMove: true, overwrite.Value, includeSubfolders: true, context);
+        return await BundledTransfer(fileDest, isMove: true, overwrite.Value, subfolder: true, context);
     }
 
     /// <summary>
     /// Same-scheme copy with action-level options. See <see cref="MoveTo"/>.
     /// </summary>
-    public override async Task<data.@this<global::app.type.item.path.@this>> CopyTo(global::app.type.item.path.@this destination, global::app.type.item.@bool.@this overwrite, global::app.type.item.@bool.@this includeSubfolders, actor.context.@this context)
+    public override async Task<data.@this<global::app.type.item.path.@this>> CopyTo(global::app.type.item.path.@this destination, global::app.type.item.@bool.@this overwrite, global::app.type.item.@bool.@this subfolder, actor.context.@this context)
     {
-        if (destination is not @this fileDest) return await base.CopyTo(destination, overwrite, includeSubfolders, context);
-        return await BundledTransfer(fileDest, isMove: false, overwrite.Value, includeSubfolders.Value, context);
-    }
-
-    private static string ResolveDestinationPath(@this source, @this destination)
-    {
-        if (System.IO.File.Exists(source.Absolute) && System.IO.Directory.Exists(destination.Absolute))
-            return PathHelper.Combine(destination.Absolute, source.FileName);
-        return destination.Absolute;
-    }
-
-    private static void CopyDirectory(string src, string dest, bool overwrite, bool includeSubfolders)
-    {
-        System.IO.Directory.CreateDirectory(dest);
-        foreach (var file in System.IO.Directory.GetFiles(src))
-        {
-            var fileName = PathHelper.GetFileName(file);
-            System.IO.File.Copy(file, PathHelper.Combine(dest, fileName), overwrite);
-        }
-        if (!includeSubfolders) return;
-        foreach (var subDir in System.IO.Directory.GetDirectories(src))
-        {
-            var dirName = PathHelper.GetFileName(subDir);
-            CopyDirectory(subDir, PathHelper.Combine(dest, dirName), overwrite, includeSubfolders);
-        }
+        if (destination is not @this fileDest) return await base.CopyTo(destination, overwrite, subfolder, context);
+        return await BundledTransfer(fileDest, isMove: false, overwrite.Value, subfolder.Value, context);
     }
 
     /// <summary>
     /// Bundled-consent transfer. <paramref name="overwrite"/> and
-    /// <paramref name="includeSubfolders"/> are threaded through PerformTransfer
+    /// <paramref name="subfolder"/> are threaded through PerformTransfer
     /// so action-handler options (file.copy / file.move) ride along on the
     /// same bundled-prompt flow.
     /// </summary>
-    private async Task<data.@this<global::app.type.item.path.@this>> BundledTransfer(@this destination, bool isMove, bool overwrite, bool includeSubfolders, actor.context.@this context)
+    private async Task<data.@this<global::app.type.item.path.@this>> BundledTransfer(@this destination, bool isMove, bool overwrite, bool subfolder, actor.context.@this context)
     {
         var sourceVerb = Verb.Read;
         var destVerb   = Verb.Write;
@@ -311,7 +274,7 @@ public sealed partial class @this
         bool destOk   = destAuth?.Success == true;
 
         if (sourceOk && destOk)
-            return PerformTransfer(destination, isMove, overwrite, includeSubfolders, context);
+            return await PerformTransfer(destination, isMove, overwrite, subfolder, context);
 
         var question = new StringBuilder();
         question.Append(context.Actor!.Name).Append(" wants to:");
@@ -325,7 +288,7 @@ public sealed partial class @this
         {
             if (!sourceOk) await StoreGrant(sourceVerb, persist, context);
             if (!destOk)   await destination.StoreGrant(destVerb, persist, context);
-            return PerformTransfer(destination, isMove, overwrite, includeSubfolders, context);
+            return await PerformTransfer(destination, isMove, overwrite, subfolder, context);
         });
         return data.@this<global::app.type.item.path.@this>.From(consented);
     }
@@ -352,44 +315,41 @@ public sealed partial class @this
     /// subfolders) — absorbs <c>file/code/Default.cs::Default.Copy/Move</c>.
     /// Returns the new Path (post-transfer) wrapped in Data.
     /// </summary>
-    private data.@this<global::app.type.item.path.@this> PerformTransfer(@this destination, bool isMove, bool overwrite, bool includeSubfolders, actor.context.@this context)
+    private async Task<data.@this<global::app.type.item.path.@this>> PerformTransfer(@this destination, bool isMove, bool overwrite, bool subfolder, actor.context.@this context)
     {
+        var files = context.FileSystem;
+        // A folder copied whole: its files, and its folders' too when subfolder.
+        async Task Copy(@this from, @this to)
+        {
+            files.Create(to);
+            foreach (var entry in files.List(from, "*", recursive: false).ToList())
+            {
+                var into = new @this(PathHelper.Combine(to.Absolute, entry.FileName));
+                if (files.IsFile(entry)) await files.Copy(entry, into, overwrite);
+                else if (subfolder) await Copy(entry, into);
+            }
+        }
         try
         {
-            if (!System.IO.File.Exists(Absolute) && !System.IO.Directory.Exists(Absolute))
+            if (!files.IsFile(this) && !files.IsFolder(this))
                 return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError($"Not found: {Raw}", "NotFound", 404));
 
             // Directory transfer ------------------------------------------------
-            if (System.IO.Directory.Exists(Absolute))
+            if (files.IsFolder(this))
             {
-                var destDir0 = PathHelper.GetDirectoryName(destination.Absolute);
-                if (!string.IsNullOrEmpty(destDir0) && !System.IO.Directory.Exists(destDir0))
-                    System.IO.Directory.CreateDirectory(destDir0);
-
-                if (isMove)
-                {
-                    if (overwrite && System.IO.Directory.Exists(destination.Absolute))
-                        System.IO.Directory.Delete(destination.Absolute, recursive: true);
-                    System.IO.Directory.Move(Absolute, destination.Absolute);
-                    return context.Ok<global::app.type.item.path.@this>(new @this(destination.Absolute) { Raw = destination.Raw });
-                }
-
-                CopyDirectory(Absolute, destination.Absolute, overwrite, includeSubfolders);
+                if (isMove) await files.Move(this, destination, overwrite);
+                else await Copy(this, destination);
                 return context.Ok<global::app.type.item.path.@this>(new @this(destination.Absolute) { Raw = destination.Raw });
             }
 
-            // File transfer -----------------------------------------------------
-            var destPath = ResolveDestinationPath(this, destination);
-            var destDir = PathHelper.GetDirectoryName(destPath);
-            if (!string.IsNullOrEmpty(destDir) && !System.IO.Directory.Exists(destDir))
-                System.IO.Directory.CreateDirectory(destDir);
-
-            if (isMove) System.IO.File.Move(Absolute, destPath, overwrite);
-            else        System.IO.File.Copy(Absolute, destPath, overwrite);
+            // File transfer: into the destination when it names a folder ---------
+            var target = destination.Into(this, files);
+            if (isMove) await files.Move(this, target, overwrite);
+            else await files.Copy(this, target, overwrite);
 
             // The destination as given — or, when it named a folder, the file under it.
-            var destTyped = destPath == destination.Absolute ? destination.Raw : destination.Combine(FileName).Raw;
-            return context.Ok<global::app.type.item.path.@this>(new @this(destPath) { Raw = destTyped });
+            var destTyped = ReferenceEquals(target, destination) ? destination.Raw : destination.Combine(FileName).Raw;
+            return context.Ok<global::app.type.item.path.@this>(new @this(target.Absolute) { Raw = destTyped });
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {

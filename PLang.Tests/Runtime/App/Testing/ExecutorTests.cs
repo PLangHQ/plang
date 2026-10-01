@@ -52,18 +52,18 @@ public class ExecutorTests
     }
 
     // --test={"timeout":5} routes through Testing.Apply with the parsed dict and sets
-    // TimeoutSeconds. Exercises the CommandLineParser JSON collection path.
+    // Timeout. Exercises the CommandLineParser JSON collection path.
     [Test]
     public async Task Configure_TestFlagWithConfig_AppliesToTesting()
     {
         var executor = NewExecutor();
         // Keys are property names — the setting walk maps them (no "timeout" alias).
-        var (engine, error) = executor.Configure(new[] { "--test={\"timeoutSeconds\":5,\"parallel\":3}" });
+        var (engine, error) = executor.Configure(new[] { "--test={\"timeout\":\"5s\",\"parallel\":3}" });
 
         await Assert.That(error).IsNull();
         await Assert.That(engine).IsNotNull();
         await Assert.That(engine!.test.list.Session != null).IsTrue();
-        await Assert.That(engine.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds).IsEqualTo(5);
+        await Assert.That(engine.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Timeout.Value.TotalSeconds).IsEqualTo(5);
         await Assert.That(engine.actor.list.System.Context.Setting.Of<global::app.test.setting.@this>().Parallel).IsEqualTo(3);
         await using var _ = engine;
     }

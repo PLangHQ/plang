@@ -1,0 +1,6 @@
+/ A where with two conditions joined by and keeps only what passes both.
+Start
+- variable.set(Name=%users%, Value=[{name: "a", type: "student", age: 25}, {name: "b", type: "student", age: 18}, {name: "c", type: "teacher", age: 40}])
+- list.query(List=%users%, Query={where: {and: [{field: "type", op: "==", value: "student"}, {field: "age", op: ">", value: 20}]}}); variable.set(Name=%kept%, Value=%!data%)
+- assert.equals(Expected=1, Actual=%kept.Count%, Message="only the student over 20")
+- assert.equals(Expected="a", Actual=%kept[0].name%)

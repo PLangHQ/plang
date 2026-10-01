@@ -22,13 +22,13 @@ plang '--debug={"goal":"BuildGoal","step":3}'
 plang '--debug={"variables":["response","goal"]}'
 
 # Set max line length (default 500)
-plang '--debug={"maxLength":2000}'
+plang '--debug={"length":{"max":2000}}'
 
 # Filter output lines by regex
 plang '--debug={"grep":"actions"}'
 
 # Combine options
-plang '--debug={"goal":"BuildGoal","step":3,"variables":["actions"],"maxLength":2000,"grep":"Module"}'
+plang '--debug={"goal":"BuildGoal","step":3,"variables":["actions"],"length":{"max":2000},"grep":"Module"}'
 ```
 
 ## Properties
@@ -38,7 +38,7 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":["actions"],"maxLength":
 | `goal` | string | null | Filter to a specific goal name. Null = all goals. |
 | `step` | int | null | Filter to a specific step index. Null = all steps. |
 | `variables` | list&lt;text&gt; | [] | Names of the variables to watch (`["trace","goal"]`; a `%` around a name is fine). A watched variable prints at every step and logs each create, change and delete. |
-| `maxLength` | int | 500 | Max characters per line before truncation. |
+| `length.max` | int | 500 | Max characters per line before truncation (`"length":{"max":2000}`). |
 | `grep` | string | null | Regex pattern to filter output lines (case-insensitive). |
 | `level` | choice | "step" | Detail level: `"step"` (per step) or `"action"` (per action within steps). Any other value is rejected. |
 | `llm` | object | null | Granular LLM tracing — see [LLM Message Tracing](#llm-message-tracing). |
@@ -151,14 +151,14 @@ Why granular: a full trace is too noisy when you're hunting a specific question.
 # Just the response — most common when chasing "what did the LLM produce?"
 plang build '--build={"cache":false}' '--debug={"llm":{"response":true}}'
 
-# System prompt only — verify catalog/types render correctly. Bump maxLength.
-plang build '--build={"cache":false}' '--debug={"llm":{"system":true},"maxLength":50000}'
+# System prompt only — verify catalog/types render correctly. Bump length.max.
+plang build '--build={"cache":false}' '--debug={"llm":{"system":true},"length":{"max":50000}}'
 
 # Schema only — when chasing type-fidelity bugs (e.g. permissive value?: object)
 plang build '--build={"cache":false}' '--debug={"llm":{"schema":true}}'
 
 # Combine flags freely
-plang build '--build={"cache":false}' '--debug={"llm":{"system":true,"response":true},"maxLength":50000}'
+plang build '--build={"cache":false}' '--debug={"llm":{"system":true,"response":true},"length":{"max":50000}}'
 ```
 
 Output (each block fires only when its flag is on):
@@ -219,17 +219,17 @@ no longer carried on `--debug`. The knobs apply to the run's startup actors (Sys
 
 ```bash
 # Explicit per-knob control — no shorthand; name each knob you want on.
-plang '--callstack={"timing":true,"diff":true,"tags":true,"history":true,"maxFrames":500}'
+plang '--callstack={"timing":true,"diff":true,"tags":true,"history":true,"frame":{"max":500}}'
 ```
 
 | Sub-flag | Default | What it does |
 |----------|---------|--------------|
 | `timing` | false | Stamp `StartedAt` / `CompletedAt` (DateTimeOffset) and `Duration` on each Call. Off → those properties stay at default. |
 | `diff` | false | Subscribe each Call to `Variables.OnSet` and append `Diff(name, before, At)` records to `Call.Diffs`. Off → `Call.Diffs` is null. |
-| `deepDiff` | false | Only meaningful with `diff:true`. When on, the `Before` value of each diff is a deep-clone of the prior value. When off, non-scalar values render as a summary string (`"<List<int> @ 5042 items>"`) — scalar-only capture is the default to mitigate OOM under tight loops over large collections. |
+| `diff.deep` | false | Only meaningful with `diff:true` (write both as `"diff":{"enabled":true,"deep":true}`). When on, the `Before` value of each diff is a deep-clone of the prior value. When off, non-scalar values render as a summary string (`"<List<int> @ 5042 items>"`) — scalar-only capture is the default to mitigate OOM under tight loops over large collections. |
 | `tags` | false | Renderer-meaningful flag — the `tag` PLang action and C# `call.Tag(k,v)` always succeed (lazy-allocate the `Tags` dict on first write); the flag controls whether the renderer surfaces them. |
-| `history` | false | When on, popped Calls stay in `Caller.Children` instead of being removed on dispose. Combined with `maxFrames` for retention cap (FIFO eviction). Off → live tree only; popped Calls are removed from Children. |
-| `maxFrames` | 1000 | Sibling retention cap when `history:true`. The (N+1)th Push under the same Caller evicts the oldest from Children. Also doubles as the runaway-recursion guard for the Caller chain length — Push throws `CallStackOverflowException` when the chain reaches this depth. |
+| `history` | false | When on, popped Calls stay in `Caller.Children` instead of being removed on dispose. Combined with `frame.max` for retention cap (FIFO eviction). Off → live tree only; popped Calls are removed from Children. |
+| `frame.max` | 1000 | Sibling retention cap when `history:true`. The (N+1)th Push under the same Caller evicts the oldest from Children. Also doubles as the runaway-recursion guard for the Caller chain length — Push throws `CallStackOverflowException` when the chain reaches this depth. |
 
 There is no shorthand — name each knob explicitly. A bare `--callstack` (no object) does nothing.
 

@@ -49,24 +49,13 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     [Out, Store] public override string Scheme => "file";
 
-    // --- Live filesystem state — file-scheme-only (relocated off the base) ---
-    //
-    // These do synchronous System.IO calls and are meaningless for non-FS
-    // schemes; they live on FilePath so an HttpPath never inherits them.
-    // The cross-scheme liveness query is the async `Stat()`.
-
-    /// <summary>True when a file or directory exists at this path.</summary>
-    [LlmBuilder] public bool Exists =>
-        System.IO.File.Exists(Absolute) || System.IO.Directory.Exists(Absolute);
-
-    /// <summary>Size in bytes of the file at this path; 0 when absent.</summary>
-    [LlmBuilder] public global::app.type.item.number.@this Size
+    /// <summary>Size in bytes of the file at this path, as its asker may read it — through the gate; 0 when
+    /// nothing is there.</summary>
+    [LlmBuilder] public async Task<data.@this<global::app.type.item.number.@this>> Size(actor.context.@this context)
     {
-        get
-        {
-            var info = new System.IO.FileInfo(Absolute);
-            return info.Exists ? info.Length : 0;
-        }
+        var stat = await Stat(context);
+        if (!stat.Success || stat.Exits) return data.@this<global::app.type.item.number.@this>.From(stat);
+        return context.Ok<global::app.type.item.number.@this>((await stat.Value())?.Length ?? 0L);
     }
 
     /// <summary>

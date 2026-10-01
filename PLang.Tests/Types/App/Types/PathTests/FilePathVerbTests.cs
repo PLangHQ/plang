@@ -47,11 +47,11 @@ public class FilePathVerbTests
     {
         var (app, root) = MakeApp();
         var p = At(app, root, "ex.txt");
-        var before = await p.ExistsAsync(app.actor.list.User.Context);
+        var before = await p.Exists(app.actor.list.User.Context);
         await before.IsSuccess();
         await Assert.That((await before.Value())).IsEqualTo(false);
         await p.WriteText("now exists", app.actor.list.User.Context);
-        var after = await p.ExistsAsync(app.actor.list.User.Context);
+        var after = await p.Exists(app.actor.list.User.Context);
         await Assert.That((await after.Value())).IsEqualTo(true);
     }
 
@@ -73,7 +73,7 @@ public class FilePathVerbTests
         await p.WriteText("to delete", app.actor.list.User.Context);
         var d = await p.Delete(app.actor.list.User.Context);
         await d.IsSuccess();
-        var ex = await p.ExistsAsync(app.actor.list.User.Context);
+        var ex = await p.Exists(app.actor.list.User.Context);
         await Assert.That((await ex.Value())).IsEqualTo(false);
     }
 

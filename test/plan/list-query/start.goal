@@ -1,0 +1,44 @@
+Start
+/ list-query: one step, one query. Each stage is a goal; each behaviour a comment with the test that proves it.
+/ The plang here says what is wanted; the coder rewrites each test in plang that compiles.
+- call goal Stage1
+- call goal Stage2
+- call goal Stage3
+
+Stage1
+/ The type and the action: where with and/or, group, distinct, order; SQL order by default.
+/ A where with two conditions joined by and keeps only what passes both
+- call goal /module/list/query/WhereAnd
+/ A where with or keeps what passes either
+- call goal /module/list/query/WhereOr
+/ A where value given as a %variable% is read when the step runs
+- call goal /module/list/query/WhereVariable
+/ Order by a field, ascending and descending
+- call goal /module/list/query/OrderBy
+/ Distinct drops repeated elements
+- call goal /module/list/query/Distinct
+/ Group by a field gives {key, items}; order by after it orders each group's items
+- call goal /module/list/query/GroupThenOrder
+/ The parts run in SQL order whatever order the step says them ("order by age, where age > 20" filters first)
+- call goal /module/list/query/SqlOrder
+/ With %!list.query.setting.execution% = written, the parts run in the order the step says them
+- call goal /module/list/query/WrittenOrder
+/ The input list is unchanged: the query answers a new list
+- call goal /module/list/query/InputUnchanged
+/ A field the elements don't have is an error naming the part ("where: no field 'agee'")
+- call goal /module/list/query/UnknownField
+
+Stage2
+/ The builder picks list.query from the words.
+/ "filter %users% where type is 'student' and age > 20, group by name, distinct, order by age" builds to one list.query with those parts
+- call goal /module/list/query/build/ManyParts
+/ "where %users% age > 20, write to %adults%" builds to a one-part query
+- call goal /module/list/query/build/OnePart
+/ "sort %people% by age" with no destination builds with an explicit write to %people%
+- call goal /module/list/query/build/WriteBack
+
+Stage3
+/ The four are gone; their behaviours hold through list.query.
+/ The two old where tests, rewritten as queries, pass: partial-field filters and a misspelled field
+- call goal /module/list/query/PartialFieldFilters
+- call goal /module/list/query/MisspelledFieldIsAnError

@@ -30,7 +30,7 @@ public class ActionPropertyPrTests
 
     private global::app.goal.@this Sample() => Make.Goal(_app.actor.list.User.Context, "Start",
         Make.Step("read a file",
-            Make.WithDefaults(_app.actor.list.User.Context, Make.Action(_app.actor.list.User.Context, "file", "read", ("Path", "notes.txt")), ("ResolveVariables", false))));
+            Make.WithDefaults(_app.actor.list.User.Context, Make.Action(_app.actor.list.User.Context, "file", "read", ("Path", "notes.txt")), ("Template", false))));
 
     [Test] public async Task WrittenPr_ReadsBackAndWritesAgain_ByteIdentical()
     {

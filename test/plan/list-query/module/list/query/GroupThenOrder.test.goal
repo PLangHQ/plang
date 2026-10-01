@@ -1,0 +1,8 @@
+/ Group by a field gives {key, items}; an order after it orders each group's items.
+Start
+- variable.set(Name=%people%, Value=[{name: "x", age: 30}, {name: "y", age: 20}, {name: "x", age: 10}])
+- list.query(List=%people%, Query={group: "name", order: "age"}); variable.set(Name=%groups%, Value=%!data%)
+- assert.equals(Expected=2, Actual=%groups.Count%, Message="one group per name")
+- assert.equals(Expected="x", Actual=%groups[0].key%)
+- assert.equals(Expected=10, Actual=%groups[0].items[0].age%, Message="x's items by age")
+- assert.equals(Expected=30, Actual=%groups[0].items[1].age%)

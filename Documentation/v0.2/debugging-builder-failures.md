@@ -53,7 +53,7 @@ cp /tmp/good.pr <restore the .pr>
 > you set to `true` are emitted, each as its own `=== LLM SYSTEM/USER/SCHEMA/RESPONSE ===`
 > block: `system` (system prompt), `user` (user message — the single most useful one),
 > `schema` (the schema string sent), `response` (the raw model reply). Every block goes
-> to the debug channel (stderr, truncated to `maxLength`); for a file, redirect it
+> to the debug channel (stderr, truncated to `length.max`); for a file, redirect it
 > (`> /tmp/x.txt 2>&1`, as above) or back the `debug` channel with a file. All-off / no
 > `llm` object means no tracing.
 
@@ -82,7 +82,7 @@ cp /tmp/good.pr <restore the .pr>
 
 **Read `%buildStepUserMsg%` — the actual user message the compiler received.** This
 is the single most important artifact and the step people skip. Dump it in full
-(raise `maxLength`); look at these sections:
+(raise `length.max`); look at these sections:
 
 ```
 ## What to map to — the planner picked these actions

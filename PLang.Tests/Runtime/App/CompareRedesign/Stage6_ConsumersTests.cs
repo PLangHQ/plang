@@ -91,7 +91,7 @@ public class Stage6_ConsumersTests
     {
         var sort = typeof(global::app.type.item.list.@this).GetMethod("Sort",
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance,
-            [typeof(string), typeof(bool), typeof(global::app.actor.context.@this)]);
+            [typeof(global::app.type.item.text.@this), typeof(global::app.type.item.@bool.@this), typeof(global::app.actor.context.@this)]);
         await Assert.That(sort).IsNotNull();
         await Assert.That(sort!.GetCustomAttributes(typeof(System.Runtime.CompilerServices.AsyncStateMachineAttribute), false)).IsNotEmpty();
 
@@ -107,7 +107,8 @@ public class Stage6_ConsumersTests
         // phase 2 orders the in-hand keys with a sync comparator
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        var dir = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-sortsize-" + System.Guid.NewGuid().ToString("N")[..8]);
+        // in the app's root: a file's size is read through the gate, which asks for anything outside it
+        var dir = System.IO.Path.Combine(app.AbsolutePath, "sortsize");
         Directory.CreateDirectory(dir);
         try
         {
@@ -119,9 +120,9 @@ public class Stage6_ConsumersTests
             foreach (var name in new[] { "big.txt", "tiny.txt", "mid.txt" })
                 files.Add(new Data(name, new global::app.type.item.path.file.@this(System.IO.Path.Combine(dir, name)), context: ctx));
 
-            await files.Sort("size", descending: false, app.actor.list.User.Context);
+            var sorted = (global::app.type.item.list.@this)(await (await files.Sort((global::app.type.item.text.@this)"size", false, app.actor.list.User.Context)).Value())!;
 
-            var ordered = files.Items(app.actor.list.User.Context).Select(d => d.Peek()?.ToString() ?? "").ToList();
+            var ordered = sorted.Items(app.actor.list.User.Context).Select(d => d.Peek()?.ToString() ?? "").ToList();
             await Assert.That(ordered[0]).Contains("tiny.txt");
             await Assert.That(ordered[1]).Contains("mid.txt");
             await Assert.That(ordered[2]).Contains("big.txt");

@@ -28,7 +28,7 @@ public sealed class @this : global::app.type.kind.@this
     /// <summary>Its format's own writer, where the writer's envelope doesn't name the value's type.</summary>
     public override bool Owns(global::app.type.format.IWriter writer) => _format.Owns(writer) && !writer.EmitsSchema;
 
-    /// <summary>The characters as their format reads them — the json they are.</summary>
-    public override global::app.type.item.@this? Open(string characters, global::app.actor.context.@this context)
-        => _format.Parse(characters, context);
+    /// <summary>The characters as their format opens them — the json they are, or why they don't read.</summary>
+    public override global::app.data.@this? Open(string characters, global::app.actor.context.@this context)
+        => _format.Open(characters, context);
 }

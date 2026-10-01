@@ -92,6 +92,9 @@
   "app.module.identity.identity": {
     "word": "identity"
   },
+  "app.module.list.type.query": {
+    "word": "query"
+  },
   "app.module.llm.llmmessage": {
     "word": "llmmessage"
   },

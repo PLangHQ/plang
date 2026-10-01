@@ -1,0 +1,7 @@
+/ The parts run in SQL's order whatever order the step says them: written order-then-group, the group still
+/ runs first — the groups in the list's first-seen order (y, then x), each group's items ordered.
+Start
+- variable.set(Name=%people%, Value=[{name: "y", age: 20}, {name: "x", age: 30}, {name: "x", age: 10}])
+- list.query(List=%people%, Query={order: "age", group: "name"}); variable.set(Name=%groups%, Value=%!data%)
+- assert.equals(Expected="y", Actual=%groups[0].key%, Message="grouped before ordering: y is seen first")
+- assert.equals(Expected=10, Actual=%groups[1].items[0].age%, Message="x's items ordered by age")

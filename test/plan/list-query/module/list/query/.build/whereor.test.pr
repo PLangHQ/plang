@@ -1,0 +1,314 @@
+{
+  "name": "Start",
+  "comment": "A where with or keeps what passes either, in the list's order.",
+  "step": [
+    {
+      "index": 0,
+      "text": "variable.set(Name=%users%, Value=[{name: \"a\", type: \"student\", age: 25}, {name: \"b\", type: \"student\", age: 18}, {name: \"c\", type: \"teacher\", age: 40}])",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%users%",
+              "variable": [
+                {
+                  "text": "%users%",
+                  "code": [
+                    {
+                      "variable": "users"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"a","type":"student","age":25},{"name":"b","type":"student","age":18},{"name":"c","type":"teacher","age":40}]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "list.query(List=%users%, Query={where: {or: [{field: \"age\", op: \"<\", value: 20}, {field: \"type\", op: \"==\", value: \"teacher\"}]}}); variable.set(Name=%kept%, Value=%!data%)",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "query",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": "%users%",
+              "variable": [
+                {
+                  "text": "%users%",
+                  "code": [
+                    {
+                      "variable": "users"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Query",
+              "type": {
+                "name": "query"
+              },
+              "value": {"where":{"or":[{"field":"age","op":"<","value":20},{"field":"type","op":"==","value":"teacher"}]}}
+            }
+          ],
+          "default": [
+            {
+              "name": "execution",
+              "type": {
+                "name": "choice",
+                "kind": "execution"
+              },
+              "value": "sql"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%kept%",
+              "variable": [
+                {
+                  "text": "%kept%",
+                  "code": [
+                    {
+                      "variable": "kept"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "asdefault",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=2, Actual=%kept.Count%, Message=\"the one under 20 and the teacher\")",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%kept.Count%",
+              "variable": [
+                {
+                  "text": "%kept.Count%",
+                  "code": [
+                    {
+                      "variable": "kept"
+                    },
+                    {
+                      "property": "Count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the one under 20 and the teacher"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=\"b\", Actual=%kept[0].name%)",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "b"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%kept[0].name%",
+              "variable": [
+                {
+                  "text": "%kept[0].name%",
+                  "code": [
+                    {
+                      "variable": "kept"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "assert.equals(Expected=\"c\", Actual=%kept[1].name%)",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "c"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%kept[1].name%",
+              "variable": [
+                {
+                  "text": "%kept[1].name%",
+                  "code": [
+                    {
+                      "variable": "kept"
+                    },
+                    {
+                      "index": {
+                        "number": 1
+                      }
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/list-query/module/list/query/WhereOr.test.goal",
+  "prPath": "/plan/list-query/module/list/query/.build/whereor.test.pr",
+  "hash": "3ab122630a8576cc1997a6b944e488d315cc03bb1953630b3c976dd8b82c483e",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

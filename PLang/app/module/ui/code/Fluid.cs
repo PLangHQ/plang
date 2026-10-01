@@ -91,6 +91,18 @@ public class Fluid : ITemplate
         options.ValueConverters.Add(value =>
             value is global::app.type.item.@this { IsLeaf: false } container ? Item.Liquid(container, action.Context, options) : null);
 
+        // `{{ x | json }}` writes the value through plang's json format, as the json writer shows it, compact
+        // (liquid's `json: true` indent is not honoured). Liquid's own json filter reflects the C# object behind
+        // the value (IsSequence, RawBytes, …). The value is taken as it is: a text holding %…% is those characters.
+        options.Filters.AddFilter("json", async (input, _, _) =>
+        {
+            var value = new global::app.data.@this("", global::app.type.item.@this.Create(input.ToObjectValue(), action.Context),
+                context: action.Context);
+            using var json = new MemoryStream();
+            var written = await action.Context.App.type.list.Mime("application/json").Encode(json, value, action.Context);
+            if (!written.Success) throw new AppException(written.Error!);
+            return new StringValue(System.Text.Encoding.UTF8.GetString(json.ToArray()));
+        });
 
         // Configure file provider for {% include %} / {% render %} tags
         var includes = new PlangFileProvider(GetTemplateBaseDir(action), action.Context);
@@ -351,7 +363,7 @@ public class Fluid : ITemplate
             {
                 if (string.IsNullOrEmpty(candidate)) continue;
                 var resolved = _basePath.Combine(candidate);
-                var exists = await resolved.ExistsAsync(_context);
+                var exists = await resolved.Exists(_context);
                 if (!exists.Success)
                     throw new global::app.error.AppException($"include '{candidate}': {exists.Error?.Message}",
                         exists.Error?.Key ?? "IncludeFailed", exists.Error?.StatusCode ?? 500);

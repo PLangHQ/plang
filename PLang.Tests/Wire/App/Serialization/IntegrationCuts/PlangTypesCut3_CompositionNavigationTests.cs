@@ -39,7 +39,7 @@ public class PlangTypesCut3_CompositionNavigationTests
             var img = new image(PngBytes, p!, app.actor.list.User.Context);
             // image.Path.Exists navigates through the path facet — the file
             // exists, so Exists is true.
-            await Assert.That(((global::app.type.item.path.file.@this)img.Path!).Exists).IsTrue();
+            await Assert.That(await (await img.Path!.Exists(app.actor.list.User.Context)).ToBooleanAsync()).IsTrue();
         }
         finally { try { System.IO.File.Delete(abs); } catch { } }
     }
@@ -53,7 +53,7 @@ public class PlangTypesCut3_CompositionNavigationTests
         // Don't create the file.
         var p = global::app.type.item.path.@this.Resolve(abs, app.actor.list.User.Context) as global::app.type.item.path.file.@this;
         var img = new image(PngBytes, p!, app.actor.list.User.Context);
-        await Assert.That(((global::app.type.item.path.file.@this)img.Path!).Exists).IsFalse();
+        await Assert.That(await (await img.Path!.Exists(app.actor.list.User.Context)).ToBooleanAsync()).IsFalse();
     }
 
     [Test] public async Task ImageFromBase64_PathIsNull_AndBytesThatDontDecode_HaveNoSize()

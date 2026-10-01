@@ -163,8 +163,11 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public global::app.type.current.@this<Goal, global::app.goal.list.@this> goal { get; }
 
     /// <summary>
-    /// The file system abstraction.
+    /// The disk — what a file path's verbs reach once their gate has passed. A context reads and writes
+    /// through its own (<c>context.FileSystem</c>): this one, or the overlay a build checks its goals over.
     /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public global::app.type.item.path.file.filesystem.@this FileSystem { get; } = new();
 
     /// <summary>
     /// Pluggable step cache. Default: in-memory. Swap via: - use 'redis.dll' for caching
@@ -440,7 +443,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     {
         var context = actor.list.System.Context!;
         var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", context);
-        var exists = await prPath.ExistsAsync(context);
+        var exists = await prPath.Exists(context);
         if (!exists.Success || (await exists.Value())?.Value != true) return context.Ok();
         // app.pr is the app's identity, not a goal: its raw content. Its value would go through the .pr
         // format's goal reader, which refuses a file that isn't a goal.

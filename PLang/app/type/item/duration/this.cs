@@ -19,8 +19,8 @@ namespace app.type.item.duration;
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
-    public static string Example => "PT5M";
-    public static string Description => "A length of time, written in ISO 8601 (PT5M is five minutes).";
+    public static string Example => "5m";
+    public static string Description => "A length of time: a number and its unit (200ms, 30s, 5m, 1h, 1d), or ISO 8601 (PT5M).";
     public static string Shape => "string";
 
     public System.TimeSpan Value { get; }
@@ -55,7 +55,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         if (Create(value) is { } built) return built;
         data.Fail((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s)
-            ? new global::app.error.Error($"Cannot parse '{s}' as duration — expected ISO-8601 (e.g. PT30S) or .NET format (e.g. 00:00:30).", "DurationParseFailed", 400)
+            ? new global::app.error.Error($"Cannot parse '{s}' as duration — expected a number and its unit (30s, 200ms, 5m), ISO-8601 (PT30S) or .NET format (00:00:30).", "DurationParseFailed", 400)
             : new global::app.error.Error($"Cannot convert {((value as global::app.type.item.@this)?.Type.Name ?? value?.GetType().Name)} to duration.", "DurationConversionFailed", 400));
         return null;
     }

@@ -140,16 +140,16 @@ public class FileHandlerTests : IDisposable
         await result.IsFailure();
     }
 
-    // --- Read with ResolveVariables (Gap 2 from coder handover) ---
+    // --- Read with Template (Gap 2 from coder handover) ---
 
     [Test]
-    public async Task Read_ResolveVariablesTrue_ResolvesVariableInContent()
+    public async Task Read_TemplateTrue_ResolvesVariableInContent()
     {
         System.IO.File.WriteAllText(TempPath("template.txt"), "Hello %name%, welcome");
         _app.actor.list.User.Context.Variable.Set("name", "Ingi");
 
         var action = new Read(_app.actor.list.User.Context) { Path = MakePath("template.txt"),
-            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", true, context: _app.actor.list.User.Context)
+            Template = new global::app.data.@this<global::app.type.item.@bool.@this>("Template", true, context: _app.actor.list.User.Context)
         };
         var result = await action.Start();
 
@@ -158,15 +158,15 @@ public class FileHandlerTests : IDisposable
     }
 
     [Test]
-    public async Task Read_ResolveVariablesFalse_LeavesVariableLiteral()
+    public async Task Read_TemplateFalse_LeavesVariableLiteral()
     {
-        // Default value of ResolveVariables is false (per [Default(false)]). Even
+        // Default value of Template is false (per [Default(false)]). Even
         // when %var% is set, the literal must come back unresolved.
         System.IO.File.WriteAllText(TempPath("literal.txt"), "Hello %name%, welcome");
         _app.actor.list.User.Context.Variable.Set("name", "Ingi");
 
         var action = new Read(_app.actor.list.User.Context) { Path = MakePath("literal.txt"),
-            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", false, context: _app.actor.list.User.Context)
+            Template = new global::app.data.@this<global::app.type.item.@bool.@this>("Template", false, context: _app.actor.list.User.Context)
         };
         var result = await action.Start();
 
@@ -176,12 +176,12 @@ public class FileHandlerTests : IDisposable
 
     // The programmer's request is a birth fact: the file comes back unread, its type marked a template.
     [Test]
-    public async Task Read_ResolveVariablesTrue_IsAFileMarkedATemplate_NothingRead()
+    public async Task Read_TemplateTrue_IsAFileMarkedATemplate_NothingRead()
     {
         System.IO.File.WriteAllText(TempPath("marked.txt"), "Hello %name%");
 
         var action = new Read(_app.actor.list.User.Context) { Path = MakePath("marked.txt"),
-            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", true, context: _app.actor.list.User.Context)
+            Template = new global::app.data.@this<global::app.type.item.@bool.@this>("Template", true, context: _app.actor.list.User.Context)
         };
         var result = await action.Start();
 
@@ -196,13 +196,13 @@ public class FileHandlerTests : IDisposable
 
     // The content renders when it is used, against the variables then — lazily.
     [Test]
-    public async Task Read_ResolveVariablesTrue_RendersAtUse()
+    public async Task Read_TemplateTrue_RendersAtUse()
     {
         System.IO.File.WriteAllText(TempPath("late.txt"), "Hello %name%");
         _app.actor.list.User.Context.Variable.Set("name", "before");
 
         var action = new Read(_app.actor.list.User.Context) { Path = MakePath("late.txt"),
-            ResolveVariables = new global::app.data.@this<global::app.type.item.@bool.@this>("ResolveVariables", true, context: _app.actor.list.User.Context)
+            Template = new global::app.data.@this<global::app.type.item.@bool.@this>("Template", true, context: _app.actor.list.User.Context)
         };
         var result = await action.Start();
         _app.actor.list.User.Context.Variable.Set("name", "after");
@@ -315,12 +315,14 @@ public class FileHandlerTests : IDisposable
     }
 
     [Test]
-    public async Task Delete_NonexistentFile_IgnoreIfNotFound_ReturnsSuccess()
+    public async Task Delete_NonexistentFile_IsNotFound()
     {
-        var action = new Delete(_app.actor.list.User.Context) { Path = MakePath("nope.txt"), IgnoreIfNotFound = (global::app.type.item.@bool.@this)true };
+        // nothing there is NotFound — a step that doesn't mind ignores it on its error: on error 'NotFound' ignore
+        var action = new Delete(_app.actor.list.User.Context) { Path = MakePath("nope.txt") };
         var result = await action.Start();
 
-        await result.IsSuccess();
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
 
     [Test]

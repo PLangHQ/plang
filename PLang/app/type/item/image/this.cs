@@ -270,7 +270,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (_bytes != null) return _bytes.Length > 0;
         if (Path != null)
         {
-            var exists = await Path.ExistsAsync(context);
+            var exists = await Path.Exists(context);
             return exists.Success && await exists.ToBooleanAsync();
         }
         return false;

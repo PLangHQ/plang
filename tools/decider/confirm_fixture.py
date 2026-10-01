@@ -12,7 +12,7 @@ OUT = os.path.join(HERE, '..', '..', 'PLang.Tests', 'Wire', 'App', 'Decider', 'c
 
 # (step index, step text, the answer's formal for it)
 CASES = [
-    (1, 'call Flaky, on error retry once, ignore', 'goal.call(Name="Flaky"); on.error(RetryCount=1, IgnoreError=true)'),
+    (1, 'call Flaky, on error retry once, ignore', 'goal.call(Name="Flaky"); on.error(RetryCount=1, Ignore=true)'),
     (3, 'read %path%, cache for a minute', 'file.read(Path=%path%); on.cache(Duration="PT1M")'),
     (4, 'call Save, on error retry twice over 10 seconds', 'goal.call(Name="Save"); on.error(RetryCount=2)'),
 ]

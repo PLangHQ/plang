@@ -448,32 +448,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return this;
     }
 
-    /// <summary>
-    /// Sorts through THE comparison entry — so `sort` and `if a &gt; b` agree, nulls sort last, and a
-    /// mixed-type list errors (<see cref="global::app.data.IncomparableException"/>). Each element is its own
-    /// key, or its <paramref name="by"/> field (`sort %people% by "age"`). Two-phase: phase 1 resolves every
-    /// key through the door (async — all I/O lands here); phase 2 orders sync on the in-memory values.
-    /// Collapses the rows into one flat list.
-    /// </summary>
-    public async System.Threading.Tasks.Task Sort(string? by, bool descending, actor.context.@this context)
-    {
-        var flat = new List<Data>(Items(context));
-        var keys = new Dictionary<Data, (Data key, object? value)>(ReferenceEqualityComparer.Instance);
-        foreach (var d in flat)
-        {
-            var key = by == null ? d : await d.Get(by);
-            keys[d] = (key, await key.Value());
-        }
-        var sorted = await SortAsync(flat, async (a, b) =>
-        {
-            var (ka, va) = keys[a];
-            var (kb, vb) = keys[b];
-            int c = await OrderOf(ka, kb, va, vb);
-            return descending ? -c : c;
-        });
-        ResetTo(sorted);
-    }
-
     // The sort boundary: Comparison → sign. Nulls sort LAST (sort owns its null
     // placement — the value-model null policy answers Equal/NotEqual, which carries no
     // order); NotEqual/Incomparable between present values is a mixed list → error.
@@ -870,17 +844,39 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return context.Ok(this);
     }
 
-    /// <summary>Sorts this list by <paramref name="by"/> when one is given (else by the elements themselves);
-    /// elements that have no order between them are an error, not a throw. Answers this list.</summary>
+    /// <summary>
+    /// The elements in order, through THE comparison entry — so `sort` and `if a &gt; b` agree, and nulls sort
+    /// last. Each element is its own key, or its <paramref name="by"/> field (`sort %people% by "age"`); equal
+    /// keys keep their order. Two-phase: every key is resolved through the door first (async — all I/O lands
+    /// there), then the keys in hand are ordered. Elements that have no order between them are an error. A new
+    /// list, born through its type; this one is unchanged.
+    /// </summary>
     public async System.Threading.Tasks.Task<Data> Sort(global::app.type.item.text.@this? by,
         global::app.type.item.@bool.@this descending, actor.context.@this context)
     {
-        try { await Sort(by?.ToString(), descending.Value, context); }
+        var flat = new List<Data>(Items(context));
+        var keys = new Dictionary<Data, (Data key, object? value)>(ReferenceEqualityComparer.Instance);
+        foreach (var d in flat)
+        {
+            var key = by == null ? d : await d.Get(by.ToString());
+            keys[d] = (key, await key.Value());
+        }
+        List<Data> sorted;
+        try
+        {
+            sorted = await SortAsync(flat, async (a, b) =>
+            {
+                var (ka, va) = keys[a];
+                var (kb, vb) = keys[b];
+                int c = await OrderOf(ka, kb, va, vb);
+                return descending.Value ? -c : c;
+            });
+        }
         catch (global::app.data.IncomparableException ex)
         {
             return context.Error(new global::app.error.ValidationError(ex.Message));
         }
-        return context.Ok(this);
+        return await context.App.type.list["list"].Create(sorted, context);
     }
 
     /// <summary>The elements with their duplicates dropped (the first of each kept) — equal through the one
@@ -908,9 +904,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>The elements grouped by their <paramref name="key"/> field, in first-seen order: a list of
-    /// <c>{key, items}</c>, each <c>items</c> a list of its elements (navigable in turn). A key that didn't
-    /// resolve is its own answer. A new list, born through its type.</summary>
-    public async System.Threading.Tasks.Task<Data> Group(global::app.type.item.text.@this key, actor.context.@this context)
+    /// <c>{key, items}</c>, each <c>items</c> what <paramref name="each"/> answers for the group's elements (they
+    /// as they are, or a query's parts after the group). A key that didn't resolve is its own answer; so is a
+    /// group's failure. A new list, born through its type.</summary>
+    public async System.Threading.Tasks.Task<Data> Group(global::app.type.item.text.@this key,
+        System.Func<@this, System.Threading.Tasks.Task<Data>> each, actor.context.@this context)
     {
         var buckets = new Dictionary<string, @this>();
         var order = new List<string>();
@@ -925,7 +923,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             }
             bucket.Add(element);
         }
-        var groups = order.Select(name => new Dictionary<string, object?> { ["key"] = name, ["items"] = buckets[name] }).ToList();
+        var groups = new List<Dictionary<string, object?>>();
+        foreach (var name in order)
+        {
+            var items = await each(buckets[name]);
+            if (!items.Success) return items;
+            groups.Add(new Dictionary<string, object?> { ["key"] = name, ["items"] = items });
+        }
         return await context.App.type.list["list"].Create(groups, context);
     }
 

@@ -24,4 +24,9 @@ public sealed class @this
     public string Shown => ((double)Score).ToString("0.00", System.Globalization.CultureInfo.InvariantCulture);
 
     public Mark Mark { get; init; }
+
+    /// <summary>For an action picked through its module: how sure stage 1 was of each module stage 2 asked about,
+    /// as the prompt prints it (<c>file 0.56, variable 0.36</c>) — the action's score is its certainty within its
+    /// module, not the module's. Null for any other action.</summary>
+    public string? Module { get; init; }
 }
