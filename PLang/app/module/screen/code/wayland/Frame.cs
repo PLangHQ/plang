@@ -185,6 +185,8 @@ internal sealed class Frame
 
     internal void Cursor(string name) => Message(2, System.Text.Encoding.UTF8.GetBytes(name));
     internal void Clipboard(string text) => Message(5, System.Text.Encoding.UTF8.GetBytes(text));
+    /// <summary>A message for the host's PLang (json), beside the frames: kind 9.</summary>
+    internal void Host(string json) => Message(9, System.Text.Encoding.UTF8.GetBytes(json));
 
     private void Message(byte kind, ReadOnlySpan<byte> payload)
     {
