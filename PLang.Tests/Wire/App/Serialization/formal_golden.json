@@ -33,7 +33,7 @@
       "value": "/"
      },
      {
-      "name": "AsDefault",
+      "name": "Default",
       "type": {
        "name": "bool"
       },
@@ -42,8 +42,8 @@
     ]
    }
   ],
-  "formal": "variable.set(Name: variable = %path%, Value: text = \"/\", AsDefault: bool = true)",
-  "untyped": "variable.set(Name=%path%, Value=\"/\", AsDefault=true)"
+  "formal": "variable.set(Name: variable = %path%, Value: text = \"/\", Default: bool = true)",
+  "untyped": "variable.set(Name=%path%, Value=\"/\", Default=true)"
  },
  {
   "goal": "build",
@@ -82,7 +82,7 @@
       "value": true
      },
      {
-      "name": "AsDefault",
+      "name": "Default",
       "type": {
        "name": "bool"
       },
@@ -91,8 +91,8 @@
     ]
    }
   ],
-  "formal": "variable.set(Name: variable = %!build.cache%, Value: bool = true, AsDefault: bool = true)",
-  "untyped": "variable.set(Name=%!build.cache%, Value=true, AsDefault=true)"
+  "formal": "variable.set(Name: variable = %!build.cache%, Value: bool = true, Default: bool = true)",
+  "untyped": "variable.set(Name=%!build.cache%, Value=true, Default=true)"
  },
  {
   "goal": "build",
@@ -131,7 +131,7 @@
       "value": true
      },
      {
-      "name": "AsDefault",
+      "name": "Default",
       "type": {
        "name": "bool"
       },
@@ -140,8 +140,8 @@
     ]
    }
   ],
-  "formal": "variable.set(Name: variable = %!build.summary%, Value: bool = true, AsDefault: bool = true)",
-  "untyped": "variable.set(Name=%!build.summary%, Value=true, AsDefault=true)"
+  "formal": "variable.set(Name: variable = %!build.summary%, Value: bool = true, Default: bool = true)",
+  "untyped": "variable.set(Name=%!build.summary%, Value=true, Default=true)"
  },
  {
   "goal": "build",

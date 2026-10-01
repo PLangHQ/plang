@@ -205,7 +205,7 @@ public class SetTypeInferenceTests
     {
         var context = _app.actor.list.User.Context;
         await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%x%", "variable"), ("value", "first")).Start(context);
-        var result = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%x%", "variable"), ("value", "second"), ("asdefault", true)).Start(context);
+        var result = await global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%x%", "variable"), ("value", "second"), ("default", true)).Start(context);
         await result.IsSuccess();
         await Assert.That((await context.Variable.GetValue("x"))).IsEqualTo("first");
     }

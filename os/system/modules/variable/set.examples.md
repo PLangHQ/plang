@@ -2,7 +2,7 @@ Step text: `set %x% = 5`
 Properties: `{"Name": "%x%", "Value": 5}` — no `Type`; the value is plainly a number.
 
 Step text: `set default %enabled% = true`
-Properties: `{"Name": "%enabled%", "Value": true, "AsDefault": true}` — "default" is what `AsDefault` means.
+Properties: `{"Name": "%enabled%", "Value": true, "Default": true}` — "default" is what `Default` means.
 
 Step text: `set %birthday% = "2026-01-01"`
 Properties: `{"Name": "%birthday%", "Value": "2026-01-01", "Type": {"name": "date"}}` — read as a date from its ISO form.

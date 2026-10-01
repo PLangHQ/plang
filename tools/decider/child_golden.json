@@ -31,9 +31,9 @@
     "10": ["build.appSave"]
    },
    "expect": {
-    "0": [{"module": "variable", "name": "set", "property": {"Name": "%path%", "Value": "/", "AsDefault": true}}],
-    "1": [{"module": "variable", "name": "set", "property": {"Name": "%!build.cache%", "Value": true, "AsDefault": true}}],
-    "2": [{"module": "variable", "name": "set", "property": {"Name": "%!build.summary%", "Value": true, "AsDefault": true}}],
+    "0": [{"module": "variable", "name": "set", "property": {"Name": "%path%", "Value": "/", "Default": true}}],
+    "1": [{"module": "variable", "name": "set", "property": {"Name": "%!build.cache%", "Value": true, "Default": true}}],
+    "2": [{"module": "variable", "name": "set", "property": {"Name": "%!build.summary%", "Value": true, "Default": true}}],
     "3": [{"module": "channel", "name": "set", "property": {"Name": "builder",
            "Goal": {"module": "goal", "name": "call", "property": {"Name": "BuilderChannel"}}}}],
     "4": [{"module": "goal", "name": "call", "property": {"Name": "EmitBuildEvent",

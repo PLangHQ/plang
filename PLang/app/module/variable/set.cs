@@ -4,7 +4,7 @@ namespace app.module.variable;
 
 /// <summary>
 /// Sets a variable in the current context's variable store.
-/// When AsDefault is true, only sets if the variable doesn't already exist.
+/// When Default is true, only sets if the variable doesn't already exist.
 ///
 /// variable.set is the binding site. With no `as` clause it shallow-clones the source
 /// Data under the target name — value (lazy raw included), type, signature and
@@ -78,8 +78,9 @@ public partial class Set : IContext, IScope, IKeep
     /// variable.
     /// </summary>
     public partial data.@this? Type { get; init; }
+    /// <summary>Whether the value is a default — `set default %x% = …` writes only where nothing is.</summary>
     [Default(false)]
-    public partial data.@this<global::app.type.item.@bool.@this> AsDefault { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> Default { get; init; }
 
     // Build-time: with no `as` clause, adopt the type of what I capture. The
     // preceding action published its return as %!buildData%; I take its type onto
@@ -126,7 +127,7 @@ public partial class Set : IContext, IScope, IKeep
 
         // `set default` writes only where nothing is — a setting included (%!build.setting.cache% holds its
         // class's default, or this run's value).
-        if (await AsDefault.ToBooleanAsync())
+        if (await Default.ToBooleanAsync())
         {
             var existing = await name.Start(Context);
             if (existing.IsInitialized)

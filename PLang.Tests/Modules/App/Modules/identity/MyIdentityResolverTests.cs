@@ -88,10 +88,10 @@ public class MyIdentityResolverTests
         var context = _app.actor.list.System.Context;
 
         // Create two identities
-        var h1 = new Create(context) { Name = (global::app.type.item.text.@this)"first", SetAsDefault = (global::app.type.item.@bool.@this)true };
+        var h1 = new Create(context) { Name = (global::app.type.item.text.@this)"first", Default = (global::app.type.item.@bool.@this)true };
         await h1.Attach(null, context);
         await h1.Start();
-        var h2 = new Create(context) { Name = (global::app.type.item.text.@this)"second", SetAsDefault = (global::app.type.item.@bool.@this)false };
+        var h2 = new Create(context) { Name = (global::app.type.item.text.@this)"second", Default = (global::app.type.item.@bool.@this)false };
         await h2.Attach(null, context);
         await h2.Start();
 

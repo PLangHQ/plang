@@ -38,13 +38,19 @@
               "value": "/"
             },
             {
-              "name": "AsDefault",
+              "name": "Default",
               "type": {
                 "name": "bool"
               },
               "value": true
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set default %path% = \"/\"': variable.set: 'AsDefault' is not a property of this action. Its properties are: Name, Value, Type, Default."
         }
       ],
       "waitForExecution": true
@@ -91,7 +97,7 @@
               "value": true
             },
             {
-              "name": "AsDefault",
+              "name": "Default",
               "type": {
                 "name": "bool"
               },
@@ -104,6 +110,14 @@
         {
           "key": "Unsure",
           "message": "step 1 uses variable.set, which the decider was not sure of (0.73)"
+        },
+        {
+          "key": "Reopened",
+          "message": "step 1's saved code no longer holds — rebuilt: step 1 'set default %!build.setting.cache% = true': variable.set: 'AsDefault' is not a property of this action. Its properties are: Name, Value, Type, Default."
+        },
+        {
+          "key": "Unsure",
+          "message": "step 1 uses variable.set, which the decider was not sure of (0.69)"
         }
       ],
       "waitForExecution": true

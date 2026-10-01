@@ -196,7 +196,7 @@ public class SensitivePropertyFilterTests
     public async Task Sensitive_IdentityData_PrivateKeyExcluded()
     {
         // End-to-end: create real identity, serialize, verify PrivateKey absent
-        var create = new Create(_app.actor.list.System.Context) { Name = (global::app.type.item.text.@this)"e2e", SetAsDefault = (global::app.type.item.@bool.@this)true };
+        var create = new Create(_app.actor.list.System.Context) { Name = (global::app.type.item.text.@this)"e2e", Default = (global::app.type.item.@bool.@this)true };
         await create.Attach(null, _app.actor.list.System.Context);
         var result = await create.Start();
         var identity = (await result.Value()) as Identity;
