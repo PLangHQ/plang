@@ -29,13 +29,15 @@ Stage1
 - call goal /module/list/query/UnknownField
 
 Stage2
-/ The builder picks list.query from the words.
-/ "filter %users% where type is 'student' and age > 20, group by name, distinct, order by age" builds to one list.query with those parts
-- call goal /module/list/query/build/ManyParts
-/ "where %users% age > 20, write to %adults%" builds to a one-part query
+/ The builder picks list.query from the words (built goldens under build/, pinned in C# QueryBuildPinTests).
+/ A multi-part sentence (where-and, group by city, distinct, order by age) builds to one list.query with those parts
+- call goal /module/list/query/build/ManyPart
+/ A one-part where sentence builds to a one-part query
 - call goal /module/list/query/build/OnePart
-/ "sort %people% by age" with no destination builds with an explicit write to %people%
-- call goal /module/list/query/build/WriteBack
+/ "highest first" builds order with desc (plain order is ascending) — closes #18
+- call goal /module/list/query/build/HighestFirst
+/ The no-destination write-back ("sort %people% by age" -> explicit write to %people%) is proven by measurement (3/3)
+/ and holds on any list.query sentence; its dedicated golden lands in stage 3, once sort -> list.query.
 
 Stage3
 / The four are gone; their behaviours hold through list.query.

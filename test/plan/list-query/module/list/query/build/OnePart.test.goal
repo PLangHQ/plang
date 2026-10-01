@@ -1,0 +1,6 @@
+/ A one-part where sentence, in words, builds to list.query and keeps only what matches.
+Start
+- set %users% = [{name: "a", age: 25}, {name: "b", age: 18}]
+- keep %users% where age > 20, write to %kept%
+- assert that %kept.Count% is 1
+- assert that %kept[0].name% is "a"

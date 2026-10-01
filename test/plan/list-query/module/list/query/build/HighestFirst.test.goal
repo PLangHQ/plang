@@ -1,0 +1,6 @@
+/ "highest first", in words, builds to list.query with order desc (plain order is ascending — #18).
+Start
+- set %players% = [{name: "a", score: 10}, {name: "b", score: 30}, {name: "c", score: 20}]
+- order %players% by score, highest first, write to %ranked%
+- assert that %ranked[0].name% is "b"
+- assert that %ranked[2].name% is "a"
