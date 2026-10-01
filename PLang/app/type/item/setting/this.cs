@@ -25,8 +25,8 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     }
 
     /// <summary>The path this setting is read by — <c>%!app.goal.list.setting%</c> is <c>app.goal.list.setting</c>,
-    /// <c>%!llm.setting%</c> is <c>llm.setting</c>.</summary>
-    [Out] public string Path { get; }
+    /// <c>%!llm.setting%</c> is <c>llm.setting</c>. Its identity, not one of its options: it is not written with them.</summary>
+    public string Path { get; }
 
     /// <summary>Whether this setting is on — every setting node answers it, so any switch reads the same way
     /// (<c>%!signing.verify.setting.freshness.check.enabled%</c>) and can grow members without a rename. A node read
