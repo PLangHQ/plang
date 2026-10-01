@@ -35,3 +35,7 @@ Collected by the architect from the coder's eval rounds, the educator's probes a
 - **Steps written in formal because the words didn't build reliably:** the builder's FixSteps `llm.query` (item 3), `build.match` lines, and the `Start` goal's cached-goal guard (re-recorded until it came back a bare `if`).
 - **list.query's 10 plan tests are written in formal:** expected until stage 2 teaches the builder `list.query`.
 - **The docs goal's two loop-and-call steps:** the educator is holding them in a copy until item 1 is fixed (formal was offered and declined).
+
+## Added later on 2026-10-01
+
+- **19. `sleep 1 second` refused** (the educator, `/shared/educator/course/B-deciding-and-repeating/code/B6-waiting`): "1 is in the step but not in your answer; … your answer writes 1000". The cause is the action: `timer.sleep` takes `Ms` as `data<number>` milliseconds (`PLang/app/module/timer/sleep.cs:11`), and `sleep.examples.md` teaches `{"Ms": 2000}` for "sleep 2 seconds". Fix: `Duration` as `data<duration>` ("1s"); first a list of every action option holding a time as a number. With the builder bot.
