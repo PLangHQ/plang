@@ -158,6 +158,15 @@ public class ReturnTests
     }
 
     [Test]
+    public async Task ADictTemplateNamingAMissingVariable_FailsTheSet()
+    {
+        var set = await Ctx.Variable.Set("t", global::PLang.Tests.TemplateStamp.Container("value",
+            new Dictionary<string, object?> { ["a"] = "%nobody%" }, Ctx));
+        await set.IsFailure();
+        await Assert.That(set.Error!.Key).IsEqualTo("VariableNotFound");
+    }
+
+    [Test]
     public async Task ATemplateThatAppendsToItself_Accumulates()
     {
         await Ctx.Variable.Set("order", "start");

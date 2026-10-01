@@ -688,7 +688,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         if (Template == null) return this;
         var result = new @this();
         foreach (var row in Items(data.Context))
-            result.AddRaw(await row.Value());
+        {
+            var value = await row.Value();
+            // an element that can't be read (a %variable% not set) fails the list, as reading it anywhere fails
+            if (!row.Success) { data.Fail(row.Error!); return Absent; }
+            result.AddRaw(value);
+        }
         return result;
     }
 
@@ -855,6 +860,21 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         global::app.type.item.@bool.@this descending, actor.context.@this context)
     {
         var flat = new List<Data>(Items(context));
+        // a field no element has is a misspelling, an error naming it — as Where answers — never the list back
+        // unchanged
+        if (by != null && flat.Count > 0)
+        {
+            var name = by.ToString();
+            var items = new List<global::app.type.item.@this?>();
+            var any = false;
+            foreach (var d in flat)
+            {
+                var item = await d.Value();
+                items.Add(item);
+                if (item != null && await item.Field(name, context) != null) any = true;
+            }
+            if (!any) return NoField(name, items.SelectMany(i => i?.Fields ?? []), context);
+        }
         var keys = new Dictionary<Data, (Data key, object? value)>(ReferenceEqualityComparer.Instance);
         foreach (var d in flat)
         {

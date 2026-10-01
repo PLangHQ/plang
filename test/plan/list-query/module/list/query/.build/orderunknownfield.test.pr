@@ -1,0 +1,392 @@
+{
+  "name": "Start",
+  "comment": "Order by a field no element has is an error naming the part and the field — never the list back unchanged.",
+  "step": [
+    {
+      "index": 0,
+      "text": "variable.set(Name=%users%, Value=[{name: \"a\", age: 30}, {name: \"b\", age: 10}])",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%users%",
+              "variable": [
+                {
+                  "text": "%users%",
+                  "code": [
+                    {
+                      "variable": "users"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"a","age":30},{"name":"b","age":10}]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "list.query(List=%users%, Query={order: \"agee\"}); on.error(Key=\"FieldNotFound\", Recovery=[goal.call(Name=\"Caught\")]); variable.set(Name=%sorted%, Value=%!data%)",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "query",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": "%users%",
+              "variable": [
+                {
+                  "text": "%users%",
+                  "code": [
+                    {
+                      "variable": "users"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Query",
+              "type": {
+                "name": "query"
+              },
+              "value": {"order":"agee"}
+            }
+          ],
+          "default": [
+            {
+              "name": "execution",
+              "type": {
+                "name": "choice",
+                "kind": "execution"
+              },
+              "value": "sql"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "FieldNotFound"
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "Caught"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "parallel",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%sorted%",
+              "variable": [
+                {
+                  "text": "%sorted%",
+                  "code": [
+                    {
+                      "variable": "sorted"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert.contains(Value=\"order: \", Container=%caught%, Message=\"the error names the part\")",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "order: "
+            },
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%caught%",
+              "variable": [
+                {
+                  "text": "%caught%",
+                  "code": [
+                    {
+                      "variable": "caught"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the error names the part"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert.contains(Value=\"agee\", Container=%caught%, Message=\"and the misspelled field\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "agee"
+            },
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%caught%",
+              "variable": [
+                {
+                  "text": "%caught%",
+                  "code": [
+                    {
+                      "variable": "caught"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "and the misspelled field"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [
+    {
+      "name": "Caught",
+      "step": [
+        {
+          "index": 0,
+          "text": "variable.set(Name=%caught%, Value=%!error.Message%)",
+          "line": {
+            "number": 9
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%caught%",
+                  "variable": [
+                    {
+                      "text": "%caught%",
+                      "code": [
+                        {
+                          "variable": "caught"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!error.Message%",
+                  "variable": [
+                    {
+                      "text": "%!error.Message%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Message"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/list-query/module/list/query/OrderUnknownField.test.goal",
+      "prPath": "/plan/list-query/module/list/query/.build/orderunknownfield.test.pr",
+      "hash": "9e24b3d3005503e82d9a19b8467341599dd3036c67dd9fa5ceedfb60de7d0199",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": true
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/list-query/module/list/query/OrderUnknownField.test.goal",
+  "prPath": "/plan/list-query/module/list/query/.build/orderunknownfield.test.pr",
+  "hash": "9ba2c7d80470d57d8ea8328c4c533f740397e41986855bbdc4efd7fa05be5b97",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

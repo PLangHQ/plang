@@ -364,7 +364,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (Template == null) return this;
         var result = new @this();
         foreach (var key in _value.Keys)
-            result.Set(key, await Slot(key, data.Context).Value());
+        {
+            var entry = Slot(key, data.Context);
+            var value = await entry.Value();
+            // an entry that can't be read (a %variable% not set) fails the dict, as reading it anywhere fails
+            if (!entry.Success) { data.Fail(entry.Error!); return Absent; }
+            result.Set(key, value);
+        }
         return result;
     }
 
