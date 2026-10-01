@@ -276,6 +276,20 @@ public class source : @this
         _ => true,
     };
 
+    /// <summary>Emptiness from the raw form, nothing read: no bytes, or — for a list or a dict — the empty one written
+    /// (a <c>[]</c> in a .pr). A source holding a variable is not answered here: what it names is known when it is read.</summary>
+    public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
+    {
+        if (IsVariable || _variable.Count > 0) return System.Threading.Tasks.ValueTask.FromResult(false);
+        var empty = _value switch
+        {
+            string s => s.Trim() is "" || (s.Trim() is "[]" && _type.Is("list")) || (s.Trim() is "{}" && _type.Is("dict")),
+            byte[] b => b.Length == 0,
+            _ => false,
+        };
+        return System.Threading.Tasks.ValueTask.FromResult(empty);
+    }
+
     public override bool IsLeaf => true;
 
     /// <summary>
