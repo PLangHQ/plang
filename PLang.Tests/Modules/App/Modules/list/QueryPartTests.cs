@@ -34,6 +34,13 @@ public class QueryPartTests
         await Assert.That(data.Success).IsTrue();
     }
 
+    [Test] public async Task OneClause_IsAQueryListOfOne()
+    {
+        var (made, _) = await Made(new() { ["order"] = "age" });
+        await Assert.That(made).IsTypeOf<global::app.module.list.type.query.list.@this>();
+        await Assert.That(made!.Type.Name).IsEqualTo("query");
+    }
+
     [Test] public async Task AKeyThatIsNoPart_IsRefused_NamingThePartsThatExist()
     {
         var (made, data) = await Made(new() { ["limit"] = 5 });

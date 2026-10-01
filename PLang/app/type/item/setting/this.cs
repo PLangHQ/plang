@@ -9,7 +9,7 @@ namespace app.type.item.setting;
 /// node — the settings of a module or an action with no class of its own (<c>%!llm.query.setting%</c>). The
 /// asker's settings build one, the saved row and this run's values on it.
 /// </summary>
-[global::app.Attributes.PlangType("setting")]
+[global::app.Attributes.PlangType("setting"), global::app.Attributes.Kinds]
 public class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>A node: the path it stands for.</summary>

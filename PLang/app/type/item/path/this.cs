@@ -9,7 +9,7 @@ namespace app.type.item.path;
 /// Everything that needs a running scope (the root, the formats, the actor's permission)
 /// takes the caller's context.
 /// </summary>
-[global::app.Attributes.PlangType("path")]
+[global::app.Attributes.PlangType("path"), global::app.Attributes.Kinds]
 public abstract partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>

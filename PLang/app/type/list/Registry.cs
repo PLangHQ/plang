@@ -365,21 +365,16 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         string.Equals(type.Name, "this", StringComparison.Ordinal);
 
     /// <summary>
-    /// The family a class is a KIND of — only when it says so. A path scheme declares it
-    /// (<c>[PathScheme("file")]</c> → {path, kind: file}); a typed program list is one through its
-    /// generic base (<c>list&lt;step&gt;</c> → {list, kind: step}). Null for every other class:
-    /// by default a class's name is its own (modifier is "modifier", never a kind of action).
+    /// The family a class is a KIND of: the nearest base that declares it has kinds (<c>[Kinds]</c>) — a file is
+    /// a kind of path, a class of settings a kind of setting, a typed list (<c>list&lt;step&gt;</c>) a kind of
+    /// list, a where a kind of query. Null for every other class: by default a class's name is its own
+    /// (modifier is "modifier", never a kind of action).
     /// </summary>
     private static string? FamilyName(System.Type type)
     {
-        if (type.IsDefined(typeof(app.type.item.path.PathSchemeAttribute), inherit: false))
-            return global::app.type.item.@this.NameOf(typeof(app.type.item.path.@this));
-        // a class of settings is a kind of setting, named by its path
-        if (type != typeof(app.type.item.setting.@this) && typeof(app.type.item.setting.@this).IsAssignableFrom(type))
-            return global::app.type.item.@this.NameOf(typeof(app.type.item.setting.@this));
         for (var b = type.BaseType; b != null; b = b.BaseType)
-            if (b.IsGenericType && b.GetGenericTypeDefinition() == typeof(app.type.item.list.@this<>))
-                return global::app.type.item.@this.NameOf(typeof(app.type.item.list.@this));
+            if (b.IsDefined(typeof(global::app.Attributes.KindsAttribute), inherit: false))
+                return global::app.type.item.@this.NameOf(b);
         return null;
     }
 }

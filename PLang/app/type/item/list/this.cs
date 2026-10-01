@@ -17,7 +17,7 @@ namespace app.type.item.list;
 /// Without the converter, raw STJ would reflect each element's <c>Data</c> C#
 /// surface into junk — the same failure that gave <c>dict</c> its converter.</para>
 /// </summary>
-[global::app.Attributes.PlangType("list")]
+[global::app.Attributes.PlangType("list"), global::app.Attributes.Kinds]
 public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     // A CHUNK row: another list's elements appended in O(1) by an extend (`Add(list)`), read in
