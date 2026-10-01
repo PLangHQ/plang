@@ -203,12 +203,11 @@ public sealed partial class @this
 
     /// <summary>
     /// Delete with file-action options. Non-recursive directory deletes refuse
-    /// non-empty directories with <c>DirectoryNotEmpty</c>; missing targets
-    /// surface <c>NotFound</c> unless <paramref name="ignoreIfNotFound"/> is
-    /// set. Returns the resulting Path (post-delete) wrapped in Data so the
+    /// non-empty directories with <c>DirectoryNotEmpty</c>; a missing target is
+    /// <c>NotFound</c>. Returns the resulting Path (post-delete) wrapped in Data so the
     /// caller can read <see cref="Exists"/> on it.
     /// </summary>
-    public override async Task<data.@this<global::app.type.item.path.@this>> Delete(global::app.type.item.@bool.@this recursive, global::app.type.item.@bool.@this ignoreIfNotFound, actor.context.@this context)
+    public override async Task<data.@this<global::app.type.item.path.@this>> Delete(global::app.type.item.@bool.@this recursive, actor.context.@this context)
     {
         if (await AuthGate(Verb.Delete, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         try
@@ -223,7 +222,7 @@ public sealed partial class @this
                         $"Directory is not empty: {Raw}. Use recursive=true to delete contents.", "DirectoryNotEmpty", 400));
                 files.Delete(this, recursive.Value);
             }
-            else if (!ignoreIfNotFound.Value)
+            else
                 return context.Error<global::app.type.item.path.@this>(new global::app.error.ServiceError($"Not found: {Raw}", "NotFound", 404));
 
             return context.Ok<global::app.type.item.path.@this>(this);

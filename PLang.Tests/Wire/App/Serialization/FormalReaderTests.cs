@@ -103,7 +103,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task AClause_LeadingTheStep_IsRefused()
     {
-        var read = Read("on.error(IgnoreError=true)", out _);
+        var read = Read("on.error(Ignore=true)", out _);
 
         await read.IsFailure();
         await Assert.That(read.Error!.Message).Contains("is a clause of the action before it");

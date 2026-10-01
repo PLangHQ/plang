@@ -244,7 +244,7 @@ return async () =>
     if (!MatchesError(result.Error)) return result;
 
     // retry and/or call error goal, per Order
-    // IgnoreError is the final fallback
+    // Ignore is the final fallback
     ...
 };
 ```

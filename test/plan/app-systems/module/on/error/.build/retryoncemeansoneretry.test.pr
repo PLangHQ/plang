@@ -65,7 +65,7 @@
             {
               "name": "Name",
               "type": {
-                "name": "text"
+                "name": "goal"
               },
               "value": "Flaky"
             }
@@ -92,13 +92,19 @@
               "value": 1
             },
             {
-              "name": "IgnoreError",
+              "name": "Ignore",
               "type": {
                 "name": "bool"
               },
               "value": true
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 1's saved code no longer holds — rebuilt: step 1 'call Flaky, on error retry once, ignore': on.error: 'IgnoreError' is not a property of this action. Its properties are: StatusCode, Key, Message, RetryCount, RetryOver, Order, Ignore, Recovery."
         }
       ],
       "waitForExecution": true

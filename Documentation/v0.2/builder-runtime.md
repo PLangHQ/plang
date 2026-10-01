@@ -14,7 +14,7 @@ When `ErrorOrder` is `GoalFirst`, it means **fix, then retry**: the error goal r
 
 With no `RetryCount`, the error goal's result stands: a succeeding goal handles the error, as before. If the error goal fails, its error joins the error's list and the retry still runs — the failure may not have needed the fix (a transient one).
 
-`RetryFirst` (the default) is the opposite order: retries run first, the error goal only runs if every retry still fails. `IgnoreError` is the final fallback in both orderings — applied after retry and goal are both exhausted.
+`RetryFirst` (the default) is the opposite order: retries run first, the error goal only runs if every retry still fails. `Ignore` is the final fallback in both orderings — applied after retry and goal are both exhausted.
 
 See `PLang/app/module/action/error/handle.cs` for the implementation.
 

@@ -114,8 +114,9 @@ public abstract partial class @this
         Task.FromResult(context.Error(
             new error.ServiceError($"Scheme '{Scheme}' does not support assembly loading.", "NotSupported", 400)));
 
-    /// <summary>Delete with file-action options. Non-FS schemes ignore both.</summary>
-    public abstract Task<data.@this<@this>> Delete(global::app.type.item.@bool.@this recursive, global::app.type.item.@bool.@this ignoreIfNotFound, actor.context.@this context);
+    /// <summary>Delete what is at this location — a folder with what it holds when <paramref name="recursive"/>
+    /// (non-FS schemes ignore it). Nothing there is NotFound (404).</summary>
+    public abstract Task<data.@this<@this>> Delete(global::app.type.item.@bool.@this recursive, actor.context.@this context);
 
     /// <summary>List entries with a glob pattern. Non-FS schemes ignore both options.</summary>
     public abstract Task<data.@this<global::app.type.item.list.@this<@this>>> List(global::app.type.item.text.@this pattern, global::app.type.item.@bool.@this recursive, actor.context.@this context);
@@ -124,7 +125,7 @@ public abstract partial class @this
     public abstract Task<data.@this<@this>> Save(data.@this? value, actor.context.@this context);
 
     /// <summary>Convenience — same defaults the file actions carried.</summary>
-    public Task<data.@this<@this>> Delete(actor.context.@this context) => Delete(recursive: false, ignoreIfNotFound: false, context);
+    public Task<data.@this<@this>> Delete(actor.context.@this context) => Delete(recursive: false, context);
 
     /// <summary>Convenience — all entries, shallow.</summary>
     public Task<data.@this<global::app.type.item.list.@this<@this>>> List(actor.context.@this context) => List(pattern: "*", recursive: false, context);

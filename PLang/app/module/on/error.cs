@@ -21,7 +21,7 @@ public partial class OnError : IContext, IClause, IAction
     public partial global::app.data.@this<global::app.type.item.duration.@this>? RetryOver { get; init; }
     public partial global::app.data.@this<global::app.type.item.choice.@this<ErrorOrder>>? Order { get; init; }
     [Default(false)]
-    public partial global::app.data.@this<global::app.type.item.@bool.@this> IgnoreError { get; init; }
+    public partial global::app.data.@this<global::app.type.item.@bool.@this> Ignore { get; init; }
     /// <summary>The actions that run to recover — the body of the clause (a goal call, a set).</summary>
     public partial global::app.data.@this<global::app.goal.step.action.list.@this>? Recovery { get; init; }
 
@@ -87,9 +87,9 @@ public partial class OnError : IContext, IClause, IAction
             }
         }
 
-        // IgnoreError is the final fallback — after retry and recovery are exhausted. The error
+        // Ignore is the final fallback — after retry and recovery are exhausted. The error
         // stays in the audit; the frame is marked handled, and the ignore is visible under --debug.
-        if (await IgnoreError.ToBooleanAsync())
+        if (await Ignore.ToBooleanAsync())
         {
             if (erroredCall != null) erroredCall.Handled = true;
             await (context.App.Debug?.Write(

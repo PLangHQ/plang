@@ -7,7 +7,7 @@ Message — handle only errors whose message contains this text.
 RetryCount — how many times to run the action again ("retry 3 times"); each retry is a fresh attempt.
 RetryOver — the time the retries are spread over, a duration ("over 30 seconds" → "PT30S").
 Order — GoalFirst when the step runs the recovery before retrying ("call X, then retry"); left out for the default, retrying first ("retry 3 times, then call X").
-IgnoreError — true when the step says to carry on past the error.
+Ignore — true when the step says to carry on past the error ("on error ignore", "on error 'NotFound' ignore").
 
 - The recovery runs only on error: it is never also an action of the step.
 - StatusCode, Key and Message filter which errors are handled; they never hold what the recovery does. Left out when the step names no filter.

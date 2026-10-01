@@ -66,7 +66,7 @@ public class MatchTests
         => new() { [id] = new Dictionary<string, object?> { ["type"] = "noul", ["noul"] = noul } };
 
     private static Goal RetryOnce(global::app.actor.context.@this context) => Make.Goal(context, "G", Make.Step("call Flaky, on error retry once, ignore"));
-    private const string RetryOnceAnswer = "[0] goal.call(Name=\"Flaky\"); on.error(RetryCount=1, IgnoreError=true)";
+    private const string RetryOnceAnswer = "[0] goal.call(Name=\"Flaky\"); on.error(RetryCount=1, Ignore=true)";
 
     [Test]
     public async Task ANumberTheWordsDontWriteAsDigits_IsAskedOfTheDecider_AndTheStepStaysOpen()

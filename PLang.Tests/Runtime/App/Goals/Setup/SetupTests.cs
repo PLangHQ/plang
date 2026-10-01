@@ -181,7 +181,7 @@ public class SetupTests
     [Test]
     public async Task RunAsync_FailedStepNotRecorded()
     {
-        // A step that fails (unknown module) and does NOT have IgnoreError
+        // A step that fails (unknown module) and does NOT have on.error ignore
         var goal = new Goal
         {
             Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),

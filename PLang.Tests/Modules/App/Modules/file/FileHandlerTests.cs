@@ -315,12 +315,14 @@ public class FileHandlerTests : IDisposable
     }
 
     [Test]
-    public async Task Delete_NonexistentFile_IgnoreIfNotFound_ReturnsSuccess()
+    public async Task Delete_NonexistentFile_IsNotFound()
     {
-        var action = new Delete(_app.actor.list.User.Context) { Path = MakePath("nope.txt"), IgnoreIfNotFound = (global::app.type.item.@bool.@this)true };
+        // nothing there is NotFound — a step that doesn't mind ignores it on its error: on error 'NotFound' ignore
+        var action = new Delete(_app.actor.list.User.Context) { Path = MakePath("nope.txt") };
         var result = await action.Start();
 
-        await result.IsSuccess();
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
     }
 
     [Test]

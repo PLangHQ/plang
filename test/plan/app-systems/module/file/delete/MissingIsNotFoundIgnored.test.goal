@@ -1,0 +1,10 @@
+/ A file that isn't there is the NotFound error — delete has no option for it; the step's clause ignores it.
+Start
+- file.delete(Path="never-there.txt"); on.error(Key="NotFound", Recovery=[goal.call(Name="Caught")])
+- assert.equals(Expected="NotFound", Actual=%caught%, Message="a missing file is NotFound")
+- file.delete(Path="never-there.txt"); on.error(Key="NotFound", Ignore=true)
+- variable.set(Name=%after%, Value="went on")
+- assert.equals(Expected="went on", Actual=%after%, Message="on error 'NotFound' ignore carries on")
+
+Caught
+- variable.set(Name=%caught%, Value=%!error.Key%)
