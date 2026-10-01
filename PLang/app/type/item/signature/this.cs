@@ -53,9 +53,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     // bytes cover, unchanged by any reader.
     private readonly datetime? _expires;
 
-    // How long after Created a signature read live off the wire is good, given at birth by its reader; null for
-    // one read from plang's own store, or one just signed.
+    // How long after Created a signature read live off the wire is good, given at birth by its reader with its
+    // origin; it counts only for a live one.
     private readonly global::app.type.item.duration.@this? _window;
+
+    /// <summary>Where the signature came from — <c>%x!signature.origin%</c>: just signed, read live off the wire, or
+    /// read from plang's own store. Born with it; it decides the window, the nonce check and the hash's view.</summary>
+    public global::app.type.item.choice.@this<global::app.type.item.signature.Origin> Origin { get; }
 
     /// <summary>When the signature stops being good — <c>%x!signature.expires%</c>: the expiry the signer signed,
     /// or, for a signature read live, its window after <see cref="Created"/> if that comes first. Null when
@@ -64,19 +68,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     {
         get
         {
-            if (_window is not { } window) return _expires;
+            if (Origin.Value != global::app.type.item.signature.Origin.Live || _window is not { } window) return _expires;
             var live = Created.Value + (System.TimeSpan)window;
             return _expires is { } signed && signed.Value <= live ? signed : new datetime(live);
         }
     }
-
-    /// <summary>The signature was read live off the wire (its reader gave it a window): a replayed nonce is refused.
-    /// One read from plang's own store, or one just signed, isn't live.</summary>
-    public bool IsLive => _window != null;
-
-    /// <summary>The signature was read from plang's own store: what it covers is the value's stored form (every
-    /// <c>[Store]</c> field), so its hash is checked in that view. Given at birth by its reader.</summary>
-    public bool IsStored { get; }
 
     /// <summary>Whether the signature is past its <see cref="Expires"/> by the clock <paramref name="context"/>
     /// reads — <c>%x!signature.expired%</c>.</summary>
@@ -117,10 +113,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         binary signature,
         datetime? expires = null,
         global::app.type.item.list.@this? contracts = null,
-        global::app.type.item.duration.@this? window = null,
-        bool stored = false)
+        global::app.type.item.signature.Origin origin = global::app.type.item.signature.Origin.Signed,
+        global::app.type.item.duration.@this? window = null)
     {
-        IsStored = stored;
+        Origin = origin;
         Value = value;
         Algorithm = algorithm ?? new text("ed25519");
         Nonce = nonce ?? new text("");
@@ -137,7 +133,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// the signing module after it signs <see cref="ToSigningBytes"/> (the layer is
     /// immutable; build the unsigned form, sign, then stamp the bytes).</summary>
     public @this Signed(binary signature)
-        => new(Value, Algorithm, Nonce, Created, Identity, Hash, signature, _expires, Contracts, _window, IsStored);
+        => new(Value, Algorithm, Nonce, Created, Identity, Hash, signature, _expires, Contracts, Origin.Value, _window);
 
     protected internal override global::app.type.@this Type
         => new("signature", typeof(@this), Algorithm.ToString());

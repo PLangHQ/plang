@@ -98,7 +98,7 @@ fresh `Data` per call.
 ## Grant verification — a stored read
 
 A grant is read from plang's own store (`View.Store`), and the signature reader gives a signature its live window only
-when it is read off the wire. So a grant's signature is born with no window and `IsStored`:
+when it is read off the wire. So a grant's signature is born with origin `stored` (`%x!signature.origin%`) and no window:
 
 | Step | What | For a grant |
 |---|---|---|

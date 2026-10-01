@@ -78,7 +78,8 @@ public class Ed25519 : ISigning
         // re-presents the same nonce on every read, which isn't replay. Only a look here: the nonce is
         // recorded once the hash and signature pass (step 6), so an unverified wire never uses one up.
         var nonceCacheKey = $"nonce:{signature.Nonce}";
-        if (signature.IsLive && await app.Cache.GetAsync(nonceCacheKey) != null)
+        var live = signature.Origin.Value == global::app.type.item.signature.Origin.Live;
+        if (live && await app.Cache.GetAsync(nonceCacheKey) != null)
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
 
         // 3. Contract matching — Contracts may be an unset/absent slot (the
@@ -101,7 +102,8 @@ public class Ed25519 : ISigning
         // Store hash.
         var rehash = await new global::app.goal.step.action.@this(
             new Hash(action.Context) { Data = signature.Value, Algorithm = new data.@this<global::app.type.item.text.@this>("", storedHash.Algorithm, context: action.Context),
-                       StoreView = new data.@this<global::app.type.item.@bool.@this>("", signature.IsStored, context: action.Context) }, action.Context).Start(action.Context);
+                       StoreView = new data.@this<global::app.type.item.@bool.@this>("",
+                           signature.Origin.Value == global::app.type.item.signature.Origin.Stored, context: action.Context) }, action.Context).Start(action.Context);
         if (!rehash.Success) return global::app.data.@this<global::app.type.item.@bool.@this>.From(rehash);
         if (await rehash.Value() is not global::app.module.crypto.type.hash.@this rehashValue || !rehashValue.DigestEquals(storedHash))
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
@@ -123,7 +125,7 @@ public class Ed25519 : ISigning
 
         // 6. The verified live wire records its nonce until the signature expires — atomically, so of two
         // concurrent reads of one wire only the first verifies. After it expires, the expiry refuses it.
-        if (signature.IsLive)
+        if (live)
         {
             var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(DateTimeOffset.UtcNow);
             var remembered = (long)Math.Max(1, (signature.Expires!.Value - now).TotalMilliseconds);

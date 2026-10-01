@@ -79,11 +79,12 @@ public sealed class signature : ISchemaReader
         // A signature read live off the wire is good for the signing setting's window after it was made; one read
         // from plang's own store keeps only what its signer signed, and covers the value's stored form.
         var stored = ctx.View == global::app.View.Store;
-        var window = stored ? null : context.Setting.Of<global::app.module.signing.setting.@this>().Expiry;
         var layer = new global::app.type.item.signature.@this(
             inner, algorithm, nonce, new global::app.type.item.datetime.@this(created), identity,
             new global::app.module.crypto.type.hash.@this(hashValue, hashAlgo), sig,
-            expires is { } ex ? new global::app.type.item.datetime.@this(ex) : null, contracts, window, stored);
+            expires is { } ex ? new global::app.type.item.datetime.@this(ex) : null, contracts,
+            stored ? global::app.type.item.signature.Origin.Stored : global::app.type.item.signature.Origin.Live,
+            stored ? null : context.Setting.Of<global::app.module.signing.setting.@this>().Expiry);
 
         // The OUTER read verifies the signature; a NESTED reconstruction (ctx.Verify == false) peels
         // without verifying — the inner Data is already covered by the outer signature, and an inner
