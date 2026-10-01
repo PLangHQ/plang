@@ -3,7 +3,9 @@ namespace app.module.screen.code.wayland;
 /// <summary>
 /// The clipboard: what is copied — text a client offers, or the host's text — offered to the
 /// client with the keyboard. A client's copy is read (through a pipe, on a thread) and sent to the
-/// host; the host's copy is written to whichever client pastes it.
+/// host; the host's copy is written to whichever client pastes it. plang-screen's own copy (the
+/// address field's) is text and a value: a paste gets the text; a page that asks for the value
+/// (Writer's Ctrl+Shift+V, <c>{"window":"paste"}</c>) gets <see cref="Value"/>.
 /// </summary>
 internal sealed class Clipboard(Display display)
 {
@@ -12,10 +14,14 @@ internal sealed class Clipboard(Display display)
 
     private readonly List<WlDataDevice> devices = new();
     private WlDataSource? source;      // a client's copy …
-    private string? host;              // … or the host's
+    private string? host;              // … or the host's, or plang-screen's text
+    private string? value;             // plang-screen's copy as a value (json)
 
     /// <summary>The host's clipboard text (the address field pastes it too).</summary>
     internal string Host => host ?? "";
+
+    /// <summary>The clipboard as a value: plang-screen's copy's (json), else its text.</summary>
+    internal string Value => value ?? host ?? "";
 
     internal void Add(WlDataDevice device)
     {
@@ -31,6 +37,7 @@ internal sealed class Clipboard(Display display)
         if (source != null && !ReferenceEquals(source, copied)) source.Cancelled();
         source = copied;
         host = null;
+        value = null;
         if (copied?.Mime(Text) is { } mime)
         {
             var (read, write) = Native.Pipe();
@@ -48,12 +55,27 @@ internal sealed class Clipboard(Display display)
         Offer(display.Keyboard.Focus?.Client);
     }
 
-    /// <summary>The host copied: that text is the clipboard here now.</summary>
+    /// <summary>The host copied: that text is the clipboard here now. (The host telling back what
+    /// plang-screen copied keeps its value.)</summary>
     internal void Copied(string text)
+    {
+        if (value != null && text == host) return;
+        source?.Cancelled();
+        source = null;
+        host = text;
+        value = null;
+        Offer(display.Keyboard.Focus?.Client);
+    }
+
+    /// <summary>plang-screen copied (the address field): <paramref name="text"/> here and on the host's
+    /// clipboard, and <paramref name="json"/> as its value.</summary>
+    internal void Copied(string text, string json)
     {
         source?.Cancelled();
         source = null;
         host = text;
+        value = json;
+        display.Frame.Clipboard(text);
         Offer(display.Keyboard.Focus?.Client);
     }
 
