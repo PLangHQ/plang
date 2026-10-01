@@ -88,9 +88,8 @@ internal sealed class Windows(Browser browser)
             or System.Net.WebSockets.WebSocketException or TimeoutException)
         {
             // the window stays without its page (no plang(), its goals not callable): say why
-            if (browser.Context is { } context)
-                await context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(context.Error(
-                    new global::app.error.ServiceError($"Window {id} ('{title}') couldn't be paired with its page: {ex.Message}", "WindowNotPaired", 500) { Exception = ex }));
+            if (browser.Report is { } report)
+                await report(new global::app.error.ServiceError($"Window {id} ('{title}') couldn't be paired with its page: {ex.Message}", "WindowNotPaired", 500) { Exception = ex });
         }
     }
 
