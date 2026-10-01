@@ -123,16 +123,26 @@ public partial class @this
     /// Data's own context where it stands — a pointer to the same value (a computed, <c>%Now%</c> or
     /// <c>%!goal%</c>, answers what it computes now) — carrying this Data's own name and its result flags
     /// (Returned, ReturnDepth, Handled), never the named Data's. Nothing is read through a value door: a reference
-    /// to content not yet read stays unread. A reference that names nothing is itself, failed as reading it fails
-    /// anywhere (its own door says the variable is not set); a failure, and any other Data, answers itself.</summary>
+    /// to content not yet read stays unread. A reference that names nothing answers no value (not initialized,
+    /// as the miss is), failed as reading it fails anywhere (its own door says the variable is not set) — the one
+    /// settled answer with no value, so it is told from a variable that holds a failure. A failure, and any other
+    /// Data, answers itself.</summary>
     public virtual async System.Threading.Tasks.ValueTask<@this> Settle()
     {
         if (!IsVariable || _error != null) return this;
         var named = await Follow(Context);
         if (!named.IsInitialized)
         {
-            await Value();
-            return this;
+            // the miss is no value, as Follow answered it, failed with what the reference's own door says; asked
+            // of a copy, since this Data may be a program's, shared by every run
+            var asked = Copy();
+            await asked.Value();
+            var missed = NotFound(Name, _context);
+            missed.Handled = Handled;
+            missed.Returned = Returned;
+            missed.ReturnDepth = ReturnDepth;
+            missed.Fail(asked.Error!);
+            return missed;
         }
         var settled = named.Copy(Name, named._context);
         settled.Handled = Handled;
@@ -708,9 +718,10 @@ public class @this<T> : @this
     public static @this<T> Ok(T value, type? type = null) => new("", value, type);
 
     /// <summary>Settles as a <typeparamref name="T"/> slot: what the reference names, held whole and still typed
-    /// — it converts at its door, when read.</summary>
+    /// — it converts at its door, when read. A miss stays the miss (no value): a typed hold would make it a
+    /// present null.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Settle()
-        => await base.Settle() is var settled && !ReferenceEquals(settled, this) ? From(settled) : this;
+        => await base.Settle() is var settled && !ReferenceEquals(settled, this) && settled.IsInitialized ? From(settled) : settled;
     public new static @this<T> FromError(global::app.error.Error error) => new() { Error = error };
 
     /// <summary>Typed absent slot — non-null Data, <c>IsInitialized == false</c>. The

@@ -10,10 +10,14 @@ that Data as it is here and now: a pointer to the same value (the item is shared
 data.Settle()                                         data/this.cs:128
 ├─ not a reference, or failed → itself
 ├─ Follow(Context)                                     :119  — the name-hop, with the reference's own context; no value door
-├─ the miss (nothing named) → itself, failed through its own door (VariableNotFound, as reading it anywhere)
+├─ the miss (nothing named) → no value (NotFound, as Follow answered it), with this one's flags, failed with what
+│                               its own door says (VariableNotFound, as reading it anywhere) — asked of a copy,
+│                               since the reference may be a program's Data shared by runs. The only settled
+│                               answer with no value: told apart from a variable holding a failure.
 └─ named.Copy(Name, named's context)                   :608  — DynamicData's Copy computes now (:855)
    + this one's Handled / Returned / ReturnDepth
-data<T>.Settle()                                      :708  — the settled Data, retyped whole (From), converts at its door
+data<T>.Settle()                                             — the settled Data, retyped whole (From), converts at its door;
+                                                               a miss stays no value
 ```
 
 Callers, the one rule in two places:
@@ -21,7 +25,9 @@ Callers, the one rule in two places:
   bound after its start (the cache keeps the attempt's own) and before the error outcome, so `on error` sees a
   miss: `return %!goal%` is the callee, `%Now%` the moment of the return, a returned call argument the callee's.
   `%!data%` is that result.
-- `type/item/variable/list/this.cs:93` — `set %y% = %x%` binds what `%x%` names, then renames it to `y`.
+- `type/item/variable/list/this.cs` `Set` — `set %y% = %x%` binds what `%x%` names, renamed to `y`; a miss leaves
+  `y` unset (a NotFound), keeping nothing of the reference, so a later `set %x%` doesn't reach `y`; an `%x%`
+  holding a failure binds that failure.
 
 ## Tests
 

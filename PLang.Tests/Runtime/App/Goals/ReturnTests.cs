@@ -108,6 +108,28 @@ public class ReturnTests
     }
 
     [Test]
+    public async Task SetToAMissingVariable_LeavesItUnset_AndALaterSetDoesNotReviveIt()
+    {
+        await Ctx.Variable.Set("y", new global::app.data.@this("value", "%missing%",
+            Ctx.App.type.list[new global::app.type.@this("text", template: "plang"), Ctx], context: Ctx));
+        await Assert.That((await Ctx.Variable.Get("y")).IsInitialized).IsFalse();
+
+        await Ctx.Variable.Set("missing", 5);
+        await Assert.That((await Ctx.Variable.Get("y")).IsInitialized).IsFalse();
+    }
+
+    [Test]
+    public async Task SetToAVariableHoldingAFailure_KeepsTheFailure()
+    {
+        await Ctx.Variable.Set("r", Ctx.Error(new global::app.error.Error("the call failed", "CallFailed", 500)));
+        await Ctx.Variable.Set("y", new global::app.data.@this("value", "%r%",
+            Ctx.App.type.list[new global::app.type.@this("text", template: "plang"), Ctx], context: Ctx));
+        var y = await Ctx.Variable.Get("y");
+        await Assert.That(y.IsInitialized).IsTrue();
+        await Assert.That(y.Error?.Key).IsEqualTo("CallFailed");
+    }
+
+    [Test]
     public async Task AReturnedReference_ToContentNotRead_StaysUnread()
     {
         var http = new global::app.type.item.path.http.@this("http://example.com/data.json");
