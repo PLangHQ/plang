@@ -140,12 +140,19 @@ public sealed partial class Chromium : IBrowser
 
         var browser = new Browser
         {
-            Url = url, Width = screen.Width, Height = screen.Height, Os = chrome, Screen = screen, Program = chromium, Port = port!.Value,
-            Root = new Uri(context.App.AbsolutePath.TrimEnd('/') + "/").AbsoluteUri,
+            Url = url, Width = screen.Width, Height = screen.Height, Os = chrome, Screen = screen, Program = chromium, Port = port!.Value, Context = context,
+            Roots = new[] { context.App.AbsolutePath, context.App.OsAbsolutePath }
+                .Where(folder => !string.IsNullOrEmpty(folder)).Select(folder => new Uri(folder!.TrimEnd('/') + "/").AbsoluteUri).ToArray(),
         };
         var onMessage = action.OnMessage == null ? null : await action.OnMessage.Value();
         if (onMessage != null)
             browser.Message = said => global::app.module.on.code.Gate.Call(onMessage, Payload(said, context), context);
+        // OnMessage asks to hear the page, but only plang's own pages may talk: say so, rather than a page
+        // that waits for plang() forever
+        if (onMessage != null && !browser.Own(url))
+            await context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(context.Error(new global::app.error.ActionError(
+                $"browser.start: {url} is not one of plang's own pages (under {string.Join(" or ", browser.Roots)}), so it gets no plang() and OnMessage never hears it",
+                "PageNotOwn", 400)));
         // the desktop is window 0; each other window is paired with its page as it gets a title
         var desktop = pageUrl[(pageUrl.LastIndexOf('/') + 1)..];
         await browser.Windows.ShowDesktop(desktop, url);

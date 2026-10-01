@@ -13,8 +13,9 @@ public static class Gate
     private static readonly ConditionalWeakTable<global::app.@this, SemaphoreSlim> Gates = new();
 
     /// <summary>Binds <paramref name="payload"/> as <c>%!data%</c> and runs <paramref name="held"/>, after any
-    /// call already running for the same app. A failing call is written to the error channel; the source
-    /// keeps going.</summary>
+    /// call already running for the same app. A failing call is written to the error channel — one that
+    /// threw too: its sources start it and don't wait (a browser's message, a program's line), so nothing
+    /// else would ever see the exception. The source keeps going.</summary>
     public static async Task Call(Call held, data.@this payload, actor.context.@this context)
     {
         var gate = Gates.GetValue(context.App, _ => new SemaphoreSlim(1, 1));
@@ -26,6 +27,11 @@ public static class Gate
             var result = await held.Start(context);
             if (!result.Success)
                 await context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(result);
+        }
+        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        {
+            await context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(context.Error(
+                new global::app.error.ServiceError($"{held.Module}.{held.Name} failed: {ex.Message}", "CallFailed") { Exception = ex }));
         }
         finally { gate.Release(); }
     }

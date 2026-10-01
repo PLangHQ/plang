@@ -37,7 +37,7 @@ internal sealed class Windows(Browser browser)
     internal Task ShowDesktop(string target, string address)
     {
         Desktop.Address = address;
-        return Desktop.Show(0, new Page(target, browser.Port, browser.Root), address.StartsWith(browser.Root, StringComparison.Ordinal) ? browser.Message : null);
+        return Desktop.Show(0, new Page(target, browser.Port, browser.Own), browser.Own(address) ? browser.Message : null);
     }
 
     /// <summary>True the first time <paramref name="target"/> is asked about.</summary>
@@ -76,11 +76,16 @@ internal sealed class Windows(Browser browser)
             window.Address = page.GetProperty("url").GetString() ?? "";
             if (!shown.TryAdd(id, window)) return;
             browser.Screen?.Display?.Url((int)id, window.Address);
-            var own = window.Address.StartsWith(browser.Root, StringComparison.Ordinal);
-            await window.Show(id, new Page(page.GetProperty("id").GetString()!, browser.Port, browser.Root), own ? browser.Message : null);
+            await window.Show(id, new Page(page.GetProperty("id").GetString()!, browser.Port, browser.Own), browser.Own(window.Address) ? browser.Message : null);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException
-            or System.Net.WebSockets.WebSocketException or TimeoutException) { }
+            or System.Net.WebSockets.WebSocketException or TimeoutException)
+        {
+            // the window stays without its page (no plang(), its goals not callable): say why
+            if (browser.Context is { } context)
+                await context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(context.Error(
+                    new global::app.error.ServiceError($"Window {id} ('{title}') couldn't be paired with its page: {ex.Message}", "WindowNotPaired", 500) { Exception = ex }));
+        }
     }
 
     /// <summary>The address of <paramref name="window"/>'s page now, in DevTools' list.</summary>
