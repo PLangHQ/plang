@@ -36,37 +36,27 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (raw is not global::app.type.item.dict.@this dict)
         {
             data.Fail(new global::app.error.Error(
-                $"a query is a dict of its parts — {{where, group, distinct, order}} — not {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "nothing"}",
+                $"a query is a dict of its parts — {{{part.@this.Names}}} — not {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "nothing"}",
                 "QueryInvalid", 400));
             return null;
         }
         var context = data.Context!;
         var parts = new List<part.@this>();
-        try
+        // each key names a part the query has, made from what the key holds; one that doesn't read says why on data
+        foreach (var entry in dict.Entries(context))
         {
-            // each key names the part that lives under the query at that name (query/where/), made from what the
-            // key holds
-            foreach (var entry in dict.Entries(context))
+            if (!part.@this.Known.TryGetValue(entry.Name, out var make))
             {
-                var kind = typeof(@this).Assembly.GetType($"{typeof(@this).Namespace}.{entry.Name.ToLowerInvariant()}.this");
-                if (kind == null || kind.IsAbstract || !typeof(part.@this).IsAssignableFrom(kind))
-                {
-                    data.Fail(new global::app.error.Error(
-                        $"'{entry.Name}' is no part of a query — its parts are where, group, distinct, order", "QueryInvalid", 400));
-                    return null;
-                }
-                parts.Add((part.@this)System.Activator.CreateInstance(kind,
-                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic, null, [entry, context], null)!);
+                data.Fail(new global::app.error.Error(
+                    $"'{entry.Name}' is no part of a query — its parts are {part.@this.Names}", "QueryInvalid", 400));
+                return null;
             }
-        }
-        catch (System.Reflection.TargetInvocationException ex) when (ex.InnerException is global::app.error.AppException refused)
-        {
-            data.Fail(refused.Error);
-            return null;
+            if (make(entry, data, context) is not { } made) return null;
+            parts.Add(made);
         }
         if (parts.Count == 0)
         {
-            data.Fail(new global::app.error.Error("a query names at least one part: where, group, distinct or order", "QueryInvalid", 400));
+            data.Fail(new global::app.error.Error($"a query names at least one part: {part.@this.Names}", "QueryInvalid", 400));
             return null;
         }
         return new @this(parts);

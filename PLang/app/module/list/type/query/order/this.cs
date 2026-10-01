@@ -12,11 +12,25 @@ public sealed class @this : part.@this
 {
     private readonly IReadOnlyList<(global::app.type.item.text.@this? Field, bool Desc)> _key;
 
-    /// <summary>The order of <paramref name="written"/>: its keys, in the order they decide.</summary>
-    internal @this(Data written, global::app.actor.context.@this context)
-        => _key = written.Peek() is List keys
-            ? keys.Items(context).Select(k => Key(k.Peek(), context)).ToList()
-            : [Key(written.Peek(), context)];
+    private @this(IReadOnlyList<(global::app.type.item.text.@this? Field, bool Desc)> key) => _key = key;
+
+    /// <summary>The order of <paramref name="written"/>: its keys, in the order they decide; a key that doesn't
+    /// read is why on <c>data</c>.</summary>
+    internal static @this? Create(Data written, Data data, global::app.actor.context.@this context)
+    {
+        List<object?> each = written.Peek() is List keys ? keys.Items(context).Select(k => (object?)k.Peek()).ToList() : [written.Peek()];
+        var key = new List<(global::app.type.item.text.@this? Field, bool Desc)>();
+        foreach (var one in each)
+        {
+            if (Key(one, context) is not { } read)
+            {
+                data.Fail(new global::app.error.Error("order: a key is a field (\"age\") or {field, desc}", "QueryInvalid", 400));
+                return null;
+            }
+            key.Add(read);
+        }
+        return new(key);
+    }
 
     internal override int Rank => 3;
 
@@ -48,8 +62,8 @@ public sealed class @this : part.@this
         return System.Threading.Tasks.ValueTask.CompletedTask;
     }
 
-    // One key: a field, or {field?, desc?}.
-    private (global::app.type.item.text.@this? Field, bool Desc) Key(object? written, global::app.actor.context.@this context)
+    // One key: a field, or {field?, desc?}; null when it is neither.
+    private static (global::app.type.item.text.@this? Field, bool Desc)? Key(object? written, global::app.actor.context.@this context)
     {
         if (written is global::app.type.item.dict.@this dict)
         {
@@ -58,7 +72,6 @@ public sealed class @this : part.@this
             return (field, dict.Get("desc", context)?.Peek() is global::app.type.item.@bool.@this { Value: true });
         }
         if (written is global::app.type.item.text.@this { } text && text.ToString().Length > 0) return (text, false);
-        throw new global::app.error.AppException(new global::app.error.Error(
-            $"{Name}: a key is a field (\"age\") or {{field, desc}}", "QueryInvalid", 400));
+        return null;
     }
 }

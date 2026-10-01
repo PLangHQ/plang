@@ -9,9 +9,11 @@ public sealed class @this : part.@this
 {
     private readonly bool _on;
 
+    private @this(bool on) => _on = on;
+
     /// <summary>The distinct of <paramref name="written"/>: whether repeats are dropped.</summary>
-    internal @this(Data written, global::app.actor.context.@this context)
-        => _on = written.Peek() is global::app.type.item.@bool.@this { Value: true };
+    internal static @this? Create(Data written, Data data, global::app.actor.context.@this context)
+        => new(written.Peek() is global::app.type.item.@bool.@this { Value: true });
 
     internal override int Rank => 2;
 

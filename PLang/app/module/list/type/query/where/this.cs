@@ -12,9 +12,11 @@ public sealed class @this : part.@this
 {
     private readonly condition.@this _condition;
 
-    /// <summary>The where of <paramref name="written"/>; one that doesn't read is the query's error, naming
-    /// this part.</summary>
-    internal @this(Data written, global::app.actor.context.@this context) => _condition = Condition(written.Peek(), context);
+    private @this(condition.@this condition) => _condition = condition;
+
+    /// <summary>The where of <paramref name="written"/>; one that doesn't read is why on <c>data</c>, naming this part.</summary>
+    internal static @this? Create(Data written, Data data, global::app.actor.context.@this context)
+        => Condition(written.Peek(), data, context) is { } condition ? new(condition) : null;
 
     internal override int Rank => 0;
 
@@ -26,37 +28,51 @@ public sealed class @this : part.@this
         global::app.actor.context.@this context)
         => _condition.Output(writer, mode, context);
 
-    // The condition a value is written as: a comparison, and/or over conditions, or a list of them (and).
-    private condition.@this Condition(object? written, global::app.actor.context.@this context)
+    // The condition a value is written as: a comparison, and/or over conditions, or a list of them (and); null with why
+    // on data when it doesn't read.
+    private static condition.@this? Condition(object? written, Data data, global::app.actor.context.@this context)
     {
         if (written is List conditions)
-            return new condition.@and.@this(Conditions(conditions, "a list of conditions", context));
+            return Conditions(conditions, "a list of conditions", data, context) is { } listed ? new condition.@and.@this(listed) : null;
         if (written is not global::app.type.item.dict.@this dict)
-            throw Refused($"a condition is {{field, op, value}}, or {{and: [...]}} or {{or: [...]}} — not {Kind(written)}");
+            return Refused(data, $"a condition is {{field, op, value}}, or {{and: [...]}} or {{or: [...]}} — not {Kind(written)}");
         if (dict.Get("and", context) is { } all)
-            return new condition.@and.@this(Conditions(all.Peek(), "and", context));
+            return Conditions(all.Peek(), "and", data, context) is { } each ? new condition.@and.@this(each) : null;
         if (dict.Get("or", context) is { } any)
-            return new condition.@or.@this(Conditions(any.Peek(), "or", context));
+            return Conditions(any.Peek(), "or", data, context) is { } either ? new condition.@or.@this(either) : null;
         if (dict.Get("field", context)?.Peek()?.ToString() is not { Length: > 0 } field)
-            throw Refused("a condition names its field: {field, op, value}");
+            return Refused(data, "a condition names its field: {field, op, value}");
         var op = dict.Get("op", context)?.Peek()?.ToString() ?? "==";
-        global::app.data.Operator @operator;
-        try { @operator = new global::app.data.Operator(op); }
-        catch (System.ArgumentException ex) { throw Refused(ex.Message); }
-        return new condition.compare.@this(field, @operator, dict.Get("value", context) ?? context.Null("value"));
+        var known = global::app.data.Operator.Choices(context);
+        if (!known.Contains(op, StringComparer.OrdinalIgnoreCase))
+            return Refused(data, $"Unsupported operator: '{op}'. Valid: {string.Join(", ", known)}");
+        return new condition.compare.@this(field, new global::app.data.Operator(op), dict.Get("value", context) ?? context.Null("value"));
     }
 
-    // Each condition of an and or an or; there is at least one.
-    private List<condition.@this> Conditions(object? written, string joined, global::app.actor.context.@this context)
+    // Each condition of an and or an or; there is at least one. Null with why on data when one doesn't read.
+    private static List<condition.@this>? Conditions(object? written, string joined, Data data, global::app.actor.context.@this context)
     {
         if (written is not List conditions || conditions.Count == 0)
-            throw Refused($"{joined} holds a list of conditions, at least one");
-        return conditions.Items(context).Select(c => Condition(c.Peek(), context)).ToList();
+        {
+            Refused(data, $"{joined} holds a list of conditions, at least one");
+            return null;
+        }
+        var each = new List<condition.@this>();
+        foreach (var c in conditions.Items(context))
+        {
+            if (Condition(c.Peek(), data, context) is not { } read) return null;
+            each.Add(read);
+        }
+        return each;
     }
 
-    private string Kind(object? written)
+    private static string Kind(object? written)
         => (written as global::app.type.item.@this)?.Type.Name ?? written?.GetType().Name ?? "nothing";
 
-    private global::app.error.AppException Refused(string why)
-        => new(new global::app.error.Error($"{Name}: {why}", "QueryInvalid", 400));
+    // why the where doesn't read, on data, said as the where's
+    private static condition.@this? Refused(Data data, string why)
+    {
+        data.Fail(new global::app.error.Error($"where: {why}", "QueryInvalid", 400));
+        return null;
+    }
 }
