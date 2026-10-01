@@ -208,7 +208,8 @@ internal sealed class AddressButton(TitleBar bar, int slot) : LeftButton(bar, sl
     protected override void Act() => Window.Display.Open(new AddressField(Window));
 }
 
-/// <summary>☰ The window's menu: Chromium's tools.</summary>
+/// <summary>☰ The window's agent: PLang drops its chat down under the button
+/// (<c>{"menu": id, "x", "y"}</c>, the button's bottom-right on the screen).</summary>
 internal sealed class MenuButton(TitleBar bar) : Button(bar)
 {
     internal override (int, int) Span(int width) => (width - 3 * Caption - Side - 6, Side);
@@ -218,8 +219,8 @@ internal sealed class MenuButton(TitleBar bar) : Button(bar)
     }
     protected override void Act()
     {
-        if (Window.Display.Panel is WindowMenu open && open.Owner == Window) open.Close();
-        else Window.Display.Open(new WindowMenu(Window));
+        var (x, w) = Span(Window.Size.Width);
+        Window.Menu(Window.At.X + x + w, Window.At.Y);
     }
 }
 

@@ -52,6 +52,12 @@ public sealed partial class Window : global::app.type.item.@this, global::app.ty
 
     internal async Task Post(string text) => await (await Page()).Post(text);
 
+    /// <summary>How its page looks now: a PNG, base64.</summary>
+    internal async Task<string> Screenshot() => await (await Page()).Screenshot();
+
+    /// <summary>Its page loads again from its files.</summary>
+    internal async Task Reload() => await (await Page()).Reload();
+
     /// <summary>Runs the page's goal <paramref name="name"/> with <paramref name="arguments"/> (one
     /// json object); what it returned, or threw, as DevTools answers it. A page's goal may wait for the
     /// person (a question on the screen): it has ten minutes, as a goal would.</summary>
