@@ -81,7 +81,19 @@ public sealed class Default : ITerminal
         setting.@this setting, actor.context.@this context, CancellationToken ct)
     {
         Redirect(info, setting);
-        var input = action.Input == null ? null : (await action.Input.Value())?.Clr<string>();
+        // the input as text, written by the value itself — a text its characters, a dict or list its json
+        string? input = null;
+        // what Input names, as it is (a dict stays a dict) — not first made into text, which would lose it
+        if (action.Input != null && await (await action.Input.Follow(context)).Value() is { } given)
+        {
+            if (given is Text t) input = t.Clr<string>();
+            else
+            {
+                using var written = new MemoryStream();
+                await Text.Encode(written, context.Ok(given), context, null, null, CancellationToken.None);
+                input = Encoding.UTF8.GetString(written.ToArray());
+            }
+        }
         var onOutput = action.OnOutput == null ? null : await action.OnOutput.Value();
         var onError = action.OnError == null ? null : await action.OnError.Value();
         var echo = setting.Echo.Value;
@@ -195,8 +207,15 @@ public sealed class Default : ITerminal
         }
         else
         {
-            var value = await action.Data.Value();
-            line = value is Text t ? t.Clr<string>() : value?.ToString() ?? "";
+            // the value as text, written by itself — a text its characters, a dict or list its json (one line)
+            var value = await (await action.Data.Follow(context)).Value();
+            if (value is Text t) line = t.Clr<string>() ?? "";
+            else
+            {
+                using var written = new MemoryStream();
+                await Text.Encode(written, context.Ok(value), context, null, null, CancellationToken.None);
+                line = Encoding.UTF8.GetString(written.ToArray()).ReplaceLineEndings(" ");
+            }
         }
         await running.Writing.WaitAsync();
         try
