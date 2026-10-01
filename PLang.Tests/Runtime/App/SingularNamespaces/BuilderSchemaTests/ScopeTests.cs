@@ -231,24 +231,6 @@ public class ScopeTests
     }
 
     [Test]
-    public async Task AGoalTheStepCalls_MustBeCalled()
-    {
-        await using var app = new global::app.@this("/test").Testing().Building();
-        var goal = Make.Goal(app.actor.list.User.Context, "Compile", Make.Step(
-            "build.match Goal=%goal%, Answer=%answer%, on error key \"ElseWithoutIf\" call SourceError, on error call FixSteps first, then retry 1 times"));
-        await Picked(goal, app.actor.list.System.Context, (0, "build.match"), (0, "on.error"));
-
-        // the whole `on error call FixSteps` clause is left out
-        var result = await Match(goal, """
-            [0] build.match(Goal=%goal%, Answer=%answer%); on.error(Key="ElseWithoutIf", Recovery=[goal.call(Name="SourceError")])
-            """, app.actor.list.System.Context);
-
-        await result.IsFailure();
-        await Assert.That(result.Error!.Message).Contains("step 0 calls FixSteps, but no action calls it");
-        await Assert.That(result.Error.Message).DoesNotContain("calls SourceError");
-    }
-
-    [Test]
     public async Task AVariableTheStepDoesNotName_IsRefused_ATypedSetIsItsType()
     {
         await using var app = new global::app.@this("/test").Testing().Building();

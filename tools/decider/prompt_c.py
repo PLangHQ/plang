@@ -123,15 +123,15 @@ def holds_actions(action):
     return any(p['type'] in ('action', 'list<action>') for p in props.values())
 
 def prefill(action, text):
-    """One pick as the formal line pre-fills it: its required properties as `Name: type` — a slot still to
-    fill, named by what it takes, never a value to copy — what the step already says filled — `write to %x%` →
+    """One pick as the formal line pre-fills it: its required properties by name alone — a slot still to fill,
+    nothing a model could copy as a value — what the step already says filled — `write to %x%` →
     variable.set(Name=%x%, Value=%!data%). An optional property gets no slot: it is the LLM's to add when the step
     names it (a Recovery, a Parameter, a RetryCount), as the examples teach."""
     module, name = action.split('.', 1)
     props, _ = b.declared(module, name)
     if action == 'variable.set' and (d := destination(text)):
         return f'variable.set(Name={d}, Value=%!data%)'
-    required = [f'{n}: {p["type"]}' for n, p in props.items() if not p['nullable'] and p['default'] is None]
+    required = [n for n, p in props.items() if not p['nullable'] and p['default'] is None]
     return f'{action}(' + ', '.join(required) + ')'
 
 # The known code's words (goal/step/pick/list Code): a step's first variable, a foreach's `as` name, and
@@ -162,8 +162,6 @@ def assigned(text):
 def bare_names(text):
     """The bare names the step's words write: %name% — not a setting, not a way in (step.Scope)."""
     return [v['code'][0]['variable'] for v in ref.parse(text) if ref.is_bare(v)]
-CALLS = re.compile(r'\bcall\s+(?:goal\s+)?(?!goal\b)(/?[A-Za-z_][\w./]*)', re.I)   # a goal the step's words call (pick.list Calls)
-QUOTED = re.compile(r'"(?:[^"\\]|\\.)*"|\'[^\']*\'')
 
 def every_action(rows):
     """Every action in the rows, wherever it sits: the actions, what they hold, their recovery, their
@@ -177,11 +175,6 @@ def every_action(rows):
             out += every_action([v for v in vals if isinstance(v, dict) and 'module' in v])
         for c in a.get('child') or []: out += every_action(c.get('action') or [])
     return out
-
-def called_goals(rows):
-    """Every goal.call Name in the rows, wherever the call sits."""
-    return [str(r['value']).strip('"') for a in every_action(rows) if (a.get('module'), a.get('name')) == ('goal', 'call')
-            for r in a.get('property') or [] if r['name'] == 'Name']
 
 def known_code(certain, text):
     """The code a step's certain picks already know, as (action, binds): the build's walk reads it
@@ -318,7 +311,7 @@ def user_message_c(goal, picks):
             call = prefill(a, s['text'])
             if b.declared(*a.split('.', 1))[1]: line.insert(call)
             elif b.is_loop(*a.split('.', 1)): line.lead(call)
-            elif b.is_keep(*a.split('.', 1)): line.keep(call, call.replace('Value: item', 'Value=%!data%'))
+            elif b.is_keep(*a.split('.', 1)): line.keep(call, re.sub(r'\bValue(?=[,)])', 'Value=%!data%', call, count=1))
             else: line.add(call, link(a) == 0, link(a) == 3 and b.returns(*a.split('.', 1)) != 'item')   # a condition's verdict is never kept
         if known: line.append(prefill('variable.set', s['text']))
         if line.written(): out += ' => formal: ' + line.written()
@@ -413,14 +406,6 @@ def disagreements(i, rows, picks_i, text=''):
                 for a in every_action(rows)):
             refused.append(f'step {i} says it writes {writes}, but no action writes it: '
                            f'end the step with variable.set(Name={writes}, Value=%!data%)')
-    # every goal the step's words call (`call X`, quoted texts left out) is called by the code, wherever
-    # the goal.call sits (pick.list Calls)
-    called = ['/' + n.lstrip('/') for n in called_goals(rows)]
-    for goal in dict.fromkeys(m.group(1).rstrip('.,') for m in CALLS.finditer(QUOTED.sub('', text))):
-        wanted = '/' + goal.lstrip('/')
-        if wanted.lower().endswith('.goal'): wanted = wanted[:-5]
-        if not any(n.lower().endswith(wanted.lower()) or wanted.lower().endswith(n.lower()) for n in called):
-            refused.append(f'step {i} calls {goal}, but no action calls it')
     # unsure = built from a possible pick; a pick the known-value rule placed (write to → variable.set)
     # is not a guess, so it carries no warning
     known = {'variable.set'} if destination(text) else set()
