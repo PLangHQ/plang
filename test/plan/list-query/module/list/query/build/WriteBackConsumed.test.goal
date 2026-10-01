@@ -1,0 +1,9 @@
+/ When a later action in the step reads the query's result by member (%!data.count%), the result is taken,
+/ so NO write-back is appended and %people% is left unchanged. The consumed check asks the value's parsed
+/ variables (root %!data%), so a member read (%!data.count%) or an index read (%!data[0]%) counts, where a
+/ substring test on a bare "%!data%" would miss it. Written in formal to fix the action order.
+Start
+- set %people% = [{name: "a", age: 40}, {name: "b", age: 18}]
+- list.query(List=%people%, Query={order: "age"}); output.write(Data="%!data.count%")
+- assert.equals(Expected="a", Actual=%people[0].name%, Message="input unchanged: the count read consumed the result, no write-back")
+- assert.equals(Expected=2, Actual=%people.count%)

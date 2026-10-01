@@ -238,9 +238,6 @@ public class Default : IBuilder
         return context.Ok(true);
     }
 
-    private static readonly System.Text.RegularExpressions.Regex WholeVariable =
-        new(@"^%!?[A-Za-z0-9_.]+%$", System.Text.RegularExpressions.RegexOptions.Compiled);
-
     // Give the deterministic write-back to a destination-less result-only action. The write-back target is
     // the action's [Input] property's variable (its List, %people%), read from the catalog element — a built
     // action's own properties don't carry IsInput (the formal reader builds Name/Type/Value only).
@@ -258,26 +255,36 @@ public class Default : IBuilder
                 var act = code[a];
                 var inputDef = act.Module?[act.Name]?.Input;      // the [Input] property, from the catalog element
                 if (inputDef is null) continue;
-                // the result is already taken? only a later action IN THIS STEP can read it — %!data% is the
-                // transient register, clobbered the moment the next step runs its own action, so the next step
-                // reading %!data% is reading its own result, never this one's. Same-step only.
+                // the result is already taken? only a later action IN THIS STEP reads the register — %!data% is
+                // transient, clobbered the moment the next step runs its own action, so the next step reading it
+                // reads its own result, never this one's. Same-step only, and it reads it whole, by member or by
+                // index (all share the %!data% root), so ask the parsed variables, not the text.
                 if (code.Skip(a + 1).Any(ReadsData)) continue;
-                var target = act[inputDef.Name]?.Value?.ToString()?.Trim() ?? "";
-                if (!WholeVariable.IsMatch(target))
+                // the write-back goes to the input's own variable (list.query's List, %people%). The value holds
+                // its variables parsed, so ask them, not a regex of its text: it must be exactly ONE, whole (the
+                // value is nothing but it) and not a %!system% root — a literal, several, or %!data% has no name
+                // of the step's own to write back to, refused so FixSteps retries with a destination.
+                var input = act[inputDef.Name]?.Value;
+                var target = input is { HasVariable: true } && input.Variable.Count == 1 ? input.Variable[0] : null;
+                if (target is null || target.Code.Root.Name.StartsWith('!')
+                    || !string.Equals(target.Text, input!.ToString()?.Trim(), System.StringComparison.Ordinal))
                     return new global::app.error.ValidationError(
-                        $"step {step.Index}: {act.Module!.Name}.{act.Name} answers a new value and changes nothing — give it a destination (`…, write to %result%`); a literal input has no name to write the answer back to.",
+                        $"step {step.Index}: {act.Module!.Name}.{act.Name} answers a new value and changes nothing — give it a destination (`…, write to %result%`); a literal or %!system% input has no name to write the answer back to.",
                         "NoWriteBackTarget");
                 var read = new global::app.goal.step.action.formal.Reader(step, modules)
-                    .Read($"variable.set(Name={target}, Value=%!data%)", context);
+                    .Read($"variable.set(Name={target.Text}, Value=%!data%)", context);
                 if (!read.Success) return read.Error;
+                // right after the action, not at the step's end: a later output/write in the step would otherwise
+                // run first and leave its own result in %!data% before the set reads it.
                 if (await read.Value() is global::app.goal.step.action.list.@this wb)
-                    foreach (var set in wb.Items()) step.Code.Add(set);
+                    step.Code.Insert(step.Code.IndexOf(act) + 1, wb);
             }
         }
         return null;
 
         static bool ReadsData(global::app.goal.step.action.@this a)
-            => a.Property.Any(p => p.Value?.ToString()?.Contains("%!data%", System.StringComparison.OrdinalIgnoreCase) == true);
+            => a.Property.Any(p => p.Value is { } v && v.Variable.Any(
+                x => string.Equals(x.Code.Root.Name, "!data", System.StringComparison.OrdinalIgnoreCase)));
     }
 
     // --- Pick ---
