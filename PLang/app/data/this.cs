@@ -123,13 +123,17 @@ public partial class @this
     /// Data's own context where it stands — a pointer to the same value (a computed, <c>%Now%</c> or
     /// <c>%!goal%</c>, answers what it computes now) — carrying this Data's own name and its result flags
     /// (Returned, ReturnDepth, Handled), never the named Data's. Nothing is read through a value door: a reference
-    /// to content not yet read stays unread. A reference that names nothing answers the miss; a failure, and any
-    /// other Data, answers itself.</summary>
+    /// to content not yet read stays unread. A reference that names nothing is itself, failed as reading it fails
+    /// anywhere (its own door says the variable is not set); a failure, and any other Data, answers itself.</summary>
     public virtual async System.Threading.Tasks.ValueTask<@this> Settle()
     {
         if (!IsVariable || _error != null) return this;
         var named = await Follow(Context);
-        if (!named.IsInitialized) return named;
+        if (!named.IsInitialized)
+        {
+            await Value();
+            return this;
+        }
         var settled = named.Copy(Name, named._context);
         settled.Handled = Handled;
         settled.Returned = Returned;

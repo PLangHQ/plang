@@ -86,6 +86,28 @@ public class ReturnTests
     }
 
     [Test]
+    public async Task ReturnMissing_FailsAsReadingTheVariableFails()
+    {
+        var callee = await Load("Callee",
+            Make.Step("return %missing%", Return("%missing%")),
+            Make.Step("set %after%", Set("after", 1)));
+        var returned = await callee.Start(Ctx);
+        await returned.IsFailure();
+        await Assert.That(returned.Error!.Key).IsEqualTo("VariableNotFound");
+        await Assert.That((await Ctx.Variable.Get("after")).IsInitialized).IsFalse();
+    }
+
+    [Test]
+    public async Task ReturnMissing_IsCaughtByTheStepsOnError()
+    {
+        var callee = await Load("Callee",
+            Make.Step("return %missing%, on error set %caught%",
+                Return("%missing%"), Make.Action(Ctx, "on", "error", Make.Recovery(Ctx, Set("caught", true)))));
+        await callee.Start(Ctx);
+        await Assert.That((await Ctx.Variable.Get("caught")).IsInitialized).IsTrue();
+    }
+
+    [Test]
     public async Task AReturnedReference_ToContentNotRead_StaysUnread()
     {
         var http = new global::app.type.item.path.http.@this("http://example.com/data.json");
