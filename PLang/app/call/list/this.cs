@@ -123,6 +123,34 @@ public sealed partial class @this : global::app.type.item.@this
     }
 
     /// <summary>
+    /// The format a goal set, in play here — part of what PLang reads as <c>%!app.type.format%</c>: the nearest
+    /// frame outward that holds one. Null when no running goal set one (the app's own is then in play).
+    /// </summary>
+    public global::app.type.kind.@this? Format
+    {
+        get
+        {
+            for (var node = _current.Value; node != null; node = node.Caller)
+                if (node.Format is { } format) return format;
+            return null;
+        }
+    }
+
+    /// <summary>Sets <paramref name="format"/> on the running goal's own frame — the nearest outward that runs a goal
+    /// (not one of its steps or actions) — so it holds for that goal and what it calls, and goes when it returns.
+    /// False when no goal is running.</summary>
+    public bool SetFormat(global::app.type.kind.@this format)
+    {
+        for (var node = _current.Value; node != null; node = node.Caller)
+            if (node.Goal != null && node.Step == null && node.Action == null)
+            {
+                node.Format = format;
+                return true;
+            }
+        return false;
+    }
+
+    /// <summary>
     /// The event in play — what PLang reads as <c>%!event%</c>: the nearest frame outward whose event's bound
     /// call is running. Null outside any such call.
     /// </summary>
