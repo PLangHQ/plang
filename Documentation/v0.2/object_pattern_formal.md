@@ -106,6 +106,10 @@ You navigate the graph by name; the name alone must tell you what you'll find.
 
 **Test**: if the name could describe two different things, it's too broad. If you need two words, you haven't found the right one.
 
+### A name is a path
+
+Never glue words. A compound name is a hierarchy written flat: write it as a dot path (`setting.build.execution.path`, not `buildExecutionPath`) and check that it navigates, each segment an owner whose member is the next. When it doesn't navigate, the path shows where the thing really lives: `ListName` → `list.name` (a list has no name) → `list.variable.name`, so the parameter is the list itself. The rule, why it's structural, and its patterns: [obp-dot-case.md](obp-dot-case.md).
+
 ### The three paths agree
 
 The plang path, the C# path (namespace and class) and the file path name the same thing. When they line up, the objects are in the right places and named for what they are. When one of them has to be explained, the design is off at that spot.
