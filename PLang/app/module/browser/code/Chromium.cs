@@ -140,7 +140,8 @@ public sealed partial class Chromium : IBrowser
 
         var browser = new Browser
         {
-            Url = url, Width = screen.Width, Height = screen.Height, Os = chrome, Screen = screen, Program = chromium, Port = port!.Value, Context = context,
+            Url = url, Width = screen.Width, Height = screen.Height, Os = chrome, Screen = screen, Program = chromium, Port = port!.Value,
+            Report = error => context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(context.Error(error)),
             Roots = new[] { context.App.AbsolutePath, context.App.OsAbsolutePath }
                 .Where(folder => !string.IsNullOrEmpty(folder)).Select(folder => new Uri(folder!.TrimEnd('/') + "/").AbsoluteUri).ToArray(),
         };
