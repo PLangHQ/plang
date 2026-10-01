@@ -30,7 +30,23 @@
           "confidence": "high",
           "context": "12+4 Gemini 3.8 TTS samples; found instructions field + lowercase plang needed; Ingi chose Achird on flash-lite"
         }
-      ]
+      ],
+      "timestamp_end": "2026-09-30T19:15:00Z",
+      "after": {
+        "status": "Lessons 1 and 2 done; lesson 2 exported to mp4 (export/mp4.js); Writer shots pending Ingi"
+      }
+    },
+    {
+      "id": "80b466de-3c56-4ffa-8db9-80f6f94dcf89",
+      "bot": "educator",
+      "timestamp_start": "2026-10-01T08:00:00Z",
+      "intent": "Teach OBP (the Object-Based Pattern) as a language-agnostic pattern in two lessons: A the laws and rules, B the named smells",
+      "before": {
+        "assumptions": "The docs (object_pattern_formal.md, obp-smells.md) are the source of the pattern; every code excerpt in the lesson is quoted verbatim from plang C# or the film engine JS with path:line",
+        "risk": "Doc examples are partly illustrative and the docs list known drift in the codebase; a lesson could present drift as the pattern, or doc pseudo-code as real code"
+      },
+      "actions": [],
+      "plan": ".bot/educator-lesson/educator/v3/plan.md"
     }
   ]
 }

@@ -38,3 +38,23 @@ Lesson 1 ("What is plang") stays as the concept intro.
 ## Blocked
 - The os bot's screens and facts (steps 2, 3, 5).
 - Beginner-step bugs, reported to the architect in `/shared/architect/educator-beginner-steps.md` (step 6).
+
+## Animation plan (Ingi, 2026-09-30: "now create the animations; watch out for repeating code, change the framework to reduce it")
+
+**Library first**, taken from lesson 1's art where lesson 2 would repeat it:
+- `frame.word(i, f)`: scene time at fraction f of voice line i (was `word()` in lesson 1's art).
+- `film.code.this.spot(...)`: where a character sits in a code block (was `spot()`).
+- `film.paper.terminal.this`: the dark output card; the first row is the command, with no prompt sign.
+- `film.paper.stamp.this`: the slammed rubber stamp.
+- `film.line.this.tick`: a drawn tick.
+- `film.builder.this`: the AI machine that reads steps (busy or asleep).
+
+**`film.example`: one verified example on screen.**
+- `page/Write` inlines the course's example files (`Start.goal` + `output.txt`, the very files that were built and run) as `<script type="text/plain">` blocks.
+- A scene with `"example": "01-hello"` gets them: the goal types in, a build-and-run beat plays, and the real output types into a terminal card.
+- Code and output are never retyped into a lesson, so what's on screen is what ran.
+
+**Lesson 2** (`studio/lesson/first-program`):
+- title → install → PlangOS → editor → 7 example scenes (+ one for "only changes rebuild") → recap and end card.
+- Uses the os bot's stills 03-05 via lesson media.
+- The build-and-run control isn't shot yet: it's drawn as a neutral hand-drawn "build and run" note, never a made-up Writer UI, and is replaced when the screens come.
