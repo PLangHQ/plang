@@ -153,12 +153,12 @@ public sealed class Operator
         => data == null ? null : await data.Value();
 
     /// <summary>
-    /// IS-A: does the left value's type satisfy the named type (right operand)? Both are read as values
-    /// (<see cref="data.@this.Held"/>): the right is the type's name as written (a formal <c>"ask"</c> is the word
-    /// ask), the left is what a reference names (<c>%said% is ask</c> asks the value %said% holds). A reference to
-    /// nothing holds the null item, which is no type: false. The value answers from its own provenance chain, read
-    /// (a file's content still answers <c>is file</c>). A type name the developer wrote that does not exist is
-    /// their error.
+    /// IS-A: does the left value's type satisfy the named type (right operand)? The right is the type's name read
+    /// as a value (<see cref="data.@this.Held"/>: a formal <c>"ask"</c> is the word ask). The left follows its
+    /// reference to the Data it names, unread (<c>%said% is ask</c> asks what %said% holds; a reference to nothing
+    /// is no type: false), and that Data answers from its provenance chain — <c>%f% is file</c> never reads the
+    /// file. Only a miss on a value not yet read (a file reference asked <c>is dict</c>) reads it, since that
+    /// question examines the content. A type name the developer wrote that does not exist is their error.
     /// </summary>
     private static async Task<Answer> IsType(data.@this? left, data.@this? right, actor.context.@this context)
     {
@@ -169,9 +169,19 @@ public sealed class Operator
         var named = await context.App.type.Get(typeName);
         if (!named.Success || await named.Value() is not { } type)
             return Refused(context, $"Unknown type '{typeName}'", "UnknownType");
-        var value = await left.Held();
         if (!left.Success) return Failed(left, context);
-        return Answer(context, value.Is(type));
+        var held = await left.Follow(context);
+        if (!held.IsInitialized) return Answer(context, false);
+        if (held.Is(type)) return Answer(context, true);
+        if (held.Peek() is { IsFinal: false })
+        {
+            // `is dict` on a reference not yet read examines its content: the door reads and narrows, then the
+            // value answers from its retained chain
+            _ = await held.Value();
+            if (!held.Success) return Failed(held, context);
+            return Answer(context, held.Is(type));
+        }
+        return Answer(context, false);
     }
 
     /// <summary>
