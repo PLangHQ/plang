@@ -95,7 +95,7 @@ Returns — a list of `path` values.
 `file/read.notes.md`
 ```
 Path — the file to read · say: the path, inline
-ResolveVariables — fill in %variables% inside the file's text before returning · say: `load vars` · builder: true only when the step asks for the file's %variables% to be filled in
+Template — fill in %variables% inside the file's text before returning · say: `load vars` · builder: true only when the step asks for the file's %variables% to be filled in
 Returns — the file's content. A JSON file is navigable; it is parsed when first navigated.
 ```
 
@@ -117,7 +117,7 @@ Returns — the path itself; whether it exists is the value's truthiness, so `if
 Source — the file or folder to copy from · say: the first path, inline
 Destination — where the copy goes · say: `to '<path>'`
 Overwrite — replace the destination if it already exists · say: `overwrite`
-IncludeSubfolders — when copying a folder, copy its sub-folders too · say: (on by default) · builder: false only when the step says to copy the top folder only
+Subfolder — when copying a folder, copy its sub-folders too · say: (on by default) · builder: false only when the step says to copy the top folder only
 Returns — the destination path.
 ```
 
@@ -132,7 +132,6 @@ Returns — the destination path.
 `file/delete.notes.md`
 ```
 Path — the file or folder to delete · say: `file '<path>'`
-IgnoreIfNotFound — don't error if it isn't there · say: `ignore if not found`
 Recursive — delete a folder's contents too · say: `recursive`
 Returns — the deleted path.
 ```
@@ -153,12 +152,11 @@ against this. (Sources per part: see the fact-ownership table above.)
 Read, write, copy, move, delete, and list files through the configured filesystem abstraction. A `%!x.setting%` is a setting, never a file: `save %!llm.setting%` saves a setting, which is the setting module.
 
 ## delete
-Delete a file or directory at Path, optionally recursively or ignoring missing targets
+Delete a file or directory at Path, optionally recursively; nothing there is NotFound
 
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
 | Path | `file '<path>'` | path | yes | — | the file or folder to delete |
-| IgnoreIfNotFound | `ignore if not found` | bool | no | false | don't error if it isn't there |
 | Recursive | `recursive` | bool | no | false | delete a folder's contents too |
 
 **Returns:** the deleted path.
@@ -171,7 +169,7 @@ Copy a file or folder from Source to Destination, optionally overwriting and inc
 | Source | the first path, inline | path | yes | — | the file or folder to copy from |
 | Destination | `to '<path>'` | path | yes | — | where the copy goes |
 | Overwrite | `overwrite` | bool | no | false | replace the destination if it already exists |
-| IncludeSubfolders | (on by default) | bool | no | true | when copying a folder, copy its sub-folders too |
+| Subfolder | (on by default) | bool | no | true | when copying a folder, copy its sub-folders too |
 
 **Returns:** the destination path.
 
@@ -184,7 +182,7 @@ Read a file's content; optionally resolve %var% patterns in the text before retu
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
 | Path | the path, inline | path | yes | — | the file to read |
-| ResolveVariables | `load vars` | bool | no | false | fill in %variables% inside the file's text before returning |
+| Template | `load vars` | bool | no | false | fill in %variables% inside the file's text before returning |
 
 **Returns:** the file's content. A JSON file is navigable; it is parsed when first navigated.
 
