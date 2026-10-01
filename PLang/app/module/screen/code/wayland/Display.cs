@@ -152,6 +152,18 @@ internal sealed class Display
 
     internal void Tell(JsonObject e) => told.Writer.TryWrite(e);
     internal void Debug(string message) => debug(message);
+
+    /// <summary>Whether the screen says what happens to its windows (<c>%screen.debug%</c>).</summary>
+    internal bool Watching { get; set; }
+
+    /// <summary>Where the window notes go (set by what opened the screen).</summary>
+    internal Action<string>? Noted { get; set; }
+
+    /// <summary>What happened to a window, said when the screen is watched.</summary>
+    internal void Note(string message)
+    {
+        if (Watching) Noted?.Invoke("screen: " + message);
+    }
     internal uint Serial() => ++serial;
     internal uint Time() => unchecked((uint)clock.ElapsedMilliseconds);
     internal void Gone(Client client) => clients.Remove(client);
