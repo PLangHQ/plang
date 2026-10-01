@@ -1,0 +1,6 @@
+/ "if <file> exists" must ask file.exists, not test the quoted name as truthy text. missing.json does not
+/ exist, so %seen% is never set. With the bug (condition.if(Left="missing.json")), the name is truthy text
+/ and %seen% gets set — this test goes red.
+Start
+- if 'missing.json' exists, set %seen% = true
+- assert %seen% is empty

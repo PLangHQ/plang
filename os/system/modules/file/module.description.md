@@ -1,1 +1,1 @@
-Read, write, copy, move, delete, and list files through the configured filesystem abstraction. A `%!x.setting%` is a setting, never a file: `save %!llm.setting%` saves a setting, which is the setting module.
+Read, write, copy, move, delete, list, and check whether files exist through the configured filesystem abstraction. A `%!x.setting%` is a setting, never a file: `save %!llm.setting%` saves a setting, which is the setting module.
