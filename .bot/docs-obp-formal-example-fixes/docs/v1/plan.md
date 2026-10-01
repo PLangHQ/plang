@@ -17,12 +17,15 @@ code on this branch before editing (docs state what the code IS).
 4. Three-paths table: drop the non-existent `app.type.type.@this` / `app/type/type/`;
    fix `App.Type` → `App.type`; concrete type → `app.type.item.text.@this`.
 5. "Data rides sealed" `A.Resize(...)` → the real `file.save` `Path.Use(... path.Save(Value, Context))`.
-6. `path.Size`: NOT changed — it is a lazy property on current app-systems, so the
-   example is accurate. Was branch drift from the reporter's commit.
+6. `path.Size` → `path.FileName` (genuinely lazy-cached), with a note that I/O
+   knowledge uses `path.Size(context)` through the gate. (Initial pass wrongly left
+   this because the branch base was 76 commits behind origin/app-systems; after
+   merging current app-systems, `Size` is the async-gated method and the old
+   property example was indeed stale.)
 
-## Residual to confirm (educator has a running env)
-Row 3's plang path `%!app.type.text%` was kept as the educator wrote it (they only
-corrected the class/file). Worth a run-confirm that it resolves.
+## Confirmed
+Row 3's plang path `%!app.type.text%` resolves (educator ran it; lands on
+`app.type.item.text`).
 
 ## Status
 Doc fixes applied; no code changes warranted. Learnings in

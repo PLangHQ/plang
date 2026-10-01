@@ -35,9 +35,18 @@ drift. Concrete, reusable insights:
    (`module/file/save.cs`). The value (`Value`) rides in whole; the leaf never
    cracks `(...Value()).Bytes` open for a static helper.
 
-6. **Verify examples against the TARGET branch, not the reporter's commit.**
-   `path.Size` was flagged as an async method taking context on the educator's
-   commit, but on current app-systems it is a lazy property that does the work on
-   access (`type/item/path/file/this.cs`) — exactly what the doc illustrates. Left
-   unchanged. Branch drift cuts both ways; `grep`/read the branch you will merge
-   into before "fixing".
+6. **Verify against the CURRENT remote HEAD — `git fetch` first, don't trust a
+   local base.** `path.Size` is an async method taking the asker's context, reading
+   the size "through the gate" (`type/item/path/file/this.cs` on app-systems
+   3a709545a). I initially branched off an app-systems that was **76 commits
+   behind**, where `Size` was still a plain property, and nearly left the stale doc
+   unchanged on that basis. The lazy, *cached* members to cite are
+   `FileName => _fileName ??= …` and `list => _list.Value`; I/O-bound knowledge like
+   `Size(context)` is lazy **and** gated. Lesson: a branch *named* app-systems in
+   your worktree may be far behind origin — fetch and diff before concluding a
+   reporter's finding is "branch drift."
+
+7. **Lazy has two shapes.** Cheap derived knowledge is a cached property
+   (`_x ??= …`); I/O-bound knowledge is a method taking context so it can pass the
+   permission gate (`AuthGate`). A file-size read done as a plain property with no
+   context would bypass the gate — the method-with-context form is the correct one.

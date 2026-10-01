@@ -15,11 +15,11 @@ OBP says: stop. Most of that work is unnecessary.
 ### Lazy everything
 
 ```csharp
-var path = new Path("/file.txt");
-path.Size  // how big is the file?
+var path = new Path("/docs/file.txt");
+path.FileName  // "file.txt"
 ```
 
-Traditional code loads size, dates, and attributes in the constructor — work nobody asked for. In OBP, `new Path("/file.txt")` stores only the string. When you access `path.Size`, *then* it does the work. Only the CPU that's needed, only when it's needed. Construction is simple; knowledge is navigated.
+Traditional code computes the name, the parent, every derived field in the constructor — work nobody asked for. In OBP, `new Path("/docs/file.txt")` stores only the string. When you access `path.FileName`, *then* it's split from the string and cached for next time (`_fileName ??= …`). Only the work that's needed, only when it's needed. Construction is simple; knowledge is navigated. (Knowledge that needs I/O goes one step further — `path.Size(context)` fetches it through the permission gate when asked.)
 
 ### No null checks
 

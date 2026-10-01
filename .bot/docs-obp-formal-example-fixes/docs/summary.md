@@ -20,11 +20,18 @@ stale.
 | 3 | `Lifecycle.Before.Run` / `Step.Load` | `on.start.Before` / `Step.Start` / `on.start.After` (`goal/this.cs`) |
 | 4 | `app.type.type.@this`, `app/type/type/`, `App.Type` | `App.type` (lowercase); concrete type `app.type.item.text.@this` at `app/type/item/text/this.cs` |
 | 5 | `A.Resize(Width, Height)` | real `file.save`: `Path.Use(async path => (data.@this) await path.Save(Value, Context))` |
-| 6 | `path.Size` lazy | **unchanged** — `Size` is a lazy property on current app-systems; example is accurate (reporter checked an older commit) |
+| 6 | `path.Size` lazy property | `path.FileName` (genuinely lazy-cached, `_fileName ??= …`), plus a note that I/O knowledge goes through the gate via `path.Size(context)` |
 
-## Residual
-Row 3's plang path `%!app.type.text%` kept as the educator wrote it (they corrected
-only class/file). Worth a run-confirm — the educator has a running env.
+## Base correction
+My first pass branched off a **76-commits-behind** `app-systems` where `Size` was a
+plain property — so I initially left #6, wrongly. The educator confirmed current
+`app-systems` (3a709545a) has `Size` as an async method taking context ("through the
+gate"), so the doc's lazy-property `path.Size` *was* out of date. Merged current
+`app-systems` in and fixed #6. All six now resolved.
+
+## Confirmed
+Row 3's plang path `%!app.type.text%` resolves (educator ran it; lands on
+`app.type.item.text`) — matches the corrected class/file.
 
 ## Learnings
 `/learnings/docs-obp-formal-example-fixes/docs/v1/learnings.md`
