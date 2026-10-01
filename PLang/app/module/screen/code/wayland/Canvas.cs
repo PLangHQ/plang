@@ -6,8 +6,12 @@ internal readonly record struct Color(float B, float G, float R, float A)
     internal static Color Rgba(byte r, byte g, byte b, float a) => new(b * a, g * a, r * a, 255 * a);
 
     // the desktop's palette (desktop.html): deep blue glass, light text, the orange accent
-    internal static readonly Color BarActive = Rgba(0x1c, 0x26, 0x36, 1);
+    internal static readonly Color BarActive = Rgba(0x22, 0x2e, 0x42, 1);
     internal static readonly Color BarInactive = Rgba(0x14, 0x1b, 0x27, 1);
+    // a title bar's rim — its top and sides, where one window's header ends and the next one's begins: clear on the
+    // window in use, faint on the others
+    internal static readonly Color RimActive = Rgba(0x6a, 0x7f, 0x9e, 1);
+    internal static readonly Color RimInactive = Rgba(0x2e, 0x3a, 0x4e, 1);
     internal static readonly Color Ink = Rgba(0xee, 0xf2, 0xf7, 1);
     internal static readonly Color InkInactive = Rgba(0x8d, 0x9b, 0xb0, 1);
     internal static readonly Color Hover = Rgba(0xff, 0xff, 0xff, 0.10f);
