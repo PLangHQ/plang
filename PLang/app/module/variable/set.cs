@@ -300,13 +300,32 @@ public partial class Set : IContext, IScope, IKeep
             return await Context.Variable.Set(typedData);
         }
 
+        // A value with variables inside it ("hi %name%", {"text": "got %x%"}) is filled now, when it is set: what
+        // the variables hold at this step is what the name holds — not whatever they hold (or don't) when it is read.
+        if (!Value.IsVariable && Value.HasVariable)
+        {
+            var filled = await Filled(Value, Context);
+            return filled.Success ? await name.Set(filled, Context) : filled;
+        }
+
         // No forced type — just set the data. Data flows: bind the Value's Data under the target
-        // name as-is, without inspecting or computing it (no .Value). A reference
-        // or template resolves/renders on its own door at read; a literal is itself. A self-write
+        // name as-is, without inspecting or computing it (no .Value). A reference is followed at
+        // read; a literal is itself. A self-write
         // (`set %a%=%a%`) is dropped at build, never handled here. The variable writes itself: a
         // bare name rebinds, `%x.a%` sets a member, `%x!cost%` the binding's Properties, `%!llm.setting.cache%`
         // a setting's option for this run.
         return await name.Set(Value, Context);
+    }
+
+    /// <summary>A value with variables inside it, filled from what they hold now — through the value's own door (a
+    /// text interpolates, a dict or list renders each entry). A variable in it that holds nothing is the answer.</summary>
+    internal static async Task<data.@this> Filled(data.@this value, actor.context.@this context)
+    {
+        var item = await value.Value();
+        if (!value.Success || value.Exits) return value;
+        var filled = new data.@this(value.Name, item, context: context);
+        CopyProperties(value, filled);
+        return filled;
     }
 
     /// <summary>

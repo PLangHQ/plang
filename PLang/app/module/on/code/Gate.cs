@@ -35,4 +35,19 @@ public static class Gate
         }
         finally { gate.Release(); }
     }
+
+    /// <summary>Runs <paramref name="work"/> after any call already running for the same app — an event's bindings
+    /// (an element clicked), one at a time with the calls; what it throws is written to the error channel.</summary>
+    public static async Task Run(System.Func<Task> work, actor.context.@this context)
+    {
+        var gate = Gates.GetValue(context.App, _ => new SemaphoreSlim(1, 1));
+        await gate.WaitAsync();
+        try { await work(); }
+        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        {
+            await context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(context.Error(
+                new global::app.error.ServiceError($"An event's bindings failed: {ex.Message}", "EventFailed") { Exception = ex }));
+        }
+        finally { gate.Release(); }
+    }
 }

@@ -24,6 +24,7 @@ public class @this : global::app.type.item.@this
             ["error"] = (before, after) => new error(before, after),
             ["hit"] = (before, after) => new hit(before, after),
             ["miss"] = (before, after) => new miss(before, after),
+            ["click"] = (before, after) => new click(before, after),
         }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
 
     // The shared empty events: one of each, closed to bindings.
@@ -46,6 +47,7 @@ public class @this : global::app.type.item.@this
     private static readonly read NoRead = (read)None["read"];
     private static readonly ask NoAsk = (ask)None["ask"];
     private static readonly error NoError = (error)None["error"];
+    private static readonly click NoClick = (click)None["click"];
 
     /// <summary>The event named <paramref name="name"/>; null when there is no event of that name.</summary>
     public virtual global::app.@event.@this? this[string name] => None.GetValueOrDefault(name);
@@ -80,6 +82,9 @@ public class @this : global::app.type.item.@this
 
     /// <summary>The ask — what runs before and after the item asks.</summary>
     public virtual ask ask => NoAsk;
+
+    /// <summary>The click — what runs when the item (a screen's element) is clicked.</summary>
+    public virtual click click => NoClick;
 
     /// <summary>The refusal of <paramref name="name"/>, which is no event: it says the events an item has, and that
     /// before or after one is a binding's When — every item has the same events, so the name never binds.</summary>

@@ -14,16 +14,16 @@ public sealed class @this : global::app.type.kind.@this
     protected internal override string Owner => "item";
 
     // Descend one property. Bottom-up + DeclaredOnly + IgnoreCase so a shadowing derived
-    // property wins and GetProperty never throws Ambiguous. List index / dict key are NOT here —
-    // the list/dict kinds own those; navigation re-derives to them per hop.
+    // property wins and GetProperty never throws Ambiguous. The name as written wins over its other
+    // casings: a type may declare both (the app's Parent app, and parent — the plang that started it).
+    // List index / dict key are NOT here — the list/dict kinds own those; navigation re-derives to them per hop.
     public override (bool, object?) Descend(object obj, string key, bool isIndex, global::app.actor.context.@this ctx)
     {
+        const System.Reflection.BindingFlags Own = System.Reflection.BindingFlags.Public
+            | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly;
         System.Reflection.PropertyInfo? prop = null;
         for (var t = obj.GetType(); t != null && prop == null; t = t.BaseType)
-            prop = t.GetProperty(key, System.Reflection.BindingFlags.Public
-                | System.Reflection.BindingFlags.Instance
-                | System.Reflection.BindingFlags.IgnoreCase
-                | System.Reflection.BindingFlags.DeclaredOnly);
+            prop = t.GetProperty(key, Own) ?? t.GetProperty(key, Own | System.Reflection.BindingFlags.IgnoreCase);
         if (prop != null) return (true, prop.GetValue(obj));
         // A member that answers as its asker (the app's name, as the asker's settings have it) is a one-context
         // method the catalog lists as a property — read the same, with the asker's context.
