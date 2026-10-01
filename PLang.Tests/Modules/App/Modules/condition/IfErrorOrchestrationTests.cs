@@ -41,7 +41,7 @@ public class IfErrorOrchestrationTests : IDisposable
 
         // The 404 surfaces; pin the error identity so an unrelated error leaking through wouldn't pass.
         await result.IsFailure();
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(404);
         await Assert.That(result.Error!.Key).IsEqualTo("GoalNotFound");
     }
 }

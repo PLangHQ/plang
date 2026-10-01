@@ -98,6 +98,6 @@ public class DownloadActionTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(404);
     }
 }

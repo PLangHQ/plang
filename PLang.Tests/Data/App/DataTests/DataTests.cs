@@ -888,7 +888,7 @@ public class DataTests : System.IAsyncDisposable
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(500);
         await Assert.That(result.Error!.Message).Contains("size limit");
     }
 
@@ -901,7 +901,7 @@ public class DataTests : System.IAsyncDisposable
 
         var result = archived.Decompress();
 
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(500);
     }
 
     [Test]
@@ -911,7 +911,7 @@ public class DataTests : System.IAsyncDisposable
 
         var result = archived.Decompress();
 
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(500);
     }
 
     [Test]
@@ -932,7 +932,7 @@ public class DataTests : System.IAsyncDisposable
 
         var result = archived.Decompress();
 
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(500);
     }
 
     // Data.Merge deleted — it was a list operation living on Data that lowered to

@@ -20,7 +20,7 @@ public class KeepsItsKeyTests : System.IAsyncDisposable
         var result = await goal.Step.Items().First().Start(Ctx);
 
         await Assert.That(result.Error?.Key).IsEqualTo("MyRefusal");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(418);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(418);
     }
 
     private sealed class Throwing { public string Name => throw new System.InvalidOperationException("no name"); }

@@ -1,4 +1,4 @@
-================== {{ error.Key }} ({{ error.StatusCode }}) ==================
+================== {{ error.Key }} ({{ error.status.code }}) ==================
 {%- if error.Step %}
 File: {{ error.Step.Goal.Path }}:{{ error.Step.Line.Number }}
 {%- elsif error.Goal %}
@@ -83,7 +83,7 @@ For C# developers:
 {%- for cause in error.list %}
 
 --- Error during error handling [{{ forloop.index }}] ---
-    {{ cause.Key }} ({{ cause.StatusCode }}): {{ cause.Message }}
+    {{ cause.Key }} ({{ cause.status.code }}): {{ cause.Message }}
 {%- if cause.Step %}
     at {{ cause.Step.Goal.Path }}:{{ cause.Step.Line.Number }} - {{ cause.Step.Text }}
 {%- endif %}

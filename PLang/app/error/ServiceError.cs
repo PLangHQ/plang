@@ -9,21 +9,21 @@ namespace app.error;
 /// </summary>
 public class ServiceError : Error
 {
-    public ServiceError(string message, string key = "ServiceError", int statusCode = 400)
-        : base(message, key, statusCode) { }
+    public ServiceError(string message, string key = "ServiceError", global::app.type.item.status.@this? status = null)
+        : base(message, key, status) { }
 
-    public ServiceError(string message, Step step, string key = "ServiceError", int statusCode = 400)
-        : base(message, step, key, statusCode) { }
+    public ServiceError(string message, Step step, string key = "ServiceError", global::app.type.item.status.@this? status = null)
+        : base(message, step, key, status) { }
 
-    public ServiceError(string message, Step step, IReadOnlyList<Call> callFrames, string key = "ServiceError", int statusCode = 400)
-        : base(message, step, callFrames, key, statusCode) { }
+    public ServiceError(string message, Step step, IReadOnlyList<Call> callFrames, string key = "ServiceError", global::app.type.item.status.@this? status = null)
+        : base(message, step, callFrames, key, status) { }
 
-    public ServiceError(string message, actor.context.@this context, string key = "ServiceError", int statusCode = 400)
-        : base(message, context, key, statusCode) { }
+    public ServiceError(string message, actor.context.@this context, string key = "ServiceError", global::app.type.item.status.@this? status = null)
+        : base(message, context, key, status) { }
 
-    public new static ServiceError FromException(Exception ex, string key = "Exception", int statusCode = 500)
+    public new static ServiceError FromException(Exception ex, string key = "Exception", global::app.type.item.status.@this? status = null)
     {
-        return new ServiceError(ex.Message, key, statusCode)
+        return new ServiceError(ex.Message, key, status ?? 500)
         {
             Exception = ex
         };

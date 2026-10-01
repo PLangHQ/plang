@@ -1,4 +1,4 @@
-{{ error.Key }} ({{ error.StatusCode }}): {{ error.Message }}
+{{ error.Key }} ({{ error.status.code }}): {{ error.Message }}
 {%- if error.Step %}
   at {{ error.Step.Goal.Path }}:{{ error.Step.Line.Number }}
     - {{ error.Step.Text }}

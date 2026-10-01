@@ -2,14 +2,14 @@
 / the error channel. The caller hands the error in by name — `call /system/error/Show error=%!error%`
 / inside a handler; at the top level the app hands in the failed run's error.
 Show
-- set %template% = "/system/error/%error.StatusCode%.txt"
+- set %template% = "/system/error/%error.status.code%.txt"
 - render %template%, error=%error%, on error 404 call Fallback then retry once, write to %text%
 - write %text% to error channel
 
 / No template for this code: its family's — 400.txt below 500, 500.txt from 500 up.
 Fallback
 - set %template% = "/system/error/400.txt"
-- if %error.StatusCode% >= 500, call Runtime
+- if %error.status% >= 500, call Runtime
 
 Runtime
 - set %template% = "/system/error/500.txt"

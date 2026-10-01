@@ -42,7 +42,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     // The clauses after the step's first action, in the order they stand in its code.
     private static string Clauses(global::app.data.@this read) =>
         string.Join(", ", ((global::app.goal.step.action.list.@this)read.Peek()!).Items().Skip(1)
-            .Select(m => $"{m.Module.Name}.{m.Name}{(m["StatusCode"] is { } s ? $"({s.Value})" : "")}"));
+            .Select(m => $"{m.Module.Name}.{m.Name}{(m["Status"] is { } s ? $"({s.Value})" : "")}"));
 
     // a goal's name in an action slot is refused where it's read, naming the fix — never held as a value
     // nothing can read back
@@ -127,7 +127,7 @@ public class FormalReaderTests : System.IAsyncDisposable
     [Test]
     public async Task TwoOnErrorClauses_KeepTheOrderWritten()
     {
-        var read = Read("file.read(Path=\"a.txt\"); on.timeout(After=\"00:00:00.1000000\"); on.error(StatusCode=404, Recovery=[goal.call(Name=\"Missing\")]); on.error(Recovery=[goal.call(Name=\"Fix\")])", out _);
+        var read = Read("file.read(Path=\"a.txt\"); on.timeout(After=\"00:00:00.1000000\"); on.error(Status=404, Recovery=[goal.call(Name=\"Missing\")]); on.error(Recovery=[goal.call(Name=\"Fix\")])", out _);
 
         await read.IsSuccess();
         await Assert.That(Clauses(read)).IsEqualTo("on.timeout, on.error(404), on.error");

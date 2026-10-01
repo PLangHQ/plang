@@ -1,0 +1,206 @@
+{
+  "name": "InspectError",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %errorMessage% = %!error.Message%",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%errorMessage%",
+              "variable": [
+                {
+                  "text": "%errorMessage%",
+                  "code": [
+                    {
+                      "variable": "errorMessage"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!error.Message%",
+              "variable": [
+                {
+                  "text": "%!error.Message%",
+                  "code": [
+                    {
+                      "variable": "!error"
+                    },
+                    {
+                      "property": "Message"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "set %errorKey% = %!error.Key%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%errorKey%",
+              "variable": [
+                {
+                  "text": "%errorKey%",
+                  "code": [
+                    {
+                      "variable": "errorKey"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!error.Key%",
+              "variable": [
+                {
+                  "text": "%!error.Key%",
+                  "code": [
+                    {
+                      "variable": "!error"
+                    },
+                    {
+                      "property": "Key"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "set %errorStatus% = %!error.status.code%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%errorStatus%",
+              "variable": [
+                {
+                  "text": "%errorStatus%",
+                  "code": [
+                    {
+                      "variable": "errorStatus"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!error.status.code%",
+              "variable": [
+                {
+                  "text": "%!error.status.code%",
+                  "code": [
+                    {
+                      "variable": "!error"
+                    },
+                    {
+                      "property": "status"
+                    },
+                    {
+                      "property": "code"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/error/prop/InspectError.goal",
+  "prPath": "/module/error/prop/.build/inspecterror.pr",
+  "hash": "13909484b9e95136d2167cac61f590f64efc4860776405ca66c4d0a9dd2bdaa8",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}

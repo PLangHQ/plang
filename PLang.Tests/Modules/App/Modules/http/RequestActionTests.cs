@@ -417,7 +417,7 @@ public class RequestActionTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(404);
     }
 
     [Test]
@@ -433,7 +433,7 @@ public class RequestActionTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(500);
     }
 
     #endregion
@@ -521,8 +521,8 @@ public class RequestActionTests
         var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
 
         await result.IsSuccess();
-        await Assert.That((await result.Properties.Value("StatusCode"))).IsEqualTo(200);
-        await Assert.That((await result.Properties.Value("IsSuccess"))).IsEqualTo(true);
+        await Assert.That(((global::app.type.item.status.@this)(await result.Properties.Value("Status"))!).Code.ToInt32()).IsEqualTo(200);
+        await Assert.That(((global::app.type.item.status.@this)(await result.Properties.Value("Status"))!).Ok.Value).IsTrue();
         await Assert.That(((await result.Properties.Value("Method")))?.ToString()).IsEqualTo("GET");
         await Assert.That((await result.Properties.Value("Url"))!.ToString()).IsEqualTo("https://api.example.com/test");
     }
@@ -662,7 +662,7 @@ public class RequestActionTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(503);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(503);
     }
 
     [Test]
@@ -675,7 +675,7 @@ public class RequestActionTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("IOError");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(500);
     }
 
     [Test]
@@ -688,7 +688,7 @@ public class RequestActionTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("InvalidContent");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(400);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(400);
     }
 
     #endregion
@@ -802,7 +802,7 @@ public class RequestActionTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("HttpError");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(500);
     }
 
     [Test]
@@ -908,7 +908,7 @@ public class RequestActionTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ResponseTooLarge");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(413);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(413);
     }
 
     [Test]

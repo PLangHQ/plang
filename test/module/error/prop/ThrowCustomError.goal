@@ -1,2 +1,2 @@
 ThrowCustomError
-- throw error "bad thing" key="CustomKey" statusCode=422
+- throw error "bad thing" key="CustomKey" status=422

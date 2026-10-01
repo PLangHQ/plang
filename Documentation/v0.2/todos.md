@@ -2125,3 +2125,9 @@ In the decider eval (`tools/decider/c_eval.py`), the `build` goal failed all 11 
 step 3 (`set channel "builder" call BuilderChannel` → `channel.set Goal=`) was refused twice: a goal whose answer
 can't be read fails whole, so one flaky step scores as eleven failures. The eval (and the builder) could keep the
 steps that read and fail only the refused one, so a round measures steps, not the worst step of a goal.
+
+Its cause in those rounds: the decider's formal hint shows each slot as `?` (`channel.set(Name=?, Goal=goal.call(Name=?))`),
+and nano sometimes copies the `?` into its answer, then on retry writes `Goal=BuilderChannel` unquoted. Run alone, the
+`build` case answers `Goal=goal.call(Name="BuilderChannel")` (2/2); in full rounds it failed 3 of the last 5. Seen with
+`--debug={"llm":{"user":true,"response":true}}` on `os/system/builder/Build.goal`, where step 3 is cached and never asked.
+A hint slot that reads as a value to copy (`?`) is worth rethinking.

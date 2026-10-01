@@ -3,4 +3,4 @@ Start
 - call ThrowCustomError, on error call InspectError
 - assert %errorMessage% equals "bad thing"
 - assert %errorKey% equals "CustomKey"
-- assert %errorStatusCode% equals 422
+- assert %errorStatus% equals 422

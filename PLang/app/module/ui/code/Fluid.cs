@@ -323,7 +323,7 @@ public class Fluid : ITemplate
         var result = await goal.Start(plangContext);
         if (!result.Success)
             throw new global::app.error.AppException($"callGoal '{goalName}' failed: {result.Error?.Message}",
-                result.Error?.Key ?? "GoalFailed", result.Error?.StatusCode ?? 500);
+                result.Error?.Key ?? "GoalFailed", result.Error?.Status ?? 500);
 
         await writer.WriteAsync((await result.Value())?.ToString() ?? "");
         return Completion.Normal;
@@ -380,13 +380,13 @@ public class Fluid : ITemplate
                 var exists = await resolved.Exists(_context);
                 if (!exists.Success)
                     throw new global::app.error.AppException($"include '{candidate}': {exists.Error?.Message}",
-                        exists.Error?.Key ?? "IncludeFailed", exists.Error?.StatusCode ?? 500);
+                        exists.Error?.Key ?? "IncludeFailed", exists.Error?.Status ?? 500);
                 if ((exists.Peek() as global::app.type.item.@bool.@this)?.Value != true) continue;
                 var landed = await resolved.Read(_context);
                 var read = landed.Success ? await landed.Value() : null;
                 if (!landed.Success)
                     throw new global::app.error.AppException($"include '{candidate}': {landed.Error?.Message}",
-                        landed.Error?.Key ?? "IncludeFailed", landed.Error?.StatusCode ?? 500);
+                        landed.Error?.Key ?? "IncludeFailed", landed.Error?.Status ?? 500);
                 return read is global::app.type.item.binary.@this bin
                     ? System.Text.Encoding.UTF8.GetString(bin.Value)
                     : read?.ToString() ?? "";

@@ -680,7 +680,7 @@ public sealed class OpenAi : ILlm
                     }
                 };
             }
-            if (!content.Success && content.Error is { StatusCode: not 404 } unread)
+            if (!content.Success && content.Error is { } unread && !unread.Status.Equals((global::app.type.item.status.@this)404))
                 throw new global::app.error.AppException(unread);
         }
 

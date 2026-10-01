@@ -30,7 +30,7 @@ public class Phase0Proof : System.IAsyncDisposable
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Message).IsEqualTo("File not found");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(404);
     }
 
     [Test]

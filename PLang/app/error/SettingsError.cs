@@ -11,11 +11,11 @@ public class SettingsError : Error
     public string? TableName { get; init; }
     public string? KeyName { get; init; }
 
-    public SettingsError(string message, string key = "SettingsError", int statusCode = 500)
-        : base(message, key, statusCode) { }
+    public SettingsError(string message, string key = "SettingsError", global::app.type.item.status.@this? status = null)
+        : base(message, key, status ?? 500) { }
 
-    public SettingsError(string message, actor.context.@this context, string key = "SettingsError", int statusCode = 500)
-        : base(message, context, key, statusCode) { }
+    public SettingsError(string message, actor.context.@this context, string key = "SettingsError", global::app.type.item.status.@this? status = null)
+        : base(message, context, key, status ?? 500) { }
 
     public static SettingsError FromException(Exception ex, string? tableName = null, string? keyName = null)
     {

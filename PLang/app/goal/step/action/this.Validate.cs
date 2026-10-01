@@ -76,7 +76,7 @@ public partial class @this
         // literal its slot declines is the build's to name, not a judgement.
         if (causes.Count == 0 && (await Bind(context)).Handler is global::app.module.IClass own
             && (await own.Parse()).Count == 0 && await own.Validate() is { } complaint)
-            causes.Add(new global::app.error.Error($"{Module}.{Name}: {complaint.Message}", complaint.Key, complaint.StatusCode));
+            causes.Add(new global::app.error.Error($"{Module}.{Name}: {complaint.Message}", complaint.Key, complaint.Status));
 
         // what it holds judges itself too — the actions its properties hold (a callback, a recovery), the steps
         // of its branch body — as the build walks them

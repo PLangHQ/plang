@@ -2,7 +2,7 @@ namespace app.error.serializer;
 
 /// <summary>
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <see cref="app.error.Error"/> — the
-/// read-back mirror of <see cref="app.error.Error.Write"/> (<c>{id, message, key, statusCode, createdUtc,
+/// read-back mirror of <see cref="app.error.Error.Write"/> (<c>{id, message, key, status, createdUtc,
 /// fixSuggestion?, helpfulLinks?, list?}</c>), each causing error read back the same way.
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
@@ -19,7 +19,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (reader.Null()) return new global::app.type.item.@null.@this("error", kind);
         reader.BeginObject();
         string id = "", message = "", key = "Error";
-        int statusCode = 400;
+        global::app.type.item.status.@this status = 400;
         var createdUtc = System.DateTime.UtcNow;
         string? fixSuggestion = null, helpfulLinks = null;
         var causes = new System.Collections.Generic.List<global::app.error.Error>();
@@ -30,7 +30,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "id":            id = reader.String(); break;
                 case "message":       message = reader.String(); break;
                 case "key":           key = reader.String(); break;
-                case "statuscode":    statusCode = reader.Int(); break;
+                case "status":
+                    if (new global::app.type.item.status.serializer.Reader().Read(ref reader, null, ctx) is global::app.type.item.status.@this read)
+                        status = read;
+                    break;
                 case "createdutc":    createdUtc = reader.DateTime(); break;
                 case "fixsuggestion": fixSuggestion = reader.String(); break;
                 case "helpfullinks":  helpfulLinks = reader.String(); break;
@@ -44,6 +47,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             }
         }
         reader.EndObject();
-        return global::app.error.Error.Restore(id, message, key, statusCode, createdUtc, fixSuggestion, helpfulLinks, causes);
+        return global::app.error.Error.Restore(id, message, key, status, createdUtc, fixSuggestion, helpfulLinks, causes);
     }
 }

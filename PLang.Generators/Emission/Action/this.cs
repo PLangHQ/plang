@@ -457,7 +457,7 @@ public static class @this
                 {
                     if (action == null) return err;
                     var msg = $"{action.Module}.{action.Name}: {err.Message}";
-                    return new global::app.error.ActionError(msg, err.Key ?? "ActionError", err.StatusCode);
+                    return new global::app.error.ActionError(msg, err.Key ?? "ActionError", err.Status);
                 }
 
             """);

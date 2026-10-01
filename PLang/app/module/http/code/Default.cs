@@ -210,7 +210,7 @@ public sealed class Default : IHttp
         catch (Exception ex) when (ex is TaskCanceledException or HttpRequestException
             or IOException or UnauthorizedAccessException or FormatException)
         {
-            var (key, statusCode) = ex switch
+            var (key, status) = ex switch
             {
                 TaskCanceledException => ("Timeout", 408),
                 HttpRequestException hre => ("HttpError", (int)(hre.StatusCode ?? 0)),
@@ -218,7 +218,7 @@ public sealed class Default : IHttp
                 FormatException => ("InvalidContent", 400),
                 _ => ("HttpError", 500)
             };
-            return context.Error(new ServiceError(ex.Message, key, statusCode));
+            return context.Error(new ServiceError(ex.Message, key, status));
         }
     }
 
@@ -375,7 +375,6 @@ public sealed class Default : IHttp
         System.TimeSpan duration = default)
     {
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
-        var statusCode = (int)response.StatusCode;
 
         if (!response.IsSuccessStatusCode)
         {
@@ -496,12 +495,9 @@ public sealed class Default : IHttp
             props["ContentLength"] = request.Content.Headers.ContentLength;
         }
 
-        props["StatusCode"] = (int)response.StatusCode;
-        // `status` is the numeric code (the architect's %response!status% == 200);
-        // the human reason phrase rides as `reason`.
-        props["Status"] = (int)response.StatusCode;
-        props["Reason"] = response.ReasonPhrase;
-        props["IsSuccess"] = response.IsSuccessStatusCode;
+        // %response!status% — its code, the server's own reason (%response!status.text%), whether it is a success
+        // (%response!status.ok%); it compares with a number by its code (%response!status% == 200).
+        props["Status"] = new global::app.type.item.status.@this((int)response.StatusCode, response.ReasonPhrase ?? "");
 
         var respHeaders = new Dictionary<string, object?>();
         foreach (var h in response.Headers)

@@ -216,6 +216,9 @@
   "app.type.item.signature": {
     "word": "signature"
   },
+  "app.type.item.status": {
+    "word": "status"
+  },
   "app.type.item.tag": {
     "word": "tag"
   },

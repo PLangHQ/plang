@@ -47,7 +47,7 @@ public class ForeachErrorPropagationTests
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(404);
         // Loop must stop on first failure — the body saw the first element, not the last.
         await Assert.That((await context.Variable.GetValue("seen"))).IsEqualTo("a");
     }
@@ -99,7 +99,7 @@ public class ForeachErrorPropagationTests
         // swallowed by condition.if's Handled flag.
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(404);
         // The failure is the body's own: the goal the condition's body called.
         await Assert.That(result.Error!.Message).Contains("MissingGoal");
     }

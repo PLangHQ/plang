@@ -277,7 +277,7 @@ public class DataSourceTests
         var ex = new Exception("something unexpected");
         var error = SettingsError.FromException(ex);
         await Assert.That(error.Key).IsEqualTo("SettingsError");
-        await Assert.That(error.StatusCode).IsEqualTo(500);
+        await Assert.That(error.Status.Code.ToInt32()).IsEqualTo(500);
     }
 
     // --- In-memory datasource tests ---

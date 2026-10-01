@@ -10,7 +10,7 @@ Step text: `save %doc%, on error key Conflict, write out "already exists"`
 Properties: `{"Key": "Conflict", "Recovery": [output.write(Data="already exists")]}` — a named error key filters which errors this handles.
 
 Step text: `read %path%, on error 404, write out "missing"`
-Properties: `{"StatusCode": 404, "Recovery": [output.write(Data="missing")]}` — a bare number is a status code, never a key.
+Properties: `{"Status": 404, "Recovery": [output.write(Data="missing")]}` — a bare number is a status, never a key.
 
 Step text: `http get %url%, on error retry 3 times`
 Properties: `{"RetryCount": 3}` — retry with no recovery.
@@ -31,4 +31,4 @@ Step text: `call Save, on error call Rollback first, then retry 2 times`
 Properties: `{"RetryCount": 2, "Order": "GoalFirst", "Recovery": [goal.call(Name="Rollback")]}` — `GoalFirst` is fix, then retry: the recovery runs, then the step retries and gets the retry's result. Without a `RetryCount` the recovery's result stands.
 
 Step text: `render %template%, on error 404 call Fallback then retry, write to %text%`
-Properties: `{"StatusCode": 404, "RetryCount": 1, "Order": "GoalFirst", "Recovery": [goal.call(Name="Fallback")]}` — the recovery fixes what the step reads (`Fallback` sets `%template%`), and the retry reads it anew.
+Properties: `{"Status": 404, "RetryCount": 1, "Order": "GoalFirst", "Recovery": [goal.call(Name="Fallback")]}` — the recovery fixes what the step reads (`Fallback` sets `%template%`), and the retry reads it anew.

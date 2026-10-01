@@ -63,7 +63,7 @@ public class DataResultTests : System.IAsyncDisposable
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Message).IsEqualTo("Something went wrong");
         await Assert.That(result.Error!.Key).IsEqualTo("Error");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(400);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(400);
     }
 
     [Test]
@@ -74,7 +74,7 @@ public class DataResultTests : System.IAsyncDisposable
         await result.IsFailure();
         await Assert.That(result.Error!.Message).IsEqualTo("Not found");
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(404);
     }
 
     [Test]

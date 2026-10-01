@@ -67,8 +67,8 @@
 [11] output.write(Data: text = "Report sent", channel: text = "log")
 
 # show
-[0] variable.set(Name: variable = %template%, Value: text = "/system/error/%error.StatusCode%.txt")
-[1] ui.render(Template: text = "%template%", Parameter: list = {error: item = %error%}); on.error(StatusCode: number = 404, RetryCount: number = 1, Order: choice<errororder> = "GoalFirst", Recovery: list<action> = [goal.call(Name: goal = "Fallback")]); variable.set(Name: variable = %text%, Value: item = %!data%)
+[0] variable.set(Name: variable = %template%, Value: text = "/system/error/%error.status.code%.txt")
+[1] ui.render(Template: text = "%template%", Parameter: list = {error: item = %error%}); on.error(Status: status = 404, RetryCount: number = 1, Order: choice<errororder> = "GoalFirst", Recovery: list<action> = [goal.call(Name: goal = "Fallback")]); variable.set(Name: variable = %text%, Value: item = %!data%)
 [2] output.write(Data: item = %text%, channel: text = "error")
 
 # guard

@@ -112,7 +112,7 @@ public class HashActionTests
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("ValueRequired");
-        await Assert.That(result.Error.StatusCode).IsEqualTo(400);
+        await Assert.That(result.Error.Status.Code.ToInt32()).IsEqualTo(400);
     }
 
     [Test]
@@ -219,7 +219,7 @@ public class HashActionTests
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
         await Assert.That(result.Error!.Key).IsEqualTo("ValueRequired");
-        await Assert.That(result.Error.StatusCode).IsEqualTo(400);
+        await Assert.That(result.Error.Status.Code.ToInt32()).IsEqualTo(400);
     }
 
     [Test]
