@@ -15,6 +15,14 @@ public sealed class Ask : global::app.type.item.@this, global::app.type.item.ICr
 
     /// <summary>What is asked, as the asker resolved it — what a program reading this plang shows the person.</summary>
     [global::app.Out] public global::app.type.item.text.@this? Question { get; init; }
+
+    /// <summary>This goal's own ask, waiting for its answer — the one a message channel suspends the goal on. An
+    /// ask that arrived from another plang (its question, read as Data) is something to answer, not a reason to
+    /// stop: it flows through the goal that reads it.</summary>
+    internal bool Waiting { get; init; }
+
+    /// <summary>Stops the goal only when it is this goal's own, waiting.</summary>
+    public bool ShouldExit() => Waiting;
 }
 
 /// <summary>

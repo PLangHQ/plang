@@ -158,6 +158,18 @@ public sealed class @this
         _runtimeTyped[(typeName, kind)] = reader;
     }
 
+    // The word of the one item type the namespace declares by its word ([PlangType]); null when it declares none, or more.
+    private static string? Declared(Assembly assembly, string @namespace)
+    {
+        var words = assembly.GetTypes()
+            .Where(t => t.Namespace == @namespace && typeof(global::app.type.item.@this).IsAssignableFrom(t))
+            .Select(t => t.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(inherit: false)?.Name)
+            .Where(w => !string.IsNullOrEmpty(w))
+            .Distinct()
+            .ToList();
+        return words.Count == 1 ? words[0] : null;
+    }
+
     private void EnsureInitialized()
     {
         if (_initialized) return;
@@ -179,14 +191,15 @@ public sealed class @this
             if (!type.Namespace!.EndsWith(".serializer", System.StringComparison.Ordinal)) continue;
 
             // namespace shape: <the type's namespace>.serializer — the reader is its type's, registered under
-            // the name that type goes by (its word, else its namespace). A folder with no item class of its own
-            // (a module's serializer folder) registers under its last segment.
+            // the name that type goes by (its word, else its namespace). A module's serializer folder reads the one
+            // type the module declares by its word ([PlangType("ask")] in app.module.output); a folder with no such
+            // type registers under its last segment.
             var ns = type.Namespace;
             var pivot = ns.LastIndexOf(".serializer", System.StringComparison.Ordinal);
             var head = ns[..pivot];
             var lastDot = head.LastIndexOf('.');
             if (lastDot < 0) continue;
-            var typeName = global::app.type.item.@this.NameOf(assembly, head) ?? head[(lastDot + 1)..].TrimStart('@');
+            var typeName = global::app.type.item.@this.NameOf(assembly, head) ?? Declared(assembly, head) ?? head[(lastDot + 1)..].TrimStart('@');
 
             // The typed (ITypeReader) pull reader — an instance class whose own Kind
             // names the (type, kind) variant. Registered into the token-stream table;
