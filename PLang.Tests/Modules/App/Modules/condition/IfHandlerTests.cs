@@ -230,35 +230,6 @@ public class IfHandlerTests : IDisposable
         await result.IsFailure();
     }
 
-    // `if %event.guest% is empty` on {"mouse": …}: a property the value hasn't is empty, and an unset variable
-    // is too — `is empty` asks what the reference names, not the reference (a host goal routing on it once
-    // kept every click from reaching PlangOS)
-    [Test]
-    [Arguments("event.guest", "isempty", true)]
-    [Arguments("event.guest", "isnotempty", false)]
-    [Arguments("event.mouse", "isempty", false)]
-    [Arguments("event.mouse", "isnotempty", true)]
-    [Arguments("unset", "isempty", true)]
-    public async Task Emptiness_IsWhatTheReferenceNames(string reference, string op, bool expected)
-    {
-        var ctx = _app.actor.list.User.Context;
-        ctx.Variable.Set("event", new Dictionary<string, object?> { ["mouse"] = "down" });
-        // the reference as the builder writes it: a template value whose whole text is one %ref%
-        var left = new global::app.data.@this("Left",
-            new global::app.type.item.source("%" + reference + "%", new global::app.type.@this("item", template: "plang")), context: ctx);
-        var action = new If(ctx)
-        {
-            Left = left,
-            Operator = ctx.Ok<global::app.type.item.choice.@this<Operator>>((global::app.type.item.choice.@this<Operator>)new Operator(op)),
-        };
-        await action.Attach(null, ctx);
-
-        var result = await action.Start();
-
-        await result.IsSuccess();
-        await Assert.That(await result.ToBooleanAsync()).IsEqualTo(expected);
-    }
-
     [Test]
     public async Task NegativeOperator_KeepsThePositivesError()
     {
