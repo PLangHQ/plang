@@ -25,15 +25,26 @@ public static class Gate
             payload.Name = "!data";
             await context.Variable.Set("!data", payload);
             var result = await held.Start(context);
-            if (!result.Success)
-                await context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(result);
+            if (!result.Success) await Report(result, context);
         }
         catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
         {
-            await context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(context.Error(
-                new global::app.error.ServiceError($"{held.Module}.{held.Name} failed: {ex.Message}", "CallFailed") { Exception = ex }));
+            await Report(context.Error(
+                new global::app.error.ServiceError($"{held.Module}.{held.Name} failed: {ex.Message}", "CallFailed") { Exception = ex }), context);
         }
         finally { gate.Release(); }
+    }
+
+    /// <summary>A failure nothing waits for (a callback's, a background read's) goes to the error channel of the actor it
+    /// ran as — the app's, where the app shows its errors. When that channel can't take it (its goal failed too), both go
+    /// to the system's error channel: an error is never lost.</summary>
+    public static async Task Report(data.@this failed, actor.context.@this context)
+    {
+        var shown = await context.Actor.Channel[global::app.channel.list.@this.Error].WriteAsync(failed);
+        if (shown.Success) return;
+        var system = context.App.actor.list.System.Channel[global::app.channel.list.@this.Error];
+        await system.WriteAsync(failed);
+        await system.WriteAsync(shown);
     }
 
     /// <summary>Runs <paramref name="work"/> after any call already running for the same app — an event's bindings
@@ -45,8 +56,8 @@ public static class Gate
         try { await work(); }
         catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
         {
-            await context.App.actor.list.System.Channel[global::app.channel.list.@this.Error].WriteAsync(context.Error(
-                new global::app.error.ServiceError($"An event's bindings failed: {ex.Message}", "EventFailed") { Exception = ex }));
+            await Report(context.Error(
+                new global::app.error.ServiceError($"An event's bindings failed: {ex.Message}", "EventFailed") { Exception = ex }), context);
         }
         finally { gate.Release(); }
     }
