@@ -121,7 +121,10 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
         // The written value is the call's argument %message% — bound as goal.call binds its own
         // arguments, in a frame that ends with the run. (%!data% is the action before's
         // result; the call's own run replaces it before the goal's first step reads it.)
-        var message = new data.@this(MessageName, data.Peek(), data.Type, context: context);
+        // read where it is written, in the writer's step: a template renders there, with the writer's variables
+        var written = await data.Settle();
+        if (written.IsInitialized && !written.Success) return written;
+        var message = new data.@this(MessageName, written.Peek(), written.Type, context: context);
 
         var prev = _executing.Value;
         _executing.Value = true;

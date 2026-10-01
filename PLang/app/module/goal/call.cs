@@ -5,7 +5,7 @@ namespace app.module.goal;
 
 /// <summary>
 /// Calls a named goal, optionally on a different actor. The goal is selected through the goal
-/// collection as seen from the goal this call sits in; each argument binds as a variable in the
+/// collection as seen from the goal this call sits in; each parameter binds as a variable in the
 /// context the goal runs under.
 /// </summary>
 [Action("call")]
@@ -17,7 +17,7 @@ public partial class Call : IContext
     /// goal this call sits in.</summary>
     public partial data.@this<global::app.goal.@this> Name { get; init; }
 
-    /// <summary>The arguments — one named, typed row each, bound as a variable of that name in the
+    /// <summary>The parameters — one named, typed row each, bound as a variable of that name in the
     /// called goal.</summary>
     public partial data.@this<global::app.type.item.list.@this>? Parameter { get; init; }
 
@@ -35,7 +35,7 @@ public partial class Call : IContext
     /// Build-time: the name becomes the goal's own address — one truth, a dictionary hit at run. A %variable%
     /// name is only known at run and stays authored; a goal in the caller's own file stays bare
     /// (<see cref="global::app.goal.@this.Reference"/>). A goal not found yet may be built later in the same
-    /// run, so the name is left as written. The arguments stay as written: <c>x=%x%</c> gives the callee its
+    /// run, so the name is left as written. The parameters stay as written: <c>x=%x%</c> gives the callee its
     /// own <c>%x%</c>, starting as the caller's.
     /// </summary>
     public async Task<data.@this> Build()
@@ -61,25 +61,30 @@ public partial class Call : IContext
 
     private async Task<data.@this> Run(global::app.goal.@this goal, global::app.actor.context.@this execContext)
     {
-        // The arguments bind in the call's own frame, in the memory the callee runs in: they are the
+        // The parameters bind in the call's own frame, in the memory the callee runs in: they are the
         // callee's for as long as it runs and gone when it returns; any other write the callee makes
-        // reaches that memory as it would without the call. Data just flows — each argument binds under
-        // its name as-is, unresolved until the callee reads it.
-        // A row that carries no value is a declaration ("this goal takes a city"), not an argument —
+        // reaches that memory as it would without the call. Each parameter is settled in the caller and binds
+        // under its name.
+        // A row that carries no value is a declaration ("this goal takes a city"), not a value given —
         // it binds nothing. A valued row is "this value unless the invocation supplied one": a runner
-        // that forks (a tool invocation) runs this call inside a frame born with the arguments it
+        // that forks (a tool invocation) runs this call inside a frame born with the parameters it
         // supplies, and a supplied name wins.
-        // Each argument binds as its own Data: `place=%city%` is the caller's %city% as it is now, and the
+        // Each parameter binds as its own Data: `place=%city%` is the caller's %city% as it is now, and the
         // shared row never enters the callee's variables. The list loads on this run's own copy, never the row.
         var bound = new List<data.@this>();
-        if (Parameter != null && await Parameter.Value() is global::app.type.item.list.@this args)
-            foreach (var arg in args.Items(Context))
+        if (Parameter != null && await Parameter.Value() is global::app.type.item.list.@this parameters)
+            foreach (var parameter in parameters.Items(Context))
             {
-                if (arg.Peek() is not { IsNull: false }) continue;
-                if (execContext.Variable.Supplies(__action, arg.Name)) continue;
-                // A reference argument (`goal=%goal%`) binds what it names now, unread — a frame entry that
-                // named itself would cycle when read.
-                bound.Add((await arg.Follow(Context)).Copy(arg.Name));
+                if (parameter.Peek() is not { IsNull: false }) continue;
+                if (execContext.Variable.Supplies(__action, parameter.Name)) continue;
+                // A parameter is read where it is written, in the caller, as a set reads its value: a reference
+                // (`goal=%goal%`) binds what it names now, unread; a template (`name="%first% %last%"`) renders
+                // here, with the caller's variables. A reference to nothing leaves the name unset in the callee;
+                // a value that can't be read (a template naming an unset variable, a variable holding a failure)
+                // fails the call, in the caller.
+                var settled = await parameter.Settle();
+                if (settled.IsInitialized && !settled.Success) return settled;
+                bound.Add(settled.IsInitialized ? settled.Copy(parameter.Name) : Context.NotFound(parameter.Name));
             }
 
         await using (execContext.Variable.Calls.Push(bound))

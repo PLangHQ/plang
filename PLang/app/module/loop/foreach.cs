@@ -54,7 +54,11 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
             if (Context.CancellationToken.IsCancellationRequested)
                 return await Result(count, completed: false);
 
-            var bound = new List<data.@this> { item.Copy(itemVariable.Name) };
+            // the element as it is here, in the loop's step, as a set reads a value (a template renders here)
+            var settled = await item.Settle();
+            if (settled.IsInitialized && !settled.Success) return settled;
+            var bound = new List<data.@this>
+                { settled.IsInitialized ? settled.Copy(itemVariable.Name) : Context.NotFound(itemVariable.Name) };
             // Optional param: absent slots are non-null Uninitialized (null model), so
             // "was a key named?" is IsInitialized, not a C# null check.
             if (keyVariable != null) bound.Add(key.Copy(keyVariable.Name));

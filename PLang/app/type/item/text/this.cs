@@ -179,8 +179,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                 if (found.Code.Root.Name.StartsWith('!')) { w.String(found.Text); at = pos - 1; continue; }
                 throw await Unreachable(found, context);
             }
-            // a value reached again while it is being written into a template (`set %label% = '%label%-and-done'`,
-            // read later: %label% holds the template that names it) is a cycle
+            // The crash net for this render's door (Start + Output, not the variable's Value door, which has its
+            // own): a value reached again while it is being written into a template would recurse until the
+            // process dies. Unreachable today — every binding a program writes is settled where it is written
+            // (data.Settle: a set, an action's exit, a call's parameters, a loop's item), so nothing holds a
+            // template that names itself — kept so a future binding that stores one fails as a plang error.
             var rendering = context.Variable.Rendering;
             var outer = rendering.Value ?? System.Collections.Immutable.ImmutableHashSet.Create<object>(
                 System.Collections.Generic.ReferenceEqualityComparer.Instance);

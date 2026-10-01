@@ -177,6 +177,77 @@ public class ReturnTests
     }
 
     [Test]
+    public async Task ATemplateParameter_RendersWithTheCallersVariables()
+    {
+        await Ctx.Variable.Set("first", "Ada");
+        await Ctx.Variable.Set("last", "Lovelace");
+        await Load("Callee", Make.Step("return %name%", Return("%name%")));
+        var got = await Got(("name", "%first% %last%"));
+        await Assert.That((await got.Value())?.ToString()).IsEqualTo("Ada Lovelace");
+    }
+
+    [Test]
+    public async Task ATemplateParameter_IsTheCallers_EvenWhenTheCalleeHasItsOwnVariableOfThatName()
+    {
+        await Ctx.Variable.Set("first", "Ada");
+        await Ctx.Variable.Set("last", "Lovelace");
+        await Load("Callee",
+            Make.Step("set %first% = \"callee\"", Set("first", "callee")),
+            Make.Step("return %name%", Return("%name%")));
+        var got = await Got(("name", "%first% %last%"));
+        await Assert.That((await got.Value())?.ToString()).IsEqualTo("Ada Lovelace");
+    }
+
+    // A parameter reads its value as a set does: a reference to nothing leaves it unset, a template that can't
+    // render fails the call, a variable holding a failure fails it with that failure.
+    [Test]
+    public async Task AParameterNamingAnUnsetVariable_DoesNotFailTheCall()
+    {
+        await Load("Callee", Make.Step("return \"ok\"", Return("ok")));
+        var caller = await Load("Caller", Make.Step("call Callee name=%missing%", Make.Call(Ctx, "Callee", ("name", "%missing%"))));
+
+        await (await caller.Start(Ctx)).IsSuccess();
+    }
+
+    [Test]
+    public async Task AParameterNamingAnUnsetVariable_IsUnsetInTheCallee_NotTheCallersOfThatName()
+    {
+        await Ctx.Variable.Set("name", "outer");
+        await Load("Callee", Make.Step("return %name%", Return("%name%")));
+        var caller = await Load("Caller", Make.Step("call Callee name=%missing%", Make.Call(Ctx, "Callee", ("name", "%missing%"))));
+
+        var result = await caller.Start(Ctx);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
+    }
+
+    [Test]
+    public async Task AParameterTemplateNamingAnUnsetVariable_FailsTheCall()
+    {
+        await Load("Callee", Make.Step("return %name%", Return("%name%")));
+        var caller = await Load("Caller", Make.Step("call Callee name=\"Hi %missing%\"", Make.Call(Ctx, "Callee", ("name", "Hi %missing%"))));
+
+        var result = await caller.Start(Ctx);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
+    }
+
+    [Test]
+    public async Task AParameterNamingAVariableHoldingAFailure_FailsTheCallWithIt()
+    {
+        await Ctx.Variable.Set("r", Ctx.Error(new global::app.error.Error("the call failed", "CallFailed", 500)));
+        await Load("Callee", Make.Step("return %x%", Return("%x%")));
+        var caller = await Load("Caller", Make.Step("call Callee x=%r%", Make.Call(Ctx, "Callee", ("x", "%r%"))));
+
+        var result = await caller.Start(Ctx);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("CallFailed");
+    }
+
+    [Test]
     public async Task AReturnedReference_ToContentNotRead_StaysUnread()
     {
         var http = new global::app.type.item.path.http.@this("http://example.com/data.json");
