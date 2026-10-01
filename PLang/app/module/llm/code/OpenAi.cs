@@ -118,7 +118,9 @@ public sealed class OpenAi : ILlm
         async System.Threading.Tasks.Task<string?> FormatOf(query a)
             => a.Format == null || await a.Format.IsEmpty() ? null : (await a.Format.Value())?.ToString();
 
-        if (await action.ContinuePreviousConversation.ToBooleanAsync())
+        // a conversation the step leaves out is the record's own default: a fresh one
+        var conversation = (action.Conversation == null ? null : await action.Conversation.Value()) ?? new global::app.module.llm.type.conversation.@this();
+        if (conversation.Continue.Value)
         {
             var prev = context.Get<List<LlmMessage>>(ConversationKey);
             if (prev != null)

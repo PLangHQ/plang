@@ -104,6 +104,9 @@
   "app.module.llm.llmmessage": {
     "word": "llmmessage"
   },
+  "app.module.llm.type.conversation": {
+    "word": "conversation"
+  },
   "app.module.output.ask": {
     "word": "ask"
   },
