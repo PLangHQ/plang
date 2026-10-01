@@ -310,6 +310,16 @@ again (`app.module.Get`) to judge an option its actions take — though `actor.s
 hand. Holding the module would be a late stamp for the module setting classes made by `new()` (llm's, build's), so
 it stays until a setting class is born from its owner.
 
+## A kind is a CLR object, not a plang item [logged 2026-10-01, duration kinds]
+
+`type.kind.@this` is a CLR class, so navigation reaches it through the clr carrier: `%d!type.kind%` on a
+duration born `30s` answers the kind object (an `item/*` host whose text is `short`), and
+`assert.equals("short", %d!type.kind%)` fails — a text never equals a host. `%d!type.kind.name%` answers
+`short`. The type writes itself `{name, kind}` with the kind as its name, yet navigating it lands on the object.
+A kind should be a plang item: it writes itself as its name, compares with a text by its name (its own Order,
+as hash compares to its text), and keeps its members (`.name`, `.mime`, `.extension`) — then
+`%d!type.kind% == "short"` holds and `%d!type.kind.mime%` still navigates. Every kind's base changes.
+
 ## Every action carries a method named Resolve [logged 2026-10-01, settings slice 2]
 
 The generator gives every action `ICodeGenerated.Resolve(action, context)` — the bind of an action's properties.

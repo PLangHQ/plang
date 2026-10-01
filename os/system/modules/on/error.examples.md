@@ -16,7 +16,7 @@ Step text: `http get %url%, on error retry 3 times`
 Properties: `{"RetryCount": 3}` — retry with no recovery.
 
 Step text: `http get %url%, on error retry 3 times over 30 seconds`
-Properties: `{"RetryCount": 3, "RetryOver": "PT30S"}` — the retries are spread evenly over that time.
+Properties: `{"RetryCount": 3, "RetryOver": "30s"}` — the retries are spread evenly over that time.
 
 Step text: `write out "hi", on error ignore`
 Properties: `{"Ignore": true}`
