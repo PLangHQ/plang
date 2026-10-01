@@ -25,6 +25,10 @@ Teaching lessons for developers new to plang, written as narrated, hand-drawn an
 4. `node export/mp4.js <topic>`: 720p, `--disable-gpu`, 3 browsers (the benchmark winner, `export/bench.js`), writes `<topic>.mp4`, `<topic>.timeline.json` and `<topic>.jpg`.
 5. `plang Hub` writes the course page from the timelines.
 
+**Player speed (2026-10-01, Ingi measured on his machine):** the pages first crawled (the live sound scheduled the whole film at once: thousands of audio nodes). Fixed in steps: just-in-time sound windows; drawing capped at 30 fps (`?fps=` to change); then, because the live synthesis still cost ~half a core (Ingi: picture only at 12 fps ~50% CPU, with live sound ~100%), each page now plays a pre-rendered `<topic>.mp3` beside it (`film.sound.track`, chosen once at load; the live engine is the fallback). `node export/sound.js <topic>` writes the mp3; `export/mp4.js` writes it too. `?sound=0` plays the picture alone (for measuring). Drawing is the remaining cost; PixiJS (GPU) is the proposed next step if needed.
+
+**Also:** lesson 4 "The smells" (`course/04-obp-smells`, `animations/obp-smells`) and a short, "Getting started is easy" (`animations/easy-start`, kind "short", not on the course page). `frame.during(line, a, b)` added: beats as fractions of a voice line (`frame.on` is seconds); lessons 3, 4 and the short use it.
+
 **v3 decisions (Ingi):**
 - OBP lesson: the pattern, any language; two lessons (laws + rules, then the smells). Then: C# only, simpler, problem first; then move the C# out as an advanced lesson; lesson 3 = the laws lightly, the root in plang (`%!app.type%`), the rules, breaking a rule as a recorded exception; then add the new dot-case rule ("a name is a path") with a real `.pr`.
 - Export to mp4 because the HTML pages didn't play in Ingi's browser; then a web UI over the lessons.
