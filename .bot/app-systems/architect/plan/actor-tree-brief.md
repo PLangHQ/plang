@@ -8,9 +8,9 @@ External plang code (a service that sends plang to be built and run) must run as
 
 "we need to graduate Service actor to app.actor.service, each can have a parent which is then the user that created it, just like user.parent would be the system. then, actor.user.service.list can then find all the child services"
 
-- Actors form a tree: **system → user → service(s)**.
+- Actors form a tree: **system → user → service**. Singular, as every concept is named (Ingi: "is not services. it is service. singular"); a user's services are its `service.list`.
 - Every actor has a **`parent`**: `%!actor.user.parent%` is the system; a service's parent is the user that created it.
-- A user's child services: **`%!actor.user.service.list%`**.
+- A user's child service actors: **`%!actor.user.service.list%`**.
 - A service actor has its own context, so its variables, memory and settings are its own; code it brings runs there.
 
 ## Open, for the design talk
