@@ -115,6 +115,18 @@ public sealed partial class @this
         => !string.IsNullOrEmpty(mime) && Held(mime) is { } kind ? kind : this["binary"].kind;
 
     /// <summary>
+    /// The format <paramref name="named"/> names — by MIME (<c>application/plang</c>), name or alias (<c>json</c>), or
+    /// extension (<c>.md</c>, <c>md</c>): a kind with a MIME or an extension. Null when no type reads such a format —
+    /// never opaque bytes, as an unknown MIME is for content.
+    /// </summary>
+    public global::app.type.kind.@this? Format(string named)
+    {
+        if (string.IsNullOrWhiteSpace(named)) return null;
+        var kind = Held(named.Trim()) ?? (named.StartsWith('.') ? null : Held("." + named.Trim()));
+        return kind is { } k && (k.Mime.Count > 0 || k.Extension.Count > 0) ? k : null;
+    }
+
+    /// <summary>
     /// The type a file of this extension holds — the format with that extension, as a kind of the type that
     /// reads it: <c>.md</c> → {text, md}, agreeing with its MIME. An extension no format has is bytes of that
     /// kind (<c>.xyz</c> → {binary, xyz}); the null type for no extension.

@@ -101,6 +101,10 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// running event, its properties <c>item</c> and <c>result</c>. Set only while that call runs.</summary>
     public global::app.data.@this? Event { get; internal set; }
 
+    /// <summary>The format this frame's goal set (<c>set %!app.type.format% to …</c>) — what it and what it calls
+    /// write and read in; null: its caller's. <see cref="app.callstack.@this.Format"/> walks <see cref="Caller"/>.</summary>
+    public global::app.type.kind.@this? Format { get; internal set; }
+
     /// <summary>
     /// Sync parent in this execution chain — whatever AsyncLocal.Current was at Push time.
     /// Walk this for the "stack trace" view.
