@@ -43,15 +43,15 @@ namespace PLang
 			global::app.@this.WireDefaultConsoleChannels(app.actor.list.System);
 			global::app.@this.WireDefaultConsoleChannels(app.actor.list.User);
 
-			// --format=application/plang: the app's own format (%!app.type.format%), the one its console writes and
-			// reads in — plang's own for a program that runs this plang: an ask goes out as an Ask, whole. A
-			// format no type reads is refused here, never quiet text.
-			if (parameters.TryGetValue("!format", out var formatValue) && formatValue is not (null or true or false))
+			// A flag that is a path into the app is written there, as a goal's `set` writes it:
+			// --app.type.format=application/plang is `set %!app.type.format% to "application/plang"` — the app's own
+			// format, the one its console writes and reads in. A write the app refuses (a format no type reads) is
+			// the run's answer.
+			foreach (var (key, value) in parameters.Where(p => p.Key.StartsWith("!app.", StringComparison.OrdinalIgnoreCase)).ToList())
 			{
-				if (app.type.Named(formatValue.ToString()!) is not { } format)
-					return (null, app.actor.list.System.Context.Error(new global::app.error.Error(
-						$"No format '{formatValue}': name one a type reads — a MIME (application/plang), a name (json) or an extension (.md)", "FormatNotFound", 400)));
-				app.type.Format = format;
+				var written = new global::app.type.item.variable.@this(key)
+					.Set(value, app.actor.list.System.Context).AsTask().GetAwaiter().GetResult();
+				if (!written.Success) return (null, written);
 			}
 
 			var userVars = app.actor.list.User.Context.Variable;

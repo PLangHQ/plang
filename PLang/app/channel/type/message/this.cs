@@ -15,7 +15,7 @@ public abstract class @this : Channel
     {
         // A pending Ask: an IExitsGoal, so the step loop short-circuits. Snapshot carries enough
         // state for the channel to resume the goal once the user replies.
-        var pending = action.Context.Ok<module.output.Ask>(new module.output.Ask());
+        var pending = action.Context.Ok<module.output.Ask>(new module.output.Ask { Waiting = true });
         pending.Snapshot = action.Snapshot();
         return Task.FromResult<data.@this>(pending);
     }
