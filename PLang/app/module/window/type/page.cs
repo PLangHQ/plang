@@ -51,6 +51,16 @@ internal sealed class Page(string target, int port, Func<string, bool> own)
         ["expression"] = expression, ["awaitPromise"] = true, ["returnByValue"] = true,
     }, within);
 
+    /// <summary>The page as it looks now: a PNG, base64.</summary>
+    internal async Task<string> Screenshot()
+    {
+        var answer = await Ask("Page.captureScreenshot", new JsonObject { ["format"] = "png" }, TimeSpan.FromSeconds(15));
+        return answer.TryGetProperty("result", out var r) && r.TryGetProperty("data", out var data) ? data.GetString() ?? "" : "";
+    }
+
+    /// <summary>The page loads again, from its files (nothing cached): a change to them shows.</summary>
+    internal Task Reload() => Ask("Page.reload", new JsonObject { ["ignoreCache"] = true });
+
     /// <summary>The page closes (and the window it is in).</summary>
     internal Task Shut() => Ask("Page.close", new JsonObject());
 
