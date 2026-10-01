@@ -218,12 +218,12 @@ public class PickListTests
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
-    // A module's guide (module.guide.md) is the learner's, never the builder's: with a guide beside every module, no
-    // request the builder sends for the golden goals holds it (stage 1's questions and state, stage 2's questions and
-    // state, prompt C's user message). The app is rooted at a copy of the modules' docs, file's description marked, so
-    // the requests are seen to read the copy.
+    // A guide (module.guide.md, <action>.guide.md) is the learner's, never the builder's: with a guide beside every module
+    // and beside every action, no request the builder sends for the golden goals holds either (stage 1's questions and
+    // state, stage 2's questions and state, prompt C's user message). The app is rooted at a copy of the modules' docs,
+    // file's and read's descriptions marked, so the requests are seen to read the copy.
     [Test]
-    public async Task AModulesGuide_ReachesNoRequestTheBuilderSends()
+    public async Task AGuide_ReachesNoRequestTheBuilderSends()
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-guide-" + System.Guid.NewGuid().ToString("N")[..8]);
         var source = System.IO.Path.Combine(RepoRoot(), "os", "system", "modules");
@@ -237,11 +237,19 @@ public class PickListTests
                 System.IO.File.Copy(file, copy);
             }
             foreach (var folder in System.IO.Directory.GetDirectories(modules))
-                System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "module.guide.md"), "GUIDE-ONLY prose for a learner.");
+                System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "module.guide.md"), "MODULE-GUIDE-ONLY prose for a learner.");
             System.IO.File.AppendAllText(System.IO.Path.Combine(modules, "file", "module.description.md"), " DESCRIPTION-MARK");
+            System.IO.File.AppendAllText(System.IO.Path.Combine(modules, "file", "read.description.md"), " ACTION-DESCRIPTION-MARK");
 
             await using var os = new global::app.@this(root).Testing();
             var context = os.actor.list.User.Context;
+            foreach (var module in os.module.list.Items())
+                foreach (var action in module.ActionNames)
+                {
+                    var folder = System.IO.Path.Combine(modules, module.Name);
+                    System.IO.Directory.CreateDirectory(folder);
+                    System.IO.File.WriteAllText(System.IO.Path.Combine(folder, action + ".guide.md"), "ACTION-GUIDE-ONLY prose for a learner.");
+                }
             var requests = new List<string>();
             foreach (var entry in Golden())
             {
@@ -260,7 +268,9 @@ public class PickListTests
 
             await Assert.That(requests.Where(r => r.StartsWith("render failed")).ToList()).IsEmpty();
             await Assert.That(requests.Any(r => r.Contains("DESCRIPTION-MARK"))).IsTrue();
-            await Assert.That(requests.Count(r => r.Contains("GUIDE-ONLY"))).IsEqualTo(0);
+            await Assert.That(requests.Any(r => r.Contains("ACTION-DESCRIPTION-MARK"))).IsTrue();
+            await Assert.That(requests.Count(r => r.Contains("MODULE-GUIDE-ONLY"))).IsEqualTo(0);
+            await Assert.That(requests.Count(r => r.Contains("ACTION-GUIDE-ONLY"))).IsEqualTo(0);
         }
         finally
         {

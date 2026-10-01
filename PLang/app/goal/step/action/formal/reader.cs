@@ -283,9 +283,9 @@ public sealed class Reader
             var declaredFace = Face(declared.Type);
             var written = WrittenType(prop, declaredFace);
             Space();
-            // the starting line's `Name: type` copied as it stands: a slot still to fill, not a value
-            if (written != null && (Peek(",") || Peek(")")))
-                Fail($"`{prop}: {written}` is a property still to fill: write {prop}=value, the value the step gives");
+            // the starting line's slot copied as it stands — the name alone (or with its type): still to fill, not a value
+            if (Peek(",") || Peek(")"))
+                Fail($"`{prop}` is a property still to fill: write {prop}=value, the value the step gives");
             var frozen = Peek("?=");
             var options = declared.Type.Values;
             // a choice's symbol option may stand bare right after its `=`: Operator=== is Operator="=="

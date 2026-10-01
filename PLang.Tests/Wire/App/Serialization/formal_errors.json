@@ -16,6 +16,14 @@
   "message": "line 1, column 17: `Path` is path, not text"
  },
  {
+  "input": "file.read(Path)",
+  "message": "line 1, column 15: `Path` is a property still to fill: write Path=value, the value the step gives"
+ },
+ {
+  "input": "file.read(Path: path)",
+  "message": "line 1, column 21: `Path` is a property still to fill: write Path=value, the value the step gives"
+ },
+ {
   "input": "condition.if(Left=%n%, Operator=\"less\", Right=5)",
   "message": "line 1, column 33: `Operator` is one of ==, !=, >, <, >=, <=, contains, notcontains, startswith, notstartswith, endswith, notendswith, in, notin, isempty, isnotempty, is, isnot, and, or; `less` is not"
  },

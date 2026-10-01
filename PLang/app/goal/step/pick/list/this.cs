@@ -130,12 +130,6 @@ public sealed class @this
         }
         return null;
     }
-    // a goal the step's words call — plang's own `call X` or `call goal X`, X a name or a /path/Name (the word
-    // goal is plang's, never the name; a %variable% names no goal the build knows) — and the quoted texts,
-    // whose words are not the step's
-    private static readonly System.Text.RegularExpressions.Regex Calls =
-        new(@"\bcall\s+(?:goal\s+)?(?!goal\b)(/?[A-Za-z_][\w./]*)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-    private static readonly System.Text.RegularExpressions.Regex Quoted = new(@"""(?:[^""\\]|\\.)*""|'[^']*'");
 
     // Every action in the code, wherever it sits: the step's actions, the actions they hold, their
     // clauses' recovery, their bodies.
@@ -229,19 +223,6 @@ public sealed class @this
         if (Writes() is { } written && !every.Any(a => a.Module.Name == "variable" && a.Name == "set"
                 && string.Equals(a["Name"]?.Value?.ToString()?.Trim('%', '"'), written.Trim('%'), StringComparison.OrdinalIgnoreCase)))
             refused.Add($"step {i} says it writes {written}, but no action writes it: end the step with variable.set(Name={written}, Value=%!data%)");
-        // every goal the step's words call is called by the code (a name may be written as its full
-        // address: /system/builder/X calls X)
-        var called = every.Where(a => a.Module.Name == "goal" && a.Name == "call")
-            .Select(a => a["Name"]?.Value?.ToString()?.Trim('"')).OfType<string>()
-            .Select(n => "/" + n.TrimStart('/').Replace('\\', '/')).ToList();
-        foreach (var goal in Calls.Matches(Quoted.Replace(_step.Text, "")).Select(m => m.Groups[1].Value.TrimEnd('.', ',')).Distinct())
-        {
-            var wanted = "/" + goal.TrimStart('/');
-            if (wanted.EndsWith(".goal", StringComparison.OrdinalIgnoreCase)) wanted = wanted[..^5];
-            if (!called.Any(n => n.EndsWith(wanted, StringComparison.OrdinalIgnoreCase)
-                              || wanted.EndsWith(n, StringComparison.OrdinalIgnoreCase)))
-                refused.Add($"step {i} calls {goal}, but no action calls it");
-        }
         var warnings = new List<global::app.warning.@this>();
         foreach (var l in _listed.Where(l => used.Contains(l.Name)))
             if (l.Mark == listed.Mark.Possible)
@@ -364,11 +345,11 @@ public sealed class @this
         return new();
     }
 
-    // One action as the pre-fill starts it: its required properties as `Name: type` — a slot named by what it takes,
-    // never a value the LLM could copy. An optional property gets no slot — it is the LLM's to add when the step
+    // One action as the pre-fill starts it: its required properties by name alone — a slot still to fill, nothing
+    // the LLM could copy as a value. An optional property gets no slot — it is the LLM's to add when the step
     // names it (a Recovery, a Parameter, a RetryCount), as the examples teach.
     private static string Call(global::app.goal.step.action.@this action)
-        => $"{action.Module.Name}.{action.Name}({string.Join(", ", action.Property.Where(p => p.Required).Select(p => $"{p.Name}: {p.Type}"))})";
+        => $"{action.Module.Name}.{action.Name}({string.Join(", ", action.Property.Where(p => p.Required).Select(p => p.Name))})";
 
     private global::app.goal.step.action.@this? Catalog(string name, global::app.actor.context.@this context)
     {

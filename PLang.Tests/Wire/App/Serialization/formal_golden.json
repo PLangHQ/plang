@@ -4260,5 +4260,241 @@
   ],
   "formal": "condition.if(Left: item = %name%, Operator: choice<operator> = \"!=\", Right: text = \"Ada\") { output.write(Data: text = \"not Ada\") }",
   "untyped": "condition.if(Left=%name%, Operator=\"!=\", Right=\"Ada\") { output.write(Data=\"not Ada\") }"
+ },
+ {
+  "goal": "loop",
+  "index": 0,
+  "text": "foreach %module.Action%, call goal Unmatched action=%item%",
+  "pr": [
+   {
+    "module": "loop",
+    "name": "foreach",
+    "property": [
+     {
+      "name": "Collection",
+      "type": {
+       "name": "item",
+       "template": "plang"
+      },
+      "value": "%module.Action%",
+      "variable": [
+       {
+        "text": "%module.Action%",
+        "code": [
+         {
+          "variable": "module"
+         },
+         {
+          "property": "Action"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "module": "goal",
+    "name": "call",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "goal"
+      },
+      "value": "Unmatched"
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "action",
+        "type": {
+         "name": "item",
+         "template": "plang"
+        },
+        "value": "%item%",
+        "variable": [
+         {
+          "text": "%item%",
+          "code": [
+           {
+            "variable": "item"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "loop.foreach(Collection: item = %module.Action%); goal.call(Name: goal = \"Unmatched\", Parameter: list = {action: item = %item%})",
+  "untyped": "loop.foreach(Collection=%module.Action%); goal.call(Name=\"Unmatched\", Parameter={action: %item%})"
+ },
+ {
+  "goal": "loop",
+  "index": 1,
+  "text": "foreach %list%, call ShowEntry entry=%item%",
+  "pr": [
+   {
+    "module": "loop",
+    "name": "foreach",
+    "property": [
+     {
+      "name": "Collection",
+      "type": {
+       "name": "item",
+       "template": "plang"
+      },
+      "value": "%list%",
+      "variable": [
+       {
+        "text": "%list%",
+        "code": [
+         {
+          "variable": "list"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "module": "goal",
+    "name": "call",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "goal"
+      },
+      "value": "ShowEntry"
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "entry",
+        "type": {
+         "name": "item",
+         "template": "plang"
+        },
+        "value": "%item%",
+        "variable": [
+         {
+          "text": "%item%",
+          "code": [
+           {
+            "variable": "item"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "loop.foreach(Collection: item = %list%); goal.call(Name: goal = \"ShowEntry\", Parameter: list = {entry: item = %item%})",
+  "untyped": "loop.foreach(Collection=%list%); goal.call(Name=\"ShowEntry\", Parameter={entry: %item%})"
+ },
+ {
+  "goal": "loop",
+  "index": 2,
+  "text": "foreach %products% as %product%, call Ship product=%product%",
+  "pr": [
+   {
+    "module": "loop",
+    "name": "foreach",
+    "property": [
+     {
+      "name": "Collection",
+      "type": {
+       "name": "item",
+       "template": "plang"
+      },
+      "value": "%products%",
+      "variable": [
+       {
+        "text": "%products%",
+        "code": [
+         {
+          "variable": "products"
+         }
+        ]
+       }
+      ]
+     },
+     {
+      "name": "Item",
+      "type": {
+       "name": "variable"
+      },
+      "value": "%product%",
+      "variable": [
+       {
+        "text": "%product%",
+        "code": [
+         {
+          "variable": "product"
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "module": "goal",
+    "name": "call",
+    "property": [
+     {
+      "name": "Name",
+      "type": {
+       "name": "goal"
+      },
+      "value": "Ship"
+     },
+     {
+      "name": "Parameter",
+      "type": {
+       "name": "list"
+      },
+      "value": [
+       {
+        "name": "product",
+        "type": {
+         "name": "item",
+         "template": "plang"
+        },
+        "value": "%product%",
+        "variable": [
+         {
+          "text": "%product%",
+          "code": [
+           {
+            "variable": "product"
+           }
+          ]
+         }
+        ]
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "formal": "loop.foreach(Collection: item = %products%, Item: variable = %product%); goal.call(Name: goal = \"Ship\", Parameter: list = {product: item = %product%})",
+  "untyped": "loop.foreach(Collection=%products%, Item=%product%); goal.call(Name=\"Ship\", Parameter={product: %product%})"
  }
 ]

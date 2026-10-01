@@ -5,3 +5,4 @@ Parallel — true only when the step says the call may run beside others.
 
 - The arguments belong to the called goal; they are never properties of goal.call.
 - `foreach %list%, call X item=%y%` is loop.foreach, then goal.call with `item` as its argument.
+- `call goal X a=%y%` calls X: `goal` is only a word, never the name or an argument — `call goal Unmatched action=%item%` → goal.call(Name="Unmatched", Parameter={action: %item%}).

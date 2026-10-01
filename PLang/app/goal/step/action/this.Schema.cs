@@ -72,6 +72,7 @@ public partial class @this
     private global::app.type.item.file.@this? _description;
     private global::app.goal.step.action.note.@this? _note;
     private global::app.type.item.file.@this? _examples;
+    private global::app.type.item.file.@this? _guide;
 
     /// <summary>The action's description — {Name}.description.md.</summary>
     [JsonIgnore]
@@ -84,4 +85,9 @@ public partial class @this
     /// <summary>The action's examples — {Name}.examples.md.</summary>
     [JsonIgnore]
     public global::app.type.item.file.@this Examples => _examples ??= new(Module.Folder.Combine($"{Name}.examples.md"), App!.actor.list.System.Context!);
+
+    /// <summary>The action's guide — {Name}.guide.md: prose for a learner, shown on the module's page after the
+    /// action's Returns line and never read by the builder; falsy when the action has none.</summary>
+    [JsonIgnore]
+    public global::app.type.item.file.@this Guide => _guide ??= new(Module.Folder.Combine($"{Name}.guide.md"), App!.actor.list.System.Context!);
 }

@@ -303,6 +303,25 @@
     "2": [{"module": "condition", "name": "if", "property": {"Left": "%name%", "Operator": "!=", "Right": "Ada"},
            "child": [{"text": "write out \"not Ada\"", "action": [{"module": "output", "name": "write", "property": {"Data": "not Ada"}}]}]}]
    }
+  },
+  {
+   "id": "loop",
+   "covers": "a loop and a call with a named argument — the goal's name is the one word after `call` (`call goal Unmatched action=%item%` calls Unmatched, never \"Unmatched action\"); `as %product%` names the loop's Item",
+   "goal": "Page",
+   "steps": [
+    {"text": "foreach %module.Action%, call goal Unmatched action=%item%", "indent": 0},
+    {"text": "foreach %list%, call ShowEntry entry=%item%", "indent": 0},
+    {"text": "foreach %products% as %product%, call Ship product=%product%", "indent": 0}
+   ],
+   "menu": {"0": ["loop.foreach", "goal.call"], "1": ["loop.foreach", "goal.call"], "2": ["loop.foreach", "goal.call"]},
+   "expect": {
+    "0": [{"module": "loop", "name": "foreach", "property": {"Collection": "%module.Action%"}},
+          {"module": "goal", "name": "call", "property": {"Name": "Unmatched", "Parameter": [{"name": "action", "value": "%item%"}]}}],
+    "1": [{"module": "loop", "name": "foreach", "property": {"Collection": "%list%"}},
+          {"module": "goal", "name": "call", "property": {"Name": "ShowEntry", "Parameter": [{"name": "entry", "value": "%item%"}]}}],
+    "2": [{"module": "loop", "name": "foreach", "property": {"Collection": "%products%", "Item": "%product%"}},
+          {"module": "goal", "name": "call", "property": {"Name": "Ship", "Parameter": [{"name": "product", "value": "%product%"}]}}]
+   }
   }
  ]
 }

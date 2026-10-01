@@ -19,5 +19,8 @@ public class @this : global::app.goal.step.action.@this
     /// <summary>A keep takes its place once the line knows whether a value is produced: after the producers,
     /// keeping their value, or where it stands.</summary>
     internal override void Prefill(global::app.goal.step.pick.line.@this line, string call)
-        => line.Keep(call, call.Replace("Value: item", "Value=%!data%"));
+        => line.Keep(call, KeptValue.Replace(call, "Value=%!data%", 1));
+
+    // the starting line's Value slot — the name alone, before a comma or the closing parenthesis
+    private static readonly System.Text.RegularExpressions.Regex KeptValue = new(@"\bValue(?=[,)])");
 }

@@ -78,6 +78,7 @@ public class BootstrapTests
         return (root, differ);
     }
 
+    [Skip("The python twin is retired: its recorded bootstrap answers are no longer regenerated, so they can't judge the builder's check.")]
     [Test]
     public async Task EveryBuilderStep_TakesItsCode_WhereAndOnlyWherePythonAccepted()
     {

@@ -101,6 +101,46 @@ public class ModulePageTests
         }
     }
 
+    // An action's guide (<action>.guide.md, the learner's prose) is on its module's page, right after the action's
+    // Returns line and before the next action, and shown once.
+    [Test]
+    public async Task AnActionsGuide_IsOnThePageAfterItsReturns()
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-page-" + System.Guid.NewGuid().ToString("N")[..8]);
+        var folder = System.IO.Path.Combine(root, "system", "modules", "file");
+        System.IO.Directory.CreateDirectory(folder);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "module.description.md"), "Files.\n");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "read.description.md"), "Reads a file.\n");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "read.guide.md"), "A path can be a URL too.\n");
+        try
+        {
+            await using var app = new global::app.@this(root).Testing();
+            var context = app.actor.list.User.Context;
+            context.Variable.Set(new global::app.data.@this("module", app.Module("file")!, context: context));
+            var render = new Render(context)
+            {
+                Template = (global::app.type.item.text.@this)System.IO.File.ReadAllText(
+                    System.IO.Path.Combine(RepoRoot(), "docs", "templates", "module.template")),
+                IsFile = (global::app.type.item.@bool.@this)false,
+            };
+
+            var result = await new global::app.module.ui.code.Fluid().Render(render);
+
+            await result.IsSuccess();
+            var page = (await result.Value())!.ToString()!;
+            var start = page.IndexOf("\n## read\n", System.StringComparison.Ordinal);
+            await Assert.That(start).IsGreaterThan(-1);
+            var next = page.IndexOf("\n## ", start + 1, System.StringComparison.Ordinal);
+            var section = next < 0 ? page[start..] : page[start..next];
+            await Assert.That(System.Text.RegularExpressions.Regex.IsMatch(section, @"\*\*Returns:\*\* [^\n]*\n\nA path can be a URL too\.\n?\z")).IsTrue();
+            await Assert.That(System.Text.RegularExpressions.Regex.Matches(page, "A path can be a URL too").Count).IsEqualTo(1);
+        }
+        finally
+        {
+            if (System.IO.Directory.Exists(root)) System.IO.Directory.Delete(root, true);
+        }
+    }
+
     [Test]
     public async Task TheFilePage_IsTheSpecsGolden()
     {
