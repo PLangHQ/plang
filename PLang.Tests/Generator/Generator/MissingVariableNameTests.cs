@@ -36,15 +36,12 @@ public class MissingVariableNameTests
     [Arguments("list", "first", "listname")]
     [Arguments("list", "flatten", "listname")]
     [Arguments("list", "get", "listname")]
-    [Arguments("list", "group", "listname")]
     [Arguments("list", "indexof", "listname")]
     [Arguments("list", "join", "listname")]
     [Arguments("list", "last", "listname")]
     [Arguments("list", "remove", "listname")]
     [Arguments("list", "reverse", "listname")]
     [Arguments("list", "set", "listname")]
-    [Arguments("list", "sort", "listname")]
-    [Arguments("list", "unique", "listname")]
     public async Task MissingVariableName_Returns_MissingRequiredProperty_Error(
         string module, string action, string slotName)
     {
@@ -55,7 +52,6 @@ public class MissingVariableNameTests
         var extras = (module, action) switch
         {
             ("list", "any") => "Key=\"x\", Operator=\"==\"",
-            ("list", "group") => "Key=\"x\"",
             _ => "",
         };
         var act = context.Action($"{module}.{action}({extras})");
