@@ -12,6 +12,9 @@ public sealed class Ask : global::app.type.item.@this, global::app.type.item.ICr
     /// "output", the owning module, not this value's name).</summary>
     protected internal override global::app.type.@this Type
         => new("ask", typeof(Ask));
+
+    /// <summary>What is asked, as the asker resolved it — what a program reading this plang shows the person.</summary>
+    [global::app.Out] public global::app.type.item.text.@this? Question { get; init; }
 }
 
 /// <summary>

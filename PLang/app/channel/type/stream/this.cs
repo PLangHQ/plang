@@ -46,6 +46,14 @@ public sealed class @this : global::app.channel.type.session.@this
     /// carries one value (a file, a request body) is not framed.</summary>
     [global::app.Debug] public bool Framed { get; init; }
 
+    /// <summary>It writes and reads in the format in play for the writer (<c>%!app.type.format%</c>), not a format of
+    /// its own — the console: text for a person at a terminal, plang's own for a program that runs this plang.</summary>
+    [global::app.Debug] public bool InPlay { get; init; }
+
+    // the format this channel writes and reads in, for the context at hand
+    private global::app.type.kind.@this FormatFor(global::app.actor.context.@this context)
+        => InPlay ? context.App.type.FormatOf(context) : context.App.type.list.Mime(Mime.ToString());
+
     public override bool CanRead => IsOpen && Direction.Value != ChannelDirection.Output && Stream.CanRead;
     public override bool CanWrite => IsOpen && Direction.Value != ChannelDirection.Input && Stream.CanWrite;
 
@@ -64,16 +72,16 @@ public sealed class @this : global::app.channel.type.session.@this
             // last moment — the format then decides how it looks.
             var opened = await data.Peek().Open(context);
             if (opened != null) return context.Error(opened);
-            var format = context.App.type.list.Mime(Mime.ToString());
+            var format = FormatFor(context);
             // One message leaves whole, in order: its bytes and its frame, never interleaved with another writer's
             // (tasks writing side by side). Only the leaving is held — the value was opened above.
             await _writing.WaitAsync(ct);
             try
             {
                 var result = await format.Encode(Stream, data, context, encoding: ResolveEncoding(), ct: ct);
-                // A framed channel delimits each text message with a newline. Binary and the self-describing plang
-                // envelope are not framed.
-                if (result.Success && Framed && format.IsText)
+                // A framed channel delimits each text message with a newline — and, following the format in play, each
+                // whole Data too: one per line, for the program reading it. Binary content is not framed.
+                if (result.Success && Framed && (format.IsText || InPlay))
                     await Stream.WriteAsync(ResolveEncoding().GetBytes(System.Environment.NewLine), ct);
                 return result;
             }
@@ -102,6 +110,8 @@ public sealed class @this : global::app.channel.type.session.@this
             // {type, kind} from Mime into lazy Data — no bare text, no eager
             // parse (the value materializes on first touch).
             var bytes = await ReadAllBytesAsync(ct);
+            if (InPlay && Context is { } context)
+                return await FormatFor(context).Decode(bytes, context, Name, ct: ct);
             return await Read(bytes, ct);
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
@@ -119,17 +129,22 @@ public sealed class @this : global::app.channel.type.session.@this
         // input-only). Falls back to writing via self only when self is
         // bidirectional and no output channel is registered (test fixtures).
         var question = action.Question == null ? null : await action.Question.Value();
+        // In plang's own format (the format in play is not text) the ask goes out whole — a pending Ask with its
+        // question — and the answer comes back as Data: a program running this plang sees an ask, not a line.
+        var format = FormatFor(action.Context);
+        var whole = InPlay && !format.IsText;
         if (!string.IsNullOrEmpty(question?.Clr<string>()))
         {
             var output = action.Context?.Actor?.Channel.Get(global::app.channel.list.@this.Output);
+            global::app.data.@this asked = whole ? action.Context!.Ok(new module.output.Ask { Question = question }) : action.Context!.Ok(question);
             if (output != null && output.CanWrite)
             {
-                var writeRes = await output.WriteAsync(action.Context.Ok(question), ct);
+                var writeRes = await output.WriteAsync(asked, ct);
                 if (!writeRes.Success) return writeRes;
             }
             else if (CanWrite)
             {
-                var writeRes = await Write(action.Context.Ok(question), ct);
+                var writeRes = await Write(asked, ct);
                 if (!writeRes.Success) return writeRes;
             }
             // No writer at all — proceed to read; the prompt is just lost.
@@ -152,7 +167,9 @@ public sealed class @this : global::app.channel.type.session.@this
             if (line == null)
                 return action.Context.Error(new global::app.error.NoAnswer(
                     $"Channel '{Name}' has no interactive answerer (stream EOF)"));
-            // a line typed is text — the user's data itself
+            // in plang's own format the answer is Data, read in that format; a line typed is text — the user's data itself
+            if (whole)
+                return await format.Decode(ResolveEncoding().GetBytes(line), action.Context, Name, ct: ct);
             return action.Context.Ok(new global::app.type.item.text.@this(line));
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException
