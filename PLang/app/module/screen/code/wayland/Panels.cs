@@ -90,7 +90,12 @@ internal sealed class AddressField : Panel, IPart
         Draw();
     }
 
-    private void Copy() => Display.Frame.Clipboard(text == Owner.Address.Path ? Owner.Address.Copy() : text);
+    private void Copy()
+    {
+        if (text != Owner.Address.Path) { Display.Clipboard.Copied(text, text); return; }   // typed: as typed
+        var (plain, value) = Owner.Address.Copy(Owner.Toplevel.Title);
+        Display.Clipboard.Copied(plain, value);
+    }
 
     internal override bool Key(uint scancode, bool extended, int mods, bool down)
     {
