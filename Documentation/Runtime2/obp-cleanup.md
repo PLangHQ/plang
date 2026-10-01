@@ -320,6 +320,13 @@ A kind should be a plang item: it writes itself as its name, compares with a tex
 as hash compares to its text), and keeps its members (`.name`, `.mime`, `.extension`) — then
 `%d!type.kind% == "short"` holds and `%d!type.kind.mime%` still navigates. Every kind's base changes.
 
+## A type's text form isn't its name [logged 2026-10-01, catalog text]
+
+A type entity (`type.@this`) writes itself as its descriptor bag (`{"name":"app.type.item.bool","word":"bool",…}`);
+its name (`bool`, `list<message>`) is only its `ToString`. Templates print `{{ p.Type }}` and the catalog leans on
+that `ToString`. Rendering a type through the text writer, as `| text` does a value, gives the bag. How a type
+writes itself as text belongs to the kind-is-a-type talk (`.bot/app-systems/architect/plan/kind-is-a-type-brief.md`).
+
 ## An action's settings can't be saved, yet the seam reads an action row [logged 2026-10-01, llm limit]
 
 `actor/setting/this.cs` `Save` refuses `%!llm.query.setting%` (`NotASettingClass`), so no action option (cache,

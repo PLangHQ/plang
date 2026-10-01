@@ -64,13 +64,19 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 0's saved code no longer holds — rebuilt: step 0 'render template \"/system/builder/llm/templates/properties.template\", write to %propertiesUserMsg%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ],
       "waitForExecution": true
@@ -137,13 +143,19 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 1's saved code no longer holds — rebuilt: step 1 'render template \"/system/builder/llm/Properties.llm\", write to %propertiesSystemMsg%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ],
       "waitForExecution": true
@@ -205,13 +217,19 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 2's saved code no longer holds — rebuilt: step 2 'set %messages% = [{\"Role\":\"system\", \"Content\":\"%propertiesSystemMsg%\"}, {\"Role\":\"user\", \"Content\":\"%propertiesUserMsg%\"}]': variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ],
       "waitForExecution": true
@@ -231,7 +249,7 @@
               "name": "Message",
               "type": {
                 "name": "list",
-                "kind": "llmmessage",
+                "kind": "message",
                 "template": "plang"
               },
               "value": "%messages%",
@@ -280,11 +298,11 @@
           ],
           "default": [
             {
-              "name": "continuepreviousconversation",
+              "name": "conversation",
               "type": {
-                "name": "bool"
+                "name": "conversation"
               },
-              "value": false
+              "value": {}
             },
             {
               "name": "temperature",
@@ -294,25 +312,15 @@
               "value": 0
             },
             {
-              "name": "maxtokens",
+              "name": "limit",
               "type": {
-                "name": "number"
+                "name": "limit"
               },
-              "value": 16000
-            },
-            {
-              "name": "maxtoolcalls",
-              "type": {
-                "name": "number"
-              },
-              "value": 10
-            },
-            {
-              "name": "maxvalidationretries",
-              "type": {
-                "name": "number"
-              },
-              "value": 0
+              "value": {
+                "token": 16000,
+                "tool": 10,
+                "retry": 0
+              }
             }
           ]
         },
@@ -358,13 +366,19 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 3's saved code no longer holds — rebuilt: step 3 'llm.query Message=%messages%, Model=\"gpt-5.4-nano\", cache=%!build.setting.cache%, write to %answer%': llm.query's Message was built as list<llmmessage>, but it takes list<message>.; llm.query: the default frozen for 'continuepreviousconversation' is no option of this action any more.; llm.query: the default frozen for 'maxtokens' is no option of this action any more.; llm.query: the default frozen for 'maxtoolcalls' is no option of this action any more.; llm.query: the default frozen for 'maxvalidationretries' is no option of this action any more.; variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ],
       "waitForExecution": true

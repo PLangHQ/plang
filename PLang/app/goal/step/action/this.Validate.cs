@@ -57,7 +57,19 @@ public partial class @this
                         $"{Module}.{Name}'s {property.Name} holds an action ({held.Module.Name}.{held.Name}), but " +
                         $"{property.Name} takes a value. Write the action first, then {Module}.{Name}({property.Name}=%!data%).",
                         "ActionAsValue", 400));
+                // a slot whose kind changed since the build (list<llmmessage> → list<message>)
+                else if (!slot.Type.kind.IsEmpty && property.Type.Name == slot.Type.Name
+                         && !string.Equals(property.Type.kind.Name, slot.Type.kind.Name, System.StringComparison.OrdinalIgnoreCase))
+                    causes.Add(new global::app.error.Error(
+                        $"{Module}.{Name}'s {property.Name} was built as {property.Type}, but it takes {slot.Type}.",
+                        "KindChanged", 400));
             }
+            // a default the build froze for an option the action no longer has
+            foreach (var frozen in Default)
+                if (element.Property[frozen.Name] == null)
+                    causes.Add(new global::app.error.Error(
+                        $"{Module}.{Name}: the default frozen for '{frozen.Name}' is no option of this action any more.",
+                        "UnknownDefault", 400));
         }
 
         // the handler's own judgement: the combinations of its properties only it knows are legal. A
