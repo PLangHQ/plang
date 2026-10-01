@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "A where compared to an unset %variable% is an error (VariableNotFound), never a quietly empty list —\nthe value is the developer's own variable, read when the step runs. (Was ListTests.Where_OrderedByAnUnsetVariable.)",
+  "comment": "Order by a field no element has is an error naming the part and the field — never the list back unchanged.",
   "step": [
     {
       "index": 0,
       "text": "variable.set(Name=%users%, Value=[{name: \"a\", age: 30}, {name: \"b\", age: 10}])",
       "line": {
-        "number": 4
+        "number": 3
       },
       "code": [
         {
@@ -53,9 +53,9 @@
     },
     {
       "index": 1,
-      "text": "list.query(List=%users%, Query={where: {field: \"age\", op: \">\", value: %limit%}}); on.error(Recovery=[goal.call(Name=\"Caught\")]); variable.set(Name=%kept%, Value=%!data%)",
+      "text": "list.query(List=%users%, Query={order: \"agee\"}); on.error(Key=\"FieldNotFound\", Recovery=[goal.call(Name=\"Caught\")]); variable.set(Name=%sorted%, Value=%!data%)",
       "line": {
-        "number": 5
+        "number": 4
       },
       "code": [
         {
@@ -83,20 +83,9 @@
             {
               "name": "Query",
               "type": {
-                "name": "query",
-                "template": "plang"
+                "name": "query"
               },
-              "value": {"where":{"field":"age","op":">","value":"%limit%"}},
-              "variable": [
-                {
-                  "text": "%limit%",
-                  "code": [
-                    {
-                      "variable": "limit"
-                    }
-                  ]
-                }
-              ]
+              "value": {"order":"agee"}
             }
           ],
           "default": [
@@ -114,6 +103,13 @@
           "module": "on",
           "name": "error",
           "property": [
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "FieldNotFound"
+            },
             {
               "name": "Recovery",
               "type": {
@@ -165,13 +161,13 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%kept%",
+              "value": "%sorted%",
               "variable": [
                 {
-                  "text": "%kept%",
+                  "text": "%sorted%",
                   "code": [
                     {
-                      "variable": "kept"
+                      "variable": "sorted"
                     }
                   ]
                 }
@@ -211,17 +207,24 @@
     },
     {
       "index": 2,
-      "text": "assert.isNotNull(Value=%caught%, Message=\"a where compared to an unset variable is an error, not a quietly empty list\")",
+      "text": "assert.contains(Value=\"order: \", Container=%caught%, Message=\"the error names the part\")",
       "line": {
-        "number": 6
+        "number": 5
       },
       "code": [
         {
           "module": "assert",
-          "name": "isNotNull",
+          "name": "contains",
           "property": [
             {
               "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "order: "
+            },
+            {
+              "name": "Container",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -243,7 +246,55 @@
               "type": {
                 "name": "text"
               },
-              "value": "a where compared to an unset variable is an error, not a quietly empty list"
+              "value": "the error names the part"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert.contains(Value=\"agee\", Container=%caught%, Message=\"and the misspelled field\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "agee"
+            },
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%caught%",
+              "variable": [
+                {
+                  "text": "%caught%",
+                  "code": [
+                    {
+                      "variable": "caught"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "and the misspelled field"
             }
           ]
         }
@@ -321,8 +372,8 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/plan/list-query/module/list/query/WhereUnsetVariable.test.goal",
-      "prPath": "/plan/list-query/module/list/query/.build/whereunsetvariable.test.pr",
+      "path": "/plan/list-query/module/list/query/OrderUnknownField.test.goal",
+      "prPath": "/plan/list-query/module/list/query/.build/orderunknownfield.test.pr",
       "hash": "9e24b3d3005503e82d9a19b8467341599dd3036c67dd9fa5ceedfb60de7d0199",
       "isSetup": false,
       "isEvent": false,
@@ -331,9 +382,9 @@
     }
   ],
   "visibility": "Public",
-  "path": "/plan/list-query/module/list/query/WhereUnsetVariable.test.goal",
-  "prPath": "/plan/list-query/module/list/query/.build/whereunsetvariable.test.pr",
-  "hash": "f290f75b8edf25c0a33bb4b8e29bde0f5fdcd7150054f60a01712cda80fbf7e8",
+  "path": "/plan/list-query/module/list/query/OrderUnknownField.test.goal",
+  "prPath": "/plan/list-query/module/list/query/.build/orderunknownfield.test.pr",
+  "hash": "9ba2c7d80470d57d8ea8328c4c533f740397e41986855bbdc4efd7fa05be5b97",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

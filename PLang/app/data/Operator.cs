@@ -153,27 +153,33 @@ public sealed class Operator
         => data == null ? null : await data.Value();
 
     /// <summary>
-    /// IS-A: does the left value's type satisfy the named type (right operand)?
-    /// On an un-narrowed reference (`file`/`url`) a miss forces the narrow —
-    /// `is dict` IS an examination of the content, so the answer is
-    /// deterministic on both branches. `is file` answers from the chain with
-    /// no read. A type name the developer wrote that does not exist is their error.
+    /// IS-A: does the left value's type satisfy the named type (right operand)? The right is the type's name read
+    /// as a value (<see cref="data.@this.Held"/>: a formal <c>"ask"</c> is the word ask). The left follows its
+    /// reference to the Data it names, unread (<c>%said% is ask</c> asks what %said% holds; a reference to nothing
+    /// is no type: false), and that Data answers from its provenance chain — <c>%f% is file</c> never reads the
+    /// file. Only a miss on a value not yet read (a file reference asked <c>is dict</c>) reads it, since that
+    /// question examines the content. A type name the developer wrote that does not exist is their error.
     /// </summary>
     private static async Task<Answer> IsType(data.@this? left, data.@this? right, actor.context.@this context)
     {
-        var typeName = right?.Peek()?.ToString();
-        if (left == null || string.IsNullOrWhiteSpace(typeName)) return Answer(context, false);
+        if (left == null || right == null) return Answer(context, false);
+        var typeName = (await right.Held()).ToString();
+        if (!right.Success) return Failed(right, context);
+        if (string.IsNullOrWhiteSpace(typeName)) return Answer(context, false);
         var named = await context.App.type.Get(typeName);
         if (!named.Success || await named.Value() is not { } type)
             return Refused(context, $"Unknown type '{typeName}'", "UnknownType");
-        // Ask the VALUE — it walks its own provenance chain (a narrowed dict still answers `is file`).
-        if (left.Is(type)) return Answer(context, true);
-        if (left.Peek() is { IsFinal: false })
+        if (!left.Success) return Failed(left, context);
+        var held = await left.Follow(context);
+        if (!held.IsInitialized) return Answer(context, false);
+        if (held.Is(type)) return Answer(context, true);
+        if (held.Peek() is { IsFinal: false })
         {
-            // `is <type>` IS an examination — the door parses + narrows, then
-            // the value answers deterministically from its retained provenance.
-            _ = await left.Value();
-            return Answer(context, left.Is(type));
+            // `is dict` on a reference not yet read examines its content: the door reads and narrows, then the
+            // value answers from its retained chain
+            _ = await held.Value();
+            if (!held.Success) return Failed(held, context);
+            return Answer(context, held.Is(type));
         }
         return Answer(context, false);
     }

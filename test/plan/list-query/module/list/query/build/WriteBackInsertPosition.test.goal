@@ -1,0 +1,9 @@
+/ The builder appends the write-back set RIGHT AFTER the query, not at the step's end. In a step whose
+/ actions are [list.query, output.write], the set must land between them so it stores the query's result
+/ in %people% — if it landed after output.write, %people% would get output.write's result instead.
+/ Written in formal to fix the action order (the writer picks it freely); it is the post-pass under test.
+Start
+- set %people% = [{name: "a", age: 40}, {name: "b", age: 18}, {name: "c", age: 25}]
+- list.query(List=%people%, Query={order: "age"}); output.write(Data="done")
+- assert.equals(Expected="b", Actual=%people[0].name%, Message="youngest first: the set read the query, not output.write")
+- assert.equals(Expected="a", Actual=%people[2].name%, Message="oldest last")

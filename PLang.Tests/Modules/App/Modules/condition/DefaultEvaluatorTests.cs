@@ -167,6 +167,14 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
         await Assert.That(result.Error!.Message).Contains("cannot order 'dict'");
     }
 
+    // `is file` answers from the reference's type, never reading the file: a file no read could open still is one
+    [Test] public async Task Is_File_AnswersWithoutReadingTheFile()
+    {
+        var ctx = _app.actor.list.User.Context;
+        var missing = new global::app.type.item.file.@this(global::app.type.item.path.@this.Resolve("/not-there.json", ctx), ctx);
+        await Assert.That(IsTrue(await EvalIf(missing, "is", "file"))).IsTrue();
+    }
+
     [Test] public async Task Is_AliasName_ResolvesToItsType()
         => await Assert.That(IsTrue(await EvalIf("hello", "is", "string"))).IsTrue();
 

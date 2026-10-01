@@ -1,0 +1,242 @@
+{
+  "name": "Start",
+  "comment": "When a later action in the step reads the query's result by member (%!data.count%), the result is taken,\nso NO write-back is appended and %people% is left unchanged. The consumed check asks the value's parsed\nvariables (root %!data%), so a member read (%!data.count%) or an index read (%!data[0]%) counts, where a\nsubstring test on a bare \"%!data%\" would miss it. Written in formal to fix the action order.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %people% = [{name: \"a\", age: 40}, {name: \"b\", age: 18}]",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%people%",
+              "variable": [
+                {
+                  "text": "%people%",
+                  "code": [
+                    {
+                      "variable": "people"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"a","age":40},{"name":"b","age":18}]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "list.query(List=%people%, Query={order: \"age\"}); output.write(Data=\"%!data.count%\")",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "query",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": "%people%",
+              "variable": [
+                {
+                  "text": "%people%",
+                  "code": [
+                    {
+                      "variable": "people"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Query",
+              "type": {
+                "name": "query"
+              },
+              "value": {"order":"age"}
+            }
+          ],
+          "default": [
+            {
+              "name": "execution",
+              "type": {
+                "name": "choice",
+                "kind": "execution"
+              },
+              "value": "sql"
+            }
+          ]
+        },
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "%!data.count%",
+              "variable": [
+                {
+                  "text": "%!data.count%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    },
+                    {
+                      "property": "count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"a\", Actual=%people[0].name%, Message=\"input unchanged: the count read consumed the result, no write-back\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "a"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%people[0].name%",
+              "variable": [
+                {
+                  "text": "%people[0].name%",
+                  "code": [
+                    {
+                      "variable": "people"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "input unchanged: the count read consumed the result, no write-back"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=2, Actual=%people.count%)",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%people.count%",
+              "variable": [
+                {
+                  "text": "%people.count%",
+                  "code": [
+                    {
+                      "variable": "people"
+                    },
+                    {
+                      "property": "count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/list-query/module/list/query/build/WriteBackConsumed.test.goal",
+  "prPath": "/plan/list-query/module/list/query/build/.build/writebackconsumed.test.pr",
+  "hash": "db1cdf669a1c9315d6d6078ea2c75f3e5bb9f8329229db4fb9a4adc81e7edfd5",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

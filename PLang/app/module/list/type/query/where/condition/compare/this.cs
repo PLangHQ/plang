@@ -31,8 +31,13 @@ public sealed class @this : condition.@this
         return new(field, new global::app.data.Operator(op), comparison.Get("value", context) ?? context.Null("value"));
     }
 
-    internal override System.Threading.Tasks.Task<Data> Keep(List rows, global::app.actor.context.@this context)
-        => rows.Where(_field, _op, _value, context);
+    // the value read where the query runs, in its step (a %variable% not set fails, VariableNotFound), then compared
+    internal override async System.Threading.Tasks.Task<Data> Keep(List rows, global::app.actor.context.@this context)
+    {
+        var value = await _value.Settle();
+        if (!value.Success) return value;
+        return await rows.Where(_field, _op, value, context);
+    }
 
     internal override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this context)
