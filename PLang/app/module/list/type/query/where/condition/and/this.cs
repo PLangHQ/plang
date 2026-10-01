@@ -10,6 +10,10 @@ public sealed class @this : condition.@this
 
     internal @this(IReadOnlyList<condition.@this> condition) => _condition = condition;
 
+    /// <summary>The <paramref name="conditions"/>, all to hold; null with why on <c>data</c>.</summary>
+    internal static @this? Create(Data conditions, Data data, global::app.actor.context.@this context)
+        => Read(conditions, "and", data, context) is { } each ? new(each) : null;
+
     internal override async System.Threading.Tasks.Task<Data> Keep(List rows, global::app.actor.context.@this context)
     {
         Data kept = context.Ok(rows);

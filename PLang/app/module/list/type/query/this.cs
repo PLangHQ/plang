@@ -30,13 +30,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>A query is made from a dict: each key a part, in the order written. A key that is no part, or a
     /// part that doesn't read, declines with why, naming the part.</summary>
-    public static @this? Create(object? raw, global::app.type.@this? declared, Data data)
+    public static @this? Create(object? query, global::app.type.@this? declared, Data data)
     {
-        if (raw is @this query) return query;
-        if (raw is not global::app.type.item.dict.@this dict)
+        if (query is @this already) return already;
+        if (query is not global::app.type.item.dict.@this dict)
         {
             data.Fail(new global::app.error.Error(
-                $"a query is a dict of its parts — {{{part.@this.Names}}} — not {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name ?? "nothing"}",
+                $"a query is a dict of its parts — {{{part.@this.Names}}} — not {(query as global::app.type.item.@this)?.Type.Name ?? query?.GetType().Name ?? "nothing"}",
                 "QueryInvalid", 400));
             return null;
         }
@@ -51,7 +51,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                     $"'{entry.Name}' is no part of a query — its parts are {part.@this.Names}", "QueryInvalid", 400));
                 return null;
             }
-            if (make(entry, data, context) is not { } made) return null;
+            if (make(entry, data, context) is not { } made)
+            {
+                // the part's why, said as the part's: "where: …"
+                var why = data.Error!;
+                data.Fail(new global::app.error.Error($"{entry.Name}: {why.Message}", why.Key, why.Status) { list = [why] });
+                return null;
+            }
             parts.Add(made);
         }
         if (parts.Count == 0)

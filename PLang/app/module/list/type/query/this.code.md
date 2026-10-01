@@ -10,21 +10,24 @@ a class under the query at its name (`type/query/where/this.cs`, …), each appl
 query.Create(raw, declared, data)                                   type/query/this.cs:33
 ├─ a dict, else why on data, naming the parts (part.@this.Names)
 ├─ :48  each key: part.@this.Known[name]  — no such part: "'<key>' is no part of a query — its parts are …"
-├─ :54  make(entry, data, context)        — the part's own static Create; null = why is on data
+├─ :54  make(entry, data, context)        — the part's own static Create; null = why is on data,
+│                                            which query.Create says as the part's ("where: …")
 └─ no part at all: "a query names at least one part: …"
 ```
 
-`part.@this.Known` (`type/query/part/this.cs:26-34`): the part classes under the query, found once (reflection over the
-assembly, cached in a `Lazy`) and held as name → that class's `internal static Create(written, data, context)`. A
-part's name is the last segment of its namespace (`NameOf`, :18); `Names` (:36) lists them sorted, for refusals.
+`part.@this.Known` (`type/query/part/this.cs`): the part classes under the query, found once (reflection over the
+assembly, cached in a `Lazy`) and held as name → that class's `internal static Create(part, data, context)`. A
+part's name is the last segment of its namespace (`NameOf`); `Names` lists them sorted, for refusals.
 
-Each part's `Create` answers the part or null with why on `data`, said as the part's (`where: …`, `group: …`,
-`order: …`); no part throws:
-- `where/this.cs`: `{field, op, value}`, `{and: [...]}`, `{or: [...]}`, or a list (and); recursive `Condition`; an
-  unknown operator is checked against `Operator.Choices`.
+Each part's `Create` takes what the query holds under its name (`where`, `group`, `distinct`, `order`) and answers
+the part or null with a plain why on `data`; no part throws, and none prefixes its own name:
+- `where/this.cs`: one line over `condition.@this.Create(condition, …)` (`where/condition/this.cs`) — a list (and),
+  `{and: [...]}` → `and.Create`, `{or: [...]}` → `or.Create` (each reads its list through `condition.Read`), else
+  `compare.Create(comparison, …)`, which checks the operator against `Operator.Choices`.
 - `group/this.cs`: the field to group by.
-- `distinct/this.cs`: `true`/`false`.
-- `order/this.cs`: a field, `{field, desc}`, or a list of them.
+- `distinct/this.cs`: a bool, read by `bool.@this.Create` — `"true"` reads, `"yes"` is refused with bool's why.
+- `order/this.cs`: a key (`order/key/this.cs`: a field or `{field, desc}`, desc read by bool), or a list of them;
+  each key sorts the rows by itself (`key.Sort` → `list.Sort`) and writes itself (`key.Output`).
 
 ## Run
 

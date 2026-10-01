@@ -62,6 +62,27 @@ public class QueryPartTests
         await Assert.That(data.Error!.Message).IsEqualTo("group: names the field to group by — group: \"name\"");
     }
 
+    [Test] public async Task ADistinctWrittenAsText_ReadsAsBoolReadsIt()
+    {
+        var (made, data) = await Made(new() { ["distinct"] = "true" });
+        await Assert.That(made).IsNotNull();
+        await Assert.That(data.Success).IsTrue();
+    }
+
+    [Test] public async Task ADistinctThatIsNoBool_IsRefused()
+    {
+        var (made, data) = await Made(new() { ["distinct"] = "yes" });
+        await Assert.That(made).IsNull();
+        await Assert.That(data.Error!.Message).IsEqualTo("distinct: Cannot parse 'yes' as bool — expected true or false.");
+    }
+
+    [Test] public async Task AnOrderDescThatIsNoBool_IsRefused()
+    {
+        var (made, data) = await Made(new() { ["order"] = new Dictionary<string, object?> { ["field"] = "age", ["desc"] = "yes" } });
+        await Assert.That(made).IsNull();
+        await Assert.That(data.Error!.Message).IsEqualTo("order: Cannot parse 'yes' as bool — expected true or false.");
+    }
+
     [Test] public async Task AnOrderKeyThatIsNeitherFieldNorKey_IsRefused()
     {
         var (made, data) = await Made(new() { ["order"] = 5 });

@@ -9,7 +9,11 @@ public sealed class @this : condition.@this
 {
     private readonly IReadOnlyList<condition.@this> _condition;
 
-    internal @this(IReadOnlyList<condition.@this> condition) => _condition = condition;
+    private @this(IReadOnlyList<condition.@this> condition) => _condition = condition;
+
+    /// <summary>The <paramref name="conditions"/>, one to hold; null with why on <c>data</c>.</summary>
+    internal static @this? Create(Data conditions, Data data, global::app.actor.context.@this context)
+        => Read(conditions, "or", data, context) is { } either ? new(either) : null;
 
     internal override async System.Threading.Tasks.Task<Data> Keep(List rows, global::app.actor.context.@this context)
     {

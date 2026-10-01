@@ -11,11 +11,24 @@ public sealed class @this : condition.@this
     private readonly global::app.data.Operator _op;
     private readonly Data _value;
 
-    internal @this(global::app.type.item.text.@this field, global::app.data.Operator op, Data value)
+    private @this(global::app.type.item.text.@this field, global::app.data.Operator op, Data value)
     {
         _field = field;
         _op = op;
         _value = value;
+    }
+
+    /// <summary>What <paramref name="comparison"/> holds: its field, its operator (<c>==</c> when none is
+    /// written) and its value. One that doesn't read is why on <c>data</c>.</summary>
+    internal static @this? Create(global::app.type.item.dict.@this comparison, Data data, global::app.actor.context.@this context)
+    {
+        if (comparison.Get("field", context)?.Peek()?.ToString() is not { Length: > 0 } field)
+            return Refused<@this>(data, "a condition names its field: {field, op, value}");
+        var op = comparison.Get("op", context)?.Peek()?.ToString() ?? "==";
+        var known = global::app.data.Operator.Choices(context);
+        if (!known.Contains(op, StringComparer.OrdinalIgnoreCase))
+            return Refused<@this>(data, $"Unsupported operator: '{op}'. Valid: {string.Join(", ", known)}");
+        return new(field, new global::app.data.Operator(op), comparison.Get("value", context) ?? context.Null("value"));
     }
 
     internal override System.Threading.Tasks.Task<Data> Keep(List rows, global::app.actor.context.@this context)

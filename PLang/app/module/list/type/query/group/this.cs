@@ -14,11 +14,11 @@ public sealed class @this : part.@this
 
     private @this(global::app.type.item.text.@this field) => _field = field;
 
-    /// <summary>The group of <paramref name="written"/>: the field to group by; none named is why on <c>data</c>.</summary>
-    internal static @this? Create(Data written, Data data, global::app.actor.context.@this context)
+    /// <summary>The query's <paramref name="group"/>: the field to group by; none named is why on <c>data</c>.</summary>
+    internal static @this? Create(Data group, Data data, global::app.actor.context.@this context)
     {
-        if (written.Peek()?.ToString() is { Length: > 0 } field) return new(field);
-        data.Fail(new global::app.error.Error("group: names the field to group by — group: \"name\"", "QueryInvalid", 400));
+        if (group.Peek()?.ToString() is { Length: > 0 } field) return new(field);
+        data.Fail(new global::app.error.Error("names the field to group by — group: \"name\"", "QueryInvalid", 400));
         return null;
     }
 

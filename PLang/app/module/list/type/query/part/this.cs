@@ -17,9 +17,9 @@ public abstract class @this
     // a part class's name: the last segment of its namespace (query/where/ → where)
     private static string NameOf(System.Type part) => part.Namespace![(part.Namespace!.LastIndexOf('.') + 1)..];
 
-    /// <summary>How a part is made from what the query's dict writes under its name: the part, or null with why on
-    /// <c>data</c>.</summary>
-    internal delegate @this? Maker(Data written, Data data, global::app.actor.context.@this context);
+    /// <summary>How a part is made from the query's <paramref name="part"/> — what its dict holds under the part's
+    /// name: the part, or null with why on <c>data</c>.</summary>
+    internal delegate @this? Maker(Data part, Data data, global::app.actor.context.@this context);
 
     /// <summary>The parts a query has, each under its name — the part classes under the query, each with its own
     /// static <c>Create</c>, found once.</summary>
