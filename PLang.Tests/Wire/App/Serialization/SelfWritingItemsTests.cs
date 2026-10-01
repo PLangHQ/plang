@@ -40,6 +40,6 @@ public class SelfWritingItemsTests : System.IAsyncDisposable
         // what kind of error it is, its key says — never its C# class
         await Assert.That(error).StartsWith("{\"id\":\"");
         await Assert.That(error).DoesNotContain("ServiceError");
-        await Assert.That(error).Contains("\"message\":\"boom\",\"key\":\"Boom\",\"statusCode\":500");
+        await Assert.That(error).Contains("\"message\":\"boom\",\"key\":\"Boom\",\"status\":500");
     }
 }

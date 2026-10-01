@@ -18,7 +18,7 @@ public sealed partial class @this
         var causes = new List<global::app.error.Error> { invalid };
         var first = causes[0];
         return new global::app.error.StepError(
-            $"step {Index} '{Text}': {string.Join("; ", causes.Select(c => c.Message))}", this, first.Key, first.StatusCode) { list = causes };
+            $"step {Index} '{Text}': {string.Join("; ", causes.Select(c => c.Message))}", this, first.Key, first.Status) { list = causes };
     }
 
     // A quoted literal ("…", or '…' when not inside a word, so `don't` is not one); a number that stands

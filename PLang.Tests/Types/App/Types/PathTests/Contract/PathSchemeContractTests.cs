@@ -154,7 +154,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
             // Every scheme routes refusal through the same base Authorize gate —
             // the Error is a PermissionDenied with the same key/status.
             await Assert.That(read.Error!.Key).IsEqualTo("PermissionDenied");
-            await Assert.That(read.Error!.StatusCode).IsEqualTo(403);
+            await Assert.That(read.Error!.Status.Code.ToInt32()).IsEqualTo(403);
         }
         finally { await Fixture.Cleanup(p); }
     }

@@ -8,7 +8,7 @@ namespace app.module.http.type.redirect;
 /// The http module's own, as crypto's <c>hash</c> lives under crypto.
 /// </summary>
 [global::app.Attributes.PlangType("redirect")]
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.type.item.IDefault<@this>
 {
     public static string Example => "{follow: true, max: 10}";
     public static string Description => "How a request follows redirects: whether it follows them, and how many at most.";
@@ -23,6 +23,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The defaults: follow, up to ten.</summary>
     public @this() : this(true, 10) { }
 
+    /// <summary>A request that says nothing of redirects follows up to ten.</summary>
+    public static @this Default => new();
+
     private @this(global::app.type.item.@bool.@this follow, global::app.type.item.number.@this max)
     {
         Follow = follow;
@@ -30,7 +33,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     public override bool IsLeaf => false;
-
     /// <summary>A redirect is made from a dict of its members — any left out keeps its default; a member that is
     /// no member of a redirect, or a value it can't take, declines with why.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, Data data)

@@ -8,12 +8,12 @@ namespace app.error;
 /// </summary>
 public class StepError : Error
 {
-    public StepError(string message, string key = "StepError", int statusCode = 400)
-        : base(message, key, statusCode) { }
+    public StepError(string message, string key = "StepError", global::app.type.item.status.@this? status = null)
+        : base(message, key, status) { }
 
-    public StepError(string message, Step step, string key = "StepError", int statusCode = 400)
-        : base(message, step, key, statusCode) { }
+    public StepError(string message, Step step, string key = "StepError", global::app.type.item.status.@this? status = null)
+        : base(message, step, key, status) { }
 
-    public StepError(string message, actor.context.@this context, string key = "StepError", int statusCode = 400)
-        : base(message, context, key, statusCode) { }
+    public StepError(string message, actor.context.@this context, string key = "StepError", global::app.type.item.status.@this? status = null)
+        : base(message, context, key, status) { }
 }

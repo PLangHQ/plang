@@ -104,6 +104,19 @@ public class Fluid : ITemplate
             return new StringValue(System.Text.Encoding.UTF8.GetString(json.ToArray()));
         });
 
+        // `{{ x | text }}` writes the value as plang's text format writes it — a leaf bare, a container as its json:
+        // the value's own text form, never the C# object's ToString.
+        options.Filters.AddFilter("text", async (input, _, _) =>
+        {
+            var held = input.ToObjectValue();
+            var value = new global::app.data.@this("",
+                held as global::app.type.item.@this ?? global::app.type.item.@this.Create(held, action.Context), context: action.Context);
+            using var text = new MemoryStream();
+            var written = await action.Context.App.type.list.Mime("text/plain").Encode(text, value, action.Context);
+            if (!written.Success) throw new AppException(written.Error!);
+            return new StringValue(System.Text.Encoding.UTF8.GetString(text.ToArray()));
+        });
+
         // Configure file provider for {% include %} / {% render %} tags
         var includes = new PlangFileProvider(GetTemplateBaseDir(action), action.Context);
         options.FileProvider = includes;
@@ -202,7 +215,8 @@ public class Fluid : ITemplate
             // its AUTHORED form is never member-accessed here — it's embedded via the `store` filter,
             // which drives the value's own Store writer (%refs% literal) instead of this resolve door.
             var resolved = await (await new global::app.data.@this("", obj, context: context).Get(name)).Value();
-            return (resolved is global::app.type.item.@this value ? value.Backing : resolved)!;
+            // A span stays the plang value: Fluid has no span of its own and would read it as a 1970 date.
+            return (resolved is global::app.type.item.@this value ? (value.Backing is TimeSpan ? value : value.Backing) : resolved)!;
         }
 
         // The value door is async (a path stat, a computed render). Templates render via
@@ -249,7 +263,7 @@ public class Fluid : ITemplate
         private global::app.data.@this Parent => new("", item, context: context);
 
         private static FluidValue Lowered(object? value, TemplateOptions options)
-            => FluidValue.Create(value is global::app.type.item.@this reached ? reached.Backing : value, options);
+            => FluidValue.Create(value is global::app.type.item.@this reached ? (reached.Backing is TimeSpan ? reached : reached.Backing) : value, options);
     }
 
     /// <summary>
@@ -309,7 +323,7 @@ public class Fluid : ITemplate
         var result = await goal.Start(plangContext);
         if (!result.Success)
             throw new global::app.error.AppException($"callGoal '{goalName}' failed: {result.Error?.Message}",
-                result.Error?.Key ?? "GoalFailed", result.Error?.StatusCode ?? 500);
+                result.Error?.Key ?? "GoalFailed", result.Error?.Status ?? 500);
 
         await writer.WriteAsync((await result.Value())?.ToString() ?? "");
         return Completion.Normal;
@@ -366,13 +380,13 @@ public class Fluid : ITemplate
                 var exists = await resolved.Exists(_context);
                 if (!exists.Success)
                     throw new global::app.error.AppException($"include '{candidate}': {exists.Error?.Message}",
-                        exists.Error?.Key ?? "IncludeFailed", exists.Error?.StatusCode ?? 500);
+                        exists.Error?.Key ?? "IncludeFailed", exists.Error?.Status ?? 500);
                 if ((exists.Peek() as global::app.type.item.@bool.@this)?.Value != true) continue;
                 var landed = await resolved.Read(_context);
                 var read = landed.Success ? await landed.Value() : null;
                 if (!landed.Success)
                     throw new global::app.error.AppException($"include '{candidate}': {landed.Error?.Message}",
-                        landed.Error?.Key ?? "IncludeFailed", landed.Error?.StatusCode ?? 500);
+                        landed.Error?.Key ?? "IncludeFailed", landed.Error?.Status ?? 500);
                 return read is global::app.type.item.binary.@this bin
                     ? System.Text.Encoding.UTF8.GetString(bin.Value)
                     : read?.ToString() ?? "";

@@ -13,7 +13,7 @@ public class ErrorTests
 
         await Assert.That(error.Message).IsEqualTo("Test error");
         await Assert.That(error.Key).IsEqualTo("Error");
-        await Assert.That(error.StatusCode).IsEqualTo(400);
+        await Assert.That(error.Status.Code.ToInt32()).IsEqualTo(400);
         await Assert.That(error.Id).IsNotNull();
         await Assert.That(error.Id.Length).IsEqualTo(12);
     }
@@ -25,7 +25,7 @@ public class ErrorTests
 
         await Assert.That(error.Message).IsEqualTo("Not found");
         await Assert.That(error.Key).IsEqualTo("NotFound");
-        await Assert.That(error.StatusCode).IsEqualTo(404);
+        await Assert.That(error.Status.Code.ToInt32()).IsEqualTo(404);
     }
 
     [Test]
@@ -104,7 +104,7 @@ public class ErrorTests
         // an exception plang didn't raise: ServiceError (500), its message naming the exception's type
         await Assert.That(error.Message).IsEqualTo("InvalidOperationException: Something failed");
         await Assert.That(error.Key).IsEqualTo("ServiceError");
-        await Assert.That(error.StatusCode).IsEqualTo(500);
+        await Assert.That(error.Status.Code.ToInt32()).IsEqualTo(500);
         await Assert.That(error.Exception).IsEqualTo(ex);
     }
 
@@ -186,7 +186,7 @@ public class GoalErrorTests
 
         await Assert.That(error.Message).IsEqualTo("Goal 'Start' not found");
         await Assert.That(error.Key).IsEqualTo("NotFound");
-        await Assert.That(error.StatusCode).IsEqualTo(404);
+        await Assert.That(error.Status.Code.ToInt32()).IsEqualTo(404);
     }
 
     [Test]
@@ -196,7 +196,7 @@ public class GoalErrorTests
 
         await Assert.That(error.Message).IsEqualTo("Execution cancelled");
         await Assert.That(error.Key).IsEqualTo("Cancelled");
-        await Assert.That(error.StatusCode).IsEqualTo(499);
+        await Assert.That(error.Status.Code.ToInt32()).IsEqualTo(499);
     }
 }
 
@@ -217,7 +217,7 @@ public class ActionErrorTests
 
         await Assert.That(error.Message).IsEqualTo("variable.set not found");
         await Assert.That(error.Key).IsEqualTo("ActionNotFound");
-        await Assert.That(error.StatusCode).IsEqualTo(404);
+        await Assert.That(error.Status.Code.ToInt32()).IsEqualTo(404);
     }
 
 }
@@ -242,7 +242,7 @@ public class ServiceErrorTests
         await Assert.That(error).IsTypeOf<ServiceError>();
         await Assert.That(error.Message).IsEqualTo("Service crashed");
         await Assert.That(error.Key).IsEqualTo("Exception");
-        await Assert.That(error.StatusCode).IsEqualTo(500);
+        await Assert.That(error.Status.Code.ToInt32()).IsEqualTo(500);
     }
 }
 

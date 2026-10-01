@@ -23,7 +23,7 @@ public class ThrowTests : System.IAsyncDisposable
     {
         var (context, _) = CreateContext();
 
-        var action = new Throw(context) { Message = (Text)"Something went wrong", Status = (global::app.type.item.number.@this)500 };
+        var action = new Throw(context) { Message = (Text)"Something went wrong", Status = (global::app.type.item.status.@this)500 };
         var result = await action.Start();
 
         await result.IsFailure();
@@ -36,12 +36,12 @@ public class ThrowTests : System.IAsyncDisposable
     {
         var (context, _) = CreateContext();
 
-        var action = new Throw(context) { Message = (Text)"Not found", Status = (global::app.type.item.number.@this)404, Key = (Text)"NotFound" };
+        var action = new Throw(context) { Message = (Text)"Not found", Status = (global::app.type.item.status.@this)404, Key = (Text)"NotFound" };
         var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
-        await Assert.That(result.Error.StatusCode).IsEqualTo(404);
+        await Assert.That(result.Error.Status.Code.ToInt32()).IsEqualTo(404);
     }
 
     [Test]
@@ -53,7 +53,7 @@ public class ThrowTests : System.IAsyncDisposable
         var result = await action.Start();
 
         await result.IsFailure();
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(400);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(400);
         await Assert.That(result.Error.Key).IsEqualTo("error");
     }
 
@@ -72,7 +72,7 @@ public class ThrowTests : System.IAsyncDisposable
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("OriginalKey");
         await Assert.That(result.Error.Message).IsEqualTo("original boom");
-        await Assert.That(result.Error.StatusCode).IsEqualTo(418);
+        await Assert.That(result.Error.Status.Code.ToInt32()).IsEqualTo(418);
     }
 
     [Test]

@@ -60,7 +60,7 @@ public class CurrentNodeTests
         await using var app = new global::app.@this("/test").Testing();
         var read = await Read("%!app.error.current%", app.actor.list.User.Context);
         await read.IsFailure();
-        await Assert.That(read.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(read.Error!.Status.Code.ToInt32()).IsEqualTo(404);
     }
 
     // The app's module: its own .list is the collection; any other key is a module by name, an item's inner

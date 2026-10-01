@@ -10,8 +10,8 @@ public class AssertionError : Error
     public object? Actual { get; init; }
     public string? UserMessage { get; init; }
 
-    public AssertionError(string message, string key = "AssertionFailed", int statusCode = 400)
-        : base(message, key, statusCode) { }
+    public AssertionError(string message, string key = "AssertionFailed", global::app.type.item.status.@this? status = null)
+        : base(message, key, status) { }
 
     /// <summary>A failed assertion of <paramref name="actual"/> against <paramref name="expected"/>, its
     /// <paramref name="message"/> formed by the assertion that compared them.</summary>

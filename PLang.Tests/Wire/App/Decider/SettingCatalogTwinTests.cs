@@ -24,7 +24,7 @@ public class SettingCatalogTwinTests
                 {
                     ["name"] = p.Name,
                     ["type"] = p.Type.ToString(),
-                    ["default"] = p.Default?.ToString(),
+                    ["default"] = p.Default == null ? null : await Text(p.Default, context),
                 });
             root[@class.Name] = options;
         }
@@ -38,5 +38,13 @@ public class SettingCatalogTwinTests
         var held = System.IO.File.Exists(path) ? await System.IO.File.ReadAllTextAsync(path) : "";
         if (held != written) await System.IO.File.WriteAllTextAsync(path, written);
         await Assert.That(held).IsEqualTo(written).Because("settings.json drifted from the classes — rewritten; commit it");
+    }
+
+    // A default as the text format writes it — a leaf bare, a node or record as its json.
+    private static async Task<string> Text(object value, global::app.actor.context.@this context)
+    {
+        using var text = new System.IO.MemoryStream();
+        await context.App.type.list.Mime("text/plain").Encode(text, context.Ok(value), context);
+        return System.Text.Encoding.UTF8.GetString(text.ToArray());
     }
 }

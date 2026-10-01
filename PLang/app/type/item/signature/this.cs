@@ -49,8 +49,46 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>When the signature was minted.</summary>
     public datetime Created { get; }
 
-    /// <summary>Optional expiry — null is a permanent attestation.</summary>
-    public datetime? Expires { get; }
+    // The expiry the signer signed — null is a permanent attestation. What the wire carries and the signing
+    // bytes cover, unchanged by any reader.
+    private readonly datetime? _expires;
+
+    // How long after Created a signature read live off the wire is good, given at birth by its reader with its
+    // origin; it counts only for a live one.
+    private readonly global::app.type.item.duration.@this? _window;
+
+    /// <summary>Where the signature came from — <c>%x!signature.origin%</c>: just signed, read live off the wire, or
+    /// read from plang's own store. Born with it; it decides the window, the nonce check and the hash's view.</summary>
+    public global::app.type.item.choice.@this<global::app.type.item.signature.Origin> Origin { get; }
+
+    /// <summary>When the signature stops being good — <c>%x!signature.expires%</c>: the expiry the signer signed,
+    /// or, for a signature read live, its window after <see cref="Created"/> if that comes first. Null when
+    /// neither ends it.</summary>
+    public datetime? Expires
+    {
+        get
+        {
+            if (Origin.Value != global::app.type.item.signature.Origin.Live || _window is not { } window) return _expires;
+            var live = Created.Value + (System.TimeSpan)window;
+            return _expires is { } signed && signed.Value <= live ? signed : new datetime(live);
+        }
+    }
+
+    /// <summary>Whether the signature is past its <see cref="Expires"/> by the clock <paramref name="context"/>
+    /// reads — <c>%x!signature.expired%</c>.</summary>
+    public async System.Threading.Tasks.ValueTask<bool> Expired(global::app.actor.context.@this context)
+    {
+        if (Expires is not { } expires) return false;
+        var now = await (await context.Variable.Get("NowUtc")).Clr<System.DateTimeOffset>(System.DateTimeOffset.UtcNow);
+        return now > expires.Value;
+    }
+
+    /// <summary>One step down: <c>expired</c> asks the clock (<see cref="Expired"/>); every other member as any
+    /// item answers it.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
+        => string.Equals(key, "expired", System.StringComparison.OrdinalIgnoreCase) && parent.Context is { } context
+            ? new global::app.data.@this(key, await Expired(context), parent: parent)
+            : await base.Get(parent, key);
 
     /// <summary>The signing identity (public-key name).</summary>
     public text Identity { get; }
@@ -74,8 +112,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         hash hash,
         binary signature,
         datetime? expires = null,
-        global::app.type.item.list.@this? contracts = null)
+        global::app.type.item.list.@this? contracts = null,
+        global::app.type.item.signature.Origin origin = global::app.type.item.signature.Origin.Signed,
+        global::app.type.item.duration.@this? window = null)
     {
+        Origin = origin;
         Value = value;
         Algorithm = algorithm ?? new text("ed25519");
         Nonce = nonce ?? new text("");
@@ -83,15 +124,16 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         Identity = identity ?? new text("");
         Hash = hash;
         Signature = signature ?? new binary(System.Array.Empty<byte>());
-        Expires = expires;
+        _expires = expires;
         Contracts = contracts;
+        _window = window;
     }
 
     /// <summary>A copy of this layer with the signature bytes filled in — used by
     /// the signing module after it signs <see cref="ToSigningBytes"/> (the layer is
     /// immutable; build the unsigned form, sign, then stamp the bytes).</summary>
     public @this Signed(binary signature)
-        => new(Value, Algorithm, Nonce, Created, Identity, Hash, signature, Expires, Contracts);
+        => new(Value, Algorithm, Nonce, Created, Identity, Hash, signature, _expires, Contracts, Origin.Value, _window);
 
     protected internal override global::app.type.@this Type
         => new("signature", typeof(@this), Algorithm.ToString());
@@ -126,7 +168,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         w.Name("type"); Algorithm.Write(w);
         w.Name("nonce"); Nonce.Write(w);
         w.Name("created"); Created.Write(w);
-        if (Expires is { } exp) { w.Name("expires"); exp.Write(w); }
+        if (_expires is { } exp) { w.Name("expires"); exp.Write(w); }
         w.Name("identity"); Identity.Write(w);
         // Contracts are bare strings on the wire (and in ToSigningBytes), not
         // data records — emit the strings directly.
@@ -162,7 +204,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         w.Name("type"); Algorithm.Write(w);
         w.Name("nonce"); Nonce.Write(w);
         w.Name("created"); Created.Write(w);
-        if (Expires is { } exp) { w.Name("expires"); exp.Write(w); }
+        if (_expires is { } exp) { w.Name("expires"); exp.Write(w); }
         w.Name("identity"); Identity.Write(w);
         if (Contracts is not null)
         {

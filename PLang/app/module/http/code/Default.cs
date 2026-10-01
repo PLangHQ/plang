@@ -43,11 +43,10 @@ public sealed class Default : IHttp
         // T? convention — plang-null pass converts these !/Clr reads (value-door-plang-null branch)
         var unsigned = (await action.Unsigned.Value())!.Value;
         System.TimeSpan timeout = (await action.Timeout.Value())!;
-        // a record the step leaves out is the record's own defaults
-        var content = (action.Content == null ? null : await action.Content.Value()) ?? new global::app.module.http.type.entity.@this();
+        var content = (await action.Content.Value())!;
         var contentType = content.Mime.ToString();
         var encoding = content.Encoding.ToString();
-        var redirect = (action.Redirect == null ? null : await action.Redirect.Value()) ?? new global::app.module.http.type.redirect.@this();
+        var redirect = (await action.Redirect.Value())!;
 
         // the url the action goes to — the one its build expected
         var target = await ((global::app.module.http.IAddressed)action).Target();
@@ -129,7 +128,7 @@ public sealed class Default : IHttp
         // T? convention — plang-null pass converts these (value-door-plang-null branch)
         var unsigned = (await action.Unsigned.Value())!.Value;
         System.TimeSpan timeout = (await action.Timeout.Value())!;
-        var redirect = (action.Redirect == null ? null : await action.Redirect.Value()) ?? new global::app.module.http.type.redirect.@this();
+        var redirect = (await action.Redirect.Value())!;
 
         // the url the action goes to — the one its build expected
         var target = await ((global::app.module.http.IAddressed)action).Target();
@@ -172,7 +171,7 @@ public sealed class Default : IHttp
         var unsigned = (await action.Unsigned.Value())!.Value;
         System.TimeSpan timeout = (await action.Timeout.Value())!;
         var encoding = (await action.Encoding.Value())!.Clr<string>()!;
-        var redirect = (action.Redirect == null ? null : await action.Redirect.Value()) ?? new global::app.module.http.type.redirect.@this();
+        var redirect = (await action.Redirect.Value())!;
 
         // the url the action goes to — the one its build expected
         var target = await ((global::app.module.http.IAddressed)action).Target();
@@ -211,7 +210,7 @@ public sealed class Default : IHttp
         catch (Exception ex) when (ex is TaskCanceledException or HttpRequestException
             or IOException or UnauthorizedAccessException or FormatException)
         {
-            var (key, statusCode) = ex switch
+            var (key, status) = ex switch
             {
                 TaskCanceledException => ("Timeout", 408),
                 HttpRequestException hre => ("HttpError", (int)(hre.StatusCode ?? 0)),
@@ -219,7 +218,7 @@ public sealed class Default : IHttp
                 FormatException => ("InvalidContent", 400),
                 _ => ("HttpError", 500)
             };
-            return context.Error(new ServiceError(ex.Message, key, statusCode));
+            return context.Error(new ServiceError(ex.Message, key, status));
         }
     }
 
@@ -376,7 +375,6 @@ public sealed class Default : IHttp
         System.TimeSpan duration = default)
     {
         var contentType = response.Content.Headers.ContentType?.MediaType ?? "";
-        var statusCode = (int)response.StatusCode;
 
         if (!response.IsSuccessStatusCode)
         {
@@ -497,12 +495,9 @@ public sealed class Default : IHttp
             props["ContentLength"] = request.Content.Headers.ContentLength;
         }
 
-        props["StatusCode"] = (int)response.StatusCode;
-        // `status` is the numeric code (the architect's %response!status% == 200);
-        // the human reason phrase rides as `reason`.
-        props["Status"] = (int)response.StatusCode;
-        props["Reason"] = response.ReasonPhrase;
-        props["IsSuccess"] = response.IsSuccessStatusCode;
+        // %response!status% — its code, the server's own reason (%response!status.text%), whether it is a success
+        // (%response!status.ok%); it compares with a number by its code (%response!status% == 200).
+        props["Status"] = new global::app.type.item.status.@this((int)response.StatusCode, response.ReasonPhrase ?? "");
 
         var respHeaders = new Dictionary<string, object?>();
         foreach (var h in response.Headers)

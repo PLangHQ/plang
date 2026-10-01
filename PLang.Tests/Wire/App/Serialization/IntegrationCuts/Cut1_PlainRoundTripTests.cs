@@ -78,8 +78,7 @@ public class Cut1_PlainRoundTripTests
         {
             var verify = await new global::app.goal.step.action.@this(new global::app.module.signing.verify(app.actor.list.User.Context)
                 {
-                    Data = back,
-                    SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", true)
+                    Data = back
                 }, app.actor.list.User.Context).Start(app.actor.list.User.Context);
             await verify.IsSuccess();
         }

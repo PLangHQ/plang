@@ -15,13 +15,14 @@ public partial class Throw : IContext
     /// <summary>
     /// Typed value(s) attached to the error — variables: <c>- throw %order%, %item%</c>.
     /// Stored on the error as a plang <c>list</c> (1..N), navigable via <c>%!error.data%</c>.
-    /// A single thrown existing error re-raises intact (Key/Message/StatusCode/chain kept).
+    /// A single thrown existing error re-raises intact (Key/Message/Status/chain kept).
     /// </summary>
     public partial data.@this? Data { get; init; }
 
-    /// <summary>The error's status — a number, as HTTP has them. Default: 400.</summary>
+    /// <summary>The error's status — <c>throw "x", status 404</c>: made from its code, its text the code's standard
+    /// reason. Default: 400.</summary>
     [Default(400)]
-    public partial data.@this<global::app.type.item.number.@this> Status { get; init; }
+    public partial data.@this<global::app.type.item.status.@this> Status { get; init; }
 
     [Default("error")]
     public partial data.@this<global::app.type.item.text.@this> Key { get; init; }
@@ -60,7 +61,7 @@ public partial class Throw : IContext
         // Key carries its own [Default] — the unset case is answered there, once, where the
         // builder can also read it. A second fallback here would be the default stored twice.
         string key = (await Key.Value())!.Clr<string>()!;
-        int status = (await Status.Value())!.ToInt32();
+        var status = (await Status.Value())!;
         string message = Message == null ? "" : (await Message.Value())?.Clr<string>() ?? "";
 
         // Normalize the attached values to a list so 1..N is uniform: an already-list

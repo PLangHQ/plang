@@ -12,11 +12,11 @@ public class AppException : Exception
     public AppException(Error error, Exception? inner = null)
         : base(error.Message, inner) => Error = error;
 
-    public AppException(string message, string key = "AppError", int statusCode = 500)
-        : this(new Error(message, key, statusCode)) { }
+    public AppException(string message, string key = "AppError", global::app.type.item.status.@this? status = null)
+        : this(new Error(message, key, status ?? 500)) { }
 
-    public AppException(string message, Exception innerException, string key = "AppError", int statusCode = 500)
-        : this(new Error(message, key, statusCode), innerException) { }
+    public AppException(string message, Exception innerException, string key = "AppError", global::app.type.item.status.@this? status = null)
+        : this(new Error(message, key, status ?? 500), innerException) { }
 }
 
 /// <summary>

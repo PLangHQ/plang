@@ -1,0 +1,51 @@
+{
+  "name": "ThrowCustomError",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"bad thing\" key=\"CustomKey\" status=422",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "bad thing"
+            },
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "CustomKey"
+            },
+            {
+              "name": "Status",
+              "type": {
+                "name": "status"
+              },
+              "value": {"code":422,"text":"Unprocessable Entity"}
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/error/prop/ThrowCustomError.goal",
+  "prPath": "/module/error/prop/.build/throwcustomerror.pr",
+  "hash": "69963ff0e46af55efb80b134057280b420372d8aa0d0b6a2030a69667e78f1af",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}

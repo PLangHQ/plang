@@ -33,7 +33,7 @@ public sealed partial class @this
             w.WriteString("type", Algorithm.ToString());
             w.WriteString("nonce", Nonce.ToString());
             w.WriteString("created", Created.Value.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
-            if (Expires is { } e) w.WriteString("expires", e.Value.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
+            if (_expires is { } e) w.WriteString("expires", e.Value.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
             else w.WriteNull("expires");
             w.WriteString("identity", Identity.ToString());
             w.WriteStartArray("contracts");

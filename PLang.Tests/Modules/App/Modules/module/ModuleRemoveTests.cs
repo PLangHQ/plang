@@ -41,7 +41,7 @@ public class ModuleRemoveTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(404);
     }
 
     [Test]

@@ -57,14 +57,33 @@ public partial class @this
                         $"{Module}.{Name}'s {property.Name} holds an action ({held.Module.Name}.{held.Name}), but " +
                         $"{property.Name} takes a value. Write the action first, then {Module}.{Name}({property.Name}=%!data%).",
                         "ActionAsValue", 400));
+                // a slot whose kind changed since the build (list<llmmessage> → list<message>)
+                else if (!slot.Type.kind.IsEmpty && property.Type.Name == slot.Type.Name
+                         && !string.Equals(property.Type.kind.Name, slot.Type.kind.Name, System.StringComparison.OrdinalIgnoreCase))
+                    causes.Add(new global::app.error.Error(
+                        $"{Module}.{Name}'s {property.Name} was built as {property.Type}, but it takes {slot.Type}.",
+                        "KindChanged", 400));
             }
+            // a default the build froze for an option the action no longer has
+            foreach (var frozen in Default)
+                if (element.Property[frozen.Name] == null)
+                    causes.Add(new global::app.error.Error(
+                        $"{Module}.{Name}: the default frozen for '{frozen.Name}' is no option of this action any more.",
+                        "UnknownDefault", 400));
         }
 
         // the handler's own judgement: the combinations of its properties only it knows are legal. A
         // literal its slot declines is the build's to name, not a judgement.
         if (causes.Count == 0 && (await Bind(context)).Handler is global::app.module.IClass own
             && (await own.Parse()).Count == 0 && await own.Validate() is { } complaint)
-            causes.Add(new global::app.error.Error($"{Module}.{Name}: {complaint.Message}", complaint.Key, complaint.StatusCode));
+            causes.Add(new global::app.error.Error($"{Module}.{Name}: {complaint.Message}", complaint.Key, complaint.Status));
+
+        // what it holds judges itself too — the actions its properties hold (a callback, a recovery), the steps
+        // of its branch body — as the build walks them
+        foreach (var held in Held)
+            if (await held.Validate(context) is { } heldInvalid) causes.Add(heldInvalid);
+        for (int i = 0; i < Child.Count; i++)
+            if (await Child[i].Code.Validate(context) is { } branch) causes.Add(branch);
 
         if (causes.Count == 0) return null;
         return new global::app.error.Error(

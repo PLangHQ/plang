@@ -5,7 +5,7 @@ namespace app.module.on;
 /// <summary>
 /// <c>on.error</c> — a clause of the action before it: what answers when that action fails. Bound on its error
 /// outcome, which fires after the attempt; several clauses answer in the order written, and the first whose
-/// filters (StatusCode, Key, Message) match takes the failure — the others never see it. It retries (each retry a
+/// filters (Status, Key, Message) match takes the failure — the others never see it. It retries (each retry a
 /// fresh attempt), runs its <see cref="Recovery"/>, or ignores — ordered by Order (RetryFirst default, GoalFirst
 /// runs the recovery before retrying). The class is <c>OnError</c>, not <c>Error</c>: every action carries a
 /// generated <c>Error</c> member, and a member can't share its class's name.
@@ -13,7 +13,8 @@ namespace app.module.on;
 [Action("error", Cacheable = false)]
 public partial class OnError : IContext, IClause, IAction
 {
-    public partial global::app.data.@this<global::app.type.item.number.@this>? StatusCode { get; init; }
+    /// <summary>The status the failure must have — <c>on error status 404</c>; matched by its code.</summary>
+    public partial global::app.data.@this<global::app.type.item.status.@this>? Status { get; init; }
     public partial global::app.data.@this<global::app.type.item.text.@this>? Key { get; init; }
     public partial global::app.data.@this<global::app.type.item.text.@this>? Message { get; init; }
     public partial global::app.data.@this<global::app.type.item.number.@this>? RetryCount { get; init; }
@@ -124,7 +125,7 @@ public partial class OnError : IContext, IClause, IAction
     }
 
     /// <summary>
-    /// Matches the error against StatusCode / Key / Message filters.
+    /// Matches the error against Status / Key / Message filters.
     /// No filters = match all errors. Each supplied filter must match.
     /// </summary>
     private async Task<bool> MatchesError(global::app.error.Error? error)
@@ -133,17 +134,16 @@ public partial class OnError : IContext, IClause, IAction
         // lazy — it lifts on the ask — so a Peek here sees the wire form rather than the value.
         // An UNSET filter resolves to the typed null citizen, never C# null — and its ToString()
         // renders "null", so presence MUST be tested via IsNull.
-        var sc = StatusCode == null ? null : await StatusCode.Value();
+        var status = Status == null ? null : await Status.Value();
         var key = Key == null ? null : await Key.Value();
         var msg = Message == null ? null : await Message.Value();
         bool hasKey = key is { IsNull: false };
         bool hasMsg = msg is { IsNull: false };
 
-        if (sc is not global::app.type.item.number.@this && !hasKey && !hasMsg) return true;
+        if (status == null && !hasKey && !hasMsg) return true;
         if (error == null) return false;
 
-        // The matcher's int boundary is Error.StatusCode — the number lowers itself there.
-        if (sc is global::app.type.item.number.@this scNum && error.StatusCode != scNum.ToInt32()) return false;
+        if (status != null && !status.Equals(error.Status)) return false;
         if (hasKey && !string.Equals(error.Key, key!.ToString(), StringComparison.OrdinalIgnoreCase)) return false;
         if (hasMsg && !error.Message.Contains(msg!.ToString()!, StringComparison.OrdinalIgnoreCase)) return false;
 

@@ -1,0 +1,35 @@
+{% comment -%}
+A module's learner page, modules/<name>.md, written from the module catalog (decision 411; the spec is
+Documentation/v0.2/module-reference-generation.md). Each fact comes from its one home: the module's and each action's
+description; the steps of the action's examples; each property's type, whether it is required and its default, from
+its handler; how a step says it and what it changes, from the action's notes (action.Note), passed through as
+written. What the action returns is its notes' Returns line, else its type. Actions come in catalog order,
+properties in their handler's order.
+Needs: module (one element of %!app.module.list%).
+{%- endcomment -%}
+# {{ module.Name | capitalize }} Module
+{{ module.Description | strip }}
+{%- if module.Notes %}
+{{ module.Notes | strip }}
+{%- endif %}
+{%- for a in module.Action %}
+
+## {{ a.Name }}
+{{ a.Description | strip }}
+{%- if a.Examples %}
+{% assign lines = a.Examples | split: "\n" %}
+{%- for l in lines %}{% if l contains "Step text:" %}
+- {{ l | remove_first: "Step text:" | strip | remove: "`" }}{% endif %}{% endfor %}
+{%- endif %}
+{%- if a.Property.size > 0 %}
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+{%- for p in a.Property %}
+{%- assign line = a.Note.Line | where: "Name", p.Name | first %}
+| {{ p.Name }} | {{ line.Say }} | {{ p.Type }} | {% if p.Required %}yes{% else %}no{% endif %} | {% if p.HasDefault %}{{ p.Default }}{% else %}—{% endif %} | {{ line.Prose }} |
+{%- endfor %}
+{%- endif %}
+
+**Returns:** {% if a.Note.Returns %}{{ a.Note.Returns.Prose }}{% else %}a `{{ a.Return }}`.{% endif %}
+{%- endfor %}

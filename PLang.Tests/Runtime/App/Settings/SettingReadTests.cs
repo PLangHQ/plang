@@ -69,6 +69,31 @@ public class SettingReadTests
         await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("true");
     }
 
+    // A record option: its members' defaults, then this run's record — a member it leaves out keeps its default.
+    [Test] public async Task ActionRecordOption_MembersDefaultThenThisRun()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        var ctx = app.actor.list.User.Context;
+        await Assert.That((await (await Read("%!llm.query.setting.limit.token%", ctx)).Value())?.ToString()).IsEqualTo("16000");
+
+        await new global::app.type.item.variable.parser.@this("%!llm.query.setting.limit%").Variable.Single()
+            .Set(global::app.type.item.@this.Create(new Dictionary<string, object?> { ["token"] = 500 }, ctx), ctx);
+        await Assert.That((await (await Read("%!llm.query.setting.limit.token%", ctx)).Value())?.ToString()).IsEqualTo("500");
+        await Assert.That((await (await Read("%!llm.query.setting.limit.tool%", ctx)).Value())?.ToString()).IsEqualTo("10");
+    }
+
+    // A record option's default is the record's own; it writes itself as text (a container as its json).
+    [Test] public async Task ActionRecordOption_CatalogShowsItsDefault()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        var ctx = app.actor.list.User.Context;
+        var limit = app.Module("llm")["query"]!.Property["limit"]!;
+        await Assert.That(limit.HasDefault).IsTrue();
+        using var text = new System.IO.MemoryStream();
+        await (await app.type.list.Mime("text/plain").Encode(text, ctx.Ok(limit.Default), ctx)).IsSuccess();
+        await Assert.That(System.Text.Encoding.UTF8.GetString(text.ToArray())).IsEqualTo("{\"token\":16000,\"tool\":10,\"retry\":0}");
+    }
+
     // %!llm% is the module itself; its settings and its actions' are each one .setting away.
     [Test] public async Task Module_IsTheModule_ItsSettingsUnderSetting()
     {

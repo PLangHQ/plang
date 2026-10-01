@@ -41,9 +41,8 @@ public enum Verb
 /// <para>Identity is (Actor + Path + Verbs); the persistence root is the
 /// per-actor sqlite store. No App-instance scoping — grants survive
 /// <c>new App()</c> on the same root, the contract the "a" ("always allow")
-/// answer promises. Time bound: a grant's signature is verified with
-/// <c>SkipFreshnessCheck=true</c>, so the wire-freshness window doesn't apply;
-/// the grant lives for its signature's <c>Expires</c> (null today = permanent).</para>
+/// answer promises. Time bound: a grant's signature is read from plang's own store, so it gets no live
+/// window; the grant lives for the <c>Expires</c> its signer signed (null today = permanent).</para>
 /// </summary>
 [global::app.Attributes.PlangType("permission")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>

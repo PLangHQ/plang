@@ -245,10 +245,11 @@ def menu_for(goal, cat, folder=None):
 
 def notes_block(module, action):
     """The action's notes (os/system/modules/<module>/<action>.notes.md) as the template prints them:
-    under `notes:`, stripped, split on newlines (Liquid's split drops the blank lines), each indented."""
-    path = f'{ROOT}/os/system/modules/{module}/{action}.notes.md'
-    if not os.path.exists(path): return ''
-    lines = [l for l in open(path, encoding='utf-8').read().strip().split('\n') if l != '']
+    under `notes:`, each line as the compile prompt shows it (h.notes), split on newlines (Liquid's split drops the
+    blank lines), each indented."""
+    shown = h.notes(f'{ROOT}/os/system/modules/{module}/{action}.notes.md')
+    if not shown: return ''
+    lines = [l for l in shown.split('\n') if l != '']
     return '\n        notes:' + ''.join(f'\n          {l}' for l in lines)
 
 def user_message(goal, menu):
@@ -352,7 +353,7 @@ def user_message_b(goal, menu):
             out += f'\n\n## {signature(choice)}'
             if description := doc(module, action, 'description'):
                 out += '\n' + description.split('\n')[0]
-            if notes := doc(module, action, 'notes'):
+            if notes := h.notes(f'{ROOT}/os/system/modules/{module}/{action}.notes.md'):
                 out += '\n' + notes.replace('## ', '### ')
     return out + '\n'
 

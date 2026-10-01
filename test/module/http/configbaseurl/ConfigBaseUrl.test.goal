@@ -5,6 +5,6 @@ Start
 / - get /get, unsigned, write to %response%
 / - if %response% is not empty then
 /     - write out 'Relative URL with base URL worked'
-/ - if %response.StatusCode% equals 200 then
+/ - if %response!status% equals 200 then
 /     - write out 'Status code is 200'
 - write out 'ConfigBaseUrl disabled (httpbin blocked)'

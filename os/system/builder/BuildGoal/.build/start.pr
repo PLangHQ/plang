@@ -185,13 +185,19 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 2's saved code no longer holds — rebuilt: step 2 'set %buildStart% = %Now.Ticks%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ],
       "waitForExecution": true
@@ -267,13 +273,19 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 3's saved code no longer holds — rebuilt: step 3 'set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": \"%goal.Name%\", \"subGoals\": [], \"durationMs\": 0}': variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ],
       "waitForExecution": true
@@ -345,13 +357,19 @@
           ],
           "default": [
             {
-              "name": "ignoreerror",
+              "name": "ignore",
               "type": {
                 "name": "bool"
               },
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 4's saved code no longer holds — rebuilt: step 4 'call Compile, on error call HandleBuildFailure': on.error: the default frozen for 'ignoreerror' is no option of this action any more."
         }
       ],
       "waitForExecution": true
@@ -405,13 +423,19 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 5's saved code no longer holds — rebuilt: step 5 'set %parentGoal% = %goal%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ],
       "waitForExecution": true
@@ -550,13 +574,19 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 7's saved code no longer holds — rebuilt: step 7 'set %goal% = %parentGoal%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ],
       "waitForExecution": true
@@ -673,13 +703,19 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 8's saved code no longer holds — rebuilt: step 8 'math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ],
       "waitForExecution": true
@@ -782,13 +818,19 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 9's saved code no longer holds — rebuilt: step 9 'math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ],
       "waitForExecution": true
@@ -845,13 +887,19 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 10's saved code no longer holds — rebuilt: step 10 'set %trace.durationMs% = %elapsedMs%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ],
       "waitForExecution": true
@@ -974,13 +1022,19 @@
           ],
           "default": [
             {
-              "name": "atindex",
+              "name": "at",
               "type": {
                 "name": "number"
               },
               "value": -1
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 12's saved code no longer holds — rebuilt: step 12 'add %goal.Name% to %traceGoals%': list.add: the default frozen for 'atindex' is no option of this action any more."
         }
       ],
       "waitForExecution": true
@@ -1055,13 +1109,19 @@
           ],
           "default": [
             {
-              "name": "ignoreerror",
+              "name": "ignore",
               "type": {
                 "name": "bool"
               },
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 13's saved code no longer holds — rebuilt: step 13 'build.fold Goal=%goal%, on error call HandleBuildFailure': on.error: the default frozen for 'ignoreerror' is no option of this action any more."
         }
       ],
       "waitForExecution": true
@@ -1429,7 +1489,7 @@
               ],
               "default": [
                 {
-                  "name": "ignoreerror",
+                  "name": "ignore",
                   "type": {
                     "name": "bool"
                   },
@@ -1482,7 +1542,7 @@
               ],
               "default": [
                 {
-                  "name": "ignoreerror",
+                  "name": "ignore",
                   "type": {
                     "name": "bool"
                   },
@@ -1528,13 +1588,19 @@
               ],
               "default": [
                 {
-                  "name": "ignoreerror",
+                  "name": "ignore",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 4's saved code no longer holds — rebuilt: step 4 'build.match(Goal=%goal%, Answer=%answer%); on.error(Key=\"UnwrittenNumber\", Recovery=[goal.call(Name=\"ConfirmNumbers\")]); on.error(Key=\"ElseWithoutIf\", Recovery=[goal.call(Name=\"SourceError\")]); on.error(Recovery=[goal.call(Name=\"FixSteps\")])': on.error: the default frozen for 'ignoreerror' is no option of this action any more.; on.error: the default frozen for 'ignoreerror' is no option of this action any more.; on.error: the default frozen for 'ignoreerror' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -1665,7 +1731,7 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
@@ -1674,11 +1740,17 @@
               ]
             }
           ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 1's saved code no longer holds — rebuilt: step 1 'set %fixMessages% = [{\"Role\":\"user\", \"Content\":\"Steps %!error.Details.steps% were refused: %!error.Message%. Answer again only these steps, one line each, starting with its [i], in formal.\"}]': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+            }
+          ],
           "waitForExecution": true
         },
         {
           "index": 2,
-          "text": "llm.query(Message=%fixMessages%, Model=\"gpt-5.4-nano\", Cache=%!build.setting.cache%, Conversation={continue: true}); variable.set(Name=%answer%, Value=%!data%)",
+          "text": "llm.query(Message=%fixMessages%, Model=\"gpt-5.4-nano\", Cache=%!build.setting.cache%, Conversation={continue: %answer%}); variable.set(Name=%answer%, Value=%!data%)",
           "line": {
             "number": 48
           },
@@ -1691,7 +1763,7 @@
                   "name": "Message",
                   "type": {
                     "name": "list",
-                    "kind": "llmmessage",
+                    "kind": "message",
                     "template": "plang"
                   },
                   "value": "%fixMessages%",
@@ -1740,9 +1812,20 @@
                 {
                   "name": "Conversation",
                   "type": {
-                    "name": "conversation"
+                    "name": "conversation",
+                    "template": "plang"
                   },
-                  "value": {"continue":true}
+                  "value": {"continue":"%answer%"},
+                  "variable": [
+                    {
+                      "text": "%answer%",
+                      "code": [
+                        {
+                          "variable": "answer"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -1754,25 +1837,15 @@
                   "value": 0
                 },
                 {
-                  "name": "maxtokens",
+                  "name": "limit",
                   "type": {
-                    "name": "number"
+                    "name": "limit"
                   },
-                  "value": 16000
-                },
-                {
-                  "name": "maxtoolcalls",
-                  "type": {
-                    "name": "number"
-                  },
-                  "value": 10
-                },
-                {
-                  "name": "maxvalidationretries",
-                  "type": {
-                    "name": "number"
-                  },
-                  "value": 0
+                  "value": {
+                    "token": 16000,
+                    "tool": 10,
+                    "retry": 0
+                  }
                 }
               ]
             },
@@ -1818,7 +1891,7 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
@@ -1923,13 +1996,19 @@
               ],
               "default": [
                 {
-                  "name": "ignoreerror",
+                  "name": "ignore",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 3's saved code no longer holds — rebuilt: step 3 'build.match(Goal=%goal%, Answer=%answer%); on.error(Key=\"UnwrittenNumber\", Recovery=[goal.call(Name=\"ConfirmNumbers\")])': on.error: the default frozen for 'ignoreerror' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -1939,7 +2018,7 @@
       "visibility": "Private",
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "dcbf6470ce417dae6b50e4012affa3877d7a761d79e1271abad60c6fd7128633",
+      "hash": "2b98366c0db2a16a1c4cbb3d75aafbd92c6dbad620c4be38c16e9bc23fb8ab48",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,
@@ -2004,13 +2083,19 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %numbers% = %!error.Details.numbers%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -2077,13 +2162,19 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 1's saved code no longer holds — rebuilt: step 1 'render template \"/system/builder/llm/templates/confirm.state.template\", write to %confirmState%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -2150,13 +2241,19 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 2's saved code no longer holds — rebuilt: step 2 'render template \"/system/builder/llm/templates/confirm.template\", write to %confirmQuestions%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -2261,13 +2358,19 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 3's saved code no longer holds — rebuilt: step 3 'llm.decider State=%confirmState%, Question=%confirmQuestions%, write to %confirmed%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -2406,13 +2509,19 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %goal% = %subGoal%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -2514,13 +2623,19 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 2's saved code no longer holds — rebuilt: step 2 'set %subgoalStart% = %Now.Ticks%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -2592,13 +2707,19 @@
               ],
               "default": [
                 {
-                  "name": "ignoreerror",
+                  "name": "ignore",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 3's saved code no longer holds — rebuilt: step 3 'call Compile, on error call HandleBuildFailure': on.error: the default frozen for 'ignoreerror' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -2658,13 +2779,19 @@
               ],
               "default": [
                 {
-                  "name": "atindex",
+                  "name": "at",
                   "type": {
                     "name": "number"
                   },
                   "value": -1
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 4's saved code no longer holds — rebuilt: step 4 'add {goal: \"%goal.Name%\"} to %trace.subGoals%': list.add: the default frozen for 'atindex' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -2781,13 +2908,19 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 5's saved code no longer holds — rebuilt: step 5 'math.subtract A=%Now.Ticks%, B=%subgoalStart%, write to %elapsedTicks%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -2890,13 +3023,19 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 6's saved code no longer holds — rebuilt: step 6 'math.divide A=%elapsedTicks%, B=10000, write to %subgoalMs%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -3023,13 +3162,19 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 0's saved code no longer holds — rebuilt: step 0 'render template \"/system/builder/llm/SourceFix.llm\", write to %sourceFixSystem%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -3113,13 +3258,19 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 1's saved code no longer holds — rebuilt: step 1 'set %sourceFixMessages% = [{\"Role\":\"system\", \"Content\":\"%sourceFixSystem%\"}, {\"Role\":\"user\", \"Content\":\"%!error.Key%: %!error.Message%\\n\\nThe goal:\\n%goal%\"}]': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -3139,7 +3290,7 @@
                   "name": "Message",
                   "type": {
                     "name": "list",
-                    "kind": "llmmessage",
+                    "kind": "message",
                     "template": "plang"
                   },
                   "value": "%sourceFixMessages%",
@@ -3188,11 +3339,11 @@
               ],
               "default": [
                 {
-                  "name": "continuepreviousconversation",
+                  "name": "conversation",
                   "type": {
-                    "name": "bool"
+                    "name": "conversation"
                   },
-                  "value": false
+                  "value": {}
                 },
                 {
                   "name": "temperature",
@@ -3202,25 +3353,15 @@
                   "value": 0
                 },
                 {
-                  "name": "maxtokens",
+                  "name": "limit",
                   "type": {
-                    "name": "number"
+                    "name": "limit"
                   },
-                  "value": 16000
-                },
-                {
-                  "name": "maxtoolcalls",
-                  "type": {
-                    "name": "number"
-                  },
-                  "value": 10
-                },
-                {
-                  "name": "maxvalidationretries",
-                  "type": {
-                    "name": "number"
-                  },
-                  "value": 0
+                  "value": {
+                    "token": 16000,
+                    "tool": 10,
+                    "retry": 0
+                  }
                 }
               ]
             },
@@ -3266,13 +3407,19 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 2's saved code no longer holds — rebuilt: step 2 'llm.query Message=%sourceFixMessages%, Model=\"gpt-5.4-nano\", cache=%!build.setting.cache%, write to %sourceFix%': llm.query's Message was built as list<llmmessage>, but it takes list<message>.; llm.query: the default frozen for 'continuepreviousconversation' is no option of this action any more.; llm.query: the default frozen for 'maxtokens' is no option of this action any more.; llm.query: the default frozen for 'maxtoolcalls' is no option of this action any more.; llm.query: the default frozen for 'maxvalidationretries' is no option of this action any more.; variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -3327,7 +3474,7 @@
               ],
               "default": [
                 {
-                  "name": "statuscode",
+                  "name": "status",
                   "type": {
                     "name": "number"
                   },
@@ -3341,6 +3488,12 @@
                   "value": "error"
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 3's saved code no longer holds — rebuilt: step 3 'throw %!error%, fix suggestion %sourceFix%': error.throw: the default frozen for 'statuscode' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -3482,13 +3635,19 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 1's saved code no longer holds — rebuilt: step 1 'set %trace.buildError% = {\"key\": \"%!error.Key%\", \"message\": \"%!error.Message%\", \"goal\": \"%goal.Name%\"}': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -3591,7 +3750,7 @@
               ],
               "default": [
                 {
-                  "name": "statuscode",
+                  "name": "status",
                   "type": {
                     "name": "number"
                   },
@@ -3605,6 +3764,12 @@
                   "value": "error"
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 3's saved code no longer holds — rebuilt: step 3 'throw %!error%': error.throw: the default frozen for 'statuscode' is no option of this action any more."
             }
           ],
           "waitForExecution": true

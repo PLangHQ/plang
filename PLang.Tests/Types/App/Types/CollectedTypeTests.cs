@@ -18,7 +18,7 @@ public class CollectedTypeTests
 
         var missing = await probes.Get("c");
         await Assert.That(missing.Success).IsFalse();
-        await Assert.That(missing.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(missing.Error!.Status.Code.ToInt32()).IsEqualTo(404);
     }
 
     [Test] public async Task TheCollectedType_IsNamedByItsElement_AndItsClassIsAType()
@@ -39,7 +39,7 @@ public class CollectedTypeTests
         await Assert.That((await text.Value())!.Name).IsEqualTo("text");
 
         var missing = await app.type.Get("csv");
-        await Assert.That(missing.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(missing.Error!.Status.Code.ToInt32()).IsEqualTo(404);
 
         await Assert.That(await app.type.Get("type") is var self && (await self.Value()) is { } entry
             && ReferenceEquals(entry, app.type)).IsTrue();
@@ -106,6 +106,6 @@ public class CollectedTypeTests
         await using var app = new global::app.@this("/test").Testing();
         var current = app.goal.current(app.actor.list.User.Context);
         await Assert.That(current.Success).IsFalse();
-        await Assert.That(current.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(current.Error!.Status.Code.ToInt32()).IsEqualTo(404);
     }
 }

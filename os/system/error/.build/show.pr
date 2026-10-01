@@ -4,7 +4,7 @@
   "step": [
     {
       "index": 0,
-      "text": "set %template% = \"/system/error/%error.StatusCode%.txt\"",
+      "text": "set %template% = \"/system/error/%error.status.code%.txt\"",
       "line": {
         "number": 5
       },
@@ -36,16 +36,19 @@
                 "name": "text",
                 "template": "plang"
               },
-              "value": "/system/error/%error.StatusCode%.txt",
+              "value": "/system/error/%error.status.code%.txt",
               "variable": [
                 {
-                  "text": "%error.StatusCode%",
+                  "text": "%error.status.code%",
                   "code": [
                     {
                       "variable": "error"
                     },
                     {
-                      "property": "StatusCode"
+                      "property": "status"
+                    },
+                    {
+                      "property": "code"
                     }
                   ]
                 }
@@ -54,7 +57,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -108,9 +111,9 @@
           "name": "error",
           "property": [
             {
-              "name": "StatusCode",
+              "name": "Status",
               "type": {
-                "name": "number"
+                "name": "status"
               },
               "value": 404
             },
@@ -128,7 +131,7 @@
                     {
                       "name": "Name",
                       "type": {
-                        "name": "text"
+                        "name": "goal"
                       },
                       "value": "Fallback"
                     }
@@ -163,7 +166,7 @@
           ],
           "default": [
             {
-              "name": "ignoreerror",
+              "name": "ignore",
               "type": {
                 "name": "bool"
               },
@@ -213,13 +216,19 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 1's saved code no longer holds — rebuilt: step 1 'render %template%, error=%error%, on error 404 call Fallback then retry once, write to %text%': on.error: 'StatusCode' is not a property of this action. Its properties are: Status, Key, Message, RetryCount, RetryOver, Order, Ignore, Recovery.; on.error: the default frozen for 'ignoreerror' is no option of this action any more.; variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ],
       "waitForExecution": true
@@ -309,7 +318,7 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
@@ -318,11 +327,17 @@
               ]
             }
           ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %template% = \"/system/error/400.txt\"': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+            }
+          ],
           "waitForExecution": true
         },
         {
           "index": 1,
-          "text": "if %error.StatusCode% >= 500, call Runtime",
+          "text": "if %error.status% >= 500, call Runtime",
           "line": {
             "number": 12
           },
@@ -337,16 +352,16 @@
                     "name": "item",
                     "template": "plang"
                   },
-                  "value": "%error.StatusCode%",
+                  "value": "%error.status%",
                   "variable": [
                     {
-                      "text": "%error.StatusCode%",
+                      "text": "%error.status%",
                       "code": [
                         {
                           "variable": "error"
                         },
                         {
-                          "property": "StatusCode"
+                          "property": "status"
                         }
                       ]
                     }
@@ -383,7 +398,7 @@
                         {
                           "name": "Name",
                           "type": {
-                            "name": "text"
+                            "name": "goal"
                           },
                           "value": "Runtime"
                         }
@@ -411,7 +426,7 @@
       "visibility": "Private",
       "path": "/system/error/Show.goal",
       "prPath": "/system/error/.build/show.pr",
-      "hash": "f93891911ba00df83413c5da71c4384869f2fbf48205288dd35c9c38bdf15c70",
+      "hash": "f0f9913395bc311cc8cdd165d30d6b6304caf1fffed5155680e9f455de10a2f3",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,
@@ -458,13 +473,19 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
                   "value": false
                 }
               ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Reopened",
+              "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %template% = \"/system/error/500.txt\"': variable.set: the default frozen for 'asdefault' is no option of this action any more."
             }
           ],
           "waitForExecution": true
@@ -484,7 +505,7 @@
   "visibility": "Public",
   "path": "/system/error/Show.goal",
   "prPath": "/system/error/.build/show.pr",
-  "hash": "c4962471b01abc133e75c1864f09945922a1fa9a902498f27fa827715034284e",
+  "hash": "b7cd51d9d387404ec48ddc48a735cd59e384c5a63baf1b81a1752d908d9dc205",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,

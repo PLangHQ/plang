@@ -53,7 +53,7 @@ public partial class upload : IContext, IAddressed
     public partial data.@this<global::app.type.item.dict.@this>? DefaultHeaders { get; init; }
 
     /// <summary>How redirects are followed — whether, and how many at most. Left out, up to ten are followed.</summary>
-    public partial data.@this<global::app.module.http.type.redirect.@this>? Redirect { get; init; }
+    public partial data.@this<global::app.module.http.type.redirect.@this> Redirect { get; init; }
 
     /// <summary>Max response body size in bytes. Default 100MB.</summary>
     [Default(100 * 1024 * 1024)]

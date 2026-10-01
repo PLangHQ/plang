@@ -458,6 +458,8 @@ public partial class @this
         if (T.IsName && Peek() is T name)
             return T.Create(name, null, this);
         var value = await Value();
+        // a read that failed has said why — nothing is made from it
+        if (!Success) return null;
         // a type selected by key answers the one the value names (a goal by its name), as this Data's asker sees it
         if (T.IsSelected && value is not T && Context != null && await T.Select(value, Context) is { } chosen)
             return chosen;

@@ -15,7 +15,7 @@
     {
       "name": "diff",
       "type": "setting",
-      "default": "false"
+      "default": "{\"deep\":false,\"enabled\":false}"
     },
     {
       "name": "tags",
@@ -30,7 +30,7 @@
     {
       "name": "frame",
       "type": "setting",
-      "default": "true"
+      "default": "{\"max\":1000,\"enabled\":true}"
     }
   ],
   "app.callstack.setting.diff": [
@@ -56,7 +56,7 @@
     {
       "name": "visibility",
       "type": "list<choice<visibility>>",
-      "default": "[Public]"
+      "default": "[\"Public\"]"
     }
   ],
   "app.setting": [
@@ -139,7 +139,7 @@
     {
       "name": "length",
       "type": "setting",
-      "default": "true"
+      "default": "{\"max\":500,\"enabled\":true}"
     },
     {
       "name": "grep",
@@ -203,6 +203,13 @@
       "name": "cache",
       "type": "bool",
       "default": "true"
+    }
+  ],
+  "signing.setting": [
+    {
+      "name": "expiry",
+      "type": "duration",
+      "default": "5m"
     }
   ]
 }

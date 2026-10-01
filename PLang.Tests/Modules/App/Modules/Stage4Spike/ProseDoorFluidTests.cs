@@ -4,8 +4,8 @@ namespace PLang.Tests.App.Modules.Stage4Spike;
 
 /// <summary>
 /// 4d load-bearing check: a prose <c>file</c> door renders through Fluid the way the templates need —
-/// <c>{{ action.Notes }}</c> emits the md CONTENT (the door awaits Value), and
-/// <c>{% if action.Notes %}</c> is an EXISTENCE guard (an absent facet file is falsy, so the block is
+/// <c>{{ action.Examples }}</c> emits the md CONTENT (the door awaits Value), and
+/// <c>{% if action.Examples %}</c> is an EXISTENCE guard (an absent facet file is falsy, so the block is
 /// omitted without a read). Proves the architect's "prose doors are file handles" ruling holds in the
 /// real Fluid provider before the template rewrite leans on it.
 /// </summary>
@@ -44,17 +44,17 @@ public class ProseDoorFluidTests
     [Test]
     public async Task PresentProse_RendersContent_AndGuardIsTrue()
     {
-        await using var app = Stage("/tmp/prose-fluid-1", ("setvalue.notes.md", "The action rule."));
-        var outp = await Render(app, "{% if m.Notes %}[{{ m.Notes }}]{% endif %}");
+        await using var app = Stage("/tmp/prose-fluid-1", ("setvalue.examples.md", "The action rule."));
+        var outp = await Render(app, "{% if m.Examples %}[{{ m.Examples }}]{% endif %}");
         await Assert.That(outp).IsEqualTo("[The action rule.]");
     }
 
     [Test]
     public async Task AbsentProse_GuardIsFalse_BlockOmitted()
     {
-        // notes staged, examples NOT — the existence guard omits the examples block without reading.
-        await using var app = Stage("/tmp/prose-fluid-2", ("setvalue.notes.md", "rule"));
-        var outp = await Render(app, "N:{% if m.Notes %}yes{% endif %} E:{% if m.Examples %}yes{% endif %}");
-        await Assert.That(outp).IsEqualTo("N:yes E:");
+        // description staged, examples NOT — the existence guard omits the examples block without reading.
+        await using var app = Stage("/tmp/prose-fluid-2", ("setvalue.description.md", "rule"));
+        var outp = await Render(app, "D:{% if m.Description %}yes{% endif %} E:{% if m.Examples %}yes{% endif %}");
+        await Assert.That(outp).IsEqualTo("D:yes E:");
     }
 }

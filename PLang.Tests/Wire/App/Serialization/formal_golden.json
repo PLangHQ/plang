@@ -3640,7 +3640,7 @@
  {
   "goal": "show",
   "index": 0,
-  "text": "set %template% = \"/system/error/%error.StatusCode%.txt\"",
+  "text": "set %template% = \"/system/error/%error.status.code%.txt\"",
   "pr": [
    {
     "module": "variable",
@@ -3669,16 +3669,19 @@
        "name": "text",
        "template": "plang"
       },
-      "value": "/system/error/%error.StatusCode%.txt",
+      "value": "/system/error/%error.status.code%.txt",
       "variable": [
        {
-        "text": "%error.StatusCode%",
+        "text": "%error.status.code%",
         "code": [
          {
           "variable": "error"
          },
          {
-          "property": "StatusCode"
+          "property": "status"
+         },
+         {
+          "property": "code"
          }
         ]
        }
@@ -3687,8 +3690,8 @@
     ]
    }
   ],
-  "formal": "variable.set(Name: variable = %template%, Value: text = \"/system/error/%error.StatusCode%.txt\")",
-  "untyped": "variable.set(Name=%template%, Value=\"/system/error/%error.StatusCode%.txt\")"
+  "formal": "variable.set(Name: variable = %template%, Value: text = \"/system/error/%error.status.code%.txt\")",
+  "untyped": "variable.set(Name=%template%, Value=\"/system/error/%error.status.code%.txt\")"
  },
  {
   "goal": "show",
@@ -3750,9 +3753,9 @@
     "name": "error",
     "property": [
      {
-      "name": "StatusCode",
+      "name": "Status",
       "type": {
-       "name": "number"
+       "name": "status"
       },
       "value": 404
      },
@@ -3837,8 +3840,8 @@
     ]
    }
   ],
-  "formal": "ui.render(Template: text = \"%template%\", Parameter: list = {error: item = %error%}); on.error(StatusCode: number = 404, RetryCount: number = 1, Order: choice<errororder> = \"GoalFirst\", Recovery: list<action> = [goal.call(Name: goal = \"Fallback\")]); variable.set(Name: variable = %text%, Value: item = %!data%)",
-  "untyped": "ui.render(Template=\"%template%\", Parameter={error: %error%}); on.error(StatusCode=404, RetryCount=1, Order=\"GoalFirst\", Recovery=[goal.call(Name=\"Fallback\")]); variable.set(Name=%text%, Value=%!data%)"
+  "formal": "ui.render(Template: text = \"%template%\", Parameter: list = {error: item = %error%}); on.error(Status: status = 404, RetryCount: number = 1, Order: choice<errororder> = \"GoalFirst\", Recovery: list<action> = [goal.call(Name: goal = \"Fallback\")]); variable.set(Name: variable = %text%, Value: item = %!data%)",
+  "untyped": "ui.render(Template=\"%template%\", Parameter={error: %error%}); on.error(Status=404, RetryCount=1, Order=\"GoalFirst\", Recovery=[goal.call(Name=\"Fallback\")]); variable.set(Name=%text%, Value=%!data%)"
  },
  {
   "goal": "show",

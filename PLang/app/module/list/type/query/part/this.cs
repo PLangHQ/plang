@@ -40,6 +40,6 @@ public abstract class @this
     protected Data Named(Data failed, global::app.actor.context.@this context)
     {
         if (failed.Success || failed.Error is not { } error) return failed;
-        return context.Error(new global::app.error.Error($"{Name}: {error.Message}", error.Key, error.StatusCode) { list = [error] });
+        return context.Error(new global::app.error.Error($"{Name}: {error.Message}", error.Key, error.Status) { list = [error] });
     }
 }

@@ -45,7 +45,7 @@ A condition's body goes in its { }; the next branch of the same chain follows af
 A clause (on.error, on.cache, on.timeout) comes right after the action it is a clause of; several stand in the
 order the step gives them, and the first on.error that matches the error takes it. What on.error runs is its Recovery:
   goal.call(Name="Compile"); on.error(RetryCount=2, Order="GoalFirst", Recovery=[goal.call(Name="FixProperties")])
-  file.read(Path="file.txt"); on.error(StatusCode=404, Recovery=[goal.call(Name="Fix")]); variable.set(Name=%content%, Value=%!data%)
+  file.read(Path="file.txt"); on.error(Status=404, Recovery=[goal.call(Name="Fix")]); variable.set(Name=%content%, Value=%!data%)
 Common steps, and their formal:
   read 'notes.txt', write to %content%            file.read(Path="notes.txt"); variable.set(Name=%content%, Value=%!data%)
   write out "Hello %name%"                        output.write(Data="Hello %name%")

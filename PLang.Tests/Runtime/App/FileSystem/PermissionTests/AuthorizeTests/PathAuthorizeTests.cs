@@ -255,7 +255,7 @@ public class PathAuthorizeTests
         var perm = new PermissionRecord("user", "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.Exact);
         var err = new global::app.error.PermissionDenied(perm);
         await Assert.That(err.Key).IsEqualTo("PermissionDenied");
-        await Assert.That(err.StatusCode).IsEqualTo(403);
+        await Assert.That(err.Status.Code.ToInt32()).IsEqualTo(403);
         await Assert.That(err.Permission).IsSameReferenceAs(perm);
     }
 }

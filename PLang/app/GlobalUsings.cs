@@ -44,6 +44,9 @@ global using ISnapshot = app.snapshot.ISnapshot;
 // Statics — app-scoped key/value store extracted from app._statics
 global using AppStatics = app.Statics.@this;
 
+// One message in an llm conversation — the llm module's `message` type.
+global using LlmMessage = app.module.llm.type.message.@this;
+
 // Standalone concepts
 global using ICache = app.module.cache.ICache;
 global using Debug = app.module.debug.@this;

@@ -217,7 +217,7 @@ public class UploadActionTests
         // [JsonConverter] fires, not the item base's infra props.
         var json = System.Text.Json.JsonSerializer.Serialize((object?)await result.Value());
         await Assert.That(json).Contains("42");
-        await Assert.That((await result.Properties.Value("StatusCode"))).IsEqualTo(200);
+        await Assert.That(((global::app.type.item.status.@this)(await result.Properties.Value("Status"))!).Code.ToInt32()).IsEqualTo(200);
     }
 
     #region Form Upload & @file

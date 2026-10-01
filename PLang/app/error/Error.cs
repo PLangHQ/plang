@@ -53,7 +53,8 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
     public string Id { get; }
     public string Message { get; }
     public string Key { get; }
-    public int StatusCode { get; }
+    /// <summary>The outcome's code and its reason — <c>%!error.status%</c>, <c>%!error.status.code%</c>.</summary>
+    public global::app.type.item.status.@this Status { get; }
     /// <summary>How the programmer fixes it. Born with the error, or attached when a handler re-raises
     /// it (<c>- throw %!error%, fix suggestion %fix%</c>) — the same error, now with its fix.</summary>
     public string? FixSuggestion { get; internal set; }
@@ -110,7 +111,7 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
         writer.Name("id");          writer.String(Id);
         writer.Name("message");     writer.String(Message);
         writer.Name("key");         writer.String(Key);
-        writer.Name("statusCode");  writer.Int(StatusCode);
+        writer.Name("status");      Status.Write(writer);
         writer.Name("createdUtc");  writer.DateTime(CreatedUtc);
         if (FixSuggestion != null) { writer.Name("fixSuggestion"); writer.String(FixSuggestion); }
         if (HelpfulLinks != null)  { writer.Name("helpfulLinks");  writer.String(HelpfulLinks); }
@@ -183,12 +184,12 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>
     /// Creates an error with a message. Use for errors not tied to a specific execution context.
     /// </summary>
-    public Error(string message, string key = "Error", int statusCode = 400)
+    public Error(string message, string key = "Error", global::app.type.item.status.@this? status = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         Message = message;
         Key = key;
-        StatusCode = statusCode;
+        Status = status ?? 400;
         CreatedUtc = DateTime.UtcNow;
     }
 
@@ -200,12 +201,12 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
     /// section already carries the frame chain, and a live Exception / Goal
     /// object graph cannot round-trip.
     /// </summary>
-    private Error(string id, string message, string key, int statusCode, DateTime createdUtc)
+    private Error(string id, string message, string key, global::app.type.item.status.@this status, DateTime createdUtc)
     {
         Id = id;
         Message = message;
         Key = key;
-        StatusCode = statusCode;
+        Status = status;
         CreatedUtc = createdUtc;
     }
 
@@ -213,9 +214,9 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
     /// An error read back from its written form — the read-back ctor with the init-only advisory fields and
     /// the errors that caused it.
     /// </summary>
-    internal static Error Restore(string id, string message, string key, int statusCode,
+    internal static Error Restore(string id, string message, string key, global::app.type.item.status.@this status,
         DateTime createdUtc, string? fixSuggestion, string? helpfulLinks, List<Error>? causes = null)
-        => new Error(id, message, key, statusCode, createdUtc)
+        => new Error(id, message, key, status, createdUtc)
         {
             FixSuggestion = fixSuggestion,
             HelpfulLinks = helpfulLinks,
@@ -225,8 +226,8 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>
     /// Creates an error tied to a specific step. Goal is inferred from step.Goal.
     /// </summary>
-    public Error(string message, Step? step, string key = "Error", int statusCode = 400)
-        : this(message, key, statusCode)
+    public Error(string message, Step? step, string key = "Error", global::app.type.item.status.@this? status = null)
+        : this(message, key, status)
     {
         Step = step;
         Goal = step?.Goal;
@@ -235,8 +236,8 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>
     /// Creates an error with a step and explicit Call chain snapshot.
     /// </summary>
-    public Error(string message, Step? step, IReadOnlyList<Call> callFrames, string key = "Error", int statusCode = 400)
-        : this(message, step, key, statusCode)
+    public Error(string message, Step? step, IReadOnlyList<Call> callFrames, string key = "Error", global::app.type.item.status.@this? status = null)
+        : this(message, step, key, status)
     {
         CallFrames = callFrames;
     }
@@ -244,8 +245,8 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>
     /// Creates an error from an execution context. Captures step, goal, and Call chain automatically.
     /// </summary>
-    public Error(string message, actor.context.@this context, string key = "Error", int statusCode = 400)
-        : this(message, context.CallStack.Step, key, statusCode)
+    public Error(string message, actor.context.@this context, string key = "Error", global::app.type.item.status.@this? status = null)
+        : this(message, context.CallStack.Step, key, status)
     {
         Goal = context.CallStack.Goal;
         Context = context;

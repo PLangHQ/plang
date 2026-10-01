@@ -10,14 +10,14 @@ public class ValidationError : Error
 {
     public string? ParameterName { get; init; }
 
-    public ValidationError(string message, string key = "ValidationError", int statusCode = 400)
-        : base(message, key, statusCode) { }
+    public ValidationError(string message, string key = "ValidationError", global::app.type.item.status.@this? status = null)
+        : base(message, key, status) { }
 
-    public ValidationError(string message, Step step, string key = "ValidationError", int statusCode = 400)
-        : base(message, step, key, statusCode) { }
+    public ValidationError(string message, Step step, string key = "ValidationError", global::app.type.item.status.@this? status = null)
+        : base(message, step, key, status) { }
 
-    public ValidationError(string message, actor.context.@this context, string key = "ValidationError", int statusCode = 400)
-        : base(message, context, key, statusCode) { }
+    public ValidationError(string message, actor.context.@this context, string key = "ValidationError", global::app.type.item.status.@this? status = null)
+        : base(message, context, key, status) { }
 
     public static ValidationError Required(string parameterName) =>
         new($"'{parameterName}' is required", "MissingParameter", 400) { ParameterName = parameterName };

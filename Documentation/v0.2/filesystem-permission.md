@@ -95,58 +95,29 @@ repeat `Find` calls on the **same** `Data<PermissionRecord>` skip re-verify.
 Sqlite grants always re-verify because `SettingsStore.GetAll` yields a
 fresh `Data` per call.
 
-## Grant verification — Ed25519 with SkipFreshnessCheck
+## Grant verification — a stored read
 
-`VerifySignature` constructs `app.module.signing.verify`:
+A grant is read from plang's own store (`View.Store`), and the signature reader gives a signature its live window only
+when it is read off the wire. So a grant's signature is born with origin `stored` (`%x!signature.origin%`) and no window:
 
-```csharp
-var action = new signing.verify {
-    Data = data,
-    SkipFreshnessCheck = new Data<bool>("", true),
-};
-```
-
-`Ed25519.VerifyAsync` runs eight steps:
-
-| Step | What | Run for grants? |
+| Step | What | For a grant |
 |---|---|---|
-| 1 | Data-type check | yes |
-| 2 | Wire-freshness (`Created + TimeoutMs`) | **skipped** |
-| 3 | Expires lifetime (`Expires == null` → permanent) | yes |
-| 4 | Nonce-replay cache | **skipped** |
-| 5 | Contract check | yes |
-| 6 | Header check | yes |
-| 7 | Data-hash check | yes |
-| 8 | Ed25519 cryptographic signature | yes |
+| 1 | Expired (`%x!signature.expired%`) | only what its signer signed (`Expires == null` → permanent) |
+| 2 | Nonce replay | **not checked** — not a live read |
+| 3 | Contract check | yes |
+| 4 | Data-hash check | yes, in the Store view |
+| 5 | Ed25519 cryptographic signature | yes |
 
-Step 2 is skipped because grants are long-lived artifacts; a 5-minute
-wire-freshness window would expire "always allow" after 5 minutes.
-Step 4 is skipped because a persisted grant re-presents the same nonce
-on every read — that is not a replay. The grant's `Expires` field
-(step 3) is the only time bound that applies.
-
-**Why this is safe (security v2's 4-step bypass-scoping template):**
-
-1. Identify which checks the flag actually skips → steps 2 and 4.
-2. Identify which checks still run → 1, 3, 5, 6, 7, **8**. Step 8 (the
-   Ed25519 signature) is the core integrity gate; forgery still requires
-   the actor's private key.
-3. Enumerate every production site constructing `signing.verify`:
-   - `app/actor/permission/this.cs:147` — single true-setter.
-   - `app/modules/http/code/Default.cs:603, 636, 655, 917` — wire-message
-     verify sites, all leave `SkipFreshnessCheck` default-false. Wire
-     anti-replay is fully intact.
-4. Confirm the bypass is correct *by design* in the one true-set site —
-   not "tolerable", but the right behavior for stored grants.
+A live read's window (`%!signing.setting.expiry%`, 5 minutes) would expire "always allow" after 5 minutes, and a
+persisted grant re-presents the same nonce on every read — that is not a replay. Neither applies, because what decides
+both is how the signature was read, born with it, not a flag a caller passes. Step 5 (the Ed25519 signature) is the core
+integrity gate; forgery still requires the actor's private key. A wire message read live gets the window and the nonce
+check: wire anti-replay is intact.
 
 Regression coverage:
-- `Scenario4_PersistedGrantSurvivesPast_WireFreshnessWindow` advances
-  `NowUtc` past `Config.TimeoutMs` and re-reads.
-- `Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt` reads
-  twice with a stateless channel; each `Find` re-deserializes the grant,
-  so each read is a real `VerifySignature` pass.
-- Mutation-verified: flipping `SkipFreshnessCheck` true→false kills
-  exactly one of those two on independent assertions (step 2 vs. step 4).
+- `Scenario4_PersistedGrantSurvivesPast_WireFreshnessWindow` advances `NowUtc` past the live window and re-reads.
+- `Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt` reads twice with a stateless channel; each `Find`
+  re-deserializes the grant, so each read is a real verify.
 
 ## Revoke
 

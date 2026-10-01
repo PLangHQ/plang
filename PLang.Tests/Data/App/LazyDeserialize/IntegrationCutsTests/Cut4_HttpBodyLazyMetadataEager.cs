@@ -42,7 +42,7 @@ public class Cut4_HttpBodyLazyMetadataEager
         var (app, r) = await Get();
         await using (app)
         {
-            await Assert.That((await (await r.Get("!StatusCode")).Value())?.ToString()).IsEqualTo("200");
+            await Assert.That(((global::app.type.item.status.@this)(await (await r.Get("!status")).Value())!).Code.ToInt32()).IsEqualTo(200);
             await Assert.That(r.MaterializeCount()).IsEqualTo(0); // body stayed raw
         }
     }

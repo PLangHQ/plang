@@ -66,20 +66,20 @@ public partial class @this
         }
     }
 
-    // The action's docs — lazy file handles in its module's folder: born unread, content materializes
-    // at the Value door, and an absent file is falsy (existence truthiness), so `{% if action.Notes %}`
-    // guards presence without reading.
+    // The action's docs, in its module's folder, born unread. The description and examples are lazy file handles:
+    // content materializes at the Value door, and an absent file is falsy (existence truthiness), so
+    // `{% if action.Examples %}` guards presence without reading. The notes are read line by line (note.@this).
     private global::app.type.item.file.@this? _description;
-    private global::app.type.item.file.@this? _notes;
+    private global::app.goal.step.action.note.@this? _note;
     private global::app.type.item.file.@this? _examples;
 
     /// <summary>The action's description — {Name}.description.md.</summary>
     [JsonIgnore]
     public global::app.type.item.file.@this Description => _description ??= new(Module.Folder.Combine($"{Name}.description.md"), App!.actor.list.System.Context!);
 
-    /// <summary>The action's notes — {Name}.notes.md.</summary>
+    /// <summary>The action's notes, read line by line — {Name}.notes.md; no lines when the action has none.</summary>
     [JsonIgnore]
-    public global::app.type.item.file.@this Notes => _notes ??= new(Module.Folder.Combine($"{Name}.notes.md"), App!.actor.list.System.Context!);
+    public global::app.goal.step.action.note.@this Note => _note ??= new(this, new(Module.Folder.Combine($"{Name}.notes.md"), App!.actor.list.System.Context!));
 
     /// <summary>The action's examples — {Name}.examples.md.</summary>
     [JsonIgnore]

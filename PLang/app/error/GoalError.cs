@@ -8,18 +8,18 @@ namespace app.error;
 /// </summary>
 public class GoalError : Error
 {
-    public GoalError(string message, string key = "GoalError", int statusCode = 400)
-        : base(message, key, statusCode) { }
+    public GoalError(string message, string key = "GoalError", global::app.type.item.status.@this? status = null)
+        : base(message, key, status) { }
 
-    public GoalError(string message, Step step, string key = "GoalError", int statusCode = 400)
-        : base(message, step, key, statusCode) { }
+    public GoalError(string message, Step step, string key = "GoalError", global::app.type.item.status.@this? status = null)
+        : base(message, step, key, status) { }
 
-    public GoalError(string message, actor.context.@this context, string key = "GoalError", int statusCode = 400)
-        : base(message, context, key, statusCode) { }
+    public GoalError(string message, actor.context.@this context, string key = "GoalError", global::app.type.item.status.@this? status = null)
+        : base(message, context, key, status) { }
 
-    public new static GoalError FromException(Exception ex, string key = "Exception", int statusCode = 500)
+    public new static GoalError FromException(Exception ex, string key = "Exception", global::app.type.item.status.@this? status = null)
     {
-        return new GoalError(ex.Message, key, statusCode)
+        return new GoalError(ex.Message, key, status ?? 500)
         {
             Exception = ex
         };

@@ -136,7 +136,7 @@ public class Stage3_HttpContentTypeDispatchTests
     public async Task Metadata_StatusIsProperty_NotBody()
     {
         var resp = await Get("https://x/j", r => r.Content = new StringContent("{\"k\":\"v\"}", Encoding.UTF8, "application/json"));
-        await Assert.That((await (await resp.Get("!StatusCode")).Value())?.ToString()).IsEqualTo("200");
+        await Assert.That(((global::app.type.item.status.@this)(await (await resp.Get("!status")).Value())!).Code.ToInt32()).IsEqualTo(200);
         await Assert.That(resp.MaterializeCount()).IsEqualTo(0); // status read did not touch the body
     }
 

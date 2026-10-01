@@ -61,7 +61,7 @@ public class TimeoutAfterTests
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("Timeout");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(408);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(408);
     }
 
     [Test]

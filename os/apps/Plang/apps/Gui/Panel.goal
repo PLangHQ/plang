@@ -38,7 +38,7 @@ AskQuestion
 - [llm] system: %system%
         user: %answer%
         model: "gpt-4.1"
-        continue: true
+        continue: %prepQuestions%
         scheme: {questions:[{columnName:string, answer:string|null}], hasAnsweredAll:true|false}
         write to %result%
 - append %result.questions% to list %answers%

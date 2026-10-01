@@ -19,11 +19,11 @@ public class ErrorHandleTests
     public async Task Cleanup() => await _app.DisposeAsync();
 
     // An error.throw with its on.error clauses after it (bound on it, as a program's read binds them).
-    private PrAction Throw(string message, int? statusCode = null, string? key = null,
+    private PrAction Throw(string message, int? status = null, string? key = null,
         PrAction[]? modifiers = null)
     {
         var parameters = new List<global::app.data.@this> { new("message", message, context: _app.actor.list.User.Context) };
-        if (statusCode != null) parameters.Add(new("status", statusCode.Value, context: _app.actor.list.User.Context));
+        if (status != null) parameters.Add(new("status", status.Value, context: _app.actor.list.User.Context));
         if (key != null) parameters.Add(new("key", key, context: _app.actor.list.User.Context));
         return global::PLang.Tests.Shared.Make.With(new PrAction
         {
@@ -125,12 +125,12 @@ public class ErrorHandleTests
     }
 
     [Test]
-    public async Task Handle_FilterByStatusCode_MatchHandles()
+    public async Task Handle_FilterByStatus_MatchHandles()
     {
-        var action = Throw("not found", statusCode: 404,
+        var action = Throw("not found", status: 404,
             modifiers: new PrAction[]
             {
-                ErrorHandler(("statusCode", 404), ("ignore", true))
+                ErrorHandler(("status", 404), ("ignore", true))
             });
 
         var result = await action.Start(Ctx);
@@ -139,18 +139,18 @@ public class ErrorHandleTests
     }
 
     [Test]
-    public async Task Handle_FilterByStatusCode_NoMatchPropagates()
+    public async Task Handle_FilterByStatus_NoMatchPropagates()
     {
-        var action = Throw("server error", statusCode: 500,
+        var action = Throw("server error", status: 500,
             modifiers: new PrAction[]
             {
-                ErrorHandler(("statusCode", 404), ("ignore", true))
+                ErrorHandler(("status", 404), ("ignore", true))
             });
 
         var result = await action.Start(Ctx);
 
         await result.IsFailure();
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(500);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(500);
     }
 
     [Test]
@@ -214,7 +214,7 @@ public class ErrorHandleTests
     [Test]
     public async Task Handle_NoFilter_MatchesAllErrors()
     {
-        var action = Throw("anything", statusCode: 418,
+        var action = Throw("anything", status: 418,
             modifiers: new PrAction[] { ErrorHandler(("ignore", true)) });
 
         var result = await action.Start(Ctx);

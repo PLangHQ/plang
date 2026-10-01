@@ -77,6 +77,12 @@
   "app.goal.step.action.loop": {
     "word": "loop"
   },
+  "app.goal.step.action.note": {
+    "word": null
+  },
+  "app.goal.step.action.note.line": {
+    "word": null
+  },
   "app.module": {
     "word": "module"
   },
@@ -101,11 +107,14 @@
   "app.module.list.type.query": {
     "word": "query"
   },
-  "app.module.llm.llmmessage": {
-    "word": "llmmessage"
-  },
   "app.module.llm.type.conversation": {
     "word": "conversation"
+  },
+  "app.module.llm.type.limit": {
+    "word": "limit"
+  },
+  "app.module.llm.type.message": {
+    "word": "message"
   },
   "app.module.output.ask": {
     "word": "ask"
@@ -212,6 +221,9 @@
   },
   "app.type.item.signature": {
     "word": "signature"
+  },
+  "app.type.item.status": {
+    "word": "status"
   },
   "app.type.item.tag": {
     "word": "tag"

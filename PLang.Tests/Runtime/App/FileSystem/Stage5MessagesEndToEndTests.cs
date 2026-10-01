@@ -118,11 +118,10 @@ public class Stage5MessagesEndToEndTests
         await Assert.That(secondRead.Type?.Name).IsNotEqualTo("ask");
     }
 
-    /// Persisted "always allow" grants must outlive the wire-freshness
-    /// window (Config.TimeoutMs, default 5 min). Without SkipFreshnessCheck
-    /// on grant verification, this re-read after advancing NowUtc by 10
-    /// minutes would re-prompt — the user would see "always allow" expire
-    /// after 5 minutes despite the docs claiming permanence.
+    /// Persisted "always allow" grants must outlive the live-read window
+    /// (%!signing.setting.expiry%, default 5 min). A grant is read from plang's
+    /// own store, so it gets no window: this re-read after advancing NowUtc by 10
+    /// minutes must not re-prompt — "always allow" does not expire after 5 minutes.
     [Test] public async Task Scenario4_PersistedGrantSurvivesPast_WireFreshnessWindow()
     {
         var (app1, foreignFile) = Setup("a");
@@ -132,7 +131,7 @@ public class Stage5MessagesEndToEndTests
         await firstRead.IsSuccess();
 
         // Advance clock by 10 minutes — past the default 5-minute
-        // Config.TimeoutMs window that would otherwise expire the signature.
+        // live-read window, which a stored grant does not get.
         var app2 = new global::app.@this(root).TestSigning();
         var statelessProbe = new StatelessChannel();
         app2.actor.list.User.Channel.Register(statelessProbe);
@@ -152,10 +151,10 @@ public class Stage5MessagesEndToEndTests
     /// Nonce-replay half of the persisted-grant contract: a persisted grant
     /// is re-verified on every Find (SettingsStore.GetAll yields a fresh
     /// Data each call, so the per-instance VerifiedFlag cache does not
-    /// carry across reads). Without SkipFreshnessCheck neutralising the
-    /// nonce-replay step, the second verification inside one app would hit
-    /// NonceReplay and re-prompt. Pairs with the WireFreshnessWindow test,
-    /// which gates only the wire-freshness step.
+    /// carry across reads). A grant read from the store is not a live read, so
+    /// its nonce is not checked for replay; otherwise the second verification
+    /// inside one app would hit NonceReplay and re-prompt. Pairs with the
+    /// WireFreshnessWindow test, which gates only the expiry.
     [Test] public async Task Scenario4_PersistedGrantReVerified_NonceReplayDoesNotReprompt()
     {
         var (app1, foreignFile) = Setup("a");

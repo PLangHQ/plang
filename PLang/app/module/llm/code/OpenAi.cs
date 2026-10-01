@@ -34,8 +34,6 @@ public sealed class OpenAi : ILlm
     /// Each subscriber is awaited before the result is built.</summary>
     public event Func<string, Task>? OnAfterResponse;
 
-    private const string ConversationKey = "__llm_conversation__";
-    private const string SchemaKey = "__llm_schema__";
     private const string CacheTable = "LlmCache";
 
     // USD per 1M tokens. Longest matching prefix wins; missing model → null cost.
@@ -118,21 +116,18 @@ public sealed class OpenAi : ILlm
         async System.Threading.Tasks.Task<string?> FormatOf(query a)
             => a.Format == null || await a.Format.IsEmpty() ? null : (await a.Format.Value())?.ToString();
 
-        // a conversation the step leaves out is the record's own default: a fresh one
-        var conversation = (action.Conversation == null ? null : await action.Conversation.Value()) ?? new global::app.module.llm.type.conversation.@this();
-        if (conversation.Continue.Value)
+        // a record that refuses what the step wrote answers why
+        if (await action.Conversation.Value() is not { } conversation) return context.Error(action.Conversation.Error!);
+        if (await action.Limit.Value() is not { } limit) return context.Error(action.Limit.Error!);
+        // the conversation continued rides on the response it continues: its messages, and its schema when this
+        // query gives none
+        schema = await SchemaOf(action);
+        if (conversation.Continue is { } continued)
         {
-            var prev = context.Get<List<LlmMessage>>(ConversationKey);
-            if (prev != null)
-                messages.InsertRange(0, prev);
-
-            schema = await SchemaOf(action) ?? context.Get<string>(SchemaKey);
-        }
-        else
-        {
-            schema = await SchemaOf(action);
-            context.Set<List<LlmMessage>>(ConversationKey, null!);
-            context.Set<string>(SchemaKey, null!);
+            var previous = await continued.Follow(context);
+            if (await previous.Properties.Value("Messages") is global::app.type.item.@this history)
+                messages.InsertRange(0, history.Clr<List<LlmMessage>>() ?? new List<LlmMessage>());
+            schema ??= (await previous.Properties.Value("Schema"))?.ToString();
         }
 
         // Snapshot originals BEFORE format mutation
@@ -207,7 +202,7 @@ public sealed class OpenAi : ILlm
                 ["model"] = model,
                 ["messages"] = await ToApiMessages(messages, app, context),
                 ["temperature"] = (await action.Temperature.Value())!.ToDouble(),
-                ["max_completion_tokens"] = (await action.MaxTokens.Value())!.ToInt64()
+                ["max_completion_tokens"] = limit.Token.ToInt64()
             };
             if ((action.TopP == null ? null : await action.TopP.Value()) != null)
                 body["top_p"] = (await action.TopP.Value())!.ToDouble();
@@ -307,7 +302,7 @@ public sealed class OpenAi : ILlm
                     _ => "ResponseIncomplete"
                 };
                 var msg = finishReason == "length"
-                    ? $"LLM output hit the max-tokens limit before finishing ({totalCompletionTokens} completion tokens). Raise MaxTokens or shorten the prompt."
+                    ? $"LLM output hit the max-tokens limit before finishing ({totalCompletionTokens} completion tokens). Raise limit.token or shorten the prompt."
                     : finishReason == "content_filter"
                     ? "LLM refused the request via content filter."
                     : $"LLM response ended abnormally (finish_reason={finishReason}).";
@@ -320,7 +315,7 @@ public sealed class OpenAi : ILlm
                         ["Model"] = model,
                         ["PromptTokens"] = totalPromptTokens,
                         ["CompletionTokens"] = totalCompletionTokens,
-                        ["MaxTokens"] = (action.MaxTokens == null ? null : await action.MaxTokens.Value())
+                        ["Limit"] = limit
                     }
                 });
             }
@@ -329,13 +324,13 @@ public sealed class OpenAi : ILlm
             var toolCalls = await ParseToolCalls(response);
             if (toolCalls.Count > 0)
             {
-                if (toolCallCount >= (await action.MaxToolCalls.Value())!.ToInt64())
+                if (toolCallCount >= limit.Tool.ToInt64())
                     break; // hit limit
 
                 lastContent = content;
 
                 // Slice to remaining budget — never execute more tools than the limit allows
-                int remaining = (await action.MaxToolCalls.Value())!.ToInt32() - toolCallCount;
+                int remaining = limit.Tool.ToInt32() - toolCallCount;
                 if (toolCalls.Count > remaining)
                     toolCalls = toolCalls.Take(remaining).ToList();
 
@@ -423,7 +418,7 @@ public sealed class OpenAi : ILlm
                 {
                     var validationError = validationResult.Error?.Message ?? "Unknown validation error";
 
-                    if (validationRetries >= (await action.MaxValidationRetries.Value())!.ToInt64())
+                    if (validationRetries >= limit.Retry.ToInt64())
                     {
                         await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(
                             $"  Validation failed (no retries left): {validationError}");
@@ -434,7 +429,7 @@ public sealed class OpenAi : ILlm
 
                     validationRetries++;
                     await context.Actor.Channel[global::app.channel.list.@this.Output].WriteText(
-                        $"  Validation failed (retry {validationRetries}/{(await action.MaxValidationRetries.Value())}): {validationError}");
+                        $"  Validation failed (retry {validationRetries}/{limit.Retry}): {validationError}");
                     messages.Add(new LlmMessage
                     {
                         Role = "user",
@@ -446,10 +441,9 @@ public sealed class OpenAi : ILlm
                 }
             }
 
-            // --- Store conversation for continuity (pre-mutation originals) ---
+            // --- The conversation as sent (pre-mutation originals) and the answer: what a later query continues ---
             originalMessages.Add(new LlmMessage { Role = "assistant", Content = rawResponse });
-            context.Set(ConversationKey, originalMessages);
-            context.Set(SchemaKey, schema);
+            var conversed = global::app.type.item.@this.Create(originalMessages, context);
 
             if (OnAfterResponse is { } after)
                 foreach (Func<string, Task> hook in after.GetInvocationList())
@@ -478,7 +472,8 @@ public sealed class OpenAi : ILlm
                     ["ToolCallCount"] = toolCallCount,
                     ["ValidationRetries"] = validationRetries,
                     ["Format"] = effectiveFormat,
-                    ["Schema"] = schema
+                    ["Schema"] = schema,
+                    ["Messages"] = conversed
                 };
                 await settings.Set(CacheTable, cacheKey, new data.@this("cache", cacheEntry, context: context));
             }
@@ -486,9 +481,9 @@ public sealed class OpenAi : ILlm
             // --- Populate response properties ---
             SetProp(result, "RawResponse", rawResponse);
             SetProp(result, "Model", model);
-            SetProp(result, "Messages", messages);
+            SetProp(result, "Messages", conversed);
             SetProp(result, "Temperature", (await action.Temperature.Value()));
-            SetProp(result, "MaxTokens", (await action.MaxTokens.Value()));
+            SetProp(result, "Limit", limit);
             SetProp(result, "Cached", false);
             SetProp(result, "PromptTokens", totalPromptTokens);
             SetProp(result, "CompletionTokens", totalCompletionTokens);
@@ -503,7 +498,7 @@ public sealed class OpenAi : ILlm
             return result;
         }
 
-        // Loop exited via break (MaxToolCalls or streaming)
+        // Loop exited via break (limit.tool or streaming)
         var exitResult = context.Ok(lastContent);
         SetProp(exitResult, "Model", model);
         SetProp(exitResult, "ToolCallCount", toolCallCount);
@@ -685,7 +680,7 @@ public sealed class OpenAi : ILlm
                     }
                 };
             }
-            if (!content.Success && content.Error is { StatusCode: not 404 } unread)
+            if (!content.Success && content.Error is { } unread && !unread.Status.Equals((global::app.type.item.status.@this)404))
                 throw new global::app.error.AppException(unread);
         }
 
@@ -920,7 +915,8 @@ public sealed class OpenAi : ILlm
             foreach (var entry in entries)
             {
                 if (entry.Name == "Value") { resultValue = entry.Peek(); continue; }
-                props[entry.Name] = entry.Peek();
+                // each property read through its Data, so a stored one comes back as what it is, not its wire
+                props[entry.Name] = await entry.Value();
             }
         }
 

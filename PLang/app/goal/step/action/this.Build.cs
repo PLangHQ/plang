@@ -43,7 +43,7 @@ public partial class @this
             foreach (var decline in declined)
                 causes.Add(new global::app.error.Error(
                     $"{decline.Message} Leave it out if the step does not name it — never emit \"\" as a placeholder.",
-                    decline.Key, decline.StatusCode));
+                    decline.Key, decline.Status));
             // The handler judges and finishes only values its slots could take.
             if (declined.Count == 0)
             {

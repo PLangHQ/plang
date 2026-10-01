@@ -35,12 +35,16 @@ public sealed class @this
         var value = isDataGeneric ? bare.GetGenericArguments()[0] : bare;
         Type = value == typeof(global::app.data.@this) ? types["item"] : types[value];
 
-        // A closed-set default is born as its choice, so it names itself (`Promote`), never its number.
+        // A closed-set default is born as its choice, so it names itself (`Promote`), never its number. Without
+        // [Default], a type with a default of its own (IDefault<T>) gives it.
         var declaredDefault = prop.GetCustomAttribute<global::app.module.DefaultAttribute>()?.Value;
+        var ownDefault = value.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.IDefault<>))
+            ? value.GetProperty("Default", BindingFlags.Public | BindingFlags.Static)?.GetValue(null)
+            : null;
         Default = declaredDefault is System.Enum && value.IsGenericType
                   && value.GetGenericTypeDefinition() == typeof(global::app.type.item.choice.@this<>)
             ? System.Activator.CreateInstance(value, declaredDefault)
-            : declaredDefault;
+            : declaredDefault ?? ownDefault;
     }
 
     /// <summary>A property built by hand — a type's field, the synthetic channel property, a .pr row, a builder's.</summary>

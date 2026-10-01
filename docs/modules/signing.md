@@ -40,17 +40,14 @@ Verify a signed data envelope.
 | Data | object | yes | — | Signed data to verify (must have `.Signature`) |
 | Contracts | list | no | — | Expected contracts to match |
 | Headers | dictionary | no | — | Expected headers to match |
-| TimeoutMs | long | no | — | Override the default timeout (5 minutes) |
 
 **Returns:** `true` on success. On failure, returns an error with a specific key:
 
 | Error Key | Cause |
 |-----------|-------|
 | `NoSignature` | Data has no signature attached |
-| `InvalidType` | Signature type field is wrong |
-| `TimedOut` | Signature is older than timeout |
-| `Expired` | Signature's explicit expiry has passed |
-| `NonceReplay` | This nonce was already seen (replay attack) |
+| `Expired` | The signature is past its expiry (`%x!signature.expired%`) |
+| `NonceReplay` | A signature read live presents a nonce already seen (replay attack) |
 | `ContractMismatch` | Signer's contracts don't match expected |
 | `HeaderMismatch` | Signer's headers don't match expected |
 | `DataHashMismatch` | Data has been tampered with |
@@ -59,7 +56,18 @@ Verify a signed data envelope.
 ## How It Works
 
 1. **Sign**: Hashes the data (Keccak256), builds an envelope with nonce, timestamp, identity, and contracts, then signs the envelope bytes with the signer's Ed25519 private key.
-2. **Verify**: Runs a 9-step check — type, provider, timeout, expiry, nonce replay, contracts, headers, data hash, cryptographic signature. Each step returns a specific error key on failure.
+2. **Verify**: asks the signature whether it has expired, then checks the nonce (a live read only), contracts, data hash and the cryptographic signature. Each step returns a specific error key on failure.
+
+## Expiry
+
+A signature's expiry is `%x!signature.expires%` (a datetime) and `%x!signature.expired%` (a bool). It is what the signer
+signed (`sign … Expires=5m`), or, for a signature read live off the wire, `%!signing.setting.expiry%` (default `5m`) after
+it was created, whichever comes first. A signature read from plang's own store (a saved grant) gets no such window: only
+what its signer signed bounds it, and its nonce is not checked for replay (the same nonce re-presents on every read).
+
+```plang
+- set %!signing.setting.expiry% = 1m
+```
 
 ## Examples
 

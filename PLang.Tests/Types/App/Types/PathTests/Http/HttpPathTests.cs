@@ -52,7 +52,7 @@ public class HttpPathTests
         var result = await new HttpPath(url).Touch(context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("NotFound");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(404);
     }
 
     [Test] public async Task Post_200_WriteText_ReturnsOk_AndBodyIsStored()
@@ -79,7 +79,7 @@ public class HttpPathTests
         var result = await new HttpPath(url).WriteText("nope", context);
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("MethodNotAllowed");
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(405);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(405);
     }
 
     [Test] public async Task Delete_204_ReturnsOk()
@@ -95,7 +95,7 @@ public class HttpPathTests
 
         var read = await new HttpPath(url).Touch(context);
         await read.IsFailure();
-        await Assert.That(read.Error!.StatusCode).IsEqualTo(404);
+        await Assert.That(read.Error!.Status.Code.ToInt32()).IsEqualTo(404);
     }
 
     [Test] public async Task Stat_Head_PopulatesContentLengthAndLastModified()
@@ -174,7 +174,7 @@ public class HttpPathTests
 
         var result = await new HttpPath(u).Touch(context);
         await result.IsFailure();
-        await Assert.That(result.Error!.StatusCode).IsEqualTo(401);
+        await Assert.That(result.Error!.Status.Code.ToInt32()).IsEqualTo(401);
     }
 
     [Test] public async Task NetworkFailure_ConnectionRefused_ReturnsFail_NetworkError()

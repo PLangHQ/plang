@@ -1,0 +1,52 @@
+{
+  "name": "ChainThrows",
+  "comment": "Deepest goal in the chain — throws a 404 error so the test can assert on the propagation.",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"deep failure\", key NotFound, status 404",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "deep failure"
+            },
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "NotFound"
+            },
+            {
+              "name": "Status",
+              "type": {
+                "name": "status"
+              },
+              "value": {"code":404,"text":"Not Found"}
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/ChainThrows.goal",
+  "prPath": "/app/callstack/.build/chainthrows.pr",
+  "hash": "c4d67cc312f66a24650e8375e4b7b79d6c37bce3ebbb90e30edc1e0ed56ead18",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}

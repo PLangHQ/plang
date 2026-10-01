@@ -54,7 +54,7 @@ public class FailedWriteTests
         await Assert.That(back!.Id).IsEqualTo(sent.Id);
         await Assert.That(back.Message).IsEqualTo("the disk is full");
         await Assert.That(back.Key).IsEqualTo("DiskFull");
-        await Assert.That(back.StatusCode).IsEqualTo(507);
+        await Assert.That(back.Status.Code.ToInt32()).IsEqualTo(507);
         await Assert.That(back.list.Single().Key).IsEqualTo("Quota");
     }
 
