@@ -25,6 +25,16 @@ public sealed class Screen : global::app.type.item.@this, global::app.type.item.
     /// <summary>Frames drawn so far.</summary>
     [LlmBuilder, Out] public int Frames => Window?.Frames ?? 0;
 
+    /// <summary>Whether the screen says what happens to its windows as it happens — opened, the size each is asked to
+    /// be, its first picture, shown, minimized, focused, closed: <c>set %screen.debug% to true</c>. On under
+    /// <c>--debug</c>. The notes go to the debug output (<c>--debug</c>), else the error output — never to a goal.</summary>
+    [LlmBuilder, Out]
+    public bool Debug
+    {
+        get => Display?.Watching ?? false;
+        set { if (Display != null) Display.Watching = value; }
+    }
+
     /// <summary>The Win32 window that shows frames (Windows).</summary>
     internal code.Window? Window { get; set; }
 
