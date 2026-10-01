@@ -244,4 +244,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>The module's notes — module.notes.md; falsy when the module has none.</summary>
     public global::app.type.item.file.@this Notes => _notes ??= new(Folder.Combine("module.notes.md"), App.actor.list.System.Context!);
+
+    private global::app.type.item.file.@this? _guide;
+
+    /// <summary>The module's guide — module.guide.md: prose for a learner, shown on the module's page and never read by
+    /// the builder; falsy when the module has none.</summary>
+    public global::app.type.item.file.@this Guide => _guide ??= new(Folder.Combine("module.guide.md"), App.actor.list.System.Context!);
 }

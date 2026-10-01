@@ -218,6 +218,56 @@ public class PickListTests
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
+    // A module's guide (module.guide.md) is the learner's, never the builder's: with a guide beside every module, no
+    // request the builder sends for the golden goals holds it (stage 1's questions and state, stage 2's questions and
+    // state, prompt C's user message). The app is rooted at a copy of the modules' docs, file's description marked, so
+    // the requests are seen to read the copy.
+    [Test]
+    public async Task AModulesGuide_ReachesNoRequestTheBuilderSends()
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-guide-" + System.Guid.NewGuid().ToString("N")[..8]);
+        var source = System.IO.Path.Combine(RepoRoot(), "os", "system", "modules");
+        var modules = System.IO.Path.Combine(root, "system", "modules");
+        try
+        {
+            foreach (var file in System.IO.Directory.EnumerateFiles(source, "*.md", System.IO.SearchOption.AllDirectories))
+            {
+                var copy = System.IO.Path.Combine(modules, System.IO.Path.GetRelativePath(source, file));
+                System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(copy)!);
+                System.IO.File.Copy(file, copy);
+            }
+            foreach (var folder in System.IO.Directory.GetDirectories(modules))
+                System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "module.guide.md"), "GUIDE-ONLY prose for a learner.");
+            System.IO.File.AppendAllText(System.IO.Path.Combine(modules, "file", "module.description.md"), " DESCRIPTION-MARK");
+
+            await using var os = new global::app.@this(root).Testing();
+            var context = os.actor.list.User.Context;
+            var requests = new List<string>();
+            foreach (var entry in Golden())
+            {
+                var goal = Goal(entry, context);
+                requests.Add(await Rendered("decider1.template", goal, context));
+                requests.Add(await Rendered("decider.state.template", goal, context, stage: 1));
+                var first = Answer(entry.GetProperty("answer1"), context);
+                foreach (var step in goal.Step.Items()) await step.Pick.Take(first, Popular(), context);
+                requests.Add(await Rendered("decider2.template", goal, context));
+                requests.Add(await Rendered("decider.state.template", goal, context, stage: 2));
+                var second = Answer(entry.GetProperty("answer2"), context);
+                foreach (var step in goal.Step.Items()) await step.Pick.Take(second, Popular(), context);
+                await goal.Step.Scope(context);
+                requests.Add(await Rendered("properties.template", goal, context));
+            }
+
+            await Assert.That(requests.Where(r => r.StartsWith("render failed")).ToList()).IsEmpty();
+            await Assert.That(requests.Any(r => r.Contains("DESCRIPTION-MARK"))).IsTrue();
+            await Assert.That(requests.Count(r => r.Contains("GUIDE-ONLY"))).IsEqualTo(0);
+        }
+        finally
+        {
+            if (System.IO.Directory.Exists(root)) System.IO.Directory.Delete(root, true);
+        }
+    }
+
     [Test]
     public async Task BothAnswers_GiveThePicksPythonRead()
     {
