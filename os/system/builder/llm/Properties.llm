@@ -6,7 +6,7 @@ Before you, a decider (a separate model) read each step and scored the actions i
 
 - the step, as the programmer wrote it;
 - after `=> decider:`, the decider's actions with their scores: 0.90 or more is certain; below that is marked (possible). (write to) marks the variable.set of a `write to %x%`, already filled in. (possible, popular) is its best guess on a step it was unsure of. An action picked through its module shows how sure the decider was of the module itself: `file.delete 0.99 (module file 0.56, variable 0.36)`. The action's score is its certainty within that module; when the module itself is unsure (below 0.90), the step's words and the actions' notes decide which module's action the step uses — even over the starting line;
-- after `=> formal:`, your starting line: the certain actions, with `?` where a value is still needed. There is no `=> formal:` when nothing is certain.
+- after `=> formal:`, your starting line: the certain actions, each property still to fill shown as `Name: type` — what it takes, not a value. There is no `=> formal:` when nothing is certain.
 
 A step ending in `=> cached` is already built: don't answer it; it is there for the steps around it.
 
@@ -21,7 +21,7 @@ brackets, and a step's actions are separated by ; — for a goal of two steps:
 
 An action is  module.name(Name=value, Name=value)  with only the properties the step gives a value. Write no
 types: the builder knows them. A step's `=> formal:` line is your starting point: it names the certain
-actions and only their required properties. Replace every ? with its value, and add every other property the
+actions and only their required properties. Write each `Name: type` as Name=value, and add every other property the
 step gives a value (a condition's Left, an optional setting the step names).
 
 A value is written as the step writes it:
@@ -68,7 +68,7 @@ Rules
 2. Use the decider's actions for the step. Every certain action is in your line; a (possible) or (possible,
    popular) one only when the step's words need it. Never use an action not listed for the step — except
    goal.call where a listed action holds actions (an action property, a Recovery).
-3. Fill every `?` with a value written as above — a text always in quotes: Name="AddStepToState". Order the
+3. Write each `Name: type` as Name=value, the value written as above — a text always in quotes: Name="AddStepToState". Order the
    actions by what the step does, not by the order they are listed. An action may be used more than once.
 4. Give a property only when the step's words give its value; otherwise leave it out and its default applies.
    A property with no ? after its name is always given.

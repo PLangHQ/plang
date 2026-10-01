@@ -264,6 +264,9 @@ class _Reader:
         declared = spec['type']
         written = self.written_type(prop, declared)
         self.space()
+        # the starting line's `Name: type` copied as it stands: a slot still to fill, not a value
+        if written is not None and (self.peek(',') or self.peek(')')):
+            self.fail(f'`{prop}: {written}` is a property still to fill: write {prop}=value, the value the step gives')
         frozen = self.text.startswith('?=', self.pos)
         # a choice's symbol option may stand bare right after its `=`: Operator=== is Operator="=="
         after_equals = SYMBOL.match(self.text, self.pos + (2 if frozen else 1))

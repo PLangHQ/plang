@@ -38,6 +38,7 @@ BAD = [
     'file.read(Path="x")\n    variable.set(Name=%y%, Value=%!data%)',
     'file.read(Pth="x")',
     'file.read(Path: text = "x")',
+    'file.read(Path: path)',
     'condition.if(Left=%n%, Operator="less", Right=5)',
     'condition.if(Left=%n%, Operator=less, Right=5)',
     'condition.if(Left=%n%, Operator=="<", Right=5)',

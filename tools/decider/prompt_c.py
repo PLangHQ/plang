@@ -123,14 +123,15 @@ def holds_actions(action):
     return any(p['type'] in ('action', 'list<action>') for p in props.values())
 
 def prefill(action, text):
-    """One pick as the formal line pre-fills it: its required properties as `?`, what the step already
-    says filled — `write to %x%` → variable.set(Name=%x%, Value=%!data%). An optional property gets no hole: it
-    is the LLM's to add when the step names it (a Recovery, a Parameter, a RetryCount), as the examples teach."""
+    """One pick as the formal line pre-fills it: its required properties as `Name: type` — a slot still to
+    fill, named by what it takes, never a value to copy — what the step already says filled — `write to %x%` →
+    variable.set(Name=%x%, Value=%!data%). An optional property gets no slot: it is the LLM's to add when the step
+    names it (a Recovery, a Parameter, a RetryCount), as the examples teach."""
     module, name = action.split('.', 1)
     props, _ = b.declared(module, name)
     if action == 'variable.set' and (d := destination(text)):
         return f'variable.set(Name={d}, Value=%!data%)'
-    required = [f'{n}=?' for n, p in props.items() if not p['nullable'] and p['default'] is None]
+    required = [f'{n}: {p["type"]}' for n, p in props.items() if not p['nullable'] and p['default'] is None]
     return f'{action}(' + ', '.join(required) + ')'
 
 # The known code's words (goal/step/pick/list Code): a step's first variable, a foreach's `as` name, and
@@ -317,7 +318,7 @@ def user_message_c(goal, picks):
             call = prefill(a, s['text'])
             if b.declared(*a.split('.', 1))[1]: line.insert(call)
             elif b.is_loop(*a.split('.', 1)): line.lead(call)
-            elif b.is_keep(*a.split('.', 1)): line.keep(call, call.replace('Value=?', 'Value=%!data%'))
+            elif b.is_keep(*a.split('.', 1)): line.keep(call, call.replace('Value: item', 'Value=%!data%'))
             else: line.add(call, link(a) == 0, link(a) == 3 and b.returns(*a.split('.', 1)) != 'item')   # a condition's verdict is never kept
         if known: line.append(prefill('variable.set', s['text']))
         if line.written(): out += ' => formal: ' + line.written()
