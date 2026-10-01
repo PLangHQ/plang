@@ -385,6 +385,9 @@ internal sealed class Window : ISurfaceRole
     /// <summary>Asks PLang to send this window somewhere (the address field, the menu's pages).</summary>
     internal void Navigate(string where) => Display.Tell(new JsonObject { ["navigate"] = where, ["id"] = Id });
 
+    /// <summary>☰ was clicked: PLang drops the window's agent down from (x, y), the button's bottom-right.</summary>
+    internal void Menu(int x, int y) => Display.Tell(new JsonObject { ["menu"] = Id, ["x"] = x, ["y"] = y, ["title"] = Toplevel.Title, ["address"] = Address.Path });
+
     /// <summary>One of the app's tools was clicked: PLang hands it to the page.</summary>
     internal void Tool(string name) => Display.Tell(new JsonObject { ["tool"] = name, ["id"] = Id });
 

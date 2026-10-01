@@ -114,7 +114,8 @@ internal sealed class Window
     /// <summary>
     /// A message from PlangOS's screen, [u8 kind][payload]: 1 a frame's rectangles, 7 a frame that
     /// opens with a move, 3/4 an input's echo (for latency) — these keep their order in the decode
-    /// queue — 2 the pointer to show, 5 text PlangOS copied. False when it isn't one (an image, say).
+    /// queue — 2 the pointer to show, 5 text PlangOS copied, 9 a message from PlangOS's PLang for
+    /// this one (json; it reaches OnInput as the events do). False when it isn't one (an image, say).
     /// </summary>
     public bool Take(byte[] message)
     {
@@ -124,6 +125,7 @@ internal sealed class Window
             case 1 or 3 or 4 or 7: PatchBinary(message); return true;
             case 2: Cursor(System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1)); return true;
             case 5: Clipboard(System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1)); return true;
+            case 9: onEvent("{\"guest\":" + System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1) + "}"); return true;
             default: return false;
         }
     }
