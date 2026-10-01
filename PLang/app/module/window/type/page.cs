@@ -8,12 +8,12 @@ namespace app.module.window;
 
 /// <summary>
 /// The page a window shows, over a DevTools connection of its own. It goes where it is sent,
-/// evaluates, and gives a message event. When it is one of the app's own pages (a file under the
-/// app's folder), it also gets <c>plang(text)</c>: what it says is heard with its window's id added
-/// (<c>"from"</c>). Every call is checked: a page that has since gone somewhere else (a website) is
-/// not heard.
+/// evaluates, and gives a message event. When it is one of plang's own pages (a file under the
+/// app's folder or the os folder), it also gets <c>plang(text)</c>: what it says is heard with its
+/// window's id added (<c>"from"</c>). Every call is checked: a page that has since gone somewhere else
+/// (a website) is not heard.
 /// </summary>
-internal sealed class Page(string target, int port, string root)
+internal sealed class Page(string target, int port, Func<string, bool> own)
 {
     private readonly ClientWebSocket socket = new();
     private readonly SemaphoreSlim sending = new(1, 1);
@@ -102,7 +102,7 @@ internal sealed class Page(string target, int port, string root)
             var reply = await Ask("Runtime.evaluate", new JsonObject { ["expression"] = "location.href", ["contextId"] = context, ["returnByValue"] = true });
             return reply.TryGetProperty("result", out var r) && r.TryGetProperty("result", out var v)
                 && v.TryGetProperty("value", out var href) && href.ValueKind == JsonValueKind.String
-                && href.GetString()!.StartsWith(root, StringComparison.Ordinal);
+                && own(href.GetString()!);
         }
         catch (Exception ex) when (ex is TimeoutException or WebSocketException or KeyNotFoundException) { return false; }
     }

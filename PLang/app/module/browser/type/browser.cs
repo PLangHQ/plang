@@ -40,10 +40,17 @@ public sealed class Browser : global::app.type.item.@this, global::app.type.item
     internal System.Net.WebSockets.ClientWebSocket? Control { get; set; }
     /// <summary>The desktop's browser window: a page that lands in it was opened as a tab.</summary>
     internal int DesktopWindow { get; set; }
+    /// <summary>The context it was started in: what goes wrong away from any step (a window that can't be
+    /// paired with its page) is written to its app's error channel.</summary>
+    internal actor.context.@this? Context { get; set; }
     /// <summary>Hands what a page of the app's own says (<c>plang(text)</c>) to OnMessage.</summary>
     internal Func<string, Task>? Message { get; set; }
-    /// <summary>The app's own pages (<c>file://</c> under this folder) may talk with plang; no other page.</summary>
-    internal string Root { get; set; } = "";
+    /// <summary>Where plang's own pages are (<c>file://</c> under these folders): the app's folder, and the
+    /// runtime's os folder (the system's pages — only the system writes there). They may talk with plang;
+    /// no other page.</summary>
+    internal string[] Roots { get; set; } = [];
+    /// <summary>The page at <paramref name="address"/> is one of plang's own.</summary>
+    internal bool Own(string address) => Roots.Any(root => address.StartsWith(root, StringComparison.Ordinal));
     /// <summary>The screen Chromium draws onto (PlangOS's display), from <c>screen.open</c>.</summary>
     internal global::app.module.screen.Screen? Screen { get; set; }
     /// <summary>The page, off-screen (no screen): its frames and input go over this.</summary>
