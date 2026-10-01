@@ -96,10 +96,10 @@ The builder sends step text to an LLM which maps it to module/action/parameters.
 
 > For a wrong **`.pr`** (bad mapping, hallucinated actions, dropped modifiers) —
 > especially deterministic/context-dependent ones — follow the triage in
-> [`debugging-builder-failures.md`](debugging-builder-failures.md): it isolates
-> planner vs compiler vs the rendered user message (the "blind compiler" class,
-> where the compile prompt renders empty because Fluid can't read native
-> collections) before you change any prompt.
+> [`debugging.code.md`](../../os/system/builder/debugging.code.md): it isolates
+> the decider vs the writer vs the rendered prompt (a template/binding bug where
+> the prompt renders empty because Fluid can't read a value) before you change any
+> prompt.
 
 When a build produces wrong output, don't guess — use `!debug`:
 

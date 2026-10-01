@@ -106,7 +106,7 @@ The step's trailing clause compiles directly into the callback's `Actions([list<
 5. Rebuild every user `.pr` that uses any of the touched params.
 6. Delete `error.handle.Goal` deprecated alias.
 7. Update the relevant per-action notes (`os/system/modules/<m>/<action>.notes.md` / `.examples.md`) for the touched callback shapes.
-8. Update `Documentation/v0.2/action-catalog.md` with the "callbacks are action chains" section.
+8. Update `os/system/modules/catalog.md` with the "callbacks are action chains" section.
 
 Leaving `goal.call.GoalName` and the `[goal.call]` type in place is deliberate. Revisit only if the sweep reveals a different shape is cleaner.
 
@@ -1692,7 +1692,7 @@ Debug-activation pass, Ingi flagged "what does llm have to do with debug?".
 - **Rebuild the builder `.goal`/`.pr`.** `os/system/builder/*.goal` + `.build/*.pr` still call `builder.load`
   /`builder.goals`/`builder.appSave`/… — the action module is now `build.*`, so the builder can't self-build
   until these are updated to `build.*` and the `.pr` rebuilt (LLM-driven bootstrap, cwd=os/, ordered file list;
-  see building-the-builder.md). Blocked on the born-source regression that already breaks the builder.
+  see os/system/builder/bootstrap.code.md). Blocked on the born-source regression that already breaks the builder.
 - **`app.builder.type` consistency.** The build-time type-schema namespace (`Example`/`Action`/`Field` specs
   used by action handlers) stayed `app.builder.type` — a distinct subsystem from the renamed module. Rename to
   `app.build.type` for full consistency if wanted (mechanical sed, ~15 files).

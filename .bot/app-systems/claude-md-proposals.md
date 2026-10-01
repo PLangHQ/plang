@@ -130,3 +130,12 @@ The value slot is built via `data.Normalize(View) → IWriter`, so a new domain 
 ```
 - **glued name** — a compound camelCase name (`ListName`, `buildExecutionPath`). Write it as a dot path, one word per segment (`setting.build.execution.path`), and check it navigates: each segment an owner whose member is the next. A path that doesn't navigate (`list.name`: a list has no name) is a flat copy or a misplaced member; the dot path shows the real owner (`list.variable.name`, so take `list`).
 ```
+
+## builder — v1 — 2026-10-01
+**Target:** CLAUDE.md, the "Action prose lives in markdown, not attributes" bullet under Runtime2 Conventions
+**Why:** The bullet describes the retired two-phase pipeline ("the user message of each Compile call only when the planner picked that action; Compile.llm keeps only the cross-cutting kernel") — there is no planner/Compile call on app-systems; it's the decider + one whole-goal writer (Properties) call. It also links `Documentation/v0.2/action-catalog.md`, which I moved to `os/system/modules/catalog.md` (co-located, renamed off `.code.md` per Ingi — no `catalog.cs`). The `MarkdownTeaching.cs` loader part is already covered by architect's v2 proposal above, but that proposal's replacement text still points "Full guide" at the old `Documentation/v0.2/action-catalog.md` — this supersedes that path.
+**Proposed change:**
+```
+- Per-action Notes render in the user message of each Compile call **only when the planner picked that action**; `Compile.llm` keeps only the cross-cutting kernel. `module.*.md` is a reserved stem (module-wide teaching layer); the renderer concats module-first + blank line + action. Orphan files surface as warnings via `MarkdownTeaching.ScanOrphans`. Full guide: `Documentation/v0.2/action-catalog.md`; loader: `PLang/app/module/MarkdownTeaching.cs`.
++ Per-action Notes/Examples render in the writer's Properties call (one `llm.query` per goal) **only for the actions the decider listed for a step**; `os/system/builder/llm/Properties.llm` keeps only the cross-cutting kernel. Each catalog element exposes its teaching as lazy file items (action: `PLang/app/goal/step/action/this.Schema.cs`; module: `PLang/app/module/this.cs`) under `os/system/modules/<module>/` — an absent file is falsy; there is no load-time orphan scan. Full guide: `os/system/modules/catalog.md`.
+```
