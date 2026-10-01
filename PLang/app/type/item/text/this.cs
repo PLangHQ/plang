@@ -217,7 +217,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
                 return new global::app.error.VariableNotFoundException(variable.Name, reachedPrefix, reachedType, hop.Text.TrimStart('.'));
             reached += hop.Text;
             reachedPrefix = reached;
-            reachedType = current.Peek()?.GetType().Name ?? "null";
+            reachedType = current.Type.Name;
         }
         return new global::app.error.VariableNotFoundException(variable.Name);
     }

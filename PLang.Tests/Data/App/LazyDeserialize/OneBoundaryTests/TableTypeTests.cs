@@ -64,9 +64,36 @@ public class TableTypeTests
         var t = (table)global::app.type.table.serializer.csv.Read(Csv, "csv",
             new global::app.type.reader.ReadContext(null))!;
         await Assert.That(t.Headers.Count).IsEqualTo(2);
-        await Assert.That(t.ColumnCount).IsEqualTo(2);
-        await Assert.That(t.RowCount).IsEqualTo(2);
+        await Assert.That(t.Rows.Count).IsEqualTo(2);
         await Assert.That(t.Headers[0]).IsEqualTo("name");
+    }
+
+    // A csv read and touched (counted, navigated) is a table, and `write out %content%` then writes it: the
+    // table writes itself — an array of rows, each an object keyed by header — and the json writer shows it
+    // as json. (It was refused: NoWireContract.) Untouched, the read is still its raw text and relays that.
+    [Test] public async Task TableCsv_WrittenThroughJsonWriter_IsTheRows()
+    {
+        await using var app = NewApp();
+        var ctx = app.actor.list.User.Context;
+        var d = global::PLang.Tests.Shared.Make.FromRaw(Csv, ctx.App.type.list[new type("table", "csv"), ctx], ctx, "t");
+        await Assert.That(await d.Value()).IsTypeOf<table>();
+
+        using var ms = new System.IO.MemoryStream();
+        var written = await ctx.Format("application/json").Encode(ms, d, ctx);
+
+        await written.IsSuccess();
+        await Assert.That(System.Text.Encoding.UTF8.GetString(ms.ToArray()))
+            .IsEqualTo("[{\"name\":\"Ada\",\"age\":\"36\"},{\"name\":\"Grace\",\"age\":\"40\"}]");
+    }
+
+    // `%t.count%` is the row count, as a list's and a dict's count is — the table answers it itself.
+    [Test] public async Task TableCount_IsTheRowCount()
+    {
+        await using var app = NewApp();
+        var ctx = app.actor.list.User.Context;
+        await ctx.Variable.Set("t", global::PLang.Tests.Shared.Make.FromRaw(Csv, ctx.App.type.list[new type("table", "csv"), ctx], ctx, "t"));
+
+        await Assert.That(await ctx.Rendered("%t.count%")).IsEqualTo("2");
     }
 
     // Lazy: stamping `type=table` is not parsing. `_raw` is the csv text

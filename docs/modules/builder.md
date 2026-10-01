@@ -20,7 +20,7 @@ Returns metadata for all registered actions — module names, action names, para
 
 ### types
 
-Returns the structured action catalog — primitive type names, discovered record/enum entries, and pre-rendered `TypeNames` / `TypeSchemas` strings ready for the Liquid template. The catalog is what teaches the LLM the shape of every type a parameter can hold. See [Action Catalog](../../Documentation/v0.2/action-catalog.md) for the attribute model and rendering rules.
+Returns the structured action catalog — primitive type names, discovered record/enum entries, and pre-rendered `TypeNames` / `TypeSchemas` strings ready for the Liquid template. The catalog is what teaches the LLM the shape of every type a parameter can hold. See [the action catalog guide](../../os/system/modules/catalog.md) for the attribute model and rendering rules.
 
 ```plang
 - get type info, write to %typeInfo%
