@@ -92,7 +92,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
         try
         {
             await src.WriteText("copy me", context);
-            var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true, context);
+            var copied = await src.CopyTo(dst, overwrite: true, subfolder: true, context);
             await copied.IsSuccess();
             var read = await dst.Touch(context);
             await Assert.That((await read.Value())?.ToString()).IsEqualTo("copy me");

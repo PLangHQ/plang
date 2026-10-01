@@ -244,25 +244,25 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.path.@this>> MoveTo(global::app.type.item.path.@this destination, global::app.type.item.@bool.@this overwrite, actor.context.@this context)
     {
         if (destination is not @this fileDest) return await base.MoveTo(destination, overwrite, context);
-        return await BundledTransfer(fileDest, isMove: true, overwrite.Value, includeSubfolders: true, context);
+        return await BundledTransfer(fileDest, isMove: true, overwrite.Value, subfolder: true, context);
     }
 
     /// <summary>
     /// Same-scheme copy with action-level options. See <see cref="MoveTo"/>.
     /// </summary>
-    public override async Task<data.@this<global::app.type.item.path.@this>> CopyTo(global::app.type.item.path.@this destination, global::app.type.item.@bool.@this overwrite, global::app.type.item.@bool.@this includeSubfolders, actor.context.@this context)
+    public override async Task<data.@this<global::app.type.item.path.@this>> CopyTo(global::app.type.item.path.@this destination, global::app.type.item.@bool.@this overwrite, global::app.type.item.@bool.@this subfolder, actor.context.@this context)
     {
-        if (destination is not @this fileDest) return await base.CopyTo(destination, overwrite, includeSubfolders, context);
-        return await BundledTransfer(fileDest, isMove: false, overwrite.Value, includeSubfolders.Value, context);
+        if (destination is not @this fileDest) return await base.CopyTo(destination, overwrite, subfolder, context);
+        return await BundledTransfer(fileDest, isMove: false, overwrite.Value, subfolder.Value, context);
     }
 
     /// <summary>
     /// Bundled-consent transfer. <paramref name="overwrite"/> and
-    /// <paramref name="includeSubfolders"/> are threaded through PerformTransfer
+    /// <paramref name="subfolder"/> are threaded through PerformTransfer
     /// so action-handler options (file.copy / file.move) ride along on the
     /// same bundled-prompt flow.
     /// </summary>
-    private async Task<data.@this<global::app.type.item.path.@this>> BundledTransfer(@this destination, bool isMove, bool overwrite, bool includeSubfolders, actor.context.@this context)
+    private async Task<data.@this<global::app.type.item.path.@this>> BundledTransfer(@this destination, bool isMove, bool overwrite, bool subfolder, actor.context.@this context)
     {
         var sourceVerb = Verb.Read;
         var destVerb   = Verb.Write;
@@ -274,7 +274,7 @@ public sealed partial class @this
         bool destOk   = destAuth?.Success == true;
 
         if (sourceOk && destOk)
-            return await PerformTransfer(destination, isMove, overwrite, includeSubfolders, context);
+            return await PerformTransfer(destination, isMove, overwrite, subfolder, context);
 
         var question = new StringBuilder();
         question.Append(context.Actor!.Name).Append(" wants to:");
@@ -288,7 +288,7 @@ public sealed partial class @this
         {
             if (!sourceOk) await StoreGrant(sourceVerb, persist, context);
             if (!destOk)   await destination.StoreGrant(destVerb, persist, context);
-            return await PerformTransfer(destination, isMove, overwrite, includeSubfolders, context);
+            return await PerformTransfer(destination, isMove, overwrite, subfolder, context);
         });
         return data.@this<global::app.type.item.path.@this>.From(consented);
     }
@@ -315,10 +315,10 @@ public sealed partial class @this
     /// subfolders) — absorbs <c>file/code/Default.cs::Default.Copy/Move</c>.
     /// Returns the new Path (post-transfer) wrapped in Data.
     /// </summary>
-    private async Task<data.@this<global::app.type.item.path.@this>> PerformTransfer(@this destination, bool isMove, bool overwrite, bool includeSubfolders, actor.context.@this context)
+    private async Task<data.@this<global::app.type.item.path.@this>> PerformTransfer(@this destination, bool isMove, bool overwrite, bool subfolder, actor.context.@this context)
     {
         var files = context.FileSystem;
-        // A folder copied whole: its files, and its folders' too when includeSubfolders.
+        // A folder copied whole: its files, and its folders' too when subfolder.
         async Task Copy(@this from, @this to)
         {
             files.Create(to);
@@ -326,7 +326,7 @@ public sealed partial class @this
             {
                 var into = new @this(PathHelper.Combine(to.Absolute, entry.FileName));
                 if (files.IsFile(entry)) await files.Copy(entry, into, overwrite);
-                else if (includeSubfolders) await Copy(entry, into);
+                else if (subfolder) await Copy(entry, into);
             }
         }
         try

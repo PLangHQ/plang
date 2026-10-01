@@ -310,6 +310,13 @@ again (`app.module.Get`) to judge an option its actions take — though `actor.s
 hand. Holding the module would be a late stamp for the module setting classes made by `new()` (llm's, build's), so
 it stays until a setting class is born from its owner.
 
+## Every action carries a method named Resolve [logged 2026-10-01, settings slice 2]
+
+The generator gives every action `ICodeGenerated.Resolve(action, context)` — the bind of an action's properties.
+"Resolve" names the mechanism, not what a caller wants of it, and it takes the name from every action: no
+action can have an option called `resolve` (file.read's became `Template`, which is the better name anyway).
+The bind should be named for what it answers, so action options are free to use the word.
+
 ## The setting catalog shows a default through ToString [logged 2026-10-01, settings slice 1]
 
 `type/item/setting/kind/this.cs` `Options` writes each option's default as `value.ToString()`. A setting node

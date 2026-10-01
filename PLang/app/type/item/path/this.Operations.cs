@@ -52,7 +52,7 @@ public abstract partial class @this
     // The option-bearing verbs (Delete/List/CopyTo/MoveTo/Save) live here, on
     // the base — so a file action handler calls them through the abstract
     // `path` reference and never downcasts to a concrete scheme. Filesystem-only
-    // options (recursive, includeSubfolders, overwrite, pattern) are honoured by
+    // options (recursive, subfolder, overwrite, pattern) are honoured by
     // FilePath and documented as no-ops by non-FS schemes — the no-op lives
     // inside the scheme, not as a branch the handler picks.
 
@@ -134,13 +134,13 @@ public abstract partial class @this
 
     /// <summary>
     /// Cross-scheme copy default: the bytes from this, WriteBytes to destination.
-    /// <paramref name="overwrite"/> / <paramref name="includeSubfolders"/> are
+    /// <paramref name="overwrite"/> / <paramref name="subfolder"/> are
     /// filesystem-only — a byte-stream copy has no folder tree and no in-place
     /// target, so they are no-ops here. Authorization is performed by the
     /// underlying verb impls. Subclasses (e.g. FilePath) override for
     /// same-scheme fast paths that honour the options.
     /// </summary>
-    public virtual async Task<data.@this<@this>> CopyTo(@this destination, global::app.type.item.@bool.@this overwrite, global::app.type.item.@bool.@this includeSubfolders, actor.context.@this context)
+    public virtual async Task<data.@this<@this>> CopyTo(@this destination, global::app.type.item.@bool.@this overwrite, global::app.type.item.@bool.@this subfolder, actor.context.@this context)
     {
         var read = await Bytes(context);
         if (!read.Success || read.Exits) return data.@this<@this>.From(read);
@@ -156,7 +156,7 @@ public abstract partial class @this
     /// </summary>
     public virtual async Task<data.@this<@this>> MoveTo(@this destination, global::app.type.item.@bool.@this overwrite, actor.context.@this context)
     {
-        var copy = await CopyTo(destination, overwrite, includeSubfolders: true, context);
+        var copy = await CopyTo(destination, overwrite, subfolder: true, context);
         if (!copy.Success || copy.Exits) return copy;
         return await Delete(context);
     }

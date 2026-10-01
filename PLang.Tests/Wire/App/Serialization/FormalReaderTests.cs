@@ -206,7 +206,7 @@ public class FormalReaderTests : System.IAsyncDisposable
         var read = Read("file.read(Pth=\"x\")", out _);
         await Assert.That(read.Success).IsFalse();
         await Assert.That(read.Error!.Key).IsEqualTo("FormalInvalid");
-        await Assert.That(read.Error.FixSuggestion).IsEqualTo("`file.read` has no property `Pth` (it has Path, ResolveVariables)");
+        await Assert.That(read.Error.FixSuggestion).IsEqualTo("`file.read` has no property `Pth` (it has Path, Template)");
     }
 
     [Test]

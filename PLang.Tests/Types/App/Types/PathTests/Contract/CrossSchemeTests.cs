@@ -24,7 +24,7 @@ public class CrossSchemeTests
         Authorize(context);
 
         await src.WriteText("cross hello", context);
-        var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true, context);
+        var copied = await src.CopyTo(dst, overwrite: true, subfolder: true, context);
         await copied.IsSuccess();
         var read = await dst.Touch(context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("cross hello");
@@ -40,7 +40,7 @@ public class CrossSchemeTests
         Authorize(context);
 
         await src.WriteText("reverse hello", context);
-        var copied = await src.CopyTo(dst, overwrite: true, includeSubfolders: true, context);
+        var copied = await src.CopyTo(dst, overwrite: true, subfolder: true, context);
         await copied.IsSuccess();
         var read = await dst.Touch(context);
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("reverse hello");
