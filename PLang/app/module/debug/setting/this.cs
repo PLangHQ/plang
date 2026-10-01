@@ -15,8 +15,8 @@ public sealed class @this : global::app.type.item.setting.module.@this
     /// it is created, changed or deleted. <c>--debug={"variables":["trace","goal"]}</c></summary>
     [Out, Store] public global::app.type.item.list.@this<global::app.type.item.text.@this> Variables { get; set; } = new();
 
-    /// <summary>Max characters per line before truncation. Default 500.</summary>
-    [Out, Store] public global::app.type.item.number.@this MaxLength { get; set; } = 500;
+    /// <summary>How long a line runs before it is cut (<c>length.max</c>, default 500).</summary>
+    [Out, Store] public length.@this Length { get; set; } = new();
 
     /// <summary>Regex string to filter debug output lines.</summary>
     [Out, Store] public global::app.type.item.text.@this? Grep { get; set; }
@@ -29,5 +29,5 @@ public sealed class @this : global::app.type.item.setting.module.@this
 
     /// <summary>Granular LLM tracing — each sub-flag dumps one part of the API exchange.
     /// <c>--debug={"llm":{"system":true,"user":true,"response":true,"schema":true}}</c></summary>
-    [Out] public global::app.module.debug.LlmDebug? Llm { get; set; }
+    [Out] public llm.@this? Llm { get; set; }
 }

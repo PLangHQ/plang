@@ -1,11 +1,10 @@
 namespace app.type.item.duration;
 
 /// <summary>
-/// String → duration. Accepts both CLR <see cref="System.TimeSpan"/> text
-/// (<c>"1.02:03:04"</c>, <c>"00:05:00"</c>) and ISO-8601 duration
-/// (<c>"PT5M"</c>, <c>"P1DT2H30M"</c>). The ISO path is hand-rolled
-/// because System.Xml's parser isn't available everywhere and we want a
-/// tight surface here.
+/// String → duration. Accepts the short form a step says (<c>"5s"</c>, <c>"200ms"</c>, <c>"2m"</c>, <c>"1h"</c>,
+/// <c>"1d"</c>), CLR <see cref="System.TimeSpan"/> text (<c>"1.02:03:04"</c>, <c>"00:05:00"</c>) and ISO-8601
+/// duration (<c>"PT5M"</c>, <c>"P1DT2H30M"</c>). The ISO path is hand-rolled because System.Xml's parser isn't
+/// available everywhere and we want a tight surface here.
 /// </summary>
 public sealed partial class @this
 {
@@ -13,6 +12,22 @@ public sealed partial class @this
     {
         if (string.IsNullOrWhiteSpace(raw)) return null;
         raw = raw.Trim();
+
+        // the short form: a number and its unit
+        var @short = System.Text.RegularExpressions.Regex.Match(raw, @"^(-?\d+(?:\.\d+)?)\s*(ms|s|m|h|d)$",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (@short.Success)
+        {
+            var amount = double.Parse(@short.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+            return new @this(@short.Groups[2].Value.ToLowerInvariant() switch
+            {
+                "ms" => System.TimeSpan.FromMilliseconds(amount),
+                "s" => System.TimeSpan.FromSeconds(amount),
+                "m" => System.TimeSpan.FromMinutes(amount),
+                "h" => System.TimeSpan.FromHours(amount),
+                _ => System.TimeSpan.FromDays(amount),
+            });
+        }
 
         if (raw.StartsWith('P') || raw.StartsWith('-') && raw.Length > 1 && raw[1] == 'P')
         {

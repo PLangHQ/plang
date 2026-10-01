@@ -14,9 +14,9 @@ public class ConceptSettingTests : System.IAsyncDisposable
     [Test] public async Task TestsSettings_AreReadThroughTheConceptType()
     {
         await using var app = new global::app.@this("/test").Testing();
-        var read = await Read("%!app.test.setting.timeoutSeconds%", app.actor.list.User.Context);
+        var read = await Read("%!app.test.setting.timeout%", app.actor.list.User.Context);
         await read.IsSuccess();
-        await Assert.That((await read.Value())?.ToString()).IsEqualTo("30");
+        await Assert.That((await read.Value())?.ToString()).IsEqualTo("PT30S");
     }
 
     [Test] public async Task AWriteThroughTheConceptType_IsThisRunsSetting()

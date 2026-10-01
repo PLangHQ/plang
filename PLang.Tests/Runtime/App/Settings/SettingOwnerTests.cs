@@ -40,10 +40,10 @@ public class SettingOwnerTests
     {
         await using var app = new global::app.@this("/test").Testing();
         app.Debug = new global::app.module.debug.@this(app.actor.list.System.Context);
-        await Assert.That(app.Debug.Setting.MaxLength.ToInt32()).IsEqualTo(500);
+        await Assert.That(app.Debug.Setting.Length.Max.ToInt32()).IsEqualTo(500);
 
-        await app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["maxLength"] = 10 }).IsSuccess();
-        await Assert.That(app.Debug.Setting.MaxLength.ToInt32()).IsEqualTo(10);
+        await app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["length"] = new Dictionary<string, object?> { ["max"] = 10 } }).IsSuccess();
+        await Assert.That(app.Debug.Setting.Length.Max.ToInt32()).IsEqualTo(10);
     }
 
     // A value the option can't take is refused at the flag, and nothing is written.
@@ -75,13 +75,13 @@ public class SettingOwnerTests
         {
             await using (var first = new global::app.@this(dir))
             {
-                var saved = new global::app.test.setting.@this { TimeoutSeconds = 7 };
+                var saved = new global::app.test.setting.@this { Timeout = System.TimeSpan.FromSeconds(7) };
                 await (await first.actor.list.System.Setting.Save(saved)).IsSuccess();
             }
 
             await using var app = new global::app.@this(dir);
             await app.Load();
-            await Assert.That(app.actor.list.User.Context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToInt32()).IsEqualTo(7);
+            await Assert.That(app.actor.list.User.Context.Setting.Of<global::app.test.setting.@this>().Timeout.Value.TotalSeconds).IsEqualTo(7);
         }
         finally { try { System.IO.Directory.Delete(dir, true); } catch (System.IO.IOException) { } }
     }

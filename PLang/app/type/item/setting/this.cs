@@ -28,6 +28,20 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <c>%!llm.setting%</c> is <c>llm.setting</c>.</summary>
     [Out] public string Path { get; }
 
+    /// <summary>Whether this setting is on — every setting node answers it, so any switch reads the same way
+    /// (<c>%!signing.verify.setting.freshness.check.enabled%</c>) and can grow members without a rename. A node read
+    /// as a bool is this; a bool written onto a node is this.</summary>
+    [Out, Store] public global::app.type.item.@bool.@this Enabled { get; set; } = true;
+
+    /// <summary>Whether this setting is off — what <see cref="Enabled"/> is not.</summary>
+    public global::app.type.item.@bool.@this Disabled => !Enabled.Value;
+
+    /// <summary>A setting node read as a bool is whether it is on.</summary>
+    public override bool IsTruthy() => Enabled.Value;
+
+    /// <summary>A setting node as text is what it reads as: whether it is on.</summary>
+    public override string ToString() => Enabled.ToString();
+
     /// <summary>A setting is built by the asker's settings, never made from a value.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {
@@ -51,10 +65,16 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// (<see cref="Next"/>).</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
     {
-        if (Option(key) is { } option)
+        if ((Option(key) ?? Switch(key)) is { } option)
             return new global::app.data.@this(key, option.GetValue(this), parent: parent);
         return await Next(parent, key);
     }
+
+    // enabled and disabled — what every setting node answers, beside its options
+    private System.Reflection.PropertyInfo? Switch(string key)
+        => key.Equals(nameof(Enabled), System.StringComparison.OrdinalIgnoreCase) || key.Equals(nameof(Disabled), System.StringComparison.OrdinalIgnoreCase)
+            ? typeof(@this).GetProperty(key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase)
+            : null;
 
     /// <summary>What a key that isn't one of this class's options names — an action's settings answer its
     /// options (<c>%!llm.query.setting.cache%</c>); a class has nothing past its options.</summary>
@@ -67,7 +87,7 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex,
         object? value, global::app.actor.context.@this context)
     {
-        if (Option(key) == null)
+        if (Option(key) == null && Switch(key)?.SetMethod == null)
             throw new System.NotSupportedException($"setting '{Path}' has no option '{key}'");
         // onto this instance through the one convert walk (a choice from its text) — a value the option can't
         // take is refused before this run holds it
@@ -113,6 +133,16 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
                 var child = prop.GetValue(node) ?? Construct(prop.PropertyType, context);
                 var r = Apply(child, sub, context);
                 if (!r.Success) return r;
+                prop.SetValue(node, child);
+            }
+            else if (typeof(@this).IsAssignableFrom(prop.PropertyType))
+            {
+                // a setting node takes a bool — whether it is on — or its members; anything else is refused
+                if (global::app.type.item.@this.Create(kvp.Value, context) is not global::app.type.item.@bool.@this on)
+                    return context.Error(new global::app.error.Error(
+                        $"setting '{kvp.Key}' is a switch: write true or false, or set its members", "TypeConversionFailed", 400));
+                var child = (@this)(prop.GetValue(node) ?? Construct(prop.PropertyType, context));
+                child.Enabled = on;
                 prop.SetValue(node, child);
             }
             else

@@ -130,9 +130,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         Begin();
         global::app.@event.binding.@this[] watching = [app.test.list.Report.Coverage.Watch(own), .. await Time(own)];
 
-        var seconds = context.Setting.Of<global::app.test.setting.@this>().TimeoutSeconds.ToDouble();
+        System.TimeSpan timeout = context.Setting.Of<global::app.test.setting.@this>().Timeout;
         using var cts = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(context.CancellationToken);
-        cts.CancelAfter(seconds <= 0 ? System.Threading.Timeout.InfiniteTimeSpan : System.TimeSpan.FromSeconds(seconds));
+        cts.CancelAfter(timeout <= System.TimeSpan.Zero ? System.Threading.Timeout.InfiniteTimeSpan : timeout);
         own.PushCancellation(cts);
         var timedOut = () => cts.IsCancellationRequested && !context.CancellationToken.IsCancellationRequested;
         try

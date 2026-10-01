@@ -22,7 +22,7 @@ public class EventsSinceTests
         var stack = app.actor.list.User.CallStack;
         var vars = app.actor.list.User.Context.Variable;
         stack.Variables = vars;
-        stack.Setting.Diff = true;
+        stack.Setting.Diff = new() { Enabled = true };
 
         await using var call = stack.Push(action, vars);
 
@@ -42,7 +42,7 @@ public class EventsSinceTests
     {
         var (app, action) = BuildLive("EvtB");
         var stack = app.actor.list.User.CallStack;
-        stack.Setting.Diff = true;
+        stack.Setting.Diff = new() { Enabled = true };
         await using var call = stack.Push(action, app.actor.list.User.Context.Variable);
 
         var future = DateTimeOffset.UtcNow.AddSeconds(10);

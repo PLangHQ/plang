@@ -79,7 +79,7 @@ If you see those, the planner/compiler is telling you it had to settle for a fal
 To verify the planner LLM was given your new action in its catalog, use `--debug` with `llmTrace`:
 
 ```bash
-plang '--build={"files":"myfile.goal","cache":false}' '--debug={"llmTrace":true,"maxLength":50000}'
+plang '--build={"files":"myfile.goal","cache":false}' '--debug={"llmTrace":true,"length":{"max":50000}}'
 ```
 
 That prints `=== LLM REQUEST ===` blocks for each `llm.query` call, including the planner's system prompt with the full `{{ actionSummary }}` block. Search the request body for your action name — if it's missing there, the catalog discovery didn't pick it up. Common causes:

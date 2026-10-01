@@ -271,7 +271,7 @@ goal to redirect all build output somewhere else.
 
 To see exactly what the LLM received and returned, use `--debug` rather than
 adding diagnostics — e.g.
-`plang build '--build={"cache":false}' '--debug={"llm":{"system":true,"response":true},"maxLength":50000}'`.
+`plang build '--build={"cache":false}' '--debug={"llm":{"system":true,"response":true},"length":{"max":50000}}'`.
 Full options in [`debug.md`](debug.md).
 
 ---
@@ -358,9 +358,9 @@ that answer "where did this variable come from / change / go wrong?":
   with the resolved type and nesting depth. Use it when a `%var%` resolves to
   null or the wrong member and you need to see the lookup path.
 - **Scope and trim the noise** — `goal` / `step` filter to one place, `grep` is a
-  case-insensitive regex over output lines, `maxLength` caps line length:
+  case-insensitive regex over output lines, `length.max` caps line length:
   ```bash
-  plang build '--build={"cache":false}' '--debug={"goal":"BuildGoal","step":3,"grep":"Module","maxLength":2000}'
+  plang build '--build={"cache":false}' '--debug={"goal":"BuildGoal","step":3,"grep":"Module","length":{"max":2000}}'
   ```
 
 The combination — read the trace to see *what* the builder produced and what the
