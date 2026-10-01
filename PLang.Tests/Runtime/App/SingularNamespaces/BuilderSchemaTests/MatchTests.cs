@@ -141,6 +141,34 @@ public class MatchTests
         await Assert.That(goal.Step[0].Code.Count).IsEqualTo(1);
     }
 
+    // A variable is one by its name whatever its case, as the variable list holds it: the answer that writes the
+    // step's %greeting% as %Greeting% holds it, both ways.
+    [Test]
+    public async Task AVariableTheAnswerWritesInAnotherCase_IsTheStepsVariable()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("write out %greeting%"));
+        await Picked(goal, app.actor.list.System.Context, (0, "output.write"));
+
+        var result = await Match(goal, "[0] output.write(Data=%Greeting%)", app.actor.list.System.Context);
+
+        await result.IsSuccess();
+    }
+
+    [Test]
+    public async Task AVariableTheStepWrites_MissingFromTheAnswer_IsRefused()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("set %Name% to %other%"));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
+
+        var result = await Match(goal, "[0] variable.set(Name=%name%)", app.actor.list.System.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("%other% is in the step but not in your answer");
+        await Assert.That(result.Error!.Message).DoesNotContain("%Name% is in the step");
+    }
+
     // A number the step writes is one of its markers: an answer that drops it (no Operator, no Right) is refused,
     // never taken silently.
     [Test]

@@ -1,8 +1,8 @@
 namespace PLang.Tests.App.Serialization;
 
-// The formal writer against the python reference: each golden step's .pr rows, read through the real step
-// reader, written through formal.Writer, must be python's formal byte for byte (formal_golden.json, written
-// by tools/decider/formal_fixture.py from formal.py).
+// The formal writer against a pinned fixture (formal_golden.json): each golden step's .pr rows, read through the
+// real step reader, written through formal.Writer, are the pinned formal byte for byte. An intended change re-pins
+// it through AcceptTheFixture.
 public class FormalWriterTests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = new global::app.@this("/app").Testing();
@@ -44,8 +44,22 @@ public class FormalWriterTests : System.IAsyncDisposable
         return writer.ToString();
     }
 
+    // Re-pins formal_golden.json's formal from C#: run by hand after an intended change to the formal writer, then
+    // review the diff.
+    [Test, Explicit]
+    public async Task AcceptTheFixture()
+    {
+        var context = app.actor.list.User.Context;
+        var goal = Goal(context);
+        const string pinnedPath = "PLang.Tests/Wire/App/Serialization/formal_golden.json";
+        var pinned = Fixture.Read(pinnedPath).AsArray();
+        var entries = Golden();
+        for (int i = 0; i < entries.Length; i++) pinned[i]!["formal"] = await Formal(Step(goal, entries[i], context), context);
+        Fixture.Write(pinnedPath, pinned);
+    }
+
     [Test]
-    public async Task EveryGoldenStep_WritesPythonsFormal_ByteForByte()
+    public async Task EveryGoldenStep_WritesThePinnedFormal_ByteForByte()
     {
         var context = app.actor.list.User.Context;
         var goal = Goal(context);

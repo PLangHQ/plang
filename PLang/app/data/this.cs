@@ -119,6 +119,63 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<@this> Follow(actor.context.@this ctx)
         => IsVariable && _item != null && await _item.Get(ctx) is { } named ? named : this;
 
+    /// <summary>The Data this is, as it is here and now, read with this Data's own context where it stands —
+    /// carrying this Data's own name and its result flags (Returned, ReturnDepth, Handled), never another's.
+    /// <list type="bullet">
+    /// <item>A reference (one whole variable) answers the Data it names — a pointer to the same value (a computed,
+    /// <c>%Now%</c> or <c>%!goal%</c>, answers what it computes now). Nothing is read through a value door: a
+    /// reference to content not yet read stays unread.</item>
+    /// <item>A reference that names nothing answers no value (not initialized, as the miss is), failed as reading
+    /// it fails anywhere (its own door says the variable is not set) — the one settled answer with no value, so it
+    /// is told from a variable that holds a failure.</item>
+    /// <item>A value that holds variables (<c>"%name%: %price% kr"</c>, a dict or list holding them) renders here:
+    /// the one place a value door is opened, since a template renders by opening the values it names. A name it
+    /// can't read fails the render, and that failure is the answer.</item>
+    /// <item>A failure, and any other Data, answers itself.</item>
+    /// </list></summary>
+    public virtual async System.Threading.Tasks.ValueTask<@this> Settle()
+    {
+        if (!HasVariable || _error != null) return this;
+        @this answer;
+        if (!IsVariable) answer = await Rendered();
+        else if (await Follow(Context) is { IsInitialized: true } named) answer = named.Copy(Name, named._context);
+        else answer = await Missed();
+        answer.Handled = Handled;
+        answer.Returned = Returned;
+        answer.ReturnDepth = ReturnDepth;
+        return answer;
+    }
+
+    // This value rendered: what its door answers, held under this name. A render that fails answers null, failed with
+    // why — nothing of the template is kept, so a name set later doesn't bring it back. Asked of a copy, since this
+    // Data may be a program's, shared by every run.
+    private async System.Threading.Tasks.ValueTask<@this> Rendered()
+    {
+        var asked = Copy();
+        global::app.error.Error? why;
+        try
+        {
+            var rendered = await asked.Value();
+            if (asked.Success) return new @this(Name, rendered, context: _context) { Properties = Properties.Clone() };
+            why = asked.Error!;
+        }
+        // a partial template throws for a name it can't read; here that is this value's answer, on the Data
+        catch (global::app.error.VariableNotFoundException missing) { why = missing.Error; }
+        var failed = new @this(Name, global::app.type.item.@null.@this.Instance, context: _context);
+        failed.Fail(why);
+        return failed;
+    }
+
+    // The miss: no value, as Follow answered it, failed with what the reference's own door says (asked of a copy).
+    private async System.Threading.Tasks.ValueTask<@this> Missed()
+    {
+        var asked = Copy();
+        await asked.Value();
+        var missed = NotFound(Name, _context);
+        missed.Fail(asked.Error!);
+        return missed;
+    }
+
     /// <summary>
     /// True when the value holds a variable — the value's own answer (a template's <c>%…%</c>, a
     /// variable itself). <see cref="IsVariable"/> is "%name%" (the whole value IS a reference);
@@ -684,6 +741,12 @@ public class @this<T> : @this
         : base(name, value, type, parent, context) { }
 
     public static @this<T> Ok(T value, type? type = null) => new("", value, type);
+
+    /// <summary>Settles as a <typeparamref name="T"/> slot: what the reference names, held whole and still typed
+    /// — it converts at its door, when read. A miss stays the miss (no value): a typed hold would make it a
+    /// present null.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Settle()
+        => await base.Settle() is var settled && !ReferenceEquals(settled, this) && settled.IsInitialized ? From(settled) : settled;
     public new static @this<T> FromError(global::app.error.Error error) => new() { Error = error };
 
     /// <summary>Typed absent slot — non-null Data, <c>IsInitialized == false</c>. The

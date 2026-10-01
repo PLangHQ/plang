@@ -12,13 +12,14 @@ public sealed class @this : part.@this
 {
     private readonly global::app.type.item.text.@this _field;
 
-    /// <summary>The group of <paramref name="written"/>: the field to group by.</summary>
-    internal @this(Data written, global::app.actor.context.@this context)
+    private @this(global::app.type.item.text.@this field) => _field = field;
+
+    /// <summary>The query's <paramref name="group"/>: the field to group by; none named is why on <c>data</c>.</summary>
+    internal static @this? Create(Data group, Data data, global::app.actor.context.@this context)
     {
-        if (written.Peek()?.ToString() is not { Length: > 0 } field)
-            throw new global::app.error.AppException(new global::app.error.Error(
-                $"{Name}: names the field to group by — group: \"name\"", "QueryInvalid", 400));
-        _field = field;
+        if (group.Peek()?.ToString() is { Length: > 0 } field) return new(field);
+        data.Fail(new global::app.error.Error("names the field to group by — group: \"name\"", "QueryInvalid", 400));
+        return null;
     }
 
     internal override int Rank => 1;

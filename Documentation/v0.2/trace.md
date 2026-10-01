@@ -62,12 +62,14 @@ it:
 └── traces/
     └── {trace.id}/
         ├── manifest.json           ← list of goal names built in this run
-        ├── Start.json              ← per-goal trace JSON (BuildGoal output)
-        ├── DoStuff.json
-        └── llm/                    ← optional, when --debug llm.output=file
-            ├── Start_goal.txt      ← raw LLM exchange for the goal-level call
-            └── Start_3.txt         ← per-step LLM exchange (BuildStep)
+        ├── Start.json              ← per-goal trace JSON
+        └── DoStuff.json
 ```
+
+Each per-goal `<goal>.json` holds `{id, timestamp, goal, subGoals, durationMs}`
+(plus a `buildError` block when that goal failed) — identity and timing, **not**
+the LLM exchange. To see what the LLM received or returned, use
+`--debug={"llm":{...}}` (see [debug.md](debug.md)), not the trace.
 
 The folder layout makes it cheap to delete one build's traces (`rm -rf
 .build/traces/{trace.id}/`) and groups everything from one execution together.
@@ -79,9 +81,9 @@ Trace files are written by the builder PLang **regardless of whether
 *consumes* it for filename composition.
 
 If you need a runtime diagnostic id (correlating logs to a build), use
-`%!trace.id%`. If you need a per-LLM-call id, see [debug.md](debug.md) — the
-LLM debug feature uses `Trace.Id` as the folder, then disambiguates calls by
-goal/step within that folder.
+`%!trace.id%` — it is the trace-folder name, so the trace files all line up
+under one id. For what the LLM actually saw or returned, use
+`--debug={"llm":{...}}` (see [debug.md](debug.md)).
 
 ## Extension
 

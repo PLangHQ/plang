@@ -17,7 +17,7 @@ Then **check that the path navigates**: each segment must be an owner in the cod
 
 The dot path is the same test as [the three paths agree](object_pattern_formal.md#the-three-paths-agree) (plang path = C# path = file path), applied to every single name. Done correctly, it guides you to where things should be, and it shows you when they don't match.
 
-**The example that found it.** Sketching `list.query`, the action took `ListName`, the name of the variable holding the list, copied from `list.where`, `list.sort` and `list.group`:
+**The example that found it.** Sketching `list.query`, the action took `ListName`, the name of the variable holding the list, copied from the list actions it replaced:
 
 ```csharp
 public partial data.@this<app.type.item.variable.@this> ListName { get; init; }

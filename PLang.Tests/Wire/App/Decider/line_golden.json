@@ -1,205 +1,205 @@
 [
- {
-  "name": "a lone if holds the step's other action in its body",
-  "nests": true,
-  "moves": [
-   [
-    "add",
-    "condition.if(Left=?)",
-    true
-   ],
-   [
-    "add",
-    "goal.return()",
-    false
-   ]
-  ],
-  "written": "condition.if(Left=?) { goal.return() }"
- },
- {
-  "name": "a lone if with nothing else stays bare",
-  "nests": true,
-  "moves": [
-   [
-    "add",
-    "condition.if(Left=?)",
-    true
-   ]
-  ],
-  "written": "condition.if(Left=?)"
- },
- {
-  "name": "a chain stays flat",
-  "nests": false,
-  "moves": [
-   [
-    "add",
-    "condition.if(Left=?)",
-    true
-   ],
-   [
-    "add",
-    "condition.else()",
-    false
-   ],
-   [
-    "add",
-    "goal.call(Name=?)",
-    false
-   ]
-  ],
-  "written": "condition.if(Left=?); condition.else(); goal.call(Name=?)"
- },
- {
-  "name": "a step with a body below stays flat",
-  "nests": false,
-  "moves": [
-   [
-    "add",
-    "condition.if(Left=?)",
-    true
-   ],
-   [
-    "add",
-    "goal.return()",
-    false
-   ]
-  ],
-  "written": "condition.if(Left=?); goal.return()"
- },
- {
-  "name": "a clause follows its action inside the body; write to stays after the if",
-  "nests": true,
-  "moves": [
-   [
-    "add",
-    "condition.if(Left=?)",
-    true
-   ],
-   [
-    "add",
-    "goal.call(Name=?)",
-    false
-   ],
-   [
-    "insert",
-    "on.error(Recovery=[goal.call(Name=?)])"
-   ],
-   [
-    "append",
-    "variable.set(Name=%x%, Value=%!data%)"
-   ]
-  ],
-  "written": "condition.if(Left=?) { goal.call(Name=?); on.error(Recovery=[goal.call(Name=?)]) }; variable.set(Name=%x%, Value=%!data%)"
- },
- {
-  "name": "a clause with no action yet leaves ? for it, and the action takes it",
-  "nests": false,
-  "moves": [
-   [
-    "insert",
-    "on.error(Recovery=?)"
-   ],
-   [
-    "add",
-    "file.read(Path=?)",
-    false
-   ]
-  ],
-  "written": "file.read(Path=?); on.error(Recovery=?)"
- },
- {
-  "name": "two clauses: the later one right after the action",
-  "nests": false,
-  "moves": [
-   [
-    "add",
-    "goal.call(Name=?)",
-    false
-   ],
-   [
-    "insert",
-    "on.error(Recovery=?)"
-   ],
-   [
-    "insert",
-    "on.timeout(After=?)"
-   ]
-  ],
-  "written": "goal.call(Name=?); on.timeout(After=?); on.error(Recovery=?)"
- },
- {
-  "name": "a loop leads, whatever its score put before it",
-  "nests": false,
-  "moves": [
-   [
-    "add",
-    "goal.call(Name=?)",
-    false
-   ],
-   [
-    "lead",
-    "loop.foreach(Collection=?)"
-   ]
-  ],
-  "written": "loop.foreach(Collection=?); goal.call(Name=?)"
- },
- {
-  "name": "set %x% = %x% + 1: the keep follows the action that produces its value, keeping %!data%",
-  "nests": false,
-  "moves": [
-   [
-    "keep",
-    "variable.set(Name=?, Value=?)",
-    "variable.set(Name=?, Value=%!data%)"
-   ],
-   [
-    "add",
-    "math.add(A=?, B=?)",
-    false,
-    true
-   ]
-  ],
-  "written": "math.add(A=?, B=?); variable.set(Name=?, Value=%!data%)"
- },
- {
-  "name": "set %x% = 5, write out %x%: a sink produces nothing, so the keep stays first",
-  "nests": false,
-  "moves": [
-   [
-    "keep",
-    "variable.set(Name=?, Value=?)",
-    "variable.set(Name=?, Value=%!data%)"
-   ],
-   [
-    "add",
-    "output.write(Data=?)",
-    false,
-    false
-   ]
-  ],
-  "written": "variable.set(Name=?, Value=?); output.write(Data=?)"
- },
- {
-  "name": "a keep follows the producers, and a write-to stays last",
-  "nests": false,
-  "moves": [
-   [
-    "keep",
-    "variable.set(Name=?, Value=?)",
-    "variable.set(Name=?, Value=%!data%)"
-   ],
-   [
-    "add",
-    "math.add(A=?, B=?)",
-    false,
-    true
-   ],
-   [
-    "append",
-    "variable.set(Name=%y%, Value=%!data%)"
-   ]
-  ],
-  "written": "math.add(A=?, B=?); variable.set(Name=?, Value=%!data%); variable.set(Name=%y%, Value=%!data%)"
- }
+  {
+    "name": "a lone if holds the step's other action in its body",
+    "nests": true,
+    "moves": [
+      [
+        "add",
+        "condition.if(Left=?)",
+        true
+      ],
+      [
+        "add",
+        "goal.return()",
+        false
+      ]
+    ],
+    "written": "condition.if(Left=?) { goal.return() }"
+  },
+  {
+    "name": "a lone if with nothing else stays bare",
+    "nests": true,
+    "moves": [
+      [
+        "add",
+        "condition.if(Left=?)",
+        true
+      ]
+    ],
+    "written": "condition.if(Left=?)"
+  },
+  {
+    "name": "a chain stays flat",
+    "nests": false,
+    "moves": [
+      [
+        "add",
+        "condition.if(Left=?)",
+        true
+      ],
+      [
+        "add",
+        "condition.else()",
+        false
+      ],
+      [
+        "add",
+        "goal.call(Name=?)",
+        false
+      ]
+    ],
+    "written": "condition.if(Left=?); condition.else(); goal.call(Name=?)"
+  },
+  {
+    "name": "a step with a body below stays flat",
+    "nests": false,
+    "moves": [
+      [
+        "add",
+        "condition.if(Left=?)",
+        true
+      ],
+      [
+        "add",
+        "goal.return()",
+        false
+      ]
+    ],
+    "written": "condition.if(Left=?); goal.return()"
+  },
+  {
+    "name": "a clause follows its action inside the body; write to stays after the if",
+    "nests": true,
+    "moves": [
+      [
+        "add",
+        "condition.if(Left=?)",
+        true
+      ],
+      [
+        "add",
+        "goal.call(Name=?)",
+        false
+      ],
+      [
+        "insert",
+        "on.error(Recovery=[goal.call(Name=?)])"
+      ],
+      [
+        "append",
+        "variable.set(Name=%x%, Value=%!data%)"
+      ]
+    ],
+    "written": "condition.if(Left=?) { goal.call(Name=?); on.error(Recovery=[goal.call(Name=?)]) }; variable.set(Name=%x%, Value=%!data%)"
+  },
+  {
+    "name": "a clause with no action yet leaves ? for it, and the action takes it",
+    "nests": false,
+    "moves": [
+      [
+        "insert",
+        "on.error(Recovery=?)"
+      ],
+      [
+        "add",
+        "file.read(Path=?)",
+        false
+      ]
+    ],
+    "written": "file.read(Path=?); on.error(Recovery=?)"
+  },
+  {
+    "name": "two clauses: the later one right after the action",
+    "nests": false,
+    "moves": [
+      [
+        "add",
+        "goal.call(Name=?)",
+        false
+      ],
+      [
+        "insert",
+        "on.error(Recovery=?)"
+      ],
+      [
+        "insert",
+        "on.timeout(After=?)"
+      ]
+    ],
+    "written": "goal.call(Name=?); on.timeout(After=?); on.error(Recovery=?)"
+  },
+  {
+    "name": "a loop leads, whatever its score put before it",
+    "nests": false,
+    "moves": [
+      [
+        "add",
+        "goal.call(Name=?)",
+        false
+      ],
+      [
+        "lead",
+        "loop.foreach(Collection=?)"
+      ]
+    ],
+    "written": "loop.foreach(Collection=?); goal.call(Name=?)"
+  },
+  {
+    "name": "set %x% = %x% + 1: the keep follows the action that produces its value, keeping %!data%",
+    "nests": false,
+    "moves": [
+      [
+        "keep",
+        "variable.set(Name=?, Value=?)",
+        "variable.set(Name=?, Value=%!data%)"
+      ],
+      [
+        "add",
+        "math.add(A=?, B=?)",
+        false,
+        true
+      ]
+    ],
+    "written": "math.add(A=?, B=?); variable.set(Name=?, Value=%!data%)"
+  },
+  {
+    "name": "set %x% = 5, write out %x%: a sink produces nothing, so the keep stays first",
+    "nests": false,
+    "moves": [
+      [
+        "keep",
+        "variable.set(Name=?, Value=?)",
+        "variable.set(Name=?, Value=%!data%)"
+      ],
+      [
+        "add",
+        "output.write(Data=?)",
+        false,
+        false
+      ]
+    ],
+    "written": "variable.set(Name=?, Value=?); output.write(Data=?)"
+  },
+  {
+    "name": "a keep follows the producers, and a write-to stays last",
+    "nests": false,
+    "moves": [
+      [
+        "keep",
+        "variable.set(Name=?, Value=?)",
+        "variable.set(Name=?, Value=%!data%)"
+      ],
+      [
+        "add",
+        "math.add(A=?, B=?)",
+        false,
+        true
+      ],
+      [
+        "append",
+        "variable.set(Name=%y%, Value=%!data%)"
+      ]
+    ],
+    "written": "math.add(A=?, B=?); variable.set(Name=?, Value=%!data%); variable.set(Name=%y%, Value=%!data%)"
+  }
 ]

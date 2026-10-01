@@ -13,7 +13,11 @@ namespace app.type.item.variable.list;
 /// </summary>
 public partial class @this
 {
-    private readonly ConcurrentDictionary<string, data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>How two variable names compare: a name is the same variable whatever its case (<c>%Greeting%</c> is
+    /// <c>%greeting%</c>).</summary>
+    internal static readonly StringComparer Comparer = StringComparer.OrdinalIgnoreCase;
+
+    private readonly ConcurrentDictionary<string, data.@this> _variables = new(Comparer);
     private actor.context.@this _context;
 
     /// <summary>
@@ -80,21 +84,20 @@ public partial class @this
     /// </summary>
     public async System.Threading.Tasks.ValueTask<data.@this> Set(string name, object? value)
     {
-        // A reference value (%x%) binds the referenced VALUE, not the reference marker. The
-        // instance Gets itself (lazy name-hop: the target's value door is never opened here — no
-        // eager read), and `name` gets a Copy of it — the documented `set %y% = %x%` rule:
-        // the value INSTANCE is shared (immutable, so safe) so it stays lazy, while the Properties
-        // bag is COPIED so a later `%y%!prop` write never bleeds onto x. Copy semantics: y captures
-        // x's CURRENT value, not its future reassignments. Storing the marker verbatim would go
-        // stale (!data rebinds every action) and a self-assign (`set %a% = %a%`) would cycle on the
-        // value door; the copy avoids both. Each reference carrier resolves its own name
-        // (variable/source/text) — the courier just asks. A miss flows through as-is. The
-        // reference resolves with the context of the Data that carries it (a goal-call argument
-        // `place=%city%` reads the CALLER's memory, whichever store it lands in).
-        if (value is data.@this reference && reference.IsVariable)
+        // A value that holds variables binds as it is now (data.Settle): a template renders here, at the set — a
+        // name it can't read fails the set — and a reference (%x%) binds the referenced VALUE, not the marker
+        // (data.Settle: the value INSTANCE is shared, so it stays lazy; the Properties bag is its own,
+        // so a later `%y%!prop` write never bleeds onto x). y captures x's CURRENT value, not its future
+        // reassignments. Storing the marker verbatim would go stale (!data rebinds every action) and a
+        // self-assign (`set %a% = %a%`) would cycle on the value door. The reference resolves with the
+        // context of the Data that carries it (a goal-call argument `place=%city%` reads the CALLER's
+        // memory, whichever store it lands in). What binds is renamed to `name` — a variable holding a
+        // failure binds that failure; a reference to nothing (settled to no value) leaves `name` unset,
+        // keeping nothing of the reference, so setting the missing one later doesn't reach it.
+        if (value is data.@this reference && reference.HasVariable)
         {
-            var bound = await reference.Follow(reference.Context);
-            value = bound.IsInitialized ? bound.Copy(name) : bound;
+            var bound = await reference.Settle();
+            value = bound.IsInitialized ? bound.Copy(name) : _context.NotFound(name);
         }
 
         // The name is a variable's root; a write deeper in is the variable's own (variable.Set).

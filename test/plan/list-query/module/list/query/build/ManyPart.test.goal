@@ -1,0 +1,6 @@
+/ A multi-part sentence, in words, builds to one list.query with where-and, group, distinct and order.
+Start
+- set %users% = [{name: "x", city: "A", age: 30, active: true}, {name: "y", city: "A", age: 20, active: true}, {name: "z", city: "B", age: 40, active: false}]
+- filter %users% where active is true and age >= 18, group by city, distinct, order by age, write to %r%
+- assert that %r.Count% is 1
+- assert that %r[0].key% is "A"

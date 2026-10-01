@@ -139,3 +139,15 @@ The value slot is built via `data.Normalize(View) → IWriter`, so a new domain 
 - Per-action Notes render in the user message of each Compile call **only when the planner picked that action**; `Compile.llm` keeps only the cross-cutting kernel. `module.*.md` is a reserved stem (module-wide teaching layer); the renderer concats module-first + blank line + action. Orphan files surface as warnings via `MarkdownTeaching.ScanOrphans`. Full guide: `Documentation/v0.2/action-catalog.md`; loader: `PLang/app/module/MarkdownTeaching.cs`.
 + Per-action Notes/Examples render in the writer's Properties call (one `llm.query` per goal) **only for the actions the decider listed for a step**; `os/system/builder/llm/Properties.llm` keeps only the cross-cutting kernel. Each catalog element exposes its teaching as lazy file items (action: `PLang/app/goal/step/action/this.Schema.cs`; module: `PLang/app/module/this.cs`) under `os/system/modules/<module>/` — an absent file is falsy; there is no load-time orphan scan. Full guide: `os/system/modules/catalog.md`.
 ```
+
+## architect — v4 — 2026-10-01
+**Target:** characters/builder/character.md, line 22 (the C# boundary) and line 125
+**Why:** Ingi ratified it directly to the architect (2026-10-01, decision 452: "yes, correct"), then narrowed the C# to modules (relayed by the builder bot the same day): a build bug sent to the builder bot can be fixed along its path (prompt, template, teaching, and the module C# that feeds them) instead of handing the C# half to the coder; core runtime stays the coder's. The character still says "minor C# changes only".
+**Proposed change:**
+```
+- You do not own user-facing `.pr` files or runtime C# (that's coder). Minor C# changes are allowed when they directly expose data the builder's goal files need but can't currently reach — note them clearly when you make them.
++ You own all of `os/system/**` (the builder's goals, `.llm` prompts and templates, and the action teaching under `os/system/modules/**`) and the module C# under `PLang/app/module/**` (`module/build`, `module/llm` and the decider among them). Core runtime is the coder's and you don't edit it: `PLang/app/goal/**` (the pick, the step checks in `goal/step/this.Validate.cs`), `PLang/app/type/**`, `event`, `actor`. A build bug whose fix lies in core goes to the coder through the architect. Build bugs reported by any bot come to you. Show the architect the shape before a C# edit; every commit gets the architect's review and gate.
+
+- - **Missing data** → minor C# change to expose what the builder needs
++ - **Missing data** → the change in a module's C#; in core, ask the coder through the architect
+```

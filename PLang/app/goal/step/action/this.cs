@@ -203,10 +203,7 @@ public partial class @this
         // answers (a retry, a recovery, an ignore); a failure no clause takes stands.
         if (!data.Success) data = await on.error.Catch(this, data, context);
 
-        // %!data% is the last action's result, stored AS-IS. A reference stays a
-        // reference and a lazy source stays unread — %!data% never forces a value.
-        // Resolution happens only when a real consumer opens the door; storing the
-        // value here would read a pending file / resolve a %ref% at every action.
+        // %!data% is the last action's result, as its attempt settled it.
         if (data.Success)
             await context.Variable.Set("!data", data);
         return data;
@@ -234,7 +231,12 @@ public partial class @this
             data = answer;
         else
             data = await DispatchAsync(context, context.CallStack.Current!);
-        return await on.start.After(this, data, context);
+        // The result leaves the attempt as it is here, inside the frame: a reference is bound to what it names,
+        // read where it is written (`return %!goal%` is this goal, `%Now%` the moment of the return, a call
+        // argument the callee's), not where the caller opens it after the frame is gone. Nothing is read through
+        // a value door, so a lazy source stays unread; a reference to nothing fails here, where on.error sees it.
+        // What is bound after the start (the cache) still sees the attempt's own result.
+        return await (await on.start.After(this, data, context)).Settle();
     }
 
     /// <summary>A program action of this catalog element's kind, in <paramref name="step"/> — a clause when this

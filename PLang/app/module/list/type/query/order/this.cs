@@ -4,19 +4,28 @@ using List = global::app.type.item.list.@this;
 namespace app.module.list.type.query.order;
 
 /// <summary>
-/// The order part: the rows sorted by its keys, the first key first (<c>list.Sort</c>). Written as a field
-/// (<c>order: "age"</c>), one key (<c>{field: "age", desc: true}</c>) or a list of keys; a key with no field
-/// orders by the elements themselves.
+/// The order part: the rows sorted by its keys, the first key first. Written as a field (<c>order: "age"</c>), one
+/// key (<c>{field: "age", desc: true}</c>) or a list of keys; a key with no field orders by the elements themselves.
 /// </summary>
 public sealed class @this : part.@this
 {
-    private readonly IReadOnlyList<(global::app.type.item.text.@this? Field, bool Desc)> _key;
+    private readonly IReadOnlyList<key.@this> _key;
 
-    /// <summary>The order of <paramref name="written"/>: its keys, in the order they decide.</summary>
-    internal @this(Data written, global::app.actor.context.@this context)
-        => _key = written.Peek() is List keys
-            ? keys.Items(context).Select(k => Key(k.Peek(), context)).ToList()
-            : [Key(written.Peek(), context)];
+    private @this(IReadOnlyList<key.@this> key) => _key = key;
+
+    /// <summary>The query's <paramref name="order"/>: its keys, in the order they decide; a key that doesn't read
+    /// is why on <c>data</c>.</summary>
+    internal static @this? Create(Data order, Data data, global::app.actor.context.@this context)
+    {
+        IEnumerable<Data> each = order.Peek() is List listed ? listed.Items(context) : [order];
+        var keys = new List<key.@this>();
+        foreach (var one in each)
+        {
+            if (key.@this.Create(one, data, context) is not { } read) return null;
+            keys.Add(read);
+        }
+        return new(keys);
+    }
 
     internal override int Rank => 3;
 
@@ -25,9 +34,9 @@ public sealed class @this : part.@this
     {
         // the last key sorts first: the sort keeps the order of equal keys, so each key before it decides over it
         Data sorted = context.Ok(rows);
-        foreach (var (field, desc) in _key.Reverse())
+        foreach (var by in _key.Reverse())
         {
-            sorted = await sorted.Use<List>(left => left.Sort(field, desc, context));
+            sorted = await sorted.Use<List>(left => by.Sort(left, context));
             if (!sorted.Success) break;
         }
         return await Next(sorted, rest, context);
@@ -37,28 +46,8 @@ public sealed class @this : part.@this
         global::app.actor.context.@this context)
     {
         writer.BeginArray(_key.Count);
-        foreach (var (field, desc) in _key)
-        {
-            writer.BeginObject();
-            if (field != null) { writer.Name("field"); writer.String(field.ToString()); }
-            writer.Name("desc"); writer.Bool(desc);
-            writer.EndObject();
-        }
+        foreach (var by in _key) by.Output(writer);
         writer.EndArray();
         return System.Threading.Tasks.ValueTask.CompletedTask;
-    }
-
-    // One key: a field, or {field?, desc?}.
-    private (global::app.type.item.text.@this? Field, bool Desc) Key(object? written, global::app.actor.context.@this context)
-    {
-        if (written is global::app.type.item.dict.@this dict)
-        {
-            global::app.type.item.text.@this? field = dict.Get("field", context)?.Peek()?.ToString() is { Length: > 0 } name
-                ? new global::app.type.item.text.@this(name) : null;
-            return (field, dict.Get("desc", context)?.Peek() is global::app.type.item.@bool.@this { Value: true });
-        }
-        if (written is global::app.type.item.text.@this { } text && text.ToString().Length > 0) return (text, false);
-        throw new global::app.error.AppException(new global::app.error.Error(
-            $"{Name}: a key is a field (\"age\") or {{field, desc}}", "QueryInvalid", 400));
     }
 }

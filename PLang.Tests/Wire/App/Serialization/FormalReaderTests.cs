@@ -1,9 +1,9 @@
 namespace PLang.Tests.App.Serialization;
 
-// The formal reader (goal/step/action/serializer/Formal.cs) against the python reference: every golden step's
-// formal parses and writes back byte for byte; its untyped form (as the LLM and a programmer write it) parses
-// to the same actions; and every error python's parser answers, the C# parser answers the same — message,
-// line and column (formal_errors.json, written by tools/decider/formal_fixture.py).
+// The formal reader (goal/step/action/formal/reader.cs) against pinned fixtures: every golden step's formal parses
+// and writes back byte for byte; its untyped form (as the LLM and a programmer write it) parses to the same actions;
+// and every pinned error is the reader's own — message, line and column (formal_errors.json). An intended change
+// re-pins them through the Accept tests.
 public class FormalReaderTests : System.IAsyncDisposable
 {
     private readonly global::app.@this app = new global::app.@this("/app").Testing();
@@ -141,47 +141,66 @@ public class FormalReaderTests : System.IAsyncDisposable
     public async Task EveryGoldenStep_Untyped_ParsesToTheSameActions()
         => await Assert.That(await RoundTrips("untyped")).IsEqualTo("");
 
+    private const string ErrorsPinned = "PLang.Tests/Wire/App/Serialization/formal_errors.json";
+    private const string BarePinned = "PLang.Tests/Wire/App/Serialization/formal_bare.json";
+
+    private static List<System.Text.Json.JsonElement> Cases(string pinned)
+        => System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(Fixture.Root(), pinned)))
+            .RootElement.EnumerateArray().ToList();
+
+    // What the reader answers for an input that must not read: its message (null when it reads).
+    private string? Refusal(string input) => Read(input, out _) is { Success: false } read ? read.Error!.Message : null;
+
+    // What the reader makes of an input written bare: the formal it writes back, or why it refuses.
+    private async Task<string> Reread(string input)
+        => Read(input, out _) is { Success: true } read ? await Written(read) : Read(input, out _).Error!.Message;
+
+    // Every pinned error (formal_errors.json) is the reader's message, line and column for its input.
     [Test]
-    public async Task EveryPythonError_HasItsTwin_SameMessageLineAndColumn()
+    public async Task EveryPinnedError_IsTheReadersMessageLineAndColumn()
     {
-        var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !System.IO.File.Exists(System.IO.Path.Combine(dir.FullName, "PLang.Tests", "Wire", "App", "Serialization", "formal_errors.json")))
-            dir = dir.Parent;
-        var cases = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(
-            System.IO.Path.Combine(dir!.FullName, "PLang.Tests", "Wire", "App", "Serialization", "formal_errors.json"))).RootElement.EnumerateArray();
         var differ = new List<string>();
-        foreach (var c in cases)
+        foreach (var c in Cases(ErrorsPinned))
         {
             var input = c.GetProperty("input").GetString()!;
             var expected = c.GetProperty("message").GetString();
-            var read = Read(input, out _);
-            var message = read.Success ? null : read.Error!.Message;
-            if (message != expected) differ.Add($"{input.Replace("\n", "\\n")}\n  python: {expected}\n  c#:     {message}");
+            var message = Refusal(input);
+            if (message != expected) differ.Add($"{input.Replace("\n", "\\n")}\n  pinned: {expected}\n  c#:     {message}");
         }
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
-    // A choice's symbol option written bare (Operator=>=) reads as that option, as python reads it
-    // (formal_bare.json) — and an open slot's list of dicts with bare keys reads as that list; a symbol
-    // that is not an option is in formal_errors.json.
+    // A choice's symbol option written bare (Operator=>=) reads as that option (formal_bare.json) — and an open
+    // slot's list of dicts with bare keys reads as that list; a symbol that is not an option is in formal_errors.json.
     [Test]
-    public async Task EveryBareSymbolOption_ReadsAsTheOption_AsPythonReadsIt()
+    public async Task EveryBareSymbolOption_ReadsAsThePinnedOption()
     {
-        var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !System.IO.File.Exists(System.IO.Path.Combine(dir.FullName, "PLang.Tests", "Wire", "App", "Serialization", "formal_bare.json")))
-            dir = dir.Parent;
-        var cases = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(
-            System.IO.Path.Combine(dir!.FullName, "PLang.Tests", "Wire", "App", "Serialization", "formal_bare.json"))).RootElement.EnumerateArray().ToList();
+        var cases = Cases(BarePinned);
         var differ = new List<string>();
         foreach (var c in cases)
         {
             var input = c.GetProperty("input").GetString()!;
-            var read = Read(input, out _);
-            var written = read.Success ? await Written(read) : read.Error!.Message;
-            if (written != c.GetProperty("formal").GetString()) differ.Add($"{input}\n  python: {c.GetProperty("formal").GetString()}\n  c#:     {written}");
+            var written = await Reread(input);
+            if (written != c.GetProperty("formal").GetString()) differ.Add($"{input}\n  pinned: {c.GetProperty("formal").GetString()}\n  c#:     {written}");
         }
         await Assert.That(cases.Count).IsEqualTo(8);
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
+    }
+
+    // Re-pins formal_errors.json's messages and formal_bare.json's formal from C#: run by hand after an intended change
+    // to the reader, then review the diff.
+    [Test, Explicit]
+    public async Task AcceptTheFixtures()
+    {
+        var errors = Fixture.Read(ErrorsPinned).AsArray();
+        var errorCases = Cases(ErrorsPinned);
+        for (int i = 0; i < errorCases.Count; i++) errors[i]!["message"] = Refusal(errorCases[i].GetProperty("input").GetString()!);
+        Fixture.Write(ErrorsPinned, errors);
+
+        var bare = Fixture.Read(BarePinned).AsArray();
+        var bareCases = Cases(BarePinned);
+        for (int i = 0; i < bareCases.Count; i++) bare[i]!["formal"] = await Reread(bareCases[i].GetProperty("input").GetString()!);
+        Fixture.Write(BarePinned, bare);
     }
 
     // An empty `{ }` is syntax that reads; the rule it breaks is the chain check's, which says where

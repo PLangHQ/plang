@@ -12,7 +12,28 @@ public abstract class @this
 {
     /// <summary>The part's name, as the query writes it — where it lives: <c>where</c>, <c>group</c>,
     /// <c>distinct</c>, <c>order</c>.</summary>
-    public string Name => GetType().Namespace![(GetType().Namespace!.LastIndexOf('.') + 1)..];
+    public string Name => NameOf(GetType());
+
+    // a part class's name: the last segment of its namespace (query/where/ → where)
+    private static string NameOf(System.Type part) => part.Namespace![(part.Namespace!.LastIndexOf('.') + 1)..];
+
+    /// <summary>How a part is made from the query's <paramref name="part"/> — what its dict holds under the part's
+    /// name: the part, or null with why on <c>data</c>.</summary>
+    internal delegate @this? Maker(Data part, Data data, global::app.actor.context.@this context);
+
+    /// <summary>The parts a query has, each under its name — the part classes under the query, each with its own
+    /// static <c>Create</c>, found once.</summary>
+    internal static IReadOnlyDictionary<string, Maker> Known => _known.Value;
+
+    private static readonly System.Lazy<IReadOnlyDictionary<string, Maker>> _known = new(() =>
+        typeof(@this).Assembly.GetTypes()
+            .Where(t => !t.IsAbstract && typeof(@this).IsAssignableFrom(t))
+            .ToDictionary(NameOf, t => (Maker)System.Delegate.CreateDelegate(typeof(Maker),
+                t.GetMethod("Create", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic)!),
+                StringComparer.OrdinalIgnoreCase));
+
+    /// <summary>The parts' names, for a refusal that says what a query takes: <c>distinct, group, order, where</c>.</summary>
+    internal static string Names => string.Join(", ", Known.Keys.Order(StringComparer.Ordinal));
 
     /// <summary>Its place in SQL's order: where, group, distinct, order.</summary>
     internal abstract int Rank { get; }
