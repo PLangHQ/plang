@@ -1,75 +1,53 @@
 # educator: summary
 
-**Version:** v2, in progress (2026-09-30). v1 = lesson 1 "What is plang", done and voiced. v2 = lesson 2 "your first plang program" (hands-on), text first, animation last (Ingi).
+**Version:** v3 (2026-10-01). v1 = lesson 1 "What is plang". v2 = lesson 2 "Your first plang program". v3 = lesson 3 "OBP, the object-based pattern", the mp4 export, and the course web page. All three lessons are voiced, checked, exported to mp4 and on the course page.
 
 ## What this is
 
-This work builds two things:
-- **studio**, an OBP animation library for PLang teaching animations, in `/shared/educator/studio`.
-- **"What is plang"**, a beginner lesson made with it.
-
-The three bots aniva, rafbokin and coder had each written the same canvas engine, with timings copied by hand and state shared through globals. studio is the one shared version.
-
-The split is Ingi's call:
-- PLang does the building: voicing, and writing the page.
-- JavaScript is only the in-browser engine.
-- Playwright is only used for checking.
+Teaching lessons for developers new to plang, written as narrated, hand-drawn animations:
+- **studio** (`/shared/educator/studio`): an OBP animation library plus a PLang app that voices a lesson and writes its page. PLang does the building; JS is the in-browser engine; Node + Playwright only check and export.
+- **course** (`/shared/educator/course/<lesson>/`): each lesson as `lesson.md` plus code that was built and run for real; the animation is made last, from it.
+- **the course page** (`/shared/educator/index.html`, Windows `C:\Dev\claude\shared\educator\index.html`): every exported lesson as a card; each lesson's mp4 with chapters (and their sources) and the narration as a transcript that follows the video.
 
 ## State
 
-**Engine:** `studio/film/**`, one folder per concept, `this.js` each.
-- The root is `film.this`, the context is `film.frame.this`, and the lesson data is sealed.
-- Every method carries an `origin:` comment pointing to the original it came from; `REFERENCE.md` indexes them.
-- Voice lines measure their own duration from their PCM, and the scene list lays out the timeline once. No time is written by hand.
-- Sound is scheduled live from the play position. An up-front offline render took 2–3 minutes for 90 s in the check container.
+| Lesson | Course text | Animation | mp4 |
+|---|---|---|---|
+| 1 What is plang | `course/01-what-is-plang` | `animations/what-is-plang` | 98.7 s |
+| 2 Your first plang program | `course/02-first-program` | `animations/first-program` | 206.5 s (Writer build-and-run screens still pending Ingi) |
+| 3 OBP, the object-based pattern | `course/03-obp-pattern` | `animations/obp-pattern` | 231.4 s |
+| Advanced: OBP in C# | `course/obp-in-csharp` (C# programs run with `dotnet run`) | not animated | — |
 
-**PLang app** (`studio/*.goal`):
-- `Start` voices every line and writes the page. It is **blocked** by an http bug on app-systems.
-- `Draft` writes the page without voice. It works.
-- `voice/Key`, `voice/Scene` and `voice/Line` handle voicing; each take is cached per line id with a hash of what made it.
-- `page/Write` inlines the engine, fonts, lesson and art through `ui.render`.
+**Pipeline for a lesson** (`studio/`):
+1. `lesson/<topic>/lesson.json` (scenes, voice lines, cues, source notes) + `art.js` (one drawing per scene).
+2. `plang Draft topic=<topic>` writes the page with estimated timings; `plang Start topic=<topic>` voices every line (Gemini TTS via OpenRouter, cached by hash) and writes the page.
+3. Check: `node check/voices.js <topic>` (every take transcribed against its line; `check/ask.js` for targeted questions), `node check/shots.js <topic>` (3 shots a chapter), `node check/listen.js <topic>`.
+4. `node export/mp4.js <topic>`: 720p, `--disable-gpu`, 3 browsers (the benchmark winner, `export/bench.js`), writes `<topic>.mp4`, `<topic>.timeline.json` and `<topic>.jpg`.
+5. `plang Hub` writes the course page from the timelines.
 
-**Brand (Ingi: keep coder's logo.png and plang logo):** `film.puffin` (logo.png cut into a paper puppet), `film.logo` (ransom-letter wordmark, teal sunburst card), `film.image` (inlined pictures). Used in the title card, the hook, the run chapter and the end card.
+**v3 decisions (Ingi):**
+- OBP lesson: the pattern, any language; two lessons (laws + rules, then the smells). Then: C# only, simpler, problem first; then move the C# out as an advanced lesson; lesson 3 = the laws lightly, the root in plang (`%!app.type%`), the rules, breaking a rule as a recorded exception; then add the new dot-case rule ("a name is a path") with a real `.pr`.
+- Export to mp4 because the HTML pages didn't play in Ingi's browser; then a web UI over the lessons.
 
-**Music:** tuned by listening through Gemini (`studio/check/listen.js`): the bass and brush layer read as "groovy electronic", now level 4 and unused; levels 1-3 rate 10/10 warm and storybook-like.
-
-**The lesson:**
-- Script: `studio/lesson/what-is-plang/lesson.json` (9 chapters, 15 lines, every claim with its source in the speaker notes).
-- Drawings: `studio/lesson/what-is-plang/art.js`.
-- Written by `plang Draft topic=what-is-plang` to `/shared/educator/animations/what-is-plang/index.html`.
-- Checked with `node studio/check/shots.js what-is-plang` (24 shots, no errors).
-
-**Facts verified on this branch:**
-- The example goal (`/shared/educator/work/hello`) builds and prints "Hello, world!".
-- It runs with every LLM key removed from the environment.
-
-**Blocked:**
-- The http bugs (FINDINGS 9, 18, 19) are reported to the architect (`plang-21`), who passed them to the coder.
-- The coder will tell educator to pull `app-systems` when fixed. Then run `plang Start topic=what-is-plang`, check the takes by transcription, and re-shoot.
-
-**Open for Ingi:**
-- Which install and command lines the "Your turn" chapter shows. The latest release is v0.1.17.3 (`plang exec`); this branch uses `plang build` then `plang`.
-- Listen to the music.
-
-## Files
-
-- `/shared/educator/studio/FINDINGS.md`: 20 PLang behaviours that contradict the docs, or are bugs, each with a repro in `/shared/educator/work/probe/`.
-- `/shared/architect/educator-http-body.md`: the report for the architect.
+**Open:**
+- Lesson 4, the smells (`obp-smells.md`), not started.
+- The OBP doc's examples differ from the code in six places (table at the end of `course/obp-in-csharp/lesson.md` and the previous lesson 3 text); not yet sent to the docs bot (asked Ingi).
+- `%!app.product%` (an app's own concepts on the root) isn't possible today; taught with plang's own concepts.
+- FINDINGS 28-31 (`studio/FINDINGS.md`): piped permission answers reach only the first prompt; `%!app.goal.list%` resolve cycle; one "timeout" phrase compiling to two timeouts; "a this" in an error message.
+- Doing the export in plang needs browser actions that `plang-os`'s browser module doesn't have yet (run JS, capture a frame now, launch flags); asked Ingi who adds them.
 
 ## Code example
 
+A lesson scene places every beat on a word of its voice line, and draws cards with the engine's new `film.paper.label`:
+
 ```js
-film.scene.art.variable = frame => {
-  frame.code('goal', GOAL, { x, y, size, w: 880, title: 'Start.goal', focus: second ? [2] : [1] });
-  const tagIn = word(frame, 0, 0.55);   // a beat placed at 55% of voice line 0
-  tag.draw(frame, right + 330, ty, { scale: frame.at(tagIn, tagIn + 0.45, 'outBack') });
+film.scene.art.root = frame => {
+  label('app', { size: 96, color: P.sun, seed: 'app' }).draw(frame, 960, 250, { scale: frame.on(0, 0.4, 0.8, 'outBack') });
+  const a0 = frame.word(2, 0.62);   // "like reading an address"
+  arrow(frame, [940, 320], [670, 420], [390, 580], P.clay, frame.at(a0, a0 + 0.7), 'addr', 9);
 };
 ```
 
-## v2: lesson 2 (hands-on)
-- The lesson text is `/shared/educator/course/02-first-program/lesson.md`; the examples are `code/01..07`, each built and run on this branch, with real output in `output.txt`. All 7 work.
-- Ingi: don't wait for fixes. `ask` moved to `later/ask`; the condition uses a set value; the file step writes the read value out on its own.
-- Ingi: Writer gets new/open and build-and-run (assumed in the text; screens after he says). The button rebuilds only what changed, verified in the build trace (`=> cached`).
-- Ingi: commands are shown bare (`plang build`, `plang`), never with a prompt sign. Removed from lesson 1, smoke, lesson 2 and the outputs.
-- PLang bugs reported in `/shared/architect/educator-beginner-steps.md` (ask, compare, `is`, read-in-text, the builder's file warning).
-- Engine: `film.video` and `film.paper.photo` are parked until the lesson text is settled; animation comes last.
+## v3 after review
+
+Ingi's review of the first lesson 3 text: verbatim production excerpts in two languages were noisy, and "I didn't understand why it's good that any object can have access to context". Response: one small teaching example shown failing first (a static user mixes two concurrent checkouts: `Ada: 4990 USD`, 5/5 runs), then the context fixing it, and the cost of one more need measured with a real diff (3 classes change vs 2). Later moved to the advanced lesson; lesson 3 now explains the laws in plain words.

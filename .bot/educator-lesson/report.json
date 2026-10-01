@@ -47,22 +47,67 @@
       },
       "actions": [
         {
-          "paths": ["/shared/educator/course/03-obp-pattern/lesson.md", "/shared/educator/course/03-obp-pattern/code/01-three-paths/"],
-          "type": "create", "category": "doc", "confidence": "high",
+          "paths": [
+            "/shared/educator/course/03-obp-pattern/lesson.md",
+            "/shared/educator/course/03-obp-pattern/code/01-three-paths/"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
           "context": "Lesson 3 (OBP, any language) text: 12 scenes, every excerpt verbatim with path:line (C# PLang/app, JS film engine), checked by grep -F; %!app.type% proven by a built and run goal. Six doc/code disagreements tabled for Ingi."
         },
         {
-          "paths": ["/shared/educator/studio/Hub.goal", "/shared/educator/studio/hub/index.html", "/shared/educator/studio/export/record.js", "/shared/educator/studio/export/timeline.js", "/shared/educator/studio/export/mp4.js", "/shared/educator/index.html"],
-          "type": "create", "category": "code", "confidence": "high",
+          "paths": [
+            "/shared/educator/studio/Hub.goal",
+            "/shared/educator/studio/hub/index.html",
+            "/shared/educator/studio/export/record.js",
+            "/shared/educator/studio/export/timeline.js",
+            "/shared/educator/studio/export/mp4.js",
+            "/shared/educator/index.html"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
           "context": "Course web UI (Ingi asked): plang Hub writes /shared/educator/index.html from each lesson's timeline.json, written by the export from the film engine itself; mp4 player, chapters with sources, transcript following the video, resume. Checked in Playwright at 1280 and 400 px with a WebM copy (Playwright Chromium has no H.264)."
         },
         {
-          "paths": ["/shared/educator/animations/what-is-plang/what-is-plang.mp4"],
-          "type": "create", "category": "doc", "confidence": "high",
+          "paths": [
+            "/shared/educator/animations/what-is-plang/what-is-plang.mp4"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
           "context": "Lesson 1 exported to mp4 (291 s, --disable-gpu, 3 browsers)."
+        },
+        {
+          "paths": [
+            "/shared/educator/course/03-obp-pattern/",
+            "/shared/educator/course/obp-in-csharp/"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Lesson 3 reworked on Ingi's review: C# only and problem-first, then the C# moved to an advanced lesson; lesson 3 is the laws lightly, the root in plang (built and run), the rules, the new dot-case rule with a real .pr (app-systems merged, aa5eb3084), and a recorded exception from obp-scan.md."
+        },
+        {
+          "paths": [
+            "/shared/educator/studio/lesson/obp-pattern/",
+            "/shared/educator/studio/film/paper/label/this.js",
+            "/shared/educator/animations/obp-pattern/"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Lesson 3 animated: 13 chapters, 40 voice takes (35 exact by transcription; 5 confirmed by targeted questions), 39 shots with no errors, mp4 231.4 s, on the course page. New engine piece film.paper.label (a card sized to its words) to stop repeating piece+fillText per card."
         }
       ],
-      "plan": ".bot/educator-lesson/educator/v3/plan.md"
+      "plan": ".bot/educator-lesson/educator/v3/plan.md",
+      "timestamp_end": "2026-10-01T13:53:54.314Z",
+      "after": {
+        "status": "Lessons 1-3 voiced, checked, exported to mp4 and on the course page; advanced OBP-in-C# lesson written (not animated)",
+        "health": "good",
+        "notes": "Next: lesson 4 (smells). Open: doc/code table to docs bot; FINDINGS 28-31."
+      }
     }
   ]
 }
