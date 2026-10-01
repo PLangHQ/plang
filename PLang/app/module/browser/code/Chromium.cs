@@ -124,9 +124,9 @@ public sealed partial class Chromium : IBrowser
         var url = (await action.Url.Value())!.Clr<string>()!;
         // a Chromium that was killed (PlangOS closed hard) leaves its profile's lock naming its process;
         // in a new PlangOS another process can have that number, and the new Chromium would hand its
-        // page to "the running one" and exit. None of ours runs yet: the lock is stale.
+        // page to "the running one" and exit. None of ours runs yet: the lock is stale. (Not there: NotFound, and fine.)
         foreach (var name in new[] { "SingletonLock", "SingletonSocket", "SingletonCookie" })
-            await FilePath.Resolve(PathHelper.Combine(context.App.AbsolutePath, ".browser", name), context).Delete(false, true, context);
+            await FilePath.Resolve(PathHelper.Combine(context.App.AbsolutePath, ".browser", name), context).Delete(recursive: false, context);
         var chrome = Process.Start(Chrome(chromium, screen, context, "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=0", "--app=" + url))!;
         chrome.StandardInput.Close();
         _ = Drain(chrome.StandardOutput);

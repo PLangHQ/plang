@@ -31,14 +31,15 @@ public sealed class Wayland : IScreen
         var folder = FilePath.Resolve("/.run", context);
         await folder.Mkdir(context);
         var socket = FilePath.Resolve("/.run/" + SocketName, context);
-        await socket.Delete(recursive: false, ignoreIfNotFound: true, context);
+        await socket.Delete(recursive: false, context);   // a socket left by an earlier run; none there is NotFound, and fine
+
         var allowed = await socket.Authorize(Verb.Write, context);
         if (!allowed.Success) return data.@this<Screen>.From(allowed);
 
         var toOutput = (await action.ToOutput.Value())!.Value;
         var output = toOutput ? (context.Actor.Channel[global::app.channel.list.@this.Output] as global::app.channel.type.stream.@this)?.Stream : null;
         var fontFile = FilePath.Resolve(FontPath, context);
-        var font = await (await fontFile.ExistsAsync(context)).ToBooleanAsync() ? await fontFile.Read(context) : null;
+        var font = await (await fontFile.Exists(context)).ToBooleanAsync() ? await fontFile.Read(context) : null;
         var width = (int)(await action.Width.Value())!.ToDouble();
         var height = (int)(await action.Height.Value())!.ToDouble();
         // the display's notes, written one at a time, in order (it speaks from several threads)
