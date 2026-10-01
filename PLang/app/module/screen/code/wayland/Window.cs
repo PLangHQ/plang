@@ -388,6 +388,12 @@ internal sealed class Window : ISurfaceRole
     /// <summary>☰ was clicked: PLang drops the window's agent down from (x, y), the button's bottom-right.</summary>
     internal void Menu(int x, int y) => Display.Tell(new JsonObject { ["menu"] = Id, ["x"] = x, ["y"] = y, ["title"] = Toplevel.Title, ["address"] = Address.Path });
 
+    /// <summary>A bound element of this window was clicked (<c>#window.bot</c> — the window's own parts are named
+    /// under <c>window</c>, so a page's ids never collide with them): PLang hears which, in which window, and where
+    /// (the element's bottom-right on the screen) — the window's own facts PLang reads from the window.</summary>
+    internal void Clicked(string element, int x, int y)
+        => Display.Tell(new JsonObject { ["ui"] = "click", ["element"] = "#window." + element, ["window"] = Id, ["x"] = x, ["y"] = y });
+
     /// <summary>One of the app's tools was clicked: PLang hands it to the page.</summary>
     internal void Tool(string name) => Display.Tell(new JsonObject { ["tool"] = name, ["id"] = Id });
 

@@ -40,6 +40,27 @@ internal sealed class Display
     /// <summary>The title bar button the mouse button went down on.</summary>
     internal Button? Pressed { get; set; }
 
+    /// <summary>A message up to the host's PLang, now — beside the frames (kind 9): how this plang reaches the app
+    /// that started it (<c>%!app.parent%</c>).</summary>
+    internal void Up(string json)
+    {
+        lock (Gate)
+        {
+            Frame.Host(json);
+            Flush();
+        }
+    }
+
+    /// <summary>The window parts whose click PLang bound (<c>bot</c> for <c>#window.bot</c>): a click on one is PLang's.</summary>
+    internal HashSet<string> Bound { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    // a window part by its selector: #window.bot → bot
+    private static string Part(string selector)
+    {
+        var s = selector.TrimStart('#');
+        return s.StartsWith("window.", StringComparison.OrdinalIgnoreCase) ? s["window.".Length..] : s;
+    }
+
     /// <summary>What happens to windows ({"window":"opened",…}, {"navigate":…}, {"open":…}), for PLang.</summary>
     internal event Func<JsonObject, Task>? Told;
 
@@ -189,6 +210,9 @@ internal sealed class Display
             else if (e.ContainsKey("stats")) Tell(e);   // the host's numbers: the desktop's taskbar shows them
             else if (e.ContainsKey("video")) Frame.Lossless("the host can't show H.264: " + S("why"));
             else if (e.ContainsKey("agent")) Tell(e);
+            // PLang binds a window part's click (on click on #window.bot): from now on a click on it is PLang's
+            else if (S("ui") == "bind") Bound.Add(Part(S("element")));
+            else if (S("ui") == "unbind") Bound.Remove(Part(S("element")));
             else if (e["host"] is JsonNode up) Frame.Host(up.ToJsonString());
             // the window by its id — or, from a window's own page, the one it is in ("from")
             else if (e.ContainsKey("window")) Windows.ById(e.ContainsKey("id") ? N("id") : N("from"))?.Command(S("window"), e);
