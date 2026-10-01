@@ -1,0 +1,35 @@
+# Builder issues seen in the last ~24 h (for the builder bot)
+
+Collected by the architect from the coder's eval rounds, the educator's probes and the fix bot (2026-09-30 → 2026-10-01). Each item says what the model or builder did, the evidence, and where it stands.
+
+## Still open
+
+1. **"call goal Unmatched action=%item%" → the goal name "Unmatched action".** The raw Compile answer: `goal.call(Name="Unmatched action", Parameter={action: %item%})`. The model reads the goal name and the argument name as one English phrase; the retry repeats it; `build.match` refuses ("calls Unmatched, but no action calls it"). Renaming the argument made it flaky (1 of 2), not fixed. Evidence: `/shared/educator/work/modules-probe/llm-debug.log:4499`, `:5155`. Likely lever: show prompt C the goal names this goal's steps can call. With the coder.
+2. **`foreach %list% as %x%` drops the item's name.** It builds, but the `.pr` has no `Item` property, so `%x%` is empty at run. `loop/foreach.examples.md` teaches `as %product%` → `"Item": "%product%"`. Evidence: `/shared/educator/work/foreach-probe`. With the coder.
+3. **"continue the conversation" dropped.** Rebuilt from words, nano dropped the llm.query option, and no check refused it, so the builder's own FixSteps retry would silently lose its context. Worked around by writing that step in formal (e496e562f; now `Conversation={continue: %answer%}`). No golden case exists; it's a teaching gap.
+4. **`set default …` loses `Default=true`.** nano dropped it from `set default %!build.setting.cache%` in bootstrap recordings, twice (375 (2), f5e49d9c3); re-recorded until it held, and `set.examples.md` now teaches it. Silent: no check notices a dropped modifier.
+5. **Flaky steps that recur in the eval:**
+   - `show[1]`: ui.render's `Parameter` / on.error's `Order`;
+   - `guard[2]`: `throw %!error%` given `Message` instead of `Data`;
+   - checkout's `isnot`, `decide[1]` and `[2]`;
+   - **one flaky step fails its whole goal for the round** (build[3], `channel.set Goal=`, refused twice → the build goal lost in 3 of 5 rounds).
+6. **Stage 1 (module choice) sees no module descriptions, by design.** So a step like `remove %x%` after a file read leans to `file` (0.56) with nothing the notes can say. Mitigated, not changed (item 10).
+7. **The trace records only the refusal, not the LLM's answer.** To see what the model wrote you need `plang build '--debug={"llm":{"user":true,"response":true}}'`. A builder trace that kept the answer would have saved the educator a round.
+8. **A running goal can't start a build** (only `plang build` gives the app a `Build`), and **plang has no door that writes a step's formal line.** Both block an eval written as a plang goal (E1).
+9. **`post … body` built as `http.upload`** (the educator's first report): an LLM pick, unconfirmed, since upload's description overlaps request's.
+
+## Fixed in the last day (what the builder was getting wrong)
+
+10. **`remove %x%` → `file.delete` (destructive).** Prompt C was handed `file.delete` pre-filled as certain (0.99 within `file`, though `file` itself scored 0.56). Fixed: an action is certain only when its module's share is ≥ 0.90; prompt C shows the module's share; the instruction says an unsure module leaves it to the notes (fb14118e0). 5/6 → `variable.remove`.
+11. **`if %x% is "y"` → `Operator=="=="`** (the operator table gave bare `==`, nano merged it with `=`). Fixed by teaching only (e7ddce003); 10/10.
+12. **Goal names written bare** (`Name=AddStepToState`), with a refusal ("a text is quoted") that made the retry repeat it. Fixed: the notes say a quoted text, and the refusal says `write "X", not X` (9f304a76b).
+13. **Placeholders copied as values:** the decider's pre-fill `channel.set(Name=?, …)` → nano wrote `?`; FixSteps' `[i]` copied literally. Fixed: a slot to fill shows as `Name: type` (36c42ae4b; review pending).
+14. **Stale cached steps** (same text, catalog changed) never rebuilt. Fixed through the existing door: `action.Validate` refuses a frozen default for a gone option and a slot's changed kind, so `goal.Reopen` rebuilds the step (3a709545a, be3cf285a for held actions).
+15. **False "does not exist on disk" warnings at build.** Fixed: the build checks over a virtual filesystem (the disk plus what earlier steps write) (b1b8faaf0, 031f6fb56).
+16. **`plang build` segfaulted on any goal with a sub-goal** (the check context deep-cloned a cyclic goal graph), and `call goal X` was read as calling "goal" (b6e09798a).
+
+## Workarounds in place ("the builder can't, so we wrote it another way")
+
+- **Steps written in formal because the words didn't build reliably:** the builder's FixSteps `llm.query` (item 3), `build.match` lines, and the `Start` goal's cached-goal guard (re-recorded until it came back a bare `if`).
+- **list.query's 10 plan tests are written in formal:** expected until stage 2 teaches the builder `list.query`.
+- **The docs goal's two loop-and-call steps:** the educator is holding them in a copy until item 1 is fixed (formal was offered and declined).
