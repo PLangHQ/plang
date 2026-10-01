@@ -474,16 +474,6 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         => System.Threading.Tasks.Task.FromResult(context.Error(new global::app.error.ValidationError(
             $"'where {field} …' needs a list or dict to scope into — a {Type.Name} has no fields.", "WhereOnApex")));
 
-    /// <summary>
-    /// Emptiness — each type owns its own answer: text → whitespace-only,
-    /// dict/list → no entries, null/absent → empty. Async because a reference
-    /// may load to answer (same precedent as <see cref="AsBooleanAsync"/>).
-    /// The default is false — a present value with no emptier notion is not
-    /// empty.
-    /// </summary>
-    public virtual System.Threading.Tasks.ValueTask<bool> IsEmpty()
-        => System.Threading.Tasks.ValueTask.FromResult(false);
-
     /// <summary>Reads what this value stands for, as the one writing it out asks — at the last moment, by the
     /// channel about to send it; the value never loads itself while it writes. A value that holds all it is
     /// has nothing to read. The reason it couldn't be read, else null.</summary>
@@ -511,10 +501,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     }
 
     /// <summary>
-    /// Synchronous truthiness — the hot path so a plain <c>if %bool%</c> never
-    /// takes an async hop. The default is "reference-ish item is truthy when
-    /// present"; concrete types override (empty text / zero / empty collection /
-    /// null are falsy). I/O truthiness (<c>path</c> existence) overrides
+    /// Synchronous truthiness — each type's own answer, and emptiness is its negation (<c>isempty</c> is
+    /// "not truthy"). The default: a present value is truthy; concrete types override (empty text, zero,
+    /// false, an empty list or dict, and null — the absent item a missing value holds — are not).
+    /// Whitespace is content: <c>"  "</c> is truthy. I/O truthiness (<c>path</c> existence) overrides
     /// <see cref="AsBooleanAsync"/> instead.
     /// </summary>
     public virtual bool IsTruthy() => true;

@@ -43,10 +43,10 @@ public sealed class Operator
             ["notendswith"] = Negated(EndsWith),
             ["in"] = In,
             ["notin"] = Negated(In),
-            // The ITEM owns emptiness (text → whitespace-only, containers →
-            // zero entries, null/absent → empty); the binding answers absence.
-            ["isempty"] = IsEmpty,
-            ["isnotempty"] = Negated(IsEmpty),
+            // Emptiness is truthiness, asked of Left alone — "is not empty" is Left's own truth: what doesn't
+            // exist, null, "", 0, false, [] and {} are empty. The value answers; there is no emptiness beside it.
+            ["isempty"] = Negated((l, _, c) => Truth(l, c)),
+            ["isnotempty"] = (l, _, c) => Truth(l, c),
             // `%x% is dict` / `is number` / `is item` — IS-A query against the
             // value-type lattice. The right operand is the PLang type name. `item`
             // is the apex (true for any value).
@@ -59,9 +59,9 @@ public sealed class Operator
 
     // Ordering boundary: Less/Equal/Greater answer by operator; NotEqual and
     // Incomparable have no honest order — an error, never a silent false.
-    // A missing operand (an `if` on an unset variable, a where compared to one) is refused; only a filtered
-    // item's own field it doesn't have (a NotFound Left, from where/any) is simply no match — optional data
-    // isn't ordered.
+    // A missing operand is refused: an operand left out, and a reference to nothing, whose read fails it
+    // (`%event.guest% > 5` is VariableNotFound) — that failure is the answer. Only a filtered item's own field
+    // it doesn't have (a NotFound Left, from where/any) is simply no match — optional data isn't ordered.
     private static async Task<Answer> Ordered(data.@this? l, data.@this? r, actor.context.@this context, string op,
         Func<global::app.data.Comparison, bool> map)
     {
@@ -69,6 +69,8 @@ public sealed class Operator
             return Refused(context, $"cannot order a missing operand with '{op}'", "EvaluationError");
         if (!l.IsInitialized) return Answer(context, false);
         var c = await l.Compare(r);
+        if (!l.Success) return Failed(l, context);
+        if (!r.Success) return Failed(r, context);
         if (c is global::app.data.Comparison.NotEqual or global::app.data.Comparison.Incomparable)
             return Refused(context, $"cannot order '{l.Type.Name}' and '{r.Type.Name}' values with '{op}'", "EvaluationError");
         return Answer(context, map(c));
@@ -112,6 +114,10 @@ public sealed class Operator
     private static Answer Refused(actor.context.@this context, string message, string key)
         => context.Error<global::app.type.item.@bool.@this>(new global::app.error.ServiceError(message, key, 400));
 
+    // A failed operand's error is the answer.
+    private static Answer Failed(data.@this operand, actor.context.@this context)
+        => context.Error<global::app.type.item.@bool.@this>(operand.Error!);
+
     // The negation of an answer; an error stays the error.
     private static Answer Not(Answer answer, actor.context.@this context)
         => answer.Success ? Answer(context, !answer.ToBoolean()) : answer;
@@ -133,16 +139,12 @@ public sealed class Operator
     private static async Task<Answer> In(data.@this? l, data.@this? r, actor.context.@this c)
         => Answer(c, await Contains(r, l));
 
-    private static async Task<Answer> IsEmpty(data.@this? l, data.@this? _, actor.context.@this c)
-        => Answer(c, l == null || await l.IsEmpty());
-
+    // Each side's own truth; the left decides when it can (false for and, true for or). A failed side is the answer.
     private static async Task<Answer> Logical(data.@this? l, data.@this? r, actor.context.@this context, bool and)
     {
-        if (l is { Success: false }) return context.Error<global::app.type.item.@bool.@this>(l.Error!);
-        var left = await IsTruthy(l);
-        if (left != and) return Answer(context, left);
-        if (r is { Success: false }) return context.Error<global::app.type.item.@bool.@this>(r.Error!);
-        return Answer(context, await IsTruthy(r));
+        var left = await Truth(l, context);
+        if (!left.Success || left.ToBoolean() != and) return left;
+        return await Truth(r, context);
     }
 
     /// <summary>The value through the door — the type makes itself ready
@@ -177,38 +179,43 @@ public sealed class Operator
     }
 
     /// <summary>
-    /// Truthy check on Data. Routes through <c>Data.ToBooleanAsync()</c> so an
-    /// <see cref="app.data.IBooleanResolvable"/> value (a path) answers for
-    /// itself; otherwise the usual null/false/0/"" rules apply.
+    /// A value's own truth, as an answer — a condition with no Operator, <c>isnotempty</c> (and, inverted,
+    /// <c>isempty</c>), and each side of <c>and</c>/<c>or</c>. The value answers through the truthiness door
+    /// (<see cref="data.@this.ToBooleanAsync"/>): what doesn't exist — a reference to nothing, an operand left
+    /// out — is not truthy, with no error. A failed operand, failed before it was asked or on the way (a parse,
+    /// a read), is the answer.
     /// </summary>
-    public static async Task<bool> IsTruthy(data.@this? data)
+    public static async Task<Answer> Truth(data.@this? data, actor.context.@this context)
     {
-        if (data == null) return false;
-        return await data.ToBooleanAsync();
+        var truthy = data != null && await data.ToBooleanAsync();
+        return data is { Success: false } ? Failed(data, context) : Answer(context, truthy);
     }
 
     // --- Equality ---
 
     private static async Task<Answer> Equal(data.@this? left, data.@this? right, actor.context.@this context)
     {
-        // == true with non-bool left: delegates to Data.ToBooleanAsync(), so an
-        // IBooleanResolvable left (a path) answers `if %path% exists` itself.
-        // A bool rides born-native as bool.@this — unwrap both shapes.
-        var rv = right == null ? null : await right.Value();
+        // Each operand as it holds (Data.Held): a reference to nothing is null, so `%event.guest% == null` is
+        // true; an operand whose read failed is the answer.
+        var rv = right == null ? null : await right.Held();
+        if (right is { Success: false }) return Failed(right, context);
+        var lv = left == null ? null : await left.Held();
+        if (left is { Success: false }) return Failed(left, context);
+        // == true with non-bool left: the left's own truthiness, so a path answers
+        // `if %path% exists` itself. A bool rides born-native as bool.@this.
         bool? rb = (rv as global::app.type.item.@bool.@this)?.Value;
-        var lv = left == null ? null : await left.Value();
         bool leftIsBool = lv is global::app.type.item.@bool.@this;
         if (rb != null && !leftIsBool)
         {
-            bool leftTruthy = left != null && await left.ToBooleanAsync();
+            bool leftTruthy = lv != null && await lv.AsBooleanAsync(context);
             return Answer(context, rb.Value ? leftTruthy : !leftTruthy);
         }
 
-        if (left == null || right == null) return Answer(context, left == null && right == null);
+        if (lv == null || rv == null) return Answer(context, lv == null && rv == null);
 
-        // THE comparison entry; the equality boundary: Equal → true, Less/Greater/
+        // THE comparison, on the values held; the equality boundary: Equal → true, Less/Greater/
         // NotEqual → false, Incomparable → error (dict == number has no honest answer).
-        var c = await left.Compare(right);
+        var c = await lv.Compare(rv, context);
         // named by what the values are — a slot's declared type (`item`) says nothing of what met
         if (c == global::app.data.Comparison.Incomparable)
             return Refused(context, $"'{lv!.Type.Name}' and '{rv!.Type.Name}' values cannot be compared with '=='", "EvaluationError");

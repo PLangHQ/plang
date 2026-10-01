@@ -963,10 +963,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         return await context.App.type.list["list"].Create(kept, context);
     }
 
-    /// <summary>The item emptiness hook — no elements (an empty chunk holds none).</summary>
-    public override System.Threading.Tasks.ValueTask<bool> IsEmpty()
-        => System.Threading.Tasks.ValueTask.FromResult(CountRaw == 0);
-
     // ---- Comparison (the unified hook — see app.type.compare) ----
 
     /// <summary>Outranks everything — a list never coerces into a scalar or dict.</summary>

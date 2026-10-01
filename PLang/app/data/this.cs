@@ -468,17 +468,11 @@ public partial class @this
         return walked._item.EnumerateItems(_context);
     }
 
-    /// <summary>Emptiness — the binding answers for absence (uninitialized,
-    /// no value); the INSTANCE answers for its own emptiness (text knows
-    /// whitespace, dict/list know zero entries, null knows it is empty).</summary>
-    public async ValueTask<bool> IsEmpty()
-        => !IsInitialized || await _item.IsEmpty();
-
-    /// <summary>Presence — the binding's own question (absence is Data's one
-    /// concern): initialized and holding neither absence citizen. Distinct
-    /// from emptiness ("" and false are present) and truthiness.</summary>
-    public bool HasValue => IsInitialized
-        && _item is not global::app.type.item.@null.@this;
+    /// <summary>Presence — "was it given": this Data holds a value, not the null item (an absent Data,
+    /// <c>IsInitialized == false</c>, holds the null item too). A different question from truthiness:
+    /// <c>""</c>, <c>0</c> and <c>false</c> are present, and not truthy. Emptiness is truthiness
+    /// (<see cref="ToBooleanAsync"/>); there is no third question.</summary>
+    public bool HasValue => Peek() is not global::app.type.item.@null.@this;
 
     // The null *value* — a present null carrying the null.@this singleton, so
     // IsInitialized is true (distinct from NotFound/Uninitialized, which leave a
@@ -589,39 +583,39 @@ public partial class @this
         => await (await Value()).Compare(await other.Value(), _context);
 
     /// <summary>
-    /// Creates a deep clone of this Data. Value is deep-cloned, metadata is preserved.
-    /// The natural boolean meaning of this Data.
-    /// Follows common language conventions: null, false, 0, "" are falsy. Everything else is truthy.
+    /// What is in memory now, asked its truthiness — sync, no read. The value answers (empty text, zero,
+    /// false, an empty list or dict and null are not truthy); an absent Data holds the null item, which
+    /// answers for it. For a value that may still need reading (a reference, a literal, a file's content)
+    /// ask <see cref="ToBooleanAsync"/>.
     /// </summary>
-    public virtual bool ToBoolean()
-    {
-        if (!IsInitialized || _item == null) return false;
-        // The value owns its own truthiness (empty text / zero number / empty
-        // dict / null are falsy) — the instance answers; there is no CLR case
-        // table here. The carrier's truthiness covers a rung-2 POCO (present →
-        // truthy), the source's its raw form.
-        return _item.IsTruthy();
-    }
+    public bool ToBoolean() => Peek().IsTruthy();
 
     /// <summary>
-    /// Boolean meaning of this Data, async — when the wrapped value knows how to
-    /// answer for itself (<see cref="IBooleanResolvable"/>) the question is
-    /// delegated to it; otherwise it falls through to the sync <see cref="ToBoolean"/>.
-    /// The canonical resolvable is <c>path</c>: <c>path.AsBooleanAsync()</c> means
-    /// "does this resource exist", which the http scheme answers with I/O — hence
-    /// the async signature, and hence the condition pipeline is async.
-    /// 
+    /// THE truthiness door — and emptiness is its negation (<c>isempty</c> is "not truthy"). What this
+    /// holds (<see cref="Held"/>: a reference followed, the value opened) answers for itself: null, "",
+    /// 0, false, [] and {} are not truthy, and a value that doesn't exist is the null item, which is not
+    /// either; a path answers "does it exist" (I/O, hence async). A failure on the way is this Data's
+    /// (its <c>Success</c> says so), answering false.
     /// </summary>
-    public virtual async System.Threading.Tasks.Task<bool> ToBooleanAsync()
+    public async System.Threading.Tasks.Task<bool> ToBooleanAsync()
+        => await (await Held()).AsBooleanAsync(_context);
+
+    /// <summary>
+    /// What this holds, read, as a question asks it (truthiness, equality): a reference (<see cref="IsVariable"/>)
+    /// answers what it names, and a reference to nothing — an unset variable, a property its value hasn't —
+    /// answers the null item, with no error (a question about it has an answer); any other value is opened
+    /// through its door (a literal parses, a template renders, a file's content is read). A failure on the
+    /// way is this Data's, as a read's is, and the answer is the absent item; a Data that already failed is
+    /// not read again (a second read would replace its first error).
+    /// </summary>
+    public async ValueTask<global::app.type.item.@this> Held()
     {
-        if (!IsInitialized) return false;
-        // Resolve ONCE and ask the RESOLVED value its truthiness — a stamped
-        // template (`cache: %off%`) must render before answering, else the
-        // unrendered text reads truthy. A value that resolves its own boolean
-        // meaning with I/O (path → "does it exist") answers via the marker.
-        var resolved = await Value();
-        if (resolved is IBooleanResolvable resolvable) return await resolvable.AsBooleanAsync(_context);
-        return resolved?.IsTruthy() ?? false;
+        if (!Success) return Peek();
+        var named = await Follow(_context);
+        var value = await named.Value();
+        if (ReferenceEquals(named, this) || named.Success) return value;
+        Fail(named.Error!);
+        return global::app.type.item.@this.Absent;
     }
 
     /// <summary>
@@ -887,8 +881,6 @@ public class DynamicData : @this
 
     /// <summary>In memory now = the current computation, lifted with this Data's context.</summary>
     public override global::app.type.item.@this Peek() => _cell.Compute(Context);
-
-    public override bool ToBoolean() => IsInitialized && Peek().IsTruthy();
 
     /// <summary>A copy captures the current answer — `set %start% = %Now%` holds the moment of the
     /// set, not a live cell. Computed with the copy's context (the asker's).</summary>

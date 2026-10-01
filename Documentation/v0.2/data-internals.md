@@ -365,23 +365,19 @@ The earlier one-vowel pair (`Materialise` / `Materialize`) was a footgun; rename
 
 ## Truthiness — `IBooleanResolvable` and async condition evaluation
 
-A value's boolean meaning belongs to the value, not to `Data`. `Data.ToBoolean()` is the sync fallback (null/false/0/"" falsy, everything else truthy); **do not** add type-specific cases to it. A type that knows its own truthiness implements `app.data.IBooleanResolvable`:
+A value's boolean meaning belongs to the value, not to `Data`: each item answers `IsTruthy()` (null, `""`, `0`, `false`, an empty list or dict are not truthy; whitespace is content, so `"  "` is), and `AsBooleanAsync(context)` (`app.data.IBooleanResolvable`, which every item implements; the default asks `IsTruthy`) when the answer needs I/O. **Do not** add type-specific cases to `Data`.
 
-```csharp
-public interface IBooleanResolvable
-{
-    Task<bool> AsBooleanAsync();
-}
-```
+**Emptiness is truthiness** (decision 463): `isempty` is "not truthy", `isnotempty` its negation — one question, one door, no `IsEmpty` beside it. A value that doesn't exist is not truthy: an absent Data (`IsInitialized == false`) holds the null item, and the null item answers false, so no caller checks `IsInitialized`. Presence — "was it given" — is a different question, `Data.HasValue` (`""`, `0` and `false` are present): the generator's typed slots, an http `Body`, crypto hash/verify ask that.
 
-`path` implements it — truthiness means "does the resource exist". For `FilePath` that's a stat; for `HttpPath` it's a HEAD request. Because the probe can be I/O, the entire condition-evaluation pipeline is **async**:
+`Data.ToBooleanAsync()` is THE door (`PLang/app/data/this.cs`, see `this.code.md`): it reads what the Data holds (`Held()` — a reference followed, a reference to nothing is the null item with no error; any other value opened through its door, so a `[]` literal parses), then asks the item. A failure on the way (a parse, a read) lands on the Data, and a condition answers that error, never "empty". `Data.ToBoolean()` is the sync face (`Peek().IsTruthy()`, no read).
 
-- `IEvaluator.Evaluate` returns `Task<data.@this>` (`PLang/app/module/condition/code/IEvaluator.cs`).
-- `Operator.Evaluate` is `Func<data.@this?, data.@this?, Task<bool>>` (`PLang/app/module/condition/Operator.cs`).
-- `assert.IsTrue` / `assert.IsFalse` are async (`PLang/app/module/assert/code/Default.cs:138`).
-- `Data.ToBooleanAsync()` dispatches to `IBooleanResolvable` when present and falls back to `ToBoolean()` otherwise (`PLang/app/data/this.cs:896`).
+`path` overrides `AsBooleanAsync` — truthiness means "does the resource exist". For `FilePath` that's a stat; for `HttpPath` it's a HEAD request. Because the probe can be I/O, the entire condition-evaluation pipeline is **async**:
 
-A new operator or evaluator must `await`. A new type that wants scheme-defined truthiness implements `IBooleanResolvable` — never edit `Data.ToBoolean()` to special-case it.
+- `IEvaluator.Evaluate` returns `Task<data.@this<bool>>` (`PLang/app/module/condition/code/IEvaluator.cs`).
+- `Operator.Evaluate` is `Func<data.@this?, data.@this?, context, Task<Answer>>` (`PLang/app/data/Operator.cs`); `Operator.Truth` is a value's own truth as a plang bool.
+- `assert.IsTrue` / `assert.IsFalse` are async (`PLang/app/module/assert/code/Default.cs`).
+
+A new operator or evaluator must `await`. A new type that wants scheme-defined truthiness overrides `AsBooleanAsync` — never edit `Data.ToBooleanAsync()` to special-case it.
 
 ## Recursion guards belong on the value, not on a parallel context layer
 

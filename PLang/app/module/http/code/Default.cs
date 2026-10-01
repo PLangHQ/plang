@@ -53,9 +53,9 @@ public sealed class Default : IHttp
         if (!target.Success) return target;
         var resolvedUrl = (await target.Value())!.ToString();
 
-        var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
+        var defaultHeaders = action.DefaultHeaders == null || !await action.DefaultHeaders.ToBooleanAsync() ? null
             : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
-        var headers = MergeHeaders(action.Header == null || await action.Header.IsEmpty() ? null
+        var headers = MergeHeaders(action.Header == null || !await action.Header.ToBooleanAsync() ? null
             : (await action.Header.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
         // One Content-Type: a Content-Type header is the content type, in place of the parameter — it names the
         // format the body is written in, and it is sent once, never joined with the parameter's.
@@ -63,10 +63,9 @@ public sealed class Default : IHttp
 
         // Build body
         HttpContent? httpContent = null;
-        // An absent body is an Uninitialized Data whose value door answers @null (not C#
-        // null) — guard on IsEmpty so a no-body request (GET, etc.) skips serialization
-        // instead of serializing an empty value.
-        var bodyVal = action.Body == null || await action.Body.IsEmpty() ? null : await action.Body.Value();
+        // A body is content when given — presence, not truthiness: a body of 0 or false is sent. One left
+        // out (or null) is none, so a no-body request (GET, etc.) skips serialization.
+        var bodyVal = action.Body == null || !action.Body.HasValue ? null : await action.Body.Value();
         if (bodyVal != null)
         {
             // the content type as sent: its media type and parameters; the encoding is its charset unless it names one
@@ -135,9 +134,9 @@ public sealed class Default : IHttp
         if (!target.Success) return target;
         var resolvedUrl = (await target.Value())!.ToString();
 
-        var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
+        var defaultHeaders = action.DefaultHeaders == null || !await action.DefaultHeaders.ToBooleanAsync() ? null
             : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
-        var headers = MergeHeaders(action.Header == null || await action.Header.IsEmpty() ? null
+        var headers = MergeHeaders(action.Header == null || !await action.Header.ToBooleanAsync() ? null
             : (await action.Header.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
         var requestMessage = new HttpRequestMessage(SysHttpMethod.Get, resolvedUrl);
         ApplyHeaders(requestMessage, headers);
@@ -178,9 +177,9 @@ public sealed class Default : IHttp
         if (!target.Success) return target;
         var resolvedUrl = (await target.Value())!.ToString();
 
-        var defaultHeaders = action.DefaultHeaders == null || await action.DefaultHeaders.IsEmpty() ? null
+        var defaultHeaders = action.DefaultHeaders == null || !await action.DefaultHeaders.ToBooleanAsync() ? null
             : (await action.DefaultHeaders.Value()).Clr<Dictionary<string, object>>();
-        var headers = MergeHeaders(action.Header == null || await action.Header.IsEmpty() ? null
+        var headers = MergeHeaders(action.Header == null || !await action.Header.ToBooleanAsync() ? null
             : (await action.Header.Value()).Clr<Dictionary<string, object>>(), defaultHeaders);
 
         var (httpContent, contentErr) = await ResolveUploadContentAsync(action, app, encoding);

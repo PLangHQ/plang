@@ -25,7 +25,8 @@ it moves `Data`, reads `Type`/`Success`/`Error` to route, but doesn't open `.Val
 | `Kind` | the value's kind (`_item.Mint().Kind`) |
 | `Declare(type)` | stamp a declared type after construction (build pipeline) |
 | `Navigate` / `GetChild` | walk into the value (`%x.y%`) |
-| `Fail` / `Ok` / `IsEmpty` | error / success / emptiness |
+| `Fail` / `Ok` | error / success |
+| `ToBooleanAsync` / `HasValue` | truthiness — the one door; emptiness is "not truthy" / presence ("was it given") |
 
 ## Layer 2 — the VALUE (`app.type.item.@this`)
 
@@ -44,7 +45,7 @@ text, number, dict, image, `source`, … The type instance **IS** the value. Thr
 | `Write(key, value)` | set a child (containers) |
 | `Navigate(parent, key)` | walk into itself by key |
 | `Clr<T>()` | **internal** — lower to a CLR value (the .NET exit door, boundary only) |
-| `IsLeaf` / `IsNull` / `IsTruthy` / `Contains` / `IsEmpty` | predicates |
+| `IsLeaf` / `IsNull` / `IsTruthy` / `Contains` | predicates (emptiness is `!IsTruthy`) |
 | `Clone()` | protected copy |
 
 ## Layer 3 — the TYPE entity (`app.type.@this`)

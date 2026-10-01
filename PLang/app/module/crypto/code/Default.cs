@@ -20,10 +20,11 @@ public class Default : ICrypto
         // door would parse + narrow the value mid-sign, making the signed
         // shape diverge from the wire/verify shape.
         var value = data.Peek();
-        // A null/absent value has nothing to hash — the digest would be of the
+        // A value left out (or null) has nothing to hash — the digest would be of the
         // empty wire shape, which silently verifies against any other empty.
-        // Surface the missing input instead. A failed result is not empty: it writes its error.
-        if (data.Error == null && (value is null || await value.IsEmpty()))
+        // Surface the missing input instead: presence, not truthiness — 0, false and ""
+        // are values with digests. A failed result is not missing: it writes its error.
+        if (data.Error == null && !data.HasValue)
             return action.Context.Error<global::app.module.crypto.type.hash.@this>(new ActionError(
                 "Hash requires a value to hash", "ValueRequired", 400));
         if (value is global::app.type.item.binary.@this bin)
@@ -92,9 +93,8 @@ public class Default : ICrypto
         // on it (no separate parameter); when it's a bare base64 string, the
         // kind on the Type (if any) or the Algorithm parameter supplies it.
         // The value under verification must exist before we bother parsing the
-        // expected-hash string — a null payload is a missing input, not a bad hash.
-        var toVerify = action.Data.Peek();
-        if (toVerify is null || await toVerify.IsEmpty())
+        // expected-hash string — a payload left out (or null) is a missing input, not a bad hash.
+        if (!action.Data.HasValue)
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError(
                 "Verify requires a value to verify", "ValueRequired", 400));
 

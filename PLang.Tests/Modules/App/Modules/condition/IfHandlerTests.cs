@@ -243,17 +243,17 @@ public class IfHandlerTests : IDisposable
     // --- Data.ToBoolean tests ---
 
     [Test]
-    public async Task IsTruthy_DataWithToBooleanTrue_ReturnsTrue()
+    public async Task Truth_DataWithToBooleanTrue_IsTrue()
     {
         var data = new TestData(true);
-        await Assert.That(Operator.IsTruthy(data)).IsTrue();
+        await Assert.That(await (await Operator.Truth(data, _app.actor.list.User.Context)).ToBooleanAsync()).IsTrue();
     }
 
     [Test]
-    public async Task IsTruthy_DataWithToBooleanFalse_ReturnsFalse()
+    public async Task Truth_DataWithToBooleanFalse_IsFalse()
     {
         var data = new TestData(false);
-        await Assert.That(Operator.IsTruthy(data)).IsFalse();
+        await Assert.That(await (await Operator.Truth(data, _app.actor.list.User.Context)).ToBooleanAsync()).IsFalse();
     }
 
     [Test]
@@ -285,6 +285,140 @@ public class IfHandlerTests : IDisposable
     {
         await Assert.That(() => new Operator("xor")).ThrowsException()
             .WithMessageMatching("*Unsupported operator*");
+    }
+
+    // --- Emptiness is truthiness (decision 463): a value that doesn't exist, or is empty, is not truthy ---
+    //
+    // Each runs `condition.if(Left=…, Operator=…) { write "yes" }` through the real read path, so Left is the
+    // template a built .pr holds (a %ref% source), not a value handed in from C#.
+
+    private async Task<bool> Holds(string left, string op, string right = "")
+        => await Written($"if {left} {op}", _app.actor.list.User.Context.Action(
+            $"condition.if(Left={left}, Operator=\"{op}\"{(right == "" ? "" : $", Right={right}")}) {{ output.write(Data=\"yes\") }}")) != "";
+
+    private async Task Event() => await _app.actor.list.User.Context.Variable.Set("event", new Dictionary<string, object?> { ["mouse"] = 1 });
+
+    // The os bot's report: a property its value hasn't is empty — it said not empty, silently.
+    [Test]
+    public async Task IsEmpty_AMissingProperty_IsEmpty()
+    {
+        await Event();
+        await Assert.That(await Holds("%event.guest%", "isempty")).IsTrue();
+        await Assert.That(await Holds("%event.guest%", "isnotempty")).IsFalse();
+        await Assert.That(await Holds("%event.mouse%", "isempty")).IsFalse();
+    }
+
+    [Test]
+    public async Task IsEmpty_AnUnsetVariable_IsEmpty()
+    {
+        await Assert.That(await Holds("%nothere%", "isempty")).IsTrue();
+        await Assert.That(await Holds("%nothere%", "isnotempty")).IsFalse();
+    }
+
+    // Not truthy is empty: "", an empty list and dict, and — truthiness, plainly — false and 0.
+    [Test]
+    [Arguments("text")]
+    [Arguments("list")]
+    [Arguments("dict")]
+    [Arguments("false")]
+    [Arguments("zero")]
+    public async Task IsEmpty_ANotTruthyValue_IsEmpty(string kind)
+    {
+        object value = kind switch
+        {
+            "text" => "",
+            "list" => new List<object?>(),
+            "dict" => new Dictionary<string, object?>(),
+            "false" => false,
+            _ => 0,
+        };
+        await _app.actor.list.User.Context.Variable.Set("x", value);
+        await Assert.That(await Holds("%x%", "isempty")).IsTrue();
+        await Assert.That(await Holds("%x%", "isnotempty")).IsFalse();
+    }
+
+    // A literal is read to answer: [] is an empty list, {} an empty dict.
+    [Test]
+    public async Task IsEmpty_EmptyLiterals_AreEmpty()
+    {
+        await Assert.That(await Holds("[]", "isempty")).IsTrue();
+        await Assert.That(await Holds("{}", "isempty")).IsTrue();
+        await Assert.That(await Holds("[1]", "isempty")).IsFalse();
+        await Assert.That(await Holds("{\"a\": 1}", "isempty")).IsFalse();
+    }
+
+    // Whitespace is content: "  " is truthy, so not empty.
+    [Test]
+    [Arguments("text")]
+    [Arguments("space")]
+    [Arguments("number")]
+    [Arguments("list")]
+    public async Task IsEmpty_ASetValue_IsNotEmpty(string kind)
+    {
+        object value = kind switch
+        {
+            "text" => "x",
+            "space" => "  ",
+            "number" => 1,
+            _ => new List<object?> { 1 },
+        };
+        await _app.actor.list.User.Context.Variable.Set("x", value);
+        await Assert.That(await Holds("%x%", "isempty")).IsFalse();
+        await Assert.That(await Holds("%x%", "isnotempty")).IsTrue();
+    }
+
+    // A reference to nothing is null to equality: `== null` is how a missing property is asked too.
+    [Test]
+    public async Task EqualsNull_AMissingProperty_IsTrue()
+    {
+        await Event();
+        await Assert.That(await Holds("%event.guest%", "==", "null")).IsTrue();
+        await Assert.That(await Holds("%event.guest%", "!=", "null")).IsFalse();
+    }
+
+    // Other reads of a missing property fail: ordering names what is missing, not a type clash.
+    [Test]
+    public async Task Ordering_AMissingProperty_IsVariableNotFound()
+    {
+        await Event();
+        var result = await RunStep("if %event.guest% > 5", _app.actor.list.User.Context.Action(
+            "condition.if(Left=%event.guest%, Operator=\">\", Right=5) { output.write(Data=\"yes\") }"));
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("VariableNotFound");
+        await Assert.That(result.Error!.Message).Contains("%event.guest% is not set");
+        await Assert.That(result.Error!.Message).DoesNotContain("%%");
+    }
+
+    // Writing a missing property out surfaces VariableNotFound — never an empty write. Today the channel
+    // writes the error as the content and the step succeeds (reported to the architect, for the coder); the
+    // pin holds either way the VariableNotFound surfaces.
+    [Test]
+    public async Task WriteOut_AMissingProperty_IsVariableNotFound()
+    {
+        await Event();
+        var written = new System.IO.MemoryStream();
+        _app.actor.list.User.Channel.Register(new StreamChannel(
+            global::app.channel.list.@this.Output, written,
+            ChannelDirection.Output, ownsStream: false)
+        { Mime = "text/plain" });
+        var result = await RunStep("write out %event.guest%", _app.actor.list.User.Context.Action(
+            "output.write(Data=%event.guest%)"));
+        var surfaced = result.Error?.Key == "VariableNotFound"
+            || System.Text.Encoding.UTF8.GetString(written.ToArray()).Contains("\"VariableNotFound\"");
+        await Assert.That(surfaced).IsTrue();
+    }
+
+    // A failure is not a miss: a value whose read fails answers its error, not "empty".
+    [Test]
+    public async Task IsEmpty_AFailedRead_IsItsError()
+    {
+        var ctx = _app.actor.list.User.Context;
+        await ctx.Variable.Set("broken", new global::app.data.@this("broken", "{not json",
+            ctx.App.type.list[new global::app.type.@this("dict", "json"), ctx], context: ctx));
+        var result = await RunStep("if %broken.a% is empty", ctx.Action(
+            "condition.if(Left=%broken.a%, Operator=\"isempty\") { output.write(Data=\"yes\") }"));
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("MaterializeFailed");
     }
 
     [Test]

@@ -47,7 +47,7 @@ public class Stage5_ListDictOpsTests
 
         var dropped = await Person("age", 10L).Where(Text("age"), new Op(">"), D(20L), ctx);
         await dropped.IsSuccess();
-        await Assert.That(await (await dropped.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await dropped.Value())!.IsTruthy()).IsFalse();
     }
 
     [Test]

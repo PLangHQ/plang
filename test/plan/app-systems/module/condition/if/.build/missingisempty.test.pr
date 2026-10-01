@@ -1,0 +1,1251 @@
+{
+  "name": "Start",
+  "comment": "Decision 463: \"is empty\" is \"not truthy\" — a value that doesn't exist, or is empty, is not truthy, and the value\nanswers for itself. The os bot's report: %event.guest% on {\"mouse\": …} said not empty, silently.",
+  "step": [
+    {
+      "index": 0,
+      "text": "variable.set(Name=%event%, Value={\"mouse\": 1})",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%event%",
+              "variable": [
+                {
+                  "text": "%event%",
+                  "code": [
+                    {
+                      "variable": "event"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"mouse":1}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "variable.set(Name=%empty%, Value=\"no\")",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%empty%",
+              "variable": [
+                {
+                  "text": "%empty%",
+                  "code": [
+                    {
+                      "variable": "empty"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "condition.if(Left=%event.guest%, Operator=\"isempty\") { variable.set(Name=%empty%, Value=\"yes\") }",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%event.guest%",
+              "variable": [
+                {
+                  "text": "%event.guest%",
+                  "code": [
+                    {
+                      "variable": "event"
+                    },
+                    {
+                      "property": "guest"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "isempty"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%empty%, Value=\"yes\")",
+              "line": {
+                "number": 6
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%empty%",
+                      "variable": [
+                        {
+                          "text": "%empty%",
+                          "code": [
+                            {
+                              "variable": "empty"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "yes"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=\"yes\", Actual=%empty%, Message=\"a property its value hasn't is empty\")",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%empty%",
+              "variable": [
+                {
+                  "text": "%empty%",
+                  "code": [
+                    {
+                      "variable": "empty"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a property its value hasn't is empty"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "variable.set(Name=%filled%, Value=\"no\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%filled%",
+              "variable": [
+                {
+                  "text": "%filled%",
+                  "code": [
+                    {
+                      "variable": "filled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "condition.if(Left=%event.guest%, Operator=\"isnotempty\") { variable.set(Name=%filled%, Value=\"yes\") }",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%event.guest%",
+              "variable": [
+                {
+                  "text": "%event.guest%",
+                  "code": [
+                    {
+                      "variable": "event"
+                    },
+                    {
+                      "property": "guest"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "isnotempty"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%filled%, Value=\"yes\")",
+              "line": {
+                "number": 9
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%filled%",
+                      "variable": [
+                        {
+                          "text": "%filled%",
+                          "code": [
+                            {
+                              "variable": "filled"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "yes"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert.equals(Expected=\"no\", Actual=%filled%, Message=\"a property its value hasn't is not 'not empty'\")",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%filled%",
+              "variable": [
+                {
+                  "text": "%filled%",
+                  "code": [
+                    {
+                      "variable": "filled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a property its value hasn't is not 'not empty'"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "variable.set(Name=%unset%, Value=\"no\")",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%unset%",
+              "variable": [
+                {
+                  "text": "%unset%",
+                  "code": [
+                    {
+                      "variable": "unset"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "condition.if(Left=%nothere%, Operator=\"isempty\") { variable.set(Name=%unset%, Value=\"yes\") }",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%nothere%",
+              "variable": [
+                {
+                  "text": "%nothere%",
+                  "code": [
+                    {
+                      "variable": "nothere"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "isempty"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%unset%, Value=\"yes\")",
+              "line": {
+                "number": 12
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%unset%",
+                      "variable": [
+                        {
+                          "text": "%unset%",
+                          "code": [
+                            {
+                              "variable": "unset"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "yes"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "assert.equals(Expected=\"yes\", Actual=%unset%, Message=\"an unset variable is empty\")",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%unset%",
+              "variable": [
+                {
+                  "text": "%unset%",
+                  "code": [
+                    {
+                      "variable": "unset"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "an unset variable is empty"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 10,
+      "text": "variable.set(Name=%list%, Value=[])",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%list%",
+              "variable": [
+                {
+                  "text": "%list%",
+                  "code": [
+                    {
+                      "variable": "list"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": []
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 11,
+      "text": "variable.set(Name=%listEmpty%, Value=\"no\")",
+      "line": {
+        "number": 15
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%listEmpty%",
+              "variable": [
+                {
+                  "text": "%listEmpty%",
+                  "code": [
+                    {
+                      "variable": "listEmpty"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 12,
+      "text": "condition.if(Left=%list%, Operator=\"isempty\") { variable.set(Name=%listEmpty%, Value=\"yes\") }",
+      "line": {
+        "number": 16
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%list%",
+              "variable": [
+                {
+                  "text": "%list%",
+                  "code": [
+                    {
+                      "variable": "list"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "isempty"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%listEmpty%, Value=\"yes\")",
+              "line": {
+                "number": 16
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%listEmpty%",
+                      "variable": [
+                        {
+                          "text": "%listEmpty%",
+                          "code": [
+                            {
+                              "variable": "listEmpty"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "yes"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 13,
+      "text": "assert.equals(Expected=\"yes\", Actual=%listEmpty%, Message=\"an empty list is empty\")",
+      "line": {
+        "number": 17
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%listEmpty%",
+              "variable": [
+                {
+                  "text": "%listEmpty%",
+                  "code": [
+                    {
+                      "variable": "listEmpty"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "an empty list is empty"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 14,
+      "text": "variable.set(Name=%literalEmpty%, Value=\"no\")",
+      "line": {
+        "number": 18
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%literalEmpty%",
+              "variable": [
+                {
+                  "text": "%literalEmpty%",
+                  "code": [
+                    {
+                      "variable": "literalEmpty"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 15,
+      "text": "condition.if(Left={}, Operator=\"isempty\") { variable.set(Name=%literalEmpty%, Value=\"yes\") }",
+      "line": {
+        "number": 19
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "dict"
+              },
+              "value": {}
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "isempty"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%literalEmpty%, Value=\"yes\")",
+              "line": {
+                "number": 19
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%literalEmpty%",
+                      "variable": [
+                        {
+                          "text": "%literalEmpty%",
+                          "code": [
+                            {
+                              "variable": "literalEmpty"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "yes"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 16,
+      "text": "assert.equals(Expected=\"yes\", Actual=%literalEmpty%, Message=\"an empty dict literal is empty\")",
+      "line": {
+        "number": 20
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%literalEmpty%",
+              "variable": [
+                {
+                  "text": "%literalEmpty%",
+                  "code": [
+                    {
+                      "variable": "literalEmpty"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "an empty dict literal is empty"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 17,
+      "text": "variable.set(Name=%mouseEmpty%, Value=\"no\")",
+      "line": {
+        "number": 21
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%mouseEmpty%",
+              "variable": [
+                {
+                  "text": "%mouseEmpty%",
+                  "code": [
+                    {
+                      "variable": "mouseEmpty"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 18,
+      "text": "condition.if(Left=%event.mouse%, Operator=\"isempty\") { variable.set(Name=%mouseEmpty%, Value=\"yes\") }",
+      "line": {
+        "number": 22
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%event.mouse%",
+              "variable": [
+                {
+                  "text": "%event.mouse%",
+                  "code": [
+                    {
+                      "variable": "event"
+                    },
+                    {
+                      "property": "mouse"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "isempty"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%mouseEmpty%, Value=\"yes\")",
+              "line": {
+                "number": 22
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%mouseEmpty%",
+                      "variable": [
+                        {
+                          "text": "%mouseEmpty%",
+                          "code": [
+                            {
+                              "variable": "mouseEmpty"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "yes"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 19,
+      "text": "assert.equals(Expected=\"no\", Actual=%mouseEmpty%, Message=\"a set value is not empty\")",
+      "line": {
+        "number": 23
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%mouseEmpty%",
+              "variable": [
+                {
+                  "text": "%mouseEmpty%",
+                  "code": [
+                    {
+                      "variable": "mouseEmpty"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a set value is not empty"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/app-systems/module/condition/if/MissingIsEmpty.test.goal",
+  "prPath": "/plan/app-systems/module/condition/if/.build/missingisempty.test.pr",
+  "hash": "d3011a6b726dd3be9527d2b3a8516052da8ae299fb39b7e37457bb45e9860959",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

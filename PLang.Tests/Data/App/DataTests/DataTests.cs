@@ -336,36 +336,60 @@ public class DataTests : System.IAsyncDisposable
         await Assert.That(child.IsInitialized).IsFalse();
     }
 
+    // Emptiness is truthiness: one door, Data.ToBooleanAsync.
+
     [Test]
-    public async Task IsEmpty_NullValue_ReturnsTrue()
+    public async Task Truthy_NullValue_IsFalse()
     {
         var ov = new Data("test");
 
-        await Assert.That(await ov.IsEmpty()).IsTrue();
+        await Assert.That(await ov.ToBooleanAsync()).IsFalse();
     }
 
     [Test]
-    public async Task IsEmpty_EmptyString_ReturnsTrue()
+    public async Task Truthy_EmptyString_IsFalse()
     {
         var ov = _app.Data("test", "");
 
-        await Assert.That(await ov.IsEmpty()).IsTrue();
+        await Assert.That(await ov.ToBooleanAsync()).IsFalse();
+    }
+
+    // Whitespace is content: "  " is truthy, as in JS and Python; trimming is explicit.
+    [Test]
+    public async Task Truthy_WhitespaceString_IsTrue()
+    {
+        var ov = _app.Data("test", "  ");
+
+        await Assert.That(await ov.ToBooleanAsync()).IsTrue();
     }
 
     [Test]
-    public async Task IsEmpty_NonEmptyValue_ReturnsFalse()
+    public async Task Truthy_NonEmptyValue_IsTrue()
     {
         var ov = _app.Data("test", "hello");
 
-        await Assert.That(await ov.IsEmpty()).IsFalse();
+        await Assert.That(await ov.ToBooleanAsync()).IsTrue();
     }
 
+    // An absent Data holds the null item, which answers for it — no IsInitialized check in the door.
     [Test]
-    public async Task IsEmpty_NotInitialized_ReturnsTrue()
+    public async Task Truthy_NotInitialized_IsFalse()
     {
-        var ov = new Data("test");
+        var ov = _app.NotFound("test");
 
-        await Assert.That(await ov.IsEmpty()).IsTrue();
+        await Assert.That(await ov.ToBooleanAsync()).IsFalse();
+        await Assert.That(ov.ToBoolean()).IsFalse();
+        await Assert.That(ov.Success).IsTrue();
+    }
+
+    // Presence is a different question: "" and 0 and false are given.
+    [Test]
+    public async Task HasValue_EmptyStringAndFalse_AreGiven()
+    {
+        await Assert.That(_app.Data("test", "").HasValue).IsTrue();
+        await Assert.That(_app.Data("test", false).HasValue).IsTrue();
+        await Assert.That(new Data("test").HasValue).IsFalse();
+        await Assert.That(_app.NotFound("test").HasValue).IsFalse();
     }
 
     [Test]
@@ -386,7 +410,7 @@ public class DataTests : System.IAsyncDisposable
         var ov = _app.NotFound("missing");
 
         await Assert.That(ov.Name).IsEqualTo("missing");
-        await Assert.That(await (await ov.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await ov.Value())!.IsTruthy()).IsFalse();
         await Assert.That(ov.IsInitialized).IsFalse();
     }
 

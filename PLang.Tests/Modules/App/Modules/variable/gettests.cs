@@ -36,6 +36,6 @@ public class GetTests
         var result = await action.Start();
 
         await result.IsSuccess();
-        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
     }
 }

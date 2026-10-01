@@ -74,7 +74,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("file", "read", ("Path", "foo.zzz"));
         await result.IsSuccess();
-        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
     }
 
     [Test]
@@ -82,7 +82,7 @@ public class Stage4_BuildMethodImplsTests
     {
         var result = await Build("file", "read", ("Path", "%p%"));
         await result.IsSuccess();
-        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
     }
 
     [Test]
@@ -143,7 +143,7 @@ public class Stage4_BuildMethodImplsTests
         var result = await Build("llm", "query",
             ("Message", Chat));
         await result.IsSuccess();
-        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
     }
 
     // --- http.request / http.upload .Build() ---
@@ -209,6 +209,6 @@ public class Stage4_BuildMethodImplsTests
         var result = await ((IClass)handler!).Build();
 
         await result.IsSuccess();
-        await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
     }
 }

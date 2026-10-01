@@ -153,13 +153,14 @@ public sealed record @this(
         // UNSET slot falls to the step value → setting → [Default] cascade below.
         sb.AppendLine($"        if (__seed?.{Name} is {{ IsInitialized: true }} __sv{Name}) {Local} = __sv{Name};");
         // step value → setting → frozen default (.pr) → [Default]: an explicit setting beats what
-        // the build froze; a runtime change of [Default] never does.
+        // the build froze; a runtime change of [Default] never does. "Was it given" is presence
+        // (HasValue), never truthiness: a written false or 0 is given (list.split's Empty=false stays false).
         sb.AppendLine("        else");
         sb.AppendLine("        {");
         sb.AppendLine($"            var __d = __View<{InnerType}>(action, \"{ParamName}\", context);");
-        sb.AppendLine($"            if (!await __d.IsEmpty()) {Local} = __d;");
+        sb.AppendLine($"            if (__d.HasValue) {Local} = __d;");
         sb.AppendLine($"            else if ({settingGet} is {{ IsInitialized: true }} __s) {Local} = __s.As<{InnerType}>();");
-        sb.AppendLine($"            else if (__Default<{InnerType}>(action, \"{ParamName}\", context) is var __f && !await __f.IsEmpty()) {Local} = __f;");
+        sb.AppendLine($"            else if (__Default<{InnerType}>(action, \"{ParamName}\", context) is var __f && __f.HasValue) {Local} = __f;");
         if (IsNullable)
             sb.AppendLine($"            else {Local} = global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\");");
         else if (DefaultValue != null)

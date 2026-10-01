@@ -105,6 +105,6 @@ public class ListSetTests : System.IAsyncDisposable
 
         await result.IsSuccess();
         var list = (await memory.GetValue("myList")) as global::app.type.item.list.@this;
-        await Assert.That(await (await list!.At(0, app.actor.list.User.Context)!.Value())!.IsEmpty()).IsTrue();
+        await Assert.That((await list!.At(0, app.actor.list.User.Context)!.Value())!.IsTruthy()).IsFalse();
     }
 }

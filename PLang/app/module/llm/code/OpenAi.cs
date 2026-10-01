@@ -96,11 +96,11 @@ public sealed class OpenAi : ILlm
         // builder LLM may store it as a structured value (dict/list from a JSON
         // literal in .goal source) or as a free-form string (YAML/XML/prose). The LLM
         // expects text — JSON-serialize structured values, pass text through as-is.
-        // An ABSENT/empty schema slot is "no schema" — asked via the binding's
-        // IsEmpty (the value door hands the absent/null citizen, never C# null).
+        // An ABSENT/empty schema slot is "no schema" — asked via its truthiness
+        // (an absent slot holds the null item, which is not truthy).
         async System.Threading.Tasks.Task<string?> SchemaOf(query a)
         {
-            if (a.Schema == null || await a.Schema.IsEmpty()) return null;
+            if (a.Schema == null || !await a.Schema.ToBooleanAsync()) return null;
             // The schema writes ITSELF through the Text serializer: a free-form json/yaml string
             // rides bare (as authored), a structured value (dict/list from a .goal json literal)
             // renders as json. NEVER STJ on the wrapper — that emitted the value's C# property bag
@@ -110,11 +110,10 @@ public sealed class OpenAi : ILlm
             return System.Text.Encoding.UTF8.GetString(ms.ToArray());
         }
 
-        // Format slot — absent/empty is "no explicit format" (the door hands
-        // the absent citizen, never C# null), so the schema-implies-json
-        // fallback can fire.
+        // Format slot — absent/empty is "no explicit format" (not truthy), so the
+        // schema-implies-json fallback can fire.
         async System.Threading.Tasks.Task<string?> FormatOf(query a)
-            => a.Format == null || await a.Format.IsEmpty() ? null : (await a.Format.Value())?.ToString();
+            => a.Format == null || !await a.Format.ToBooleanAsync() ? null : (await a.Format.Value())?.ToString();
 
         // a record that refuses what the step wrote answers why
         if (await action.Conversation.Value() is not { } conversation) return context.Error(action.Conversation.Error!);
@@ -1006,7 +1005,7 @@ public sealed class OpenAi : ILlm
     // The tools ride as a plang list of held goal.call actions. Null when no tools were passed.
     private static async Task<List<Tool>?> ToolsOf(query action)
     {
-        if (action.Tool == null || await action.Tool.IsEmpty()) return null;
+        if (action.Tool == null || !await action.Tool.ToBooleanAsync()) return null;
         if (await action.Tool.Value() is not global::app.type.item.list.@this list) return null;
         var tools = new List<Tool>();
         foreach (var row in list.Items(action.Context))

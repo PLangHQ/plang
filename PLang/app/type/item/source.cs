@@ -140,7 +140,7 @@ public class source : @this
             if (resolved is null || !resolved.IsInitialized)
             {
                 data.Fail(new global::app.error.Error(
-                    $"%{_value}% is not set — nothing to answer for it.", "VariableNotFound", 404));
+                    $"{_value} is not set — nothing to answer for it.", "VariableNotFound", 404));
                 return Absent;
             }
             return await resolved.Value();

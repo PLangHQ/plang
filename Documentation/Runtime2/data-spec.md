@@ -87,14 +87,12 @@ Non-generic `GetValue(Type)`:
 - Returns the value directly if assignable.
 - Otherwise attempts conversion via `TypeMapping`.
 
-## 7. IsEmpty
+## 7. Emptiness
 
-`IsEmpty` is true when ANY of:
-- `IsInitialized == false`
-- `Value == null`
-- `Value` is an empty string (`""`)
-
-Note: a non-null, non-string value (e.g., `0`, `false`) is NOT empty.
+Emptiness is truthiness (decision 463): a value is empty when it is not truthy — null, `""`, `0`, `false`, an
+empty list or dict, or a value that doesn't exist (`IsInitialized == false`; it holds the null item, which answers).
+There is no `IsEmpty`; ask `ToBooleanAsync()`. Whitespace is content: `"  "` is not empty. Presence ("was it
+given") is `HasValue`: `""`, `0` and `false` are present.
 
 ## 8. Data.Null(name)
 
@@ -107,7 +105,9 @@ This is the "no value found" sentinel used throughout navigation.
 
 ## 9. ToBoolean
 
-`ToBoolean()` returns `IsInitialized`. A Data wrapping a non-null value is "truthy"; a Data with null value is "falsy".
+The value answers its own truthiness (`item.IsTruthy()`); `ToBooleanAsync()` reads what the Data holds (a reference
+followed, a value opened) and asks it, `ToBoolean()` asks what is in memory now. An absent Data holds the null item, so
+it is not truthy without an `IsInitialized` check.
 
 ## 10. Success / Error
 

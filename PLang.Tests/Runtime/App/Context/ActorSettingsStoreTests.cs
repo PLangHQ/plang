@@ -64,7 +64,7 @@ public class ActorSettingsStoreTests
             var result = await engine2.store.Get<global::app.type.item.@this>("LlmCache", "testkey");
             // A missing key yields an empty value (the plang null/absent citizen),
             // never C# null — assert emptiness the plang way, not TUnit IsNull.
-            await Assert.That(await (await result.Value())!.IsEmpty()).IsTrue();
+            await Assert.That((await result.Value())!.IsTruthy()).IsFalse();
         }
     }
 

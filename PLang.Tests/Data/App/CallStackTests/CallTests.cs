@@ -77,7 +77,7 @@ public class CallTests : System.IAsyncDisposable
         // Tags is always allocated (a lazy alloc would race the writer). No tag written → empty.
         var stack = new CallStack();
         await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
-        await Assert.That(await call.Tags.IsEmpty()).IsTrue();
+        await Assert.That(call.Tags.IsTruthy()).IsFalse();
     }
 
     [Test]
