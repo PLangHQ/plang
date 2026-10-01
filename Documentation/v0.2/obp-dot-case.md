@@ -53,6 +53,9 @@ A survey of every setting class and every action option found these, each a hier
 5. **A name that repeats its owner drops that part.** `on.error`'s `IgnoreError` → `ignore`; `variable.set`'s `AsDefault` → `default`.
 6. **Siblings sharing a prefix are one sub-record.** `FollowRedirects`, `MaxRedirects` → `redirect.follow`, `redirect.max`, one `redirect` under the action.
 
+7. **A path only for a real group.** A glued name becomes a path when its first word is something that has, or plausibly will have, more than one member. Otherwise the action is the owner, and the name is the one word it isn't already.
+   `ContinuePreviousConversation` → `conversation.continue` (a conversation is a group: its id, its history). But `file.copy`'s `IncludeSubfolders` → `subfolder` (true: included), `file.read`'s `ResolveVariables` → `resolve` (reading only resolves its file's variables), and `list.split`'s `RemoveEmpty` → `empty` (true: empty parts kept). A record type holding one bool is the path taken too literally.
+
 Patterns 2, 3 (when the option moves) and 6 change more than a name: a type, an owner, or a shape. That's the rule doing its job: the unit, the owner and the shared prefix were the structure the glued name hid.
 
 ## Where it applies
