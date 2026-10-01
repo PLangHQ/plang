@@ -2,11 +2,9 @@
 
 The `Path` on every action in this module is polymorphic. Anything that looks like a URL is routed to the matching scheme handler; a bare path or `file://` goes to the local filesystem.
 
-```plang
 - read 'config.json', write to %config%
 - read 'https://api.example.com/users.json', write to %users%
 - read %source%, write to %content%
-```
 
 The last one works whether `%source%` holds a local path or a URL — the program doesn't care which. The registered schemes are `file://` (and bare paths) and `http(s)://`:
 
