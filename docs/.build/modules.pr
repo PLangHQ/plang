@@ -1,0 +1,444 @@
+{
+  "name": "Modules",
+  "step": [
+    {
+      "index": 0,
+      "text": "call goal Page module=%!app.module.file%",
+      "line": {
+        "number": 8
+      },
+      "comment": "The learner pages in modules/, each written from the module catalog, never by hand (decision 411; the spec is\nDocumentation/v0.2/module-reference-generation.md): the module's description, then each action's description,\nthe steps of its examples, its properties (how a step says each, its type, whether it is required, its default,\nwhat it changes) and what it returns.\nOnly the file module's notes are tagged yet, so only its page is written. The loop over %!app.module.list% comes\nwhen the other modules' notes are tagged.",
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Page"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"module","type":{"name":"item","template":"plang"},"value":"%!app.module.file%","variable":[{"text":"%!app.module.file%","code":[{"variable":"!app"},{"property":"module"},{"property":"file"}]}]}]
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [
+    {
+      "name": "Page",
+      "step": [
+        {
+          "index": 0,
+          "text": "render template \"/templates/module.template\", write to %page%",
+          "line": {
+            "number": 12
+          },
+          "comment": "One module's page, modules/<name>.md, then what its actions' notes and properties don't agree on.",
+          "code": [
+            {
+              "module": "ui",
+              "name": "render",
+              "property": [
+                {
+                  "name": "Template",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "/templates/module.template"
+                }
+              ]
+            },
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%page%",
+                  "variable": [
+                    {
+                      "text": "%page%",
+                      "code": [
+                        {
+                          "variable": "page"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 1,
+          "text": "save %page% to \"/modules/%module.Name%.md\"",
+          "line": {
+            "number": 13
+          },
+          "code": [
+            {
+              "module": "file",
+              "name": "save",
+              "property": [
+                {
+                  "name": "Path",
+                  "type": {
+                    "name": "path",
+                    "template": "plang"
+                  },
+                  "value": "/modules/%module.Name%.md",
+                  "variable": [
+                    {
+                      "text": "%module.Name%",
+                      "code": [
+                        {
+                          "variable": "module"
+                        },
+                        {
+                          "property": "Name"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%page%",
+                  "variable": [
+                    {
+                      "text": "%page%",
+                      "code": [
+                        {
+                          "variable": "page"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        },
+        {
+          "index": 2,
+          "text": "foreach %module.Action%, call Unmatched action=%item%",
+          "line": {
+            "number": 14
+          },
+          "code": [
+            {
+              "module": "loop",
+              "name": "foreach",
+              "property": [
+                {
+                  "name": "Collection",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%module.Action%",
+                  "variable": [
+                    {
+                      "text": "%module.Action%",
+                      "code": [
+                        {
+                          "variable": "module"
+                        },
+                        {
+                          "property": "Action"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "item",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%item%",
+                  "variable": [
+                    {
+                      "text": "%item%",
+                      "code": [
+                        {
+                          "variable": "item"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "Unmatched"
+                },
+                {
+                  "name": "Parameter",
+                  "type": {
+                    "name": "list"
+                  },
+                  "value": [{"name":"action","type":{"name":"item","template":"plang"},"value":"%item%","variable":[{"text":"%item%","code":[{"variable":"item"}]}]}]
+                }
+              ],
+              "default": [
+                {
+                  "name": "parallel",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/Modules.goal",
+      "prPath": "/.build/modules.pr",
+      "hash": "9886e9e805680340d72533651d5737b04959b02eac87227c5b20db587a2e7b0e",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false
+    },
+    {
+      "name": "Unmatched",
+      "step": [
+        {
+          "index": 0,
+          "text": "foreach %action.Note.Warning%, call Warn warning=%item%",
+          "line": {
+            "number": 19
+          },
+          "comment": "What one action's notes and properties don't agree on: a notes line that names no property, a property that no\nline names. The notes find them (action.Note.Warning); this writes each one.",
+          "code": [
+            {
+              "module": "loop",
+              "name": "foreach",
+              "property": [
+                {
+                  "name": "Collection",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%action.Note.Warning%",
+                  "variable": [
+                    {
+                      "text": "%action.Note.Warning%",
+                      "code": [
+                        {
+                          "variable": "action"
+                        },
+                        {
+                          "property": "Note"
+                        },
+                        {
+                          "property": "Warning"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "item",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%item%",
+                  "variable": [
+                    {
+                      "text": "%item%",
+                      "code": [
+                        {
+                          "variable": "item"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "Warn"
+                },
+                {
+                  "name": "Parameter",
+                  "type": {
+                    "name": "list"
+                  },
+                  "value": [{"name":"warning","type":{"name":"item","template":"plang"},"value":"%item%","variable":[{"text":"%item%","code":[{"variable":"item"}]}]}]
+                }
+              ],
+              "default": [
+                {
+                  "name": "parallel",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/Modules.goal",
+      "prPath": "/.build/modules.pr",
+      "hash": "be5de25a39b52311fab3e2e17fd45503dd5f4408a30e9fe6c0bd52d1903fff85",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false
+    },
+    {
+      "name": "Warn",
+      "step": [
+        {
+          "index": 0,
+          "text": "write %warning.Message% to \"error\" channel",
+          "line": {
+            "number": 22
+          },
+          "code": [
+            {
+              "module": "output",
+              "name": "write",
+              "property": [
+                {
+                  "name": "Data",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%warning.Message%",
+                  "variable": [
+                    {
+                      "text": "%warning.Message%",
+                      "code": [
+                        {
+                          "variable": "warning"
+                        },
+                        {
+                          "property": "Message"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "channel",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "error"
+                }
+              ]
+            }
+          ],
+          "waitForExecution": true
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/Modules.goal",
+      "prPath": "/.build/modules.pr",
+      "hash": "f6ed3ccca47c73ff64ee3cbd74155a288496d7cd0b8156e1c48b1e15f1086867",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false
+    }
+  ],
+  "visibility": "Public",
+  "path": "/Modules.goal",
+  "prPath": "/.build/modules.pr",
+  "hash": "c6874f1ad103573ee84307c754ffe673fac83345126cdeb7f87d954161c63ea0",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}

@@ -11,12 +11,12 @@ Page
 / One module's page, modules/<name>.md, then what its actions' notes and properties don't agree on.
 - render template "/templates/module.template", write to %page%
 - save %page% to "/modules/%module.Name%.md"
-- foreach %module.Action%, call Unmatched item=%action%
+- foreach %module.Action%, call Unmatched action=%item%
 
 Unmatched
 / What one action's notes and properties don't agree on: a notes line that names no property, a property that no
 / line names. The notes find them (action.Note.Warning); this writes each one.
-- foreach %action.Note.Warning%, call Warn item=%warning%
+- foreach %action.Note.Warning%, call Warn warning=%item%
 
 Warn
 - write %warning.Message% to "error" channel
