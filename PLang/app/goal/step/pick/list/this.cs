@@ -364,10 +364,11 @@ public sealed class @this
         return new();
     }
 
-    // One action as the pre-fill starts it: its required properties as `?`. An optional property gets no hole —
-    // it is the LLM's to add when the step names it (a Recovery, a Parameter, a RetryCount), as the examples teach.
+    // One action as the pre-fill starts it: its required properties as `Name: type` — a slot named by what it takes,
+    // never a value the LLM could copy. An optional property gets no slot — it is the LLM's to add when the step
+    // names it (a Recovery, a Parameter, a RetryCount), as the examples teach.
     private static string Call(global::app.goal.step.action.@this action)
-        => $"{action.Module.Name}.{action.Name}({string.Join(", ", action.Property.Where(p => p.Required).Select(p => $"{p.Name}=?"))})";
+        => $"{action.Module.Name}.{action.Name}({string.Join(", ", action.Property.Where(p => p.Required).Select(p => $"{p.Name}: {p.Type}"))})";
 
     private global::app.goal.step.action.@this? Catalog(string name, global::app.actor.context.@this context)
     {
