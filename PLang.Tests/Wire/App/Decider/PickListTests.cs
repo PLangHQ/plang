@@ -1,19 +1,18 @@
 namespace PLang.Tests.App.Decider;
 
-// step.Pick against the python decider (harness.picks / stage2, decider_eval.one): for each golden goal,
-// the decider's recorded answers (pick_golden.json, written by tools/decider/pick_fixture.py from an eval
-// round) go through each step's pick.list — stage 1's answer gives the same stage-2 questions python
-// asked, and both answers give the same picks and popular top three python read off them.
+// step.Pick and the builder's decider templates against a pinned fixture (pick_golden.json): for each golden goal,
+// the decider's recorded answers go through each step's pick.list — the stage-1 request, the stage-2 questions and
+// state stage 1's answer gives, prompt C's user message after both answers, and the picks and popular top three
+// both answers give. The recorded answers are frozen input; the rest is C#'s own output as pinned. An intended change
+// re-pins it through AcceptTheFixture.
 public class PickListTests
 {
+    private const string Pinned = "PLang.Tests/Wire/App/Decider/pick_golden.json";
+    private const string SettingsPinned = "PLang.Tests/Wire/App/Decider/settings_golden.json";
+
     private static System.Text.Json.JsonElement[] Golden()
-    {
-        var dir = new System.IO.DirectoryInfo(AppContext.BaseDirectory);
-        while (dir != null && !System.IO.File.Exists(System.IO.Path.Combine(dir.FullName, "PLang.Tests", "Wire", "App", "Decider", "pick_golden.json")))
-            dir = dir.Parent;
-        var path = System.IO.Path.Combine(dir!.FullName, "PLang.Tests", "Wire", "App", "Decider", "pick_golden.json");
-        return System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(path)).RootElement.EnumerateArray().ToArray();
-    }
+        => System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(Fixture.Root(), Pinned)))
+            .RootElement.EnumerateArray().ToArray();
 
     // A JSON value as the raw CLR a decider answer arrives as: objects, lists, numbers, text, bools.
     private static object? Raw(System.Text.Json.JsonElement e) => e.ValueKind switch
@@ -44,17 +43,11 @@ public class PickListTests
         return goal;
     }
 
-    private static string RepoRoot()
-    {
-        var dir = System.AppContext.BaseDirectory;
-        while (dir != null && !System.IO.Directory.Exists(System.IO.Path.Combine(dir, "PLang", "app")))
-            dir = System.IO.Directory.GetParent(dir)?.FullName;
-        return dir!;
-    }
+    private static string DeciderJson => System.IO.Path.Combine(Fixture.Root(), "os", "system", "builder", "llm", "decider.json");
 
-    // The popular actions an unsure step is offered — the builder's decider.json, which python reads too.
+    // The popular actions an unsure step is offered — the builder's decider.json.
     private static List<string> Popular() =>
-        System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(RepoRoot(), "os", "system", "builder", "llm", "decider.json")))
+        System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(DeciderJson))
             .RootElement.GetProperty("popular").EnumerateArray().Select(p => p.GetString()!).ToList();
 
     // A decider template rendered for the goal, with the variables Decide sets: goal, modules, decider
@@ -63,157 +56,201 @@ public class PickListTests
     {
         context.Variable.Set(new global::app.data.@this("goal", goal, context: context));
         context.Variable.Set(new global::app.data.@this("modules", context.App.module.list, context: context));
-        var decider = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(
-            System.IO.Path.Combine(RepoRoot(), "os", "system", "builder", "llm", "decider.json"))).RootElement;
+        var decider = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(DeciderJson)).RootElement;
         context.Variable.Set(new global::app.data.@this("decider", Answer(decider, context), context: context));
         context.Variable.Set(new global::app.data.@this("stage", stage, context: context));
         var render = new global::app.module.ui.Render(context)
         {
             Template = (global::app.type.item.text.@this)System.IO.File.ReadAllText(
-                System.IO.Path.Combine(RepoRoot(), "os", "system", "builder", "llm", "templates", template)),
+                System.IO.Path.Combine(Fixture.Root(), "os", "system", "builder", "llm", "templates", template)),
             IsFile = (global::app.type.item.@bool.@this)false,
         };
         var result = await new global::app.module.ui.code.Fluid().Render(render);
         return result.Success ? (await result.Value())!.ToString() : $"render failed: {result.Error!.Message}";
     }
 
+    // ---- what C# makes of one golden goal: each is what the fixture pins
+
+    private static async Task<(string Question, string State)> StageOne(System.Text.Json.JsonElement entry, global::app.actor.context.@this context)
+    {
+        var goal = Goal(entry, context);
+        return (await Rendered("decider1.template", goal, context), await Rendered("decider.state.template", goal, context, stage: 1));
+    }
+
+    private static async Task<(string Question, string State)> StageTwo(System.Text.Json.JsonElement entry, global::app.actor.context.@this context)
+    {
+        var goal = Goal(entry, context);
+        var first = Answer(entry.GetProperty("answer1"), context);
+        foreach (var step in goal.Step.Items()) await step.Pick.Take(first, Popular(), context);
+        return (await Rendered("decider2.template", goal, context), await Rendered("decider.state.template", goal, context, stage: 2));
+    }
+
+    // Prompt C's user message after both answers: each step's line (its listing and starting formal), the Types and
+    // each listed action once.
+    private static async Task<string> UserMessage(System.Text.Json.JsonElement entry, global::app.actor.context.@this context)
+    {
+        var goal = Goal(entry, context);
+        foreach (var s in entry.GetProperty("step").EnumerateArray())
+            if (s.GetProperty("comment").GetString() is { } comment) goal.Step[s.GetProperty("index").GetInt32()].Comment = comment;
+        var first = Answer(entry.GetProperty("answer1"), context);
+        var second = Answer(entry.GetProperty("answer2"), context);
+        foreach (var step in goal.Step.Items())
+        {
+            await step.Pick.Take(first, Popular(), context);
+            await step.Pick.Take(second, Popular(), context);
+        }
+        await goal.Step.Scope(context);   // build.pick's walk: each step's => types:
+        return await Rendered("properties.template", goal, context);
+    }
+
+    // Each step's picks after both answers, with its popular top three: {"<i>": {"<action>": score, "@popular": {...}}}.
+    private static async Task<System.Text.Json.Nodes.JsonObject> Picks(System.Text.Json.JsonElement entry, global::app.actor.context.@this context)
+    {
+        var goal = Goal(entry, context);
+        var first = Answer(entry.GetProperty("answer1"), context);
+        var second = Answer(entry.GetProperty("answer2"), context);
+        var picks = new System.Text.Json.Nodes.JsonObject();
+        foreach (var step in goal.Step.Items())
+        {
+            await step.Pick.Take(first, Popular(), context);
+            await step.Pick.Take(second, Popular(), context);
+            var one = new System.Text.Json.Nodes.JsonObject();
+            foreach (var p in step.Pick.Item) one[p.Name] = p.Score is { } s ? System.Text.Json.Nodes.JsonValue.Create((double)s) : null;
+            if (step.Pick.Top.Count > 0)
+            {
+                var popular = new System.Text.Json.Nodes.JsonObject();
+                foreach (var t in step.Pick.Top) popular[t.Name] = t.Score is { } s ? System.Text.Json.Nodes.JsonValue.Create((double)s) : null;
+                one["@popular"] = popular;
+            }
+            picks[step.Index.ToString()] = one;
+        }
+        return picks;
+    }
+
+    // Prompt C's Settings and Keys blocks for one settings case: the classes its steps name and the %!app.X["key"]%
+    // line when a step reads one so.
+    private static async Task<string> SettingsBlock(System.Text.Json.JsonElement entry, global::app.actor.context.@this context)
+    {
+        var name = entry.GetProperty("goal").GetString()!;
+        var goal = Make.Goal(context, name, "/" + name + ".goal",
+            entry.GetProperty("steps").EnumerateArray().Select(t => Make.Step(t.GetString()!, 0)).ToArray());
+        await goal.Step.Scope(context);
+        // the message ends in one newline; the block is what comes before it
+        var rendered = (await Rendered("properties.template", goal, context)).TrimEnd('\n');
+        // the blocks run from the first of their headers to the actions' definitions (or the end)
+        var at = new[] { rendered.IndexOf("\n\nSettings\n", StringComparison.Ordinal), rendered.IndexOf("\n\nKeys\n", StringComparison.Ordinal) }
+            .Where(i => i >= 0).DefaultIfEmpty(-1).Min();
+        var end = at < 0 ? -1 : rendered.IndexOf("\n\n## ", at, StringComparison.Ordinal);
+        return at < 0 ? "" : end < 0 ? rendered[at..] : rendered[at..end];
+    }
+
+    private static global::app.@this Os() => new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing();
+
+    // ---- the comparisons
+
     // Two JSON question sets, key by key in order: the differences, or none.
-    private static IEnumerable<string> Differ(string at, string rendered, System.Text.Json.JsonElement python)
+    private static IEnumerable<string> Differ(string at, string rendered, System.Text.Json.JsonElement pinned)
     {
         System.Text.Json.Nodes.JsonObject ours;
         try { ours = System.Text.Json.Nodes.JsonNode.Parse(rendered)!.AsObject(); }
         catch (System.Text.Json.JsonException ex) { return [$"{at}: not JSON ({ex.Message})\n{rendered}"]; }
         var differ = new List<string>();
-        var theirs = python.EnumerateObject().ToList();
+        var theirs = pinned.EnumerateObject().ToList();
         if (!ours.Select(q => q.Key).SequenceEqual(theirs.Select(q => q.Name)))
-            differ.Add($"{at} asks [{string.Join(", ", ours.Select(q => q.Key))}], python [{string.Join(", ", theirs.Select(q => q.Name))}]");
+            differ.Add($"{at} asks [{string.Join(", ", ours.Select(q => q.Key))}], pinned [{string.Join(", ", theirs.Select(q => q.Name))}]");
         foreach (var q in theirs)
             if (ours[q.Name] is { } mine && !System.Text.Json.Nodes.JsonNode.DeepEquals(mine, System.Text.Json.Nodes.JsonNode.Parse(q.Value.GetRawText())))
-                differ.Add($"{at} {q.Name}\n  ours:   {mine.ToJsonString()}\n  python: {q.Value.GetRawText()}");
+                differ.Add($"{at} {q.Name}\n  ours:   {mine.ToJsonString()}\n  pinned: {q.Value.GetRawText()}");
         return differ;
     }
 
-    // Two state texts, line by line: the first line that differs, or none.
-    private static IEnumerable<string> Differ(string at, string ours, string python)
+    // Two texts, line by line: the first line that differs, or none.
+    private static IEnumerable<string> Differ(string at, string ours, string pinned)
     {
-        if (ours == python) return [];
-        var a = ours.Split('\n'); var b = python.Split('\n');
+        if (ours == pinned) return [];
+        var a = ours.Split('\n'); var b = pinned.Split('\n');
         var n = Enumerable.Range(0, Math.Min(a.Length, b.Length)).FirstOrDefault(i => a[i] != b[i], Math.Min(a.Length, b.Length));
-        return [$"{at} state differs at line {n + 1} (ours {a.Length} lines, python {b.Length})\n  ours:   {(n < a.Length ? a[n] : "<end>")}\n  python: {(n < b.Length ? b[n] : "<end>")}"];
+        return [$"{at} differs at line {n + 1} (ours {a.Length} lines, pinned {b.Length})\n  ours:   {(n < a.Length ? a[n] : "<end>")}\n  pinned: {(n < b.Length ? b[n] : "<end>")}"];
     }
 
     [Test]
-    public async Task TheStageOneRequest_IsTheOnePythonSends()
+    public async Task TheStageOneRequest_IsThePinnedOne()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = Os();
         var context = os.actor.list.User.Context;
         var differ = new List<string>();
         foreach (var entry in Golden())
         {
-            var goal = Goal(entry, os.actor.list.User.Context);
             var at = entry.GetProperty("goal").GetString()!;
-            differ.AddRange(Differ(at, await Rendered("decider1.template", goal, context), entry.GetProperty("question1")));
-            differ.AddRange(Differ(at, await Rendered("decider.state.template", goal, context, stage: 1), entry.GetProperty("state1").GetString()!));
+            var (question, state) = await StageOne(entry, context);
+            differ.AddRange(Differ(at, question, entry.GetProperty("question1")));
+            differ.AddRange(Differ(at + " state1", state, entry.GetProperty("state1").GetString()!));
         }
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
-    // Prompt C's user message after both answers: each step's line (its listing and starting formal),
-    // the Types and each listed action once — byte for byte what the eval sends.
     [Test]
-    public async Task ThePromptCUserMessage_IsTheOnePythonSends()
+    public async Task ThePromptCUserMessage_IsThePinnedOne()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = Os();
         var context = os.actor.list.User.Context;
         var differ = new List<string>();
         foreach (var entry in Golden())
-        {
-            var goal = Goal(entry, os.actor.list.User.Context);
-            foreach (var s in entry.GetProperty("step").EnumerateArray())
-                if (s.GetProperty("comment").GetString() is { } comment) goal.Step[s.GetProperty("index").GetInt32()].Comment = comment;
-            var first = Answer(entry.GetProperty("answer1"), context);
-            var second = Answer(entry.GetProperty("answer2"), context);
-            foreach (var step in goal.Step.Items())
-            {
-                await step.Pick.Take(first, Popular(), context);
-                await step.Pick.Take(second, Popular(), context);
-            }
-            await goal.Step.Scope(context);   // build.pick's walk: each step's => types:
-            differ.AddRange(Differ(entry.GetProperty("goal").GetString()!,
-                await Rendered("properties.template", goal, context), entry.GetProperty("user").GetString()!));
-        }
+            differ.AddRange(Differ(entry.GetProperty("goal").GetString()!, await UserMessage(entry, context), entry.GetProperty("user").GetString()!));
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
-    // Prompt C's Settings and Keys blocks: for each goal of settings_golden.json (tools/decider/settings_fixture.py),
-    // the classes its steps name (from settings.json) and the %!app.X["key"]% line when a step reads one so — the
-    // template's blocks, byte for byte.
     [Test]
-    public async Task ThePromptCSettingsAndKeys_AreTheOnesPythonSends()
+    public async Task ThePromptCSettingsAndKeys_AreThePinnedOnes()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = Os();
         var context = os.actor.list.User.Context;
-        var cases = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(
-            RepoRoot(), "PLang.Tests", "Wire", "App", "Decider", "settings_golden.json"))).RootElement.EnumerateArray().ToList();
+        var cases = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(Fixture.Root(), SettingsPinned)))
+            .RootElement.EnumerateArray().ToList();
         await Assert.That(cases.Count).IsGreaterThan(0);
         var differ = new List<string>();
         foreach (var entry in cases)
-        {
-            var name = entry.GetProperty("goal").GetString()!;
-            var goal = Make.Goal(context, name, "/" + name + ".goal",
-                entry.GetProperty("steps").EnumerateArray().Select(t => Make.Step(t.GetString()!, 0)).ToArray());
-            await goal.Step.Scope(context);
-            // the message ends in one newline (python: out + "\n"); the block is what comes before it
-            var rendered = (await Rendered("properties.template", goal, context)).TrimEnd('\n');
-            // the blocks run from the first of their headers to the actions' definitions (or the end)
-            var at = new[] { rendered.IndexOf("\n\nSettings\n", StringComparison.Ordinal), rendered.IndexOf("\n\nKeys\n", StringComparison.Ordinal) }
-                .Where(i => i >= 0).DefaultIfEmpty(-1).Min();
-            var end = at < 0 ? -1 : rendered.IndexOf("\n\n## ", at, StringComparison.Ordinal);
-            var block = at < 0 ? "" : end < 0 ? rendered[at..] : rendered[at..end];
-            var python = entry.GetProperty("block").GetString()!;
-            if (block != python)
-            {
-                var i = 0;
-                while (i < block.Length && i < python.Length && block[i] == python[i]) i++;
-                var from = Math.Max(0, i - 30);
-                differ.Add($"{name} differs at {i}: ours {System.Text.Json.JsonSerializer.Serialize(block[from..Math.Min(block.Length, i + 40)])}, python {System.Text.Json.JsonSerializer.Serialize(python[from..Math.Min(python.Length, i + 40)])}");
-            }
-        }
+            differ.AddRange(Differ(entry.GetProperty("goal").GetString()!, await SettingsBlock(entry, context), entry.GetProperty("block").GetString()!));
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
     [Test]
-    public async Task TheStageTwoState_IsTheOnePythonSends()
+    public async Task TheStageTwoState_IsThePinnedOne()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = Os();
         var context = os.actor.list.User.Context;
         var differ = new List<string>();
         foreach (var entry in Golden())
-        {
-            var goal = Goal(entry, context);
-            var first = Answer(entry.GetProperty("answer1"), context);
-            foreach (var step in goal.Step.Items()) await step.Pick.Take(first, Popular(), context);
-            differ.AddRange(Differ(entry.GetProperty("goal").GetString()!,
-                await Rendered("decider.state.template", goal, context, stage: 2), entry.GetProperty("state2").GetString()!));
-        }
+            differ.AddRange(Differ(entry.GetProperty("goal").GetString()! + " state2", (await StageTwo(entry, context)).State, entry.GetProperty("state2").GetString()!));
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
     // The words are the template's: the app is rooted at the repo's os/ folder, where each action's
     // teaching file (/system/modules/<module>/<action>.description.md) is.
     [Test]
-    public async Task StageOnesAnswer_RendersTheStageTwoQuestionsPythonAsked()
+    public async Task StageOnesAnswer_RendersThePinnedStageTwoQuestions()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        await using var os = Os();
         var context = os.actor.list.User.Context;
         var differ = new List<string>();
         foreach (var entry in Golden())
+            differ.AddRange(Differ(entry.GetProperty("goal").GetString()!, (await StageTwo(entry, context)).Question, entry.GetProperty("question2")));
+        await Assert.That(string.Join("\n", differ)).IsEqualTo("");
+    }
+
+    [Test]
+    public async Task BothAnswers_GiveThePinnedPicks()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var context = app.actor.list.User.Context;
+        var differ = new List<string>();
+        foreach (var entry in Golden())
         {
-            var goal = Goal(entry, context);
-            var first = Answer(entry.GetProperty("answer1"), context);
-            foreach (var step in goal.Step.Items()) await step.Pick.Take(first, Popular(), context);
-            differ.AddRange(Differ(entry.GetProperty("goal").GetString()!,
-                await Rendered("decider2.template", goal, context), entry.GetProperty("question2")));
+            var ours = await Picks(entry, context);
+            var pinned = System.Text.Json.Nodes.JsonNode.Parse(entry.GetProperty("picks").GetRawText())!;
+            foreach (var (index, step) in ours)
+                if (!System.Text.Json.Nodes.JsonNode.DeepEquals(step, pinned[index]))
+                    differ.Add($"{entry.GetProperty("goal").GetString()}[{index}]\n  ours:   {step!.ToJsonString()}\n  pinned: {pinned[index]?.ToJsonString()}");
         }
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
@@ -226,7 +263,7 @@ public class PickListTests
     public async Task AGuide_ReachesNoRequestTheBuilderSends()
     {
         var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-guide-" + System.Guid.NewGuid().ToString("N")[..8]);
-        var source = System.IO.Path.Combine(RepoRoot(), "os", "system", "modules");
+        var source = System.IO.Path.Combine(Fixture.Root(), "os", "system", "modules");
         var modules = System.IO.Path.Combine(root, "system", "modules");
         try
         {
@@ -253,17 +290,9 @@ public class PickListTests
             var requests = new List<string>();
             foreach (var entry in Golden())
             {
-                var goal = Goal(entry, context);
-                requests.Add(await Rendered("decider1.template", goal, context));
-                requests.Add(await Rendered("decider.state.template", goal, context, stage: 1));
-                var first = Answer(entry.GetProperty("answer1"), context);
-                foreach (var step in goal.Step.Items()) await step.Pick.Take(first, Popular(), context);
-                requests.Add(await Rendered("decider2.template", goal, context));
-                requests.Add(await Rendered("decider.state.template", goal, context, stage: 2));
-                var second = Answer(entry.GetProperty("answer2"), context);
-                foreach (var step in goal.Step.Items()) await step.Pick.Take(second, Popular(), context);
-                await goal.Step.Scope(context);
-                requests.Add(await Rendered("properties.template", goal, context));
+                var (question1, state1) = await StageOne(entry, context);
+                var (question2, state2) = await StageTwo(entry, context);
+                requests.AddRange([question1, state1, question2, state2, await UserMessage(entry, context)]);
             }
 
             await Assert.That(requests.Where(r => r.StartsWith("render failed")).ToList()).IsEmpty();
@@ -278,31 +307,32 @@ public class PickListTests
         }
     }
 
-    [Test]
-    public async Task BothAnswers_GiveThePicksPythonRead()
+    // Re-pins pick_golden.json and settings_golden.json from C#: run by hand after an intended change to the decider's
+    // templates, prompt C or the pick, then review the fixtures' diff and commit it.
+    [Test, Explicit]
+    public async Task AcceptTheFixture()
     {
-        await using var app = new global::app.@this("/app").Testing();
-        var context = app.actor.list.User.Context;
-        var differ = new List<string>();
-        foreach (var entry in Golden())
+        await using var os = Os();
+        var context = os.actor.list.User.Context;
+        var golden = Fixture.Read(Pinned).AsArray();
+        var entries = Golden();
+        for (int i = 0; i < entries.Length; i++)
         {
-            var goal = Goal(entry, context);
-            var first = Answer(entry.GetProperty("answer1"), context);
-            var second = Answer(entry.GetProperty("answer2"), context);
-            foreach (var step in goal.Step.Items())
-            {
-                await step.Pick.Take(first, Popular(), context);
-                await step.Pick.Take(second, Popular(), context);
-                var at = $"{entry.GetProperty("goal").GetString()}[{step.Index}]";                var python = entry.GetProperty("picks").GetProperty(step.Index.ToString());
-                var theirs = python.EnumerateObject().Where(p => !p.Name.StartsWith('@'))
-                    .Select(p => $"{p.Name} {(p.Value.ValueKind == System.Text.Json.JsonValueKind.Null ? "null" : p.Value.GetDouble().ToString("R"))}");
-                var ours = step.Pick.Item.Select(p => $"{p.Name} {(p.Score is { } s ? ((double)s).ToString("R") : "null")}");
-                if (!ours.SequenceEqual(theirs)) differ.Add($"{at}\n  ours:   {string.Join(", ", ours)}\n  python: {string.Join(", ", theirs)}");
-                var popular = python.TryGetProperty("@popular", out var p) ? p.EnumerateObject().Select(o => o.Name) : [];
-                if (!step.Pick.Top.Select(t => t.Name).SequenceEqual(popular))
-                    differ.Add($"{at} popular: ours [{string.Join(", ", step.Pick.Top.Select(t => t.Name))}], python [{string.Join(", ", popular)}]");
-            }
+            var (question1, state1) = await StageOne(entries[i], context);
+            var (question2, state2) = await StageTwo(entries[i], context);
+            golden[i]!["question1"] = System.Text.Json.Nodes.JsonNode.Parse(question1);
+            golden[i]!["state1"] = state1;
+            golden[i]!["question2"] = System.Text.Json.Nodes.JsonNode.Parse(question2);
+            golden[i]!["state2"] = state2;
+            golden[i]!["user"] = await UserMessage(entries[i], context);
+            golden[i]!["picks"] = await Picks(entries[i], context);
         }
-        await Assert.That(string.Join("\n", differ)).IsEqualTo("");
+        Fixture.Write(Pinned, golden);
+
+        var settings = Fixture.Read(SettingsPinned).AsArray();
+        var cases = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(Fixture.Root(), SettingsPinned)))
+            .RootElement.EnumerateArray().ToArray();
+        for (int i = 0; i < cases.Length; i++) settings[i]!["block"] = await SettingsBlock(cases[i], context);
+        Fixture.Write(SettingsPinned, settings);
     }
 }

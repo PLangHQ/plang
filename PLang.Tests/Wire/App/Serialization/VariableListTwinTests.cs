@@ -2,11 +2,14 @@ using System.Text.Json.Nodes;
 
 namespace PLang.Tests.App.Serialization;
 
-// The twin of a row's "variable" list: every golden row python wrote (tools/decider/variables.py via
-// formal.py) holds exactly the list the C# parser makes of its value — a template's texts, each variable
-// once, first written first; a variable slot, the variable it names. A row holding none has no list.
+// A row's "variable" list against a pinned fixture (formal_golden.json's .pr rows): every golden row holds exactly
+// the list the C# parser makes of its value — a template's texts, each variable once, first written first; a
+// variable slot, the variable it names. A row holding none has no list. An intended change re-pins it through
+// AcceptTheFixture.
 public class VariableListTwinTests
 {
+    private const string Pinned = "PLang.Tests/Wire/App/Serialization/formal_golden.json";
+
     [Test]
     public async Task EveryGoldenRow_ListsWhatTheParserFinds()
     {
@@ -19,10 +22,26 @@ public class VariableListTwinTests
                 var expected = Expected(row);
                 var written = row["variable"]?.ToJsonString();
                 if (expected != written)
-                    differ.Add($"{entry.GetProperty("goal").GetString()}[{entry.GetProperty("index").GetInt32()}] {row["name"]}: python {written ?? "(none)"}, C# {expected ?? "(none)"}");
+                    differ.Add($"{entry.GetProperty("goal").GetString()}[{entry.GetProperty("index").GetInt32()}] {row["name"]}: pinned {written ?? "(none)"}, C# {expected ?? "(none)"}");
             }
         await Assert.That(rows).IsGreaterThan(100);
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
+    }
+
+    // Re-pins each golden row's variable list from the C# parser: run by hand after an intended change to the parser
+    // or the list's shape, then review the diff.
+    [Test, Explicit]
+    public async Task AcceptTheFixture()
+    {
+        var pinned = Fixture.Read(Pinned).AsArray();
+        foreach (var entry in pinned)
+            foreach (var row in Rows(entry!["pr"]).ToList())
+            {
+                if (Expected(row) is { } list) row["variable"] = JsonNode.Parse(list);
+                else row.Remove("variable");
+            }
+        Fixture.Write(Pinned, pinned);
+        await Task.CompletedTask;
     }
 
     // A variable with an index — a number or a variable key — reads back from the .pr it was written to.

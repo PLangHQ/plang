@@ -1,34 +1,34 @@
 [
- {
-  "input": "condition.if(Left=%n%, Operator===, Right=5) { goal.return() }",
-  "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \"==\", Right: number = 5) { goal.return() }"
- },
- {
-  "input": "condition.if(Left=%n%, Operator=!=, Right=5) { goal.return() }",
-  "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \"!=\", Right: number = 5) { goal.return() }"
- },
- {
-  "input": "condition.if(Left=%n%, Operator=>, Right=5) { goal.return() }",
-  "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \">\", Right: number = 5) { goal.return() }"
- },
- {
-  "input": "condition.if(Left=%n%, Operator=<, Right=5) { goal.return() }",
-  "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \"<\", Right: number = 5) { goal.return() }"
- },
- {
-  "input": "condition.if(Left=%n%, Operator=>=, Right=5) { goal.return() }",
-  "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \">=\", Right: number = 5) { goal.return() }"
- },
- {
-  "input": "condition.if(Left=%n%, Operator=<=, Right=5) { goal.return() }",
-  "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \"<=\", Right: number = 5) { goal.return() }"
- },
- {
-  "input": "variable.set(Name=%messages%, Value=[{Role:\"system\", Content:%system%}, {Role:\"user\", Content:%user%}])",
-  "formal": "variable.set(Name: variable = %messages%, Value: list = [{\"Role\": \"system\", \"Content\": \"%system%\"}, {\"Role\": \"user\", \"Content\": \"%user%\"}])"
- },
- {
-  "input": "file.read(Path=\"a.txt\"); on.timeout(After=PT5S); on.cache(Duration=PT1M)",
-  "formal": "file.read(Path: path = \"a.txt\"); on.timeout(After: duration = \"PT5S\"); on.cache(Duration: duration = \"PT1M\")"
- }
+  {
+    "input": "condition.if(Left=%n%, Operator===, Right=5) { goal.return() }",
+    "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \"==\", Right: number = 5) { goal.return() }"
+  },
+  {
+    "input": "condition.if(Left=%n%, Operator=!=, Right=5) { goal.return() }",
+    "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \"!=\", Right: number = 5) { goal.return() }"
+  },
+  {
+    "input": "condition.if(Left=%n%, Operator=>, Right=5) { goal.return() }",
+    "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \">\", Right: number = 5) { goal.return() }"
+  },
+  {
+    "input": "condition.if(Left=%n%, Operator=<, Right=5) { goal.return() }",
+    "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \"<\", Right: number = 5) { goal.return() }"
+  },
+  {
+    "input": "condition.if(Left=%n%, Operator=>=, Right=5) { goal.return() }",
+    "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \">=\", Right: number = 5) { goal.return() }"
+  },
+  {
+    "input": "condition.if(Left=%n%, Operator=<=, Right=5) { goal.return() }",
+    "formal": "condition.if(Left: item = %n%, Operator: choice<operator> = \"<=\", Right: number = 5) { goal.return() }"
+  },
+  {
+    "input": "variable.set(Name=%messages%, Value=[{Role:\"system\", Content:%system%}, {Role:\"user\", Content:%user%}])",
+    "formal": "variable.set(Name: variable = %messages%, Value: list = [{\"Role\": \"system\", \"Content\": \"%system%\"}, {\"Role\": \"user\", \"Content\": \"%user%\"}])"
+  },
+  {
+    "input": "file.read(Path=\"a.txt\"); on.timeout(After=PT5S); on.cache(Duration=PT1M)",
+    "formal": "file.read(Path: path = \"a.txt\"); on.timeout(After: duration = \"PT5S\"); on.cache(Duration: duration = \"PT1M\")"
+  }
 ]

@@ -53,3 +53,16 @@ nothing a model could copy as a value. Measured (5 full rounds each, replayed pi
   is written in any language; these readings don't hold for it. They feed `Known`, the write-to keep in the starting
   line, and the write-to check. To be replaced by what the LLM's answer says.
 - The first answer for a `foreach %x% as %y%` step often leaves out `Item` (3 of 3 builds); the retry restores it.
+- **Not refused any more: an answer that drops a whole `on error call X` clause.** The check "step N calls X, but no
+  action calls it" caught it, and went because it read `call X` from the step's English words. A dropped clause now
+  builds; what refuses it next must come from the answer and the decider's picks, not from the words.
+
+## Tests
+
+The prompts this part renders are pinned as fixtures (C# is the reference; an intended change re-pins a fixture
+through its test's `[Explicit]` `AcceptTheFixture`, run by name: `PLang.Tests.Wire --treenode-filter
+"/*/*/PickListTests/AcceptTheFixture"`):
+- `PLang.Tests/Wire/App/Decider/PickListTests.cs` — `pick_golden.json` (stage 1 and 2 requests and states, prompt C's
+  user message, the picks), `settings_golden.json` (prompt C's Settings and Keys blocks);
+- `LineTwinTests.cs` — `line_golden.json` (the starting line's placement);
+- `ConfirmTemplateTests.cs` — `confirm_golden.json` (the number confirmation).

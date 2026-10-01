@@ -48,28 +48,48 @@ public class ConfirmTemplateTests
         await Assert.That(state).Contains("- on.error: Answer when the action before it fails");
     }
 
-    // The eval's twin (tools/decider/prompt_c confirm_state / confirm_questions, via confirm_fixture.py): the same
-    // numbers render the same state, byte for byte, and the same questions.
-    [Test]
-    public async Task TheStateAndQuestions_AreTheOnesPythonSends()
+    private const string Pinned = "PLang.Tests/Wire/App/Decider/confirm_golden.json";
+
+    // The pinned numbers rendered: the confirm state and its questions.
+    private static async Task<(string State, System.Text.Json.Nodes.JsonNode Questions, List<global::app.goal.step.unwritten.@this> Numbers)> Render(
+        System.Text.Json.JsonElement golden, global::app.actor.context.@this context)
     {
-        var golden = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(
-            System.IO.Path.Combine(RepoRoot(), "PLang.Tests", "Wire", "App", "Decider", "confirm_golden.json"))).RootElement;
-        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
-        var context = os.actor.list.User.Context;
         var numbers = golden.GetProperty("numbers").EnumerateArray().Select(n => new global::app.goal.step.unwritten.@this(
             n.GetProperty("step").GetInt32(), n.GetProperty("action").GetString()!, n.GetProperty("property").GetString()!,
             n.GetProperty("value").GetString()!, n.GetProperty("text").GetString()!)).ToList();
         context.Variable.Set(new global::app.data.@this("numbers", numbers, context: context));
         context.Variable.Set(new global::app.data.@this("modules", context.App.module.list, context: context));
+        return (await Rendered("confirm.state.template", context),
+            System.Text.Json.Nodes.JsonNode.Parse(await Rendered("confirm.template", context))!, numbers);
+    }
 
-        var state = await Rendered("confirm.state.template", context);
-        var questions = System.Text.Json.Nodes.JsonNode.Parse(await Rendered("confirm.template", context))!;
+    // A pinned fixture (confirm_golden.json): the same numbers render the pinned state, byte for byte, and the pinned
+    // questions. An intended change re-pins it through AcceptTheFixture.
+    [Test]
+    public async Task TheStateAndQuestions_AreThePinnedOnes()
+    {
+        var golden = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(Fixture.Root(), Pinned))).RootElement;
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        var (state, questions, numbers) = await Render(golden, os.actor.list.User.Context);
 
         await Assert.That(state).IsEqualTo(golden.GetProperty("state").GetString());
         await Assert.That(System.Text.Json.Nodes.JsonNode.DeepEquals(questions,
             System.Text.Json.Nodes.JsonNode.Parse(golden.GetProperty("questions").GetRawText()))).IsTrue();
         await Assert.That(numbers.Select(n => n.Id)).IsEquivalentTo(
             golden.GetProperty("numbers").EnumerateArray().Select(n => n.GetProperty("id").GetString()!));
+    }
+
+    // Re-pins confirm_golden.json's state and questions from C#: run by hand after an intended change to the confirm
+    // templates, then review the diff.
+    [Test, Explicit]
+    public async Task AcceptTheFixture()
+    {
+        var golden = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(System.IO.Path.Combine(Fixture.Root(), Pinned))).RootElement;
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
+        var (state, questions, _) = await Render(golden, os.actor.list.User.Context);
+        var pinned = Fixture.Read(Pinned);
+        pinned["state"] = state;
+        pinned["questions"] = questions;
+        Fixture.Write(Pinned, pinned);
     }
 }
