@@ -74,8 +74,8 @@ public partial class query : IContext
     /// <summary>Model override (e.g., "gpt-4o"). Falls back to provider settings default.</summary>
     public partial data.@this<global::app.type.item.text.@this>? Model { get; init; }
 
-    /// <summary>How the query stands to the conversation before it — <c>{continue: true}</c> prepends the stored
-    /// history of earlier queries. Left out, a fresh conversation.</summary>
+    /// <summary>How the query stands to the conversation before it — <c>{continue: %answer%}</c> prepends the
+    /// messages of the conversation that response answered. Left out, a fresh conversation.</summary>
     public partial data.@this<global::app.module.llm.type.conversation.@this> Conversation { get; init; }
 
     /// <summary>Sampling temperature. 0.0 = deterministic.</summary>

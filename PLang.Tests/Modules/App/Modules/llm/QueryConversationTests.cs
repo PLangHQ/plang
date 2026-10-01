@@ -7,8 +7,8 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules.llm;
 
 /// <summary>
-/// Tests conversation.continue: message history management,
-/// format instruction non-compounding, and schema reuse.
+/// Tests conversation.continue: a query continues the conversation the response it is given answered —
+/// its messages carried on that response, format instructions not compounding, its schema reused.
 /// </summary>
 public class QueryConversationTests
 {
@@ -40,8 +40,23 @@ public class QueryConversationTests
 
     private global::app.actor.context.@this Ctx => _app.actor.list.System.Context;
 
+    private async Task<global::app.data.@this> Ask(string user, global::app.data.@this? continues = null,
+        global::app.data.@this? schema = null, bool cache = false)
+    {
+        var message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = user } }.ToListData<LlmMessage>(Ctx);
+        var action = continues == null
+            ? new query(Ctx) { Message = message, Schema = schema, Cache = (global::app.type.item.@bool.@this)cache }
+            : new query(Ctx) { Message = message, Schema = schema, Cache = (global::app.type.item.@bool.@this)cache,
+                Conversation = new global::app.module.llm.type.conversation.@this(continues) };
+        await action.Attach(null, Ctx);
+        return await action.Start();
+    }
+
+    private void Answers(string content)
+        => _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse(content)));
+
     [Test]
-    public async Task Query_ContinueConversation_PrependsPreviousMessages()
+    public async Task Query_ContinueConversation_PrependsTheResponsesMessages()
     {
         int callIndex = 0;
         _handler.Handler = _ =>
@@ -51,98 +66,50 @@ public class QueryConversationTests
                 LlmTestHelper.MakeCompletionResponse($"answer {callIndex}")));
         };
 
-        // First query
-        var action1 = new query(Ctx) { Message = new List<LlmMessage>
-            {
-                new LlmMessage { Role = "system", Content = "You are helpful" },
-                new LlmMessage { Role = "user", Content = "What is 2+2?" }
-            }.ToListData<LlmMessage>(Ctx),
-            Cache = (global::app.type.item.@bool.@this)false
-        };
-        await action1.Attach(null, Ctx);
-        await action1.Start();
+        var first = await Ask("What is 2+2?");
+        await Ask("And 3+3?", continues: first);
 
-        // Second query with continuation
-        var action2 = new query(Ctx) { Message = new List<LlmMessage>
-            {
-                new LlmMessage { Role = "user", Content = "And 3+3?" }
-            }.ToListData<LlmMessage>(Ctx),
-            Conversation = new global::app.module.llm.type.conversation.@this(true),
-            Cache = (global::app.type.item.@bool.@this)false
-        };
-        await action2.Attach(null, Ctx);
-        await action2.Start();
-
-        // Second request should contain previous messages
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
-        // JSON escaping may turn + into \u002B
+        // JSON escaping may turn + into +
         await Assert.That(secondReq).Contains("What is 2");
         await Assert.That(secondReq).Contains("answer 1"); // assistant response from first query
-        // JSON escaping may turn + into \u002B
         await Assert.That(secondReq).Contains("And 3");
     }
 
     [Test]
-    public async Task Query_ContinueConversation_False_ClearsHistory()
+    public async Task Query_ConversationLeftOut_StartsAfresh()
     {
-        _handler.Handler = _ => Task.FromResult(
-            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("answer")));
+        Answers("answer");
+        await Ask("first question");
+        await Ask("fresh start");
 
-        // First query — stores conversation
-        var action1 = LlmTestHelper.MakeQuery(Ctx, userText: "first question");
-        action1 = new query(Ctx) { Message = action1.Message, Cache = (global::app.type.item.@bool.@this)false };
-        await action1.Attach(null, Ctx);
-        await action1.Start();
-
-        // Second query with conversation.continue false — should clear
-        var action2 = new query(Ctx) { Message = new List<LlmMessage>
-            {
-                new LlmMessage { Role = "user", Content = "fresh start" }
-            }.ToListData<LlmMessage>(Ctx),
-            Conversation = new global::app.module.llm.type.conversation.@this(false),
-            Cache = (global::app.type.item.@bool.@this)false
-        };
-        await action2.Attach(null, Ctx);
-        await action2.Start();
-
-        // Second request should NOT contain first question
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
         await Assert.That(secondReq).DoesNotContain("first question");
+    }
+
+    // Two queries that each continue the first one carry its conversation, not each other's.
+    [Test]
+    public async Task Query_ContinueConversation_IsTheResponseGiven_NotTheLastQuery()
+    {
+        Answers("answer");
+        var first = await Ask("first question");
+        await Ask("an unrelated question");
+        await Ask("back to the first", continues: first);
+
+        var thirdReq = await _handler.AllRequests[2].Content!.ReadAsStringAsync();
+        await Assert.That(thirdReq).Contains("first question");
+        await Assert.That(thirdReq).DoesNotContain("an unrelated question");
     }
 
     [Test]
     public async Task Query_FormatInstruction_DoesNotCompound()
     {
-        _handler.Handler = _ => Task.FromResult(
-            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("{\"ok\":true}")));
-
-        // First query with schema
-        var action1 = new query(Ctx) { Message = new List<LlmMessage>
-            {
-                new LlmMessage { Role = "system", Content = "analyze" },
-                new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData<LlmMessage>(Ctx),
-            Schema = Ctx.Ok("{ok: bool}"),
-            Cache = (global::app.type.item.@bool.@this)false
-        };
-        await action1.Attach(null, Ctx);
-        await action1.Start();
-
-        // Second query continuing conversation with same schema
-        var action2 = new query(Ctx) { Message = new List<LlmMessage>
-            {
-                new LlmMessage { Role = "user", Content = "again" }
-            }.ToListData<LlmMessage>(Ctx),
-            Schema = Ctx.Ok("{ok: bool}"),
-            Conversation = new global::app.module.llm.type.conversation.@this(true),
-            Cache = (global::app.type.item.@bool.@this)false
-        };
-        await action2.Attach(null, Ctx);
-        await action2.Start();
+        Answers("{\"ok\":true}");
+        var first = await Ask("test", schema: Ctx.Ok("{ok: bool}"));
+        await Ask("again", continues: first, schema: Ctx.Ok("{ok: bool}"));
 
         // The system message should NOT have doubled format instructions
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
-        // Count occurrences of the format instruction
         var count = secondReq.Split("You MUST respond in JSON").Length - 1;
         await Assert.That(count).IsEqualTo(1);
     }
@@ -150,31 +117,9 @@ public class QueryConversationTests
     [Test]
     public async Task Query_ContinueConversation_ReusesSchemaWhenNotSpecified()
     {
-        _handler.Handler = _ => Task.FromResult(
-            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("{\"result\":\"ok\"}")));
-
-        // First query with schema
-        var action1 = new query(Ctx) { Message = new List<LlmMessage>
-            {
-                new LlmMessage { Role = "system", Content = "analyze" },
-                new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData<LlmMessage>(Ctx),
-            Schema = Ctx.Ok("{result: string}"),
-            Cache = (global::app.type.item.@bool.@this)false
-        };
-        await action1.Attach(null, Ctx);
-        await action1.Start();
-
-        // Second query: no schema, continue conversation → should reuse
-        var action2 = new query(Ctx) { Message = new List<LlmMessage>
-            {
-                new LlmMessage { Role = "user", Content = "again" }
-            }.ToListData<LlmMessage>(Ctx),
-            Conversation = new global::app.module.llm.type.conversation.@this(true),
-            Cache = (global::app.type.item.@bool.@this)false
-        };
-        await action2.Attach(null, Ctx);
-        await action2.Start();
+        Answers("{\"result\":\"ok\"}");
+        var first = await Ask("test", schema: Ctx.Ok("{result: string}"));
+        await Ask("again", continues: first);
 
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
         await Assert.That(secondReq).Contains("result: string");
@@ -183,34 +128,54 @@ public class QueryConversationTests
     [Test]
     public async Task Query_ContinueConversation_NewSchemaOverridesPrevious()
     {
-        _handler.Handler = _ => Task.FromResult(
-            LlmTestHelper.JsonResponse(LlmTestHelper.MakeCompletionResponse("{\"data\":1}")));
-
-        // First query with schema A
-        var action1 = new query(Ctx) { Message = new List<LlmMessage>
-            {
-                new LlmMessage { Role = "user", Content = "test" }
-            }.ToListData<LlmMessage>(Ctx),
-            Schema = Ctx.Ok("{oldSchema: string}"),
-            Cache = (global::app.type.item.@bool.@this)false
-        };
-        await action1.Attach(null, Ctx);
-        await action1.Start();
-
-        // Second query with schema B
-        var action2 = new query(Ctx) { Message = new List<LlmMessage>
-            {
-                new LlmMessage { Role = "user", Content = "test2" }
-            }.ToListData<LlmMessage>(Ctx),
-            Schema = Ctx.Ok("{newSchema: int}"),
-            Conversation = new global::app.module.llm.type.conversation.@this(true),
-            Cache = (global::app.type.item.@bool.@this)false
-        };
-        await action2.Attach(null, Ctx);
-        await action2.Start();
+        Answers("{\"data\":1}");
+        var first = await Ask("test", schema: Ctx.Ok("{oldSchema: string}"));
+        await Ask("test2", continues: first, schema: Ctx.Ok("{newSchema: int}"));
 
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
         await Assert.That(secondReq).Contains("newSchema");
         await Assert.That(secondReq).DoesNotContain("oldSchema");
+    }
+
+    // A response read from the cache carries its conversation as a live one does.
+    [Test]
+    public async Task Query_ContinueConversation_FromACacheHit()
+    {
+        Answers("answer");
+        await Ask("cached question", cache: true);
+        var hit = await Ask("cached question", cache: true);
+        await Assert.That(await hit.Properties.Get<bool>("Cached")).IsTrue();
+
+        await Ask("go on", continues: hit);
+        var continued = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        await Assert.That(continued).Contains("cached question");
+        await Assert.That(continued).Contains("answer");
+    }
+
+    // As a step writes it: the response is set to a variable (variable.set relays it with its properties) and
+    // named in the conversation.
+    [Test]
+    public async Task Step_ContinueNamesTheResponseVariable()
+    {
+        Answers("answer");
+        await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"remember 7\"}], Cache=false)").Start(Ctx);
+        await (await Ctx.Action("variable.set(Name=%answer%, Value=%!data%)").Start(Ctx)).IsSuccess();
+        var answer = await Ctx.Variable.Get("answer");
+        await Assert.That(answer.Properties.Contains("Messages")).IsTrue();
+
+        var next = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"what was it\"}], Cache=false, Conversation={continue: %answer%})").Start(Ctx);
+        await next.IsSuccess();
+        var continued = await _handler.LastRequest!.Content!.ReadAsStringAsync();
+        await Assert.That(continued).Contains("remember 7");
+    }
+
+    // continue takes a response, never a yes: a bare true names no conversation.
+    [Test]
+    public async Task Step_ContinueTrue_IsRefused()
+    {
+        Answers("answer");
+        var read = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"x\"}], Cache=false, Conversation={continue: true})").Start(Ctx);
+        await Assert.That(read.Success).IsFalse();
+        await Assert.That(read.Error!.Message).Contains("continue which conversation");
     }
 }

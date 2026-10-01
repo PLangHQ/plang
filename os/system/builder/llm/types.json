@@ -101,14 +101,14 @@
   "app.module.list.type.query": {
     "word": "query"
   },
-  "app.module.llm.llmmessage": {
-    "word": "llmmessage"
-  },
   "app.module.llm.type.conversation": {
     "word": "conversation"
   },
   "app.module.llm.type.limit": {
     "word": "limit"
+  },
+  "app.module.llm.type.message": {
+    "word": "message"
   },
   "app.module.output.ask": {
     "word": "ask"

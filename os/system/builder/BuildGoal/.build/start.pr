@@ -1678,7 +1678,7 @@
         },
         {
           "index": 2,
-          "text": "llm.query(Message=%fixMessages%, Model=\"gpt-5.4-nano\", Cache=%!build.setting.cache%, Conversation={continue: true}); variable.set(Name=%answer%, Value=%!data%)",
+          "text": "llm.query(Message=%fixMessages%, Model=\"gpt-5.4-nano\", Cache=%!build.setting.cache%, Conversation={continue: %answer%}); variable.set(Name=%answer%, Value=%!data%)",
           "line": {
             "number": 48
           },
@@ -1691,7 +1691,7 @@
                   "name": "Message",
                   "type": {
                     "name": "list",
-                    "kind": "llmmessage",
+                    "kind": "message",
                     "template": "plang"
                   },
                   "value": "%fixMessages%",
@@ -1740,9 +1740,20 @@
                 {
                   "name": "Conversation",
                   "type": {
-                    "name": "conversation"
+                    "name": "conversation",
+                    "template": "plang"
                   },
-                  "value": {"continue":true}
+                  "value": {"continue":"%answer%"},
+                  "variable": [
+                    {
+                      "text": "%answer%",
+                      "code": [
+                        {
+                          "variable": "answer"
+                        }
+                      ]
+                    }
+                  ]
                 }
               ],
               "default": [
@@ -1754,25 +1765,15 @@
                   "value": 0
                 },
                 {
-                  "name": "maxtokens",
+                  "name": "limit",
                   "type": {
-                    "name": "number"
+                    "name": "limit"
                   },
-                  "value": 16000
-                },
-                {
-                  "name": "maxtoolcalls",
-                  "type": {
-                    "name": "number"
-                  },
-                  "value": 10
-                },
-                {
-                  "name": "maxvalidationretries",
-                  "type": {
-                    "name": "number"
-                  },
-                  "value": 0
+                  "value": {
+                    "token": 16000,
+                    "tool": 10,
+                    "retry": 0
+                  }
                 }
               ]
             },
@@ -1818,7 +1819,7 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
@@ -1939,7 +1940,7 @@
       "visibility": "Private",
       "path": "/system/builder/BuildGoal/Start.goal",
       "prPath": "/system/builder/BuildGoal/.build/start.pr",
-      "hash": "dcbf6470ce417dae6b50e4012affa3877d7a761d79e1271abad60c6fd7128633",
+      "hash": "2b98366c0db2a16a1c4cbb3d75aafbd92c6dbad620c4be38c16e9bc23fb8ab48",
       "isSetup": false,
       "isEvent": false,
       "isSystem": true,

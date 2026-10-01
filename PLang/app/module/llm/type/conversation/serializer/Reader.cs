@@ -14,6 +14,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (reader.Null()) return nothing;
         var written = global::app.type.item.@this.Create(new global::app.type.item.serializer.json(ctx.Context).Read(ref reader, ctx), ctx.Context);
         var carrier = new global::app.data.@this("", nothing, context: ctx.Context);
-        return (global::app.type.item.@this?)global::app.module.llm.type.conversation.@this.Create(written, carrier.Type, carrier) ?? nothing;
+        // a conversation that refuses what was written says why, at the read boundary
+        return (global::app.type.item.@this?)global::app.module.llm.type.conversation.@this.Create(written, carrier.Type, carrier)
+            ?? throw new global::app.error.DeclinedException(carrier.Error!);
     }
 }

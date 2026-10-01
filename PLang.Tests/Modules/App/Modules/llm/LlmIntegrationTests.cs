@@ -149,7 +149,7 @@ public class LlmIntegrationTests
         };
 
         var result2 = await RunWithSnapshot("ConvPart2", messages2, new query(Ctx) { Message = messages2.ToListData<LlmMessage>(Ctx),
-            Conversation = new global::app.module.llm.type.conversation.@this(true),
+            Conversation = new global::app.module.llm.type.conversation.@this(result1),
             Temperature = (global::app.type.item.number.@this)0.0,
             Limit = new global::app.module.llm.type.limit.@this(50, 10, 0),
             Cache = (global::app.type.item.@bool.@this)false

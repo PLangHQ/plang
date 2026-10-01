@@ -1,7 +1,7 @@
-namespace app.module.http.type.redirect.serializer;
+namespace app.module.llm.type.message.serializer;
 
-/// <summary>Typed pull reader for <see cref="app.module.http.type.redirect.@this"/>: a redirect writes itself as
-/// its dict, so the value is pulled as a dict and the redirect is made from it.</summary>
+/// <summary>Typed pull reader for <see cref="app.module.llm.type.message.@this"/>: a message is stored as its
+/// members, so the value is pulled as a dict and the message type makes itself from it.</summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
 {
     public string Kind => global::app.type.reader.@this.AnyKind;
@@ -10,12 +10,12 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
     {
-        var nothing = new global::app.type.item.@null.@this("redirect", kind);
+        var nothing = new global::app.type.item.@null.@this("message", kind);
         if (reader.Null()) return nothing;
         var written = global::app.type.item.@this.Create(new global::app.type.item.serializer.json(ctx.Context).Read(ref reader, ctx), ctx.Context);
         var carrier = new global::app.data.@this("", nothing, context: ctx.Context);
-        // a redirect that refuses what was written says why, at the read boundary
-        return (global::app.type.item.@this?)global::app.module.http.type.redirect.@this.Create(written, carrier.Type, carrier)
+        // a message that refuses what was written says why, at the read boundary
+        return ctx.Context.App.type.list["message"].Make(written, carrier)
             ?? throw new global::app.error.DeclinedException(carrier.Error!);
     }
 }

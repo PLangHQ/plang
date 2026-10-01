@@ -34,8 +34,6 @@ public sealed class OpenAi : ILlm
     /// Each subscriber is awaited before the result is built.</summary>
     public event Func<string, Task>? OnAfterResponse;
 
-    private const string ConversationKey = "__llm_conversation__";
-    private const string SchemaKey = "__llm_schema__";
     private const string CacheTable = "LlmCache";
 
     // USD per 1M tokens. Longest matching prefix wins; missing model → null cost.
@@ -118,21 +116,18 @@ public sealed class OpenAi : ILlm
         async System.Threading.Tasks.Task<string?> FormatOf(query a)
             => a.Format == null || await a.Format.IsEmpty() ? null : (await a.Format.Value())?.ToString();
 
-        var conversation = (await action.Conversation.Value())!;
-        var limit = (await action.Limit.Value())!;
-        if (conversation.Continue.Value)
+        // a record that refuses what the step wrote answers why
+        if (await action.Conversation.Value() is not { } conversation) return context.Error(action.Conversation.Error!);
+        if (await action.Limit.Value() is not { } limit) return context.Error(action.Limit.Error!);
+        // the conversation continued rides on the response it continues: its messages, and its schema when this
+        // query gives none
+        schema = await SchemaOf(action);
+        if (conversation.Continue is { } continued)
         {
-            var prev = context.Get<List<LlmMessage>>(ConversationKey);
-            if (prev != null)
-                messages.InsertRange(0, prev);
-
-            schema = await SchemaOf(action) ?? context.Get<string>(SchemaKey);
-        }
-        else
-        {
-            schema = await SchemaOf(action);
-            context.Set<List<LlmMessage>>(ConversationKey, null!);
-            context.Set<string>(SchemaKey, null!);
+            var previous = await continued.Follow(context);
+            if (await previous.Properties.Value("Messages") is global::app.type.item.@this history)
+                messages.InsertRange(0, history.Clr<List<LlmMessage>>() ?? new List<LlmMessage>());
+            schema ??= (await previous.Properties.Value("Schema"))?.ToString();
         }
 
         // Snapshot originals BEFORE format mutation
@@ -446,10 +441,9 @@ public sealed class OpenAi : ILlm
                 }
             }
 
-            // --- Store conversation for continuity (pre-mutation originals) ---
+            // --- The conversation as sent (pre-mutation originals) and the answer: what a later query continues ---
             originalMessages.Add(new LlmMessage { Role = "assistant", Content = rawResponse });
-            context.Set(ConversationKey, originalMessages);
-            context.Set(SchemaKey, schema);
+            var conversed = global::app.type.item.@this.Create(originalMessages, context);
 
             if (OnAfterResponse is { } after)
                 foreach (Func<string, Task> hook in after.GetInvocationList())
@@ -478,7 +472,8 @@ public sealed class OpenAi : ILlm
                     ["ToolCallCount"] = toolCallCount,
                     ["ValidationRetries"] = validationRetries,
                     ["Format"] = effectiveFormat,
-                    ["Schema"] = schema
+                    ["Schema"] = schema,
+                    ["Messages"] = conversed
                 };
                 await settings.Set(CacheTable, cacheKey, new data.@this("cache", cacheEntry, context: context));
             }
@@ -486,7 +481,7 @@ public sealed class OpenAi : ILlm
             // --- Populate response properties ---
             SetProp(result, "RawResponse", rawResponse);
             SetProp(result, "Model", model);
-            SetProp(result, "Messages", messages);
+            SetProp(result, "Messages", conversed);
             SetProp(result, "Temperature", (await action.Temperature.Value()));
             SetProp(result, "Limit", limit);
             SetProp(result, "Cached", false);
@@ -920,7 +915,8 @@ public sealed class OpenAi : ILlm
             foreach (var entry in entries)
             {
                 if (entry.Name == "Value") { resultValue = entry.Peek(); continue; }
-                props[entry.Name] = entry.Peek();
+                // each property read through its Data, so a stored one comes back as what it is, not its wire
+                props[entry.Name] = await entry.Value();
             }
         }
 

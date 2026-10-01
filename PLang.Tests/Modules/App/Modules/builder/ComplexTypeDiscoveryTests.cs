@@ -47,7 +47,7 @@ public class ComplexTypeDiscoveryTests
     [Test]
     public async Task LlmMessage_SchemaIncludesRoleAndContent()
     {
-        var schema = RenderEntry(_app.type.list["llmmessage"]);
+        var schema = RenderEntry(_app.type.list["message"]);
 
         await Assert.That(schema).Contains("role");
         await Assert.That(schema).Contains("content");

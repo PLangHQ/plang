@@ -192,8 +192,8 @@ public class ScopeTests
 
         // as llm.query reads its Message: the typed view, then lowered — the %sys% rendered
         var messages = (await app.actor.list.User.Context.Variable.Get("messages"))
-            .As<global::app.type.item.list.@this<global::app.module.llm.LlmMessage>>();
-        var lowered = (await messages.Value()).Clr<List<global::app.module.llm.LlmMessage>>();
+            .As<global::app.type.item.list.@this<global::app.module.llm.type.message.@this>>();
+        var lowered = (await messages.Value()).Clr<List<global::app.module.llm.type.message.@this>>();
         await Assert.That(lowered![0].Content?.ToString()).IsEqualTo("hello");
     }
 
