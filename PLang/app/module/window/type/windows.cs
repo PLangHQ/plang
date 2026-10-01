@@ -64,10 +64,16 @@ internal sealed class Windows(Browser browser)
             using var list = JsonDocument.Parse(await DevTools.GetStringAsync($"http://127.0.0.1:{browser.Port}/json/list"));
             if (shown.TryGetValue(id, out var known))
             {
-                // gone somewhere: its title and address follow
+                // gone somewhere: its title and address follow — the address only when the page went
+                // somewhere else, and not between plang's own pages: those name their own (Writer: the
+                // file it shows, {"window":"url"})
                 known.Named = title;
-                if (Of(known, list.RootElement) is { } now) known.Address = now;
-                browser.Screen?.Display?.Url((int)id, known.Address);
+                if (Of(known, list.RootElement) is { } now && now != known.Address)
+                {
+                    var within = browser.Own(now) && browser.Own(known.Address);
+                    known.Address = now;
+                    if (!within) browser.Screen?.Display?.Url((int)id, browser.AddressOf(known.Address));
+                }
                 return;
             }
             if (Free(title, list.RootElement) is not { } page) return;
@@ -75,7 +81,7 @@ internal sealed class Windows(Browser browser)
             window.Named = title;
             window.Address = page.GetProperty("url").GetString() ?? "";
             if (!shown.TryAdd(id, window)) return;
-            browser.Screen?.Display?.Url((int)id, window.Address);
+            browser.Screen?.Display?.Url((int)id, browser.AddressOf(window.Address));
             await window.Show(id, new Page(page.GetProperty("id").GetString()!, browser.Port, browser.Own), browser.Own(window.Address) ? browser.Message : null);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException

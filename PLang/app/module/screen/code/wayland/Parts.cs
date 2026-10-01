@@ -110,10 +110,15 @@ internal abstract class Button(TitleBar bar) : IPart
     public void Out() => Bar.Hover(null);
 }
 
-/// <summary>‹ Back: the key Chromium knows for it (Alt+Left).</summary>
-internal sealed class BackButton(TitleBar bar) : Button(bar)
+/// <summary>A button on the bar's left, in its <paramref name="slot"/> (0 first).</summary>
+internal abstract class LeftButton(TitleBar bar, int slot) : Button(bar)
 {
-    internal override (int, int) Span(int width) => (6, Side);
+    internal override (int, int) Span(int width) => (6 + slot * Side, Side);
+}
+
+/// <summary>‹ Back: the key Chromium knows for it (Alt+Left).</summary>
+internal sealed class BackButton(TitleBar bar, int slot) : LeftButton(bar, slot)
+{
     internal override void Paint(Canvas c, float cx, float mid, Color ink)
     {
         c.Line(cx + 2.5f, mid - 5, cx - 2.5f, mid, 1.4f, ink);
@@ -123,9 +128,8 @@ internal sealed class BackButton(TitleBar bar) : Button(bar)
 }
 
 /// <summary>› Forward (Alt+Right).</summary>
-internal sealed class ForwardButton(TitleBar bar) : Button(bar)
+internal sealed class ForwardButton(TitleBar bar, int slot) : LeftButton(bar, slot)
 {
-    internal override (int, int) Span(int width) => (6 + Side, Side);
     internal override void Paint(Canvas c, float cx, float mid, Color ink)
     {
         c.Line(cx - 2.5f, mid - 5, cx + 2.5f, mid, 1.4f, ink);
@@ -134,10 +138,67 @@ internal sealed class ForwardButton(TitleBar bar) : Button(bar)
     protected override void Act() => Window.Press(Keyboard.Right, Keyboard.LeftAlt);
 }
 
-/// <summary>The globe: drops down the address field.</summary>
-internal sealed class AddressButton(TitleBar bar) : Button(bar)
+/// <summary>
+/// One of the app's own tools, in place of back and forward: the app's page names them
+/// (<c>{"window":"tools","tools":["new","open","save"]}</c>) and a click tells PLang
+/// (<c>{"tool":"save","id":…}</c>), which hands it to the page. The bar draws the ones it knows —
+/// new, open, save, run; any other as its first letter.
+/// </summary>
+internal sealed class ToolButton(TitleBar bar, int slot, string name) : LeftButton(bar, slot)
 {
-    internal override (int, int) Span(int width) => (6 + 2 * Side, Side);
+    internal string Name { get; } = name;
+
+    internal override void Paint(Canvas c, float cx, float mid, Color ink)
+    {
+        switch (Name)
+        {
+            case "new":   // a page with its corner folded, and a plus
+                c.Line(cx - 5, mid - 7, cx + 1, mid - 7, 1.2f, ink);
+                c.Line(cx + 1, mid - 7, cx + 5, mid - 3, 1.2f, ink);
+                c.Line(cx + 5, mid - 3, cx + 5, mid + 7, 1.2f, ink);
+                c.Line(cx + 5, mid + 7, cx - 5, mid + 7, 1.2f, ink);
+                c.Line(cx - 5, mid + 7, cx - 5, mid - 7, 1.2f, ink);
+                c.Line(cx, mid - 1, cx, mid + 5, 1.2f, ink);
+                c.Line(cx - 3, mid + 2, cx + 3, mid + 2, 1.2f, ink);
+                break;
+            case "open":   // a folder
+                c.Line(cx - 7, mid - 5, cx - 2, mid - 5, 1.2f, ink);
+                c.Line(cx - 2, mid - 5, cx, mid - 3, 1.2f, ink);
+                c.Line(cx, mid - 3, cx + 7, mid - 3, 1.2f, ink);
+                c.Line(cx + 7, mid - 3, cx + 7, mid + 6, 1.2f, ink);
+                c.Line(cx + 7, mid + 6, cx - 7, mid + 6, 1.2f, ink);
+                c.Line(cx - 7, mid + 6, cx - 7, mid - 5, 1.2f, ink);
+                c.Line(cx - 7, mid - 0.5f, cx + 7, mid - 0.5f, 1.2f, ink);
+                break;
+            case "save":   // a floppy: its body, the label below, the shutter above
+                c.Line(cx - 6, mid - 6, cx + 4, mid - 6, 1.2f, ink);
+                c.Line(cx + 4, mid - 6, cx + 6, mid - 4, 1.2f, ink);
+                c.Line(cx + 6, mid - 4, cx + 6, mid + 6, 1.2f, ink);
+                c.Line(cx + 6, mid + 6, cx - 6, mid + 6, 1.2f, ink);
+                c.Line(cx - 6, mid + 6, cx - 6, mid - 6, 1.2f, ink);
+                c.Line(cx - 3, mid - 6, cx - 3, mid - 2.5f, 1.2f, ink);
+                c.Line(cx - 3, mid - 2.5f, cx + 3, mid - 2.5f, 1.2f, ink);
+                c.Line(cx + 3, mid - 2.5f, cx + 3, mid - 6, 1.2f, ink);
+                c.Line(cx - 3.5f, mid + 6, cx - 3.5f, mid + 1.5f, 1.2f, ink);
+                c.Line(cx - 3.5f, mid + 1.5f, cx + 3.5f, mid + 1.5f, 1.2f, ink);
+                c.Line(cx + 3.5f, mid + 1.5f, cx + 3.5f, mid + 6, 1.2f, ink);
+                break;
+            case "run":   // ▶
+                for (var dx = 0f; dx <= 9; dx += 0.75f)
+                    c.Line(cx - 4 + dx, mid - 6 + dx * 6 / 9f, cx - 4 + dx, mid + 6 - dx * 6 / 9f, 1, ink);
+                break;
+            default:
+                c.Text(Window.Display.Font, Name.Length > 0 ? Name[..1].ToUpperInvariant() : "?", cx - 4, mid, Side, ink);
+                break;
+        }
+    }
+
+    protected override void Act() => Window.Tool(Name);
+}
+
+/// <summary>The globe: drops down the address field.</summary>
+internal sealed class AddressButton(TitleBar bar, int slot) : LeftButton(bar, slot)
+{
     internal override void Paint(Canvas c, float cx, float mid, Color ink)
     {
         c.Ring(cx, mid, 7, 7, 1.2f, ink);
@@ -239,13 +300,15 @@ internal sealed class SizeGrip(Window window)
 }
 
 /// <summary>
-/// A window's title bar, drawn by plang-screen: back, forward, address; the title; menu, minimize,
-/// maximize, close. It draws itself again when the window's title, width, activity or hover changes.
+/// A window's title bar, drawn by plang-screen: back and forward — or the app's own tools, when its
+/// page names them — and the address; the title; menu, minimize, maximize, close. It draws itself
+/// again when the window's title, tools, width, activity or hover changes.
 /// </summary>
 internal sealed class TitleBar
 {
     internal const int Height = 36;
-    private readonly Button[] buttons;
+    private Button[] buttons = [];
+    private int left;   // how many buttons on the left
     private readonly TitleArea area;
 
     internal Window Window { get; }
@@ -256,8 +319,21 @@ internal sealed class TitleBar
     {
         Window = window;
         area = new TitleArea(window);
-        buttons = [new BackButton(this), new ForwardButton(this), new AddressButton(this), new MenuButton(this),
-                   new MinimizeButton(this), new MaximizeButton(this), new CloseButton(this)];
+        Arrange();
+    }
+
+    /// <summary>The buttons, for the window's tools as they are now: the app's tools in place of back and
+    /// forward; the globe after them.</summary>
+    internal void Arrange()
+    {
+        var tools = Window.Tools;
+        List<Button> lefts = tools.Count == 0
+            ? [new BackButton(this, 0), new ForwardButton(this, 1)]
+            : tools.Select((name, i) => (Button)new ToolButton(this, i, name)).ToList();
+        lefts.Add(new AddressButton(this, lefts.Count));
+        left = lefts.Count;
+        Hovered = null;
+        buttons = [.. lefts, new MenuButton(this), new MinimizeButton(this), new MaximizeButton(this), new CloseButton(this)];
     }
 
     /// <summary>The part at <paramref name="x"/> (from the bar's left).</summary>
@@ -289,7 +365,7 @@ internal sealed class TitleBar
             b.Paint(c, x + w / 2f, mid, ink);
         }
         var (menuX, _) = buttons.OfType<MenuButton>().First().Span(width);
-        c.Text(Window.Display.Font, Window.Toplevel.Title, 6 + 3 * Button.Side + 10, mid, menuX - 10, ink);
+        c.Text(Window.Display.Font, Window.Toplevel.Title, 6 + left * Button.Side + 10, mid, menuX - 10, ink);
         var old = Picture.Rect;
         Picture = c.Picture(Corner);
         if (Window.Visible) Window.Display.Frame.Redraw(old, Picture.Rect);
