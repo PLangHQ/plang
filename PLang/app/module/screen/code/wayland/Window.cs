@@ -334,8 +334,8 @@ internal sealed class Window : ISurfaceRole
     }
 
     /// <summary>A command from PLang (the taskbar): focus, minimize, maximize, restore, close; the
-    /// page it shows (url); the app's tools in its title bar (tools); the desktop's part above the
-    /// windows (above).</summary>
+    /// page it shows (url); the app's tools in its title bar (tools); the clipboard as a value, for its
+    /// page (paste); the desktop's part above the windows (above).</summary>
     internal void Command(string what, JsonObject e)
     {
         int N(string k) => e[k] is JsonValue v && v.TryGetValue<double>(out var d) ? (int)d : 0;
@@ -347,6 +347,7 @@ internal sealed class Window : ISurfaceRole
             case "restore": Restore(); break;
             case "close": Toplevel.Close(); break;
             case "url": Address = Address.Of(e["url"]); break;
+            case "paste": Display.Tell(new JsonObject { ["paste"] = Display.Clipboard.Value, ["id"] = Id }); break;   // the clipboard as a value, to its page
             case "tools":
                 Tools = e["tools"] is JsonArray names
                     ? names.Select(n => n is JsonValue v && v.TryGetValue<string>(out var s) ? s : null).OfType<string>().Take(8).ToList()
