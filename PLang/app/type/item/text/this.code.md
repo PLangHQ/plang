@@ -21,7 +21,10 @@ parameters, a loop's item and a goal channel's message — the value is rendered
 ## A number as text — the writer, born with a culture
 
 ```
-text.Encode (this.cs:47) / text.Rendered          — the two places a text writer is made, each with the asker's
+text.Encode (this.cs:47)                          — reads the value first: one that can't be read (a %var% not set)
+                                                     is the write's failure (the action fails, its on error takes
+                                                     it), never written out as the content
+text.Encode / text.Rendered                        — the two places a text writer is made, each with the asker's
   new text.Writer(stream, encoding, culture)         context.Setting.Of<app.setting>().Culture (%!app.setting.culture%,
                                                       the machine's when unset; type/item/culture: a name no culture
                                                       has is refused at the set, UnknownCulture)
