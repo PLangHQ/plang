@@ -40,9 +40,9 @@ public sealed class Browser : global::app.type.item.@this, global::app.type.item
     internal System.Net.WebSockets.ClientWebSocket? Control { get; set; }
     /// <summary>The desktop's browser window: a page that lands in it was opened as a tab.</summary>
     internal int DesktopWindow { get; set; }
-    /// <summary>The context it was started in: what goes wrong away from any step (a window that can't be
-    /// paired with its page) is written to its app's error channel.</summary>
-    internal actor.context.@this? Context { get; set; }
+    /// <summary>Says what went wrong away from any step (a window that can't be paired with its page): written to
+    /// its app's error channel. (An item holds no context; this is where the one it was started in reports.)</summary>
+    internal Func<global::app.error.Error, Task>? Report { get; set; }
     /// <summary>Hands what a page of the app's own says (<c>plang(text)</c>) to OnMessage.</summary>
     internal Func<string, Task>? Message { get; set; }
     /// <summary>Where plang's own pages are (<c>file://</c> under these folders): the app's folder, and the
