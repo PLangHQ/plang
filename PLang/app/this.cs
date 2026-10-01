@@ -208,6 +208,13 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public global::app.type.@this<global::app.type.item.variable.@this, global::app.type.item.list.@this<global::app.type.item.variable.@this>> variable { get; }
 
     /// <summary>
+    /// The type named <c>shortcut</c> — <c>%!app.shortcut%</c>: its <c>list</c> is the app's shortcuts, each a
+    /// goal under a <c>shortcut/</c> folder named by its file, read once at the first ask. <c>%!goal%</c> reads
+    /// the shortcut named <c>goal</c> when there is one, before the app's member of that name.
+    /// </summary>
+    public global::app.type.@this<global::app.shortcut.@this, global::app.shortcut.list.@this> shortcut { get; }
+
+    /// <summary>
     /// Build mode controller. null = off; non-null = on (born under --build).
     /// When present, actors use in-memory datasources.
     /// </summary>
@@ -302,6 +309,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         test = new(this);
         error = new(this);
         variable = new(this);
+        shortcut = new(this);
         // each concept's type is the list's entry of its name, as app.type is — %!app.goal% and the type goal
         // are one object
         type.list.Replace(goal);
@@ -524,6 +532,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     {
         var identity = await Load();
         if (!identity.Success) return identity;
+
+        // the shortcuts are read before anything runs: an app goal that takes a system shortcut's name stops here
+        var shortcuts = await shortcut.list.Read();
+        if (!shortcuts.Success) return shortcuts;
 
         // Invariant: every I/O actor must have all three role-channels registered
         // by the entry point before goal execution. Surface a clear error otherwise.
