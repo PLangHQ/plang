@@ -229,6 +229,13 @@ internal sealed class WindowMenu(Window owner) : Panel(owner), IPart
 
     private int? hover;
 
+    /// <summary>The window's menu opens — or, open already, closes.</summary>
+    internal static void Toggle(Window window)
+    {
+        if (window.Display.Panel is WindowMenu open && open.Owner == window) open.Close();
+        else window.Display.Open(new WindowMenu(window));
+    }
+
     private static int HeightOf => Items.Sum(i => i == null ? Gap : Row) + 2 * Pad;
 
     protected override Point Corner

@@ -182,6 +182,23 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         await Assert.That((await received!.Value())?.ToString()).IsEqualTo("answer");
     }
 
+    // Two answers already in the stream (piped in at once): each question gets its own — the reader that read past
+    // the first answer is the one the second question reads from.
+    [Test]
+    public async Task TwoAsks_TwoAnswersInTheStream_EachGetsItsOwn()
+    {
+        var ms = new MemoryStream(global::System.Text.Encoding.UTF8.GetBytes("first\nsecond\n"));
+        var ch = new StreamChannel("i2", ms, ChannelDirection.Bidirectional, ownsStream: false) { Mime = "text/plain" };
+        app.actor.list.User.Channel.Register(ch);
+        global::app.module.output.ask Ask() => new(app.actor.list.User.Context) { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") };
+
+        var first = await ch.AskAsync(Ask());
+        var second = await ch.AskAsync(Ask());
+
+        await Assert.That((await first.Value())?.ToString()).IsEqualTo("first");
+        await Assert.That((await second.Value())?.ToString()).IsEqualTo("second");
+    }
+
     [Test]
     public async Task AfterAsk_OnAMessageChannel_Fires()
     {

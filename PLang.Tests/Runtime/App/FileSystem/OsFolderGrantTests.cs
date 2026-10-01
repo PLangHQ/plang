@@ -47,6 +47,31 @@ public class OsFolderGrantTests
         await (await Authorize(app, app.actor.list.System, Verb.delete)).IsSuccess();
     }
 
+    // A new file named the plang way, /system/<folder>/x, where the os has that folder and the app doesn't: it
+    // resolves into the os folder — and the os grants rule it there: a user writing it is refused (headless; asked
+    // with a person), the system writes it (PlangOS's shell update runs as the system).
+    [Test]
+    public async Task ANewSystemFile_ResolvedIntoTheOsFolder_IsTheSystemsToWrite()
+    {
+        await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang-os-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
+        var folder = "grant-" + System.Guid.NewGuid().ToString("N")[..8];
+        var system = System.IO.Path.Join(app.OsAbsolutePath, "system", folder);
+        System.IO.Directory.CreateDirectory(system);
+        try
+        {
+            var user = global::app.type.item.path.@this.Resolve($"/system/{folder}/new.md", app.actor.list.User.Context);
+            var asSystem = global::app.type.item.path.@this.Resolve($"/system/{folder}/new.md", app.actor.list.System.Context);
+            await Assert.That(user.Absolute.StartsWith(system)).IsTrue();
+
+            var write = await user.Authorize(Verb.Write, app.actor.list.User.Context);
+            await write.IsFailure();
+            await Assert.That(write.Error!.Key).IsEqualTo("PermissionDenied");
+            await (await asSystem.Authorize(Verb.Write, app.actor.list.System.Context)).IsSuccess();
+        }
+        finally { System.IO.Directory.Delete(system, true); }
+    }
+
     // An app rooted at the os folder itself doesn't make the folder its user's: the os grants still rule there.
     [Test]
     public async Task AUserInsideTheOsApp_StillCantWriteTheOsFolder()

@@ -37,7 +37,9 @@ internal sealed class TitleArea(Window window) : IPart
     public void Down(Click click)
     {
         window.Activate();
-        if (click.Clicks >= 2) window.Toggle();
+        // a right press: the window's menu — Chromium's tools
+        if (click.Button == 0x111) WindowMenu.Toggle(window);
+        else if (click.Clicks >= 2) window.Toggle();
         else if (window.Shown == Shown.Normal) window.Display.Hold(new MoveGrab(window, window.Display.Pointer.At));
     }
 }
@@ -223,8 +225,8 @@ internal sealed class AddressButton(TitleBar bar, int slot) : LeftButton(bar, sl
     protected override void Act() => Window.Display.Open(new AddressField(Window));
 }
 
-/// <summary>☰ The window's agent: PLang drops its chat down under the button
-/// (<c>{"menu": id, "x", "y"}</c>, the button's bottom-right on the screen).</summary>
+/// <summary>☰ (#window.bot): what PLang binds to it — PlangOS's shell, the window's agent. Bound by nothing, it is
+/// the window's menu: Chromium's tools (a right press on the title bar opens them too).</summary>
 internal sealed class MenuButton(TitleBar bar) : Button(bar)
 {
     internal override string Id => "bot";
@@ -233,11 +235,7 @@ internal sealed class MenuButton(TitleBar bar) : Button(bar)
     {
         foreach (var dy in new[] { -4.5f, 0.5f, 5.5f }) c.Line(cx - 6, mid + dy, cx + 6, mid + dy, 1.2f, ink);
     }
-    protected override void Act()
-    {
-        var (x, w) = Span(Window.Size.Width);
-        Window.Menu(Window.At.X + x + w, Window.At.Y);
-    }
+    protected override void Act() => WindowMenu.Toggle(Window);
 }
 
 internal sealed class MinimizeButton(TitleBar bar) : Button(bar)
