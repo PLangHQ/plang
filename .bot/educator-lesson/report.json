@@ -45,7 +45,23 @@
         "assumptions": "The docs (object_pattern_formal.md, obp-smells.md) are the source of the pattern; every code excerpt in the lesson is quoted verbatim from plang C# or the film engine JS with path:line",
         "risk": "Doc examples are partly illustrative and the docs list known drift in the codebase; a lesson could present drift as the pattern, or doc pseudo-code as real code"
       },
-      "actions": [],
+      "actions": [
+        {
+          "paths": ["/shared/educator/course/03-obp-pattern/lesson.md", "/shared/educator/course/03-obp-pattern/code/01-three-paths/"],
+          "type": "create", "category": "doc", "confidence": "high",
+          "context": "Lesson 3 (OBP, any language) text: 12 scenes, every excerpt verbatim with path:line (C# PLang/app, JS film engine), checked by grep -F; %!app.type% proven by a built and run goal. Six doc/code disagreements tabled for Ingi."
+        },
+        {
+          "paths": ["/shared/educator/studio/Hub.goal", "/shared/educator/studio/hub/index.html", "/shared/educator/studio/export/record.js", "/shared/educator/studio/export/timeline.js", "/shared/educator/studio/export/mp4.js", "/shared/educator/index.html"],
+          "type": "create", "category": "code", "confidence": "high",
+          "context": "Course web UI (Ingi asked): plang Hub writes /shared/educator/index.html from each lesson's timeline.json, written by the export from the film engine itself; mp4 player, chapters with sources, transcript following the video, resume. Checked in Playwright at 1280 and 400 px with a WebM copy (Playwright Chromium has no H.264)."
+        },
+        {
+          "paths": ["/shared/educator/animations/what-is-plang/what-is-plang.mp4"],
+          "type": "create", "category": "doc", "confidence": "high",
+          "context": "Lesson 1 exported to mp4 (291 s, --disable-gpu, 3 browsers)."
+        }
+      ],
       "plan": ".bot/educator-lesson/educator/v3/plan.md"
     }
   ]
