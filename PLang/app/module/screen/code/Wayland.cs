@@ -53,31 +53,40 @@ public sealed class Wayland : IScreen
         var display = new wayland.Display(new wayland.Size(width, height), "is", socket.Absolute, output,
             font == null ? null : (await font.Value())?.RawBytes, note => notes.Writer.TryWrite(note));
 
-        var onWindow = action.OnWindow == null ? null : await action.OnWindow.Value();
-        if (onWindow != null)
-        {
-            // what happens to windows goes to OnWindow in order, but the display never waits for it:
-            // a goal running now (one at a time per app) may itself wait for a window to be shown,
-            // and showing it is the display's next event
-            var told = System.Threading.Channels.Channel.CreateUnbounded<System.Text.Json.Nodes.JsonObject>();
-            _ = Task.Run(async () =>
-            {
-                await foreach (var e in told.Reader.ReadAllAsync())
-                    await global::app.module.on.code.Gate.Call(onWindow, Payload(e, context), context);
-            });
-            display.Told += e => { told.Writer.TryWrite(e); return Task.CompletedTask; };
-        }
-        display.Start();
-        // the screen's output is the pipe to the host plang that started this one: the host is %!app.parent%, and
-        // a call to one of its goals goes up beside the frames (its answer comes down the input: screen.listen)
-        if (output != null) context.App.parent.Link = json => { display.Up(json); return Task.CompletedTask; };
-
         var screen = new Screen
         {
             Title = (await action.Title.Value())?.ToString() ?? "", Width = width, Height = height,
             Display = display, Runtime = folder.Absolute, Socket = SocketName,
         };
-        return context.Ok<Screen>(screen);
+
+        var onWindow = action.OnWindow == null ? null : await action.OnWindow.Value();
+        // what happens to windows goes to OnWindow in order, and an element's click to what is bound on it
+        // (on click on #window.bot) — but the display never waits for either: a goal running now (one at a time
+        // per app) may itself wait for a window to be shown, and showing it is the display's next event
+        var told = System.Threading.Channels.Channel.CreateUnbounded<System.Text.Json.Nodes.JsonObject>();
+        _ = Task.Run(async () =>
+        {
+            await foreach (var e in told.Reader.ReadAllAsync())
+            {
+                if (e["ui"]?.GetValue<string>() == "click" && e["element"]?.GetValue<string>() is { } selector)
+                {
+                    if (screen.element.Held(selector) is { } element)
+                        await global::app.module.on.code.Gate.Run(() => element.Clicked(Payload(e, context), context), context);
+                }
+                else if (onWindow != null)
+                    await global::app.module.on.code.Gate.Call(onWindow, Payload(e, context), context);
+            }
+        });
+        display.Told += e => { told.Writer.TryWrite(e); return Task.CompletedTask; };
+        display.Start();
+        // the screen's output is the pipe to the host plang that started this one: the host is %!app.parent%, and
+        // a call to one of its goals goes up beside the frames (its answer comes down the input: screen.listen)
+        if (output != null) context.App.parent.Link = json => { display.Up(json); return Task.CompletedTask; };
+
+        var opened = context.Ok<Screen>(screen);
+        // the screen in play for the goals here: %!screen% — a bare #window.bot in a step is one of its elements
+        context.Variable.Set("!screen", opened);
+        return opened;
     }
 
     /// <summary>A window event as <c>%!data%</c>: a dict, so a goal can read its fields.</summary>
@@ -106,7 +115,9 @@ public sealed class Wayland : IScreen
         System.Text.Json.Nodes.JsonObject? e;
         try { e = System.Text.Json.Nodes.JsonNode.Parse(line) as System.Text.Json.Nodes.JsonObject; }
         catch (System.Text.Json.JsonException) { return line; }
-        if (e?["window"]?.GetValue<string>() != "url" || context.CallStack is not { Step: { } step } stack) return line;
+        // "window" is a command's name here; a message that only mentions a window (its number) passes as it is
+        if (!(e?["window"] is System.Text.Json.Nodes.JsonValue command && command.TryGetValue<string>(out var name) && name == "url")
+            || context.CallStack is not { Step: { } step } stack) return line;
         if (e["url"] is not System.Text.Json.Nodes.JsonObject url)
             e["url"] = url = new System.Text.Json.Nodes.JsonObject { ["path"] = e["url"]?.DeepClone() };
         var origin = url["origin"] as System.Text.Json.Nodes.JsonObject ?? new System.Text.Json.Nodes.JsonObject();

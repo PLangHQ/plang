@@ -189,9 +189,8 @@ internal sealed class Display
     // ---- input from the host: one JSON line each ------------------------------------------------
 
     /// <summary>{"mouse":…}, {"key":…}, {"text":…}, {"clipboard":…} from the host; {"window":…} from
-    /// PLang (the taskbar). "t" is a stamp to echo. Messages between PLang here and the host pass
-    /// through: {"agent":…} from the host (what the window's agent said) goes to PLang; {"host":…} from
-    /// PLang goes up to the host, a message of its own (kind 9) beside the frames.</summary>
+    /// PLang (the taskbar). "t" is a stamp to echo. {"host":…} from PLang goes up to the host, a message
+    /// of its own (kind 9) beside the frames.</summary>
     internal void Input(string line)
     {
         JsonObject? e;
@@ -209,7 +208,6 @@ internal sealed class Display
             else if (e.ContainsKey("clipboard")) Clipboard.Copied(S("clipboard"));
             else if (e.ContainsKey("stats")) Tell(e);   // the host's numbers: the desktop's taskbar shows them
             else if (e.ContainsKey("video")) Frame.Lossless("the host can't show H.264: " + S("why"));
-            else if (e.ContainsKey("agent")) Tell(e);
             // PLang binds a window part's click (on click on #window.bot): from now on a click on it is PLang's
             else if (S("ui") == "bind") Bound.Add(Part(S("element")));
             else if (S("ui") == "unbind") Bound.Remove(Part(S("element")));
