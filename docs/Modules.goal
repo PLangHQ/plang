@@ -1,0 +1,22 @@
+Modules
+/ The learner pages in modules/, each written from the module catalog, never by hand (decision 411; the spec is
+/ Documentation/v0.2/module-reference-generation.md): the module's description, then each action's description,
+/ the steps of its examples, its properties (how a step says each, its type, whether it is required, its default,
+/ what it changes) and what it returns.
+/ Only the file module's notes are tagged yet, so only its page is written. The loop over %!app.module.list% comes
+/ when the other modules' notes are tagged.
+- call goal Page module=%!app.module.file%
+
+Page
+/ One module's page, modules/<name>.md, then what its actions' notes and properties don't agree on.
+- render template "/templates/module.template", write to %page%
+- save %page% to "/modules/%module.Name%.md"
+- foreach %module.Action%, call Unmatched item=%action%
+
+Unmatched
+/ What one action's notes and properties don't agree on: a notes line that names no property, a property that no
+/ line names. The notes find them (action.Note.Warning); this writes each one.
+- foreach %action.Note.Warning%, call Warn item=%warning%
+
+Warn
+- write %warning.Message% to "error" channel
