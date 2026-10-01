@@ -42,11 +42,11 @@ The laws are unbreakable. Without any one of them, whatever you have, it is not 
 One root; everything is reachable from it by navigation. Any code holding the root can reach anything — no dependency-injection framework, no service locator, no parameter lists that grow every time you need one more thing.
 
 ```csharp
-app.Channel.Write(text);
 app.Cache.Get(key);
+app.goal.current;
 ```
 
-Read it like English: "the app's channel — write." The code tells you exactly what it's doing and where it lives. The object graph IS the architecture.
+Read it like English: "the app's cache — get"; "the goal running now." The code tells you exactly what it's doing and where it lives. The object graph IS the architecture.
 
 ### Law 2 — There is a context, and it belongs to the request
 
@@ -69,11 +69,13 @@ Every operation belongs to the object whose data it acts on. If it iterates a co
 Parents delegate; they never iterate their children:
 
 ```csharp
-public async Task Load(Context context)
+public async Task<Data> Start(Context context)
 {
-    await Lifecycle.Before.Run(context);
-    await Step.Load(context);              // delegates, does not loop
-    await Lifecycle.After.Run(context);
+    var answer = await on.start.Before(this, context);          // what's bound before
+    var result = answer is { Success: false } or { Handled: true }
+        ? answer
+        : await Step.Start(context);                             // delegates to the step collection, does not loop
+    return await on.start.After(this, result, context);         // what's bound after
 }
 ```
 
@@ -83,13 +85,13 @@ Reach dependencies through the object graph. Never decompose an object into sepa
 
 ```csharp
 // Wrong: passing each thing separately
-async Task Run(App app, Channel channel, Cache cache) { }
+async Task Run(App app, Cache cache, Module module) { }
 
 // Correct: reach them through the root
 async Task Run(App app)
 {
-    app.Channel ...
     app.Cache ...
+    app.module ...
 }
 ```
 
@@ -112,9 +114,9 @@ The plang path, the C# path (namespace and class) and the file path name the sam
 
 | plang | C# | file |
 |---|---|---|
-| `%!app.type%` | `App.Type`, class `app.type.@this` | `app/type/this.cs` |
-| `%!app.type.list%` | `App.Type.list` | a member of `app/type/this.cs` |
-| `%!app.type.text%` | `App.Type["text"]`, class `app.type.type.@this` | `app/type/type/this.cs` |
+| `%!app.type%` | `App.type`, class `app.type.@this` | `app/type/this.cs` |
+| `%!app.type.list%` | `App.type.list` | a member of `app/type/this.cs` |
+| `%!app.type.text%` | class `app.type.item.text.@this` | `app/type/item/text/this.cs` |
 
 **Test**: write a thing's three paths side by side. If one needs a sentence to explain it ("the type system is reached at `app.type` but lives at `type/list/this.cs`"), fix the shape, not the sentence.
 
@@ -131,11 +133,11 @@ The owner exposes the collection as a **singular** property naming the concept �
 ```csharp
 public class CallStack
 {
-    public error.list Error { get; } = new();
+    public error.list Audit { get; } = new();
 }
 
-callStack.Error.Add(error);      // "the callstack's errors — add this one"
-callStack.Error.List             // enumerate
+callStack.Audit.Add(error);      // "the callstack's audit — add this one"
+callStack.Audit.Newest           // the latest error
 ```
 
 And the owner never proxies it. `callStack.AddError(...)` is wrong in every world — a middleman hiding what's actually happening. When the collection needs domain operations (`Load`, `Run`), those belong on the collection type — still never on the parent.
@@ -159,10 +161,10 @@ Only leaves open the package: the handler that declared the typed slot, and the 
 if (input.Value is Image img) return DoSomething(img.Bytes);
 
 // Wrong: leaf cracks the carriers open for a static helper
-return Resize((await A.Value()).Bytes, await Width.Value(), await Height.Value());
+return (data.@this) await FileWriter.Write((await Path.Value()).Absolute, (await Value.Value()).Bytes);
 
-// Correct: the value does the work; operands pass whole
-return await A.Resize(Width, Height);
+// Correct: the value does the work; the operand rides in whole
+return await Path.Use(async path => (data.@this) await path.Save(Value, Context));
 ```
 
 The tell: you extracted a value only to hand the raw inside to something else. If you opened the box to pass what was inside, pass the box.

@@ -1,0 +1,38 @@
+{
+  "branch": "docs/obp-formal-example-fixes",
+  "sessions": [
+    {
+      "id": "c8ea35df-obp-fixes",
+      "bot": "docs",
+      "timestamp_start": "2026-10-01T00:00:00Z",
+      "timestamp_end": "2026-10-01T00:00:00Z",
+      "intent": "Fix six stale examples in object_pattern_formal.md flagged by the educator, verifying each against app-systems code.",
+      "before": {
+        "assumptions": "Educator's six findings credible with file:line citations; some may be branch drift.",
+        "risk": "Reporter's commit may differ from current app-systems; verify against the target branch before editing."
+      },
+      "plan": ".bot/docs-obp-formal-example-fixes/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["Documentation/v0.2/object_pattern_formal.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Fixed 5 stale examples (Channel-on-root, callStack.Error->Audit, Lifecycle->on.start, app.type.type path, Resize->file.save). Left path.Size: accurate on current app-systems (branch drift in the report). No code changes warranted."
+        },
+        {
+          "paths": ["learnings/docs-obp-formal-example-fixes/docs/v1/learnings.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "OBP insights extracted from the review: channels on actor, callstack Audit, goal on.start lifecycle, type-system paths, leaf write pattern, verify-against-target-branch."
+        }
+      ],
+      "after": {
+        "status": "5 of 6 fixed; 1 was accurate (branch drift); residual: confirm row-3 plang path with educator",
+        "health": "green",
+        "notes": "Independent branch off app-systems; separate from the module-reference generator work."
+      }
+    }
+  ]
+}
