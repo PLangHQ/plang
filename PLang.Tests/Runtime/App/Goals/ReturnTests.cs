@@ -129,6 +129,53 @@ public class ReturnTests
         await Assert.That(y.Error?.Key).IsEqualTo("CallFailed");
     }
 
+    private global::app.data.@this Template(string text)
+        => new("value", text, Ctx.App.type.list[new global::app.type.@this("text", template: "plang"), Ctx], context: Ctx);
+
+    [Test]
+    public async Task AReturnedTemplate_RendersWhereItIsWritten()
+    {
+        await Load("Callee", Make.Step("return \"%name%: %price% kr\"", Return("%name%: %price% kr")));
+        var got = await Got(("name", "milk"), ("price", 3));
+        await Assert.That((await got.Value())?.ToString()).IsEqualTo("milk: 3 kr");
+    }
+
+    [Test]
+    public async Task AReturnedVariable_SetFromATemplate_HoldsWhatItRendered()
+    {
+        await Load("Callee",
+            Make.Step("set %text% = \"%name%: %price% kr\"", Set("text", "%name%: %price% kr")),
+            Make.Step("return %text%", Return("%text%")));
+        var got = await Got(("name", "milk"), ("price", 3));
+        await Assert.That((await got.Value())?.ToString()).IsEqualTo("milk: 3 kr");
+    }
+
+    [Test]
+    public async Task ATemplateSet_RendersAtTheSet_AndALaterSetDoesNotChangeIt()
+    {
+        await Ctx.Variable.Set("n", "a");
+        await Ctx.Variable.Set("t", Template("Hi %n%"));
+        await Ctx.Variable.Set("n", "x");
+        await Assert.That((await (await Ctx.Variable.Get("t")).Value())?.ToString()).IsEqualTo("Hi a");
+    }
+
+    [Test]
+    public async Task ATemplateThatAppendsToItself_Accumulates()
+    {
+        await Ctx.Variable.Set("order", "start");
+        await Ctx.Variable.Set("order", Template("%order%,low"));
+        await Ctx.Variable.Set("order", Template("%order%,low"));
+        await Assert.That((await (await Ctx.Variable.Get("order")).Value())?.ToString()).IsEqualTo("start,low,low");
+    }
+
+    [Test]
+    public async Task ATemplateNamingAMissingVariable_FailsTheSet()
+    {
+        var set = await Ctx.Variable.Set("t", Template("Hi %nobody%"));
+        await set.IsFailure();
+        await Assert.That(set.Error!.Key).IsEqualTo("VariableNotFound");
+    }
+
     [Test]
     public async Task AReturnedReference_ToContentNotRead_StaysUnread()
     {

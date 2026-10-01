@@ -84,7 +84,8 @@ public partial class @this
     /// </summary>
     public async System.Threading.Tasks.ValueTask<data.@this> Set(string name, object? value)
     {
-        // A reference value (%x%) binds the referenced VALUE as it is now, not the reference marker
+        // A value that holds variables binds as it is now (data.Settle): a template renders here, at the set — a
+        // name it can't read fails the set — and a reference (%x%) binds the referenced VALUE, not the marker
         // (data.Settle: the value INSTANCE is shared, so it stays lazy; the Properties bag is its own,
         // so a later `%y%!prop` write never bleeds onto x). y captures x's CURRENT value, not its future
         // reassignments. Storing the marker verbatim would go stale (!data rebinds every action) and a
@@ -93,7 +94,7 @@ public partial class @this
         // memory, whichever store it lands in). What binds is renamed to `name` — a variable holding a
         // failure binds that failure; a reference to nothing (settled to no value) leaves `name` unset,
         // keeping nothing of the reference, so setting the missing one later doesn't reach it.
-        if (value is data.@this reference && reference.IsVariable)
+        if (value is data.@this reference && reference.HasVariable)
         {
             var bound = await reference.Settle();
             value = bound.IsInitialized ? bound.Copy(name) : _context.NotFound(name);
