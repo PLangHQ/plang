@@ -122,3 +122,11 @@ The value slot is built via `data.Normalize(View) → IWriter`, so a new domain 
 - Orphan files surface as warnings via `MarkdownTeaching.ScanOrphans`. Full guide: `Documentation/v0.2/action-catalog.md`; loader: `PLang/app/module/MarkdownTeaching.cs`.
 + The action's docs are lazy file items on its catalog element (`goal/step/action/this.Schema.cs`: `Description`, `Notes`, `Examples`), read by the builder's templates (`os/system/builder/llm/templates/`). Full guide: `Documentation/v0.2/action-catalog.md`.
 ```
+
+## architect — v3 — 2026-10-01 (on Ingi's request: "I want to highlight the dot case learning … a rule")
+**Target:** CLAUDE.md, "OBP Shape Smells", a new first line under **Shape:**
+**Why:** Ingi, designing `list.query`: a compound camelCase name is a missing hierarchy. Writing it as a dot path and checking that each segment navigates in the code shows where the thing lives and when the structure is wrong. The architect sketched `ListName` (copied from `list.where`/`sort`/`group`); as a dot path, `list.name`, it doesn't navigate: a list has no name. The name is the holding variable's, `list.variable.name`, so the action takes `list`. Ingi: "if you do that correctly, it will guide you through where things should be and when things don't match … a rule."
+**Proposed change:**
+```
+- **glued name** — a compound camelCase name (`ListName`, `buildExecutionPath`). Write it as a dot path, one word per segment (`setting.build.execution.path`), and check it navigates: each segment an owner whose member is the next. A path that doesn't navigate (`list.name`: a list has no name) is a flat copy or a misplaced member; the dot path shows the real owner (`list.variable.name`, so take `list`).
+```
