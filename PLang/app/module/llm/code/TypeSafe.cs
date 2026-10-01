@@ -50,7 +50,7 @@ public sealed class TypeSafe : IDecider
             Header = new data.@this<global::app.type.item.dict.@this>("",
                 (global::app.type.item.dict.@this)global::app.type.item.@this.Create(headers, context)),
             Unsigned = new data.@this<global::app.type.item.@bool.@this>("", true),
-            TimeoutInSec = new data.@this<global::app.type.item.number.@this>("", 120),
+            Timeout = new data.@this<global::app.type.item.duration.@this>("", new global::app.type.item.duration.@this(System.TimeSpan.FromMinutes(2))),
         };
 
         var result = await new global::app.goal.step.action.@this(http, context).Start(context);

@@ -17,3 +17,4 @@ ThrowTimeSnapshot_EditSurvivesResume
 Trace_HandleReportsConceptName_NotNamespaceTail
 TypedSnapshotString_NavigateEditResume_PersistsEdit
 Variables_HandleReportsConceptName_NotNamespaceTail
+# Query_CacheHit_PropertiesPreserved: passes in the architect's sweep, fails in the coder's 2/2 (2026-10-01) — the cache answers the property JSON-quoted ("\"preserved\""); environment or cache state, not fixed

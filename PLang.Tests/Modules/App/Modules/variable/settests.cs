@@ -28,15 +28,15 @@ public class SetTests
     [Test]
     public async Task Set_BangPath_WritesSetting_NotVariable()
     {
-        // `set %!http.request.setting.timeoutInSec% = 5` lands on context.Setting (where the generator seam
+        // `set %!http.request.setting.timeout% = 5s` lands on context.Setting (where the generator seam
         // reads it) — the write side of the setting front door — not on the variable store.
         var context = _app.actor.list.User.Context;
-        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%!http.request.setting.timeoutInSec%", "variable"), ("value", 5));
+        var action = global::PLang.Tests.Shared.Make.Action(context, "variable", "set", global::PLang.Tests.Shared.Make.Param(context, "Name", "%!http.request.setting.timeout%", "variable"), ("value", "5s"));
         var result = await action.Start(context);
 
         await result.IsSuccess();
-        await Assert.That((await context.Setting.Get(_app.Module("http")["request"]!, "timeoutInSec")).Success).IsTrue();
-        await Assert.That((await context.Variable.GetValue("!http.request.setting.timeoutInSec"))).IsNull();
+        await Assert.That((await context.Setting.Get(_app.Module("http")["request"]!, "timeout")).Success).IsTrue();
+        await Assert.That((await context.Variable.GetValue("!http.request.setting.timeout"))).IsNull();
     }
 
     // Build.goal's `set default %!build.setting.cache% = true` leaves --build={"cache":false} standing: a

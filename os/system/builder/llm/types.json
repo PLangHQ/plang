@@ -89,6 +89,12 @@
   "app.module.crypto.type.hash": {
     "word": "hash"
   },
+  "app.module.http.type.entity": {
+    "word": "entity"
+  },
+  "app.module.http.type.redirect": {
+    "word": "redirect"
+  },
   "app.module.identity.identity": {
     "word": "identity"
   },
