@@ -1,0 +1,655 @@
+{
+  "name": "Start",
+  "comment": "`is <type>` reads both sides as values: the type's name as written (a formal \"number\" is the word number), and\nwhat a %variable% holds. A variable that holds nothing is no type.",
+  "step": [
+    {
+      "index": 0,
+      "text": "variable.set(Name=%n%, Value=5)",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 5
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "variable.set(Name=%nIs%, Value=false)",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%nIs%",
+              "variable": [
+                {
+                  "text": "%nIs%",
+                  "code": [
+                    {
+                      "variable": "nIs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "condition.if(Left=%n%, Operator=\"is\", Right=\"number\") { variable.set(Name=%nIs%, Value=true) }",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "is"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "number"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%nIs%, Value=true)",
+              "line": {
+                "number": 6
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%nIs%",
+                      "variable": [
+                        {
+                          "text": "%nIs%",
+                          "code": [
+                            {
+                              "variable": "nIs"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=true, Actual=%nIs%, Message=\"a variable holding a number is a number\")",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%nIs%",
+              "variable": [
+                {
+                  "text": "%nIs%",
+                  "code": [
+                    {
+                      "variable": "nIs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a variable holding a number is a number"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 4,
+      "text": "variable.set(Name=%nIsText%, Value=false)",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%nIsText%",
+              "variable": [
+                {
+                  "text": "%nIsText%",
+                  "code": [
+                    {
+                      "variable": "nIsText"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "condition.if(Left=%n%, Operator=\"is\", Right=\"text\") { variable.set(Name=%nIsText%, Value=true) }",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "is"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%nIsText%, Value=true)",
+              "line": {
+                "number": 9
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%nIsText%",
+                      "variable": [
+                        {
+                          "text": "%nIsText%",
+                          "code": [
+                            {
+                              "variable": "nIsText"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 6,
+      "text": "assert.equals(Expected=false, Actual=%nIsText%, Message=\"and not a text\")",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%nIsText%",
+              "variable": [
+                {
+                  "text": "%nIsText%",
+                  "code": [
+                    {
+                      "variable": "nIsText"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "and not a text"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 7,
+      "text": "variable.set(Name=%nobodyIs%, Value=false)",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%nobodyIs%",
+              "variable": [
+                {
+                  "text": "%nobodyIs%",
+                  "code": [
+                    {
+                      "variable": "nobodyIs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 8,
+      "text": "condition.if(Left=%nobody%, Operator=\"is\", Right=\"number\") { variable.set(Name=%nobodyIs%, Value=true) }",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%nobody%",
+              "variable": [
+                {
+                  "text": "%nobody%",
+                  "code": [
+                    {
+                      "variable": "nobody"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "is"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "number"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%nobodyIs%, Value=true)",
+              "line": {
+                "number": 12
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%nobodyIs%",
+                      "variable": [
+                        {
+                          "text": "%nobodyIs%",
+                          "code": [
+                            {
+                              "variable": "nobodyIs"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 9,
+      "text": "assert.equals(Expected=false, Actual=%nobodyIs%, Message=\"a variable that holds nothing is no type\")",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%nobodyIs%",
+              "variable": [
+                {
+                  "text": "%nobodyIs%",
+                  "code": [
+                    {
+                      "variable": "nobodyIs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a variable that holds nothing is no type"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/plan/app-systems/data/operator/IsType.test.goal",
+  "prPath": "/plan/app-systems/data/operator/.build/istype.test.pr",
+  "hash": "0364deade4edd442d9d6fda211230b2b185d1899c65cf84f82298ba7dc8ef839",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

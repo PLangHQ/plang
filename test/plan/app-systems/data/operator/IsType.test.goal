@@ -1,0 +1,13 @@
+/ `is <type>` reads both sides as values: the type's name as written (a formal "number" is the word number), and
+/ what a %variable% holds. A variable that holds nothing is no type.
+Start
+- variable.set(Name=%n%, Value=5)
+- variable.set(Name=%nIs%, Value=false)
+- condition.if(Left=%n%, Operator="is", Right="number") { variable.set(Name=%nIs%, Value=true) }
+- assert.equals(Expected=true, Actual=%nIs%, Message="a variable holding a number is a number")
+- variable.set(Name=%nIsText%, Value=false)
+- condition.if(Left=%n%, Operator="is", Right="text") { variable.set(Name=%nIsText%, Value=true) }
+- assert.equals(Expected=false, Actual=%nIsText%, Message="and not a text")
+- variable.set(Name=%nobodyIs%, Value=false)
+- condition.if(Left=%nobody%, Operator="is", Right="number") { variable.set(Name=%nobodyIs%, Value=true) }
+- assert.equals(Expected=false, Actual=%nobodyIs%, Message="a variable that holds nothing is no type")
