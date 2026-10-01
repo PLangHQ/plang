@@ -27,6 +27,42 @@ public class ModulePageTests
         return spec[(open + 1)..close].Where(line => !line.StartsWith("<!--")).ToArray();
     }
 
+    // The page's intro is the module's description and its guide (module.guide.md, the learner's prose); the module's
+    // notes are the builder's and never on the page.
+    [Test]
+    public async Task ThePagesIntro_IsTheDescriptionAndTheGuide_NeverTheNotes()
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-page-" + System.Guid.NewGuid().ToString("N")[..8]);
+        var folder = System.IO.Path.Combine(root, "system", "modules", "file");
+        System.IO.Directory.CreateDirectory(folder);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "module.description.md"), "Files.\n");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "module.guide.md"), "Paths can be URLs.\n");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "module.notes.md"), "BUILDER-ONLY\n");
+        try
+        {
+            await using var app = new global::app.@this(root).Testing();
+            var context = app.actor.list.User.Context;
+            context.Variable.Set(new global::app.data.@this("module", app.Module("file")!, context: context));
+            var render = new Render(context)
+            {
+                Template = (global::app.type.item.text.@this)System.IO.File.ReadAllText(
+                    System.IO.Path.Combine(RepoRoot(), "docs", "templates", "module.template")),
+                IsFile = (global::app.type.item.@bool.@this)false,
+            };
+
+            var result = await new global::app.module.ui.code.Fluid().Render(render);
+
+            await result.IsSuccess();
+            var page = (await result.Value())!.ToString()!;
+            await Assert.That(page).StartsWith("# File Module\nFiles.\n\nPaths can be URLs.\n\n## ");
+            await Assert.That(page).DoesNotContain("BUILDER-ONLY");
+        }
+        finally
+        {
+            if (System.IO.Directory.Exists(root)) System.IO.Directory.Delete(root, true);
+        }
+    }
+
     [Test]
     public async Task TheFilePage_IsTheSpecsGolden()
     {

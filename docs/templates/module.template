@@ -1,7 +1,8 @@
 {% comment -%}
 A module's learner page, modules/<name>.md, written from the module catalog (decision 411; the spec is
 Documentation/v0.2/module-reference-generation.md). Each fact comes from its one home: the module's and each action's
-description; the steps of the action's examples; each property's type, whether it is required and its default, from
+description; the module's guide (module.guide.md, learner prose the builder never reads; never its notes, which are
+the builder's); the steps of the action's examples; each property's type, whether it is required and its default, from
 its handler; how a step says it and what it changes, from the action's notes (action.Note), passed through as
 written. What the action returns is its notes' Returns line, else its type. Actions come in catalog order,
 properties in their handler's order.
@@ -9,8 +10,9 @@ Needs: module (one element of %!app.module.list%).
 {%- endcomment -%}
 # {{ module.Name | capitalize }} Module
 {{ module.Description | strip }}
-{%- if module.Notes %}
-{{ module.Notes | strip }}
+{%- if module.Guide %}
+
+{{ module.Guide | strip }}
 {%- endif %}
 {%- for a in module.Action %}
 
