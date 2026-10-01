@@ -203,10 +203,11 @@ public partial class @this
         // answers (a retry, a recovery, an ignore); a failure no clause takes stands.
         if (!data.Success) data = await on.error.Catch(this, data, context);
 
-        // %!data% is the last action's result, stored AS-IS. A reference stays a
-        // reference and a lazy source stays unread — %!data% never forces a value.
-        // Resolution happens only when a real consumer opens the door; storing the
-        // value here would read a pending file / resolve a %ref% at every action.
+        // The result leaves this frame as it is here: a reference is bound to what it names, read where it is
+        // written (`return %!goal%` is this goal, `%Now%` the moment of the return, a call argument the callee's),
+        // not where the caller opens it after the frame is gone. Nothing is read through a value door, so a lazy
+        // source stays unread. %!data% is that result.
+        data = await data.Settle();
         if (data.Success)
             await context.Variable.Set("!data", data);
         return data;

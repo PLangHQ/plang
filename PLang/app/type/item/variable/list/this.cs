@@ -80,20 +80,17 @@ public partial class @this
     /// </summary>
     public async System.Threading.Tasks.ValueTask<data.@this> Set(string name, object? value)
     {
-        // A reference value (%x%) binds the referenced VALUE, not the reference marker. The
-        // instance Gets itself (lazy name-hop: the target's value door is never opened here — no
-        // eager read), and `name` gets a Copy of it — the documented `set %y% = %x%` rule:
-        // the value INSTANCE is shared (immutable, so safe) so it stays lazy, while the Properties
-        // bag is COPIED so a later `%y%!prop` write never bleeds onto x. Copy semantics: y captures
-        // x's CURRENT value, not its future reassignments. Storing the marker verbatim would go
-        // stale (!data rebinds every action) and a self-assign (`set %a% = %a%`) would cycle on the
-        // value door; the copy avoids both. Each reference carrier resolves its own name
-        // (variable/source/text) — the courier just asks. A miss flows through as-is. The
-        // reference resolves with the context of the Data that carries it (a goal-call argument
-        // `place=%city%` reads the CALLER's memory, whichever store it lands in).
+        // A reference value (%x%) binds the referenced VALUE as it is now, not the reference marker
+        // (data.Settle: the value INSTANCE is shared, so it stays lazy; the Properties bag is its own,
+        // so a later `%y%!prop` write never bleeds onto x). y captures x's CURRENT value, not its future
+        // reassignments. Storing the marker verbatim would go stale (!data rebinds every action) and a
+        // self-assign (`set %a% = %a%`) would cycle on the value door. The reference resolves with the
+        // context of the Data that carries it (a goal-call argument `place=%city%` reads the CALLER's
+        // memory, whichever store it lands in). A miss flows through as-is; what binds is renamed to
+        // `name`.
         if (value is data.@this reference && reference.IsVariable)
         {
-            var bound = await reference.Follow(reference.Context);
+            var bound = await reference.Settle();
             value = bound.IsInitialized ? bound.Copy(name) : bound;
         }
 

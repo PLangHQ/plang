@@ -119,6 +119,24 @@ public partial class @this
     public async System.Threading.Tasks.ValueTask<@this> Follow(actor.context.@this ctx)
         => IsVariable && _item != null && await _item.Get(ctx) is { } named ? named : this;
 
+    /// <summary>The Data this is, as it is here and now. A reference answers the Data it names, read with this
+    /// Data's own context where it stands — a pointer to the same value (a computed, <c>%Now%</c> or
+    /// <c>%!goal%</c>, answers what it computes now) — carrying this Data's own name and its result flags
+    /// (Returned, ReturnDepth, Handled), never the named Data's. Nothing is read through a value door: a reference
+    /// to content not yet read stays unread. A reference that names nothing answers the miss; a failure, and any
+    /// other Data, answers itself.</summary>
+    public virtual async System.Threading.Tasks.ValueTask<@this> Settle()
+    {
+        if (!IsVariable || _error != null) return this;
+        var named = await Follow(Context);
+        if (!named.IsInitialized) return named;
+        var settled = named.Copy(Name, named._context);
+        settled.Handled = Handled;
+        settled.Returned = Returned;
+        settled.ReturnDepth = ReturnDepth;
+        return settled;
+    }
+
     /// <summary>
     /// True when the value holds a variable — the value's own answer (a template's <c>%…%</c>, a
     /// variable itself). <see cref="IsVariable"/> is "%name%" (the whole value IS a reference);
@@ -684,6 +702,11 @@ public class @this<T> : @this
         : base(name, value, type, parent, context) { }
 
     public static @this<T> Ok(T value, type? type = null) => new("", value, type);
+
+    /// <summary>Settles as a <typeparamref name="T"/> slot: what the reference names, held whole and still typed
+    /// — it converts at its door, when read.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Settle()
+        => await base.Settle() is var settled && !ReferenceEquals(settled, this) ? From(settled) : this;
     public new static @this<T> FromError(global::app.error.Error error) => new() { Error = error };
 
     /// <summary>Typed absent slot — non-null Data, <c>IsInitialized == false</c>. The
