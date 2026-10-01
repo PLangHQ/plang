@@ -19,7 +19,7 @@ A table generated from the handler cannot drift from the handler.
 
 | Fact on the page | Single source |
 |---|---|
-| Module intro | `<module>/module.description.md` + optional `module.notes.md` |
+| Module intro | `<module>/module.description.md` + optional `module.guide.md` (learner-only) |
 | Action summary line | `<module>/<action>.description.md` |
 | Example steps | `<module>/<action>.examples.md` (the `Step text:` lines) |
 | Property name, "what it changes", "how you say it" | `<module>/<action>.notes.md` |
@@ -137,8 +137,13 @@ Returns — the deleted path.
 ```
 
 Module-level learner prose that is not per-action (e.g. "a `Path` can be a URL")
-belongs in `file/module.notes.md`, rendered as the page intro after
-`module.description.md`.
+belongs in `<module>/module.guide.md` — a **learner-only** file the builder never
+reads (decision 443). It is reached as `module.Guide` and rendered right after
+`module.description.md`, before the first action. (`module.notes.md` stays the
+builder's module-level teaching, rendered only into Compile prompts.) When the
+template renders `module.Guide`, the golden above grows to include the guide block
+after the module description — spec golden, template, and `module.Guide` accessor
+land together.
 
 ## Golden output — generated `docs/modules/file.md`
 
@@ -237,8 +242,8 @@ Move or rename a file from Source to Destination, optionally overwriting the tar
 
 1. **Discover** modules/actions from the module registry (`app.Module`), skipping
    internal-only actions the builder catalog already hides.
-2. **Intro** = `module.description.md` then `module.notes.md` (learner render:
-   `· builder:` stripped) if present.
+2. **Intro** = `module.description.md` then `module.guide.md` (learner-only, reached
+   as `module.Guide`) if present.
 3. **Per action, in catalog order:** heading = action name; summary =
    `<action>.description.md`; examples = the `Step text:` lines of
    `<action>.examples.md` (drop the `Properties:` mapping lines — those are builder
