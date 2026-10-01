@@ -2,7 +2,7 @@
 
 PLang has a built-in debugger that dumps step execution info to stderr. It shows step text, actions, parameters, call stack, and variable values before and after each step.
 
-All debug options are passed as JSON via `--debug={...}`. The JSON properties map directly to `Debug.@this` class properties.
+All debug options are passed as JSON via `--debug={...}`. The JSON properties map to the `debug` settings class (`debug.setting`).
 
 Code: `PLang/app/module/debug/this.cs`
 
@@ -42,7 +42,7 @@ plang '--debug={"goal":"BuildGoal","step":3,"variables":["actions"],"length":{"m
 | `grep` | string | null | Regex pattern to filter output lines (case-insensitive). |
 | `level` | choice | "step" | Detail level: `"step"` (per step) or `"action"` (per action within steps). Any other value is rejected. |
 | `llm` | object | null | Granular LLM tracing — see [LLM Message Tracing](#llm-message-tracing). |
-| `resolveTrace` | bool | false | Log every `%variable%` resolution with resolved type and depth. |
+| `verbose` | bool | false | Include stack traces in error output. |
 
 > Callstack capture is **not** a `--debug` option — it is its own flag, `--callstack={...}`. See [CallStack](#callstack---callstack).
 
@@ -164,13 +164,13 @@ plang build '--build={"cache":false}' '--debug={"llm":{"system":true,"response":
 Output (each block fires only when its flag is on):
 ```
 === LLM SYSTEM ===
-# Goal Builder
-
-You are the PLang compiler. Map each step in a goal to engine actions...
+You write the actions of each step of a PLang goal, in formal: the notation
+module.action(Name=value) that the builder parses into the program...
 === END LLM SYSTEM ===
 
 === LLM RESPONSE ===
-{"description":"...","steps":[{"index":0,"actions":[{"module":"file","action":"read","parameters":[{"name":"Path","value":"test.txt","type":"path"}]}],...}]}
+[0] file.read(Path="notes.txt"); variable.set(Name=%content%, Value=%!data%)
+[1] output.write(Data=%content%)
 === END LLM RESPONSE ===
 ```
 
@@ -180,7 +180,7 @@ Combine with `grep` to filter further:
 plang build '--debug={"llm":{"response":true},"grep":"file.read"}'
 ```
 
-**Important — what `pass1.response` in trace files is NOT.** The `.build/traces/*.json` files capture an LLM call's `pass1.response` field *after* `builder.validateResponse` and `builder.enrichResponse` run, which means parameter values may have been normalized (e.g. a string `"data.txt"` for a `path`-typed parameter gets converted into a `Path` object whose every public property is then serialized into the .pr). Always use `llm.response` to see the actual API payload — don't infer LLM behaviour from the post-pipeline trace.
+**Important — the trace files are not the LLM payload.** The `.build/traces/{id}/<goal>.json` files record only `{id, timestamp, goal, subGoals, durationMs}` (plus a `buildError` block on failure) — they do **not** carry what the LLM saw or returned. Always use `--debug={"llm":{...}}` to see the actual API payload; the trace is for which goals ran and timing. (Full trace doc: [trace.md](trace.md).)
 
 ## Writing C# Diagnostic Lines (`context.App.Debug.Write`)
 
@@ -253,27 +253,3 @@ PLang code reaches the live tree through `%!callStack%`:
 | `%!callStack.Root%` | `Call?` | First Call pushed in this run. |
 
 `%!error%` is a separate channel — AsyncLocal-flowed via `app.Errors.Push` in `error.handle.Wrap`, **not** read off the call tree. Inside a recovery body `%!error%` is the caught error; outside any handler, it's null.
-
-## Resolve Tracing
-
-Trace every `%variable%` resolution with the resolved type. Useful for understanding how values flow through the system.
-
-```bash
-plang build '--build={"files":"myfile.goal","cache":false}' \
-  '--debug={"resolveTrace":true}'
-```
-
-Output:
-```
-  [ResolveDeep] %buildGoalPrompt% → String (depth=3)
-  [ResolveDeep] %goalForLlm% → String (depth=3)
-  [ResolveDeep] %traceId% → String (depth=2)
-  [ResolveDeep] %goal.Name% → String (depth=2)
-  [ResolveDeep] %Now% → DateTimeOffset (depth=2)
-  [ResolveDeep] %stepResults% → Dictionary`2 (depth=2)
-```
-
-Each line shows:
-- The variable name being resolved
-- The CLR type it resolved to
-- The nesting depth (how deep in the object tree the resolution is happening)
