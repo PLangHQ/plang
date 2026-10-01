@@ -16,6 +16,7 @@ Collected by the architect from the coder's eval rounds, the educator's probes a
 6. **Stage 1 (module choice) sees no module descriptions, by design.** So a step like `remove %x%` after a file read leans to `file` (0.56) with nothing the notes can say. Mitigated, not changed (item 10).
 7. **The trace records only the refusal, not the LLM's answer.** To see what the model wrote you need `plang build '--debug={"llm":{"user":true,"response":true}}'`. A builder trace that kept the answer would have saved the educator a round.
 8. **A running goal can't start a build** (only `plang build` gives the app a `Build`), and **plang has no door that writes a step's formal line.** Both block an eval written as a plang goal (E1).
+17. **"X is in the step but not in your answer" refuses good answers** (the coder, building a scratch probe, 2026-10-01): `make a range from 1 to 5000, write to %numbers%` refused with "1 is in the step but not in your answer"; `return %!goal%` refused on some builds and passed on others with "%!goal% is in the step but not in your answer". The check reads the step's words; a number or `!` variable the answer carries in another form (a range's bounds, a `!` root) reads as dropped.
 9. **`post … body` built as `http.upload`** (the educator's first report): an LLM pick, unconfirmed, since upload's description overlaps request's.
 
 ## Fixed in the last day (what the builder was getting wrong)
