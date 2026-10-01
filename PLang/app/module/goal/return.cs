@@ -13,18 +13,11 @@ public partial class Return : IContext
 
     // The value returned, marked as the goal's return, leaving Depth goals (at least the current one); a depth
     // that didn't resolve is the answer. The number lowers itself at the engine's int return-depth slot.
-    // Variables inside the value ("failed: %!error.Message%") are filled here, as `set` fills them: the value
-    // leaves the goal, and what they hold here is gone where it is read.
-    public Task<data.@this> Start() => Depth.Use(async depth =>
+    public Task<data.@this> Start() => Depth.Use(depth =>
     {
         var result = Data ?? Context.Ok();
-        if (Data is { IsVariable: false, HasVariable: true })
-        {
-            result = await global::app.module.variable.Set.Filled(Data, Context);
-            if (!result.Success) return result;
-        }
         result.Returned = true;
         result.ReturnDepth = depth.ToInt32() is > 0 and var levels ? levels : 1;
-        return result;
+        return Task.FromResult(result);
     });
 }
