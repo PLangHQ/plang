@@ -135,21 +135,22 @@ public class RuntimeDoubleWrapTests
     }
 
     [Test]
-    public async Task ListWhere_ResultValueIsListNotData()
+    public async Task ListQuery_ResultValueIsListNotData()
     {
-        // where wraps a list/dict value (owned construction), never an inner Data —
-        // so Data<object>.Ok does not double-wrap.
+        // list.query builds a new list (owned construction), never an inner Data —
+        // so Data<object>.Ok does not double-wrap. (list.where was replaced by list.query.)
         var app = new global::app.@this("/app").Testing();
         var context = app.actor.list.User.Context;
         var users = new global::app.type.item.list.@this();
         var u1 = new global::app.type.item.dict.@this(); u1.Set(new global::app.data.@this("age", 25L, context: context)); users.Add(new global::app.data.@this("", u1));
         var u2 = new global::app.type.item.dict.@this(); u2.Set(new global::app.data.@this("age", 15L, context: context)); users.Add(new global::app.data.@this("", u2));
-        context.Variable.Set("users", users);
 
-        var action = new global::app.module.list.Where(context) { ListName = new global::app.type.item.variable.@this("users"),
-            Field = new global::app.data.@this<global::app.type.item.text.@this>("", "age"),
-            Operator = new global::app.data.@this<global::app.type.item.choice.@this<global::app.data.Operator>>("", new global::app.data.Operator(">")),
-            Value = new global::app.data.@this("", 20L, context: context),
+        var written = new Dictionary<string, object?> { ["where"] = new Dictionary<string, object?> { ["field"] = "age", ["op"] = ">", ["value"] = 20L } };
+        var made = global::app.module.list.type.query.@this.Create(global::app.type.item.@this.Create(written, context), null, new global::app.data.@this("q", null, context: context));
+        var action = new global::app.module.list.query(context)
+        {
+            List = new global::app.data.@this<global::app.type.item.list.@this>("", users, context: context),
+            Query = new global::app.data.@this<global::app.module.list.type.query.@this>("", made, context: context),
         };
         await action.Attach(null, context);
         var result = await action.Start();

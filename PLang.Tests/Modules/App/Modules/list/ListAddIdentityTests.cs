@@ -11,7 +11,7 @@ namespace PLang.Tests.App.actions.list;
 // runtime2-data-share-state §Phase 5 stub-tested this pattern; v7 implements it
 // against the actual post-Data<Variable> shape).
 //
-// list.add is the prototype; list.remove / list.set / list.reverse / list.sort follow
+// list.add is the prototype; list.remove / list.set / list.reverse follow
 // the same shape (Variables.Get(ListName.Value) → mutate), so getting list.add right
 // covers the family.
 

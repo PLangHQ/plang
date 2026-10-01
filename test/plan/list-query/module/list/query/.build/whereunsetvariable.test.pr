@@ -1,10 +1,10 @@
 {
   "name": "Start",
-  "comment": "A where on a field no item has is a misspelling: an error with its own key, naming the field — never a\nsilently empty list.",
+  "comment": "A where compared to an unset %variable% is an error (VariableNotFound), never a quietly empty list —\nthe value is the developer's own variable, read when the step runs. (Was ListTests.Where_OrderedByAnUnsetVariable.)",
   "step": [
     {
       "index": 0,
-      "text": "set %users% = [{\"name\": \"a\", \"age\": 30}, {\"name\": \"b\", \"age\": 10}]",
+      "text": "variable.set(Name=%users%, Value=[{name: \"a\", age: 30}, {name: \"b\", age: 10}])",
       "line": {
         "number": 4
       },
@@ -40,7 +40,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -53,19 +53,20 @@
     },
     {
       "index": 1,
-      "text": "list.where %users% where agee > 20, write to %old%, on error key \"FieldNotFound\" call Caught",
+      "text": "list.query(List=%users%, Query={where: {field: \"age\", op: \">\", value: %limit%}}); on.error(Recovery=[goal.call(Name=\"Caught\")]); variable.set(Name=%kept%, Value=%!data%)",
       "line": {
         "number": 5
       },
       "code": [
         {
           "module": "list",
-          "name": "where",
+          "name": "query",
           "property": [
             {
-              "name": "ListName",
+              "name": "List",
               "type": {
-                "name": "variable"
+                "name": "list",
+                "template": "plang"
               },
               "value": "%users%",
               "variable": [
@@ -80,26 +81,32 @@
               ]
             },
             {
-              "name": "Field",
+              "name": "Query",
               "type": {
-                "name": "text"
+                "name": "query",
+                "template": "plang"
               },
-              "value": "agee"
-            },
+              "value": {"where":{"field":"age","op":">","value":"%limit%"}},
+              "variable": [
+                {
+                  "text": "%limit%",
+                  "code": [
+                    {
+                      "variable": "limit"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
             {
-              "name": "Operator",
+              "name": "execution",
               "type": {
                 "name": "choice",
-                "kind": "operator"
+                "kind": "execution"
               },
-              "value": ">"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "number"
-              },
-              "value": 20
+              "value": "sql"
             }
           ]
         },
@@ -107,13 +114,6 @@
           "module": "on",
           "name": "error",
           "property": [
-            {
-              "name": "Key",
-              "type": {
-                "name": "text"
-              },
-              "value": "FieldNotFound"
-            },
             {
               "name": "Recovery",
               "type": {
@@ -128,7 +128,7 @@
                     {
                       "name": "Name",
                       "type": {
-                        "name": "text"
+                        "name": "goal"
                       },
                       "value": "Caught"
                     }
@@ -148,7 +148,7 @@
           ],
           "default": [
             {
-              "name": "ignoreerror",
+              "name": "ignore",
               "type": {
                 "name": "bool"
               },
@@ -165,13 +165,13 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%old%",
+              "value": "%kept%",
               "variable": [
                 {
-                  "text": "%old%",
+                  "text": "%kept%",
                   "code": [
                     {
-                      "variable": "old"
+                      "variable": "kept"
                     }
                   ]
                 }
@@ -198,7 +198,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -211,24 +211,17 @@
     },
     {
       "index": 2,
-      "text": "assert %caught% contains \"agee\", \"the error names the misspelled field\"",
+      "text": "assert.isNotNull(Value=%caught%, Message=\"a where compared to an unset variable is an error, not a quietly empty list\")",
       "line": {
         "number": 6
       },
       "code": [
         {
           "module": "assert",
-          "name": "contains",
+          "name": "isNotNull",
           "property": [
             {
               "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "agee"
-            },
-            {
-              "name": "Container",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -250,7 +243,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "the error names the misspelled field"
+              "value": "a where compared to an unset variable is an error, not a quietly empty list"
             }
           ]
         }
@@ -264,7 +257,7 @@
       "step": [
         {
           "index": 0,
-          "text": "set %caught% = %!error.Message%",
+          "text": "variable.set(Name=%caught%, Value=%!error.Message%)",
           "line": {
             "number": 9
           },
@@ -314,7 +307,7 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
@@ -328,9 +321,9 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/plan/app-systems/module/list/where/MisspelledFieldIsAnError.test.goal",
-      "prPath": "/plan/app-systems/module/list/where/.build/misspelledfieldisanerror.test.pr",
-      "hash": "b6bcb130b91f2a230fed257ae1b7e4524fb5a0c7cc0193519e6f5179bbcd5ce3",
+      "path": "/plan/list-query/module/list/query/WhereUnsetVariable.test.goal",
+      "prPath": "/plan/list-query/module/list/query/.build/whereunsetvariable.test.pr",
+      "hash": "9e24b3d3005503e82d9a19b8467341599dd3036c67dd9fa5ceedfb60de7d0199",
       "isSetup": false,
       "isEvent": false,
       "isSystem": false,
@@ -338,9 +331,9 @@
     }
   ],
   "visibility": "Public",
-  "path": "/plan/app-systems/module/list/where/MisspelledFieldIsAnError.test.goal",
-  "prPath": "/plan/app-systems/module/list/where/.build/misspelledfieldisanerror.test.pr",
-  "hash": "b10f40aa93a3497dfe0d6ea0b0893cebb4dfcad9bdca95dda7905a772be9454a",
+  "path": "/plan/list-query/module/list/query/WhereUnsetVariable.test.goal",
+  "prPath": "/plan/list-query/module/list/query/.build/whereunsetvariable.test.pr",
+  "hash": "f290f75b8edf25c0a33bb4b8e29bde0f5fdcd7150054f60a01712cda80fbf7e8",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

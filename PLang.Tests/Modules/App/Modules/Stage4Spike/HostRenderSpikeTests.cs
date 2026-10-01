@@ -1,14 +1,13 @@
 using app.module.ui;
 using app.module.ui.code;
 using Op = global::app.data.Operator;
-using Where = global::app.module.list.Where;
 using ItemList = global::app.type.item.list.@this;
 
 namespace PLang.Tests.App.Modules.Stage4Spike;
 
 // Stage 4 five-leg spike — de-risk the risky mechanics BEFORE the 4a collection
 // split lands. Renders REAL host-element shapes through the REAL Fluid provider
-// and runs the REAL list.where. Spike POCOs below are throwaway test-locals that
+// and runs the REAL Where door (list.query's where). Spike POCOs below are throwaway test-locals that
 // mirror the intended element/action/property shapes (Name, Actions native list,
 // prose doors, property rows) — no production shape changes in this commit.
 //
@@ -17,7 +16,7 @@ namespace PLang.Tests.App.Modules.Stage4Spike;
 //   (b) Fluid filters (where:/map:) over element properties on a native list
 //   (c) the property-row host
 //   (d) async prose doors — least proven (methods vs sync props vs Task-props)
-//   (e) list.where subject.Get(field) over clr(action)
+//   (e) the Where door subject.Get(field) over clr(action)
 public class HostRenderSpikeTests
 {
     // --- Spike shapes (mirror the intended 4a elements; test-local only) ---
@@ -148,7 +147,7 @@ public class HostRenderSpikeTests
         await Assert.That(methodOut).IsEqualTo("[][]");                          // method — unreachable
     }
 
-    // --- Leg (e): list.where subject.Get(field) over clr(action) ---
+    // --- Leg (e): the Where door subject.Get(field) over clr(action) ---
     [Test]
     public async Task LegE_WhereOverClrAction()
     {
@@ -166,14 +165,8 @@ public class HostRenderSpikeTests
         // where %actions% Name in ["read","set"]  — proves Get(field) over clr(action)
         // + the "in" operator, the exact mechanic behind `where %actions% Name in %planStep.actions%`.
         var wanted = new ItemList(new List<object?> { "read", "set" });
-        var where = new Where(ctx)
-        {
-            ListName = new global::app.type.item.variable.@this("actions"),
-            Field = new global::app.data.@this<global::app.type.item.text.@this>("", "Name", context: ctx),
-            Operator = new global::app.data.@this<global::app.type.item.choice.@this<Op>>("", new Op("in"), context: ctx),
-            Value = new Data("", wanted, context: ctx),
-        };
-        var result = await where.Start();
+        // the Where door directly (the list.where action was replaced by list.query; the door is what it drove)
+        var result = await actions.Where(new global::app.type.item.text.@this("Name"), new Op("in"), new Data("", wanted, context: ctx), ctx);
         await result.IsSuccess();
 
         var kept = (await result.Value()) as ItemList;

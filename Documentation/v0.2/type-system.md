@@ -257,8 +257,8 @@ Data-keyed; `ToRaw()` is the read-out form only, not a mutation path.
 
 `app.data.Compare` (`PLang/app/data/Compare.cs`) is the one place where
 two values are ordered or tested for equality. Both the condition operators
-(`>`, `<`, `==` via `app.module.condition.Operator`) and `list.sort` route
-through it — so `if a.age > b.age` and `sort by "age"` can never drift.
+(`>`, `<`, `==` via `app.module.condition.Operator`) and `list.query`'s order
+route through it — so `if a.age > b.age` and `order by "age"` can never drift.
 
 The mediator owns three things only:
 

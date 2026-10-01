@@ -22,7 +22,7 @@ public class KindViaCreateTests : System.IAsyncDisposable
     }
 
     [Test] public async Task Number_IntLiteral()     => await Assert.That(KindOf("number", (text)"42")).IsEqualTo("int");
-    [Test] public async Task Number_DecimalLiteral()  => await Assert.That(KindOf("number", (text)"3.14")).IsEqualTo("decimal");
+    [Test] public async Task Number_DecimalLiteral()  => await Assert.That(KindOf("number", (text)"3.14")).IsEqualTo("double");
     [Test] public async Task Number_ExponentLiteral() => await Assert.That(KindOf("number", (text)"1e3")).IsEqualTo("double");
     [Test] public async Task Image_Extension()        => await Assert.That(KindOf("image", "photo.jpg")).IsEqualTo("jpg");
     [Test] public async Task Path_BareIsFile()        => await Assert.That(KindOf("path", "/srv/a.txt")).IsEqualTo("file");

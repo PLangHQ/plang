@@ -10,7 +10,7 @@ public static class TemplateRender
     public static async Task<string> Rendered(this global::app.actor.context.@this context, string template)
     {
         using var ms = new System.IO.MemoryStream();
-        var writer = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8);
+        var writer = new global::app.type.item.text.Writer(ms, System.Text.Encoding.UTF8, global::app.type.item.culture.@this.Create("en-US")!);
         await new global::app.type.item.text.@this(template, "plang").Output(writer, global::app.View.Out, context);
         return System.Text.Encoding.UTF8.GetString(ms.ToArray());
     }

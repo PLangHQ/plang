@@ -1,10 +1,10 @@
 {
   "name": "Start",
-  "comment": "A field only some items have is optional data: an order keeps the items that have it and hold, and\n\"is null\" keeps the items without it.",
+  "comment": "A field only some items have is optional data: a where keeps the items that have it and hold (age > 20\nkeeps \"a\"), and \"is empty\" keeps the items without it (\"b\" has no age — an absent field reads as empty).",
   "step": [
     {
       "index": 0,
-      "text": "set %users% = [{\"name\": \"a\", \"age\": 30}, {\"name\": \"b\"}]",
+      "text": "variable.set(Name=%users%, Value=[{\"name\": \"a\", \"age\": 30}, {\"name\": \"b\"}])",
       "line": {
         "number": 4
       },
@@ -40,7 +40,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -53,19 +53,20 @@
     },
     {
       "index": 1,
-      "text": "list.where %users% where age > 20, write to %old%",
+      "text": "list.query(List=%users%, Query={where: {field: \"age\", op: \">\", value: 20}}); variable.set(Name=%old%, Value=%!data%)",
       "line": {
         "number": 5
       },
       "code": [
         {
           "module": "list",
-          "name": "where",
+          "name": "query",
           "property": [
             {
-              "name": "ListName",
+              "name": "List",
               "type": {
-                "name": "variable"
+                "name": "list",
+                "template": "plang"
               },
               "value": "%users%",
               "variable": [
@@ -80,26 +81,21 @@
               ]
             },
             {
-              "name": "Field",
+              "name": "Query",
               "type": {
-                "name": "text"
+                "name": "query"
               },
-              "value": "age"
-            },
+              "value": {"where":{"field":"age","op":">","value":20}}
+            }
+          ],
+          "default": [
             {
-              "name": "Operator",
+              "name": "execution",
               "type": {
                 "name": "choice",
-                "kind": "operator"
+                "kind": "execution"
               },
-              "value": ">"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "number"
-              },
-              "value": 20
+              "value": "sql"
             }
           ]
         },
@@ -145,7 +141,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -158,7 +154,7 @@
     },
     {
       "index": 2,
-      "text": "assert %old.Count% equals 1, \"only the item with an age over 20\"",
+      "text": "assert.equals(Expected=1, Actual=%old.Count%, Message=\"only the item with an age over 20\")",
       "line": {
         "number": 6
       },
@@ -209,7 +205,7 @@
     },
     {
       "index": 3,
-      "text": "assert %old[0].name% equals \"a\"",
+      "text": "assert.equals(Expected=\"a\", Actual=%old[0].name%)",
       "line": {
         "number": 7
       },
@@ -258,19 +254,20 @@
     },
     {
       "index": 4,
-      "text": "list.where %users% where age is null, write to %ageless%",
+      "text": "list.query(List=%users%, Query={where: {field: \"age\", op: \"isempty\"}}); variable.set(Name=%ageless%, Value=%!data%)",
       "line": {
         "number": 8
       },
       "code": [
         {
           "module": "list",
-          "name": "where",
+          "name": "query",
           "property": [
             {
-              "name": "ListName",
+              "name": "List",
               "type": {
-                "name": "variable"
+                "name": "list",
+                "template": "plang"
               },
               "value": "%users%",
               "variable": [
@@ -285,26 +282,21 @@
               ]
             },
             {
-              "name": "Field",
+              "name": "Query",
               "type": {
-                "name": "text"
+                "name": "query"
               },
-              "value": "age"
-            },
+              "value": {"where":{"field":"age","op":"isempty"}}
+            }
+          ],
+          "default": [
             {
-              "name": "Operator",
+              "name": "execution",
               "type": {
                 "name": "choice",
-                "kind": "operator"
+                "kind": "execution"
               },
-              "value": "is"
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "item"
-              },
-              "value": null
+              "value": "sql"
             }
           ]
         },
@@ -350,7 +342,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -363,7 +355,7 @@
     },
     {
       "index": 5,
-      "text": "assert %ageless.Count% equals 1, \"the item without an age\"",
+      "text": "assert.equals(Expected=1, Actual=%ageless.Count%, Message=\"the item without an age\")",
       "line": {
         "number": 9
       },
@@ -414,7 +406,7 @@
     },
     {
       "index": 6,
-      "text": "assert %ageless[0].name% equals \"b\"",
+      "text": "assert.equals(Expected=\"b\", Actual=%ageless[0].name%)",
       "line": {
         "number": 10
       },
@@ -464,9 +456,9 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/plan/app-systems/module/list/where/PartialFieldFilters.test.goal",
-  "prPath": "/plan/app-systems/module/list/where/.build/partialfieldfilters.test.pr",
-  "hash": "8e446e20ea5c4ac9e7acf6d070cf71a03f677293485820a15d3d7788b1afcb86",
+  "path": "/plan/list-query/module/list/query/PartialFieldFilters.test.goal",
+  "prPath": "/plan/list-query/module/list/query/.build/partialfieldfilters.test.pr",
+  "hash": "377d38511e1416003046278a4a5ab8117504d1886bbd0a77159e21da53ec3e43",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,

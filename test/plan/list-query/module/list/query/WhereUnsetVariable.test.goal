@@ -1,0 +1,9 @@
+/ A where compared to an unset %variable% is an error (VariableNotFound), never a quietly empty list —
+/ the value is the developer's own variable, read when the step runs. (Was ListTests.Where_OrderedByAnUnsetVariable.)
+Start
+- variable.set(Name=%users%, Value=[{name: "a", age: 30}, {name: "b", age: 10}])
+- list.query(List=%users%, Query={where: {field: "age", op: ">", value: %limit%}}); on.error(Recovery=[goal.call(Name="Caught")]); variable.set(Name=%kept%, Value=%!data%)
+- assert.isNotNull(Value=%caught%, Message="a where compared to an unset variable is an error, not a quietly empty list")
+
+Caught
+- variable.set(Name=%caught%, Value=%!error.Message%)

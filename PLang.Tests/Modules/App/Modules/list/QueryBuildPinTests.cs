@@ -8,10 +8,7 @@ public class QueryBuildPinTests
 {
     private static (string Pick, string Query) QueryStep(string prName)
     {
-        var dir = new System.IO.DirectoryInfo(System.AppContext.BaseDirectory);
-        while (dir != null && !System.IO.Directory.Exists(System.IO.Path.Combine(dir.FullName, "test", "plan", "list-query")))
-            dir = dir.Parent;
-        var path = System.IO.Path.Combine(dir!.FullName, "test", "plan", "list-query",
+        var path = System.IO.Path.Combine(global::PLang.Tests.Shared.Fixture.Root(), "test", "plan", "list-query",
             "module", "list", "query", "build", ".build", prName);
         var pr = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(path)).RootElement;
         foreach (var step in pr.GetProperty("step").EnumerateArray())
