@@ -91,8 +91,26 @@ public sealed class Wayland : IScreen
         // the Data writes itself as text (a dict as its json): one line for the display
         using var line = new MemoryStream();
         await Text.Encode(line, action.Data, context, null, null, CancellationToken.None);
-        display.Input(System.Text.Encoding.UTF8.GetString(line.ToArray()));
+        display.Input(Originated(System.Text.Encoding.UTF8.GetString(line.ToArray()), action.Data.Context ?? context));
         return context.Ok();
+    }
+
+    // A window's address ({"window":"url","url":…}) knows where it came from: the Data's context — the
+    // step that sent it, its goal and that goal's .pr — joins what the page said of itself ("origin")
+    private static string Originated(string line, actor.context.@this context)
+    {
+        System.Text.Json.Nodes.JsonObject? e;
+        try { e = System.Text.Json.Nodes.JsonNode.Parse(line) as System.Text.Json.Nodes.JsonObject; }
+        catch (System.Text.Json.JsonException) { return line; }
+        if (e?["window"]?.GetValue<string>() != "url" || context.CallStack is not { Step: { } step } stack) return line;
+        if (e["url"] is not System.Text.Json.Nodes.JsonObject url)
+            e["url"] = url = new System.Text.Json.Nodes.JsonObject { ["path"] = e["url"]?.DeepClone() };
+        var origin = url["origin"] as System.Text.Json.Nodes.JsonObject ?? new System.Text.Json.Nodes.JsonObject();
+        origin["pr"] = stack.Goal?.PrPath?.ToString();
+        origin["goal"] = stack.Goal?.Name;
+        origin["step"] = new System.Text.Json.Nodes.JsonObject { ["index"] = step.Index, ["text"] = step.Text };
+        url["origin"] = origin;
+        return e.ToJsonString();
     }
 
     public Task<data.@this> Draw(draw action)
