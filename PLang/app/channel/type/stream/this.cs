@@ -111,6 +111,12 @@ public sealed class @this : global::app.channel.type.session.@this
         }
     }
 
+    // The answers' lines, one reader for the channel's life: a reader reads ahead (a whole buffer), so a new one per
+    // question lost the lines the last one had read past — two answers piped in at once, the second never arrived.
+    private StreamReader? _lines;
+    private StreamReader Lines => _lines ??= new StreamReader(Stream, ResolveEncoding(),
+        detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true);
+
     public override async Task<global::app.data.@this> Ask(module.output.ask action, CancellationToken ct = default)
     {
         // Two-call pattern across the actor's split output/input pair — per
@@ -148,9 +154,7 @@ public sealed class @this : global::app.channel.type.session.@this
         // run's cancellation arrive through ct.
         try
         {
-            using var reader = new StreamReader(Stream, ResolveEncoding(),
-                detectEncodingFromByteOrderMarks: false, bufferSize: 1024, leaveOpen: true);
-            var line = await reader.ReadLineAsync(ct);
+            var line = await Lines.ReadLineAsync(ct);
             // Null from ReadLineAsync = stream EOF. There's no interactive
             // answerer (closed pipe, redirected stdin, non-interactive runner).
             // Fail-fast instead of letting the caller loop on "" forever.
