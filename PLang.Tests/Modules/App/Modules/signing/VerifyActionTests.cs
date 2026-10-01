@@ -11,8 +11,8 @@ using PLangEngine = global::app.@this;
 namespace PLang.Tests.App.Modules.signing;
 
 /// <summary>
-/// Tests the verify action handler. All 9 error keys covered.
-/// Verify checks in order: InvalidType → ProviderNotFound → TimedOut → Expired → NonceReplay → ContractMismatch → HeaderMismatch → DataHashMismatch → SignatureInvalid
+/// Tests the verify action handler.
+/// Verify checks in order: NoSignature → Expired → NonceReplay (a live read only) → ContractMismatch → DataHashMismatch → SignatureInvalid
 /// </summary>
 public class VerifyActionTests
 {
@@ -54,12 +54,11 @@ public class VerifyActionTests
     }
 
     private async Task<Data> VerifyHelper(Data signedData, List<string>? contracts = null,
-        Dictionary<string, object>? headers = null, long? timeoutMs = null)
+        Dictionary<string, object>? headers = null)
     {
         var action = new verify(Ctx) { Data = signedData,
             Contracts = contracts is null ? null : new global::app.data.@this<global::app.type.item.list.@this>("", global::PLang.Tests.Shared.Make.List(contracts, Ctx), context: Ctx),
             Header = headers?.ToDictData(Ctx),
-            TimeoutMs = timeoutMs.HasValue ? (global::app.type.item.number.@this)timeoutMs.Value : null
         };
         return await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
     }
@@ -76,15 +75,22 @@ public class VerifyActionTests
         global::app.type.item.datetime.@this? created = null,
         global::app.module.crypto.type.hash.@this? hash = null,
         global::app.type.item.binary.@this? signature = null,
-        bool contractsNull = false)
+        bool contractsNull = false,
+        TimeSpan? window = null)
     {
         var l = Layer(signed);
         var rebuilt = new global::app.type.item.signature.@this(
             l.Value, algorithm ?? l.Algorithm, l.Nonce, created ?? l.Created,
             l.Identity, hash ?? l.Hash, signature ?? l.Signature, l.Expires,
-            contractsNull ? null : l.Contracts);
+            contractsNull ? null : l.Contracts,
+            window is { } w ? new global::app.type.item.duration.@this(w) : null);
         return signed.Context.Ok(rebuilt);
     }
+
+    // The signature as a live read off the wire has it: born with a window (the wire reader gives the signing
+    // setting's expiry).
+    private static Data Live(Data signed, TimeSpan? window = null, global::app.type.item.datetime.@this? created = null)
+        => Tampered(signed, created: created, window: window ?? TimeSpan.FromMinutes(5));
 
     #region Happy Path
 
@@ -134,28 +140,66 @@ public class VerifyActionTests
         await Assert.That(result.Error!.Key).IsEqualTo("Expired");
     }
 
+    // A live read past its window has expired, though its signer signed no expiry.
     [Test]
-    public async Task Verify_TimedOut_Error()
+    public async Task Verify_LiveReadPastItsWindow_Expired()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        var tampered = Tampered(signed, created: new global::app.type.item.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1)));
+        var live = Live(signed, window: TimeSpan.FromSeconds(1),
+            created: new global::app.type.item.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1)));
 
-        var result = await VerifyHelper(tampered, contracts: new List<string> { "C0" }, timeoutMs: 1000);
+        var result = await VerifyHelper(live, contracts: new List<string> { "C0" });
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("TimedOut");
+        await Assert.That(result.Error!.Key).IsEqualTo("Expired");
     }
 
     [Test]
     public async Task Verify_NonceReplay_Error()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        var first = await VerifyHelper(signed, contracts: new List<string> { "C0" });
+        var live = Live(signed);
+        var first = await VerifyHelper(live, contracts: new List<string> { "C0" });
         await first.IsSuccess();
 
-        // Second verify — same nonce → replay.
-        var second = await VerifyHelper(signed, contracts: new List<string> { "C0" });
+        // Second verify of the live read — same nonce → replay.
+        var second = await VerifyHelper(live, contracts: new List<string> { "C0" });
         await second.IsFailure();
         await Assert.That(second.Error!.Key).IsEqualTo("NonceReplay");
+    }
+
+    // A signature not read live (from plang's own store) presents the same nonce on every read: not replay.
+    [Test]
+    public async Task Verify_NotLive_SameNonceAgain_Succeeds()
+    {
+        var signed = await SignHelper("test", contracts: new List<string> { "C0" });
+        await (await VerifyHelper(signed, contracts: new List<string> { "C0" })).IsSuccess();
+        await (await VerifyHelper(signed, contracts: new List<string> { "C0" })).IsSuccess();
+    }
+
+    // Expires is the earlier of what the signer signed and, read live, the window after Created.
+    [Test]
+    public async Task Expires_IsTheEarlierOfSignedAndTheLiveWindow()
+    {
+        var signedLong = await SignHelper("test", expires: TimeSpan.FromHours(1));
+        var live = Layer(Live(signedLong, window: TimeSpan.FromMinutes(5)));
+        await Assert.That(live.Expires!.Value).IsEqualTo(live.Created.Value + TimeSpan.FromMinutes(5));
+
+        var signedShort = await SignHelper("test", expires: TimeSpan.FromMinutes(1));
+        var liveShort = Layer(Live(signedShort, window: TimeSpan.FromMinutes(5)));
+        await Assert.That(liveShort.Expires!.Value).IsEqualTo(Layer(signedShort).Expires!.Value);
+
+        await Assert.That(Layer(await SignHelper("test")).Expires).IsNull();
+    }
+
+    // %x!signature.expired% asks the signature against the program's clock.
+    [Test]
+    public async Task Expired_IsReadAsAMember()
+    {
+        var signed = await SignHelper("test");
+        var past = Live(signed, window: TimeSpan.FromSeconds(1),
+            created: new global::app.type.item.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1)));
+        await Assert.That((await (await past.Get("expired")).Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await (await Live(signed).Get("expired")).Value())?.ToString()).IsEqualTo("false");
     }
 
     [Test]
@@ -244,7 +288,7 @@ public class VerifyActionTests
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
         var nonce = Layer(signed).Nonce.ToString();
 
-        var result = await VerifyHelper(signed, contracts: new List<string> { "C0" });
+        var result = await VerifyHelper(Live(signed), contracts: new List<string> { "C0" });
         await result.IsSuccess();
 
         var cached = await _app.Cache.GetAsync($"nonce:{nonce}");
@@ -256,10 +300,10 @@ public class VerifyActionTests
     #region Boundary Conditions
 
     [Test]
-    public async Task Verify_CreatedJustWithinTimeout_Succeeds()
+    public async Task Verify_LiveReadWithinItsWindow_Succeeds()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        var result = await VerifyHelper(signed, contracts: new List<string> { "C0" }, timeoutMs: 60_000);
+        var result = await VerifyHelper(Live(signed, window: TimeSpan.FromMinutes(1)), contracts: new List<string> { "C0" });
         await result.IsSuccess();
     }
 
@@ -336,14 +380,15 @@ public class VerifyActionTests
     }
 
     [Test]
-    public async Task Verify_TimedOutAndContractMismatch_ReturnsTimedOutNotContractMismatch()
+    public async Task Verify_LiveExpiredAndContractMismatch_ReturnsExpiredNotContractMismatch()
     {
         var signed = await SignHelper("test", contracts: new List<string> { "C0" });
-        var tampered = Tampered(signed, created: new global::app.type.item.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1)));
+        var live = Live(signed, window: TimeSpan.FromSeconds(1),
+            created: new global::app.type.item.datetime.@this(DateTimeOffset.UtcNow.AddHours(-1)));
 
-        var result = await VerifyHelper(tampered, contracts: new List<string> { "C1" }, timeoutMs: 1000);
+        var result = await VerifyHelper(live, contracts: new List<string> { "C1" });
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("TimedOut");
+        await Assert.That(result.Error!.Key).IsEqualTo("Expired");
     }
 
     #endregion

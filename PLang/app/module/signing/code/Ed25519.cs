@@ -68,38 +68,20 @@ public class Ed25519 : ISigning
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data has no signature", "NoSignature", 400));
 
         var app = action.Context.App;
-        // NowUtc may be unset when verify runs at the deserialize boundary (the
-        // read context isn't mid-step) — fall back to the wall clock rather than
-        // NRE on an unbox of a missing runtime variable.
-        var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(DateTimeOffset.UtcNow);
-        // T? convention — plang-null pass converts this (value-door-plang-null branch)
-        long effectiveTimeout = (await action.TimeoutMs.Value())!.ToInt64();
-        var skipFreshness = (action.SkipFreshnessCheck == null ? null : (await action.SkipFreshnessCheck.Value())?.Value) ?? false;
 
-        // 1. Wire-freshness check (Created too old). Anti-replay primitive for
-        // transient signed messages — skipped for long-lived artifacts (grants)
-        // whose intrinsic lifetime is governed by step 2's Expires.
-        if (!skipFreshness)
-        {
-            var age = now - signature.Created.Value;
-            if (age.TotalMilliseconds > effectiveTimeout)
-                return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError($"Signature timed out (age: {age.TotalMilliseconds:F0}ms, timeout: {effectiveTimeout}ms)", "TimedOut", 400));
-        }
+        // 1. Expiry — the signature answers it: what its signer signed, or, read live, its window after it was made.
+        if (await signature.Expired(action.Context))
+            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError(
+                $"Signature has expired (at {signature.Expires!.Value:O})", "Expired", 400));
 
-        // 2. Expiry check (signature's intrinsic lifetime — null = permanent).
-        if (signature.Expires is { } exp && now > exp.Value)
-            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Signature has expired", "Expired", 400));
-
-        // 3. Nonce replay check — paired with step 1 (wire-freshness). For
-        // stored artifacts the same nonce naturally re-presents on every read,
-        // which isn't replay; skip alongside step 1. Only a look here: the nonce is
-        // recorded once the hash and signature pass (step 7), so an unverified
-        // wire never uses one up.
+        // 2. Nonce replay — a signature read live presents its nonce once. One read from plang's own store
+        // re-presents the same nonce on every read, which isn't replay. Only a look here: the nonce is
+        // recorded once the hash and signature pass (step 6), so an unverified wire never uses one up.
         var nonceCacheKey = $"nonce:{signature.Nonce}";
-        if (!skipFreshness && await app.Cache.GetAsync(nonceCacheKey) != null)
+        if (signature.IsLive && await app.Cache.GetAsync(nonceCacheKey) != null)
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
 
-        // 4. Contract matching — Contracts may be an unset/absent slot (the
+        // 3. Contract matching — Contracts may be an unset/absent slot (the
         // boundary-verify path never sets it), so guard the resolved value too.
         var contractsList = action.Contracts == null ? null : await action.Contracts.Value();
         var expectedContracts = contractsList == null ? null
@@ -108,24 +90,23 @@ public class Ed25519 : ISigning
         if (!ContractsMatch(System.Linq.Enumerable.ToList(signature.ContractStrings()), expectedContracts))
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Contract mismatch", "ContractMismatch", 400));
 
-        // 5. Data hash verification — rehash the inner value, compare to the
+        // 4. Data hash verification — rehash the inner value, compare to the
         // signed digest (which carries its own algorithm).
         var storedHash = signature.Hash;
         if (storedHash.Bytes.Length == 0)
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Missing data hash", "DataHashMismatch", 400));
 
-        // Re-hash in the same view the data was stored in. skipFreshness == (View == Store)
-        // (set by the reader / the Store-view caller), so it doubles as the hash view: a stored
-        // value is a property-bag carrying every [Store] field; hashing it in Out view (a subset)
-        // would diverge from the sign-time Store hash.
+        // Re-hash in the view the data was signed in: one read from plang's own store is a property-bag
+        // carrying every [Store] field; hashing it in Out view (a subset) would diverge from the sign-time
+        // Store hash.
         var rehash = await new global::app.goal.step.action.@this(
             new Hash(action.Context) { Data = signature.Value, Algorithm = new data.@this<global::app.type.item.text.@this>("", storedHash.Algorithm, context: action.Context),
-                       StoreView = new data.@this<global::app.type.item.@bool.@this>("", skipFreshness, context: action.Context) }, action.Context).Start(action.Context);
+                       StoreView = new data.@this<global::app.type.item.@bool.@this>("", signature.IsStored, context: action.Context) }, action.Context).Start(action.Context);
         if (!rehash.Success) return global::app.data.@this<global::app.type.item.@bool.@this>.From(rehash);
         if (await rehash.Value() is not global::app.module.crypto.type.hash.@this rehashValue || !rehashValue.DigestEquals(storedHash))
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
 
-        // 6. Signature verification — over the signature's canonical signing bytes.
+        // 5. Signature verification — over the signature's canonical signing bytes.
         if (signature.Signature.Value.Length == 0)
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Missing signature", "SignatureInvalid", 400));
 
@@ -140,11 +121,15 @@ public class Ed25519 : ISigning
             return action.Context.Error<global::app.type.item.@bool.@this>(ActionError.FromException(ex, "SignatureInvalid", 400));
         }
 
-        // 7. The verified wire records its nonce — atomically, so of two concurrent
-        // reads of one wire only the first verifies.
-        if (!skipFreshness
-            && !await app.Cache.TryAddAsync(nonceCacheKey, action.Context.Ok(true), new CacheSettings { DurationMs = effectiveTimeout }))
-            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
+        // 6. The verified live wire records its nonce until the signature expires — atomically, so of two
+        // concurrent reads of one wire only the first verifies. After it expires, the expiry refuses it.
+        if (signature.IsLive)
+        {
+            var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(DateTimeOffset.UtcNow);
+            var remembered = (long)Math.Max(1, (signature.Expires!.Value - now).TotalMilliseconds);
+            if (!await app.Cache.TryAddAsync(nonceCacheKey, action.Context.Ok(true), new CacheSettings { DurationMs = remembered }))
+                return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Nonce has already been used", "NonceReplay", 400));
+        }
         return action.Context.Ok<global::app.type.item.@bool.@this>(true);
     }
 

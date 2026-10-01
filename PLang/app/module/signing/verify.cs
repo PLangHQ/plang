@@ -17,21 +17,6 @@ public partial class verify : IContext
     /// <summary>Expected headers to match against signed headers.</summary>
     public partial data.@this<global::app.type.item.dict.@this>? Header { get; init; }
 
-    /// <summary>Freshness timeout in milliseconds. Default: 300000 (5 min).</summary>
-    [Default(300_000)]
-    public partial data.@this<global::app.type.item.number.@this> TimeoutMs { get; init; }
-
-    /// <summary>
-    /// When true, skip the Created-age wire-freshness check (step 2) and the
-    /// nonce-replay check (step 4). The signature's own <c>Expires</c> field
-    /// becomes the only time bound (null = permanent, set = enforced).
-    /// Use for verifying long-lived stored artifacts like permission grants,
-    /// where the same nonce naturally re-presents across reads and the
-    /// signature is intended to outlive the wire-freshness window.
-    /// </summary>
-    [Default(false)]
-    public partial data.@this<global::app.type.item.@bool.@this> SkipFreshnessCheck { get; init; }
-
     [Code]
     public partial ISigning Signer { get; }
 

@@ -204,5 +204,12 @@
       "type": "bool",
       "default": "true"
     }
+  ],
+  "signing.setting": [
+    {
+      "name": "expiry",
+      "type": "duration",
+      "default": "5m"
+    }
   ]
 }

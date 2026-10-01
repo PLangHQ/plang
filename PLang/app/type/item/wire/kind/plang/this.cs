@@ -84,11 +84,8 @@ public sealed class @this : global::app.type.kind.@this
             // so a Data this answers holds only a signer it verified.
             if (read.Signature is { } layer)
             {
-                var verified = await new global::app.goal.step.action.@this(new global::app.module.signing.verify(context)
-                {
-                    Data = context.Ok(layer),
-                    SkipFreshnessCheck = new global::app.data.@this<global::app.type.item.@bool.@this>("", view == global::app.View.Store),
-                }, context).Start(context);
+                var verified = await new global::app.goal.step.action.@this(
+                    new global::app.module.signing.verify(context) { Data = context.Ok(layer) }, context).Start(context);
                 if (!verified.Success)
                     return context.Error(verified.Error ?? new global::app.error.ServiceError(
                         "Signature verification failed", "SignatureInvalid", 400));
