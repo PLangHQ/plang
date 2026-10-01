@@ -46,7 +46,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     private object? Element(byte[] raw, global::app.type.reader.ITypeReader element,
         global::app.type.item.serializer.json parser, global::app.type.reader.ReadContext ctx)
     {
-        if (parser.Typed(raw) is { } row) return row;
+        if (parser.Typed(raw, ctx) is { } row) return row;
         var utf8 = new System.Text.Json.Utf8JsonReader(raw);
         utf8.Read();
         var bare = new global::app.type.item.kind.json.Reader(utf8, raw);

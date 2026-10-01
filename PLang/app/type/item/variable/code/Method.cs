@@ -21,6 +21,10 @@ public sealed class Method : Hop
 
     public override string Kind => "method";
 
+    /// <summary>A call on the value is own when every value handed to it is — a literal holds no variable.</summary>
+    internal override bool IsOwn => Parameter.Slots().Cast<global::app.type.item.@this>()
+        .SelectMany(value => value.Variable).All(v => v.IsOwn);
+
     /// <summary>Its name, then its values as rows: <c>"replace", "parameter": [{"type": {"name": "text"},
     /// "value": "-"}, …]</c>; a variable's row names it, as every stored row does.</summary>
     protected override void Piece(global::app.type.format.IWriter writer)

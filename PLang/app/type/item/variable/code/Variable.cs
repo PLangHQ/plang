@@ -11,6 +11,10 @@ public sealed class Variable : Hop
 
     public override string Kind => "variable";
 
+    /// <summary>A name the program sets is its own; a <c>!</c> name (<c>%!app%</c>, <c>%!trace%</c>) is the
+    /// app's or a binding's.</summary>
+    internal override bool IsOwn => !Name.StartsWith('!');
+
     protected override void Piece(global::app.type.format.IWriter writer) => writer.String(Name);
 
     /// <summary>What the name holds. A <c>!</c> name the memory doesn't bind is the app's shortcut by that name

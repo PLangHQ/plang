@@ -17,11 +17,11 @@ public class WireTemplateOutputTests
     private const string Slice = "{\"deep\": \"%x%\", \"fixed\": \"pcm\"}";
 
     // The row as the goal reader captures it (type.Read): the slice, made by the row's marked type, holding
-    // the variables the row lists.
+    // the variables the row lists — the build's own bytes (the goal reader grants them).
     private static Wire Template(global::app.actor.context.@this ctx)
         => ctx.App.type.list[new global::app.type.@this("dict", template: "plang"), ctx].Make(Slice,
             (global::app.type.item.wire.kind.plang.@this)ctx.App.type.list["wire"].kind["plang"]!,
-            new global::app.type.item.variable.parser.@this(Slice).Variable);
+            new global::app.type.item.variable.parser.@this(Slice).Variable, built: true);
 
     [Test]
     public async Task TemplateWire_IntoJson_WritesItsVariablesValues()

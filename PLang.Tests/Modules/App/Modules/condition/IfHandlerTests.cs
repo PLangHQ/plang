@@ -216,8 +216,7 @@ public class IfHandlerTests : IDisposable
     public async Task Ordering_AnUnsetVariable_IsAnError()
     {
         var ctx = _app.actor.list.User.Context;
-        var unset = new global::app.data.@this("Left", "%unset%",
-            ctx.App.type.list[new global::app.type.@this("item", template: "plang"), ctx], context: ctx);
+        var unset = global::PLang.Tests.Shared.Make.Built(ctx, "Left", "%unset%", new global::app.type.@this("item", template: "plang"));
         var action = new If(ctx)
         {
             Left = unset,

@@ -124,10 +124,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public bool Strict { get; init; }
 
     /// <summary>
-    /// Authored-template mode ("plang") — set by the BUILD when the value is a developer-authored
-    /// <c>%ref%</c> template, carried in the <c>.pr</c> so the read honors it EXPLICITLY. The read
-    /// never infers it from value content (a runtime-ingested string that happens to contain
-    /// <c>%x%</c> is data, not a template). Null = a plain value. Mirrors <c>global::app.type.item.text.@this.Template</c>.
+    /// Template mark ("plang") — set by the BUILD when the value is a developer-authored <c>%ref%</c>
+    /// template, carried in the <c>.pr</c>, and by a read that asks for its content's variables to be
+    /// filled (<c>read … load vars</c>). Never inferred from content (a runtime-ingested string that
+    /// happens to contain <c>%x%</c> is data). The mark says "may hold variables"; which ones it holds is
+    /// decided at the value's birth by whose bytes these are (<see cref="global::app.type.item.source"/>).
+    /// Null = a plain value. Mirrors <c>global::app.type.item.text.@this.Template</c>.
     /// </summary>
     public string? Template { get; init; }
 
@@ -409,10 +411,11 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// template — a <see cref="item.wire.template"/> holding the <paramref name="variable"/>s its row lists;
     /// the parse stays at first touch. The one place a slice is made (a re-declared slice comes back here).
     /// The capture build beside the content <see cref="Make(object?, actor.context.@this?)"/> build —
-    /// same verb, the capture's knowledge as an argument, never a format name. Not a birth.</summary>
+    /// same verb, the capture's knowledge as an argument, never a format name. Not a birth.
+    /// <paramref name="built"/>: the slice is the build's own bytes (its read granted it).</summary>
     internal item.wire.@this Make(string slice, global::app.type.item.wire.kind.plang.@this reader,
-        IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
-        => Template != null ? new item.wire.template(slice, this, reader, variable ?? []) : new item.wire.@this(slice, this, reader);
+        IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool built = false)
+        => Template != null ? new item.wire.template(slice, this, reader, variable ?? [], built) : new item.wire.@this(slice, this, reader, built: built);
 
     /// <summary>Reads a value slot of this type off the reader — the one door for a
     /// <c>{name, type, value}</c> row's value, a Data's or an action property's. The slot is exactly
@@ -434,16 +437,17 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         {
             var slice = System.Text.Encoding.UTF8.GetString(reader.Slice());
             // A template (its row's marker) takes the content door, with the variables its row's list says
-            // it holds; the kind-parse stays lazy on the content source. A literal string under any other
-            // type rides the wire (strict, byte-identical). A name was read above, by its own eager reader.
+            // it holds — when the read is the build's own (the source decides); the kind-parse stays lazy on
+            // the content source. A literal string under any other type rides the wire (strict,
+            // byte-identical). A name was read above, by its own eager reader.
             return Template != null
-                ? new item.source(JsonSerializer.Deserialize<string>(slice)!, this, ctx.Variable)
-                : Make(slice, transport);
+                ? new item.source(JsonSerializer.Deserialize<string>(slice)!, this, ctx.Variable, built: ctx.IsBuilt)
+                : Make(slice, transport, built: ctx.IsBuilt);
         }
         // EVERY other slot is a wire: a VERBATIM Slice with the capturing transport named at the
         // mint site. Face validation is free — the type's own pull IS the validator on first touch.
         // A container is a template only by its own row's marker, holding its row's variables.
-        return Make(System.Text.Encoding.UTF8.GetString(reader.Slice()), transport, ctx.Variable);
+        return Make(System.Text.Encoding.UTF8.GetString(reader.Slice()), transport, ctx.Variable, ctx.IsBuilt);
     }
 
     // The birth build — THIS type makes itself from a value, as it declares (its kind, its template), for the

@@ -54,6 +54,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// (<c>%x.y%</c>).</summary>
     internal bool IsBare => Code.Count == 1 && !Code.Root.Name.StartsWith('!');
 
+    /// <summary>One of the program's own variables: no <c>!</c> name and no binding on the way, its index and
+    /// method values own too (<c>%user.items[i].name.replace("a", "b")%</c>). Content read from outside holds
+    /// only these.</summary>
+    internal bool IsOwn => Code.IsOwn;
+
     /// <summary>A value reached by members only — <c>%x%</c>, <c>%user.name%</c>.</summary>
     internal bool IsMembers => !Code.Root.Name.StartsWith('!')
         && Code.Items().Skip(1).All(h => h is code.Property { IsBinding: false });

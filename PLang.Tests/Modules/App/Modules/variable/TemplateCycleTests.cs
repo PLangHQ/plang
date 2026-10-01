@@ -11,8 +11,8 @@ public class TemplateCycleTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-cycle-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
         var ctx = app.actor.list.User.Context;
-        var template = app.type.list[new global::app.type.@this("text", (string?)null, template: "plang"), ctx];
-        var born = await template.Create("%label%-and-done", ctx, "label");
+        // the value `set %label% = '%label%-and-done'` holds, born as the build births it
+        var born = global::PLang.Tests.Shared.Make.Built(ctx, "label", "%label%-and-done");
         await born.IsSuccess();
 
         var set = await ctx.Variable.Set("label", born);

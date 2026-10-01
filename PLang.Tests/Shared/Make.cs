@@ -56,7 +56,7 @@ public static class Make
             action.Property.Add(Property(value is global::app.data.@this typed
                 ? typed
                 : value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[^%]+%")   // text.HasVariable's detector (%!data% too)
-                    ? new global::app.data.@this(name, s, context.App.type.list[new global::app.type.@this("text", template: "plang"), context], context: context)
+                    ? Built(context, name, s, new global::app.type.@this("text", template: "plang"))
                     // a list/dict the programmer wrote holding a %variable% is marked too, as the builder marks it
                     : value is System.Collections.IEnumerable and not string && System.Text.RegularExpressions.Regex.IsMatch(
                             System.Text.Json.JsonSerializer.Serialize(value), "%[^%]+%")
@@ -96,7 +96,7 @@ public static class Make
         // A %ref% argument is an authored template, as the builder stamps it — it renders against
         // live variables when the callee reads it.
         var rows = arguments.Select(a => a.value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[A-Za-z_]")
-            ? new global::app.data.@this(a.name, s, ctx.App.type.list[new global::app.type.@this("text", template: "plang"), ctx], context: ctx)
+            ? Built(ctx, a.name, s, new global::app.type.@this("text", template: "plang"))
             : new global::app.data.@this(a.name, a.value, context: ctx)).ToList();
         return Action(ctx, "goal", "call", ("Name", goal),
             ("Parameter", new global::app.type.item.list.@this(rows)));
@@ -140,7 +140,34 @@ public static class Make
     /// <see cref="global::app.type.@this"/> directly.</summary>
     public static (string name, object? value) Param(global::app.actor.context.@this context,
         string name, object? value, global::app.type.@this type)
-        => (name, new global::app.data.@this(name, value, context.App.type.list[type, context], context: context));
+        => (name, Built(context, name, value, type));
+
+    /// <summary>
+    /// A value as the build writes it: a text the build marked a template is born the way a <c>.pr</c> row's
+    /// value is — through its type's read, under the build's grant, holding the variables written in it (the
+    /// list the build writes beside it). A template made straight from a raw string is content from outside,
+    /// which holds none of its variables; a test authoring what the builder marks makes it here. Any other
+    /// value is born as its type makes it.
+    /// </summary>
+    public static global::app.data.@this Built(global::app.actor.context.@this context, string name, object? value,
+        global::app.type.@this declared)
+    {
+        var type = context.App.type.list[declared, context];
+        if (type.Template == null || value is not string text)
+            return new global::app.data.@this(name, value, type, context: context);
+        var bytes = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(text);
+        var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
+        utf8.Read();
+        var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
+        var held = type.Read(ref reader, new global::app.type.reader.ReadContext(context, type.Template,
+            Variable: new global::app.type.item.variable.parser.@this(text).Variable, IsBuilt: true));
+        return new global::app.data.@this(name, held, context: context);
+    }
+
+    /// <summary>A text the build marked a template (<c>"Hi %name%"</c>), born as <see cref="Built(global::app.actor.context.@this, string, object?, global::app.type.@this)"/>
+    /// births it.</summary>
+    public static global::app.data.@this Built(global::app.actor.context.@this context, string name, string text)
+        => Built(context, name, text, new global::app.type.@this("text", template: "plang"));
 
     /// <summary>A text parameter carrying an interpolation template (an embedded or full
     /// <c>%ref%</c>) — models the builder stamping <c>type.template="plang"</c> on a value

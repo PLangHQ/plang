@@ -32,7 +32,7 @@ public class NamePropagationTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set(new global::app.data.@this("products", global::PLang.Tests.Shared.Make.List(new List<object?> { "a" }, context), context: context));
 
-        var paramData = new Data("List", "%products%", new global::app.type.@this("text", null, false, "plang"), context: context);
+        var paramData = PLang.Tests.Shared.Make.Built(context, "List", "%products%");
         var result = paramData.As<global::app.type.item.list.@this>(await paramData.Value<global::app.type.item.list.@this>());
 
         await Assert.That(result.Name).IsEqualTo("products");
@@ -59,7 +59,7 @@ public class NamePropagationTests
         var context = _app.actor.list.User.Context;
         context.Variable.Set(new global::app.data.@this<global::app.type.item.text.@this>("name", "world", context: context));
 
-        var paramData = new Data("Greeting", "hello %name%!", new global::app.type.@this("text", null, false, "plang"), context: context);
+        var paramData = PLang.Tests.Shared.Make.Built(context, "Greeting", "hello %name%!");
         var result = paramData.As<global::app.type.item.text.@this>(await paramData.Value<global::app.type.item.text.@this>());
         await Assert.That(result.Name).IsEqualTo("Greeting");
         await Assert.That((await result.Value())!.Value).IsEqualTo("hello world!");
@@ -72,7 +72,7 @@ public class NamePropagationTests
     public async Task Name_UnsetVariable_PropagatesVarName_NotInitialized()
     {
         var context = _app.actor.list.User.Context;
-        var paramData = new Data("X", "%missing%", new global::app.type.@this("text", null, false, "plang"), context: context);
+        var paramData = PLang.Tests.Shared.Make.Built(context, "X", "%missing%");
         var result = paramData.As<global::app.type.item.text.@this>(await paramData.Value<global::app.type.item.text.@this>());
         await Assert.That(result.Name).IsEqualTo("missing");
         await Assert.That(result.IsInitialized).IsFalse();
@@ -104,7 +104,7 @@ public class NamePropagationTests
         context.Variable.Set(new global::app.data.@this<global::app.type.item.number.@this>("b", 42, context: context));
         context.Variable.Set(new global::app.data.@this<global::app.type.item.text.@this>("a", "%b%", context: context));
 
-        var paramData = new Data("Slot", "%a%", new global::app.type.@this("text", null, false, "plang"), context: context);
+        var paramData = PLang.Tests.Shared.Make.Built(context, "Slot", "%a%");
         var result = paramData.As<global::app.type.item.text.@this>(await paramData.Value<global::app.type.item.text.@this>());
         await Assert.That(result.Name).IsEqualTo("a");
         await Assert.That((await result.Value())!.Value).IsEqualTo("%b%");

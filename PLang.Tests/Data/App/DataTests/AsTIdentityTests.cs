@@ -131,7 +131,7 @@ public class AsTIdentityTests
         var live = new global::app.data.@this("products", global::PLang.Tests.Shared.Make.List(new List<object?> { "a", "b" }, context), context: context);
         context.Variable.Set(live);
 
-        var paramData = new Data("Slot", "%products%", new global::app.type.@this("text", null, false, "plang"), context: context);
+        var paramData = PLang.Tests.Shared.Make.Built(context, "Slot", "%products%");
         var canonical = await paramData.Follow(context);
 
         await Assert.That(ReferenceEquals(canonical, live)).IsTrue();

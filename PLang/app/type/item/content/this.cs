@@ -45,9 +45,14 @@ public abstract class @this : global::app.type.item.@this
     /// <summary>True once the content is in memory (the reference was examined).</summary>
     public bool IsLoaded => _bytes != null;
 
-    /// <summary>A reference marked a template answers a render, which depends on the variables at each use —
-    /// never kept (the reference stays; its bytes are sampled once).</summary>
-    public override bool Cacheable => Template == null && base.Cacheable;
+    // Whether its content, decoded, holds no variable — a fact of the sample, known once it is decoded.
+    private bool _plain;
+
+    /// <summary>A reference marked a template whose content holds variables answers a render, which depends on
+    /// what they hold at each use — never kept (the reference stays; its bytes are sampled once). Content holding
+    /// none (a template whose text names only what it may not fill) renders the same every time: kept once
+    /// opened, as unmarked content is.</summary>
+    public override bool Cacheable => (Template == null || _plain) && base.Cacheable;
 
     /// <summary>The reference's type: its own name, with the kind named at creation — location metadata, never
     /// reads content.</summary>
@@ -72,6 +77,8 @@ public abstract class @this : global::app.type.item.@this
         if (!sample.Success) { data.Fail(sample.Error!); return Absent; }
         var read = await _format!.Decode(Bytes, data.Context, template: Template, origin: Path);
         if (!read.Success) { data.Fail(read.Error!); return Absent; }
+        // the decoded value says whether it holds variables (born holding only what its origin allows)
+        _plain = !read.Peek().HasVariable;
         // what the decode answers — a template's render at this use, which its Data never keeps
         var answer = await read.Value();
         if (!read.Success) { data.Fail(read.Error!); return Absent; }

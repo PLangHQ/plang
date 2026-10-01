@@ -27,9 +27,11 @@ public class @this : global::app.type.item.source
     // read reaches it directly.
     private readonly kind.plang.@this _reader;
 
+    // An encoded slice is never parsed for its variables: the build's own holds what its row lists, any other
+    // holds none (the source decides).
     public @this(string slice, global::app.type.@this type, kind.plang.@this reader,
-        IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
-        : base(slice, type, variable ?? [])   // an encoded slice is never parsed for its variables
+        IReadOnlyList<global::app.type.item.variable.@this>? variable = null, bool built = false)
+        : base(slice, type, variable ?? [], built: built)
         => _reader = reader ?? throw new System.ArgumentNullException(nameof(reader));
 
     /// <summary>The text as written: a string slice is the text it holds (unquoted, as a source's is); any other
@@ -38,8 +40,10 @@ public class @this : global::app.type.item.source
         ? System.Text.Json.JsonSerializer.Deserialize<string>(slice)
         : base.RawText;
 
+    // The slice's own read keeps whose bytes they are: a row nested in the build's slice (a goal call's
+    // parameters) is the build's too.
     private protected override global::app.type.item.@this Read(actor.context.@this context)
-        => _reader.Read(this, new global::app.type.reader.ReadContext(context, Type.Template, Variable: Variable));
+        => _reader.Read(this, new global::app.type.reader.ReadContext(context, Type.Template, Variable: Variable, IsBuilt: IsBuilt));
 
     // The decoded value, with the caller's context: the kind owns the decode (one Parse, the same
     // value Value() materializes to); a kind that declines (csv, png) falls to the type reader.
@@ -82,5 +86,5 @@ public class @this : global::app.type.item.source
 
     // Re-declared, the slice is what its new declaration makes of it — a template only when marked one.
     internal override global::app.type.item.source Declared(global::app.type.@this type)
-        => type.Make((string)Raw, _reader, Variable);
+        => type.Make((string)Raw, _reader, Variable, IsBuilt);
 }

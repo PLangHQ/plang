@@ -198,7 +198,7 @@ public class Stage4_BuildMethodImplsTests
             Name = "upload",
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
-                new Data("Url", "%endpoint%", _app.type.list[new global::app.type.@this("text", template: "plang"), context], context: context),
+                global::PLang.Tests.Shared.Make.Built(context, "Url", "%endpoint%"),
                 new Data("FilePath", "/tmp/dummy.txt", context: context),
             }),
         };

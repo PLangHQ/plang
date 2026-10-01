@@ -18,6 +18,11 @@ public abstract class Hop : global::app.type.item.@this, global::app.type.item.I
     /// <c>index</c>, <c>method</c>.</summary>
     public abstract string Kind { get; }
 
+    /// <summary>Whether this step stays among the program's own variables — it names no <c>!</c> binding and
+    /// reaches nothing but what the program set, and every value it is handed is its own too. Content read
+    /// from outside holds only variables whose every step is.</summary>
+    internal abstract bool IsOwn { get; }
+
     /// <summary>Its one step on <paramref name="previous"/> — the root has none.</summary>
     public abstract System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
         global::app.data.@this? previous, global::app.actor.context.@this context);

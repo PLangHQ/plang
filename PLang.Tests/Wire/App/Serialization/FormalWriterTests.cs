@@ -23,7 +23,8 @@ public class FormalWriterTests : System.IAsyncDisposable
         return global::app.goal.@this.Parse("Formal\n- a step\n", path, context)!;
     }
 
-    // The step as the .pr holds it: {index, text, code: [rows]} — read through the step reader.
+    // The step as the .pr holds it: {index, text, code: [rows]} — read through the step reader, as the goal loader
+    // reads the build's own bytes (granted: its templates hold every variable they list).
     internal static global::app.goal.step.@this Step(global::app.goal.@this goal, System.Text.Json.JsonElement entry, global::app.actor.context.@this context)
     {
         var json = "{\"index\":" + entry.GetProperty("index").GetInt32()
@@ -34,7 +35,7 @@ public class FormalWriterTests : System.IAsyncDisposable
         utf8.Read();
         var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
         return (global::app.goal.step.@this)new global::app.goal.step.serializer.Reader(goal)
-            .Read(ref reader, null, new global::app.type.reader.ReadContext(context, "plang"));
+            .Read(ref reader, null, new global::app.type.reader.ReadContext(context, "plang", IsBuilt: true));
     }
 
     internal static async Task<string> Formal(global::app.goal.step.@this step, global::app.actor.context.@this context)

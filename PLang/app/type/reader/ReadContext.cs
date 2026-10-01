@@ -10,11 +10,14 @@ namespace app.type.reader;
 /// <para>The read-side mirror of the write side's <c>IWriter</c>: where the
 /// writer carries the format encoder, the reader carries the decode context.</para>
 ///
-/// <para><see cref="Template"/> is the authored-content mode — <c>"plang"</c> when
-/// the bytes are a developer-authored goal/<c>.pr</c> (a <c>%ref%</c> leaf borns a
-/// live template), null for every runtime-ingest read (a <c>%ref%</c> borns literal).
-/// The trust rides the reader, never the content: a value is templatable only
-/// because the reader that read it was constructed in authored mode.</para>
+/// <para><see cref="Template"/> is the mark of the template being read — a container marked a
+/// template hands it to its slots, so a <c>%ref%</c> leaf inside it is born a template too; null
+/// when what is read is no template (a <c>%ref%</c> stays literal).</para>
+///
+/// <para><see cref="IsBuilt"/> is the trust: the bytes are the build's own — a goal's <c>.pr</c>, or
+/// the build's reading of its own answer. Only those two readers grant it; every other read (a file
+/// or url's content, a peer's Data, the app's store) is outside, so a template born under it holds
+/// none of the variables its bytes claim (<see cref="global::app.type.item.source"/> decides).</para>
 /// </summary>
 public sealed record ReadContext(
     global::app.actor.context.@this Context,
@@ -37,4 +40,7 @@ public sealed record ReadContext(
     // Where the content being read came from — the file its bytes were read off. A value born under
     // this read (a goal from its .pr) is born holding it, and a refusal names it. Null for content
     // with no location (a channel read, an http body).
-    global::app.type.item.path.@this? Origin = null);
+    global::app.type.item.path.@this? Origin = null,
+    // The bytes are the build's own (a goal's .pr, the build reading its answer): a template born under
+    // this read holds every variable its row lists. False everywhere else — fail closed.
+    bool IsBuilt = false);

@@ -374,8 +374,9 @@ public sealed class Reader
             var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
             utf8.Read();
             var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
+            // the build reading its own answer: its templates hold every variable they list
             return marked.Read(ref reader, new global::app.type.reader.ReadContext(_context, marked.Template,
-                Variable: marked.Template != null ? variables : null));
+                Variable: marked.Template != null ? variables : null, IsBuilt: true));
         }
 
         // The variables a value written as json holds: those in each of its texts, as written.

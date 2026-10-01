@@ -220,7 +220,7 @@ public class ReResolveAcrossCallsTests
     public async Task ReResolveAcrossCalls_SharedParameterData_RawValueUnchanged()
     {
         await using var app = new global::app.@this("/app").Testing();
-        var sharedData = new Data("value", "%x%", new global::app.type.@this("text", null, false, "plang"), context: app.actor.list.User.Context);
+        var sharedData = PLang.Tests.Shared.Make.Built(app.actor.list.User.Context, "value", "%x%");
 
         app.actor.list.User.Context.Variable.Set("x", "v1");
         var action1 = new PrAction
@@ -279,7 +279,7 @@ public class ConcurrentHandlersTests
 
         // Pre-register; run in parallel.
         MatrixRunner.EnsureRegistered<ConcurrentHandlers>(app);
-        var sharedData = new Data("value", "%x%", new global::app.type.@this("text", null, false, "plang"), context: app.actor.list.User.Context);
+        var sharedData = PLang.Tests.Shared.Make.Built(app.actor.list.User.Context, "value", "%x%");
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(async () =>
         {
@@ -306,7 +306,7 @@ public class ConcurrentHandlersTests
     {
         await using var app = new global::app.@this("/app").Testing();
         app.actor.list.User.Context.Variable.Set("x", "shared");
-        var data = new Data("v", "%x%", new global::app.type.@this("text", null, false, "plang"), context: app.actor.list.User.Context);
+        var data = PLang.Tests.Shared.Make.Built(app.actor.list.User.Context, "v", "%x%");
 
         var tasks = Enumerable.Range(0, 50).Select(_ => Task.Run(() =>
             data.Value<global::app.type.item.text.@this>().AsTask())).ToArray();
