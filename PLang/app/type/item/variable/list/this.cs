@@ -13,7 +13,11 @@ namespace app.type.item.variable.list;
 /// </summary>
 public partial class @this
 {
-    private readonly ConcurrentDictionary<string, data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>How two variable names compare: a name is the same variable whatever its case (<c>%Greeting%</c> is
+    /// <c>%greeting%</c>).</summary>
+    internal static readonly StringComparer Comparer = StringComparer.OrdinalIgnoreCase;
+
+    private readonly ConcurrentDictionary<string, data.@this> _variables = new(Comparer);
     private actor.context.@this _context;
 
     /// <summary>

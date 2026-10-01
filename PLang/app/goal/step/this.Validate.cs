@@ -37,12 +37,16 @@ public sealed partial class @this
         await Code.Output(writer, global::app.View.Store, context);
         var written = writer.ToString();
         var problems = new List<string>();
-        foreach (var v in new global::app.type.item.variable.parser.@this(Text).Variable.Select(x => x.Text).Distinct())
-            if (!written.Contains(v)) problems.Add($"step {Index}: {v} is in the step but not in your answer");
+        // a variable is the same one whatever its case, as the variable list compares names
+        var comparer = global::app.type.item.variable.list.@this.Comparer;
+        var said = new global::app.type.item.variable.parser.@this(Text).Variable.Select(x => x.Text).Distinct(comparer).ToList();
+        var answered = new global::app.type.item.variable.parser.@this(written).Variable.Select(x => x.Text).Distinct(comparer).ToList();
+        foreach (var v in said)
+            if (!answered.Contains(v, comparer)) problems.Add($"step {Index}: {v} is in the step but not in your answer");
         // and the other way: a variable the answer names that the step's words don't is invented — a
         // system variable (%!data%, %!error%) excepted
-        foreach (var v in new global::app.type.item.variable.parser.@this(written).Variable.Select(x => x.Text).Distinct())
-            if (!v.StartsWith("%!") && !Text.Contains(v)) problems.Add($"step {Index}: {v} isn't in the step — use only the step's variables");
+        foreach (var v in answered)
+            if (!v.StartsWith("%!") && !said.Contains(v, comparer)) problems.Add($"step {Index}: {v} isn't in the step — use only the step's variables");
         // an answer that doubles a literal's backslashes (\\n for the step's \n) holds a backslash, not what the
         // step says — told so, so the retry writes it as the step does
         foreach (var l in Literal.Matches(Text).Select(m => m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value).Distinct())
