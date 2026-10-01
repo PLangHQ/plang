@@ -33,6 +33,16 @@ public sealed class Screen : global::app.type.item.@this, global::app.type.item.
     internal bool Show(byte[] message) => Window is { Closed: false } window && window.Take(message);
     /// <summary>PlangOS's display that makes them (Linux): programs draw onto it.</summary>
     internal code.wayland.Display? Display { get; set; }
+    private Elements? _element;
+    /// <summary>Its elements, picked by selector (<c>%!screen.element["#window.bot"]%</c>) — to bind on their events.</summary>
+    public Elements element => _element ??= new(this);
+
+    /// <summary>One step by dot: <c>element</c> — its elements; any other member as every item's.</summary>
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
+        => string.Equals(key, "element", StringComparison.OrdinalIgnoreCase)
+            ? System.Threading.Tasks.ValueTask.FromResult(new global::app.data.@this(key, element, parent: parent))
+            : base.Get(parent, key);
+
     /// <summary>Where programs find the display: its socket's folder and name.</summary>
     internal string Runtime { get; set; } = "";
     internal string Socket { get; set; } = "";
