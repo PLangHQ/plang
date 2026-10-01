@@ -78,6 +78,13 @@ public partial class @this
             && (await own.Parse()).Count == 0 && await own.Validate() is { } complaint)
             causes.Add(new global::app.error.Error($"{Module}.{Name}: {complaint.Message}", complaint.Key, complaint.StatusCode));
 
+        // what it holds judges itself too — the actions its properties hold (a callback, a recovery), the steps
+        // of its branch body — as the build walks them
+        foreach (var held in Held)
+            if (await held.Validate(context) is { } heldInvalid) causes.Add(heldInvalid);
+        for (int i = 0; i < Child.Count; i++)
+            if (await Child[i].Code.Validate(context) is { } branch) causes.Add(branch);
+
         if (causes.Count == 0) return null;
         return new global::app.error.Error(
             string.Join("; ", causes.Select(c => c.Message)), "ActionInvalid", 400)
