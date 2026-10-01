@@ -11,7 +11,7 @@ namespace app.type.table;
 ///
 /// <para>The grid is held column-named: each row is a dictionary keyed by the
 /// header, so navigation reads naturally — <c>%t.rows%</c> is the row list,
-/// <c>%t.rows[0]["amount"]%</c> a cell, <c>%t.rows.count%</c> the height. The
+/// <c>%t.rows[0]["amount"]%</c> a cell, <c>%t.count%</c> the height. The
 /// header order is preserved on <see cref="Headers"/> so a re-render keeps column
 /// order. <c>foreach %t%</c> iterates the rows directly.</para>
 /// </summary>
@@ -38,12 +38,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Rows, each keyed by header — the navigation surface (<c>%t.rows[0]["amount"]%</c>).</summary>
     public IReadOnlyList<IReadOnlyDictionary<string, object?>> Rows { get; }
 
-    /// <summary>Row count — the grid's height.</summary>
-    public int RowCount => Rows.Count;
-
-    /// <summary>Column count — the grid's width.</summary>
-    public int ColumnCount => Headers.Count;
-
     /// <summary>The encoding the grid was read from (<c>csv</c>, <c>xlsx</c>) —
     /// the table's kind, carried so <c>%t!type%</c> reports <c>{table, csv}</c>.</summary>
     public string? Kind { get; }
@@ -59,9 +53,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     protected internal override global::app.type.@this Type => new(typeof(@this), Kind);
 
     /// <summary>
-    /// Navigate <c>rows</c> (the row list) and <c>headers</c> (the column names).
-    /// Count, indexing and cell access fall out of normal list/dict navigation
-    /// (<c>%t.rows[0]["amount"]%</c>, <c>%t.rows.count%</c>, <c>%t.headers.count%</c>).
+    /// Navigate <c>rows</c> (the row list), <c>headers</c> (the column names) and <c>count</c> (the
+    /// row count, as list and dict answer it). Indexing and cell access fall out of normal list/dict
+    /// navigation (<c>%t.rows[0]["amount"]%</c>, <c>%t.headers.count%</c>).
     /// </summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key)
@@ -69,8 +63,22 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         {
             "rows" => new global::app.data.@this("rows", Rows, parent: parent),
             "headers" => new global::app.data.@this("headers", Headers, parent: parent),
+            "count" => new global::app.data.@this(key, Rows.Count, parent: parent),
             _ => parent.Context.NotFound(key),
         });
+
+    /// <summary>Writes itself as an array of rows, each row an object keyed by header that writes itself
+    /// (<see cref="EnumerateItems"/> hands each out as its own Data); the writer decides how a list of
+    /// objects looks — json on a json channel, json text on a text one.</summary>
+    public override async System.Threading.Tasks.ValueTask Output(
+        global::app.type.format.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+    {
+        writer.BeginArray(Rows.Count);
+        foreach (var (_, row) in EnumerateItems(context))
+            await row.Output(writer, mode, context);
+        writer.EndArray();
+    }
 
     /// <summary><c>foreach %t%</c> iterates the rows — each row a dict keyed by header.</summary>
     public override System.Collections.Generic.IEnumerable<(global::app.data.@this key, global::app.data.@this value)>
