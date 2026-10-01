@@ -36,10 +36,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     public override bool IsLeaf => false;
-
-    /// <summary>As a step writes it — the catalog shows the default this way.</summary>
-    public override string ToString() => $"{{token: {Token}, tool: {Tool}, retry: {Retry}}}";
-
     /// <summary>A limit is made from a dict of its members — any left out keeps its default; a member that is no
     /// member of a limit, or a value it can't take, declines with why.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, Data data)

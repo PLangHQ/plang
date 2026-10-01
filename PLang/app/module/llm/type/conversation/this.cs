@@ -27,10 +27,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal @this(Data? @continue) => Continue = @continue;
 
     public override bool IsLeaf => false;
-
-    /// <summary>As a step writes it — the catalog shows the default this way.</summary>
-    public override string ToString() => Continue == null ? "{}" : $"{{continue: %{Continue.Name}%}}";
-
     /// <summary>A conversation is made from a dict of its members; a member that is no member of a conversation, or
     /// a continue that names no response, declines with why.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, Data data)

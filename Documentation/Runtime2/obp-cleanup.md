@@ -334,14 +334,6 @@ The generator gives every action `ICodeGenerated.Resolve(action, context)` — t
 action can have an option called `resolve` (file.read's became `Template`, which is the better name anyway).
 The bind should be named for what it answers, so action options are free to use the word.
 
-## The setting catalog shows a default through ToString [logged 2026-10-01, settings slice 1]
-
-`type/item/setting/kind/this.cs` `Options` writes each option's default as `value.ToString()`. A setting node
-(`callstack.setting.diff`) would show its class name, so `setting.@this` overrides `ToString` to its `Enabled` —
-the catalog's rendering leaning on `ToString`, which writers never use. The default should be written by the
-value's own text form (its writer), so a node shows `false` because that is how it writes itself, and the
-`ToString` override goes.
-
 ## A variable store's Clone deep-copies a goal graph [logged 2026-09-30, 412 regression]
 
 `type/item/variable/list/this.cs` `Clone()` deep-copies every variable (`kvp.Value.Clone()`). A goal is a cyclic

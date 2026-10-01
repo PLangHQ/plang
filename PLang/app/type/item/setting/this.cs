@@ -39,9 +39,6 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// <summary>A setting node read as a bool is whether it is on.</summary>
     public override bool IsTruthy() => Enabled.Value;
 
-    /// <summary>A setting node as text is what it reads as: whether it is on.</summary>
-    public override string ToString() => Enabled.ToString();
-
     /// <summary>A setting is built by the asker's settings, never made from a value.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {

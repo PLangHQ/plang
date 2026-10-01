@@ -34,10 +34,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     }
 
     public override bool IsLeaf => false;
-
-    /// <summary>As a step writes it — the catalog shows the default this way.</summary>
-    public override string ToString() => $"{{mime: \"{Mime}\", encoding: \"{Encoding}\"}}";
-
     /// <summary>A content is made from a dict of its members — any left out keeps its default; a member that is no
     /// member of a content declines with why.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, Data data)

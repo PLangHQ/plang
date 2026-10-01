@@ -82,13 +82,16 @@ public class SettingReadTests
         await Assert.That((await (await Read("%!llm.query.setting.limit.tool%", ctx)).Value())?.ToString()).IsEqualTo("10");
     }
 
-    // A record option's default is the record's own, shown as a step writes it.
+    // A record option's default is the record's own; it writes itself as text (a container as its json).
     [Test] public async Task ActionRecordOption_CatalogShowsItsDefault()
     {
         await using var app = new global::app.@this("/test").Testing();
+        var ctx = app.actor.list.User.Context;
         var limit = app.Module("llm")["query"]!.Property["limit"]!;
         await Assert.That(limit.HasDefault).IsTrue();
-        await Assert.That(limit.Default!.ToString()).IsEqualTo("{token: 16000, tool: 10, retry: 0}");
+        using var text = new System.IO.MemoryStream();
+        await (await app.type.list.Mime("text/plain").Encode(text, ctx.Ok(limit.Default), ctx)).IsSuccess();
+        await Assert.That(System.Text.Encoding.UTF8.GetString(text.ToArray())).IsEqualTo("{\"token\":16000,\"tool\":10,\"retry\":0}");
     }
 
     // %!llm% is the module itself; its settings and its actions' are each one .setting away.
