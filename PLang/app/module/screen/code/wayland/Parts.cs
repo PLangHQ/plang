@@ -374,7 +374,10 @@ internal sealed class TitleBar
         var active = Window.Active;
         var ink = active ? Color.Ink : Color.InkInactive;
         var c = new Canvas(width, Height);
-        c.Round(new Rect(0, 0, width, Height), Window.Shown == Shown.Maximized ? 0 : 8, active ? Color.BarActive : Color.BarInactive, topOnly: true);
+        var radius = Window.Shown == Shown.Maximized ? 0 : 8;
+        // the rim, then the bar inside it: a 1 px edge along the top and the sides
+        c.Round(new Rect(0, 0, width, Height), radius, active ? Color.RimActive : Color.RimInactive, topOnly: true);
+        c.Round(new Rect(1, 1, width - 2, Height - 1), Math.Max(0, radius - 1), active ? Color.BarActive : Color.BarInactive, topOnly: true);
         Hovered?.Highlight(c, width);
         const float mid = Height / 2f;
         foreach (var b in buttons)
