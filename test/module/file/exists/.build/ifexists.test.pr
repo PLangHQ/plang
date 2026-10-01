@@ -1,0 +1,153 @@
+{
+  "name": "Start",
+  "comment": "\"if <file> exists\" must ask file.exists, not test the quoted name as truthy text. missing.json does not\nexist, so %seen% is never set. With the bug (condition.if(Left=\"missing.json\")), the name is truthy text\nand %seen% gets set — this test goes red.",
+  "step": [
+    {
+      "index": 0,
+      "text": "if 'missing.json' exists, set %seen% = true",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "exists",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "missing.json"
+            }
+          ]
+        },
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%seen%, Value=true)",
+              "line": {
+                "number": 5
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%seen%",
+                      "variable": [
+                        {
+                          "text": "%seen%",
+                          "code": [
+                            {
+                              "variable": "seen"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 0 uses file.exists, which the decider was not sure of (0.94)"
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert %seen% is empty",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isFalse",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%seen%",
+              "variable": [
+                {
+                  "text": "%seen%",
+                  "code": [
+                    {
+                      "variable": "seen"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/file/exists/IfExists.test.goal",
+  "prPath": "/module/file/exists/.build/ifexists.test.pr",
+  "hash": "e23e757bcf0a795a8c52d13e85bc0e909d60625b6edffed64f7b59f2c3b3bf65",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

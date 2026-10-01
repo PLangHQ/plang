@@ -10,7 +10,7 @@ namespace app.module.list;
 [Action("query", Cacheable = false)]
 public partial class query : IContext
 {
-    [IsNotNull]
+    [IsNotNull, global::app.Attributes.Input]
     public partial data.@this<app.type.item.list.@this> List { get; init; }
 
     [IsNotNull]

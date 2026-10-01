@@ -19,4 +19,5 @@ Right — what Left is compared to. Left out for isempty / isnotempty, and when 
 
 - `is` and `isnot` take only a type name; a value after "is" is `==`.
 - There is no istrue, isfalse, isnull or isnotnull.
+- `if '<file>' exists` / `when <file> is there`: a file-existence test asks file.exists first and tests its result — `file.exists(Path='<file>'); condition.if(Left=%!data%) { … }`. A quoted file name on its own is text (always true); never `condition.if(Left='file.json')`.
 - `if A and B`: one condition.if cannot hold both. Compare each side with condition.compare, keep each result with variable.set, then one condition.if over the two with Operator `"and"` (or `"or"`).

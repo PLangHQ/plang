@@ -156,7 +156,7 @@ against this. (Sources per part: see the fact-ownership table above.)
 
 ```markdown
 # File Module
-Read, write, copy, move, delete, and list files through the configured filesystem abstraction. A `%!x.setting%` is a setting, never a file: `save %!llm.setting%` saves a setting, which is the setting module.
+Read, write, copy, move, delete, list, and check whether files exist through the configured filesystem abstraction. A `%!x.setting%` is a setting, never a file: `save %!llm.setting%` saves a setting, which is the setting module.
 
 ## Paths can be URLs
 
@@ -260,9 +260,10 @@ Read a file's content; optionally resolve %var% patterns in the text before retu
 **Returns:** the file's content. A JSON file is navigable; it is parsed when first navigated.
 
 ## exists
-Check whether a file or directory exists at Path and return file info
+Check whether a file or directory exists at Path — what "if '<file>' exists" or "when the file is there" asks — returning the path, whose truthiness is its existence, to feed a condition
 
 - check if file.txt exists, write to %fileInfo%
+- if 'list.json' exists, write out "there"
 
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
