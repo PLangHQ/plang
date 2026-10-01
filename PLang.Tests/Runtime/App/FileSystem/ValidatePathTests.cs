@@ -95,6 +95,43 @@ public class ValidatePathTests
         await Assert.That(resolved).IsEqualTo(System.IO.Path.Join(root, uppered));
     }
 
+    // A system folder of the runtime's own (os/system/<folder>), made for one test and removed after it
+    private static string SystemFolder(global::app.@this app, out string folder)
+    {
+        folder = "vp-" + System.Guid.NewGuid().ToString("N")[..8];
+        var at = System.IO.Path.Join(app.OsAbsolutePath, "system", folder);
+        System.IO.Directory.CreateDirectory(at);
+        return at;
+    }
+
+    // A new file (not there yet) in a system folder: it goes where its folder is — the runtime's
+    // os/system/<folder>, which exists, not the app's system/<folder>, which doesn't (PlangOS writing its shell)
+    [Test] public async Task NewFileInSystemFolder_GoesToTheSystemFolder()
+    {
+        var app = NewApp(out _);
+        var system = SystemFolder(app, out var folder);
+        try
+        {
+            var resolved = global::app.type.item.path.file.@this.ValidatePath($"/system/{folder}/new.md", app);
+            await Assert.That(resolved).IsEqualTo(System.IO.Path.GetFullPath(System.IO.Path.Join(system, "new.md")));
+        }
+        finally { System.IO.Directory.Delete(system, true); }
+    }
+
+    // …unless the app has that folder itself: then it is the app's own override
+    [Test] public async Task NewFileInSystemFolder_TheAppHasThatFolder_GoesToTheApp()
+    {
+        var app = NewApp(out var root);
+        var system = SystemFolder(app, out var folder);
+        try
+        {
+            System.IO.Directory.CreateDirectory(System.IO.Path.Combine(root, "system", folder));
+            var resolved = global::app.type.item.path.file.@this.ValidatePath($"/system/{folder}/new.md", app);
+            await Assert.That(resolved.StartsWith(root)).IsTrue();
+        }
+        finally { System.IO.Directory.Delete(system, true); }
+    }
+
     [Test] public async Task InRootAbsolute_LeftAlone()
     {
         var app = NewApp(out var root);
