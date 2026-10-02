@@ -11,6 +11,9 @@ public enum Kind
     Use,
     /// <summary>Which action of a module the step calls — a choice over <see cref="@this.Option"/>.</summary>
     Action,
+    /// <summary>Which value an action's option takes, as the step's words say — a choice over
+    /// <see cref="@this.Values"/>, about <see cref="@this.Property"/> of <see cref="@this.Action"/>.</summary>
+    Option,
 }
 
 /// <summary>
@@ -35,4 +38,22 @@ public sealed class @this
 
     /// <summary>The options of a choice (<see cref="Kind.Popular"/>, <see cref="Kind.Action"/>) — catalogue actions.</summary>
     public IReadOnlyList<global::app.goal.step.action.@this> Option { get; init; } = [];
+
+    /// <summary>The catalogue action whose option an <see cref="Kind.Option"/> question asks about.</summary>
+    public global::app.goal.step.action.@this? Action { get; init; }
+
+    /// <summary>The option an <see cref="Kind.Option"/> question asks about — a property of <see cref="Action"/>
+    /// whose notes line carries <c>ask:</c>.</summary>
+    public global::app.type.property.@this? Property { get; init; }
+
+    /// <summary>What "none" answers: the option left out.</summary>
+    public const string None = "none";
+
+    /// <summary>What an <see cref="Kind.Option"/> question offers: the option's own values, then <see cref="None"/> —
+    /// always a choice. Empty for any other question.</summary>
+    public IReadOnlyList<string> Values => Property?.Type.Values is { } own ? [.. own, None] : [];
+
+    /// <summary>The words the option's notes line asks it in (<c>ask:</c>); null for any other question.</summary>
+    public global::app.type.item.text.@this? Ask
+        => Property == null ? null : Action?.Note.Line.FirstOrDefault(line => line.Name?.ToString() == Property.Name)?.Ask;
 }

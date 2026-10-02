@@ -92,20 +92,22 @@ public sealed class @this : global::app.type.item.@this
         return parent.Success ? await base.Get(parent, key) : parent;
     }
 
-    // A line outside a fence: `Name — …` is a named line, its prose running to the first tag; `say:` and `builder:`
-    // tags follow, each after " · ". A part after " · " that is no tag stays in the prose. Anything else is a free line.
+    // A line outside a fence: `Name — …` is a named line, its prose running to the first tag; `say:`, `builder:` and
+    // `ask:` tags follow, each after " · ". A part after " · " that is no tag stays in the prose. Anything else is a
+    // free line.
     private line.@this Read(string text)
     {
         if (Named.Match(text) is not { Success: true } named) return new line.@this(new global::app.type.item.text.@this(text));
         var part = named.Groups[2].Value.Split(Tag);
         var prose = part[0];
-        global::app.type.item.text.@this? say = null, builder = null;
+        global::app.type.item.text.@this? say = null, builder = null, ask = null;
         foreach (var tag in part.Skip(1))
         {
             if (tag.StartsWith("say:", System.StringComparison.Ordinal)) say = new(tag["say:".Length..].Trim());
             else if (tag.StartsWith("builder:", System.StringComparison.Ordinal)) builder = new(tag["builder:".Length..].Trim());
+            else if (tag.StartsWith("ask:", System.StringComparison.Ordinal)) ask = new(tag["ask:".Length..].Trim());
             else prose += Tag + tag;
         }
-        return new line.@this(new global::app.type.item.text.@this(named.Groups[1].Value), new global::app.type.item.text.@this(prose), say, builder);
+        return new line.@this(new global::app.type.item.text.@this(named.Groups[1].Value), new global::app.type.item.text.@this(prose), say, builder, ask);
     }
 }

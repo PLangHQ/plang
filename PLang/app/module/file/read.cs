@@ -15,13 +15,11 @@ public partial class Read : IContext
     /// it is read as written.</summary>
     public partial data.@this<global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>>? Template { get; init; }
 
-    public Task<data.@this> Start() => Path.Use(async path =>
-    {
-        // none given reads as written; a template named that is none of the kinds is its own refusal
-        var given = Template == null ? null : await Template.Given();
-        if (given is { Success: false }) return given;
-        return await path.Read(Context, given == null ? null : (await Template!.Value())?.Value);
-    });
+    // none given reads as written; one given is opened once and its kind handed to the read — a name that is none of
+    // the kinds is the choice's own refusal
+    public Task<data.@this> Start() => Path.Use(path => Template is not { IsInitialized: true }
+        ? path.Read(Context)
+        : Template.Use(kind => path.Read(Context, kind.Value)));
 
     /// <summary>A literal path's reference type, for the step that captures it — and a warning when it isn't
     /// there now; a path holding a variable is known only at run.</summary>

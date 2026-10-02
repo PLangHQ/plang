@@ -32,15 +32,21 @@ public sealed class @this : global::app.type.item.@this
     [global::app.Out]
     public text? Builder { get; }
 
+    /// <summary>What the decider is asked about it, when its action may be the step's (<c>· ask:</c>) — an option the
+    /// step's words choose; null when the line asks nothing.</summary>
+    [global::app.Out]
+    public text? Ask { get; }
+
     /// <summary>A free line: its characters, as written.</summary>
     public @this(text prose) { Prose = prose; }
 
     /// <summary>A named line.</summary>
-    public @this(text name, text prose, text? say, text? builder)
+    public @this(text name, text prose, text? say, text? builder, text? ask = null)
     {
         Name = name;
         Prose = prose;
         Say = say;
         Builder = builder;
+        Ask = ask;
     }
 }

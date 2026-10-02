@@ -38,6 +38,7 @@ public sealed class @this
     private readonly Dictionary<string, number?> _also = new();                          // stage 2: module → does the step use it
     private readonly Dictionary<string, number?> _branch = new();                        // stage 2: branch → yes/no
     private Dictionary<string, number?>? _popular;                                       // stage 2: popular action → share; null when not asked
+    private readonly Dictionary<string, string?> _option = new();                        // stage 2: module.action.Option → the value chosen
 
     private List<pick.@this> _items = new();
     private List<question.@this> _question = new();
@@ -187,12 +188,13 @@ public sealed class @this
             if (id == "@module") await Share(a, context, _module);
             else if (id == "@popular") await Share(a, context, _popular = new());
             else if (id.StartsWith("@also.", StringComparison.Ordinal)) _also[id["@also.".Length..]] = noul;
+            else if (id.StartsWith(OptionKey, StringComparison.Ordinal)) _option[id[OptionKey.Length..]] = await Choice(a, context);
             else if (Branch(context).Any(b => $"{b.Module.Name}.{b.Name}" == id)) _branch[id] = noul;
             else if (id.Contains('.')) _named[id] = noul;
             else _choice[id] = (await Choice(a, context), a.Get<number>("confidence", context));
         }
         _items = Picks(context);
-        _question = Questions(popular, context);
+        _question = await Questions(popular, context);
         _moduleAsked = Asked(context).Select(m => _modules[m]).ToList();
         IsCondition = Tests;
         IsUnsure = Unsure(context);
@@ -348,10 +350,18 @@ public sealed class @this
     }
 
     // One action as the pre-fill starts it: its required properties by name alone — a slot still to fill, nothing
-    // the LLM could copy as a value. An optional property gets no slot — it is the LLM's to add when the step
-    // names it (a Recovery, a Parameter, a RetryCount), as the examples teach.
-    private static string Call(global::app.goal.step.action.@this action)
-        => $"{action.Module.Name}.{action.Name}({string.Join(", ", action.Property.Where(p => p.Required).Select(p => p.Name))})";
+    // the LLM could copy as a value — then each option the decider chose a value of (`Template=plang`; "none" leaves
+    // it out). Any other optional property gets no slot — it is the LLM's to add when the step names it (a Recovery,
+    // a Parameter, a RetryCount), as the examples teach.
+    private string Call(global::app.goal.step.action.@this action)
+    {
+        var given = action.Property.Where(p => p.Required).Select(p => p.Name).ToList();
+        var asked = $"{action.Module.Name}.{action.Name}.";
+        foreach (var (key, chosen) in _option)
+            if (key.StartsWith(asked, StringComparison.Ordinal) && chosen is { Length: > 0 } value && value != question.@this.None)
+                given.Add($"{key[asked.Length..]}={value}");
+        return $"{action.Module.Name}.{action.Name}({string.Join(", ", given)})";
+    }
 
     private global::app.goal.step.action.@this? Catalog(string name, global::app.actor.context.@this context)
     {
@@ -456,7 +466,10 @@ public sealed class @this
 
     // ---------------------------------------------------------------- stage 2's questions
 
-    private List<question.@this> Questions(IEnumerable<string> popular, global::app.actor.context.@this context)
+    // An option question's id: @option.{module}.{action}.{option} — apart from a common action's ({module}.{action}).
+    private const string OptionKey = "@option.";
+
+    private async Task<List<question.@this>> Questions(IEnumerable<string> popular, global::app.actor.context.@this context)
     {
         var questions = new List<question.@this>();
         if (Unsure(context))
@@ -480,6 +493,23 @@ public sealed class @this
                 Id = Key(m), Kind = Kind.Action, Module = module,
                 Option = module.ActionNames.OrderBy(a => a, StringComparer.Ordinal).Select(a => module[a]!).ToList(),
             });
+        }
+        // the options whose notes ask: of each action certain from stage 1, and of every action of each module asked
+        // its action here (a one-action module's one) — answered beside it; the starting line uses an answer only
+        // when its action ends up certain
+        var actions = _items.Where(p => p.Score is { } s && s >= (number)Near).Select(p => Catalog(p.Name, context))
+            .Concat(asked.SelectMany(m => _modules[m].ActionNames.Select(a => _modules[m][a])))
+            .Where(a => a != null).Select(a => a!).Distinct();
+        foreach (var action in actions)
+        {
+            await action.Note.Value(context.Ok());
+            foreach (var line in action.Note.Line)
+                if (line is { Ask: not null, Name: { } named } && action[named.ToString()] is { } property)
+                    questions.Add(new question.@this
+                    {
+                        Id = Key($"{OptionKey}{action.Module.Name}.{action.Name}.{property.Name}"), Kind = Kind.Option,
+                        Action = action, Property = property,
+                    });
         }
         return questions;
     }
