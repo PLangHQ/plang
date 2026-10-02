@@ -52,11 +52,19 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
     /// rebinds the variable. A root that holds nothing becomes an empty dict when a member or key is
     /// written into it; a <c>!</c> name written straight on the root needs the variable to exist. A node on
     /// the way that holds nothing leaves the write nowhere to land: an error naming that node, never a
-    /// quiet success.</summary>
+    /// quiet success. A value that holds variables is written as it reads now, as a root's is (the store settles
+    /// it): a template renders here, a reference writes what it names, a name it can't read fails the write.</summary>
     public async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(object? value, global::app.actor.context.@this context)
     {
         var hops = Items().ToList();
         if (hops.Count == 1) return await Root.Set(null, value, context);
+
+        if (value is global::app.data.@this given && given.HasVariable)
+        {
+            var settled = await given.Settle();
+            if (!settled.Success) return settled;
+            value = settled;
+        }
 
         var parent = hops is [_, Property { IsBinding: true }]
             ? await Root.Start(null, context)

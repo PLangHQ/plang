@@ -4,7 +4,8 @@ namespace PLang.Tests.App.Goals;
 
 /// <summary>
 /// A template a list action is given renders where it is written — at the add — as a set renders its value:
-/// `add "%lesson.examples%/%rel%" to list %exampleFiles%` holds the path, never the template.
+/// `add "%lesson.examples%/%rel%" to list %exampleFiles%` holds the path, never the template; so does a dict's key
+/// set to one (`set %files.k% = "%lesson.examples%/%rel%"`).
 /// </summary>
 public class ListTemplateTests
 {
@@ -40,6 +41,23 @@ public class ListTemplateTests
 
         var files = (global::app.type.item.list.@this)(await (await Ctx.Variable.Get("exampleFiles")).Value())!;
         await Assert.That((await files.Items(Ctx).Single().Value())?.ToString()).IsEqualTo("/lessons/one/a.md");
+    }
+
+    [Test]
+    public async Task AMemberSetToATemplate_RendersAtTheSet()
+    {
+        await Ctx.Variable.Set("files", new Dictionary<string, object?>());
+        await Ctx.Variable.Set("lesson", new Dictionary<string, object?> { ["examples"] = "/lessons/one" });
+        await Ctx.Variable.Set("rel", "a.md");
+
+        var set = Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "%files.k%", "variable"),
+            Make.Param(Ctx, "Value", "%lesson.examples%/%rel%", new global::app.type.@this("item", template: new global::app.type.item.template.kind.plang.@this())));
+        await (await Run(Make.Step("set the key", set))).IsSuccess();
+        // what it was written with changes after: the dict keeps what was set
+        await Ctx.Variable.Set("rel", "b.md");
+
+        var files = (global::app.type.item.dict.@this)(await (await Ctx.Variable.Get("files")).Value())!;
+        await Assert.That((await (await files.Get(await Ctx.Variable.Get("files"), "k")).Value())?.ToString()).IsEqualTo("/lessons/one/a.md");
     }
 
     [Test]
