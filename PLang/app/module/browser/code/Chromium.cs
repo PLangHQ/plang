@@ -252,7 +252,7 @@ public sealed partial class Chromium : IBrowser
     private static async Task<(FilePath? folder, data.@this? refused)> Profile(actor.context.@this context)
     {
         var folder = FilePath.Resolve(Profiled, context);
-        var allowed = await folder.Authorize(Verb.Write, context);
+        var allowed = await folder.Authorize(Verb.write, context);
         return allowed.Success && !allowed.Exits ? (folder, null) : (null, allowed);
     }
 
