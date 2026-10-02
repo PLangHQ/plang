@@ -84,7 +84,7 @@ public class KeepsItsKeyTests : System.IAsyncDisposable
     [Test] public async Task ATemplatePathToAnUnknownScheme_ReadsAsSchemeNotRegistered()
     {
         await Ctx.Variable.Set("where", Ctx.Ok("s3://bucket"));
-        var path = Make.Built(Ctx, "p", "%where%/x", new global::app.type.@this("path", template: "plang"));
+        var path = Make.Built(Ctx, "p", "%where%/x", new global::app.type.@this("path", template: new global::app.type.item.template.kind.plang.@this()));
 
         await path.Value();
 

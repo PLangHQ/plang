@@ -188,7 +188,7 @@ public class FileHandlerTests : IDisposable
         var file = result.Peek() as global::app.type.item.file.@this;
         await Assert.That(file).IsNotNull();
         await Assert.That(file!.IsLoaded).IsFalse();
-        await Assert.That(result.Type.Template).IsEqualTo("plang");
+        await Assert.That(result.Type.Template?.Name).IsEqualTo("plang");
         // what the content holds is known once it is read — nothing is read yet
         await Assert.That(result.HasVariable).IsFalse();
     }

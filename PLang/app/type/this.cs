@@ -45,7 +45,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         writer.Name("name"); writer.String(Name);
         if (!kind.IsEmpty) { writer.Name("kind"); writer.String(kind.Name); }
         if (Strict) { writer.Name("strict"); writer.Bool(true); }
-        if (!string.IsNullOrEmpty(Template)) { writer.Name("template"); writer.String(Template!); }
+        if (Template != null) { writer.Name("template"); writer.String(Template.Name); }
         writer.EndObject();
     }
 
@@ -124,14 +124,14 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public bool Strict { get; init; }
 
     /// <summary>
-    /// Template mark ("plang") — set by the BUILD when the value is a developer-authored <c>%ref%</c>
-    /// template, carried in the <c>.pr</c>, and by a read that asks for its content's variables to be
-    /// filled (<c>read … load vars</c>). Never inferred from content (a runtime-ingested string that
-    /// happens to contain <c>%x%</c> is data). The mark says "may hold variables"; which ones it holds is
+    /// The kind of template the value is (<c>plang</c>) — set by the BUILD when the value is a developer-authored
+    /// <c>%ref%</c> template, carried in the <c>.pr</c> as the kind's name, and by a read that asks for its
+    /// content's variables to be filled (<c>read … load vars</c>). Never inferred from content (a runtime-ingested
+    /// string that happens to contain <c>%x%</c> is data). It says "may hold variables"; which ones it holds is
     /// decided at the value's birth by whose bytes these are (<see cref="global::app.type.item.source"/>).
     /// Null = a plain value. Mirrors <c>global::app.type.item.text.@this.Template</c>.
     /// </summary>
-    public string? Template { get; init; }
+    public global::app.type.item.template.kind.@this? Template { get; init; }
 
     /// <summary>
     /// Catalog teaching for the <c>type</c> entry — the LLM-facing description
@@ -161,7 +161,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     [JsonConstructor]
     /// <summary>A type object holds an already-canonical name — <c>app.Type[name]</c> is the one door
     /// that turns a spelled name (<c>string</c>, <c>int</c>) into its canonical type.</summary>
-    public @this(string name, string? kind = null, bool strict = false, string? template = null)
+    public @this(string name, string? kind = null, bool strict = false, global::app.type.item.template.kind.@this? template = null)
     {
         Name = name.ToLowerInvariant();
         _kind = string.IsNullOrEmpty(kind) ? new global::app.type.kind.empty.@this(Name) : new global::app.type.kind.@this(kind);
@@ -642,7 +642,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>A type born knowing its C# class — the registry's entries and the full types it
     /// builds for an identity.</summary>
-    internal @this(string name, System.Type? clrType, string? kind = null, bool strict = false, string? template = null)
+    internal @this(string name, System.Type? clrType, string? kind = null, bool strict = false, global::app.type.item.template.kind.@this? template = null)
         : this(name, kind, strict, template)
     {
         _clrType = clrType;
@@ -651,7 +651,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
     /// <summary>A kinded type of <paramref name="family"/> ({text, md}, {choice, operator}): born holding the family
     /// entry, whose facts it reads; its class is the one <paramref name="kind"/> makes of the family's.</summary>
-    internal @this(@this family, global::app.type.kind.@this? kind, bool strict, string? template)
+    internal @this(@this family, global::app.type.kind.@this? kind, bool strict, global::app.type.item.template.kind.@this? template)
         : this(family.Name, kind != null ? kind.Of(family.ClrType) : family.ClrType, kind?.Name, strict, template)
     {
         _family = family;

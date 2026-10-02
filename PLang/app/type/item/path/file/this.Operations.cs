@@ -56,7 +56,7 @@ public sealed partial class @this
         if (info.IsFile == false)
             return await context.App.type.list["directory"].Create(this, context, "directory");
         // born with its template: the file type makes the reference from this path, as it declares
-        return await context.App.type.list[new global::app.type.@this("file", (string?)null, template: template?.Name), context]
+        return await context.App.type.list[new global::app.type.@this("file", (string?)null, template: template), context]
             .Create(this, context, FileName);
     }
 

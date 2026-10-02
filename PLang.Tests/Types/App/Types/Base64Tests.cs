@@ -66,7 +66,7 @@ public class Base64Tests : System.IAsyncDisposable
         var ctx = app.actor.list.User.Context;
         var given = ctx.Ok(new text("hello"));
         await ctx.Variable.Set("b64", base64.Create(new text("hello"), given.Type, given));
-        var line = new global::app.data.@this("line", new text("pcm:%b64%", "plang"), context: ctx);
+        var line = new global::app.data.@this("line", new text("pcm:%b64%", new global::app.type.item.template.kind.plang.@this()), context: ctx);
         await Assert.That((await line.Value())?.ToString()).IsEqualTo("pcm:aGVsbG8=");
     }
 

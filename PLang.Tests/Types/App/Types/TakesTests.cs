@@ -21,31 +21,31 @@ public class TakesTests : System.IAsyncDisposable
 
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await app.DisposeAsync();
 
-    private global::app.type.@this Declared(string name, string? kind = null, string? template = null)
+    private global::app.type.@this Declared(string name, string? kind = null, global::app.type.item.template.kind.@this? template = null)
         => app.type.list[new global::app.type.@this(name, kind, template: template), Ctx];
 
     [Test] public async Task AUrlMadeFromAPath_IsBornWithTheDeclaredTemplate()
     {
         var address = PathValue.Resolve("https://example.com/t.txt", Ctx);
 
-        var made = Declared("url", template: "plang").Make(address, Ctx);
+        var made = Declared("url", template: new global::app.type.item.template.kind.plang.@this()).Make(address, Ctx);
 
         await Assert.That(made).IsTypeOf<UrlValue>();
         await Assert.That(((UrlValue)made).Path).IsSameReferenceAs(address);
-        await Assert.That(made.Template).IsEqualTo("plang");
+        await Assert.That(made.Template?.Name).IsEqualTo("plang");
     }
 
     // The declaration rides beside the binding: a binding that declares nothing still births a template.
     [Test] public async Task TheDeclaration_ReachesTheBirth_NotTheBinding()
     {
-        var declared = Declared("file", template: "plang");
+        var declared = Declared("file", template: new global::app.type.item.template.kind.plang.@this());
         var binding = new global::app.data.@this("", context: Ctx);
 
         var aFile = FileValue.Create(PathValue.Resolve("some.txt", Ctx), declared, binding);
         var aUrl = UrlValue.Create(PathValue.Resolve("https://example.com/t.txt", Ctx), declared, binding);
 
-        await Assert.That(aFile!.Template).IsEqualTo("plang");
-        await Assert.That(aUrl!.Template).IsEqualTo("plang");
+        await Assert.That(aFile!.Template?.Name).IsEqualTo("plang");
+        await Assert.That(aUrl!.Template?.Name).IsEqualTo("plang");
     }
 
     [Test] public async Task APlainList_DeclaredATypedList_IsTakenAsIt()
@@ -78,8 +78,8 @@ public class TakesTests : System.IAsyncDisposable
         await Ctx.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: Ctx), persist: false);
         await Ctx.Variable.Set("name", "World");
 
-        var aFile = Declared("file", template: "plang").Make(PathValue.Resolve("t.txt", Ctx), Ctx);
-        var aUrl = Declared("url", template: "plang").Make(PathValue.Resolve(address, Ctx), Ctx);
+        var aFile = Declared("file", template: new global::app.type.item.template.kind.plang.@this()).Make(PathValue.Resolve("t.txt", Ctx), Ctx);
+        var aUrl = Declared("url", template: new global::app.type.item.template.kind.plang.@this()).Make(PathValue.Resolve(address, Ctx), Ctx);
 
         var fromFile = await new global::app.data.@this("f", aFile, context: Ctx).Value();
         var fromUrl = await new global::app.data.@this("u", aUrl, context: Ctx).Value();

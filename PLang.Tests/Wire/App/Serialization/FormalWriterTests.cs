@@ -35,7 +35,7 @@ public class FormalWriterTests : System.IAsyncDisposable
         utf8.Read();
         var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
         return (global::app.goal.step.@this)new global::app.goal.step.serializer.Reader(goal)
-            .Read(ref reader, null, new global::app.type.reader.ReadContext(context, "plang", IsBuilt: true));
+            .Read(ref reader, null, new global::app.type.reader.ReadContext(context, new global::app.type.item.template.kind.plang.@this(), IsBuilt: true));
     }
 
     internal static async Task<string> Formal(global::app.goal.step.@this step, global::app.actor.context.@this context)

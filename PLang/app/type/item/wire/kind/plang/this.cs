@@ -70,7 +70,7 @@ public sealed class @this : global::app.type.kind.@this
     /// <paramref name="origin"/> ask nothing of it.</summary>
     public override async System.Threading.Tasks.Task<global::app.data.@this> Decode(byte[] raw,
         global::app.actor.context.@this context, string name = "", global::app.View view = global::app.View.Out,
-        System.Threading.CancellationToken ct = default, string? template = null, global::app.type.item.path.@this? origin = null)
+        System.Threading.CancellationToken ct = default, global::app.type.item.template.kind.@this? template = null, global::app.type.item.path.@this? origin = null)
     {
         try
         {

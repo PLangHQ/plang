@@ -85,7 +85,7 @@ public class PlainReadTests
         await using var _ = app;
         global::app.goal.step.action.@this SetFile(string name)
             => Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", name, "variable"),
-                Make.Param(ctx, "Value", "%!data%", new global::app.type.@this("item", template: "plang")),
+                Make.Param(ctx, "Value", "%!data%", new global::app.type.@this("item", template: new global::app.type.item.template.kind.plang.@this())),
                 Make.Param(ctx, "Type", "file", "type"));
         var goal = await RealGoalLoad.ViaChannel(app, Make.Goal(ctx, "G", "/g.goal",
             Make.Step("set name", Set(ctx, "name", "World")),
@@ -94,9 +94,9 @@ public class PlainReadTests
             Make.Step("read greeting.txt", Make.Action(ctx, "file", "read",
                 Make.Param(ctx, "Path", "greeting.txt", "path")), SetFile("raw")),
             Make.Step("write out %raw%", Make.Action(ctx, "output", "write",
-                Make.Param(ctx, "Data", "%raw%", new global::app.type.@this("item", template: "plang")))),
+                Make.Param(ctx, "Data", "%raw%", new global::app.type.@this("item", template: new global::app.type.item.template.kind.plang.@this())))),
             Make.Step("assert that %raw% does not contain World", Make.Action(ctx, "assert", "notContains",
-                ("Value", "World"), Make.Param(ctx, "Container", "%raw%", new global::app.type.@this("item", template: "plang"))))));
+                ("Value", "World"), Make.Param(ctx, "Container", "%raw%", new global::app.type.@this("item", template: new global::app.type.item.template.kind.plang.@this()))))));
 
         await (await goal.Start(ctx)).IsSuccess();
 

@@ -15,7 +15,7 @@ public class TemplateFlagTests
         var app = new global::app.@this("/t").Testing();
         await app.actor.list.User.Context.Variable.Set("name", "World");
 
-        var flaggedType = new global::app.type.@this("text", template: "plang");
+        var flaggedType = new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this());
         var plainType = new global::app.type.@this("text");
 
         var goal = Make.Goal(app.actor.list.User.Context, "G", "/g.goal",

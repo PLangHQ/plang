@@ -20,6 +20,22 @@ public class TemplateKindTests
         await Assert.That(fluid.Error!.Key).IsEqualTo("ChoiceInvalid");
     }
 
+    // a row's template is its kind, by name: one that names no kind of template is refused at read, saying the kinds
+    [Test] public async Task ARowsTemplate_NamingNoKind_IsRefusedAtRead()
+    {
+        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        var ctx = app.actor.list.User.Context;
+        var row = "{\"name\":\"x\",\"type\":{\"name\":\"text\",\"template\":\"fluid\"},\"value\":\"hi %name%\"}";
+
+        var refused = await Assert.That(async () => await ctx.App.type.list["wire"].kind["plang"]!.Decode(
+            System.Text.Encoding.UTF8.GetBytes(row), ctx, view: global::app.View.Store)).Throws<global::app.error.DeclinedException>();
+        var plang = await ctx.App.type.list["wire"].kind["plang"]!.Decode(System.Text.Encoding.UTF8.GetBytes(row.Replace("fluid", "plang")), ctx,
+            view: global::app.View.Store);
+
+        await Assert.That(refused!.Message).Contains("Valid: plang");
+        await Assert.That(plang.Type.Template?.Name).IsEqualTo("plang");
+    }
+
     [Test] public async Task ATemplateFile_IsTextsFormat_NotTheChoiceSetNamedTemplate()
     {
         await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();

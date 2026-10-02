@@ -110,7 +110,7 @@ public class Stage2_ValueDoorTests : System.IAsyncDisposable
         // A %ref% value rides as a typed `text` (never a bare System.String); the
         // authored seam stamps the %hole% as a template (Template="plang"), which
         // is what marks it a variable reference.
-        var d = new Data("slot", new global::app.type.item.text.@this("%x%", "plang"), context: _app.actor.list.User.Context);
+        var d = new Data("slot", new global::app.type.item.text.@this("%x%", new global::app.type.item.template.kind.plang.@this()), context: _app.actor.list.User.Context);
         await Assert.That(d.Peek() is global::app.type.item.text.@this).IsTrue();
         await Assert.That(d.IsVariable).IsTrue();
     }

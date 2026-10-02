@@ -159,7 +159,7 @@ public class LoadVarsTests
                 Make.Action(ctx, "output", "write",
                     Make.Template(ctx, "Data", "n=%!app.type.list.count% %name%"),
                     ("Nested", new List<object?> { new global::app.data.@this("place", "%!app.type.list.count%",
-                        app.type.list[new global::app.type.@this("text", template: "plang"), ctx], context: ctx) }))));
+                        app.type.list[new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()), ctx], context: ctx) }))));
 
         var loaded = await RealGoalLoad.ViaChannel(app, goal);
         var properties = loaded.Step[0].Code[0].Property;

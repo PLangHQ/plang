@@ -343,7 +343,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// ones written in this text are taken); without it — a template born at build or at run —
     /// the text is parsed.</para>
     /// </summary>
-    public @this(string value, string? template, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
+    public @this(string value, global::app.type.item.template.kind.@this? template, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
     {
         _value = value ?? string.Empty;
         // Container inner slots (list/dict entries) have no per-slot .pr flag; the authored
@@ -372,7 +372,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// the one place bytes become that string (a reader handed raw stream bytes
     /// reaches the text here). <paramref name="template"/> and <paramref name="variable"/> as above.
     /// </summary>
-    public @this(object raw, string? template = null, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
+    public @this(object raw, global::app.type.item.template.kind.@this? template = null, IReadOnlyList<global::app.type.item.variable.@this>? variable = null)
         : this(raw switch
         {
             byte[] b => System.Text.Encoding.UTF8.GetString(b),

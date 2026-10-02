@@ -93,7 +93,7 @@ public class OutsideTextTests
         var (app, root, ctx) = await NewApp();
         await using var _ = app;
         await ctx.Variable.Set("dir", AppVariable);
-        var path = Make.Built(ctx, "Path", "%dir%/x.txt", new global::app.type.@this("path", template: "plang"));
+        var path = Make.Built(ctx, "Path", "%dir%/x.txt", new global::app.type.@this("path", template: new global::app.type.item.template.kind.plang.@this()));
 
         var once = await Opened(path);
         var again = await Opened(new global::app.data.@this("p", once, context: ctx));
@@ -111,7 +111,7 @@ public class OutsideTextTests
         var count = (await (await new global::app.type.item.variable.@this("!app.type.list.count").Start(ctx)).Value()).ToString();
         var goal = await RealGoalLoad.ViaChannel(app, Make.Goal(ctx, "G", "/g.goal",
             Make.Step("save", Make.Action(ctx, "file", "save",
-                Make.Param(ctx, "Path", "/.build/traces/" + AppVariable + "/manifest.json", new global::app.type.@this("path", template: "plang"))))));
+                Make.Param(ctx, "Path", "/.build/traces/" + AppVariable + "/manifest.json", new global::app.type.@this("path", template: new global::app.type.item.template.kind.plang.@this()))))));
 
         var path = await Opened(goal.Step[0].Code[0].Property["Path"]!.Data(ctx));
 
@@ -136,7 +136,7 @@ public class OutsideTextTests
     {
         var goal = await RealGoalLoad.ViaChannel(app, Make.Goal(ctx, "G", "/g.goal",
             Make.Step("read", Make.Action(ctx, "file", "read",
-                Make.Param(ctx, "Path", path, new global::app.type.@this("path", template: "plang"))))));
+                Make.Param(ctx, "Path", path, new global::app.type.@this("path", template: new global::app.type.item.template.kind.plang.@this()))))));
         return await goal.Step[0].Code[0].Start(ctx);
     }
 }

@@ -21,7 +21,7 @@ public class SystemShortcutTests
 
     private global::app.goal.step.action.@this Set(string name, string value)
         => Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", name, "variable"),
-            Make.Param(Ctx, "Value", value, new global::app.type.@this("item", template: "plang")));
+            Make.Param(Ctx, "Value", value, new global::app.type.@this("item", template: new global::app.type.item.template.kind.plang.@this())));
 
     private async Task<global::app.goal.@this> Load(string name, params Make.StepDef[] steps)
     {
