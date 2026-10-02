@@ -407,4 +407,22 @@ raw `.pr` held `"/bin/sh"` in the failing runs and `//bin/sh` in 4 on b517c9e61 
 writer-side. The 10-build drop-rate measurement needs the terminal module, not on app-systems —
 blocked here; runs on plang-os-stable or once terminal merges.
 
+## `formal.Writer` follow-up (coder 4af605b25) — regression check: nothing dropped
+
+The coder's follow-up (offers are items via `formal.Writer`; Find and Offers share one walk) changes one
+byte the writer sees: a chosen choice option rides the starting line **quoted** (`Template="plang"`, was
+`Template=plang`). Re-measured the fixed issues (fresh, cache off, 5 each; hash re-checked with a wider
+grep after the `-A3` window missed the value — no code change, extractor fix only):
+
+| issue | step | result | verdict |
+|---|---|---|---|
+| 25 | `read 'receipt.txt', load vars` | Template present **5/5** | holds |
+| 28 | `hash "…" with sha256` | `Algorithm="sha256"` **5/5** | holds |
+| 2 | `foreach … as %value% with key %field%` | Item+Key **5/5** | holds |
+| 32(b) | educator's `module=%!app.module.<m>%` | Name="Page" on **3/5 built**, 2 flaky NOPR (no mis-map) | holds |
+| 33 | `set %p% = "a.txt" as path` | `Type="path"` **5/5** | holds |
+
+The quoting change is safe — every fixed issue holds. (32(b)'s NOPR is a flaky build-completion issue
+on the educator's nested goal, not a mapping regression; when it builds, the Name is `Page`.)
+
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).
