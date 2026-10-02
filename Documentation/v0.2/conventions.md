@@ -78,3 +78,19 @@ The **actor** is the isolation unit: `Variables`, `Events`, `Channels`, and the 
 **Reach the stack through the context.** Every push/read site has a `context` in scope, so use `context.CallStack` (a read-through to `context.Actor.CallStack`). **Never** reach a callstack via `App.CurrentActor` — that global "current" pointer diverges from the actor whose flow actually pushed the frames (a snapshot taken while `CurrentActor` ≠ the pushing actor captures the wrong, empty stack). `error.list.Push(error, context)` takes the context for exactly this reason. There is no `app.goal.current` — "the executing goal" is a per-actor/per-flow fact read via `%!goal%` (`context.Goal`), not an app-level collection property.
 
 ---
+
+## A Flag Is False By Default
+
+A boolean option is false by default, and true only when something says so. Name it for what the words say when they make it true (`Parallel`, `Default`, `Descending`), never for the opposite with `[Default(true)]`.
+
+**Why:** the builder writes an action's property only when it thinks the step names it. A flag that is false by default is safe: left out, it means exactly what the step said by saying nothing. A flag that is true by default invites the writer to set it false on a step that never mentions it. `- call goal Ble` says nothing about waiting, but a writer that sees `Wait` (default true) may write `Wait=false`. The same holds for any C# or plang code: a missing field, an unread row and `default(bool)` are all false, so false must be the safe answer.
+
+**How to apply:** an action option that is a bool gets `[Default(false)]` (or no default), and its name is the positive thing a step says to turn it on. A negated name (`DontWait`, `NoCache`) glues a negation onto the word; name the behaviour instead. A setting can also be read where nothing is written, so the same rule holds for setting options.
+
+**When the common case is "on", the option is a choice, not a bool.** Keeping empty pieces, copying subfolders and using the cache are what a step means when it says nothing, so a bool for them would be true by default. Flipping the bool to false under the same name makes the name read as the opposite of what it does, and a two-word flag (`DropEmpty`) breaks the verb+noun rule. Instead the option keeps its one noun, and its value carries the verb: `Empty: keep | drop` (`Empty=drop`), with the common case as the default (`[Default(empty.keep)]`). It reads right on its own, and the catalog shows the model every value (`choice<empty> — one of: keep, drop`). Writing the default (`Empty=keep`) on a step that says nothing is harmless, since it means the same as leaving it out. The builder's option question can ask a choice (it offers the option's own values plus "none"), and a bool has no values to offer.
+
+**Still to fix (Ingi, 2026-10-02: choices):** four action options are `[Default(true)]` bools today. Each becomes a choice, and each is visible in plang:
+- `list.split` `Empty` (`module/list/split.cs`) → `Empty: keep | drop`;
+- `file.copy` `Subfolder` (`module/file/copy.cs`) → `Subfolder: include | skip`;
+- `test.discover` `Recursive` (`module/test/discover.cs`) → `Subfolder: include | skip`, the same set as file.copy's;
+- `llm.query` `Cache` (`module/llm/query.cs`) → `Cache: use | skip`.

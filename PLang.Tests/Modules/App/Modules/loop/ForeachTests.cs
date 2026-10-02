@@ -52,8 +52,8 @@ public class ForeachTests
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
-        await Assert.That((long)loopResult!["itemCount"]!).IsEqualTo(0L);
-        await Assert.That((bool)loopResult["completed"]!).IsTrue();
+        await Assert.That((long)loopResult!["count"]!).IsEqualTo(0L);
+        await Assert.That((bool)loopResult["complete"]!).IsTrue();
     }
 
     [Test]
@@ -143,8 +143,8 @@ public class ForeachTests
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
-        await Assert.That((long)loopResult!["itemCount"]!).IsEqualTo(0L);
-        await Assert.That((bool)loopResult["completed"]!).IsTrue();
+        await Assert.That((long)loopResult!["count"]!).IsEqualTo(0L);
+        await Assert.That((bool)loopResult["complete"]!).IsTrue();
     }
 
     [Test]
@@ -163,8 +163,8 @@ public class ForeachTests
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
-        await Assert.That((bool)loopResult!["completed"]!).IsFalse();
-        await Assert.That((long)loopResult["itemCount"]!).IsEqualTo(0L);
+        await Assert.That((bool)loopResult!["complete"]!).IsFalse();
+        await Assert.That((long)loopResult["count"]!).IsEqualTo(0L);
     }
 
     // Replicates the builder's `foreach %plan.steps%` — %plan% is a Data holding a

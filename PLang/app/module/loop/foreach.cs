@@ -35,7 +35,7 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
         // naturally. The null citizen Peeks itself (IsNull), absent Peeks null.
         var collectionValue = await Collection.Value();
         if (collectionValue == null || collectionValue.IsNull || collectionValue.Peek() == null)
-            return await Result(itemCount: 0, completed: true);
+            return await Result(count: 0, complete: true);
 
         var itemVariable = (Item == null ? null : await Item.Value()) ?? new app.type.item.variable.@this("item");
         var keyVariable = Key is { IsInitialized: true } ? await Key.Value() : null;
@@ -52,7 +52,7 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
         foreach (var (key, item) in await Collection.EnumerateItems())
         {
             if (Context.CancellationToken.IsCancellationRequested)
-                return await Result(count, completed: false);
+                return await Result(count, complete: false);
 
             // the element as it is here, in the loop's step, as a set reads a value (a template renders here)
             var settled = await item.Settle();
@@ -73,17 +73,17 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
             count++;
         }
 
-        var loopResult = await Result(count, completed: true);
+        var loopResult = await Result(count, complete: true);
         if (bodyActions.Count > 0)
             loopResult.Handled = true;
         return loopResult;
     }
 
     /// <summary>
-    /// The foreach result, born as a native <c>dict</c> — <c>itemCount</c> (how many items ran) and
-    /// <c>completed</c> (false when cancelled). A plain-data result, so it rides as a dict, not a dedicated type.
+    /// The foreach result, born as a native <c>dict</c> — <c>count</c> (how many items ran) and
+    /// <c>complete</c> (false when cancelled). A plain-data result, so it rides as a dict, not a dedicated type.
     /// </summary>
-    private async Task<data.@this> Result(int itemCount, bool completed)
+    private async Task<data.@this> Result(int count, bool complete)
         => await Context.App.type.list["dict"].Create(
-            new Dictionary<string, object?> { ["itemCount"] = (long)itemCount, ["completed"] = completed }, Context);
+            new Dictionary<string, object?> { ["count"] = (long)count, ["complete"] = complete }, Context);
 }

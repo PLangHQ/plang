@@ -1,0 +1,12 @@
+/ A call in parallel answers a task, and the next step runs before the called goal ends: Slow sleeps, then writes
+/ %order%; the step after the call writes it first, so right after, %order% is the caller's alone. (That the task
+/ then ends with "caller,task" is read through `wait for` in stage 2, and in C# TaskTests.)
+Start
+- goal.call(Name="Slow", Parallel=true); variable.set(Name=%task%, Value=%!data%)
+- variable.set(Name=%order%, Value="caller")
+- assert.equals(Expected="task", Actual=%task!type.name%, Message="a call in parallel answers a task")
+- assert.equals(Expected="caller", Actual=%order%, Message="the next step ran before the called goal ended")
+
+Slow
+- timer.sleep(Ms=1000)
+- variable.set(Name=%order%, Value="%order%,task")

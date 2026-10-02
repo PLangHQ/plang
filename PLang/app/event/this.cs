@@ -6,6 +6,7 @@ namespace app.@event;
 /// (<c>app/event/on/&lt;name&gt;.cs</c>); the item an event fires for is handed to its bindings when it starts,
 /// never kept (one event serves every item of a type).
 /// </summary>
+[global::app.Attributes.PlangType("event")]
 public abstract class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     private protected @this(string name, binding.list.before before, binding.list.after after)
@@ -102,7 +103,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         return result;
     }
 
-    /// <summary>Every event is of the event type (<c>app.event</c>), whichever its class.</summary>
+    /// <summary>Every event is of the event type (<c>event</c>), whichever its class.</summary>
     protected internal override global::app.type.@this Type => new(typeof(@this));
 
     public override string ToString() => Name;

@@ -341,29 +341,23 @@ public sealed class OpenAi : ILlm
                     ToolCalls = toolCalls
                 });
 
-                // Determine parallel execution — each called tool says whether it may run beside
-                // its siblings; the loop runs them together only when all of them may.
-                bool allParallel = true;
-                foreach (var tc in toolCalls)
-                    if (goalTools?.Find(t => t.Name == tc.Name) is not { } tool
-                        || !await tool.Call.Parallel.ToBooleanAsync())
-                        allParallel = false;
+                // The tools are called in order, each as its goal.call says: a plain one runs to its end before
+                // the next is called; a Parallel one answers a task at once and runs on. Each result is made when
+                // its call has ended, and they go back in call order.
+                // a Parallel tool's call answers its task: the result is made once the task has ended
+                async Task<string> Ended(ToolCall tc, data.@this called)
+                    => await Result(action, tc, await called.Use<global::app.task.@this>(task => task.Wait()));
 
-                // Execute tools
-                List<string> results;
-                if (allParallel && toolCalls.Count > 1)
+                var ending = new List<Task<string>>();
+                foreach (var tc in toolCalls)
                 {
-                    var tasks = toolCalls.Select(tc => ExecuteToolAsync(action, tc, goalTools));
-                    results = (await Task.WhenAll(tasks)).ToList();
+                    var called = await Call(action, tc, goalTools);
+                    var parallel = called.Success && goalTools?.Find(t => t.Name == tc.Name) is { } tool
+                        && await tool.Call.Parallel.ToBooleanAsync();
+                    ending.Add(parallel ? Ended(tc, called) : Task.FromResult(await Result(action, tc, called)));
                 }
-                else
-                {
-                    results = new List<string>();
-                    foreach (var tc in toolCalls)
-                    {
-                        results.Add(await ExecuteToolAsync(action, tc, goalTools));
-                    }
-                }
+                var results = new List<string>();
+                foreach (var end in ending) results.Add(await end);
 
                 // Append tool results
                 for (int i = 0; i < toolCalls.Count; i++)
@@ -512,58 +506,51 @@ public sealed class OpenAi : ILlm
 
     // --- Tool execution ---
 
-    private static async Task<string> ExecuteToolAsync(query action, ToolCall toolCall, List<Tool>? tools)
+    // The tool call made: OnToolCall "starting", then the held goal.call with the model's arguments — its answer (a
+    // Parallel call's is its task), or why it couldn't be made (an unknown tool, arguments that don't read).
+    private static async Task<data.@this> Call(query action, ToolCall toolCall, List<Tool>? tools)
     {
         var context = action.Context;
-        var onToolCall = action.OnToolCall == null ? null : await action.OnToolCall.Value();
 
         // OnToolCall — starting. The run-state binds in a frame for the held call (never the caller's own
         // variables: a user's %name% stays theirs); the held call runs as itself.
-        if (onToolCall != null)
+        if (action.OnToolCall != null && await action.OnToolCall.Value() is { } onToolCall)
             await using (context.Variable.Calls.Push(toolCall.State("starting", null, context), onToolCall))
                 await onToolCall.Start(context);
 
+        if (tools?.Find(t => t.Name == toolCall.Name) is not { } tool)
+            return context.Error(new ServiceError($"unknown tool '{toolCall.Name}'", "UnknownTool", 404));
+
+        // The model's arguments are what this invocation supplies: the held call runs inside a
+        // frame born with them, FOR it — its declaration rows bind nothing, its valued rows are
+        // defaults that yield to a supplied name, and a parallel sibling sees its own frame (a task
+        // keeps the frame it was started in).
+        var parameters = tool.Arguments(toolCall.Arguments, context);
+        if (parameters.Find(p => !p.Success) is { } unread) return unread;
+        await using (context.Variable.Calls.Isolate(parameters, tool.Held))
+            return await tool.Held.Start(context);
+    }
+
+    // What goes back to the model for an ended tool call: its result as json ("" for none), or "Error: " and why;
+    // then OnToolCall "completed".
+    private static async Task<string> Result(query action, ToolCall toolCall, data.@this ended)
+    {
+        var context = action.Context;
         string result;
-        var tool = tools?.Find(t => t.Name == toolCall.Name);
-        if (tool == null)
-        {
-            result = $"Error: unknown tool '{toolCall.Name}'";
-        }
+        if (!ended.Success)
+            result = "Error: " + (ended.Error?.Message ?? "Unknown error");
+        else if (ended.Peek().IsNull)
+            result = "";
         else
         {
-            // The model's arguments are what this invocation supplies: the held call runs inside a
-            // frame born with them, FOR it — its declaration rows bind nothing, its valued rows are
-            // defaults that yield to a supplied name, and a parallel sibling sees its own frame.
-            var parameters = tool.Arguments(toolCall.Arguments, context);
-            var parseError = parameters.Find(p => !p.Success);
-            if (parseError != null)
-            {
-                result = "Error: " + (parseError.Error?.Message ?? "Failed to parse tool arguments");
-            }
-            else
-            {
-                data.@this goalResult;
-                await using (context.Variable.Calls.Isolate(parameters, tool.Held))
-                    goalResult = await tool.Held.Start(context);
-
-                if (goalResult.Success)
-                {
-                    if (goalResult.Peek().IsNull) result = "";
-                    else
-                    {
-                        // The tool result writes ITSELF as json — never STJ on the item (property bag).
-                        using var ms = new System.IO.MemoryStream();
-                        await context.App.type.list["item"].kind["json"]!.Encode(ms, goalResult, context);
-                        result = System.Text.Encoding.UTF8.GetString(ms.ToArray());
-                    }
-                }
-                else
-                    result = "Error: " + (goalResult.Error?.Message ?? "Unknown error");
-            }
+            // The tool result writes ITSELF as json — never STJ on the item (property bag).
+            using var ms = new System.IO.MemoryStream();
+            await context.App.type.list["item"].kind["json"]!.Encode(ms, ended, context);
+            result = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         }
 
         // OnToolCall — completed
-        if (onToolCall != null)
+        if (action.OnToolCall != null && await action.OnToolCall.Value() is { } onToolCall)
             await using (context.Variable.Calls.Push(toolCall.State("completed", result, context), onToolCall))
                 await onToolCall.Start(context);
 
@@ -967,36 +954,27 @@ public sealed class OpenAi : ILlm
         /// doesn't declare is never bound (the frame is read before the caller's memory, so an undeclared
         /// name would shadow the caller's own variable): it answers the model as an error, like invalid JSON.
         /// A declared row with a value is a default the held call binds itself where the model was silent.
+        /// The arguments are json, opened by the json kind: each member is born the plang value it is (text, a
+        /// number, a bool, null, or a json value navigated by its keys); json that doesn't read, or a value that
+        /// isn't an object of named members, answers the model as an error.
         /// </summary>
         public List<data.@this> Arguments(string json, actor.context.@this context)
         {
             var arguments = new List<data.@this>();
             if (string.IsNullOrEmpty(json)) return arguments;
-            try
+            var opened = context.App.type.list["item"].kind["json"]!.Open(json, context)!;
+            if (!opened.Success) return [opened];
+            if (opened.Peek() is not { IsSequence: false, IsLeaf: false } members)
+                return [context.Error(new ServiceError($"the arguments of {Name} are not an object of named arguments", "ArgumentsNotAnObject", 400))];
+
+            var declared = Declared.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var (_, argument) in members.EnumerateItems(context))
             {
-                using var doc = JsonDocument.Parse(json);
-                var declared = Declared.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                foreach (var prop in doc.RootElement.EnumerateObject())
-                {
-                    if (!declared.Contains(prop.Name))
-                        return [context.Error(new ServiceError(
-                            $"'{prop.Name}' is not an argument of {Name}" + (declared.Count == 0 ? " — it takes none" : $" — it takes {string.Join(", ", declared)}"),
-                            "UnknownArgument", 400))];
-                    object? value = prop.Value.ValueKind switch
-                    {
-                        JsonValueKind.String => prop.Value.GetString(),
-                        JsonValueKind.Number => global::app.type.item.number.@this.Parse(prop.Value.GetRawText()),
-                        JsonValueKind.True => true,
-                        JsonValueKind.False => false,
-                        JsonValueKind.Null => null,
-                        _ => prop.Value.GetRawText()
-                    };
-                    arguments.Add(new data.@this(prop.Name, value, context: context));
-                }
-            }
-            catch (JsonException ex)
-            {
-                return [context.Error(ActionError.FromException(ex, "JsonParseError", 400))];
+                if (!declared.Contains(argument.Name))
+                    return [context.Error(new ServiceError(
+                        $"'{argument.Name}' is not an argument of {Name}" + (declared.Count == 0 ? " — it takes none" : $" — it takes {string.Join(", ", declared)}"),
+                        "UnknownArgument", 400))];
+                arguments.Add(argument);
             }
             return arguments;
         }

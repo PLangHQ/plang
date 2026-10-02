@@ -74,7 +74,7 @@ public class ExecuteVerbTests
         await Assert.That(canned.Prompts[0]).Contains("execute");
     }
 
-    [Test] public async Task ReadGrant_DoesNotCoverExecute()
+    [Test] public async Task ReadGrant_DoesNotAllowExecute()
     {
         var app = NewApp(out var root);
         var p = new FilePath(System.IO.Path.Combine(System.IO.Path.GetTempPath(),

@@ -45,7 +45,7 @@ public class ForeachStringNotIterableTests
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
-        await Assert.That((long)loopResult!["itemCount"]!).IsEqualTo(1L);
+        await Assert.That((long)loopResult!["count"]!).IsEqualTo(1L);
     }
 
     // Body sees the WHOLE string in %item%, not the first char.
@@ -93,7 +93,7 @@ public class ForeachStringNotIterableTests
 
         await result.IsSuccess();
         var loopResult = Lower<Dictionary<string, object?>>(await result.Value());
-        await Assert.That((long)loopResult!["itemCount"]!).IsEqualTo(1L);
+        await Assert.That((long)loopResult!["count"]!).IsEqualTo(1L);
         await Assert.That((await context.Variable.GetValue("seen"))).IsEqualTo(42);
     }
 }

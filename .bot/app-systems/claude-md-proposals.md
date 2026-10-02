@@ -151,3 +151,11 @@ The value slot is built via `data.Normalize(View) → IWriter`, so a new domain 
 - - **Missing data** → minor C# change to expose what the builder needs
 + - **Missing data** → the change in a module's C#; in core, ask the coder through the architect
 ```
+
+## architect — v5 — 2026-10-02
+**Target:** CLAUDE.md, a new bullet at the end of "Runtime2 Conventions"
+**Why:** Ingi (2026-10-02, on goal.call's `Wait`): a default-true flag invites the builder to write it false on a step that never mentions it (`- call goal Ble` → `Wait=false`); a default-false flag is safe, since left out it means what the step said by saying nothing. He asked that it reach everybody writing C# or plang code. Five action options break it today (listed in `Documentation/v0.2/conventions.md` "A Flag Is False By Default").
+**Proposed change:**
+```
++ - **A flag is false by default.** A bool option (action or setting) is `[Default(false)]` and named for what the words say to turn it on (`Parallel`, `Descending`) — never the opposite with `[Default(true)]`, never a negated name (`DontWait`). The builder writes a property only when it thinks the step names it, so a default-false flag left out means what the step said; a default-true one invites a false the step never said. When the common case is "on" (keep empty pieces, use the cache), the option is a choice whose values name both behaviours, the common one the default (`Empty: keep | drop`, `Empty=drop`) — never a default-true bool, never a two-word flag (`DropEmpty`). Full rule: `Documentation/v0.2/conventions.md` "A Flag Is False By Default".
+```

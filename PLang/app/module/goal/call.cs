@@ -26,15 +26,11 @@ public partial class Call : IContext
     /// </summary>
     public partial data.@this<global::app.type.item.choice.@this<actor.Name>>? Actor { get; init; }
 
-    /// <summary>Safe to run beside its siblings — a fact about this call. How many run at once is
-    /// the runner's decision (e.g. llm.query's tool loop).</summary>
+    /// <summary>Runs on its own (<c>call X in parallel</c>): the call answers a <c>task</c> at once and the step goes
+    /// on; the task is waited for, cancelled or left alone later. A failure nobody waits for goes to its actor's error
+    /// channel.</summary>
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Parallel { get; init; }
-
-    /// <summary>Whether the step waits for the goal to end (<c>call X, don't wait</c> is false): not waiting, the goal
-    /// runs on its own and the step goes on at once; what it fails with is reported on its actor's error channel.</summary>
-    [Default(true)]
-    public partial data.@this<global::app.type.item.@bool.@this> Wait { get; init; }
 
     /// <summary>
     /// Build-time: the name becomes the goal's own address — one truth, a dictionary hit at run. A %variable%
@@ -60,23 +56,11 @@ public partial class Call : IContext
         // selects here, in the caller's context.
         if (await Name.Value() is not { } goal) return Name;
 
-        // the actor named runs it; none named, this one
-        if (await Wait.ToBooleanAsync())
-            return await Context.App.actor.list.Use(Actor, Context, runner => Run(goal, runner.Context));
-
-        // not waited for: it runs on its own, and a failure nothing waits for goes to its actor's error channel
-        var context = Context;
-        _ = Task.Run(async () =>
-        {
-            data.@this ran;
-            try { ran = await context.App.actor.list.Use(Actor, context, runner => Run(goal, runner.Context)); }
-            catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
-            {
-                ran = context.Error(global::app.error.Error.FromException(ex));
-            }
-            if (!ran.Success) await (ran.Context ?? context).Actor.Channel.Report(ran);
-        });
-        return Context.Ok();
+        // the actor named runs it; none named, this one — to its end, or in parallel as one of its tasks
+        var parallel = await Parallel.ToBooleanAsync();
+        return await Context.App.actor.list.Use(Actor, Context, async runner => parallel
+            ? Context.Ok(runner.Task.Start(goal, _ => Run(goal, runner.Context)))
+            : await Run(goal, runner.Context));
     }
 
     private async Task<data.@this> Run(global::app.goal.@this goal, global::app.actor.context.@this execContext)

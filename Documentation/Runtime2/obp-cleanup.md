@@ -57,24 +57,6 @@ Each entry: **location · the smell · the OBP-clean target · status · found-i
 
 ---
 
-## 3. `path.permission.verb` — nullable verbs vs the always-present variant rule
-
-**Location:** `PLang/app/type/path/permission/verb/this.cs` (`Read? Read`, `Write? Write`, `Delete? Delete`, `Execute? Execute`; `WhenWritingNull` omits unset verbs from the wire).
-
-**Found-in:** `type-kind-strict` (2026-05-31). Surfaced reconciling `obp-smells.md` variant-design rule #3 ("variants always-present, non-nullable; never nullable as granted/not-granted signaling") against the live code, which does exactly that.
-
-**Status:** open — cleanup/todo, not for `type-kind-strict`. Security-sensitive and orthogonal to the branch. The A-vs-B call (below) is made when the pass runs; Ingi leans B. Don't change inline now.
-
-**The catch (why it's not a one-line fix):** the nullable is doing real work — **verb-level revoke**. `Read(Recursive:false, Metadata:false)` still grants basic single-file read (`Covers` returns true for a minimal read request), so an always-present-with-booleans model **cannot express "no read at all"** — only `null`/absence can. Removing `?` alone breaks revocation.
-
-**The two coherent shapes:**
-- **(A) Nullable = set membership.** Present verb = granted (with options); absent = denied. Compact wire (denied verbs omitted). Complete *given the verb vocabulary*. The cost Ingi flagged: absence is implicit — you can't distinguish "denied" from "data-loss" on the wire. If this is right, **narrow `obp-smells.md` rule #3** to "single-value variants, not set-membership grants."
-- **(B) Always-present + explicit per-verb grant flag.** Every verb serialized; a `Granted`/`Allowed` bool (or equivalent) says yes/no explicitly, and revocation is `Granted = false`. Verbose wire, fully self-describing — Ingi's "serialize the verb so we know the permission." If this is right, **change the code** and keep rule #3.
-
-Ingi's lean ("code is wrong, we should serialize the verb") points at **(B)**. Confirm, and whether the cleaner flag lives per-verb or on the `verb.@this` container.
-
----
-
 ## 4. Registry family — collection-proxy verbs (ObpScan H1)
 
 **Location:** the `*.list` registries and `module`. Surfaced by `tools/ObpScan` (H1).
@@ -192,16 +174,6 @@ Delete in the cleanup pass unless a near-term consumer is known.
 
 ---
 
-## `Covers` → `Allows` — caller-intent verb rename in permission
-
-**Location:** `PLang/app/type/path/permission/` (`permission/this.cs`, `permission/verb/{Read,Write,Delete,Execute}.cs`).
-
-**Found-in:** OBP doc-set review with Ingi (2026-07-09), naming ruling: a method verb names the caller's intent, not the mechanism (`cache.Get`, not `cache.Resolve`); `Covers` doesn't tell the caller what they get.
-
-**Status:** open — mechanical rename, safe to do inline on any branch already touching permission.
-
-**The OBP-clean target:** `Read.Allows(other)`, `verb.Allows(requested)`, `permission.Allows(path, verb)` — the grant answers "does this allow the request?". `HasAccess` stays (sanctioned `HasX` boolean compound). `Documentation/v0.2/obp-smells.md` variant-design section already documents the target name.
-
 ## coder — module-discovery — ContainerFamily vs GetTypeName (dedup)
 **Where:** `PLang/app/type/list/this.cs` — `ContainerFamily` (the door rung's family detection)
 duplicates `GetTypeName`'s generic-family cases (list.@this<>, List<>/IList<>/…, Dictionary<>/…).
@@ -246,15 +218,6 @@ Not a blocker — the settings reshape (c13532536) already avoids `CountRaw` in 
 a hole value the writer writes as `?`, and the prefill built as catalog actions with hole rows, written by
 the writer. The eval twin (`tools/decider/prompt_c.py` `Line`/`prefill`) moves with it.
 
-## type.list.Full copies every fact by hand [logged 2026-09-28, stage 9a]
-
-`type/list/this.cs` `Full(type, name)` makes a kind/strict/template variant of a registered type by
-listing each fact of the entry in an initializer (`Alias`, `Owned`, `From`, `Internal`, `Property`, `Values`,
-`Shape`, `ConstructorSignature`, `Example`, `Description`, `Namespace`). Flat copy: a new fact on the type
-has to be remembered here too, and a forgotten one makes the variant silently lack it (a template-marked
-`file` didn't know it is born `From` a path until it was added). The variant should hold its entry (the
-facts read through it) or the type should copy itself with only the declaration changed.
-
 ## list.Add chooses extend or append by asking what the value is [logged 2026-09-28, stage 9b list]
 
 `type/item/list/this.cs` `Add(value, at, ctx)` asks `await value.Value() is @this items` to decide whether the
@@ -264,13 +227,6 @@ rows — a list its elements, anything else itself — as a member on item with 
 extend path joins a list as one chunk (reference semantics, no copy); a rows hand-over must keep that.
 The same fork is in `list.Flatten` (`await element.Value() is @this nested` lifts a nested list's elements,
 keeps anything else). One rows member on item (a list hands its elements, anything else itself) dissolves both.
-
-## The llm tool arguments read JSON by hand [logged 2026-09-28, stage 9b llm]
-
-`module/action/llm/code/OpenAi.cs` `Tool.Arguments` reads the model's arguments with a `JsonDocument` and a
-`ValueKind` switch (string / number / bool / null / raw text) — a second JSON reader beside the json kind,
-which the same file already uses to encode a tool result. The arguments should be decoded by the json kind
-(a dict), and the tool binds the declared names out of it.
 
 ## A code provider remembers its DLL as a string [logged 2026-09-28, stage 9b code]
 

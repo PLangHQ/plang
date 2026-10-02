@@ -1,0 +1,272 @@
+{
+  "name": "Start",
+  "comment": "A running task is listed under the actor that runs it: %!app.actor.current.task% finds it by its id while Slow\nsleeps. (That it leaves the list when it ends, and %task% still holds it, is read through `wait for` in stage 2, and\nin C# TaskTests.)",
+  "step": [
+    {
+      "index": 0,
+      "text": "goal.call(Name=\"Slow\", Parallel=true); variable.set(Name=%task%, Value=%!data%)",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Slow"
+            },
+            {
+              "name": "Parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "variable.set(Name=%listed%, Value=%!app.actor.current.task[%task.id%]%)",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%listed%",
+              "variable": [
+                {
+                  "text": "%listed%",
+                  "code": [
+                    {
+                      "variable": "listed"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.actor.current.task[%task.id%]%",
+              "variable": [
+                {
+                  "text": "%!app.actor.current.task[%task.id%]%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "actor"
+                    },
+                    {
+                      "property": "current"
+                    },
+                    {
+                      "property": "task"
+                    },
+                    {
+                      "index": {
+                        "variable": [
+                          {
+                            "text": "%task.id%",
+                            "code": [
+                              {
+                                "variable": "task"
+                              },
+                              {
+                                "property": "id"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=%task.id%, Actual=%listed.id%, Message=\"the running task is listed under its actor\")",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%task.id%",
+              "variable": [
+                {
+                  "text": "%task.id%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    },
+                    {
+                      "property": "id"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%listed.id%",
+              "variable": [
+                {
+                  "text": "%listed.id%",
+                  "code": [
+                    {
+                      "variable": "listed"
+                    },
+                    {
+                      "property": "id"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the running task is listed under its actor"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Slow",
+      "step": [
+        {
+          "index": 0,
+          "text": "timer.sleep(Ms=1000)",
+          "line": {
+            "number": 10
+          },
+          "code": [
+            {
+              "module": "timer",
+              "name": "sleep",
+              "property": [
+                {
+                  "name": "Ms",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1000
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/module/goal/call/TaskListedWhileRunning.test.goal",
+      "prPath": "/plan/task/module/goal/call/.build/tasklistedwhilerunning.test.pr",
+      "hash": "8a735a6da549016f658eb7499f905acd38a71ebb7cec45764e77320e52761123"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/task/module/goal/call/TaskListedWhileRunning.test.goal",
+  "prPath": "/plan/task/module/goal/call/.build/tasklistedwhilerunning.test.pr",
+  "hash": "acfeeeedec3a80a3a2837d428e0b2361665847d6a7de9e801ff206ed83bea299"
+}

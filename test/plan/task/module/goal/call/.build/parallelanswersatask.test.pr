@@ -1,0 +1,330 @@
+{
+  "name": "Start",
+  "comment": "A call in parallel answers a task, and the next step runs before the called goal ends: Slow sleeps, then writes\n%order%; the step after the call writes it first, so right after, %order% is the caller's alone. (That the task\nthen ends with \"caller,task\" is read through `wait for` in stage 2, and in C# TaskTests.)",
+  "step": [
+    {
+      "index": 0,
+      "text": "goal.call(Name=\"Slow\", Parallel=true); variable.set(Name=%task%, Value=%!data%)",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Slow"
+            },
+            {
+              "name": "Parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "variable.set(Name=%order%, Value=\"caller\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%order%",
+              "variable": [
+                {
+                  "text": "%order%",
+                  "code": [
+                    {
+                      "variable": "order"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "caller"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"task\", Actual=%task!type.name%, Message=\"a call in parallel answers a task\")",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "task"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%task!type.name%",
+              "variable": [
+                {
+                  "text": "%task!type.name%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a call in parallel answers a task"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=\"caller\", Actual=%order%, Message=\"the next step ran before the called goal ended\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "caller"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%order%",
+              "variable": [
+                {
+                  "text": "%order%",
+                  "code": [
+                    {
+                      "variable": "order"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the next step ran before the called goal ended"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Slow",
+      "step": [
+        {
+          "index": 0,
+          "text": "timer.sleep(Ms=1000)",
+          "line": {
+            "number": 11
+          },
+          "code": [
+            {
+              "module": "timer",
+              "name": "sleep",
+              "property": [
+                {
+                  "name": "Ms",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1000
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "variable.set(Name=%order%, Value=\"%order%,task\")",
+          "line": {
+            "number": 12
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%order%",
+                  "variable": [
+                    {
+                      "text": "%order%",
+                      "code": [
+                        {
+                          "variable": "order"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text",
+                    "template": "plang"
+                  },
+                  "value": "%order%,task",
+                  "variable": [
+                    {
+                      "text": "%order%",
+                      "code": [
+                        {
+                          "variable": "order"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/module/goal/call/ParallelAnswersATask.test.goal",
+      "prPath": "/plan/task/module/goal/call/.build/parallelanswersatask.test.pr",
+      "hash": "121714f3b1dea64ca6a4dc8620d1c1160f03282e813cf9350d9c3ef680479040"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/task/module/goal/call/ParallelAnswersATask.test.goal",
+  "prPath": "/plan/task/module/goal/call/.build/parallelanswersatask.test.pr",
+  "hash": "6ebaebb99eb847c1b5a4b5dea34652e58f4c277f8a236ae74200a6497090e636"
+}

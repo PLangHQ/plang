@@ -151,8 +151,43 @@ public class QueryToolTests
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("parallel done");
     }
 
+    // In a mixed batch each call is as its own Parallel says: the Parallel A runs on while the plain B runs to its end
+    // before C is called; the marks are what the goals wrote, and the results go back in call order.
     [Test]
-    public async Task Query_MixedParallelFlags_ForcesSequential()
+    public async Task Query_MixedBatch_APlainToolEndsBeforeTheNextIsCalled_AParallelOneRunsOn_ResultsInCallOrder()
+    {
+        await Ctx.Variable.Set("kept", new Dictionary<string, object?> { ["order"] = "" });
+        Marks("A", 1500); Marks("B", 100); Marks("C", 0);
+        int callIndex = 0;
+        _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(++callIndex == 1
+            ? LlmTestHelper.MakeToolCallResponse(("call_1", "A", "{}"), ("call_2", "B", "{}"), ("call_3", "C", "{}"))
+            : LlmTestHelper.MakeCompletionResponse("mixed done")));
+
+        var action = new query(Ctx) { Message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = "mixed" } }.ToListData<LlmMessage>(Ctx),
+            Tool = new List<global::app.goal.step.action.@this>
+                { Make.Tool(Ctx, "A", parallel: true), Make.Tool(Ctx, "B", parallel: false), Make.Tool(Ctx, "C", parallel: false) }.ToListData(Ctx) };
+        await action.Attach(null, Ctx);
+        await (await action.Start()).IsSuccess();
+
+        await Assert.That((await (await Kept("order")).Value())?.ToString()).IsEqualTo(",B,C,A");
+        var second = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
+        var (a, b, c) = (second.IndexOf("\"tool_call_id\":\"call_1\""), second.IndexOf("\"tool_call_id\":\"call_2\""), second.IndexOf("\"tool_call_id\":\"call_3\""));
+        await Assert.That(a > 0 && a < b && b < c).IsTrue();
+        await Assert.That(second[..a]).Contains("\\u0022A\\u0022");
+    }
+
+    // A tool goal named <paramref name="name"/>: sleeps <paramref name="ms"/>, appends its name to %kept.order%, returns its name.
+    private void Marks(string name, int ms)
+    {
+        var steps = new List<Make.StepDef>();
+        if (ms > 0) steps.Add(Make.Step("sleep", Make.Action(Ctx, "timer", "sleep", ("Ms", ms))));
+        steps.Add(Make.Step("mark", Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "%kept.order%", "variable"), ("Value", "%kept.order%," + name))));
+        steps.Add(Make.Step("return", Make.Action(Ctx, "goal", "return", ("Data", name))));
+        _app.goal.list.Add(Make.Goal(Ctx, name, steps.ToArray()));
+    }
+
+    [Test]
+    public async Task Query_MixedParallelFlags_Succeeds()
     {
         int callIndex = 0;
         _handler.Handler = _ =>
@@ -507,6 +542,59 @@ public class QueryToolTests
         var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
         await Assert.That(secondReq).Contains("tool");
         await Assert.That(secondReq).DoesNotContain("is not an argument");
+    }
+
+    // A tool whose goal keeps each argument it is called with in the caller's %kept% dict: %kept.<name>% = %<name>%.
+    private async Task<global::app.data.@this> CallKeep(string arguments, params string[] names)
+    {
+        await Ctx.Variable.Set("kept", new Dictionary<string, object?>());
+        var steps = names.Select(n => Make.Step($"set %kept.{n}%",
+            Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "%kept." + n.Replace('.', '_') + "%", "variable"), ("Value", $"%{n}%")))).ToArray();
+        _app.goal.list.Add(Make.Goal(Ctx, "Keep", steps));
+        int callIndex = 0;
+        _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(++callIndex == 1
+            ? LlmTestHelper.MakeToolCallResponse(("call_1", "Keep", arguments))
+            : LlmTestHelper.MakeCompletionResponse("kept")));
+
+        var declared = names.Select(n => n.Split('.')[0]).Distinct()
+            .Select(n => new Data(n, null, Ctx.App.type.list["item"], context: Ctx)).ToList();
+        var action = new query(Ctx) { Message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = "keep" } }.ToListData<LlmMessage>(Ctx),
+            Tool = new List<global::app.goal.step.action.@this> { Make.Tool(Ctx, "Keep", parameter: declared) }.ToListData(Ctx) };
+        await action.Attach(null, Ctx);
+        return await action.Start();
+    }
+
+    // The arguments are json, opened by the json kind: each is born the plang value it is — an integer a long, a
+    // fraction a double, a string text, an object a value navigated by its keys.
+    [Test]
+    public async Task Query_ToolArgs_AreBornAsTheirPlangValues()
+    {
+        await (await CallKeep("{\"n\": 5, \"x\": 1.5, \"s\": \"a\", \"nested\": {\"key\": \"val\"}}", "n", "x", "s", "nested.key")).IsSuccess();
+
+        var n = (await Kept("n")).Peek() as global::app.type.item.number.@this;
+        var x = (await Kept("x")).Peek() as global::app.type.item.number.@this;
+        await Assert.That(n?.BoxedValue).IsEqualTo((object)5L);
+        await Assert.That(x?.BoxedValue).IsEqualTo((object)1.5);
+        await Assert.That((await Kept("s")).Peek()).IsTypeOf<global::app.type.item.text.@this>();
+        await Assert.That((await (await Kept("s")).Value())?.ToString()).IsEqualTo("a");
+        await Assert.That((await (await Kept("nested_key")).Value())?.ToString()).IsEqualTo("val");
+    }
+
+    // What the tool's goal kept under <paramref name="name"/> in %kept%.
+    private async Task<global::app.data.@this> Kept(string name)
+    {
+        var kept = await Ctx.Variable.Get("kept");
+        return await ((global::app.type.item.@this)(await kept.Value())!).Get(kept, name);
+    }
+
+    [Test]
+    public async Task Query_ToolArgs_NotAnObject_IsAnErrorToTheModel()
+    {
+        await (await CallKeep("[1, 2]", "n")).IsSuccess();
+
+        var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
+        await Assert.That(secondReq).Contains("not an object of named arguments");
+        await Assert.That((await Kept("n")).IsInitialized).IsFalse();
     }
 
     // A name the tool doesn't declare is never bound — the argument frame is read before the caller's own

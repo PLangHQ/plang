@@ -1,0 +1,69 @@
+Start
+/ task: a call in parallel answers a task; a later step waits for it or cancels it. Each stage is a goal; each
+/ behaviour a comment with the test that proves it. The coder rewrites each test in plang that compiles.
+- call goal Stage1
+- call goal Stage2
+- call goal Stage3
+- call goal Stage4
+
+Stage1
+/ The task and the call.
+/ A call in parallel answers a task, and the next step runs before the called goal ends
+- call goal /module/goal/call/ParallelAnswersATask
+/ A plain call still waits and answers the goal's result (Parallel is false by default)
+- call goal /module/goal/call/PlainCallWaits
+/ A running task is in %!app.actor.current.task.list%; once it ends it isn't, and %task% still holds it
+- call goal /module/goal/call/TaskListedWhileRunning
+/ A task that fails with nobody waiting is reported on its actor's error channel
+- call goal /module/goal/call/UnwatchedFailureReported
+/ The llm tool loop runs two Parallel tools as tasks and waits for both (C# pin in the tool-call harness)
+- call goal /module/goal/call/ToolLoopRunsTasks
+
+Stage2
+/ The task module.
+/ wait for %task% answers the goal's result
+- call goal /module/task/wait/WaitAnswersResult
+/ wait for %a%, %b% answers a list of their results, in order
+- call goal /module/task/wait/WaitForSeveral
+/ wait for %tasks% (a list of tasks) answers their results, in order
+- call goal /module/task/wait/WaitForList
+/ A failed task fails the wait step; on error handles it
+- call goal /module/task/wait/FailedTaskFailsWait
+/ A failure reported while nobody waited is still the answer of a later wait
+- call goal /module/task/wait/LateWaitGetsFailure
+/ cancel %task% stops it: a write its goal makes after a sleep never happens
+- call goal /module/task/cancel/CancelStops
+/ cancel %task%, write to %result%: the result when the task had already ended, null when the cancel stopped it
+- call goal /module/task/cancel/CancelAnswer
+/ wait for a cancelled task fails as Cancelled
+- call goal /module/task/cancel/WaitOnCancelledFails
+/ Two calls in parallel written to one %task%: %task.list% holds both, in the order written; %task% is the second
+- call goal /module/task/list/WriteTwiceKeepsBoth
+/ wait for %task.list% answers both results in order; wait for %task% answers only the current one's
+- call goal /module/task/list/WaitListVersusCurrent
+/ A text written over a text still replaces it (set's meaning is unchanged for every other type)
+- call goal /module/task/list/OtherTypesReplace
+
+Stage3
+/ loop.foreach in parallel.
+/ foreach in parallel answers a task at once; the next step runs before the items end
+- call goal /module/loop/foreach/ParallelAnswersATask
+/ The items run side by side: each item's goal waits on a signal the others set, so a sequential loop would never end
+- call goal /module/loop/foreach/ItemsRunSideBySide
+/ wait for the loop's task answers {count, complete}
+- call goal /module/loop/foreach/WaitAnswersCountComplete
+/ A plain foreach still runs its items one after another and blocks the step
+- call goal /module/loop/foreach/PlainForeachBlocks
+
+Stage4
+/ The builder (built goldens, measured fresh).
+/ "foreach %x% in parallel, call Y" builds loop.foreach with Parallel=true
+- call goal /module/loop/foreach/build/InParallel
+/ "call X in parallel, write to %t%" builds Parallel=true
+- call goal /module/goal/call/build/InParallel
+/ "call X, don't wait" and "call X in the background" build Parallel=true
+- call goal /module/goal/call/build/DontWait
+/ "call X" builds no Parallel
+- call goal /module/goal/call/build/Plain
+/ "wait for %t%, write to %r%" builds task.wait, and "wait 2 seconds" still builds timer.sleep
+- call goal /module/task/build/WaitNotSleep

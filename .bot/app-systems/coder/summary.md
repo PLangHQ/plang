@@ -31,13 +31,25 @@ commit (a full six-suite run); the coder shapes first, builds, runs the suites i
   the store is `/.data/data.sqlite`.
 - **Fixes found on the way**: the error show loaded `show.goal` (it is `Show.goal`); a goal channel's
   `%message%` for a failure; `data<T>.From` lost a miss; json `long : double` unification (3 places).
+- **Goal flags derived from Path** — `IsSystem`/`IsSetup`/`IsTest` answer from the plang path; the `.pr` drops
+  the four keys (the reader still skips them by name until the tracked `.pr` are rebuilt).
+- **A stored value settles where it is written** — a template given to `list.add/set/remove/contains/indexof/any`
+  (the one door `data.Given(then)`) and to a variable's member write (`variable/code.Set`: `%dict.k%`, `%x[0]%`)
+  renders at the write, never on a later read. Every storing action was checked.
+- **on.event** — the `on` node refuses a name that is no event itself (`NoEvent`); bind says whether the item or
+  the event is missing; When/Scope/Action open through `Use` (a `%unset%` is the answer, not a null).
+- **permission** — `grant.Allows(request)` (was `Covers`); `TryCover` gone (its actor check repeated Allows').
+- **llm tool arguments** — opened by the json kind (`Open` + the item's `EnumerateItems`): a nested object
+  navigates; `[1,2]` answers `ArgumentsNotAnObject` (it used to throw out of the whole query).
+- **Teaching** — `loop.foreach`'s no-`as` example writes `%item%` (it taught `%row%`, which isn't set).
+- **obp-cleanup.md** lists only what is open: resolved entries are removed (the commit is the record).
 
 ## Waiting
 - **v18 item 1** (a hash holds its kind) — the shape is accepted; `signing.setting.Hash` is with Ingi.
-- **Goal flags derived from Path** (`IsSystem`/`IsSetup`/`IsTest`, a flat copy) — shape sent; the `.pr` bytes
-  change, so it is the architect's first.
 - `goal.call` `Wait` vs `Parallel` — with Ingi.
-- The builder bot: the `ask:` lines and decider template (issue 25/28), the 7 stale os `.pr` (issue 30).
+- obp-cleanup entries sized and left (not small): CountRaw (53 sites), the action `Resolve` rename (~64), the
+  code provider's DLL string (rides the snapshot record), the variable store's Clone, ContainerFamily, the
+  goal reader's key skips.
 
 ## Code example — one door, the rule stated once
 ```csharp
