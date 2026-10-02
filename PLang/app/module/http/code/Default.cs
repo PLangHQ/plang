@@ -152,7 +152,7 @@ public sealed class Default : IHttp
         }
 
         var totalBytes = response.Content.Headers.ContentLength;
-        var maxDownloadSize = (await action.MaxDownloadSize.Value())!.ToInt64();
+        var maxDownloadSize = (await action.MaxDownloadSize.Value())!;
         var onProgress = action.OnProgress == null ? null : await action.OnProgress.Value();
         System.Func<TransferProgress, Task>? report = onProgress == null ? null
             : progress => RunCallbackAsync(onProgress, progress, null, "progress", app, action.Context, cts.Token);
@@ -285,7 +285,7 @@ public sealed class Default : IHttp
             totalRead += bytesRead;
             if (totalRead > maxBytes)
                 return context.Error<global::app.type.item.binary.@this>(new ServiceError(
-                    $"Response body exceeds maximum size of {FormatBytes(maxBytes)}",
+                    $"Response body exceeds maximum size of {(new global::app.type.item.size.@this(maxBytes, context))}",
                     "ResponseTooLarge", 413));
             limited.Write(buffer, 0, bytesRead);
 
@@ -877,13 +877,6 @@ public sealed class Default : IHttp
     }
 
     // --- Static utilities ---
-
-    internal static string FormatBytes(long bytes) => bytes switch
-    {
-        >= 1024 * 1024 => $"{bytes / (1024 * 1024)}MB",
-        >= 1024 => $"{bytes / 1024}KB",
-        _ => $"{bytes} bytes"
-    };
 
     private static SysHttpMethod ToSystemMethod(HttpMethod method) => method switch
     {

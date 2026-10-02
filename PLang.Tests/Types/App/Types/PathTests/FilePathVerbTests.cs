@@ -97,7 +97,7 @@ public class FilePathVerbTests
         var info = (StatInfo)(await s.Value())!;
         await Assert.That(info.Exists).IsTrue();
         await Assert.That(info.IsFile).IsEqualTo(true);
-        await Assert.That(info.Length).IsEqualTo(5L);
+        await Assert.That(info.Size!.Value).IsEqualTo(5L);
     }
 
     [Test] public async Task Stat_NonexistentPath_ReportsExistsFalse_StillSuccess()

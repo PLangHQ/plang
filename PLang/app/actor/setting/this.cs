@@ -302,10 +302,12 @@ public sealed class @this : IDisposable
     }
 
     /// <summary>The settings <paramref name="owner"/> names with <c>ISetting&lt;T&gt;</c>, as this scope sees
-    /// them — <c>%!app.goal.list.setting%</c>, <c>%!app.setting%</c>; null when it names none.</summary>
+    /// them — <c>%!app.goal.list.setting%</c>, <c>%!app.setting%</c>; a type's are its class's
+    /// (<c>%!app.type.size.setting%</c>); null when it names none.</summary>
     public async ValueTask<data.@this?> Of(object owner)
     {
-        var named = owner.GetType().GetInterfaces()
+        var host = owner is global::app.type.@this { ClrType: { } clr } ? clr : owner.GetType();
+        var named = host.GetInterfaces()
             .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.setting.ISetting<>));
         return named == null ? null : await Of(named.GetGenericArguments()[0]);
     }

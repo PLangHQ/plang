@@ -149,16 +149,17 @@ public sealed class @this : filesystem.@this
         lock (_lock) _files[to.Absolute] = content;
     }
 
-    public override StatInfo Stat(file.@this p)
+    public override StatInfo Stat(file.@this p, actor.context.@this context)
     {
         lock (_lock)
         {
             if (_files.TryGetValue(p.Absolute, out var content))
-                return new StatInfo(Exists: true, IsFile: true, Length: content.Length, Modified: DateTime.UtcNow);
+                return new StatInfo(Exists: true, IsFile: true, Size: new global::app.type.item.size.@this(content.Length, context),
+                    Modified: DateTime.UtcNow);
             if (Holds(p.Absolute)) return new StatInfo(Exists: true, IsFile: false, Modified: DateTime.UtcNow);
             if (Gone(p.Absolute)) return new StatInfo(Exists: false);
         }
-        return _under.Stat(p);
+        return _under.Stat(p, context);
     }
 
     private IEnumerable<string> Own() => _files.Keys.Concat(_folders);
