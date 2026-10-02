@@ -299,6 +299,32 @@ public class FormalReaderTests : System.IAsyncDisposable
         await Assert.That(declined).IsEmpty();
     }
 
+    // a goal call given one value where its named rows go is refused at build, saying the form — never bound as
+    // nothing
+    [Test]
+    public async Task AGoalCallGivenAModuleForItsParameters_IsRefused_SayingTheForm()
+    {
+        var ctx = app.actor.list.User.Context;
+        var read = Read("goal.call(Name=\"Page\", Parameter=%!app.module.file%)", out _);
+        var action = ((global::app.goal.step.action.list.@this)read.Peek()!)[0];
+        global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal", global::PLang.Tests.Shared.Make.Step("call", action));
+
+        var refused = await action.Validate(ctx);
+
+        await Assert.That(refused?.Message).Contains("Parameter takes named rows: {name: %!app.module.file%}");
+    }
+
+    [Test]
+    public async Task AGoalCallsNamedRows_Pass()
+    {
+        var ctx = app.actor.list.User.Context;
+        var read = Read("goal.call(Name=\"Page\", Parameter={module: %!app.module.file%})", out _);
+        var action = ((global::app.goal.step.action.list.@this)read.Peek()!)[0];
+        global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal", global::PLang.Tests.Shared.Make.Step("call", action));
+
+        await Assert.That(await action.Validate(ctx)).IsNull();
+    }
+
     // a property of the one action a formal line reads, through a real .pr load
     private async Task<global::app.data.@this> Slot(string formal, string property)
     {

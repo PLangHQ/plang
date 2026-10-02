@@ -50,6 +50,22 @@ public partial class Call : IContext
         return Context.Ok();
     }
 
+    /// <summary>Build-time: the parameters are named rows, as <see cref="Run"/> reads them — the written list's, or a
+    /// dict's entries. A value that is neither (a module by its <c>%!…%</c> path), or a row with no name, would bind
+    /// nothing: refused, saying the form. A %variable% known only at run is the run's to read.</summary>
+    public async Task<global::app.error.Error?> Validate()
+    {
+        if (Parameter == null) return null;
+        var given = await Parameter.Follow(Context);
+        if (!given.IsInitialized || !given.Success || await given.Value() is not { } value) return null;
+        if (value is global::app.type.item.list.@this or global::app.type.item.dict.@this
+            && value.Rows(Context).All(row => row.Name.Length > 0)) return null;
+        var written = __action?["Parameter"]?.Value?.RawText ?? value.ToString();
+        return new global::app.error.Error(
+            $"Parameter takes named rows: {{name: {written}}} — {written} is one value with no name, which binds nothing",
+            "ParameterUnnamed", 400);
+    }
+
     public async Task<data.@this> Start()
     {
         // The goal is the one the name selects, as seen from the goal this call sits in; a %variable% name
