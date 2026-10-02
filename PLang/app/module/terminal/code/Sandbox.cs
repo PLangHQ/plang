@@ -15,11 +15,13 @@ namespace app.module.terminal.code;
 ///
 /// <para>Each permission is first the caller's to grant (asked on the caller's channel when it isn't yet): a program
 /// is never given more than the app may touch itself. The kernel holds folders, named exactly: a glob or regex
-/// permission is refused. A verb is its rights: read — read files, list folders; write — write, make, remove, move and
-/// link (a checkout makes symlinks; <c>git mv</c> moves between folders); delete — remove. Execute is not given to a
+/// permission is refused. A verb is its rights, and only its own: read — read files, list folders; write — write, make,
+/// move and link (a checkout makes symlinks; <c>git mv</c> moves between folders); delete — remove (a program that
+/// replaces files, as git does its locks, needs write and delete). Execute is not given to a
 /// program yet. Besides its permissions a program reads its own file and the system's libraries (/usr /lib /lib64
 /// /bin /sbin /etc /sys /dev — not /proc, where it would read plang's own environment) and writes /dev/null. No /tmp:
-/// a program that writes temporary files needs a permission for a folder (and to be told of it, e.g. TMPDIR).</para>
+/// a program that writes temporary files needs a permission for a folder (and to be told of it, e.g. TMPDIR). It starts
+/// with none of plang's environment (<see cref="Environment"/>): what it needs, the step gives it.</para>
 ///
 /// <para>Fails closed: where the lock can't be made (not Linux, no Landlock 3, a folder that can't be held), the
 /// program isn't started. Not held yet: the program runs as plang's own user, so it can signal plang (Landlock's
@@ -33,6 +35,14 @@ internal sealed class Sandbox
     private static readonly string[] Base = ["/usr", "/lib", "/lib64", "/bin", "/sbin", "/etc", "/sys", "/dev"];
     /// <summary>Written by most programs, holding nothing: the one system path a program may write.</summary>
     private const string Sink = "/dev/null";
+
+    /// <summary>What a held program's environment starts with — none of plang's own (its keys are there): where programs
+    /// are, and text as UTF-8. The settings and the step add what the program needs.</summary>
+    internal static readonly IReadOnlyDictionary<string, string> Environment = new Dictionary<string, string>
+    {
+        ["PATH"] = "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        ["LANG"] = "C.UTF-8",
+    };
 
     /// <summary>A folder (or file) and the kernel rights its permission gives.</summary>
     internal readonly record struct Rule(string Path, ulong Rights);
@@ -75,6 +85,12 @@ internal sealed class Sandbox
             var carrier = new data.@this("path", permission.Path, context: context);
             if (PathItem.Create(permission.Path, null, carrier) is not { } path)
                 return (null, carrier.Error != null ? context.Error(carrier.Error) : Invalid($"{permission.Path} is no path"));
+            // the place itself, never a link to elsewhere: a permission for a link would hold the program to where it
+            // leads, which no one granted
+            // (//tmp/x, an os-absolute path as plang keeps it, is /tmp/x on the disk)
+            if (Landlock.Real(path.Absolute) is { } real
+                && real != System.Text.RegularExpressions.Regex.Replace(path.Absolute, "/{2,}", "/").TrimEnd('/'))
+                return (null, Invalid($"{permission.Path} is reached through a link (it is {real}): name the place itself"));
             ulong rights = 0;
             foreach (var verb in permission.Verbs)
             {
@@ -127,6 +143,17 @@ internal sealed class Sandbox
         [DllImport("libc", SetLastError = true)] private static extern int prctl(int option, ulong a, ulong b, ulong c, ulong d);
         [DllImport("libc", SetLastError = true)] private static extern int open(string path, int flags);
         [DllImport("libc")] private static extern int close(int fd);
+        [DllImport("libc", SetLastError = true)] private static extern IntPtr realpath(string path, IntPtr resolved);
+        [DllImport("libc")] private static extern void free(IntPtr pointer);
+
+        /// <summary>Where <paramref name="path"/> really is, every link on the way followed; null when it isn't there.</summary>
+        public static string? Real(string path)
+        {
+            var at = realpath(path, IntPtr.Zero);
+            if (at == IntPtr.Zero) return null;
+            try { return Marshal.PtrToStringUTF8(at); }
+            finally { free(at); }
+        }
 
         [StructLayout(LayoutKind.Sequential, Pack = 1)]
         private struct PathBeneath { public ulong Allowed; public int Folder; }
@@ -139,14 +166,14 @@ internal sealed class Sandbox
             MakeSym = 4096, Refer = 8192, Truncate = 16384;
         private const ulong Reading = ReadFile | ReadDir;
         private const ulong Removing = RemoveFile | RemoveDir;
-        // write: write, make files and folders, truncate, remove (a lock file replaced, git's), and
+        // write: write, make files and folders, truncate — never remove (that is delete's), and
         // + make symlink: a checkout of a repo that holds a link makes one (git, tar). Safe: the kernel checks the path a
         //   link leads to when it is opened, so a link can't lead out of what the program holds
         // + refer: a move or link from one folder to another (git mv d1/y d2/y; without it EXDEV, "Invalid cross-device
         //   link"). Safe: the kernel moves a file only where the program holds at least the same rights
-        private const ulong Writing = WriteFile | MakeDir | MakeReg | Truncate | Removing | MakeSym | Refer;
+        private const ulong Writing = WriteFile | MakeDir | MakeReg | Truncate | MakeSym | Refer;
         // every right Landlock 3 guards — what no rule names is refused
-        private const ulong Guarded = Execute | Reading | Writing | MakeChar | MakeSock | MakeFifo | MakeBlock;
+        private const ulong Guarded = Execute | Reading | Writing | Removing | MakeChar | MakeSock | MakeFifo | MakeBlock;
         // what a file (not a folder) can be given: execute, write, read, truncate
         private const ulong FileRights = Execute | WriteFile | ReadFile | Truncate;
 
@@ -171,21 +198,24 @@ internal sealed class Sandbox
             if (ruleset < 0) throw new InvalidOperationException($"Landlock refused a ruleset (errno {Marshal.GetLastPInvokeError()})");
             try
             {
-                foreach (var path in system) Allow(ruleset, path, Reading | Execute, required: false);
-                Allow(ruleset, sink, ReadFile | WriteFile, required: false);
-                Allow(ruleset, program, ReadFile | Execute, required: true);
-                foreach (var rule in rules) Allow(ruleset, rule.Path, rule.Rights, required: true);
+                // the system's folders and the program file are plang's to name: followed (/lib is usr/lib on Debian);
+                // a permission's path is the app's, and is held as it is, never followed
+                foreach (var path in system) Allow(ruleset, path, Reading | Execute, required: false, follow: true);
+                Allow(ruleset, sink, ReadFile | WriteFile, required: false, follow: true);
+                Allow(ruleset, program, ReadFile | Execute, required: true, follow: true);
+                foreach (var rule in rules) Allow(ruleset, rule.Path, rule.Rights, required: true, follow: false);
                 if (prctl(NoNewPrivileges, 1, 0, 0, 0) != 0) throw new InvalidOperationException("no_new_privs was refused");
                 if (syscall(RestrictSelf, ruleset, 0) < 0) throw new InvalidOperationException($"Landlock refused the lock (errno {Marshal.GetLastPInvokeError()})");
             }
             finally { close(ruleset); }
         }
 
-        private const int NoSuchFile = 2, Invalid = 22;
+        private const int NoSuchFile = 2, Invalid = 22, ONoFollow = 0x20000;
 
-        private static void Allow(int ruleset, string path, ulong access, bool required)
+        private static void Allow(int ruleset, string path, ulong access, bool required, bool follow)
         {
-            var at = open(path, OPath | OCloseOnExec);
+            // not followed: a link swapped in after the permission was checked is held as the link, not where it leads
+            var at = open(path, OPath | OCloseOnExec | (follow ? 0 : ONoFollow));
             if (at < 0)
             {
                 var errno = Marshal.GetLastPInvokeError();

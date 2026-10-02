@@ -35,11 +35,13 @@ public class PermissionTests : IDisposable
     /// the goal as made (its values born typed), or <paramref name="wire"/>: written as a .pr and read back, as a
     /// built app runs it.</summary>
     private async Task<global::app.data.@this> Sh(string script, object? permission, string answer = "a", string sh = "//bin/sh",
-        bool wire = false)
+        bool wire = false, Dictionary<string, object?>? environment = null, params (string, object?)[] more)
     {
         Context.Actor!.Channel.Register(new CannedAnswerChannel(answer));
         var parameters = new List<(string, object?)> { ("App", sh), ("Parameter", new List<object?> { "-c", script }) };
         if (permission != null) parameters.Add(("Permission", permission));
+        if (environment != null) parameters.Add(("Environment", environment));
+        parameters.AddRange(more);
         var goal = Make.Goal(Context, "Run" + Guid.NewGuid().ToString("N")[..6],
             Make.Step("run it", Make.Action(Context, "terminal", "start", parameters.ToArray())));
         return await _app.Start(wire ? await RealGoalLoad.ViaChannel(_app, goal) : goal, Context);
@@ -169,13 +171,73 @@ public class PermissionTests : IDisposable
             "mkdir d1 d2 && echo y > d1/y.txt && git add d1/y.txt && git mv d1/y.txt d2/y.txt 2>&1 && " +
             "ln -s f.txt link 2>&1 && git add link && git -c user.name=t -c user.email=t@t commit -qm second 2>&1 && " +
             "git fsck --strict 2>&1 && echo GIT-OK 2>&1",
-            Permissions(May("//" + origin.TrimStart('/'), "read"), May("/granted", "read", "write")));
+            Permissions(May("//" + origin.TrimStart('/'), "read"), May("/granted", "read", "write", "delete")));
 
         await result.IsSuccess();
         var said = (await result.Value())?.ToString() ?? "";
         await Assert.That(said).Contains("seed");
         await Assert.That(said).Contains("first");
         await Assert.That(said).Contains("GIT-OK");
+    }
+
+    [Test]
+    public async Task Write_NeverDeletes_DeleteDoes()
+    {
+        if (!OperatingSystem.IsLinux()) return;
+        File.WriteAllText(Path.Combine(_root, "granted", "kept.txt"), "k");
+        var writeOnly = await Sh($"rm {_root}/granted/kept.txt 2>/dev/null || echo refused-delete; echo new > {_root}/granted/new.txt",
+            Permissions(May("/granted", "read", "write")));
+        await writeOnly.IsSuccess();
+        await Assert.That((await writeOnly.Value())?.ToString() ?? "").Contains("refused-delete");
+        await Assert.That(File.Exists(Path.Combine(_root, "granted", "kept.txt"))).IsTrue();
+        await Assert.That(File.Exists(Path.Combine(_root, "granted", "new.txt"))).IsTrue();
+
+        var withDelete = await Sh($"rm {_root}/granted/kept.txt && echo deleted", Permissions(May("/granted", "read", "write", "delete")));
+        await withDelete.IsSuccess();
+        await Assert.That(File.Exists(Path.Combine(_root, "granted", "kept.txt"))).IsFalse();
+    }
+
+    [Test]
+    public async Task APermissionThroughALink_IsRefused()
+    {
+        if (!OperatingSystem.IsLinux()) return;
+        // /door in the app is a link to a folder outside it: a permission for /door would hold the program to the outside
+        File.CreateSymbolicLink(Path.Combine(_root, "door"), _outside);
+        var result = await Sh($"echo x > {_outside}/through.txt", Permissions(May("/door", "write")));
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("PermissionInvalid");
+        await Assert.That(result.Error!.Message).Contains("link");
+        await Assert.That(File.Exists(Path.Combine(_outside, "through.txt"))).IsFalse();
+    }
+
+    [Test]
+    public async Task AHeldProgram_GetsNoneOfPlangsEnvironment_OnlyWhatTheStepGives()
+    {
+        if (!OperatingSystem.IsLinux()) return;
+        System.Environment.SetEnvironmentVariable("PLANG_TEST_SECRET", "s3cret");
+        try
+        {
+            var held = await Sh("echo \"secret=[$PLANG_TEST_SECRET] given=[$GIVEN] path=[$PATH]\"", Permissions(May("/granted", "read")),
+                environment: new Dictionary<string, object?> { ["GIVEN"] = "ok" });
+            await held.IsSuccess();
+            var said = (await held.Value())?.ToString() ?? "";
+            await Assert.That(said).Contains("secret=[]");
+            await Assert.That(said).Contains("given=[ok]");
+            await Assert.That(said).Contains("/usr/bin");
+            // without permissions the program is free, environment and all
+            var free = await Sh("echo \"secret=[$PLANG_TEST_SECRET]\"", null);
+            await Assert.That((await free.Value())?.ToString() ?? "").Contains("secret=[s3cret]");
+        }
+        finally { System.Environment.SetEnvironmentVariable("PLANG_TEST_SECRET", null); }
+    }
+
+    [Test]
+    public async Task AsAdministrator_WhatUacCantPass_IsRefused_NotIgnored()
+    {
+        var result = await Sh("true", null, more: [("Administrator", true), ("Input", "typed")]);
+        await result.IsFailure();
+        await Assert.That(result.Error!.Key).IsEqualTo("AdministratorNotSupported");
+        await Assert.That(result.Error!.Message).Contains("Input");
     }
 
     [Test]
