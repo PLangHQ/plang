@@ -630,12 +630,14 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public string? ConstructorSignature { get => Family._constructorSignature; init => _constructorSignature = value; }
     private string? _constructorSignature;
 
-    /// <summary>Canonical example from a static <c>Example</c> property on the type.</summary>
-    public string? Example { get => Family._example; init => _example = value; }
+    /// <summary>Canonical example — the kind's own when it shows one (a list of records, one of its element), else
+    /// the static <c>Example</c> property on the type.</summary>
+    public string? Example { get => kind.Example ?? Family._example; init => _example = value; }
     private string? _example;
 
-    /// <summary>Semantic description from a static <c>Description</c> property on the type.</summary>
-    public string? Description { get => Family._description; init => _description = value; }
+    /// <summary>Semantic description — the kind's own when it says one (a list of records names its element), else
+    /// the static <c>Description</c> property on the type.</summary>
+    public string? Description { get => kind.Description ?? Family._description; init => _description = value; }
     private string? _description;
 
     /// <summary>The other names this type answers to (<c>string</c> for text, <c>map</c> for dict),

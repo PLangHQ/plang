@@ -78,6 +78,27 @@ public class TypeAccessorTests
         await Assert.That(p.Description).IsNotNull();
     }
 
+    // a list of records shows one of its element, and names it — so a list<permission> slot teaches {path, verbs}
+    [Test] public async Task AListOfPermissions_ShowsOneOfItsElement()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        var ctx = app.actor.list.User.Context;
+        var listed = app.type.list[new global::app.type.@this("list", "permission"), ctx];
+        await Assert.That(listed.Example).IsEqualTo("[{\"path\": \"/src/os\", \"verbs\": [\"read\", \"write\"]}]");
+        await Assert.That(listed.Description).StartsWith("A list of permission: What may be done where");
+    }
+
+    // a list of any other element, and a list with none, says the list's own
+    [Test] public async Task AListOfTextsOrOfAnything_ShowsTheListsOwn()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        var ctx = app.actor.list.User.Context;
+        var plain = app.type.list["list"];
+        var texts = app.type.list[new global::app.type.@this("list", "text"), ctx];
+        await Assert.That(texts.Example).IsEqualTo(plain.Example);
+        await Assert.That(texts.Description).IsEqualTo(plain.Description);
+    }
+
     [Test] public async Task AppType_IndexByName_Example_FoldedFromEntry_ReadsOffTheEntity()
     {
         // Example may be null for many types — just check the surface exists.

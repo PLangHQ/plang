@@ -23,4 +23,19 @@ public sealed class @this : global::app.type.kind.@this
            && typeof(global::app.type.item.ICreate<>).MakeGenericType(_element).IsAssignableFrom(_element)
             ? typeof(global::app.type.item.list.@this<>).MakeGenericType(_element)
             : type;
+
+    /// <summary>A list of records is shown by one of its element (<c>[{"path": …, "verbs": […]}]</c>); a list of any
+    /// other element shows the list's own.</summary>
+    public override string? Example => IsRecord && Fact("Example") is { } one ? $"[{one}]" : null;
+
+    /// <summary>A list of records says what each element is; a list of any other element says the list's own.</summary>
+    public override string? Description => IsRecord && Fact("Description") is { } each ? $"A list of {Name}: {each}" : null;
+
+    // The element is a record — its class declares the object shape.
+    private bool IsRecord => Fact("Shape") == "object";
+
+    // A fact the element's class declares (a static Example, Description, Shape); null when it declares none.
+    private string? Fact(string member)
+        => _element?.GetProperty(member, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static
+                                         | System.Reflection.BindingFlags.FlattenHierarchy)?.GetValue(null) as string;
 }
