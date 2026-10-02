@@ -228,13 +228,6 @@ extend path joins a list as one chunk (reference semantics, no copy); a rows han
 The same fork is in `list.Flatten` (`await element.Value() is @this nested` lifts a nested list's elements,
 keeps anything else). One rows member on item (a list hands its elements, anything else itself) dissolves both.
 
-## The llm tool arguments read JSON by hand [logged 2026-09-28, stage 9b llm]
-
-`module/action/llm/code/OpenAi.cs` `Tool.Arguments` reads the model's arguments with a `JsonDocument` and a
-`ValueKind` switch (string / number / bool / null / raw text) — a second JSON reader beside the json kind,
-which the same file already uses to encode a tool result. The arguments should be decoded by the json kind
-(a dict), and the tool binds the declared names out of it.
-
 ## A code provider remembers its DLL as a string [logged 2026-09-28, stage 9b code]
 
 `module/action/code/this.Load.cs` `Register` stamps `instance.Source = source.Absolute` so a snapshot can reload

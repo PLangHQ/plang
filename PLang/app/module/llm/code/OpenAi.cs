@@ -967,36 +967,27 @@ public sealed class OpenAi : ILlm
         /// doesn't declare is never bound (the frame is read before the caller's memory, so an undeclared
         /// name would shadow the caller's own variable): it answers the model as an error, like invalid JSON.
         /// A declared row with a value is a default the held call binds itself where the model was silent.
+        /// The arguments are json, opened by the json kind: each member is born the plang value it is (text, a
+        /// number, a bool, null, or a json value navigated by its keys); json that doesn't read, or a value that
+        /// isn't an object of named members, answers the model as an error.
         /// </summary>
         public List<data.@this> Arguments(string json, actor.context.@this context)
         {
             var arguments = new List<data.@this>();
             if (string.IsNullOrEmpty(json)) return arguments;
-            try
+            var opened = context.App.type.list["item"].kind["json"]!.Open(json, context)!;
+            if (!opened.Success) return [opened];
+            if (opened.Peek() is not { IsSequence: false, IsLeaf: false } members)
+                return [context.Error(new ServiceError($"the arguments of {Name} are not an object of named arguments", "ArgumentsNotAnObject", 400))];
+
+            var declared = Declared.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var (_, argument) in members.EnumerateItems(context))
             {
-                using var doc = JsonDocument.Parse(json);
-                var declared = Declared.Select(d => d.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                foreach (var prop in doc.RootElement.EnumerateObject())
-                {
-                    if (!declared.Contains(prop.Name))
-                        return [context.Error(new ServiceError(
-                            $"'{prop.Name}' is not an argument of {Name}" + (declared.Count == 0 ? " — it takes none" : $" — it takes {string.Join(", ", declared)}"),
-                            "UnknownArgument", 400))];
-                    object? value = prop.Value.ValueKind switch
-                    {
-                        JsonValueKind.String => prop.Value.GetString(),
-                        JsonValueKind.Number => global::app.type.item.number.@this.Parse(prop.Value.GetRawText()),
-                        JsonValueKind.True => true,
-                        JsonValueKind.False => false,
-                        JsonValueKind.Null => null,
-                        _ => prop.Value.GetRawText()
-                    };
-                    arguments.Add(new data.@this(prop.Name, value, context: context));
-                }
-            }
-            catch (JsonException ex)
-            {
-                return [context.Error(ActionError.FromException(ex, "JsonParseError", 400))];
+                if (!declared.Contains(argument.Name))
+                    return [context.Error(new ServiceError(
+                        $"'{argument.Name}' is not an argument of {Name}" + (declared.Count == 0 ? " — it takes none" : $" — it takes {string.Join(", ", declared)}"),
+                        "UnknownArgument", 400))];
+                arguments.Add(argument);
             }
             return arguments;
         }

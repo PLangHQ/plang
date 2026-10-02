@@ -509,6 +509,59 @@ public class QueryToolTests
         await Assert.That(secondReq).DoesNotContain("is not an argument");
     }
 
+    // A tool whose goal keeps each argument it is called with in the caller's %kept% dict: %kept.<name>% = %<name>%.
+    private async Task<global::app.data.@this> CallKeep(string arguments, params string[] names)
+    {
+        await Ctx.Variable.Set("kept", new Dictionary<string, object?>());
+        var steps = names.Select(n => Make.Step($"set %kept.{n}%",
+            Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "%kept." + n.Replace('.', '_') + "%", "variable"), ("Value", $"%{n}%")))).ToArray();
+        _app.goal.list.Add(Make.Goal(Ctx, "Keep", steps));
+        int callIndex = 0;
+        _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(++callIndex == 1
+            ? LlmTestHelper.MakeToolCallResponse(("call_1", "Keep", arguments))
+            : LlmTestHelper.MakeCompletionResponse("kept")));
+
+        var declared = names.Select(n => n.Split('.')[0]).Distinct()
+            .Select(n => new Data(n, null, Ctx.App.type.list["item"], context: Ctx)).ToList();
+        var action = new query(Ctx) { Message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = "keep" } }.ToListData<LlmMessage>(Ctx),
+            Tool = new List<global::app.goal.step.action.@this> { Make.Tool(Ctx, "Keep", parameter: declared) }.ToListData(Ctx) };
+        await action.Attach(null, Ctx);
+        return await action.Start();
+    }
+
+    // The arguments are json, opened by the json kind: each is born the plang value it is — an integer a long, a
+    // fraction a double, a string text, an object a value navigated by its keys.
+    [Test]
+    public async Task Query_ToolArgs_AreBornAsTheirPlangValues()
+    {
+        await (await CallKeep("{\"n\": 5, \"x\": 1.5, \"s\": \"a\", \"nested\": {\"key\": \"val\"}}", "n", "x", "s", "nested.key")).IsSuccess();
+
+        var n = (await Kept("n")).Peek() as global::app.type.item.number.@this;
+        var x = (await Kept("x")).Peek() as global::app.type.item.number.@this;
+        await Assert.That(n?.BoxedValue).IsEqualTo((object)5L);
+        await Assert.That(x?.BoxedValue).IsEqualTo((object)1.5);
+        await Assert.That((await Kept("s")).Peek()).IsTypeOf<global::app.type.item.text.@this>();
+        await Assert.That((await (await Kept("s")).Value())?.ToString()).IsEqualTo("a");
+        await Assert.That((await (await Kept("nested_key")).Value())?.ToString()).IsEqualTo("val");
+    }
+
+    // What the tool's goal kept under <paramref name="name"/> in %kept%.
+    private async Task<global::app.data.@this> Kept(string name)
+    {
+        var kept = await Ctx.Variable.Get("kept");
+        return await ((global::app.type.item.@this)(await kept.Value())!).Get(kept, name);
+    }
+
+    [Test]
+    public async Task Query_ToolArgs_NotAnObject_IsAnErrorToTheModel()
+    {
+        await (await CallKeep("[1, 2]", "n")).IsSuccess();
+
+        var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
+        await Assert.That(secondReq).Contains("not an object of named arguments");
+        await Assert.That((await Kept("n")).IsInitialized).IsFalse();
+    }
+
     // A name the tool doesn't declare is never bound — the argument frame is read before the caller's own
     // variables, so a prompt-injected model could shadow %userId%. It goes back to the model as an error.
     [Test]
