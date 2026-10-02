@@ -145,10 +145,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         if (PrPath != null) { writer.Name("prPath"); await PrPath.Output(writer, mode, context); }
         if (Hash != null) { writer.Name("hash"); writer.String(Hash); }
         if (BuilderVersion != null) { writer.Name("builderVersion"); writer.String(BuilderVersion); }
-        writer.Name("isSetup"); writer.Bool(IsSetup);
-        writer.Name("isEvent"); writer.Bool(IsEvent);
-        writer.Name("isSystem"); writer.Bool(IsSystem);
-        writer.Name("isTest"); writer.Bool(IsTest);
         if (Tag.CountRaw > 0) { writer.Name("tag"); await Tag.Output(writer, mode, context); }
         writer.EndObject();
     }

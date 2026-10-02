@@ -30,10 +30,10 @@ public class SetupTests
     [Test]
     public async Task Setup_Goals_OrdersSetupFirst_ThenAlphabetical()
     {
-        _app.goal.list.Add(new Goal { Name = "Zebra", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Zebra.goal", _app.actor.list.User.Context) });
-        _app.goal.list.Add(new Goal { Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context) });
-        _app.goal.list.Add(new Goal { Name = "Alpha", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Alpha.goal", _app.actor.list.User.Context) });
-        _app.goal.list.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal { Name = "Zebra", Path = global::app.type.item.path.@this.Resolve("/setup/Zebra.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal { Name = "Setup", Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal { Name = "Alpha", Path = global::app.type.item.path.@this.Resolve("/setup/Alpha.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal { Name = "NormalGoal", Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", _app.actor.list.User.Context) });
 
         var setupGoals = _app.goal.list.Setup.Goals.ToList();
 
@@ -46,8 +46,8 @@ public class SetupTests
     [Test]
     public async Task Setup_ExcludesSetupGoalsFromRegularLookup()
     {
-        _app.goal.list.Add(new Goal { Name = "SetupGoal", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/SetupGoal.goal", _app.actor.list.User.Context) });
-        _app.goal.list.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal { Name = "SetupGoal", Path = global::app.type.item.path.@this.Resolve("/setup/SetupGoal.goal", _app.actor.list.User.Context) });
+        _app.goal.list.Add(new Goal { Name = "NormalGoal", Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", _app.actor.list.User.Context) });
 
         var found = await _app.goal.list.Find("SetupGoal").Found();
         var normal = await _app.goal.list.Find("NormalGoal").Found();
@@ -92,7 +92,7 @@ public class SetupTests
         // Goal first, then its steps — a step is born knowing its goal (Goal is init).
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
+            Name = "Setup", Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
         };
         var step1 = new Step { Goal = goal, Index = 0, Text = "step one",
             Code = CreateNoOpActions() };
@@ -128,7 +128,7 @@ public class SetupTests
     {
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
+            Name = "Setup", Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
         };
         var step = new Step { Goal = goal, Index = 0, Text = "create table",
             Code = CreateNoOpActions() };
@@ -152,7 +152,7 @@ public class SetupTests
     {
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
+            Name = "Setup", Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
             Step = new GoalSteps()
         };
         _app.goal.list.Add(goal);
@@ -184,7 +184,7 @@ public class SetupTests
         // A step that fails (unknown module) and does NOT have on.error ignore
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
+            Name = "Setup", Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
         };
         var step = new Step
         {
@@ -208,7 +208,7 @@ public class SetupTests
         // Goal first, then its steps — a step is born knowing its goal (Goal is init).
         var goal = new Goal
         {
-            Name = "Setup", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
+            Name = "Setup", Path = global::app.type.item.path.@this.Resolve("/Setup.goal", _app.actor.list.User.Context),
         };
         var step1 = new Step { Goal = goal, Index = 0, Text = "step one",
             Code = CreateNoOpActions() };

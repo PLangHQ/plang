@@ -363,13 +363,13 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// that resolve against variables at every USE, never at set. An ordinary
     /// init-only stamp, set at creation by the authored seams (.pr load,
     /// action wire rebuild) — runtime INPUT is never stamped, so a user who
-    /// types <c>"%secret%"</c> gets it printed literally. <c>"plang"</c> is
-    /// the only language today. Null = not a template; a stamped value is
+    /// types <c>"%secret%"</c> gets it printed literally. The kind of template it is — <c>plang</c>, the
+    /// only one today. Null = not a template; a stamped value is
     /// never cached by the holding Data (see <see cref="Cacheable"/> on the
     /// types that honor the stamp).
     /// </summary>
     // A birth fact: the value is born a template (its reader or builder knows), never stamped after.
-    public string? Template { get; init; }
+    public global::app.type.item.template.kind.@this? Template { get; init; }
 
     /// <summary>The variables this value holds, each once: a template's <c>%…%</c>, a container's
     /// entries', a variable itself. Read-only, born with the value; empty when none.</summary>

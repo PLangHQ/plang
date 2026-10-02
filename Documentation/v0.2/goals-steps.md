@@ -20,8 +20,9 @@ These are the three entity types that form the execution model. Each is a **seal
 | `Path` | `string?` | Yes | Relative path to `.goal` file |
 | `PrPath` | `string?` | Yes | Computed from `Path` (inserts `.build/`, lowercases, `.pr` extension) |
 | `Hash` | `string?` | Yes | Hash of the source as written, comments included (a comment-only change re-saves the `.pr`, every step still cached) |
-| `IsSetup` | `bool` | Yes | Runs during setup phase |
-| `IsEvent` | `bool` | Yes | This goal is an event handler |
+| `IsSetup` | `bool` | No | Derived from path: name `Setup`, or under `setup/`. Runs during the setup phase |
+| `IsSystem` | `bool` | No | Derived from path: under `system/` |
+| `IsTest` | `bool` | No | Derived from path: file ends `.test.goal` |
 | `InputParameters` | `Dictionary<string, string>?` | Yes | Named input parameters |
 | `Parent` | `Goal?` | No | Parent goal (`[JsonIgnore]`) |
 | `App` | `App?` | No | App reference (`[JsonIgnore]`) |
@@ -187,7 +188,6 @@ Task<Data> LoadFromDirectoryAsync(...)  // Load all .pr files recursively
 // Filtered views
 IEnumerable<Goal> Public               // Visibility == Public
 IEnumerable<Goal> Setup                // IsSetup == true
-IEnumerable<Goal> Events               // IsEvent == true
 IReadOnlyList<Goal> Value              // All goals as list
 int Count
 ```

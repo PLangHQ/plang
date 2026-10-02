@@ -1016,14 +1016,14 @@ public class DynamicDataTests : System.IAsyncDisposable
     [Test]
     public async Task IsVariable_StandardVariable_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.item.text.@this("%var%", "plang"));
+        var d = new Data("x", new global::app.type.item.text.@this("%var%", new global::app.type.item.template.kind.plang.@this()));
         await Assert.That(d.IsVariable).IsTrue();
     }
 
     [Test]
     public async Task IsVariable_ShortName_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.item.text.@this("%v%", "plang"));
+        var d = new Data("x", new global::app.type.item.text.@this("%v%", new global::app.type.item.template.kind.plang.@this()));
         await Assert.That(d.IsVariable).IsTrue();
     }
 
@@ -1067,21 +1067,21 @@ public class DynamicDataTests : System.IAsyncDisposable
     [Test]
     public async Task HasVariable_EmbeddedVariable_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.item.text.@this("hello %name%", "plang"));
+        var d = new Data("x", new global::app.type.item.text.@this("hello %name%", new global::app.type.item.template.kind.plang.@this()));
         await Assert.That(d.HasVariable).IsTrue();
     }
 
     [Test]
     public async Task HasVariable_MultipleVariables_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.item.text.@this("%a% + %b%", "plang"));
+        var d = new Data("x", new global::app.type.item.text.@this("%a% + %b%", new global::app.type.item.template.kind.plang.@this()));
         await Assert.That(d.HasVariable).IsTrue();
     }
 
     [Test]
     public async Task HasVariable_SingleVariable_ReturnsTrue()
     {
-        var d = new Data("x", new global::app.type.item.text.@this("%var%", "plang"));
+        var d = new Data("x", new global::app.type.item.text.@this("%var%", new global::app.type.item.template.kind.plang.@this()));
         await Assert.That(d.HasVariable).IsTrue();
     }
 

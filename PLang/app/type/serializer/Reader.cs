@@ -36,7 +36,17 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         reader.EndObject();
         if (name == null) return new global::app.type.item.@null.@this("type", kind);
         // Born through the types: an alias (string) canonicalises and the type carries its class; a
-        // name no type answers to stays as written, for the reader of the type to judge.
-        return ctx.Context.App.type.list[new global::app.type.@this(name, typeKind, strict, template), ctx.Context];
+        // name no type answers to stays as written, for the reader of the type to judge. The template is the kind
+        // its name names; a name that is no kind of template is refused here, saying the kinds.
+        global::app.type.item.template.kind.@this? marked = null;
+        if (template != null)
+        {
+            try { marked = global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>.Parse(template).Value; }
+            catch (System.FormatException refused)
+            {
+                throw new global::app.error.DeclinedException(new global::app.error.Error(refused.Message, "TemplateInvalid", 400));
+            }
+        }
+        return ctx.Context.App.type.list[new global::app.type.@this(name, typeKind, strict, marked), ctx.Context];
     }
 }

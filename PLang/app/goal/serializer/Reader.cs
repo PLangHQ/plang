@@ -70,10 +70,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                 case "prPath": reader.Skip(); break;
                 case "hash": goal.Hash = reader.String(); break;
                 case "builderVersion": goal.BuilderVersion = reader.String(); break;
-                case "isSetup": goal.IsSetup = reader.Bool(); break;
-                case "isEvent": goal.IsEvent = reader.Bool(); break;
-                case "isSystem": goal.IsSystem = reader.Bool(); break;
-                case "isTest": goal.IsTest = reader.Bool(); break;
+                // what a goal is (setup, system, a test) it answers from its path, and isEvent was never set: an
+                // older .pr's keys are skipped by name
+                case "isSetup" or "isEvent" or "isSystem" or "isTest": reader.Skip(); break;
                 case "tag":
                     // Each tag reads itself through its own reader.
                     var tag = new global::app.type.item.tag.serializer.Reader();

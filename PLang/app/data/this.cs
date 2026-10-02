@@ -369,12 +369,14 @@ public partial class @this
             : Context.Error(new global::app.error.Error($"'{Name}' is {Peek()}, a variable that holds nothing", "VariableNotFound", 404));
     }
 
-    /// <summary>This carrier as the step gave it (<see cref="Given()"/>; itself when absent), handed to
-    /// <paramref name="then"/> — or, when it didn't resolve (a %variable% that holds nothing), its failure is
-    /// the answer, never compared or stored as its own text.</summary>
+    /// <summary>This carrier as the step gave it, read where it is written (<see cref="Settle"/>: a reference the Data
+    /// it names, a template rendered with the step's variables; itself when absent), handed to <paramref name="then"/>
+    /// — what a list action adds, sets or compares is what was written, as it reads now, never a template read again
+    /// later. When it didn't resolve (a %variable% that holds nothing, a template naming one), its failure is the
+    /// answer, never compared or stored as its own text.</summary>
     public async System.Threading.Tasks.Task<@this> Given(System.Func<@this, System.Threading.Tasks.Task<@this>> then)
     {
-        var given = await Given() ?? this;
+        var given = await Settle();
         return given.Success ? await then(given) : given;
     }
 

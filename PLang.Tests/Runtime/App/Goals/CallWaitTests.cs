@@ -142,7 +142,7 @@ public class CallWaitTests
         await Load("Weather", Make.Step("set got", Set("got", "%city% for %days%")));
         var caller = await Load("Caller", Make.Step("call Weather with %asked%",
             Make.Action(Ctx, "goal", "call", ("Name", "Weather"),
-                Make.Param(Ctx, "Parameter", "%asked%", new global::app.type.@this("list", template: "plang")))));
+                Make.Param(Ctx, "Parameter", "%asked%", new global::app.type.@this("list", template: new global::app.type.item.template.kind.plang.@this())))));
 
         await (await caller.Start(Ctx)).IsSuccess();
 

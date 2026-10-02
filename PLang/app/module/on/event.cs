@@ -28,10 +28,10 @@ public partial class OnEvent : IContext
     public partial data.@this<global::app.type.item.choice.@this<global::app.@event.binding.Scope>> Scope { get; init; }
 
     /// <summary>
-    /// Build-time hint: the event's path is walked hop by hop, and one that reaches nothing surfaces a
-    /// {action, message} warning on Channel("builder") naming that hop. Never a refusal — the item may only
-    /// exist at run (a channel a step before it creates); a path that reaches a value that is not an event is
-    /// refused by the slot's own type.
+    /// Build-time check: the event's path is walked hop by hop. A hop that names no event of an item's events
+    /// (<c>…on.before</c>) is refused — every item has the same events, so it can never bind. Any other hop that
+    /// reaches nothing surfaces a warning on Channel("builder") naming it — the item may only exist at run (a channel
+    /// a step before it creates).
     /// </summary>
     public async Task<data.@this> Build()
     {
@@ -40,8 +40,10 @@ public partial class OnEvent : IContext
         data.@this? reached = null;
         foreach (var hop in path.Code.Items())
         {
+            var on = reached?.Peek() as global::app.@event.on.@this;
             reached = await hop.Start(reached, Context);
             if (reached.IsInitialized && reached.Success) continue;
+            if (on != null) return Context.Error(NoEvent(path.Text, on));
             await __action.Warn(new global::app.error.Error(
                 $"on.event: '{path.Text}' reaches nothing at '{hop.Text}' at build time — it binds only if that exists when the step runs",
                 "EventUnreached", 404), Context);
@@ -50,14 +52,19 @@ public partial class OnEvent : IContext
         return Context.Ok();
     }
 
+    // A path whose last name is no event: it says the item's events, and that before/after is the When.
+    private static global::app.error.Error NoEvent(string path, global::app.@event.on.@this on)
+        => new global::app.error.ActionError(
+            $"on.event: '{path}' names no event — an item's events are {string.Join(", ", on.Names)}; before or after one " +
+            "is When (Event=%!app.type.step.on.start%, When=before)", "EventNotFound", 404);
+
     public async Task<data.@this<global::app.@event.binding.@this>> Start()
     {
         // The path navigates event ← its on ← the item. An item nothing is bound on answers the shared empty
         // events, which don't know their item: the item is the navigation's, and it binds on its own events.
         var reached = await Event.Follow(Context);
         if (reached.Peek() is not global::app.@event.@this named || reached.Parent?.Parent?.Peek() is not global::app.type.item.@this item)
-            return Context.Error<global::app.@event.binding.@this>(new global::app.error.ActionError(
-                "on.event binds on an item's event, reached by its path — e.g. %!app.type.goal.on.start%", "EventNotFound", 404));
+            return Context.Error<global::app.@event.binding.@this>(NoEvent(Event.Peek()?.ToString() ?? Event.Name, global::app.@event.on.@this.Empty));
 
         var own = item.Own();
         var @event = own[named.Name]!;

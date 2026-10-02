@@ -57,6 +57,28 @@ anchors on the decider's `=> formal:` starting line. Two recurring lessons:
 - `Wait`→`Parallel` collapse (goal.call): `Parallel` already means "concurrent AND wait" (tool loop),
   so folding "don't wait" in would make `call X in parallel, write to %r%` lose the result. Paused.
 
-## Next (unblocked, my lane)
-- Condition/loop notes tagging (say:/builder: per decision 411) so the generator can render those pages —
-  the last item not waiting on the coder/Ingi. (Awaiting architect's go / plang-d2 coordination.)
+## Closed since (later in v2)
+- **Issues 25 & 28** — the decider **Option question** (coder's core 26eef5568; mine: decider2.template's
+  `when "Option"` case + the `ask:` note lines on file.read Template & crypto.hash Algorithm). load-vars →
+  `Template=plang` 5/5, hash → `Algorithm=sha256` 5/5, guards clean. The lever teaching couldn't be.
+- **Issues 1 & 31** — `call goal X`/`call the goal X` drops the keyword (it's the word "goal", not the slash).
+- **on.event** — the event is `start`/`error`, never the fused `on.before`/`on.after`/`on.end` (the When).
+- **Condition/loop notes tagged** (decision 411); plang-d2 owns the page render + goldens.
+- **Leftovers deleted** (unused, unreferenced): MapVariables, Run.goal, /system/Build.goal, AskSystem.
+
+## The os/ build tail — HANDED TO A FRESH SESSION
+`plang build` from os/ no longer dies early (llm regression, formal reader, SetupApp all fixed), but each
+reopened hand-authored system goal surfaces its own step the builder can't cleanly rebuild. Architect's
+two-pass plan (note: 819f239c6 moved **no** goals — it changed only C#/tests, the four goal flags now
+derive from the goal's path, and the `.pr` dropped IsSetup/IsSystem/IsTest/IsEvent; AskSystem was already
+under `os/system/events/`):
+1. **Sweep** every `os/**/*.goal` for who references it (C#/.goal/template/.llm/doc/`call`-by-name); send
+   architect the unreferenced list → delete in one commit.
+2. **Rebuild each remaining reopened goal** individually (`--build={"files":[…],"cache":false}`), don't stop
+   at the first failure; one table: goal, built/not, refusal, class — **leftover** (delete), **writer
+   mis-map** (builder's teaching fix), **missing action param/core** (coder, e.g. output.ask has no Actor),
+   **write in formal**. Architect routes from the table; builder does the writer-mis-map rows.
+
+## Blocked on Ingi
+- `Wait`→`Parallel` collapse (goal.call): `Parallel` already means "concurrent AND wait" (llm tool loop),
+  so folding "don't wait" in would make `call X in parallel, write to %r%` lose the result. Paused for Ingi.

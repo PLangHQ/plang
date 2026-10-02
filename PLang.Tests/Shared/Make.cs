@@ -56,7 +56,7 @@ public static class Make
             action.Property.Add(Property(value is global::app.data.@this typed
                 ? typed
                 : value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[^%]+%")   // text.HasVariable's detector (%!data% too)
-                    ? Built(context, name, s, new global::app.type.@this("text", template: "plang"))
+                    ? Built(context, name, s, new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()))
                     // a list/dict the programmer wrote holding a %variable% is marked too, as the builder marks it
                     : value is System.Collections.IEnumerable and not string && System.Text.RegularExpressions.Regex.IsMatch(
                             System.Text.Json.JsonSerializer.Serialize(value), "%[^%]+%")
@@ -96,7 +96,7 @@ public static class Make
         // A %ref% argument is an authored template, as the builder stamps it — it renders against
         // live variables when the callee reads it.
         var rows = arguments.Select(a => a.value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[A-Za-z_]")
-            ? Built(ctx, a.name, s, new global::app.type.@this("text", template: "plang"))
+            ? Built(ctx, a.name, s, new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()))
             : new global::app.data.@this(a.name, a.value, context: ctx)).ToList();
         return Action(ctx, "goal", "call", ("Name", goal),
             ("Parameter", new global::app.type.item.list.@this(rows)));
@@ -167,13 +167,13 @@ public static class Make
     /// <summary>A text the build marked a template (<c>"Hi %name%"</c>), born as <see cref="Built(global::app.actor.context.@this, string, object?, global::app.type.@this)"/>
     /// births it.</summary>
     public static global::app.data.@this Built(global::app.actor.context.@this context, string name, string text)
-        => Built(context, name, text, new global::app.type.@this("text", template: "plang"));
+        => Built(context, name, text, new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()));
 
     /// <summary>A text parameter carrying an interpolation template (an embedded or full
     /// <c>%ref%</c>) — models the builder stamping <c>type.template="plang"</c> on a value
     /// that contains a <c>%var%</c>. The read fills the holes against live variables.</summary>
     public static (string name, object? value) Template(global::app.actor.context.@this context, string name, string value)
-        => Param(context, name, value, new global::app.type.@this("text", template: "plang"));
+        => Param(context, name, value, new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()));
 
     /// <summary>
     /// An action with its clauses after it (<c>on.error</c>, <c>on.cache</c>, <c>on.timeout</c>, made with

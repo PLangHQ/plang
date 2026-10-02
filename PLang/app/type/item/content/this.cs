@@ -30,7 +30,7 @@ public abstract class @this : global::app.type.item.@this
     /// name the kind and not kept. <paramref name="template"/> is a birth fact: the programmer asked for the
     /// content's variables to be filled (<c>read … resolve variables</c>) — its text content is born a template
     /// and renders itself at use.</summary>
-    protected @this(global::app.type.item.path.@this path, global::app.actor.context.@this context, string? template)
+    protected @this(global::app.type.item.path.@this path, global::app.actor.context.@this context, global::app.type.item.template.kind.@this? template)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
         _kind = path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null;

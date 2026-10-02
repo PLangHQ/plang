@@ -351,7 +351,7 @@ public sealed class Reader
             if (value.Action != null) born = value.Action;
             // argument rows are named rows, each value its own (a %x% row value is born a template on
             // its own): the rows are never rendered as one list, which would drop their names
-            else if (declared.Type.Name == "list" && value.Entries != null) born = Born(type, Arguments(value), template: null);
+            else if (declared.Type.Name == "list" && value.Entries != null) born = Born(type, Arguments(value), marks: false);
             else if (value.Entries != null && value.Entries.Any(e => e.Type != null))
             { Fail($"`{prop}` takes a value, not argument rows: a typed entry (`name: type = value`) belongs to a list of arguments", at); return default; }
             else born = Born(type, Json(value));
@@ -363,12 +363,13 @@ public sealed class Reader
 
         // Each value born through the type's own door — the one a .pr row's value reads through.
         // The marker is born HERE, at build, and nowhere else: the programmer's own literal holding
-        // %variables% is typed a template ("plang"); its row carries the mark from then on.
-        private global::app.type.item.@this Born(global::app.type.@this type, string json, string? template = "plang")
+        // %variables% is typed a plang template; its row carries the mark from then on (unless `marks` is off).
+        private global::app.type.item.@this Born(global::app.type.@this type, string json, bool marks = true)
         {
             var variables = Variables(json);
-            var marked = template != null && type.Template == null && variables.Count > 0
-                ? _context.App.type.list[new global::app.type.@this(type.Name, type.kind.Name, type.Strict, template), _context]
+            var marked = marks && type.Template == null && variables.Count > 0
+                ? _context.App.type.list[new global::app.type.@this(type.Name, type.kind.Name, type.Strict,
+                    new global::app.type.item.template.kind.plang.@this()), _context]
                 : type;
             var bytes = Encoding.UTF8.GetBytes(json);
             var utf8 = new System.Text.Json.Utf8JsonReader(bytes);

@@ -28,7 +28,7 @@ public static class TemplateStamp
                 // Leaf: a %ref% text is declared a template, so its value is born one.
                 if (new global::app.type.item.variable.parser.@this(raw).Variable.Count > 0)
                 {
-                    var declared = context.App.type.list[new global::app.type.@this(p.Type.Name, p.Type.kind.Name, p.Type.Strict, "plang"), context];
+                    var declared = context.App.type.list[new global::app.type.@this(p.Type.Name, p.Type.kind.Name, p.Type.Strict, new global::app.type.item.template.kind.plang.@this()), context];
                     properties.Set(new global::app.type.property.@this
                     {
                         Name = p.Name, Type = declared, Properties = p.Properties,
@@ -45,7 +45,7 @@ public static class TemplateStamp
                 properties.Set(new global::app.type.property.@this
                 {
                     Name = p.Name, Properties = p.Properties, Value = stamped,
-                    Type = context.App.type.list[new global::app.type.@this(p.Type.Name, p.Type.kind.Name, p.Type.Strict, "plang"), context],
+                    Type = context.App.type.list[new global::app.type.@this(p.Type.Name, p.Type.kind.Name, p.Type.Strict, new global::app.type.item.template.kind.plang.@this()), context],
                 });
         }
     }
@@ -59,7 +59,7 @@ public static class TemplateStamp
         {
             case global::app.type.item.text.@this t:
                 return t.Template == null && new global::app.type.item.variable.parser.@this(t.ToString()).Variable.Count > 0
-                    ? new global::app.type.item.text.@this(t.ToString(), "plang") { Kind = t.Kind }
+                    ? new global::app.type.item.text.@this(t.ToString(), new global::app.type.item.template.kind.plang.@this()) { Kind = t.Kind }
                     : null;
 
             case global::app.type.item.list.@this l when l.Template == null:
@@ -67,7 +67,7 @@ public static class TemplateStamp
                 var items = l.Items(context).ToList();   // materialize once — entries rebind in place
                 bool any = false;
                 foreach (var entry in items) any |= StampEntry(entry, context);
-                return any ? new global::app.type.item.list.@this(items) { Template = "plang" } : null;
+                return any ? new global::app.type.item.list.@this(items) { Template = new global::app.type.item.template.kind.plang.@this() } : null;
             }
 
             case global::app.type.item.dict.@this d when d.Template == null:
@@ -76,7 +76,7 @@ public static class TemplateStamp
                 bool any = false;
                 foreach (var entry in entries) any |= StampEntry(entry, context);
                 if (!any) return null;
-                var stampedDict = new global::app.type.item.dict.@this() { Template = "plang" };
+                var stampedDict = new global::app.type.item.dict.@this() { Template = new global::app.type.item.template.kind.plang.@this() };
                 foreach (var entry in entries) stampedDict.Set(entry);
                 return stampedDict;
             }
@@ -99,7 +99,7 @@ public static class TemplateStamp
     /// <summary>
     /// Builds a Data whose CONTAINER value carries the authored-template flag
     /// explicitly — the shape a %ref%-bearing container has once it rides the wire:
-    /// <c>Template = "plang"</c> on the container AND on each %ref% text leaf, so
+    /// <c>Template = new global::app.type.item.template.kind.plang.@this()</c> on the container AND on each %ref% text leaf, so
     /// the render door (<c>Value</c>) resolves the nested refs. Scalar
     /// %ref% values carry the flag via a flagged <c>text</c> type at the call site;
     /// this helper is for list/dict values only.
@@ -113,11 +113,11 @@ public static class TemplateStamp
         switch (raw)
         {
             case string s when new global::app.type.item.variable.parser.@this(s).Variable.Count > 0:
-                return new global::app.type.item.text.@this(s, "plang");
+                return new global::app.type.item.text.@this(s, new global::app.type.item.template.kind.plang.@this());
 
             case IDictionary<string, object?> d:
             {
-                var dict = new global::app.type.item.dict.@this() { Template = "plang" };
+                var dict = new global::app.type.item.dict.@this() { Template = new global::app.type.item.template.kind.plang.@this() };
                 foreach (var kv in d)
                     dict.Set(new global::app.data.@this(kv.Key, Build(kv.Value, context), context: context));
                 return dict;
@@ -128,7 +128,7 @@ public static class TemplateStamp
                 var items = new List<global::app.data.@this>();
                 foreach (var el in e)
                     items.Add(new global::app.data.@this("", Build(el, context), context: context));
-                return new global::app.type.item.list.@this(items) { Template = "plang" };
+                return new global::app.type.item.list.@this(items) { Template = new global::app.type.item.template.kind.plang.@this() };
             }
 
             // A literal leaf (holeless string, number, bool) — built as its plain type.

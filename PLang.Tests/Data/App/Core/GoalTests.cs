@@ -15,11 +15,9 @@ public class GoalTests : System.IAsyncDisposable
         {
             Name = "TestGoal",
             Comment = "This is a comment",
-            Path = global::app.type.item.path.@this.Resolve("/path/to/goal.goal", _app.actor.list.User.Context),
-            PrPath = global::app.type.item.path.@this.Resolve("/path/to/goal.pr.json", _app.actor.list.User.Context),
+            Path = global::app.type.item.path.@this.Resolve("/setup/to/goal.goal", _app.actor.list.User.Context),
+            PrPath = global::app.type.item.path.@this.Resolve("/setup/to/goal.pr.json", _app.actor.list.User.Context),
             Hash = "abc123",
-            IsSetup = true,
-            IsEvent = false,
             Step = new GoalSteps
             {
                 new Step { Index = 0, Text = "first step" },
@@ -32,11 +30,10 @@ public class GoalTests : System.IAsyncDisposable
         await Assert.That(goal.Name).IsEqualTo("TestGoal");
         await Assert.That(goal.Comment).IsEqualTo("This is a comment");
         await Assert.That(goal.Visibility.Value).IsEqualTo(Visibility.Public);
-        await Assert.That(goal.Path?.ToString()).IsEqualTo("/path/to/goal.goal");
-        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("/path/to/.build/goal.pr");
+        await Assert.That(goal.Path?.ToString()).IsEqualTo("/setup/to/goal.goal");
+        await Assert.That(goal.PrPath?.ToString()).IsEqualTo("/setup/to/.build/goal.pr");
         await Assert.That(goal.Hash).IsEqualTo("abc123");
         await Assert.That(goal.IsSetup).IsTrue();
-        await Assert.That(goal.IsEvent).IsFalse();
         await Assert.That(goal.Child.CountRaw).IsEqualTo(2);
         await Assert.That(goal.Child.Items().All(c => c.Parent == goal)).IsTrue();
         await Assert.That(goal.Step.Count).IsEqualTo(2);
@@ -69,12 +66,37 @@ public class GoalTests : System.IAsyncDisposable
         await Assert.That(goal.IsSetup).IsFalse();
     }
 
+    // an os /system/ goal, loaded in an app with no /system/ of its own, is a system goal: its plang path is /system/…
     [Test]
-    public async Task IsEvent_DefaultsToFalse()
+    public async Task AnOsSystemGoal_InAnAppWithoutItsOwn_IsSystem()
     {
-        var goal = new Goal();
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "issystem-" + System.Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(root);
+        try
+        {
+            await using var other = new global::app.@this(root).Testing();
+            var loaded = await other.goal.Load("/system/error/Show.goal");
 
-        await Assert.That(goal.IsEvent).IsFalse();
+            await loaded.IsSuccess();
+            await Assert.That(((Goal)(await loaded.Value())!).IsSystem).IsTrue();
+        }
+        finally { System.IO.Directory.Delete(root, true); }
+    }
+
+    // what a goal is, it answers from where it lives: /system/, /setup/ (or named Setup), a .test.goal
+    [Test]
+    [Arguments("/system/error/Show.goal", "Show", true, false, false)]
+    [Arguments("/setup/Db.goal", "Db", false, true, false)]
+    [Arguments("/Setup.goal", "Setup", false, true, false)]
+    [Arguments("/test/a.test.goal", "A", false, false, true)]
+    [Arguments("/Start.goal", "Start", false, false, false)]
+    public async Task AGoalIs_WhatItsPathSays(string path, string name, bool system, bool setup, bool test)
+    {
+        var goal = new Goal { Name = name, Path = global::app.type.item.path.@this.Resolve(path, _app.actor.list.User.Context) };
+
+        await Assert.That(goal.IsSystem).IsEqualTo(system);
+        await Assert.That(goal.IsSetup).IsEqualTo(setup);
+        await Assert.That(goal.IsTest).IsEqualTo(test);
     }
 
     [Test]

@@ -13,8 +13,9 @@ public class GoalsTests : System.IAsyncDisposable
 
     private global::app.goal.list.@this Goals() => new(app.actor.list.User.Context.App);
 
-    private Goal Named(string name, string path, bool setup = false, string? comment = null)
-        => new() { Name = name, Path = global::app.type.item.path.@this.Resolve(path, app.actor.list.User.Context), IsSetup = setup, Comment = comment };
+    // a goal at path — a setup goal is one by its place (/setup/) or its name (Setup)
+    private Goal Named(string name, string path, string? comment = null)
+        => new() { Name = name, Path = global::app.type.item.path.@this.Resolve(path, app.actor.list.User.Context), Comment = comment };
 
     private static string TempApp()
     {
@@ -57,8 +58,8 @@ public class GoalsTests : System.IAsyncDisposable
     public async Task Add_KeysByPrPath_SameNameInTwoFiles_BothHeld()
     {
         var goals = Goals();
-        goals.Add(Named("Setup", "/Setup.goal", setup: true));
-        goals.Add(Named("Setup", "/Setup/Setup.goal", setup: true));
+        goals.Add(Named("Setup", "/Setup.goal"));
+        goals.Add(Named("Setup", "/Setup/Setup.goal"));
 
         await Assert.That(goals.Setup.Goals.Count()).IsEqualTo(2);
     }
@@ -79,7 +80,7 @@ public class GoalsTests : System.IAsyncDisposable
     public async Task Setup_ReturnsOnlySetupGoals()
     {
         var goals = Goals();
-        goals.Add(Named("SetupGoal", "/SetupGoal.goal", setup: true));
+        goals.Add(Named("SetupGoal", "/setup/SetupGoal.goal"));
         goals.Add(Named("NormalGoal", "/NormalGoal.goal"));
 
         await Assert.That(goals.Setup.Goals.Select(g => g.Name).ToList()).IsEquivalentTo(new[] { "SetupGoal" });
@@ -123,7 +124,7 @@ public class GoalsTests : System.IAsyncDisposable
     public async Task Find_NeverASetupGoal()
     {
         var goals = Goals();
-        goals.Add(Named("SetupDb", "/SetupDb.goal", setup: true));
+        goals.Add(Named("SetupDb", "/setup/SetupDb.goal"));
         goals.Add(Named("NormalGoal", "/NormalGoal.goal"));
 
         await Assert.That(await goals.Find("SetupDb").Found()).IsNull();
@@ -151,13 +152,13 @@ public class GoalsTests : System.IAsyncDisposable
             await using var engine = new global::app.@this(dir).Testing();
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "normalgoal.pr"),
                 """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","step":[]}""");
-            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "setupdb.pr"),
-                """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","step":[]}""");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "setup.pr"),
+                """{"name":"Setup","path":"/Setup.goal","step":[]}""");
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "NormalGoal.goal"), "NormalGoal\n");
-            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "SetupDb.goal"), "SetupDb\n");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "Setup.goal"), "Setup\n");
 
             await Assert.That((await engine.goal.list.Find("NormalGoal").Found())!.Name).IsEqualTo("NormalGoal");
-            await Assert.That(await engine.goal.list.Find("SetupDb").Found()).IsNull();
+            await Assert.That(await engine.goal.list.Find("Setup").Found()).IsNull();
         }
         finally { System.IO.Directory.Delete(dir, true); }
     }
@@ -171,10 +172,10 @@ public class GoalsTests : System.IAsyncDisposable
         try
         {
             await using var engine = new global::app.@this(dir).Testing();
-            var pr = System.IO.Path.Combine(dir, ".build", "setupdb.pr");
-            System.IO.File.WriteAllText(pr, """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","step":[]}""");
+            var pr = System.IO.Path.Combine(dir, ".build", "setup.pr");
+            System.IO.File.WriteAllText(pr, """{"name":"Setup","path":"/Setup.goal","step":[]}""");
 
-            var result = await engine.goal.Load(System.IO.Path.Combine(dir, "SetupDb.goal"));
+            var result = await engine.goal.Load(System.IO.Path.Combine(dir, "Setup.goal"));
 
             await Assert.That(result.Error?.Key).IsEqualTo("SetupGoal");
         }
@@ -186,9 +187,9 @@ public class GoalsTests : System.IAsyncDisposable
     {
         // rooted where Named's paths resolve, so the held goal's .pr is the one loaded
         await using var app = new global::app.@this(this.app.AbsolutePath).Testing();
-        app.goal.list.Add(Named("SetupDb", "/SetupDb.goal", setup: true));
+        app.goal.list.Add(Named("SetupDb", "/setup/SetupDb.goal"));
 
-        var result = await app.goal.Load("/SetupDb.goal");
+        var result = await app.goal.Load("/setup/SetupDb.goal");
 
         await Assert.That(result.Error?.Key).IsEqualTo("SetupGoal");
     }

@@ -17,7 +17,7 @@ public class BuildTemplateStampTests
     {
         var app = new global::app.@this("/t").Testing();
         var row = Row(app, """{"name":"Message","type":{"name":"text","template":"plang"},"value":"hello %name%"}""");
-        await Assert.That(row.Type?.Template).IsEqualTo("plang");
+        await Assert.That(row.Type?.Template?.Name).IsEqualTo("plang");
     }
 
     // A value holding %name% with no marker is text — no guess from its content.
@@ -43,7 +43,7 @@ public class BuildTemplateStampTests
     {
         var app = new global::app.@this("/t").Testing();
         var row = Row(app, """{"name":"Message","type":{"name":"text","template":"plang"},"value":"count is %n% today"}""");
-        await Assert.That(row.Type?.Template).IsEqualTo("plang");
+        await Assert.That(row.Type?.Template?.Name).IsEqualTo("plang");
     }
 
     [Test]

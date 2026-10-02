@@ -13,7 +13,7 @@ public class HttpReadTemplateTests
         var read = await url.Read(ctx, new global::app.type.item.template.kind.plang.@this());
 
         await read.IsSuccess();
-        await Assert.That(read.Peek()!.Template).IsEqualTo("plang");
+        await Assert.That(read.Peek()!.Template?.Name).IsEqualTo("plang");
     }
 
     // Its text content renders at use: the url's variables are filled from the reader's.

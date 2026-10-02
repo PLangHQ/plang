@@ -176,7 +176,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     public override async Task<data.@this> Read(actor.context.@this context, global::app.type.item.template.kind.@this? template = null)
     {
         // born with its template: the url type makes the reference from this location, as it declares
-        return await context.App.type.list[new global::app.type.@this("url", (string?)null, template: template?.Name), context]
+        return await context.App.type.list[new global::app.type.@this("url", (string?)null, template: template), context]
             .Create(this, context, "url");
     }
 

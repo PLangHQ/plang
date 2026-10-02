@@ -41,14 +41,14 @@ public class Wire
     private readonly actor.context.@this _context;
 
     // The authored-content mode threaded into every value read this reader
-    // drives — "plang" only on the dedicated goal/.pr-load Wire (a %ref% leaf borns
+    // drives — plang's only on the dedicated goal/.pr-load Wire (a %ref% leaf borns
     // a live template), null everywhere else (runtime ingest borns literal). The
     // trust rides the reader instance, set once at the construction site, never
     // inferred from the bytes. Owned per-instance, like View/Sign.
-    private readonly string? _template;
+    private readonly global::app.type.item.template.kind.@this? _template;
 
     public Wire(global::app.View view, actor.context.@this context, bool sign = true,
-        string? template = null, bool verify = true, bool deferVerify = false)
+        global::app.type.item.template.kind.@this? template = null, bool verify = true, bool deferVerify = false)
     {
         View = view;
         Sign = sign;

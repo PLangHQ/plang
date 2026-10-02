@@ -136,7 +136,9 @@ public class FormalReaderTests : System.IAsyncDisposable
 
         await ev.IsFailure();
         await Assert.That(ev.Error!.Key).IsEqualTo("NotAnEvent");
-        await Assert.That(ev.Error.Message).Contains("%!app.type.step.on.before%");
+        // the paths it teaches are real events, before/after in When — the retry reads this
+        await Assert.That(ev.Error.Message).Contains("Event=%!app.type.step.on.start%, When=before");
+        await Assert.That(ev.Error.Message).DoesNotContain("on.before");
     }
 
     // a conversation writes what it continues as written — the reference, never what it names now (unset at build)

@@ -143,14 +143,14 @@ public class CreateEventTests : System.IAsyncDisposable
     [Test] public async Task AFileMadeFromAPath_IsTheReferenceToIt_WithTheDeclaredTemplate()
     {
         var path = global::app.type.item.path.@this.Resolve("some.txt", Ctx);
-        var type = app.type.list[new global::app.type.@this("file", (string?)null, template: "plang"), Ctx];
+        var type = app.type.list[new global::app.type.@this("file", (string?)null, template: new global::app.type.item.template.kind.plang.@this()), Ctx];
 
         var born = await type.Create(path, Ctx);
 
         await born.IsSuccess();
         await Assert.That(born.Peek()).IsTypeOf<global::app.type.item.file.@this>();
         await Assert.That(((global::app.type.item.file.@this)born.Peek()).Path).IsSameReferenceAs(path);
-        await Assert.That(born.Peek().Template).IsEqualTo("plang");
+        await Assert.That(born.Peek().Template?.Name).IsEqualTo("plang");
     }
 
     [Test] public async Task DecodedContent_IsABirth_ThroughItsTypesCreate()

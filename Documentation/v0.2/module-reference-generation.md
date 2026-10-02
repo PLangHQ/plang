@@ -147,7 +147,7 @@ land together. `module.guide.md` may also end with a `## Examples` section of
 module-level worked programs (authored by whoever owns the learner programs); it
 renders as part of the guide, so the golden includes it too.
 
-## Golden output — generated `docs/modules/file.md`
+## Golden output — file module
 
 This is the exact literal the generator must produce for the `file` module —
 actions in catalog order, `*.description.md` verbatim (no added periods, second
@@ -266,6 +266,31 @@ With `load vars`, the read treats the file's text as a template: each `%variable
 
 Infrastructure variables are never filled. A `%!…%` name — engine internals like `%!app%`, `%!trace%`, `%!fileSystem%` — is left exactly as written, because a file's content may be untrusted; only the program's own `%variables%` resolve. To put an `%!…%` value into a string, build the string in `.goal` code rather than reading it from a file.
 
+For example, a `greeting.txt` of:
+
+```text
+Hello, %name%!
+Trace: %!trace.id%
+```
+
+read with `load vars`:
+
+```plang
+Start
+- set %name% = "World"
+- read 'greeting.txt', load vars, write to %greeting%
+- write out %greeting%
+```
+
+prints:
+
+```text
+Hello, World!
+Trace: %!trace.id%
+```
+
+`%name%` is filled; `%!trace.id%` is left exactly as written.
+
 ## exists
 Check whether a file or directory exists at Path — what "if '<file>' exists" or "when the file is there" asks — returning the path, whose truthiness is its existence, to feed a condition
 
@@ -312,6 +337,106 @@ Move or rename a file from Source to Destination, optionally overwriting the tar
 | Overwrite | `overwrite` | bool | no | false | replace the destination if it already exists |
 
 **Returns:** the destination path.
+```
+
+## Golden output — condition module
+
+```markdown
+# Condition Module
+Comparisons: ask whether something holds — equal, greater, contains, starts with, empty — and either branch on the answer (if/elseif/else) or keep it. Any yes/no question belongs here, whatever it is about: whether a list holds an item, whether text starts with something, whether a number is bigger. The subject's own module is not involved just because the question is about its contents. What follows the comparison is an ordinary action — call a goal, return from the goal (`if %done%, return`), write out, keep the answer in a variable — and is that action's own module.
+
+## Branching: if, elseif, else
+
+`if` runs what follows it when its condition is true. To choose among several cases, chain `elseif` (or `or if`) and `else` (or `otherwise`) after it — the first branch whose condition holds runs, and `else` runs when none do:
+
+```plang
+- if %total% > 20, write out "big", elseif %total% > 15, write out "medium", else write out "small"
+```
+
+For a `%total%` of 18 this prints `medium`. What follows each branch is that branch's body. To ask a yes/no question and keep the answer rather than branch on it, use [compare](#compare).
+
+## compare
+Compare two values with an operator and write the boolean result to a variable
+
+- compare %a% > %b%, write to %isGreater%
+- check if %myList% contains 20, write to %has20%
+- check if %name% starts with "plang", write to %isPlang%
+- check if %content% is empty, write out "nothing here"
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Left | the value before the comparison | item | no | — | the first value compared |
+| Operator | `>`, `is`, `contains`, `is empty`, … (as in condition.if) | choice<operator> | yes | — | the comparison, a choice<operator> |
+| Right | the value after the comparison | item | no | — | the second value |
+
+**Returns:** a `bool`.
+
+## if
+Evaluate a condition and execute the then-branch actions; pair with elseif/else for full branching
+
+- if %count% > 0, call ProcessItems
+- if %content% is not empty
+- if %flag% is true, call Go
+- if %done%, return %result%
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Left | the value right after `if` | item | yes | — | the value tested |
+| Operator | `>`, `is`, `is not`, `contains`, `starts with`, `is empty`, `is in […]`, `is a <type>`, … | choice<operator> | no | — | the comparison, a choice<operator> |
+| Right | the value after the operator | item | no | — | what Left is compared to |
+
+**Returns:** a `bool`.
+
+## elseif
+Additional condition branch evaluated when the preceding if condition is false
+
+- else if %a% > 5, write 'mid'
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Left | the value right after `else if` | item | yes | — | the value tested, the same as condition.if's |
+| Operator | `>`, `is`, `contains`, `is empty`, … (see if.notes' table) | choice<operator> | no | — | the comparison, the same as condition.if's |
+| Right | the value after the operator | item | no | — | what Left is compared to, the same as condition.if's |
+
+**Returns:** a `bool`.
+
+## else
+Fallback branch that executes when all preceding if/elseif conditions are false
+
+**Returns:** a `bool`.
+```
+
+## Golden output — loop module
+
+```markdown
+# Loop Module
+Iterate over a collection, executing the remaining step actions once per item
+
+## The work per item is its own action
+
+`foreach` repeats the rest of the step for each element of a collection. What you do with each element is a separate action after it — usually a `call` to a goal:
+
+```plang
+- foreach %items% as %thing%, call Show thing=%thing%
+```
+
+`foreach %items% as %thing%` binds each element to `%thing%`; `call Show thing=%thing%` is the per-item work, passing the element on. Without `as`, each element is `%item%`; add `with key %sku%` to bind the key or index too.
+
+## foreach
+Iterate over Collection, binding each element to Item (and its key or index to Key) and executing the remaining step actions
+
+- foreach %items%, call ProcessItem item=%item%
+- foreach %rows%, write out %row%
+- foreach %products% as %product%, call Handle
+- foreach %prices% as %price% with key %sku%, write out "%sku%: %price%"
+
+| Property | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| Collection | `foreach %list%`, `for each %order% in %orders%` | item | yes | — | the list or dict to walk |
+| Item | `as %product%` (else it is %item%) | variable | no | item | the variable each element is bound to |
+| Key | `with key %sku%` | variable | no | — | the variable the key or index is bound to |
+
+**Returns:** a summary of the loop: `{itemCount, completed}` — how many elements it ran over, and whether it finished (false if cancelled). The work per element is its own action, so there is usually nothing to write the summary to.
 ```
 
 ## Generation rules

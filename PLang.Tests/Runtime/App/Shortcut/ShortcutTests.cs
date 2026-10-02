@@ -34,8 +34,6 @@ public class ShortcutTests
     {
         var goal = Make.Goal(Ctx, name, $"/{folder}/{name}.goal",
             Make.Step($"return {value}", Make.Action(Ctx, "goal", "return", ("Data", value))));
-        // as the build stamps it: a goal under system/ is a system goal
-        goal.IsSystem = folder.StartsWith("system/");
         var at = System.IO.Path.Combine(_root, folder);
         System.IO.Directory.CreateDirectory(System.IO.Path.Combine(at, ".build"));
         await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(at, ".build", name.ToLowerInvariant() + ".pr"), await Ctx.Pr(goal));

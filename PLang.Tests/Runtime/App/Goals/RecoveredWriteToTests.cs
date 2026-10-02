@@ -20,7 +20,7 @@ public class RecoveredWriteToTests
 
     private global::app.goal.step.action.@this WriteTo(string name)
         => Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", name, "variable"),
-            Make.Param(Ctx, "Value", "%!data%", new global::app.type.@this("item", template: "plang")));
+            Make.Param(Ctx, "Value", "%!data%", new global::app.type.@this("item", template: new global::app.type.item.template.kind.plang.@this())));
 
     private global::app.goal.step.action.@this Throw()
         => Make.Action(Ctx, "error", "throw", ("Message", "broke"), ("Key", "Broke"));

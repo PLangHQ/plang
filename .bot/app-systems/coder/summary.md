@@ -1,188 +1,49 @@
 # coder — app-systems
 
-**Version:** v14 (stages 1–12 done except 10b's (C); batch 3 done; baseline audited)
+**Version:** v18 (all pushed; reviews by the architect, plang-21, gate by gate)
 
 ## What this is
 app-systems makes every `app.X` the type X, so the plang path, the C# path and the file path agree. The
-architect's plan is `.bot/app-systems/architect/plan.md` (13 stages); its running log of rulings is
-`.bot/app-systems/architect/summary.md`. The plan's readable face and its tests are `test/plan/app-systems/`
-(`start.md`, `start.goal`, `done.list`). Stage 9 moves every value's birth onto its type and makes each module
-action a one-line door to the object that owns the work (worklist:
-`.bot/app-systems/architect/plan/stage-9-worklist.md`).
+architect's plan is `.bot/app-systems/architect/plan.md`; its running log of rulings is
+`.bot/app-systems/architect/summary.md`. Working mode: the architect relays Ingi's rulings and gates every
+commit (a full six-suite run); the coder shapes first, builds, runs the suites its change touches and
+`plang --test`, then pushes and reports.
 
-Working mode (Ingi): the architect hands intent; the coder proposes and starts in the same turn, stops only at
-a real design fork, and reports each pushed slice for review. Plan tests are intent: each must fail with its
-change reverted.
+## Done since v14 (2026-10-02)
+- **Goals are found by their `.goal`** — `goal.Pr(source)` holds `X.goal → .build/x.pr` once; `goal.Load` takes
+  the `.goal`; `Find` is one method answering a Data (goal / miss / `GoalNotBuilt`), a goal's name compared
+  ignoring case; the goal list walks `.goal` files, never dot-folders. Executor's own (wrong) copy of the rule
+  went.
+- **The /system/ overlay** is one door: `path.Place(context)` — the app's own, then the os's.
+- **Shortcuts** — the system shortcut goals (`os/system/shortcut/*.goal`) built; `%!goal% %!step% %!error%
+  %!test% %!channel%` read through them; the context keeps only `!app`/`!context`.
+- **Numbers** — every number written as text reads through `number.Parse` (an integer is long; past long a
+  biginteger, exact); json documents and llm tool arguments no longer turn integers into doubles.
+- **Choice over a closed set** — three kinds of set (`member`, `named`, `family`), one birth door
+  `set.For(clr)`; a `[Default]` is born through `choice.Create`; `crypto.hash`'s Algorithm is
+  `choice<hash.kind>`.
+- **Templates** — `file.read`'s `Template` is a `choice<template.kind>` (plang); the template mark everywhere is
+  the kind (the `.pr` bytes unchanged); a dotted key answers only as an extension.
+- **Builder** — the Option question (`ask:` on a notes line → a stage-2 choice of the option's values + none);
+  a prompt written as text is a user message; a list read off one value holds it; an event written as a value is
+  refused saying its path; the formal reader takes a list of dicts for a typed list.
+- **Settings** — the call stack and debug read through the store's cache (holders and `App.Refresh` gone);
+  the store is `/.data/data.sqlite`.
+- **Fixes found on the way**: the error show loaded `show.goal` (it is `Show.goal`); a goal channel's
+  `%message%` for a failure; `data<T>.From` lost a miss; json `long : double` unification (3 places).
 
-## Latest (2026-09-30, all pushed)
-- **375 (1–5)** — a received error is born failed (`crypto.hash` takes its Data whole); a Data read in plang
-  holds its verified `Signature`; settings always under `.setting` (`%!llm.setting.cache%`, class path = read
-  path); a concept execution is inside (goal, actor, test, error) is a `type.current` node: dot = own members,
-  the type's facts, then the current's member; brackets pick by name; `%!app.event%` answers the running call's
-  Data; `!callStack`/`!trace`/`!event`/`!data` registrations gone (the app's members answer). `!goal`/`!error`/`!test`
-  stay as shortcuts to the current (398).
-- **400** — an answered `ask` is the user's data itself; `Ask` is only the pending state.
-- **Educator items** — `if … is "x"` teaches `Operator="=="` (golden case `compare`); a goal name is a quoted
-  text (and the refusal says so); a goal's steps are built inside the goal's frame (relative files found).
-- Tests: two parallel-run flakes made deterministic.
+## Waiting
+- **v18 item 1** (a hash holds its kind) — the shape is accepted; `signing.setting.Hash` is with Ingi.
+- **Goal flags derived from Path** (`IsSystem`/`IsSetup`/`IsTest`, a flat copy) — shape sent; the `.pr` bytes
+  change, so it is the architect's first.
+- `goal.call` `Wait` vs `Parallel` — with Ingi.
+- The builder bot: the `ask:` lines and decider template (issue 25/28), the 7 stale os `.pr` (issue 30).
 
-**Waiting on Ingi:** (24) `remove %x%` → `file.delete` (decider pick scoring (b); notes held uncommitted in
-`os/system/modules/{file/delete,variable/remove}.notes.md`); item 5 cause 2 (a file the program writes first);
-380 (4) `system.on.create` (bind, the app-wide shortcut list, module names); the http `response` reshape (387).
-**Waiting on the fix bot:** 380 (5) read-as-text, after blocker 2 lands.
-
-## What was done (v10, all pushed)
-- **9a** — births through types; `data<T>.Use` / `data.Use<TAs>` / `data.Follow`; `path.Read` the one read verb.
-- **9b** — every module action a one-line door: frames keep only the names they bind (`call.Keeper`); the where
-  rule (a field no item has is an error, an optional one filters); identity (one door to an actor); patterns
-  B/D/E/F; `module.remove`; mock deleted (mocking is an event); signing; http; `goal.return`.
-  Ruled leftovers: debug.tag (one `Tags: dict`, tags on the goal's frame, read `%!callStack.Scope.Tags.x%`,
-  the frame's tags a plang dict); code.* (`choice<code.kind>`, `[PlangType("provider")]`, carrying its
-  interface); output.ask (every input channel answers an `Ask`, born through `Ask.Create`); the list's
-  members take items and the handlers open carriers through `Use`; the LLM trace writes to the debug channel
-  (`TraceOutput` and per-call trace files gone); a program's error keeps its key through a channel write.
-- **9c** — handlers live at `app/module/<m>/<a>.cs` (no `action/`); the module registry dissolved:
-  `%!app.module%` is an empty module holding `list<module>`, the catalog action holds its `Class`,
-  `ActionEntry` and shared-instance registration gone.
-- **Eval round 25** (C + nano ×3): 64, 64, 63 of 64 — the one silent is `show` step 1, a known weak step
-  (silent in round 24 too). The eval tooling read handlers at the pre-9c path; fixed, with the provider kind's
-  options mirrored. Pick golden regenerated from round25-run1.
-- **dev.sh** — no-op build 9.8 s → 0.017 s (stamp), `full` in its own Gate configuration (analyzers now reach
-  PLang), suites in parallel (sweep 339 s → 87 s), the console in `All.proj`.
-
-## The 9b+9c gate (2026-09-28)
-- `./dev.sh full` (Gate, analyzers ON), 137 s: Modules 25/954, Types 16/670, Wire 17/466, Data 36/826,
-  Generator 10/189, Runtime 19/815 — every suite at or below the morning's counts (30/17/18/36/10/22); none
-  cut off. plang: 15 pass, 0 fail (329 stale = goals with no committed .pr).
-- Analyzers on PLang now report 257 PLNG003 (raw CLR returns) + 28 PLNG004 (direct System.Text.Json) warnings;
-  PLNG001/002 clean.
-- Revert checks (mutation, reverted, nothing committed): MisspelledFieldIsAnError, PartialFieldFilters,
-  RenderTakesNamedArguments each red on its own mutation (and nothing else); the four frame tests
-  (ParameterEndsWithTheCall, LoopItemEndsWithTheLoop, BodyWritesReachTheCaller, CallbackWriteReachesTheCaller)
-  red with `Keeper` reverted to "every write stays in its frame". IfReturnReturns was revert-checked at 220.
-  The two tag tests pass built fresh (their .pr not committed).
-- Fixture DLLs (TestProvider, NoCtorProvider) rebuilt from source; ProviderModuleTests 19/19.
-
-## After the gate (2026-09-29, all pushed; the architect reviews each commit read in full)
-- **10a** registration: the plan tests read `%!app.type.list%` / `%!app.type.<name>%`, built and
-  revert-checked; `code.load` lost its dead `Name` slot.
-- **10b** (A) the type door makes `list<T>` (`list.kind.element`, coined by `kind.Coin`, not held);
-  (B) copy-on-write list reads, every write through one door `Change(state, edit)`. (C) — the plan test
-  `TypedListHoldsItsType` — waits on Ingi (eager vs lazy element births) and the `list<path>` teaching.
-- **Review batch 1** (data/variable/list): EnumerateItems via Follow; `variable.Held`; one door per list
-  operation; `item.Enroll` / `item.Spread`; `data.Use<TAs>` follows; `variable.code` owns Ensure/Replace.
-- **Review batch 2** (path/http/assert/consent): `action.Warn(Error)` the one build-warning door;
-  `path.Read(ctx, bool?)` and url templates born and rendered; `Error.Keeps`; `http` `BaseUrl` an http
-  path + `IAddressed.Target()`; one consent door `actor.permission.Ask` (empty and EOF denied); `NoAnswer`.
-- Regressions of mine found by name-diffing against `baseline-failures.txt` and fixed: the actor-by-name
-  door (CrossActorGoalCall), the path shape test. Gate rule now: diff failing **names**, never counts.
-- Item 6: one birth door `ICreate.Create(raw, declared?, data)` + `Takes(type)`; `From` gone. Item 8: one
-  reference base (`type/item/reference`, "content") for file/url. Eval round 26: 63/64/63.
-- **10c** the app's facts as plang values (datetime/duration; identity read in one reflection pass; the store
-  an item; `app.setting` Name/Environment). **10d** formats with their owners (json kind, text writer,
-  formal Reader/Writer, `kind.Report`, junit, `item.Debug(ctx)`). **10e** one computed form
-  (`DynamicData(name, Func<context,data?>, context, declared?)`). OsDirectory deleted.
-- **11b** tests through the app's doors: `PLang.Tests/Shared/Testing.cs` (`app.Testing()`, `context.Action(formal)`);
-  every Shared factory takes the test's context first (`Make.Action(ctx, …)`); `TestApp`/`TestAction` deleted;
-  ~65 sites that leaned on a helper's implicit `variable` typing now say `Make.Param(ctx, "Name", …, "variable")`.
-  A composed action runs through its own door: `new action(seed, ctx).Start(ctx)` (module/name from `module[Type]`).
-- **11c** `app.Run<TAction>` deleted. `build.unreached` (after Build.goal's foreach) warns `GoalUnreached` on the
-  builder channel for a private goal its file's public goal doesn't reach (`goal.Unreached(ctx)` answers
-  (Goal, From) pairs; a file with a `%var%` call — `IClass.IsDynamic` — is silent; public goals never warn).
-  The test report gains "Goals reached". Eval round 27: 64, 63, 60 (show variance), rerun 63.
-
-## Open / held for Ingi
-binding → on (names, hit/miss); decision 236 (variable.set type.Convert); key strictness stays (b); channel
-Timeout; `%!app` missing-node reads; environment.start (delete?); timer shape; return depth; 10b(C) eager vs
-lazy typed-list element births; the os/ write rule (IsInRoot auto-grants all verbs under os/; the builder runs
-as the User actor, so "Write only for system" would block its self-rebuild); where variable memory belongs
-(`actor/memory` vs `actor/context/variable`) plus `Context {internal set}` and the `%!variables%` second door.
-The llm cache stays unfixed on purpose. Pile2_SqliteSettings reads a file gone before this branch.
-
-- **12a** (the exception pass, 5fc297836 … 17199645f): 234 throws this branch added were classified; a program's
-  mistake now reaches the result under its own key. One carrier: `AppException` holds an `Error`
-  (Output/Normalize/Declined/SchemeNotRegistered/Callback* are AppExceptions) and every catch answers `ex.Error`;
-  one door from a foreign exception, `Error.FromException(ex)` (ServiceError 500, the type in the message); a
-  method that can answer a result answers (`Fail`/`Error`) instead of throwing. Dead code deleted
-  (sqlite.CreateAsync, stream WriteBytesAsync, Comparison.AsSign). Pins: `KeepsItsKeyTests` and key asserts beside
-  each change. Report-only: the `?` rows, PrFormatOutdated's load rebuild, the six `new static FromException` hides.
-
-- **12b** (1610abfe7): content read off a file carries its `origin` down its own read (`reference.Value` →
-  `kind.Decode(…, origin)` → `type.Create`/`Make` → `source` → `ReadContext.Origin`); all 21 PrFormatOutdated throws
-  name their .pr. Then decision 294 (ec1105380): `goal.Origin` deleted (plang never builds under one root and runs
-  under another) — `goal.Folder => Path?.Parent`; the read-carried origin stays for the file-naming errors.
-- **Batch 3** (4d83eeadc, d4dbf5279, 8fb2334dd): code wanting a path's bytes asks `path.Bytes`; "a value of this type
-  is a name" is `ICreate.IsName` (from the IName marker) — no `typeof(variable)` left, and Make reads a name type's
-  text through its own eager reader (the courier still declines a value asked as a variable); a kinded type is born
-  holding its family (`type.Family`), `kind.Values` answering a choice set's options.
-- **Baseline audit** (`v14/baseline-audit.md`): runtime2's merge-base `0ea5a4b94` passes all 4095 C# tests; all 116
-  failing here are branch-only, and all were already failing when app-systems started (inherited from ~2,300 earlier
-  branch commits). Classified STALE ~48 / HARNESS ~24 / BUG ~17 / ? ~26. The Properties-tamper "security" row is
-  harness: real Ed25519 refuses a tampered Properties value (`DataHashMismatch`, Properties ride inside the signed
-  value).
-
-## The fix pass (decision 302 onward) — 116 inherited failures → 44
-One commit per owner, each name-diffed (no regressions), each bug's test its pin, a mutation sample per cluster.
-- **Harness:** pipeline .pr fixtures regenerated; shims/setup/moved-file scans; the tamper tests on real Ed25519;
-  the parallel test gated deterministically (a TaskCompletionSource, not a clock).
-- **Bugs fixed:** a stored null reads back; nested Properties read through their own type's reader; clr's text form
-  is its json; the nonce recorded only after the hash and signature pass (305); `set` from an unset variable is
-  VariableNotFound (307); Coverage's lone-if outcome; the Debug view writes an action's own shape, never walking back
-  edges, its template parameters as authored, sensitive members masked (310/311); X-Signature is plang's wire; an
-  error value refuses to become another type at the birth doors (`item.Refuses`, 313/314); number pass-through and
-  a declared kind honoured from any raw (303); variable's own decline; directory/image load in the Out view
-  only (317); `Template` born, not stamped (322).
-- **Stale:** rewritten to today's behaviour through the door each used, or deleted naming the commit that removed
-  the subject (the `if`/Child cluster, the STJ converters, renamed/values-as-items rows).
-- **Baseline:** `baseline-failures.txt` = the 36; `v14/baseline-after-fixes.md` gives each its owner.
-
-## After the baseline (decisions 323–333, all pushed)
-- **The ? rows:** ruled harness/stale and rewritten; `data.AsCanonical` deleted (tests ask `Follow` / the value
-  door); json content relays verbatim onto a json writer (`kind.Owns(writer)` asked by the source; `IWriter.Raw`
-  has a bytes form; injection fails the encode; markers stay content).
-- **Writing structures:** `Tagged.Declares(type, view)` — a type with no face for the view is refused on the wire
-  and named in a Debug dump; `[Debug]` on line/warning/channel. `item.Output`'s default: a leaf writes bare, a
-  structure its face through the reflection kind; the self-writers (error, hop, permission, path, reference,
-  hash, code) state `Output => Write` once; the six reflection overrides are gone (wire byte-identical, captured
-  before/after). `IsLeaf` stays the type door's question (type.Make's Takes arm reads it).
-- **The `%!app%` dump completes:** `app.Culture` (dead) deleted; `ShutdownToken` and a stream channel's `Stream`
-  are handles (`[JsonIgnore]`); the app's module's folder is the modules folder; `item.Fields` protected internal.
-  The app's clr-leak inventory is empty.
-- **Deterministic tests:** the parallel run (a gate), the timeout tests (a sleep only the deadline ends).
-
-## The channel reads, the formatter shows (decisions 335–344, all pushed)
-- **`reference` → `content`** (946cfe085).
-- **The channel opens the value** (6f191412a): `item.Open(context)` (content samples, directory lists, image loads);
-  the stream channel opens the value it writes just before its format encodes; nothing loads inside `Output`;
-  Store/Debug/goal channel never open. Only the top value opens — a nested one writes unread (an unread image
-  writes its path). `write out %file%` prints its content.
-- **The writer rule** (f986aed8a) in `item.Write`'s doc, `object_pattern_formal.md`, `obp-smells.md` (*format peek*):
-  a value writes WHAT it is through primitives; the writer decides HOW. Sweep: image writes `Bytes` (text shows
-  `[n bytes]`, json/plang the full base64 — 88ac52572); list/dict/clr text arms deleted (ca5767f28);
-  `IWriter.Variable(name)` for variable/source (ef75ff3a9).
-- **304** (edb6afa1a): a raw string/bytes a bare type owns is born its value (`type.Owns`); `set`'s throwaway kind
-  birth deleted and the declared type is handed the value unlowered, so its own lift derives the kind.
-- **Baseline: 19** (`baseline-failures.txt`).
-
-## Next / held
-- **The `set … as <type>` one-liner** (Ingi): shape sent — `type.Create` must pass through "already me" with no
-  birth, image takes strict at birth, `Made` maps a failed conversion, one lookup door answers NotFound; open: the
-  UnknownType key, Properties riding the born Data.
-- **The Data envelope into the writers** (with Ingi): `Data.Output` builds the plang envelope by hand on
-  `EmitsSchema`; `IWriter.BeginRecord/EndRecord` are dead. Until it's ruled the formal list arm stays.
-- 335 (4): `save %x% to "file"` and the http body through channels — shape first.
-- With Ingi: the file reference's Out face, the
-  half-written stream on a failed encode, the Out-view template leak (drop the row's `mode == Debug &&`),
-  `%!callStack%/%!variables%/%!trace%` beside `%!app.…%` (0d), a value's `_history`/`_on` on shared instances,
-  json narrowing (also the two Roundtrip decodes), the legacy `os/system/modules/` goals. The snapshot read-back
-  family waits on the ISnapshot redesign.
-- Gate rule: diff failing **names** against `baseline-failures.txt`; rebuild after reverting a mutation.
-
-## Code example
+## Code example — one door, the rule stated once
 ```csharp
-// a composed action runs through its own door; the catalog names its module and action
-var verify = await new global::app.goal.step.action.@this(new signing.verify(ctx) { Data = back }, ctx).Start(ctx);
-
-// a test factory takes the test's own context first
-var set = Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "%x%", "variable"), ("Value", 1));
+// goal/this.cs — the .pr a .goal is built to, read by PrPath, Load and setup's discovery, nothing else
+public static path.@this Pr(path.@this source)
+    => source.Parent.Combine(".build").Combine(source.FileNameWithoutExtension.ToLowerInvariant() + ".pr");
 ```
+Before it, Executor computed `"/.build/" + name.ToLower() + ".pr"` itself (wrong for a subfolder), setup wrote
+`"/.build/setup.pr"`, and Find did string math on folder names.
