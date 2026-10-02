@@ -12,7 +12,9 @@ internal sealed class Window
 {
     private readonly string title;
     private readonly int width, height;
-    private readonly Action<string> onEvent;
+    // what happens here goes to plang as values: input and the clipboard as themselves; the rest (a message from
+    // PlangOS, video, the window's numbers) as its text until it has a type of its own
+    private readonly Action<global::app.type.item.@this> onEvent;
     private readonly Action onClosed;
     private readonly WndProc proc;          // held: the OS calls it for the window's whole life
     private readonly ManualResetEventSlim ready = new();
@@ -27,7 +29,7 @@ internal sealed class Window
     public bool Closed { get; private set; }
     public int Frames;
 
-    public Window(string title, int width, int height, Action<string> onEvent, Action onClosed)
+    public Window(string title, int width, int height, Action<global::app.type.item.@this> onEvent, Action onClosed)
     {
         this.title = title; this.width = width; this.height = height;
         this.onEvent = onEvent; this.onClosed = onClosed;
@@ -125,7 +127,7 @@ internal sealed class Window
             case 1 or 3 or 4 or 7: PatchBinary(message); return true;
             case 2: Cursor(System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1)); return true;
             case 5: Clipboard(System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1)); return true;
-            case 9: onEvent("{\"guest\":" + System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1) + "}"); return true;
+            case 9: onEvent((global::app.type.item.text.@this)("{\"guest\":" + System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1) + "}")); return true;
             default: return false;
         }
     }
@@ -228,7 +230,7 @@ internal sealed class Window
             noVideo = true;
             video?.Dispose();
             video = null;
-            onEvent("{\"video\":false,\"why\":" + JsonSerializer.Serialize(ex.Message) + "}");
+            onEvent((global::app.type.item.text.@this)("{\"video\":false,\"why\":" + JsonSerializer.Serialize(ex.Message) + "}"));
             return null;
         }
     }
@@ -365,7 +367,7 @@ internal sealed class Window
         var numbers = System.Globalization.CultureInfo.InvariantCulture;
         var stats = "{\"stats\":{" + string.Format(numbers, "\"updates\":{0:F0},\"mb\":{1:F2},\"apply\":{2:F1},\"queued\":{3}", statUpdates / seconds, mb, ms, patches.Count)
             + ",\"picture\":" + picture.Json() + ",\"pipe\":" + pipe.Json() + "}}";
-        onEvent(stats);
+        onEvent((global::app.type.item.text.@this)stats);
         statUpdates = 0; statTicks = 0; statSince = now;
     }
 
@@ -478,7 +480,7 @@ internal sealed class Window
         finally { CloseClipboard(); }
         if (text == null || text == shared) return;
         shared = text;
-        onEvent("{\"clipboard\":" + JsonSerializer.Serialize(text) + "}");
+        onEvent(new global::app.type.item.clipboard.@this((global::app.type.item.text.@this)text));
     }
 
     // another program may hold the clipboard for a moment
@@ -574,7 +576,7 @@ internal sealed class Window
             // a stuck Alt turns clicks into downloads and keys into menu shortcuts. Release them.
             case WM_KILLFOCUS:
                 foreach (var (sc, ext) in heldKeys.ToArray())
-                    onEvent($"{{\"key\":\"up\",\"sc\":{sc},\"ext\":{(ext ? "true" : "false")},\"vk\":0,\"name\":null,\"mods\":0}}");
+                    onEvent(new global::app.type.item.input.key.@this(false, (uint)sc, ext));
                 heldKeys.Clear();
                 break;
             case WM_DESTROY: RemoveClipboardFormatListener(h); PostQuitMessage(0); return IntPtr.Zero;
@@ -605,7 +607,8 @@ internal sealed class Window
                 var point = new POINT { x = Low(lParam), y = High(lParam) };
                 ScreenToClient(h, ref point);   // wheel positions are screen coordinates
                 var delta = High(wParam);          // negative when scrolling down
-                onEvent($"{{\"mouse\":\"wheel\",\"x\":{point.x},\"y\":{point.y},\"dx\":0,\"dy\":{-delta},\"mods\":{Mods()},\"t\":{Environment.TickCount64}}}");
+                onEvent(new global::app.type.item.input.mouse.@this(global::app.type.item.input.mouse.Action.wheel, point.x, point.y,
+                    dy: -delta, mods: Mods(), stamp: Environment.TickCount64));
                 return IntPtr.Zero;
 
             case WM_KEYDOWN: case WM_SYSKEYDOWN:
@@ -616,7 +619,7 @@ internal sealed class Window
                 break;
             case WM_CHAR:
                 var c = unchecked((char)wParam.ToInt64());
-                if (c >= ' ') onEvent("{\"text\":" + JsonSerializer.Serialize(c.ToString()) + "}");
+                if (c >= ' ') onEvent(new global::app.type.item.input.text.@this(c.ToString()));
                 return IntPtr.Zero;
         }
         return DefWindowProcW(h, message, wParam, lParam);
@@ -644,9 +647,10 @@ internal sealed class Window
     private void Mouse(string kind, IntPtr lParam, string button, int clicks)
     {
         int x = Low(lParam), y = High(lParam);   // negative outside the window while dragging
-        // a click is stamped ("t"): the screen echoes it after the next frame, which times input → picture
-        var stamp = kind == "move" ? "" : $",\"t\":{Environment.TickCount64}";
-        onEvent($"{{\"mouse\":\"{kind}\",\"x\":{x},\"y\":{y},\"button\":\"{button}\",\"clicks\":{clicks},\"mods\":{Mods()}{stamp}}}");
+        // a click is stamped: the screen echoes it after the next frame, which times input → picture
+        onEvent(new global::app.type.item.input.mouse.@this(Enum.Parse<global::app.type.item.input.mouse.Action>(kind), x, y,
+            Enum.Parse<global::app.type.item.input.mouse.Button>(button), clicks, mods: Mods(),
+            stamp: kind == "move" ? null : Environment.TickCount64));
     }
 
     // Every key goes out with its scancode (sc, ext): a real keyboard for a compositor, which applies
@@ -658,24 +662,16 @@ internal sealed class Window
         var alt = (mods & 1) != 0; var ctrl = (mods & 2) != 0;
         var sc = (int)((lParam.ToInt64() >> 16) & 0xFF);
         var ext = ((lParam.ToInt64() >> 24) & 1) != 0;
-        if (kind == "down" && alt && vk == VK_LEFT) onEvent("{\"nav\":\"back\"}");
-        if (kind == "down" && alt && vk == VK_RIGHT) onEvent("{\"nav\":\"forward\"}");
-        if (kind == "down" && vk == VK_F5) onEvent("{\"nav\":\"reload\"}");
+        if (kind == "down" && alt && vk == VK_LEFT) onEvent(new global::app.type.item.input.navigate.@this(global::app.type.item.input.navigate.Direction.back));
+        if (kind == "down" && alt && vk == VK_RIGHT) onEvent(new global::app.type.item.input.navigate.@this(global::app.type.item.input.navigate.Direction.forward));
+        if (kind == "down" && vk == VK_F5) onEvent(new global::app.type.item.input.navigate.@this(global::app.type.item.input.navigate.Direction.reload));
         // paste: Windows' clipboard reaches PlangOS before the keys do (copied before this window
         // listened, or before PlangOS was up)
         if (kind == "down" && ((ctrl && vk == 'V') || ((mods & 8) != 0 && vk == VK_INSERT))) ShareClipboard();
-        var name = alt ? null : vk switch
-        {
-            0x0D => "Enter", 0x08 => "Backspace", 0x09 => "Tab", 0x2E => "Delete", 0x1B => "Escape",
-            0x24 => "Home", 0x23 => "End", 0x21 => "PageUp", 0x22 => "PageDown",
-            0x25 => "ArrowLeft", 0x26 => "ArrowUp", 0x27 => "ArrowRight", 0x28 => "ArrowDown",
-            >= 0x41 and <= 0x5A when ctrl => ((char)('a' + vk - 0x41)).ToString(),   // Ctrl+A, Ctrl+C …
-            _ => null,
-        };
-        var named = name == null ? "null" : "\"" + name + "\"";
         if (kind == "down") heldKeys.Add((sc, ext)); else heldKeys.Remove((sc, ext));
-        var stamp = kind == "down" ? $",\"t\":{Environment.TickCount64}" : "";
-        onEvent($"{{\"key\":\"{kind}\",\"sc\":{sc},\"ext\":{(ext ? "true" : "false")},\"vk\":{vk},\"name\":{named},\"mods\":{mods}{stamp}}}");
+        // the key names itself from its virtual key (the key type owns its codes)
+        onEvent(new global::app.type.item.input.key.@this(kind == "down", (uint)sc, ext, vk, mods: mods,
+            stamp: kind == "down" ? Environment.TickCount64 : null));
         return !alt;   // Alt combinations stay Windows' too (Alt+F4 closes the window)
     }
 
