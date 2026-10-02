@@ -107,7 +107,23 @@ Landed (d08a129df): four LLM-facing templates read `s.Mask.Text`; `properties.te
 renders `listed.Option`; `ask:` lines on loop.foreach Item/Key + llm.query Conversation; `pick_golden`
 re-pinned; Wire 487 pass / 9 baseline. Measurements (fresh, cache off, 5 each; table in `v3/result.md`,
 commit 2f73f5479): **issue 2 Item+Key 5/5 FIXED, named continue 5/5 FIXED, plain-foreach/plain-read
-guards hold.** Open edges sent to the architect: (a) **control regression** — `save %!llm.setting.cache%`
+guards hold.** ### Edges resolved by the architect (core → coder batch; my ask: lines + re-measure follow)
+1. **Control regression →** do NOT exempt `%!…%` paths (that revives 32a). Instead **the mask carries
+   each variable's type** where the build knows it: `save %v1% (setting)`, `call goal Page module=%v1%
+   (module)` — same annotation `write to` already gets (`%x% (hash)`). The type is the honest signal,
+   its words aren't. Core = Mask; **my part = templates** (render the annotation — confirm whether
+   Mask.Text already embeds it or the template adds it, when the core lands).
+2. **32(b) →** the **goal type** answers its offers = the app's goal names reachable from the step's
+   goal. Core = goal type `Offers(step)`; **my part = an `ask:` line on `goal.call.Name`** (decider
+   picks `Page` from reachable goals, not the step's variables).
+3. **33 →** same: the **type** type answers its offers = plang type names. Core = type type `Offers`;
+   **my part = an `ask:` line on `variable.set.Type`**.
+4. **Bare-continue flake →** an option's offers never include the step's own `write to` destination
+   (the pick knows it via `Destination()`). Core only.
+Order: coder lands 1/2/3 core + 4 as one batch after its current queue → I add the ask: lines +
+template annotation → **re-measure all eight scenarios**. Idle until that core hash.
+
+### (original, now resolved) Open edges sent to the architect: (a) **control regression** — `save %!llm.setting.cache%`
 masks to `save %v1%`, loses the `setting` signal → file.save mis-map, 0/5 (masking cost for
 `%!…setting…%` steps); (b) **32(b) not fixed** — the writer still picks the variable as goal Name over
 `Page` even masked (32(a) decider half IS fixed); (c) **33** — Option question doesn't reach `set.Type`
