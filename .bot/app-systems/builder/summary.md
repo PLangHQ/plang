@@ -49,14 +49,17 @@ confirm a fix still need the key.
   current valid .pr; no writer-mis-map/core/write-in-formal refusals left (v2-era failures were in the
   24 swept goals). 5 rebuilt this session (dropped deprecated isSetup/etc. per 819f239c6; kept). Two
   needed one FixSteps retry (issue-17 class, recovered). Table in `v3/result.md`.
-- **`cache:false` regression found (`v3/cache-false-diagnosis.md`).** On head, cache:false does NOT
-  rebuild an unchanged goal in ANY folder (reproduced on hash-take: fresh build then unchanged
-  cache:false rebuild → skipped, md5 unchanged). The CLI build setting isn't visible as
-  `%!build.setting.cache%` at Build.goal start, so `Build.goal:7` `set default … = true` clobbers it;
-  `Default.cs:116` reads true → MergePrData → `IsCached` (`goal/this.cs:288`) → skip. The LLM-cache
-  half still works (`Executor.cs:111`). build.md 69-71 are correct; it's a code regression (root in
-  the `.setting` projection, 7c98a5e44 family) — handed to the architect/coder. Fresh-folder
-  measurements are unaffected (no .pr to merge), so this session's c4/loop/modules measurements stand.
+- **`cache:false` regression — builder half FIXED + validated (`v3/cache-false-diagnosis.md`).** On
+  head, cache:false stopped rebuilding an unchanged goal (reproduced on hash-take). Root: the CLI build
+  setting wasn't visible as `%!build.setting.cache%` at Build.goal start, so `Build.goal:7`
+  `set default … = true` clobbered it → `Default.cs:116` merged → `IsCached` (`goal/this.cs:288`) →
+  skip. **Fix (architect-directed, my lane): deleted `Build.goal:7`** — the setting class already owns
+  the default (`build/setting/this.cs:10` `Cache = true`), so the goal line was a redundant clobber.
+  Rebuilt Build.goal's `.pr` (bootstrap, cwd=os/). **Validated:** hash-take unchanged cache:false now
+  rebuilds ("Building goal: Start / Saved 8.0s", `.pr` mtime changes; md5 identical = deterministic,
+  correct). **Wire: 9 failed / 480 passed — all 9 are baseline, zero new.** Core half still owed
+  (coder): a setting must never read undefined when the CLI wrote it (the `.setting` projection,
+  7c98a5e44 family). Fresh-folder measurements unaffected (no .pr to merge) — c4/loop/modules stand.
 - **Issue 32 masking shape drafted (`v3/issue32-masking-shape.md`).** Step variables → opaque `%vN%`
   for both decider and writer (via a new `s.Masked` + reverse map on step, core); templates read
   `s.Masked`; the formal answer's `%vN%` maps back before parse. Couples with Option-v2 (shared mask).

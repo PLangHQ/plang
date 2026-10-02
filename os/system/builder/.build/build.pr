@@ -50,69 +50,9 @@
     },
     {
       "index": 1,
-      "text": "set default %!build.setting.cache% = true",
-      "line": {
-        "number": 7
-      },
-      "code": [
-        {
-          "module": "variable",
-          "name": "set",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "%!build.setting.cache%",
-              "variable": [
-                {
-                  "text": "%!build.setting.cache%",
-                  "code": [
-                    {
-                      "variable": "!build"
-                    },
-                    {
-                      "property": "setting"
-                    },
-                    {
-                      "property": "cache"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Unsure",
-          "message": "step 1 uses variable.set, which the decider was not sure of (0.63)"
-        }
-      ]
-    },
-    {
-      "index": 2,
       "text": "set %traceGoals% = []",
       "line": {
-        "number": 8
+        "number": 7
       },
       "code": [
         {
@@ -157,10 +97,10 @@
       ]
     },
     {
-      "index": 3,
+      "index": 2,
       "text": "set channel \"builder\" call BuilderChannel",
       "line": {
-        "number": 9
+        "number": 8
       },
       "code": [
         {
@@ -214,10 +154,10 @@
       ]
     },
     {
-      "index": 4,
+      "index": 3,
       "text": "call EmitBuildEvent kind=\"build-path\", path=%path%",
       "line": {
-        "number": 10
+        "number": 9
       },
       "code": [
         {
@@ -259,10 +199,10 @@
       ]
     },
     {
-      "index": 5,
+      "index": 4,
       "text": "build.load, write to %app%",
       "line": {
-        "number": 11
+        "number": 10
       },
       "code": [
         {
@@ -332,10 +272,10 @@
       ]
     },
     {
-      "index": 6,
+      "index": 5,
       "text": "build.goals path=%path%, write to %goals%",
       "line": {
-        "number": 12
+        "number": 11
       },
       "code": [
         {
@@ -415,10 +355,10 @@
       ]
     },
     {
-      "index": 7,
+      "index": 6,
       "text": "call EmitBuildEvent kind=\"goals-found\", goals=%goals%",
       "line": {
-        "number": 13
+        "number": 12
       },
       "code": [
         {
@@ -466,10 +406,10 @@
       ]
     },
     {
-      "index": 8,
+      "index": 7,
       "text": "foreach %goals%, call BuildGoal goal=%item%",
       "line": {
-        "number": 14
+        "number": 13
       },
       "code": [
         {
@@ -554,10 +494,10 @@
       ]
     },
     {
-      "index": 9,
+      "index": 8,
       "text": "build.unreached",
       "line": {
-        "number": 15
+        "number": 14
       },
       "code": [
         {
@@ -568,10 +508,10 @@
       ]
     },
     {
-      "index": 10,
+      "index": 9,
       "text": "save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'",
       "line": {
-        "number": 16
+        "number": 15
       },
       "code": [
         {
@@ -622,10 +562,10 @@
       ]
     },
     {
-      "index": 11,
+      "index": 10,
       "text": "build.appSave",
       "line": {
-        "number": 17
+        "number": 16
       },
       "code": [
         {
@@ -640,5 +580,5 @@
   "visibility": "Public",
   "path": "/system/builder/Build.goal",
   "prPath": "/system/builder/.build/build.pr",
-  "hash": "66899595e3622b5a9d92854ed8663235dbf4ef23852d107e5f0fb4570e8cc894"
+  "hash": "c0be979a3836c3d8998523667afa0858fc258a715848d787914bd08f69bc4593"
 }

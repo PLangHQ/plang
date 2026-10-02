@@ -4,7 +4,6 @@
 Build
 
 - set default %path% = "/"
-- set default %!build.setting.cache% = true
 - set %traceGoals% = []
 - set channel "builder" call BuilderChannel
 - call EmitBuildEvent kind="build-path", path=%path%

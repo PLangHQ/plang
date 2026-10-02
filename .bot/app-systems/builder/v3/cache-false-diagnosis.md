@@ -53,7 +53,28 @@ behavior (Default.cs:116 is written for it: "cache:false means no cached answer 
 fresh source rebuilds in full — skip the merge entirely") and is currently defeated by the Build.goal
 clobber. So it's a **code regression**, not a doc error. A one-line doc note could warn until fixed.
 
-## Fix options (for the architect to route)
+## FIX LANDED (builder half) — architect-directed, validated
+
+The architect's call: the setting class already owns the default —
+`PLang/app/module/build/setting/this.cs:10` `[Out, Store] public @bool Cache { get; set; } = true;`.
+So `Build.goal:7`'s `set default %!build.setting.cache% = true` was a redundant second copy of that
+default that clobbered the CLI's `false` whenever the setting read as undefined. **Deleted that line;
+rebuilt `Build.goal`'s `.pr` (bootstrap: cwd=os/, files=["system/builder/Build.goal"], cache:false).**
+
+**Validated on hash-take** (fresh build, then rebuild the unchanged goal with cache:false):
+- Before: Build 2 printed only "Found 1 goals" — skipped (no rebuild).
+- After: Build 2 prints "Building goal: Start / Saved Start (8.0s)" and the `.pr` mtime changes — it
+  **rebuilds**. The md5 is byte-identical because the rebuild is *deterministic* for unchanged source
+  (same input → same `.pr`); that is the desired outcome, not a skip. (The architect's "md5 changes"
+  expectation assumed a non-deterministic re-answer; an unchanged goal re-answers identically.)
+
+**Core half still owed (coder):** a setting always has a value — its class default or the one written
+— so `%!build.setting.cache%` must **never** read as undefined when the CLI wrote the typed setting.
+That it does is the real bug (`set default` meets a setting; the `.setting` projection from the
+`7c98a5e44` family). Deleting the Build.goal line removes the *symptom* (the clobber); the projection
+bug remains and would bite any `%!…setting%` read + `set default` pair.
+
+## Fix options (for the architect to route) — the core half
 - **Core (settings projection):** make the CLI-applied `build.setting.cache` surface as
   `%!build.setting.cache%` so `set default` (Build.goal:7) correctly sees it as set and does not
   override. This is the root — restores the intended `cache:false` everywhere. (From `7c98a5e44`'s

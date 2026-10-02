@@ -987,11 +987,11 @@
           "context": "Issue 30 pass 2 (closed by architect): rebuilt the stale os/ .pr (cache off). All 15 remaining os/ goals build clean / current valid .pr; no refusals remain. These 5 dropped the deprecated isSetup/isEvent/isSystem/isTest fields (819f239c6; hash+steps unchanged) - kept. Table in v3/result.md."
         },
         {
-          "paths": [".bot/app-systems/builder/v3/cache-false-diagnosis.md", "PLang/app/module/build/code/Default.cs", "os/system/builder/Build.goal", "PLang/Executor.cs"],
-          "type": "decision",
+          "paths": ["os/system/builder/Build.goal", "os/system/builder/.build/build.pr", ".bot/app-systems/builder/v3/cache-false-diagnosis.md"],
+          "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Diagnosed a cache:false regression: it no longer rebuilds an unchanged goal in ANY folder (reproduced on hash-take). Root: CLI build setting not visible as %!build.setting.cache% at Build.goal start -> Build.goal:7 'set default = true' clobbers it -> Default.cs:116 reads true -> MergePrData -> goal.IsCached (goal/this.cs:288) -> BuildGoal/Start.goal skips. LLM-cache half works (Executor.cs:111). build.md 69-71 correct; code regression in the .setting projection (7c98a5e44 family). Handed to architect/coder."
+          "context": "cache:false regression, builder half FIXED (architect-directed): deleted Build.goal:7 'set default %!build.setting.cache% = true' - the setting class already defaults Cache=true (build/setting/this.cs:10), so the line was a redundant clobber of the CLI's false whenever %!build.setting.cache% read undefined. Rebuilt Build.goal .pr (bootstrap cwd=os/, cache:false). VALIDATED on hash-take: unchanged cache:false now rebuilds (Building goal: Start / Saved 8.0s, .pr mtime changes; md5 identical = deterministic/correct). Wire: 9 failed/480 passed, all 9 baseline, zero new. Core half owed to coder: %!build.setting.cache% must never read undefined when CLI wrote the typed setting (.setting projection, 7c98a5e44 family). Diag at v3/cache-false-diagnosis.md."
         },
         {
           "paths": [".bot/app-systems/builder/v3/issue32-masking-shape.md"],
