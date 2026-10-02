@@ -118,7 +118,7 @@ public sealed class Browser : global::app.type.item.@this, global::app.type.item
     /// <summary>A page's address for its window: what the globe shows (<see cref="Shown"/>), and the page itself.</summary>
     internal global::app.module.screen.code.wayland.Address AddressOf(string address) => new(Shown(address), address);
     /// <summary>The screen Chromium draws onto (PlangOS's display), from <c>screen.open</c>.</summary>
-    internal global::app.module.screen.Screen? Screen { get; set; }
+    internal global::app.module.screen.type.screen.display.@this? Screen { get; set; }
     /// <summary>The page, off-screen (no screen): its frames and input go over this.</summary>
     internal System.Net.WebSockets.ClientWebSocket? Page { get; set; }
     internal SemaphoreSlim Sending { get; } = new(1, 1);

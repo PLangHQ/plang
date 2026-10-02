@@ -155,7 +155,7 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
     internal void Tell(JsonObject e) => told.Writer.TryWrite(e);
     internal void Debug(string message) => debug(message);
 
-    /// <summary>Whether the screen says what happens to its windows (<c>%screen.debug%</c>).</summary>
+    /// <summary>Whether the screen says what happens to its windows (<c>%screen.verbose%</c>).</summary>
     internal bool Watching { get; set; }
 
     /// <summary>Where the window notes go (set by what opened the screen).</summary>

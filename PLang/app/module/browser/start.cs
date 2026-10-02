@@ -42,7 +42,7 @@ public partial class start : IContext
     /// a normal browser there, each page in a window of its own; the screen makes the frames and
     /// gives it the pointer and keyboard. Without one, Chromium runs headless and frames come
     /// through OnFrame.</summary>
-    public partial data.@this<global::app.module.screen.Screen>? Screen { get; init; }
+    public partial data.@this<global::app.module.screen.type.screen.@this>? Screen { get; init; }
 
     [Code]
     public partial IBrowser Provider { get; }

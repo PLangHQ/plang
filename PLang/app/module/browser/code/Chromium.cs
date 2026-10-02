@@ -42,7 +42,7 @@ public sealed partial class Chromium : IBrowser
 
         // On a screen (PlangOS's display), Chromium runs as a normal browser drawing onto it: the
         // screen sends only what changed, and gives it a real pointer and keyboard.
-        if (action.Screen != null && await action.Screen.Value() is { Display: not null } screen)
+        if (action.Screen != null && await action.Screen.Value() is global::app.module.screen.type.screen.display.@this screen)
             return await OnScreen(action, program, screen);
 
         // headless over DevTools: what the screencast needs, read here where it is used
@@ -115,10 +115,10 @@ public sealed partial class Chromium : IBrowser
         return context.Ok<Browser>(browser);
     }
 
-    private static async Task<data.@this<Browser>> OnScreen(start action, FilePath chromium, global::app.module.screen.Screen screen)
+    private static async Task<data.@this<Browser>> OnScreen(start action, FilePath chromium, global::app.module.screen.type.screen.display.@this screen)
     {
         var context = action.Context;
-        var display = screen.Display!;
+        var display = screen.Wayland;
 
         // The first page is the desktop: an app window (no tabs or toolbar), which the screen makes the
         // whole screen — not fullscreen, where Chromium shows its "press Esc to exit" bubble. DevTools,
@@ -153,7 +153,7 @@ public sealed partial class Chromium : IBrowser
 
         var browser = new Browser
         {
-            Url = url, Width = screen.Width, Height = screen.Height, Os = chrome, Screen = screen, Program = chromium, Profile = profile, Port = port!.Value,
+            Url = url, Width = screen.PixelWidth, Height = screen.PixelHeight, Os = chrome, Screen = screen, Program = chromium, Profile = profile, Port = port!.Value,
             Report = error => context.Actor.Channel.Report(context.Error(error)),
             Roots = new[] { context.App.AbsolutePath, context.App.OsAbsolutePath }
                 .Where(folder => !string.IsNullOrEmpty(folder)).Select(folder => new Uri(folder!.TrimEnd('/') + "/").AbsoluteUri).ToArray(),
@@ -198,7 +198,7 @@ public sealed partial class Chromium : IBrowser
 
     /// <summary>Chromium drawing onto the screen, with the app's own profile: the first start runs
     /// it, a later one hands its page to the running one and exits.</summary>
-    private static ProcessStartInfo Chrome(FilePath chromium, global::app.module.screen.Screen screen, actor.context.@this context,
+    private static ProcessStartInfo Chrome(FilePath chromium, global::app.module.screen.type.screen.display.@this screen, actor.context.@this context,
         FilePath profile, params string[] args)
     {
         var info = new ProcessStartInfo(chromium.Absolute)
@@ -286,7 +286,7 @@ public sealed partial class Chromium : IBrowser
     {
         var context = action.Context;
         var browser = await action.Browser.Value();
-        if (browser?.Screen?.Display is { } display)
+        if (browser?.Screen?.Wayland is { } display)
         {
             // on a screen, input is the screen's (screen.send): passed on, the Data written as text
             using var written = new MemoryStream();
@@ -489,7 +489,7 @@ public sealed partial class Chromium : IBrowser
         }
         catch (Exception ex) when (ex is TimeoutException or JsonException or KeyNotFoundException or InvalidOperationException) { return; }
         await Cdp(browser, "Target.closeTarget", new JsonObject { ["targetId"] = target }, browser.Control);
-        browser.Screen?.Display?.Tell(new JsonObject { ["open"] = url });
+        browser.Screen?.Wayland.Tell(new JsonObject { ["open"] = url });
     }
 
     private static async Task Receive(Browser browser, string format, ChannelWriter<string>? frames)
