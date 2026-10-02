@@ -38,6 +38,13 @@
               "value": "."
             },
             {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "path"
+            },
+            {
               "name": "Default",
               "type": {
                 "name": "bool"
@@ -46,14 +53,7 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set default %path% = '.'': variable.set: 'AsDefault' is not a property of this action. Its properties are: Name, Value, Type, Default."
-        }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
@@ -69,7 +69,7 @@
             {
               "name": "Path",
               "type": {
-                "name": "text",
+                "name": "path",
                 "template": "plang"
               },
               "value": "%path%",
@@ -83,13 +83,23 @@
                   ]
                 }
               ]
+            }
+          ],
+          "default": [
+            {
+              "name": "pattern",
+              "type": {
+                "name": "text"
+              },
+              "value": "*.test.goal"
             },
             {
-              "name": "Recursive",
+              "name": "subfolder",
               "type": {
-                "name": "bool"
+                "name": "choice",
+                "kind": "subfolder"
               },
-              "value": true
+              "value": "include"
             }
           ]
         },
@@ -117,7 +127,7 @@
             {
               "name": "Value",
               "type": {
-                "name": "text",
+                "name": "item",
                 "template": "plang"
               },
               "value": "%!data%",
@@ -132,10 +142,18 @@
                 }
               ]
             }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
@@ -169,14 +187,7 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 2's saved code no longer holds — rebuilt: step 2 'test.start tests %tests%': test.run: module 'test' exists but action 'run' not found. Did you mean: tag, start, report, discover?"
-        }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 3,
@@ -190,17 +201,12 @@
           "name": "report",
           "property": []
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [],
   "visibility": "Public",
   "path": "/system/test.goal",
   "prPath": "/system/.build/test.pr",
-  "hash": "2a0089465daefedf3717cc5dcd54cc9af29f1b290f1be230c79bfa1aeb4c1ac8",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false
+  "hash": "2a0089465daefedf3717cc5dcd54cc9af29f1b290f1be230c79bfa1aeb4c1ac8"
 }

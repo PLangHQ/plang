@@ -89,9 +89,10 @@ public partial class query : IContext
     /// makes, the retries of an answer that fails validation. Left out, the limit's defaults.</summary>
     public partial data.@this<global::app.module.llm.type.limit.@this> Limit { get; init; }
 
-    /// <summary>Whether to cache the response. Skipped when Tool is non-null.</summary>
-    [Default(true)]
-    public partial data.@this<global::app.type.item.@bool.@this> Cache { get; init; }
+    /// <summary>Whether an answer kept from before is used, and this one kept — used, unless the step skips it. Never
+    /// for a query with tools.</summary>
+    [Default(global::app.module.cache.type.cache.use)]
+    public partial data.@this<global::app.type.item.choice.@this<global::app.module.cache.type.cache>> Cache { get; init; }
 
     [Code]
     public partial ILlm Llm { get; }

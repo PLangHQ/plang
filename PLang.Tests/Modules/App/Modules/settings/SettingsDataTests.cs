@@ -43,13 +43,13 @@ public class SettingsDataTests
     {
         var ctx = _app.actor.list.System.Context;
         var llm = Llm(ctx);
-        llm.Cache = false;
+        llm.Cache = new(global::app.module.cache.type.cache.skip);
 
         var result = await new global::app.module.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start();
         await result.IsSuccess();
         // no value rides out — a setting may hold secrets
         await Assert.That(result.Peek() is null or global::app.type.item.@null.@this).IsTrue();
-        await Assert.That(Llm(ctx).Cache == false).IsTrue();
+        await Assert.That(Llm(ctx).Cache.Value).IsEqualTo(global::app.module.cache.type.cache.skip);
     }
 
     [Test]
@@ -57,12 +57,12 @@ public class SettingsDataTests
     {
         var ctx = _app.actor.list.System.Context;
         var llm = Llm(ctx);
-        llm.Cache = false;
+        llm.Cache = new(global::app.module.cache.type.cache.skip);
         await (await new global::app.module.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start()).IsSuccess();
 
         var result = await new global::app.module.setting.Remove(ctx) { Setting = Given(Llm(ctx), ctx) }.Start();
         await result.IsSuccess();
-        await Assert.That(Llm(ctx).Cache == true).IsTrue();
+        await Assert.That(Llm(ctx).Cache.Value).IsEqualTo(global::app.module.cache.type.cache.use);
     }
 
     [Test]
@@ -99,7 +99,7 @@ public class SettingsDataTests
         {
             var ctx = onDisk.actor.list.System.Context;
             var llm = Llm(ctx);
-            llm.Cache = false;
+            llm.Cache = new(global::app.module.cache.type.cache.skip);
             await (await onDisk.actor.list.System.Setting.Save(llm)).IsSuccess();
 
             await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(_tempDir, ".data", "setting", "data.sqlite"))).IsTrue();
@@ -109,7 +109,7 @@ public class SettingsDataTests
 
         await using var again = new global::app.@this(_tempDir).TestSigning();
         var read = await new global::app.type.item.variable.@this("!llm.setting.cache").Start(again.actor.list.System.Context);
-        await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
+        await Assert.That((await read.Value())?.ToString()).IsEqualTo("skip");
     }
 
     // --- Store-level error path ---

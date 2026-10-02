@@ -107,10 +107,10 @@ All debug output goes to **stderr** (not stdout), so it doesn't interfere with p
 
 ```bash
 # Build one file, debug the BuildGoal steps, watch a variable
-plang build '--build={"files":"myfile.goal","cache":false}' '--debug={"goal":"BuildGoal","variables":["actionSummary"]}'
+plang build '--build={"files":"myfile.goal","cache":"skip"}' '--debug={"goal":"BuildGoal","variables":["actionSummary"]}'
 ```
 
-The `cache:false` option bypasses the LLM cache, forcing a fresh LLM call.
+The `cache:skip` option bypasses the LLM cache, forcing a fresh LLM call.
 
 ## Variable Watch
 
@@ -119,7 +119,7 @@ logs each time it is created, changed or deleted. The watch listens to the User 
 store, which announces every create, change and delete for any name; it logs the ones it watches.
 
 ```bash
-plang build '--build={"files":"myfile.goal","cache":false}' '--debug={"variables":["trace"]}'
+plang build '--build={"files":"myfile.goal","cache":"skip"}' '--debug={"variables":["trace"]}'
 ```
 
 Output:
@@ -149,16 +149,16 @@ Why granular: a full trace is too noisy when you're hunting a specific question.
 
 ```bash
 # Just the response — most common when chasing "what did the LLM produce?"
-plang build '--build={"cache":false}' '--debug={"llm":{"response":true}}'
+plang build '--build={"cache":"skip"}' '--debug={"llm":{"response":true}}'
 
 # System prompt only — verify catalog/types render correctly. Bump length.max.
-plang build '--build={"cache":false}' '--debug={"llm":{"system":true},"length":{"max":50000}}'
+plang build '--build={"cache":"skip"}' '--debug={"llm":{"system":true},"length":{"max":50000}}'
 
 # Schema only — when chasing type-fidelity bugs (e.g. permissive value?: object)
-plang build '--build={"cache":false}' '--debug={"llm":{"schema":true}}'
+plang build '--build={"cache":"skip"}' '--debug={"llm":{"schema":true}}'
 
 # Combine flags freely
-plang build '--build={"cache":false}' '--debug={"llm":{"system":true,"response":true},"length":{"max":50000}}'
+plang build '--build={"cache":"skip"}' '--debug={"llm":{"system":true,"response":true},"length":{"max":50000}}'
 ```
 
 Output (each block fires only when its flag is on):

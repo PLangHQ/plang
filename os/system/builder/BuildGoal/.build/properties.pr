@@ -72,14 +72,7 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 0's saved code no longer holds — rebuilt: step 0 'render template \"/system/builder/llm/templates/properties.template\", write to %propertiesUserMsg%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
@@ -151,14 +144,7 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 1's saved code no longer holds — rebuilt: step 1 'render template \"/system/builder/llm/Properties.llm\", write to %propertiesSystemMsg%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
@@ -225,14 +211,7 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 2's saved code no longer holds — rebuilt: step 2 'set %messages% = [{\"Role\":\"system\", \"Content\":\"%propertiesSystemMsg%\"}, {\"Role\":\"user\", \"Content\":\"%propertiesUserMsg%\"}]': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 3,
@@ -274,7 +253,8 @@
             {
               "name": "Cache",
               "type": {
-                "name": "bool",
+                "name": "choice",
+                "kind": "cache",
                 "template": "plang"
               },
               "value": "%!build.setting.cache%",
@@ -374,14 +354,7 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 3's saved code no longer holds — rebuilt: step 3 'llm.query Message=%messages%, Model=\"gpt-5.4-nano\", cache=%!build.setting.cache%, write to %answer%': llm.query's Message was built as list<llmmessage>, but it takes list<message>.; llm.query: the default frozen for 'continuepreviousconversation' is no option of this action any more.; llm.query: the default frozen for 'maxtokens' is no option of this action any more.; llm.query: the default frozen for 'maxtoolcalls' is no option of this action any more.; llm.query: the default frozen for 'maxvalidationretries' is no option of this action any more.; variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 4,
@@ -423,19 +396,14 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 4 uses goal.call, which the decider was not sure of (0.52)"
+          "message": "step 4 uses goal.call, which the decider was not sure of (0.55)"
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [],
   "visibility": "Public",
   "path": "/system/builder/BuildGoal/Properties.goal",
   "prPath": "/system/builder/BuildGoal/.build/properties.pr",
-  "hash": "7dc10560680a024aba0a130d39e3d0526e3259135286760e73b90290d3a938bc",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false
+  "hash": "7dc10560680a024aba0a130d39e3d0526e3259135286760e73b90290d3a938bc"
 }

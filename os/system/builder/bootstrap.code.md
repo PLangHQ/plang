@@ -30,7 +30,7 @@ a post-build cleanup.
 
 ```bash
 cd os/
-plang build '--build={"cache":false,"files":[
+plang build '--build={"cache":"skip","files":[
   "system/builder/Build.goal",
   "system/builder/BuildGoal.goal",
   "system/builder/BuildGoal/Start.goal",

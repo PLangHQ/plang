@@ -259,10 +259,10 @@ applies to every action in the module.
 
 ## Viewing the rendered catalog
 
-Build any goal with `cache:false` and dump the prompts:
+Build any goal with `cache:skip` and dump the prompts:
 
 ```bash
-plang build '--build={"cache":false}' '--debug={"llm":{"system":true,"user":true},"length":{"max":50000}}'
+plang build '--build={"cache":"skip"}' '--debug={"llm":{"system":true,"user":true},"length":{"max":50000}}'
 ```
 
 The decider State is the **system** side of the `Decide` call (module descriptions +

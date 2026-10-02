@@ -111,9 +111,9 @@ public class Default : IBuilder
             if (goal == null) continue;
 
             // The .pr IS the build's cache: merging it sets goal.Cache (→ IsCached skips the goal) and carries
-            // each step's prior code (→ step.IsCached skips the step). cache:false means no cached answer of any
+            // each step's prior code (→ step.IsCached skips the step). cache:skip means no cached answer of any
             // kind, so a fresh source rebuilds in full — skip the merge entirely and the goal is built anew.
-            if (context.Setting.Of<global::app.module.build.setting.@this>().Cache.Value)
+            if (context.Setting.Of<global::app.module.build.setting.@this>().Cache.Value == global::app.module.cache.type.cache.use)
                 await MergePrData(goal, context);
             allGoals.Add(goal);
         }
