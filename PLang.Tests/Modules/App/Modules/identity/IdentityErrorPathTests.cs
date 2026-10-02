@@ -50,7 +50,7 @@ public class IdentityErrorPathTests
     {
         // No identities exist → auto-create path → save fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.store));
+            SettingsStore(_app)));
 
         var getHandler = new global::app.module.identity.Get(Ctx) { Name = null };
         await getHandler.Attach(null, Ctx);
@@ -70,7 +70,7 @@ public class IdentityErrorPathTests
 
         // Now swap to failing DataSource — GetAll still works (delegates), but Set fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.store));
+            SettingsStore(_app)));
 
         var getHandler = new global::app.module.identity.Get(Ctx) { Name = null };
         await getHandler.Attach(null, Ctx);
@@ -86,7 +86,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — Get(null) calls GetOrCreateDefaultAsync which returns error
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.store));
+            SettingsStore(_app)));
 
         var handler = new global::app.module.identity.Get(Ctx) { Name = null };
         await handler.Attach(null, Ctx);
@@ -102,7 +102,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — Export(null) calls GetOrCreateDefaultAsync which returns error
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.store));
+            SettingsStore(_app)));
 
         var handler = new Export(Ctx) { Name = null };
         await handler.Attach(null, Ctx);
@@ -118,7 +118,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save before %MyIdentity% resolves
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.store));
+            SettingsStore(_app)));
 
         // Access %MyIdentity% — the computed cell calls the provider, which
         // fails; the answer is the present-null VALUE (the singleton).
@@ -140,7 +140,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — clearing old default fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.store));
+            SettingsStore(_app)));
 
         var handler = new Create(Ctx) { Name = (global::app.type.item.text.@this)"new", Default = (global::app.type.item.@bool.@this)true };
         await handler.Attach(null, Ctx);
@@ -156,7 +156,7 @@ public class IdentityErrorPathTests
     {
         // Swap to failing save — saving the new identity fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.store));
+            SettingsStore(_app)));
 
         var handler = new Create(Ctx) { Name = (global::app.type.item.text.@this)"newid", Default = (global::app.type.item.@bool.@this)false };
         await handler.Attach(null, Ctx);
@@ -180,7 +180,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — clearing old default fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.store));
+            SettingsStore(_app)));
 
         var handler = new SetDefault(Ctx) { Name = (global::app.type.item.text.@this)"new" };
         await handler.Attach(null, Ctx);
@@ -201,7 +201,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — saving the new default fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.store));
+            SettingsStore(_app)));
 
         var handler = new SetDefault(Ctx) { Name = (global::app.type.item.text.@this)"target" };
         await handler.Attach(null, Ctx);
@@ -221,7 +221,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save — saving with new name fails
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.store));
+            SettingsStore(_app)));
 
         var handler = new Rename(Ctx) { Name = (global::app.type.item.text.@this)"oldname", NewName = (global::app.type.item.text.@this)"newname" };
         await handler.Attach(null, Ctx);
@@ -241,7 +241,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.store));
+            SettingsStore(_app)));
 
         var handler = new Archive(Ctx) { Name = (global::app.type.item.text.@this)"toarchive" };
         await handler.Attach(null, Ctx);
@@ -265,7 +265,7 @@ public class IdentityErrorPathTests
 
         // Swap to failing save
         SwapDataSource(_app, new FailingSaveDataSource(
-            _app.store));
+            SettingsStore(_app)));
 
         var handler = new Unarchive(Ctx) { Name = (global::app.type.item.text.@this)"tounarchive" };
         await handler.Attach(null, Ctx);
@@ -336,15 +336,18 @@ public class IdentityErrorPathTests
     // --- Helpers ---
 
     /// <summary>
-    /// Swaps the app's store via reflection on its lazy backing field — there's a single shared
-    /// <c>app.store</c>.
+    /// Swaps the settings' store — an identity is saved as the system's identity setting, and the settings keep
+    /// their own store, made by the root of the chain (the system's settings) — via reflection on its lazy field.
     /// </summary>
     private static void SwapDataSource(global::app.@this app, global::app.store.@this newDataSource)
-    {
-        var field = typeof(global::app.@this).GetField("<store>k__BackingField",
-            BindingFlags.NonPublic | BindingFlags.Instance);
-        field!.SetValue(app, newDataSource);
-    }
+        => SettingsStoreField().SetValue(app.actor.list.System.Setting, new Lazy<global::app.store.@this>(() => newDataSource));
+
+    // The settings' store the system's settings made — what a failing store wraps.
+    private static global::app.store.@this SettingsStore(global::app.@this app)
+        => ((Lazy<global::app.store.@this>)SettingsStoreField().GetValue(app.actor.list.System.Setting)!).Value;
+
+    private static FieldInfo SettingsStoreField()
+        => typeof(global::app.actor.setting.@this).GetField("_store", BindingFlags.NonPublic | BindingFlags.Instance)!;
 
     /// <summary>
     /// A store that delegates all operations except Set, which always fails.

@@ -61,13 +61,11 @@ public sealed class OpenAi : ILlm
         var app = action.Context.App;
         var context = action.Context;
 
-        // --- Config ---
-        var settings = app.store;
-        var endpoint = await ResolveConfigAsync(settings, "llm.endpoint", "OPENAI_API_ENDPOINT",
-            "https://api.openai.com/v1/chat/completions");
-        var apiKey = await ResolveConfigAsync(settings, "llm.apiKey", "OPENAI_API_KEY", null);
-        var model = ((action.Model == null ? null : await action.Model.Value())?.ToString()) is { Length: >0 } __m ? __m : null;
-        model ??= await ResolveConfigAsync(settings, "llm.model", null, "gpt-5.4-nano");
+        // --- Config: the llm module's settings — a saved key wins, else its environment's ---
+        var llm = context.Setting.Of<global::app.module.llm.setting.@this>();
+        var endpoint = llm.Endpoint.ToString();
+        var apiKey = llm.Key.ToString();
+        var model = ((action.Model == null ? null : await action.Model.Value())?.ToString()) is { Length: >0 } __m ? __m : llm.Model.ToString();
 
         // --- Validate ---
         // HACK (minimal): Messages.Value can be NULL (not just empty) — the [IsNotNull]
@@ -162,7 +160,7 @@ public sealed class OpenAi : ILlm
         if (await action.Cache.ToBooleanAsync() && goalTools == null)
         {
             cacheKey = ComputeCacheKey(messages, model, (await action.Temperature.Value())!.ToDouble(), schema, await FormatOf(action));
-            var cached = await settings.Get<global::app.type.item.@this>(CacheTable, cacheKey);
+            var cached = await app.store.Get<global::app.type.item.@this>(CacheTable, cacheKey);
             // A missing key returns the null citizen (Ok(null) → Peek is null.this),
             // which is a real instance — test .IsNull, not a C# != null reference check.
             if (cached.Success && cached.Peek() is { IsNull: false })
@@ -472,7 +470,7 @@ public sealed class OpenAi : ILlm
                     ["Schema"] = schema,
                     ["Messages"] = conversed
                 };
-                await settings.Set(CacheTable, cacheKey, new data.@this("cache", cacheEntry, context: context));
+                await app.store.Set(CacheTable, cacheKey, new data.@this("cache", cacheEntry, context: context));
             }
 
             // --- Populate response properties ---
@@ -815,32 +813,6 @@ public sealed class OpenAi : ILlm
 
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(sb.ToString()));
         return Convert.ToHexString(bytes).ToLowerInvariant();
-    }
-
-    // --- Config resolution ---
-
-    private static async Task<string> ResolveConfigAsync(global::app.store.@this settings, string settingKey,
-        string? envVar, string? defaultValue)
-    {
-        // Try settings store. A missing key returns the null citizen (Peek is
-        // null.this, not C# null) — test .IsNull, or a missing setting reads as the
-        // literal string "null" and (e.g.) the endpoint becomes "null:443".
-        var result = await settings.Get<global::app.type.item.@this>("LlmConfig", settingKey);
-        if (result.Success && result.Peek() is { IsNull: false })
-        {
-            // A clr never wraps a Data (the ctor forbids it), so read the value directly.
-            var val = (await result.Value())?.ToString();
-            if (!string.IsNullOrEmpty(val)) return val;
-        }
-
-        // Try environment variable
-        if (!string.IsNullOrEmpty(envVar))
-        {
-            var envVal = Environment.GetEnvironmentVariable(envVar);
-            if (!string.IsNullOrEmpty(envVal)) return envVal;
-        }
-
-        return defaultValue ?? "";
     }
 
     // --- Response parsing ---

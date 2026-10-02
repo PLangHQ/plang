@@ -8,9 +8,10 @@ namespace app.actor.setting;
 /// (<c>app.actor.list.System.Setting</c>, <c>app.actor.list.User.Setting</c>, the user's falling back to the system's) that holds
 /// the actor's rows; a context's own layer (<c>context.Setting</c>) chains up to its actor's, so a
 /// goal-local value shadows the rest. The rows are read once, when the app starts (<see cref="Load"/>);
-/// after that a setting is built in memory.
+/// after that a setting is built in memory. The rows live in the settings' own store,
+/// <c>/.data/setting/data.sqlite</c> — never the app's data — made by the root of the chain.
 /// </summary>
-public sealed class @this
+public sealed class @this : IDisposable
 {
     internal const string Table = "settings";                       // the store's table: one row per actor per setting
     private readonly @this? _parent;
@@ -45,9 +46,27 @@ public sealed class @this
     // The settings changed somewhere: every setting built before this is stale.
     private void Move() => System.Threading.Interlocked.Increment(ref Root._version);
 
+    // The settings' own store — /.data/setting/data.sqlite, in memory while testing under this app's id — made by the
+    // root of the chain at its first use; every layer reaches it through its root.
+    private global::app.store.@this Store => Root._store.Value;
+    private readonly Lazy<global::app.store.@this> _store;
+
     /// <summary>A context's layer, chaining up to <paramref name="parent"/>.</summary>
     public @this(actor.context.@this context, @this? parent = null)
-    { _context = context; _parent = parent; }
+    {
+        _context = context;
+        _parent = parent;
+        _store = new(() => new global::app.store.sqlite.@this(
+            global::app.type.item.path.@this.Resolve("/.data/setting/data.sqlite", context),
+            () => context.App.Mode.Value == global::app.Mode.Test ? $"setting-{context.App.Id}" : null,
+            context));
+    }
+
+    /// <summary>The store the root made lets its database go; one never made holds nothing.</summary>
+    public void Dispose()
+    {
+        if (_store.IsValueCreated) _store.Value.Dispose();
+    }
 
     /// <summary>An actor's own: holds the actor's saved rows, falling back to <paramref name="parent"/>
     /// (the system's, for the user).</summary>
@@ -153,7 +172,7 @@ public sealed class @this
         // rows that could not be read are never written over
         if (await owner.Load() is { Success: false } unread) return unread;
         var row = new data.@this($"{owner._actor!.Name.ToLowerInvariant()}!{path}", setting, context: _context);
-        var stored = await _context.App.store.Set(Table, row.Name, row);
+        var stored = await Store.Set(Table, row.Name, row);
         if (!stored.Success) return stored;
         owner._held![path] = row;
         Move();
@@ -167,7 +186,7 @@ public sealed class @this
         var path = setting.Path;
         var owner = Owner;
         if (await owner.Load() is { Success: false } unread) return unread;
-        var removed = await _context.App.store.Remove(Table, $"{owner._actor!.Name.ToLowerInvariant()}!{path}");
+        var removed = await Store.Remove(Table, $"{owner._actor!.Name.ToLowerInvariant()}!{path}");
         if (!removed.Success) return removed;
         owner._held!.TryRemove(path, out _);
         Move();
@@ -211,7 +230,7 @@ public sealed class @this
         _ => null,
     };
 
-    // The actor's rows, read from the app's store — its keys are "<actor>!<path>" — each value read
+    // The actor's rows, read from the settings' store — its keys are "<actor>!<path>" — each value read
     // through, so a setting builds from them in memory.
     private async Task<ConcurrentDictionary<string, data.@this>> Read()
     {
@@ -221,7 +240,7 @@ public sealed class @this
         // A store that can't open (an unwritable root) answers why, as any unreadable rows do: they are unread,
         // not empty — a save or remove, which needs them, answers why (Load too), and nothing writes over rows
         // that may be there.
-        var all = await _context.App.store.GetAll<global::app.type.item.@this>(Table);
+        var all = await Store.GetAll<global::app.type.item.@this>(Table);
         if (!all.Success)
         {
             await (_context.App.Debug?.Write($"settings: the {_actor.Name} actor's rows could not be read — {all.Error?.Message}") ?? Task.CompletedTask);
