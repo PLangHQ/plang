@@ -189,9 +189,19 @@ Idle pending:
 - **36 — FIXED** (coder 220b07145/ae2bc8549; measured 5a586e25a): `foreach %x%, call Y y=%item%` →
   no `Key=%item%` 5/5; guards hold (`as %i%` → Item,no Key; `with key %field%` → Item+Key), 5/5 each.
 - **37 — cast FIXED** (coder 6c136ec1a): no more `InvalidCastException: lower app.module into list`.
-  32(b) edu now 9/10 `Name="Page"`. **Residual (new): a ~1/10 FixSteps-recovery gap** on the goal.call
-  `Parameter takes named rows` refusal (the writer writes an unnamed arg row; the retry recovers ~2/10,
-  fails ~1/10) — flagged to the coder, not urgent.
+  32(b) edu now 9/10 `Name="Page"`.
+- **39 (the ~1/10 non-recovery) — diagnosed, CORRECTED:** NOT a FixSteps set failure. The set
+  succeeds and the retry `llm.query` runs; the retry's re-answer is `goal.call(Name="Page",
+  Parameter=%!app.module.file%)` — the writer writes the Parameter as a **bare nameless value** (drops
+  the arg name `module`), both initially and on retry, and does NOT copy the placeholder `name`. So
+  build.match refuses again → NO PR. Fix (architect/coder): the refusal should name the step's own arg
+  (`{module: …}`) not the placeholder `name`; and/or teach that a plang-word arg name is still a name.
+  Same plang-word pull as 32(b), on the Parameter side.
+  - **⚠️ Lesson (twice now):** the DEBUG `[BEFORE]`/watch `%x% = (undefined)` listing is UNRELIABLE
+    (debug/this.cs:344,351 — it fooled me on cache:false AND here). **Never conclude a variable is
+    undefined from the debug listing — check the step's DEBUG [AFTER] / the actual effect first.** My
+    first issue-39 read ("set fails, retry never runs") was wrong because of this; corrected after
+    reading the AFTER state (fixMessages populated, retry ran). [[feedback_use_debug_not_csharp]]
 - **38** (1/5 `hash the file 'x.bin'` hashes the name's letters): waits on Ingi (hashing a path's content).
 - **34 type-Example** (element-kind change): coder's. When it lands → measure a `list<T>` slot on
   app-systems whose element has an Example (+ `list<text>` guard).
