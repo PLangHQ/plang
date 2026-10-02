@@ -1,0 +1,1 @@
+{"mouse": "down", "x": 120, "y": 40, "button": "left", "clicks": 1}
