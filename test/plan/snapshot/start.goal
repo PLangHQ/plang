@@ -1,0 +1,35 @@
+Start
+/ snapshot: every item serializes itself through its own wire; a resume snapshot and an app snapshot. Each stage
+/ is a goal; each behaviour a comment with the test that proves it. The coder rewrites each test in plang that compiles.
+- call goal Stage1
+- call goal Stage2
+- call goal Stage3
+
+Stage1
+/ One door.
+/ A snapshot holds a section for each item that marks members for it, under the item's own path, and none for an item that marks none
+- call goal /snapshot/SectionsAreTheItemsOwn
+/ A snapshot written to text and read back holds the same entries (its own wire, no other serializer)
+- call goal /snapshot/WriteReadRoundTrip
+/ An always-fresh value (Now) and a ! name are not captured
+- call goal /snapshot/AlwaysFreshNotCaptured
+
+Stage2
+/ The resume snapshot.
+/ A run that fails at step 3 is saved, written to disk, read back in a fresh app and resumed: it re-enters step 3 with the variables it had
+- call goal /snapshot/resume/ResumeAtFailedStep
+/ A resume whose goal was rebuilt since (another hash) fails as CallbackGoalHashMismatch
+- call goal /snapshot/resume/RebuiltGoalRefuses
+/ The variables restored are the ones at the throw, not ones written by the error handler after it
+- call goal /snapshot/resume/VariablesAtTheThrow
+/ A nested call chain resumes inside the sub-goal, then continues after the call in the parent
+- call goal /snapshot/resume/NestedChainResumes
+
+Stage3
+/ The app snapshot and children.
+/ A child app sees the parent's goals and types without loading them again
+- call goal /snapshot/app/ChildSharesParent
+/ A module added in a child is not in the parent or a sibling
+- call goal /snapshot/app/ChildChangeStaysInChild
+/ A dirty child reset matches the parent again
+- call goal /snapshot/app/ResetDropsChildChanges
