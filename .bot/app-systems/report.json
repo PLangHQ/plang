@@ -835,6 +835,81 @@
         "health": "docs rebuilt + relocated; all .md cross-links resolve; old docs removed",
         "notes": "Builder fully understood (PLang+C#). Architect must ratify ownership shift in to-architect.md before builder acts on C#/eval retirement. Incidental old-pipeline mentions remain in debug.md/builder-runtime.md/trace.md/building_plang_tests.md (flagged, out of scope)."
       }
+    },
+    {
+      "bot": "builder",
+      "timestamp_start": "2026-10-01T20:00:00Z",
+      "intent": "Builder bug-fixing round: write-back, issue 21/24/25/26, re-checks 1/2",
+      "before": {
+        "assumptions": "builder maps NL steps to .pr; fix builder source not the dev goal",
+        "risk": "core vs module scope; kernel/decider changes have wide blast radius"
+      },
+      "plan": ".bot/app-systems/builder/v2/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "PLang/app/module/build/code/Default.cs",
+            "os/system/modules/list/query.notes.md",
+            "os/system/modules/list/query.examples.md",
+            "test/plan/list-query/module/list/query/build/WriteBack.test.goal",
+            "test/plan/list-query/module/list/query/build/WriteBackInsertPosition.test.goal",
+            "test/plan/list-query/module/list/query/build/WriteBackConsumed.test.goal",
+            "PLang.Tests/Wire/App/Decider/pick_golden.json"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "write-back: destination-less list.query appends variable.set right after the query; follow-up insert-position + parsed-variable checks; goldens mutation-verified"
+        },
+        {
+          "paths": [
+            "os/system/builder/llm/templates/decider.state.template",
+            "PLang.Tests/Wire/App/Decider/pick_golden.json"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "issue 21 part a: decider principle surfaces file.exists for a resource-existence condition; measured file 5/5; part b handed to coder (core pick/list)"
+        },
+        {
+          "paths": [
+            "test/plan/list-query/module/list/query/WhereUnsetVariable.test.goal"
+          ],
+          "type": "delete",
+          "category": "test",
+          "confidence": "high",
+          "context": "redundant with coder's tighter twin"
+        },
+        {
+          "paths": [
+            "os/system/builder/llm/Properties.llm",
+            "os/system/modules/file/read.notes.md",
+            "os/system/modules/file/read.examples.md"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "issue 25 lever experiments measured 0 of 9 and reverted; escalated to Ingi option rename; LoadVars golden left uncommitted on disk"
+        },
+        {
+          "paths": [
+            "PLang/app/this.cs",
+            "PLang/app/goal/step/pick/list/this.cs",
+            "PLang/app/type/format/value/reader.cs"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "diagnosed issues 24 app.pr derived Name, 21b pick starting-line nests predicate, 26.2 formal reader BeginArray on Conversation value; all core, handed to coder"
+        }
+      ],
+      "after": {
+        "status": "3 commits pushed plus a test deletion; core items handed to coder; issue 25 to Ingi",
+        "health": "green on touched suites (PickListTests, ModulePageTests, write-back goldens)",
+        "notes": "parked on coder (21b/24/26.2) and Ingi (25 rename); summary.md has next steps"
+      },
+      "id": "b968a773-fcc7-4ced-9462-342a56c30d2c",
+      "timestamp_end": "2026-10-02T00:09:51Z"
     }
   ]
 }
