@@ -63,6 +63,14 @@ public sealed class @this
     /// <summary>The property accepts null (either a <c>Nullable&lt;T&gt;</c> or a nullable reference).</summary>
     public bool Nullable { get; init; }
 
+    /// <summary>A type's member a step calls with arguments (<c>%x.replace("a", "b")%</c>, <c>%x.toupper()%</c>): what
+    /// it is called with, each a name and a plang type, and <see cref="Type"/> what it answers. Null for a member read
+    /// as it is (<c>%p.relative%</c>, <c>%s.length%</c>) — a property, or a method that asks only for its asker.</summary>
+    public System.Collections.Generic.IReadOnlyList<@this>? Arguments { get; init; }
+
+    /// <summary>Whether a step calls this member with arguments, rather than reading it.</summary>
+    public bool IsMethod => Arguments != null;
+
     /// <summary>The class's <c>[Default]</c> value, or null when the property is required / has no default.</summary>
     public object? Default { get; init; }
 

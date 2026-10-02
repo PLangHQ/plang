@@ -731,11 +731,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         }
 
         var property = new property.list.@this();
-        // A member that needs the asker's context is a one-context method; it is the same property to
-        // the catalog, listed where it is declared among the properties.
+        // Every member the class marks plang's, listed where it is declared. A method that asks only for its asker's
+        // context is read as a property (%p.relative%); any other is called with its arguments (%x.replace("a", "b")%).
         var methods = new Queue<System.Reflection.MethodInfo>(clr.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Where(m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void)
-                && m.GetParameters() is [{ ParameterType: var p }] && p == typeof(actor.context.@this))
+            .Where(m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void))
             .OrderBy(m => m.MetadataToken));
         foreach (var prop in clr.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
         {
@@ -743,15 +742,26 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             if (!System.Attribute.IsDefined(prop, typeof(global::app.LlmBuilderAttribute))) continue;
             while (methods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
                 && m.MetadataToken < prop.GetMethod!.MetadataToken)
-                property.Add(types.Property(methods.Dequeue().Name, Answer(m)));
+                property.Add(Member(methods.Dequeue()));
             property.Add(types.Property(prop.Name, prop.PropertyType));
         }
-        while (methods.TryDequeue(out var m)) property.Add(types.Property(m.Name, Answer(m)));
+        while (methods.TryDequeue(out var m)) property.Add(Member(m));
 
-        // what a one-context method answers — an asynchronous one, what its task completes with
-        System.Type Answer(System.Reflection.MethodInfo m)
-            => m.ReturnType is { IsGenericType: true } task && task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>)
+        // A method as the catalog lists it: what it answers (an asynchronous one, what its task completes with), and —
+        // unless it asks only for its asker — what it is called with. The asker's context and a cancellation are the
+        // runtime's to give, never a step's argument.
+        property.@this Member(System.Reflection.MethodInfo m)
+        {
+            var answers = m.ReturnType is { IsGenericType: true } task && task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>)
                 ? task.GenericTypeArguments[0] : m.ReturnType;
+            var parameters = m.GetParameters();
+            if (parameters is [{ ParameterType: var only }] && only == typeof(actor.context.@this))
+                return types.Property(m.Name, answers);
+            return types.Property(m.Name, answers, parameters
+                .Where(p => p.ParameterType != typeof(actor.context.@this) && p.ParameterType != typeof(System.Threading.CancellationToken))
+                .Select(p => types.Property(p.Name!, p.ParameterType))
+                .ToList());
+        }
 
         // A scalar has a constructor, a declared wire shape, or is a named type with no builder
         // properties (a domain wrapper around a primitive); a record has builder properties.
