@@ -25,6 +25,13 @@ Entry form: **who** · **what** · **cost** (evidence) · **if I had** (the wish
 - **os · a method with quoted arguments can't sit inside a quoted text.** `set %path% to "/system/plangos/%file!relative.replace("/shell.next/", "").replace(".staged.txt", "")%"` is refused twice ("%file!relative.replace(…)…% is in the step but not in your answer"): the quotes inside `%…%` likely end the outer text. One method per step, in formal, works. **If I had** a `%…%` inside a text hold quoted arguments, or the builder say "a method with quoted arguments can't sit inside a quoted text: set it apart first".
 - **architect · the builder isn't taught text methods.** `%x.replace("\\", "/")%` exists (`text/this.cs:432`, with ToUpper, ToLower, Trim, MaxLength, Grep, GrepCount), but the type catalog lists only context-taking methods (`type/this.cs:736–739`) and no note teaches them, so "replace \ with / in %x%" may not build to it. **If I had** the text methods in the catalog, a plain step would reach them.
 
+## Docs
+
+- **docs · hand-written docs drift from code, and nothing gates them** (`object_pattern_formal.md` had five wrong examples; `file.md`, `condition.md`, `loop.md` documented v0.1 names and returns). **If I had** every module's page generated from the catalog with a golden test (as `file`, `list`, `loop` now are), drift couldn't happen; the hand-written `docs/modules/*.md` retired.
+- **docs · where a `/system/…` read or write lands isn't written in one place** (app overlay vs os; decision 522's new-file rule). **If I had** the resolution rule in one doc a goal author can find.
+- **docs, architect · CLAUDE.md is stale for every bot** (`MarkdownTeaching.ScanOrphans` deleted, `action-catalog.md` moved, path read verbs collapsed, the channel API example). v6 and v7 are applied (aa4074d4d); the docs bot is applying the rest of the proposals with a reason each.
+- **docs · verifying against a stale checkout** led to a wrong message to a teammate (76 commits behind). This is a habit, not a missing feature: `git fetch` and compare with origin before concluding something is drift.
+
 ## Errors that don't say what to do
 
 - **os · a stale `.pr` says "holds a bool — choice<…> cannot be created from it".** **If I had** the action named and "built by an older builder: rebuild this goal".
@@ -56,4 +63,5 @@ Entry form: **who** · **what** · **cost** (evidence) · **if I had** (the wish
 
 - **os:** "X is in the step but not in your answer" catches real drops; formal lines are an exact escape hatch that survives rebuilds; errors say where (goal, step, line); download Path+Hash (the hash refused a wrong-host page before anything used it); Pull.goal is ~120 lines of plain plang over http, crypto and file.
 - **builder:** the per-action notes system is the right shape, and the teaching lever is fast: issue 41 went 0/5 → 5/5 with a one-line addition, measured in minutes.
+- **docs:** the notes' `say:`/`builder:`/`ask:` split (one source, each reader sees its part); the catalog's lazy Description/Notes/Examples items made page generation one render; `ModulePageTests` as a byte-exact golden caught every downstream drift; fast-forward-only pushes kept a fast-moving branch safe.
 - **educator:** everyday plain steps build right every time (18 lessons rest on them); errors with `at <file>:<line>` and the step; templates render where written; learner module pages generated from the notes; `--debug={"goal":"X"}` with BEFORE/AFTER variables; `VariableNotFound`'s message says what to do.
