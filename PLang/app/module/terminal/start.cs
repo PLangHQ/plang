@@ -26,8 +26,9 @@ public partial class start : IContext
     public partial data.@this<global::app.type.item.path.@this>? WorkingDirectory { get; init; }
 
     /// <summary>The folders the program is held to — <c>{read: [...], write: [...]}</c>: the kernel lets it touch
-    /// nothing else. Each folder is first this app's to read or write. No jail, no hold. Not with Administrator.</summary>
-    public partial data.@this<global::app.module.terminal.type.jail.@this>? Jail { get; init; }
+    /// nothing else. Each folder is first this app's to read or write. Left out, the program runs free; named, it
+    /// never does (a %ref% holding none is refused). Not with Administrator.</summary>
+    public partial data.@this<global::app.module.terminal.type.sandbox.@this>? Sandbox { get; init; }
 
     /// <summary>Text written to the program's stdin, which is then closed.</summary>
     public partial data.@this<global::app.type.item.text.@this>? Input { get; init; }

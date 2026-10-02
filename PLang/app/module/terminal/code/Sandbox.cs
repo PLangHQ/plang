@@ -9,7 +9,7 @@ namespace app.module.terminal.code;
 /// so the program can never lift it, while the rest of plang never was locked. The thread ends with the start.
 /// Fails closed: where the lock can't be made (not Linux, no Landlock), the program isn't started.
 /// </summary>
-internal sealed class Jail
+internal sealed class Sandbox
 {
     /// <summary>Read (and run) only: what a program needs to start — its libraries and the system's own
     /// settings. Not /proc: there it would read plang's own environment.</summary>
@@ -17,19 +17,23 @@ internal sealed class Jail
     /// <summary>Written by most programs, holding nothing.</summary>
     private static readonly string[] Sink = ["/dev/null"];   // written: the one system path a program may write
 
+    /// <summary>The program file: read and run, nothing else of its folder.</summary>
+    public string Program { get; }
     public IReadOnlyList<string> Read { get; }
     public IReadOnlyList<string> Write { get; }
 
-    public Jail(IEnumerable<string> read, IEnumerable<string> write)
+    /// <summary>Each one an absolute path, from a path the caller may touch (<c>path.Absolute</c>).</summary>
+    public Sandbox(string program, IEnumerable<string> read, IEnumerable<string> write)
     {
+        Program = program;
         Read = read.Distinct().ToList();
         Write = write.Distinct().ToList();
     }
 
-    /// <summary>Why a jail can't be made here, or null when it can.</summary>
+    /// <summary>Why a sandbox can't be made here, or null when it can.</summary>
     public static string? Unavailable()
     {
-        if (!OperatingSystem.IsLinux()) return "Running a program inside its folders (Read/Write) is supported on Linux only.";
+        if (!OperatingSystem.IsLinux()) return "Running a program in a sandbox is supported on Linux only.";
         var abi = Landlock.Version();
         return abi < 3 ? $"This kernel can't hold a program to its folders (Landlock {(abi < 0 ? "is off" : $"version {abi}, needs 3")})." : null;
     }
@@ -43,13 +47,12 @@ internal sealed class Jail
         {
             try
             {
-                // the base and the program's folder where this system has them; every folder the caller named
-                Landlock.Restrict(
-                    Base.Append(Path.GetDirectoryName(info.FileName)!).Concat(Sink), Read, Write);
+                // the base where this system has it; the program file and every folder the caller named
+                Landlock.Restrict(Base.Concat(Sink), Read.Prepend(Program), Write);
                 started = System.Diagnostics.Process.Start(info);
             }
             catch (Exception ex) { failed = ex; }
-        }) { IsBackground = true, Name = "jail" };
+        }) { IsBackground = true, Name = "sandbox" };
         thread.Start();
         thread.Join();
         if (failed != null) throw failed;
@@ -75,9 +78,13 @@ internal sealed class Jail
         // execute, read file, read dir
         private const ulong Reading = 1 | 4 | 8;
         // + write file, remove dir, remove file, make dir, make file, truncate
-        private const ulong Writing = Reading | 2 | 16 | 32 | 128 | 256 | 16384;
-        // + make char/sock/fifo/block/symlink, refer: every right Landlock 3 guards — what no rule names is refused
-        private const ulong Guarded = Writing | 64 | 512 | 1024 | 2048 | 4096 | 8192;
+        // + make symlink (4096): a checkout of a repo that holds a link makes one (git, tar). Safe: the kernel checks
+        //   the path a link leads to when it is opened, so a link can't lead out of the jail
+        // + refer (8192): a move or link from one folder to another (git mv d1/y d2/y; without it EXDEV, "Invalid
+        //   cross-device link"). Safe: the kernel moves a file only where the jail grants it at least the same rights
+        private const ulong Writing = Reading | 2 | 16 | 32 | 128 | 256 | 16384 | 4096 | 8192;
+        // + make char/sock/fifo/block: every right Landlock 3 guards — what no rule names is refused
+        private const ulong Guarded = Writing | 64 | 512 | 1024 | 2048;
 
         public static int Version() => (int)syscall(Create, IntPtr.Zero, 0, 1);
 
