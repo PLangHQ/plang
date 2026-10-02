@@ -110,6 +110,42 @@ public class FormalReaderTests : System.IAsyncDisposable
         await read.IsSuccess();
     }
 
+    // `continue the conversation` as FixSteps writes it: the formal reads, rides its .pr (an object template), and
+    // opens as the conversation
+    [Test]
+    public async Task AConversationContinuing_ReadsRidesThePr_AndOpens()
+    {
+        var conversation = await Continuing("{continue: %answer%}");
+
+        await Assert.That(await conversation.Value()).IsTypeOf<global::app.module.llm.type.conversation.@this>();
+        await conversation.IsSuccess();
+    }
+
+    // a conversation written as text is refused saying its shape — never a reader's exception
+    [Test]
+    public async Task AConversationWrittenAsText_IsRefused_SayingItsShape()
+    {
+        var conversation = await Continuing("\"{continue: %answer%}\"");
+
+        await conversation.Value();
+
+        await conversation.IsFailure();
+        await Assert.That(conversation.Error!.Key).IsEqualTo("ConversationInvalid");
+        await Assert.That(conversation.Error.Message).Contains("a conversation is {continue: %answer%}");
+    }
+
+    // llm.query's Conversation as written, through a real .pr load, with %answer% set
+    private async Task<global::app.data.@this> Continuing(string written)
+    {
+        var read = Read("llm.query(Message=[{Role: \"user\", Content: \"again\"}], Conversation=" + written + ")", out _);
+        await read.IsSuccess();
+        var ctx = app.actor.list.User.Context;
+        var goal = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
+            global::PLang.Tests.Shared.Make.Step("continue", ((global::app.goal.step.action.list.@this)read.Peek()!)[0])));
+        await ctx.Variable.Set("answer", "earlier");
+        return goal.Step[0].Code[0].Property["Conversation"]!.Data(ctx);
+    }
+
     [Test]
     public async Task GoalCallsParameters_WrittenAsAListOfDicts_AreRefused()
     {
