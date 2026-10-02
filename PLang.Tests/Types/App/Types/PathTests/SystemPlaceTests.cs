@@ -42,6 +42,32 @@ public class SystemPlaceTests : System.IAsyncDisposable
         await Assert.That(at.Place(Ctx).First().Absolute).IsEqualTo(Own("system/error/400.txt"));
     }
 
+    // a new file lands where its folder is: the os's when only the os has the folder
+    [Test] public async Task ANewFile_UnderAFolderOnlyTheOsHas_IsTheOss()
+    {
+        var at = global::app.type.item.path.@this.Resolve("/system/error/new.md", Ctx);
+
+        await Assert.That(at.Absolute).IsEqualTo(Os("system/error/new.md"));
+    }
+
+    // the app's own first, when the app has the folder too
+    [Test] public async Task ANewFile_UnderAFolderTheAppHasToo_IsTheApps()
+    {
+        System.IO.Directory.CreateDirectory(Own("system/error"));
+
+        var at = global::app.type.item.path.@this.Resolve("/system/error/new.md", Ctx);
+
+        await Assert.That(at.Absolute).IsEqualTo(Own("system/error/new.md"));
+    }
+
+    // a folder neither has: where it was written
+    [Test] public async Task ANewFile_UnderAFolderNeitherHas_IsAsWritten()
+    {
+        var at = global::app.type.item.path.@this.Resolve("/system/no-such-folder/new.md", Ctx);
+
+        await Assert.That(at.Absolute).IsEqualTo(Own("system/no-such-folder/new.md"));
+    }
+
     [Test] public async Task AnyOtherPath_IsTheOnePlaceItIs()
     {
         var at = global::app.type.item.path.@this.Resolve("/data/x.txt", Ctx);
