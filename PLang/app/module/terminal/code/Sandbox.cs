@@ -60,8 +60,8 @@ internal sealed class Sandbox
         {
             if (await row.Value<Permission>() is not { } permission)
                 return (null, row.Error != null ? context.Error(row.Error) : Invalid($"{row.Name} is no permission — {{path, verbs}}"));
-            if (permission.Match != global::app.type.item.permission.Match.Exact)
-                return (null, Invalid($"{permission.Path} is a {permission.Match.ToString().ToLowerInvariant()}: the kernel holds a program to folders, named exactly"));
+            if (permission.Match != global::app.type.item.permission.Match.exact)
+                return (null, Invalid($"{permission.Path} is a {permission.Match}: the kernel holds a program to folders, named exactly"));
             // the actor is the caller until a program is an actor of its own (the Service actor)
             if (permission.Actor is { Length: > 0 } named && !string.Equals(named, caller, StringComparison.OrdinalIgnoreCase))
                 return (null, Invalid($"a permission for {named}: a program {caller} starts is given {caller}'s own"));
@@ -70,7 +70,7 @@ internal sealed class Sandbox
                 return (null, Invalid("a permission names no path"));
             if (permission.Verbs.Count == 0)
                 return (null, Invalid($"the permission for {permission.Path} names no verbs — read, write, delete"));
-            if (permission.Verbs.Contains(Verb.Execute))
+            if (permission.Verbs.Contains(Verb.execute))
                 return (null, Invalid($"execute ({permission.Path}) is not given to a program yet — read, write, delete"));
             var carrier = new data.@this("path", permission.Path, context: context);
             if (PathItem.Create(permission.Path, null, carrier) is not { } path)
@@ -153,9 +153,9 @@ internal sealed class Sandbox
         /// <summary>The rights a verb gives.</summary>
         public static ulong Rights(Verb verb) => verb switch
         {
-            Verb.Read => Reading,
-            Verb.Write => Writing,
-            Verb.Delete => Removing,
+            Verb.read => Reading,
+            Verb.write => Writing,
+            Verb.delete => Removing,
             _ => 0,
         };
 

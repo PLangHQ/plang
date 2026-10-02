@@ -322,13 +322,13 @@ public sealed class Default : ITerminal
         var program = FilePath.Program(name, context);
         if (program == null)
             return (null, context.Error(new ActionError($"Program not found: {name}. Not a path, and not on PATH.", "ProgramNotFound", 404)));
-        var allowed = await program.Authorize(Verb.Execute, context);
+        var allowed = await program.Authorize(Verb.execute, context);
         if (allowed.Exits || !allowed.Success) return (null, allowed);
 
         var folder = workingDirectory == null ? null : await workingDirectory.Value();
         if (folder != null)
         {
-            var readable = await folder.Authorize(Verb.Read, context);
+            var readable = await folder.Authorize(Verb.read, context);
             if (readable.Exits || !readable.Success) return (null, readable);
         }
 
