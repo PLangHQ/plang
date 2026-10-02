@@ -218,30 +218,45 @@ public class PermissionTests : IDisposable
         await Assert.That(File.Exists(Path.Combine(_outside, "ran.txt"))).IsFalse();
     }
 
+    /// <summary>Runs <paramref name="formal"/> as a built app does: the formal line read by the formal reader (as the
+    /// builder writes a step), written as a .pr and read back.</summary>
+    private async Task<global::app.data.@this> Built(string formal, string answer = "a")
+    {
+        Context.Actor!.Channel.Register(new CannedAnswerChannel(answer));
+        var made = Make.Goal(Context, "Run" + Guid.NewGuid().ToString("N")[..6], Make.Step("run it"));
+        var step = new global::app.goal.step.@this { Goal = made };
+        var read = new global::app.goal.step.action.formal.Reader(step, Context.App.module.list).Read(formal, Context);
+        await read.IsSuccess();
+        var actions = ((global::app.goal.step.action.list.@this)read.Peek()!).Items().ToArray();
+        var goal = Make.Goal(Context, made.Name, Make.Step(formal, actions));
+        return await _app.Start(await RealGoalLoad.ViaChannel(_app, goal), Context);
+    }
+
     [Test]
-    [Skip("core gap: permission.Create reads its members by their held type (Get<Text>, Peek() is list), and read off a .pr they are still wires — path and verbs come back empty — for the coder")]
     public async Task ReadOffAPr_APermissionKeepsItsPathAndVerbs()
     {
         if (!OperatingSystem.IsLinux()) return;
-        var result = await Sh($"echo in > {_root}/granted/a.txt; (echo out > {_outside}/b.txt) 2>/dev/null || echo refused",
-            Permissions(May("/granted", "write")), wire: true);
+        var script = $"echo in > {_root}/granted/a.txt; (echo out > {_outside}/b.txt) 2>/dev/null || echo refused";
+        var result = await Built(
+            $"terminal.start(App=\"//bin/sh\", Parameter=[\"-c\", \"{script}\"], Permission=[{{\"path\": \"/granted\", \"verbs\": [\"write\"]}}])");
         await result.IsSuccess();
         await Assert.That(File.Exists(Path.Combine(_root, "granted", "a.txt"))).IsTrue();
+        await Assert.That(File.Exists(Path.Combine(_outside, "b.txt"))).IsFalse();
         await Assert.That((await result.Value())?.ToString() ?? "").Contains("refused");
     }
 
     [Test]
-    public async Task ReadOffAPr_APermissionThatCameBackEmpty_IsRefused_NeverRunFree()
+    public async Task APermissionThatComesBackEmpty_IsRefused_NeverRunFree()
     {
-        // until permission.Create reads a .pr's members, they come back empty: refused, never a program run free
+        // a .pr written from CLR values (each member a whole Data row) reads back without path or verbs:
+        // refused, never a program run free
         var result = await Sh($"echo ran > {_outside}/ran.txt", Permissions(May("/granted", "write")), wire: true);
-        if (result.Success) return;   // the core reads them now: the test above covers it
+        if (result.Success) return;   // the permission reads them now: the test above covers the held run
         await Assert.That(result.Error!.Key).IsEqualTo("PermissionInvalid");
         await Assert.That(File.Exists(Path.Combine(_outside, "ran.txt"))).IsFalse();
     }
 
     [Test]
-    [Skip("core gap: list<T>.Create given one value makes no list of one (the list's reader does, since 22885b348) — for the coder")]
     public async Task OnePermissionNotInAList_IsAListOfOne()
     {
         if (!OperatingSystem.IsLinux()) return;
