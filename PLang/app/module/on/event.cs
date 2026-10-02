@@ -28,10 +28,10 @@ public partial class OnEvent : IContext
     public partial data.@this<global::app.type.item.choice.@this<global::app.@event.binding.Scope>> Scope { get; init; }
 
     /// <summary>
-    /// Build-time check: the event's path is walked hop by hop. A hop that names no event of an item's events
-    /// (<c>…on.before</c>) is refused — every item has the same events, so it can never bind. Any other hop that
-    /// reaches nothing surfaces a warning on Channel("builder") naming it — the item may only exist at run (a channel
-    /// a step before it creates).
+    /// Build-time check: the event's path is walked hop by hop. A name the item's events refuse (<c>…on.before</c>)
+    /// is the answer — every item has the same events, so it can never bind. Any other hop that reaches nothing
+    /// surfaces a warning on Channel("builder") naming it — the item may only exist at run (a channel a step before
+    /// it creates).
     /// </summary>
     public async Task<data.@this> Build()
     {
@@ -43,7 +43,7 @@ public partial class OnEvent : IContext
             var on = reached?.Peek() as global::app.@event.on.@this;
             reached = await hop.Start(reached, Context);
             if (reached.IsInitialized && reached.Success) continue;
-            if (on != null) return Context.Error(NoEvent(path.Text, on));
+            if (on != null) return reached;
             await __action.Warn(new global::app.error.Error(
                 $"on.event: '{path.Text}' reaches nothing at '{hop.Text}' at build time — it binds only if that exists when the step runs",
                 "EventUnreached", 404), Context);
@@ -52,26 +52,27 @@ public partial class OnEvent : IContext
         return Context.Ok();
     }
 
-    // A path whose last name is no event: it says the item's events, and that before/after is the When.
-    private static global::app.error.Error NoEvent(string path, global::app.@event.on.@this on)
-        => new global::app.error.ActionError(
-            $"on.event: '{path}' names no event — an item's events are {string.Join(", ", on.Names)}; before or after one " +
-            "is When (Event=%!app.type.step.on.start%, When=before)", "EventNotFound", 404);
-
     public async Task<data.@this<global::app.@event.binding.@this>> Start()
     {
         // The path navigates event ← its on ← the item. An item nothing is bound on answers the shared empty
-        // events, which don't know their item: the item is the navigation's, and it binds on its own events.
+        // events, which don't know their item: the item is the navigation's, and it binds on its own events. A name
+        // the events refuse is that refusal; an item that isn't there is unreached; a path ending at something
+        // other than an event names no event.
+        var path = Event.Peek()?.ToString() ?? Event.Name;
         var reached = await Event.Follow(Context);
+        if (!reached.Success) return Context.Error<global::app.@event.binding.@this>(reached.Error!);
+        if (!reached.IsInitialized)
+            return Context.Error<global::app.@event.binding.@this>(new global::app.error.Error(
+                $"on.event: '{path}' reaches nothing — the item isn't there to bind on", "EventUnreached", 404));
         if (reached.Peek() is not global::app.@event.@this named || reached.Parent?.Parent?.Peek() is not global::app.type.item.@this item)
-            return Context.Error<global::app.@event.binding.@this>(NoEvent(Event.Peek()?.ToString() ?? Event.Name, global::app.@event.on.@this.Empty));
+            return Context.Error<global::app.@event.binding.@this>(global::app.@event.on.@this.Empty.NoEvent(path));
 
+        // each carrier is opened through its door: the first that doesn't resolve (a %variable% holding nothing, a
+        // name that is none of the choice's) is the answer
         var own = item.Own();
         var @event = own[named.Name]!;
-        var call = (await Action.Value())!;
-        global::app.@event.binding.Scope scope = await Scope.Value();
-        var binding = own.Bind(named.Name, await When.Value(),
-            side => new global::app.@event.binding.action.@this(side, @event, call, Context.Actor!, scope));
-        return Context.Ok<global::app.@event.binding.@this>(binding);
+        return data.@this<global::app.@event.binding.@this>.From(await When.Use(when => Scope.Use(scope => Action.Use(call =>
+            Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(own.Bind(named.Name, when.Value,
+                side => new global::app.@event.binding.action.@this(side, @event, call, Context.Actor!, scope.Value))))))));
     }
 }

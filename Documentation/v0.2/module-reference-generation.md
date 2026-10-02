@@ -421,7 +421,7 @@ Additional condition branch evaluated when the preceding if condition is false
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
 | Left | the value right after `else if` | item | yes | — | the value tested, the same as condition.if's |
-| Operator | `>`, `is`, `contains`, `is empty`, … (see if.notes' table) | choice<operator> | no | — | the comparison, the same as condition.if's |
+| Operator | `>`, `is`, `contains`, `is empty`, … (as in if) | choice<operator> | no | — | the comparison, the same as condition.if's |
 | Right | the value after the operator | item | no | — | what Left is compared to, the same as condition.if's |
 
 **Returns:** a `bool`.
@@ -476,7 +476,7 @@ A string is one value, not a sequence of characters: `foreach %greeting%` where 
 Iterate over Collection, binding each element to Item (and its key or index to Key) and executing the remaining step actions
 
 - foreach %items%, call ProcessItem item=%item%
-- foreach %rows%, write out %row%
+- foreach %rows%, write out %item%
 - foreach %products% as %product%, call Handle
 - foreach %prices% as %price% with key %sku%, write out "%sku%: %price%"
 

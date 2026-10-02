@@ -3,7 +3,7 @@
 Step text: `foreach %items%, call ProcessItem item=%item%`
 Properties: `{"Collection": "%items%"}` — `item=%item%` belongs to the call, not here.
 
-Step text: `foreach %rows%, write out %row%`
+Step text: `foreach %rows%, write out %item%`
 Properties: `{"Collection": "%rows%"}`
 
 Step text: `foreach %products% as %product%, call Handle`
