@@ -34,7 +34,8 @@ public sealed class @this : global::app.type.item.@this
             return context.Error(new global::app.error.Error(
                 $"There is no app to call {goal} in: nothing links this plang to it", "NoParent", 404));
         var parameters = new JsonObject();
-        if (context.Variable.Calls.Current is { } frame)
+        // the goal's own frame: born with what its call passed
+        if (context.call.Scope is { } frame)
             foreach (var name in frame.Arguments)
                 if (frame.TryGet(name, out var argument))
                 {

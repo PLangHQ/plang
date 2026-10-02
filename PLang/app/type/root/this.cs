@@ -16,7 +16,7 @@ public sealed class @this(global::app.@this app) : global::app.type.@this<global
     /// <summary>The format in play for <paramref name="context"/>: the nearest goal's that set one, else the app's,
     /// else plain text.</summary>
     public global::app.type.kind.@this FormatOf(global::app.actor.context.@this context)
-        => context.CallStack?.Format ?? Format ?? list.Mime("text/plain");
+        => context.call.Format ?? Format ?? list.Mime("text/plain");
 
     /// <summary>The format <paramref name="named"/> names — by MIME (<c>application/plang</c>), name (<c>json</c>)
     /// or extension (<c>.md</c>); null when no type reads such a format.</summary>
@@ -39,7 +39,7 @@ public sealed class @this(global::app.@this app) : global::app.type.@this<global
         if (string.IsNullOrWhiteSpace(text) || Named(text) is not { } kind)
             throw new global::app.error.AppException(new global::app.error.Error(
                 $"No format '{text}': name one a type reads — a MIME (application/plang), a name (json) or an extension (.md)", "FormatNotFound", 400));
-        if (context.CallStack?.SetFormat(kind) != true)
+        if (!context.call.SetFormat(kind))
             Format = kind;   // no goal running (the app starting): the app's own
         return this;
     }

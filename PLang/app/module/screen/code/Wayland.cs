@@ -68,13 +68,23 @@ public sealed class Wayland : IScreen
         {
             await foreach (var e in told.Reader.ReadAllAsync())
             {
-                if (e["ui"]?.GetValue<string>() == "click" && e["element"]?.GetValue<string>() is { } selector)
+                // one event that fails is said, and the next still goes: a failure here would otherwise end this
+                // loop without a word, and with it every click and window after it
+                try
                 {
-                    if (screen.element.Held(selector) is { } element)
-                        await global::app.module.on.code.Gate.Run(() => element.Clicked(Payload(e, context), context), context);
+                    if (e["ui"]?.GetValue<string>() == "click" && e["element"]?.GetValue<string>() is { } selector)
+                    {
+                        if (screen.element.Held(selector) is { } element)
+                            await global::app.module.on.code.Gate.Run(() => element.Clicked(Payload(e, context), context), context);
+                    }
+                    else if (onWindow != null)
+                        await global::app.module.on.code.Gate.Call(onWindow, Payload(e, context), context);
                 }
-                else if (onWindow != null)
-                    await global::app.module.on.code.Gate.Call(onWindow, Payload(e, context), context);
+                catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+                {
+                    await context.Actor.Channel.Report(context.Error(new global::app.error.ServiceError(
+                        $"The screen could not hand on {e.ToJsonString()}: {ex.Message}", "ScreenEventFailed") { Exception = ex }));
+                }
             }
         });
         display.Told += e => { told.Writer.TryWrite(e); return Task.CompletedTask; };
@@ -96,7 +106,7 @@ public sealed class Wayland : IScreen
 
         var opened = context.Ok<Screen>(screen);
         // the screen in play for the goals here: %!screen% — a bare #window.bot in a step is one of its elements
-        context.Variable.Set("!screen", opened);
+        await context.Variable.Set("!screen", opened);
         return opened;
     }
 
@@ -128,7 +138,7 @@ public sealed class Wayland : IScreen
         catch (System.Text.Json.JsonException) { return line; }
         // "window" is a command's name here; a message that only mentions a window (its number) passes as it is
         if (!(e?["window"] is System.Text.Json.Nodes.JsonValue command && command.TryGetValue<string>(out var name) && name == "url")
-            || context.CallStack is not { Step: { } step } stack) return line;
+            || context.call is not { Step: { } step } stack) return line;
         if (e["url"] is not System.Text.Json.Nodes.JsonObject url)
             e["url"] = url = new System.Text.Json.Nodes.JsonObject { ["path"] = e["url"]?.DeepClone() };
         var origin = url["origin"] as System.Text.Json.Nodes.JsonObject ?? new System.Text.Json.Nodes.JsonObject();
