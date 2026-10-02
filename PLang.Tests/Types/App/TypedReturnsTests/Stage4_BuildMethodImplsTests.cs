@@ -199,7 +199,7 @@ public class Stage4_BuildMethodImplsTests
             Property = global::PLang.Tests.Shared.Make.Properties(new List<Data>
             {
                 global::PLang.Tests.Shared.Make.Built(context, "Url", "%endpoint%"),
-                new Data("FilePath", "/tmp/dummy.txt", context: context),
+                new Data("Content", "/tmp/dummy.txt", context: context),
             }),
         };
         var (shell, err) = a.Instance(context);

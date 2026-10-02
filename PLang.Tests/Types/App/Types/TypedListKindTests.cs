@@ -42,6 +42,35 @@ public class TypedListKindTests
         await Assert.That(made.Peek()).IsTypeOf<global::app.type.item.list.@this<global::app.type.item.path.@this>>();
     }
 
+    // one value given a list<path> (a sandbox's `write: "/granted"`) is a list of one path — as the list's reader reads it
+    [Test] public async Task OneValueMadeThroughTheType_IsAListOfOne()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var ctx = app.actor.list.User.Context;
+        var typed = app.type.list[new global::app.type.@this("list", "path"), ctx];
+
+        // a text, as a member read off a .pr's dict arrives — not raw, which the list's reader reads
+        var made = await typed.Create(new global::app.type.item.text.@this("/granted"), ctx);
+
+        await made.IsSuccess();
+        var list = (global::app.type.item.list.@this<global::app.type.item.path.@this>)(await made.Value())!;
+        var row = list.Rows(ctx).Single();
+        await Assert.That((await row.Value<global::app.type.item.path.@this>())!.ToString()).IsEqualTo("/granted");
+    }
+
+    // the plain list too: one value is a list of one
+    [Test] public async Task OneValueMadeAList_IsAListOfOne()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var ctx = app.actor.list.User.Context;
+
+        var made = await app.type.list["list"]!.Create(new global::app.type.item.text.@this("/granted"), ctx);
+
+        await made.IsSuccess();
+        var row = ((global::app.type.item.list.@this)(await made.Value())!).Rows(ctx).Single();
+        await Assert.That((await row.Value())?.ToString()).IsEqualTo("/granted");
+    }
+
     [Test] public async Task AnUnknownElement_IsNoClosedList()
     {
         await using var app = new global::app.@this("/app").Testing();

@@ -96,7 +96,8 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>The ICreate courier face — a <c>list</c> passes through; a blank string is an empty
     /// list (the LLM emits <c>""</c> for <c>[]</c>); a native sequence re-tags through its own
-    /// <c>Clr</c>. Uses <c>data.Context</c> for the born-with-context construction.</summary>
+    /// <c>Clr</c>; one value is a list of one, as the list's reader reads it. Uses <c>data.Context</c>
+    /// for the born-with-context construction.</summary>
     public static @this? Create(object? value, global::app.type.@this? declared, Data data)
     {
         if (value is @this self) return self;
@@ -106,6 +107,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         // parameterless ctor); the item owns its own conversion. Other sources re-tag via Clr.
         if (value is global::app.type.clr.@this { Value: System.Text.Json.JsonElement { ValueKind: System.Text.Json.JsonValueKind.Array } je })
             return new global::app.type.item.serializer.json(data.Context).Parse(je) as @this;
+        if (value is global::app.type.item.@this { IsLeaf: true, IsNull: false } one) return new @this(new[] { one });
         return (value as global::app.type.item.@this)?.Clr(typeof(@this)) as @this;
     }
 

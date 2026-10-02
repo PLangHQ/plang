@@ -74,9 +74,14 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     {
         if (value is @this<T> already) return already;
         if (value is @this list) return new @this<T>(list);
-        // A single value / raw container lifts to a base list first, then re-tags.
-        return global::app.type.item.@this.Create((value as global::app.type.item.@this)?.Clr<object>() ?? value, data.Context) is @this lifted
-            ? new @this<T>(lifted) : null;
+        // A raw container lifts to a base list first, then re-tags; one value is a list of one, as the list's reader
+        // reads it.
+        return global::app.type.item.@this.Create((value as global::app.type.item.@this)?.Clr<object>() ?? value, data.Context) switch
+        {
+            @this lifted => new @this<T>(lifted),
+            { IsNull: false } one => new @this<T>(new[] { one }),
+            _ => null,
+        };
     }
 
     /// <summary>A typed list is made from any list: a list<typeparamref name="T"/> passes through, another is

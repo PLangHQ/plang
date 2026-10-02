@@ -87,6 +87,31 @@ public class KeptStepTests
         await Assert.That(Code(after, 1).ToJsonString()).Contains("\"B\"");
     }
 
+    // a .pr built before a property went (goal.call's Wait): the kept step's code names a property its action no
+    // longer has, so the build opens it again rather than keep it
+    [Test]
+    public async Task AKeptStepNamingAPropertyItsActionHasNot_IsOpenedAgain()
+    {
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
+        var context = os.actor.list.User.Context;
+
+        var first = Parse(First, context);
+        Built(first, context, "output.write(Data=\"a\")", "output.write(Data=\"b\")", "output.write(Data=\"c\")");
+        var pr = System.Text.Json.Nodes.JsonNode.Parse(await Pr(first, os))!;
+        var property = pr["step"]![0]!["code"]![0]!["property"]!.AsArray();
+        var wait = property[0]!.DeepClone();
+        wait["name"] = "Wait";
+        property.Add(wait);
+        var second = Parse(First, context);
+        second.Merge(await RealGoalLoad.Read(os, pr.ToJsonString()));
+
+        await second.Reopen(context);
+
+        await Assert.That(second.Step[0].IsCached).IsFalse();
+        await Assert.That(second.Step[0].Warning.Single().Message).Contains("'Wait' is not a property of this action");
+        await Assert.That(second.Step[1].IsCached).IsTrue();
+    }
+
     [Test]
     public async Task AKeptStepWhoseCodeNoLongerHolds_IsOpenedAgain_WithAWarning()
     {
