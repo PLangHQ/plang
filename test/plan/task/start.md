@@ -22,10 +22,8 @@ Start
 - **A `task` module: `wait` and `cancel`.** `wait for %a%` answers a's result; `wait for %a%, %b%` answers a list of results in order, and so does `wait for %tasks%` given a list of tasks; a failed task fails the wait step (`on error` works as anywhere).
 - **`cancel %task%, write to %result%`** answers the task's result when it had already ended, and nothing (null) when the cancel stopped it. A `wait for` on a cancelled task fails as Cancelled.
 - **The llm tool loop is one more caller:** it starts its `Parallel` tool calls as tasks and waits for all of them.
-
-## Later, not in this plan
-
-- Ingi's idea (2026-10-02), its own discussion: `write to %task%` called more than once could collect each instance into `%task.list%`, with the variable itself the newest, perhaps for every variable.
+- **A task keeps the tasks it replaced** (Ingi's `.list` idea, as (b)): writing a value where another was asks the new value what it becomes (`item.Replace(previous)`, default: itself, so `set` still replaces everything else). A task written over a task keeps it, so `%task.list%` is every task written to that variable, in the order written, the last being `%task%` itself. `wait for %task%` waits for the current one only; `wait for %task.list%` waits for all. Not on every variable: history there would cost memory in loops, hide a dict's own `list` key, and change what `set` means.
+- **`loop.foreach` gets `Parallel` too**, false by default, with the same meaning: it doesn't block the step. Its items run side by side, each as a task, and the loop answers a task of its own; `wait for` that task answers `{count, complete}`. (Open: a cap on how many items run at once.)
 
 ## The shape (the coder owns the code; this is the intent)
 
@@ -38,8 +36,9 @@ Start
 ## Stages
 
 1. **The task and the call** (coder): the `task` type and its list under the actor; `goal.call` `Parallel` answers a task; `Wait` goes; an unwatched failure is reported at its end; the llm tool loop starts its `Parallel` tools as tasks and waits for all (`llm/code/OpenAi.cs:344–358`). Plang tests below, written in formal where the builder can't pick it yet.
-2. **The task module** (coder): `wait` (one, several, a list of tasks, a failure) and `cancel`.
-3. **The builder** (the builder session): `call.notes.md`'s `Parallel` line ("in parallel", "don't wait", "in the background"); `call.examples.md:22` rewritten to `Parallel: true` with `write to %task%`; the task module's `description`/`notes`/`examples`, kept apart from `timer.sleep` ("wait for %task%" vs "wait 2 seconds"); goldens; measured fresh, cache off.
+2. **The task module and `.list`** (coder): `wait` (one, several, a list of tasks, `%task.list%`, a failure) and `cancel`, with the task's token wired into its run; `item.Replace(previous)` (a virtual, default itself) called by the variable's write door, and the task's override keeping the tasks it replaced.
+3. **`loop.foreach` in parallel** (coder): its `Parallel` option; items run as tasks; the loop answers a task whose result is `{count, complete}`.
+4. **The builder** (the builder session): foreach's "in parallel" too; `call.notes.md`'s `Parallel` line ("in parallel", "don't wait", "in the background"); `call.examples.md:22` rewritten to `Parallel: true` with `write to %task%`; the task module's `description`/`notes`/`examples`, kept apart from `timer.sleep` ("wait for %task%" vs "wait 2 seconds"); goldens; measured fresh, cache off.
 
 ## Demolition
 

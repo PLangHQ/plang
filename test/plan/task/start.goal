@@ -4,6 +4,7 @@ Start
 - call goal Stage1
 - call goal Stage2
 - call goal Stage3
+- call goal Stage4
 
 Stage1
 / The task and the call.
@@ -36,9 +37,28 @@ Stage2
 - call goal /module/task/cancel/CancelAnswer
 / wait for a cancelled task fails as Cancelled
 - call goal /module/task/cancel/WaitOnCancelledFails
+/ Two calls in parallel written to one %task%: %task.list% holds both, in the order written; %task% is the second
+- call goal /module/task/list/WriteTwiceKeepsBoth
+/ wait for %task.list% answers both results in order; wait for %task% answers only the current one's
+- call goal /module/task/list/WaitListVersusCurrent
+/ A text written over a text still replaces it (set's meaning is unchanged for every other type)
+- call goal /module/task/list/OtherTypesReplace
 
 Stage3
+/ loop.foreach in parallel.
+/ foreach in parallel answers a task at once; the next step runs before the items end
+- call goal /module/loop/foreach/ParallelAnswersATask
+/ The items run side by side: each item's goal waits on a signal the others set, so a sequential loop would never end
+- call goal /module/loop/foreach/ItemsRunSideBySide
+/ wait for the loop's task answers {count, complete}
+- call goal /module/loop/foreach/WaitAnswersCountComplete
+/ A plain foreach still runs its items one after another and blocks the step
+- call goal /module/loop/foreach/PlainForeachBlocks
+
+Stage4
 / The builder (built goldens, measured fresh).
+/ "foreach %x% in parallel, call Y" builds loop.foreach with Parallel=true
+- call goal /module/loop/foreach/build/InParallel
 / "call X in parallel, write to %t%" builds Parallel=true
 - call goal /module/goal/call/build/InParallel
 / "call X, don't wait" and "call X in the background" build Parallel=true
