@@ -1,6 +1,7 @@
 namespace app.type.item.input.navigate;
 
 /// <summary>Where to go.</summary>
+[global::app.Attributes.PlangType("navigation")]
 public enum Direction { back, forward, reload }
 
 /// <summary>Back, forward or reload — asked by a key (Alt+←, Alt+→, F5) or a mouse's side buttons.</summary>
@@ -13,9 +14,9 @@ public sealed class @this : input.@this
     private protected override string Variant => "navigate";
 
     /// <summary>back, forward or reload.</summary>
-    [Out] public global::app.type.item.text.@this To => _to.ToString();
+    [Out] public global::app.type.item.choice.@this<Direction> To => new(_to);
 
-    private protected override void Applied(ITarget target) => target.Navigate(_to);
+    private protected override void Applied(ITarget target) => target.Navigate(this);
 
     public override void Write(global::app.type.format.IWriter writer)
     {

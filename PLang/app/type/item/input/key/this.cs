@@ -41,14 +41,20 @@ public sealed class @this : input.@this
 
     private protected override string Variant => "key";
 
-    /// <summary>down or up.</summary>
-    [Out] public global::app.type.item.text.@this Action => _down ? "down" : "up";
+    /// <summary>True while it goes down, false as it comes up.</summary>
+    [Out] public global::app.type.item.@bool.@this Down => _down;
     /// <summary>The keyboard's number for the key.</summary>
     [Out] public global::app.type.item.number.@this Scancode => (long)_scancode;
-    /// <summary>The key's name, when the host knows it (Enter, F5, A).</summary>
+    /// <summary>An extended key (the arrows, Home, the right Ctrl): its scancode means another key.</summary>
+    [Out] public global::app.type.item.@bool.@this Extended => _extended;
+    /// <summary>The host's virtual key for it, 0 when not known.</summary>
+    [Out] public global::app.type.item.number.@this Vk => _vk;
+    /// <summary>The key's name, when it has one (Enter, ArrowLeft, a with Ctrl).</summary>
     [Out] public global::app.type.item.text.@this? Name => _name is { } n ? (global::app.type.item.text.@this)n : null;
+    /// <summary>The modifier keys held: alt, ctrl, meta, shift.</summary>
+    [Out] public global::app.type.item.list.@this<global::app.type.item.choice.@this<Modifier>> Modifiers => Named(_mods);
 
-    private protected override void Applied(ITarget target) => target.Key(_down, _scancode, _extended, _vk, _name, _mods);
+    private protected override void Applied(ITarget target) => target.Key(this);
 
     public override void Write(global::app.type.format.IWriter writer)
     {

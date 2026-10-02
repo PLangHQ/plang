@@ -46,7 +46,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         reader.EndObject();
         return variant switch
         {
-            "mouse" => new mouse.@this(Parsed<mouse.Action>(what, "mouse"), x, y,
+            "mouse" => new mouse.@this(Parsed<mouse.Gesture>(what, "mouse"), x, y,
                 button == null ? mouse.Button.none : Parsed<mouse.Button>(button, "button"), clicks, dx, dy, mods, stamp),
             "key" => new key.@this(what == "down" ? true : what == "up" ? false
                 : throw new FormatException($"a key goes down or up, not '{what}'"), (uint)scancode, extended, vk, name, mods, stamp),

@@ -607,7 +607,7 @@ internal sealed class Window
                 var point = new POINT { x = Low(lParam), y = High(lParam) };
                 ScreenToClient(h, ref point);   // wheel positions are screen coordinates
                 var delta = High(wParam);          // negative when scrolling down
-                onEvent(new global::app.type.item.input.mouse.@this(global::app.type.item.input.mouse.Action.wheel, point.x, point.y,
+                onEvent(new global::app.type.item.input.mouse.@this(global::app.type.item.input.mouse.Gesture.wheel, point.x, point.y,
                     dy: -delta, mods: Mods(), stamp: Environment.TickCount64));
                 return IntPtr.Zero;
 
@@ -648,7 +648,7 @@ internal sealed class Window
     {
         int x = Low(lParam), y = High(lParam);   // negative outside the window while dragging
         // a click is stamped: the screen echoes it after the next frame, which times input → picture
-        onEvent(new global::app.type.item.input.mouse.@this(Enum.Parse<global::app.type.item.input.mouse.Action>(kind), x, y,
+        onEvent(new global::app.type.item.input.mouse.@this(Enum.Parse<global::app.type.item.input.mouse.Gesture>(kind), x, y,
             Enum.Parse<global::app.type.item.input.mouse.Button>(button), clicks, mods: Mods(),
             stamp: kind == "move" ? null : Environment.TickCount64));
     }
