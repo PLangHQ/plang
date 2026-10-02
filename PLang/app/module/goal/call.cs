@@ -67,7 +67,7 @@ public partial class Call : IContext
         if (value.Rows(Context) is { } rows && rows.All(row => row.Name.Length > 0)) return null;
         var written = __action?["Parameter"]?.Value?.RawText ?? value.ToString();
         return new global::app.error.Error(
-            $"Parameter takes named rows: {{name: {written}}} — {written} is one value with no name, which binds nothing",
+            $"Parameter takes named rows — write each argument as the step names it, {{<the name before =>: {written}}}: {written} alone is one value with no name, which binds nothing",
             "ParameterUnnamed", 400);
     }
 

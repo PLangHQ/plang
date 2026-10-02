@@ -311,7 +311,7 @@ public class FormalReaderTests : System.IAsyncDisposable
 
         var refused = await action.Validate(ctx);
 
-        await Assert.That(refused?.Message).Contains("Parameter takes named rows: {name: %!app.module.file%}");
+        await Assert.That(refused?.Message).Contains("write each argument as the step names it, {<the name before =>: %!app.module.file%}");
     }
 
     [Test]
