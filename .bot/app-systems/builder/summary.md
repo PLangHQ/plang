@@ -231,6 +231,23 @@ Idle pending:
 - **34 type-Example** (element-kind change): coder's. When it lands → measure a `list<T>` slot on
   app-systems whose element has an Example (+ `list<text>` guard).
 - **34 (5-build) / 35 (10-build)**: blocked — terminal module not on app-systems.
+- **40 — FIXED + re-measured** (coder `85e8d27d2`, gate 109). `pick.list.Picks` kept a module's
+  weak stage-1 common score and skipped stage-2's stronger confirmation of the same action, so
+  Properties.goal step 4's `goal.call` (0.46, under the 0.5 Possible floor) dropped and the step
+  built with no actions 6/10. Fix: a common action certain on its own stage-1 score (≥ Near) stands
+  (stage 2 can't add to it, its module may be one the decider is unsure of); below that, stage 2's
+  stronger answer is the pick, as its own module pick. **Re-measure** (binary clean from head
+  `f7b8d7377`, Properties.goal in place, 10 fresh builds, `--build={"cache":"skip"}`, jq-counted step 4):
+  goal.call LISTED **10/10** (was 4/10), NO-SAVE **0/10** (was 6/10). Guard `write out "hi"` → single
+  `output.write`, no alternatives = Certain, holds. `properties.pr` kept — only change vs committed is
+  the recorded decider confidence 0.55 → 0.98; mapped actions byte-identical.
+  Detail: `v3/issue40-remeasure.md`.
+
+## `cache` is now a choice (choices merge `aa45d0ca7`)
+On app-systems the build `cache` flag is a `choice<cache>` (`use`|`skip`), not a boolean.
+**Use `--build={"cache":"skip"}`** to force fresh LLM calls. `--build={"cache":false}` is REFUSED
+("holds a Boolean — choice<cache> cannot be created from it"). Memory updated
+([[reference_plang_cli]], [[feedback_builder_scope]], [[feedback_keep_rebuilt_pr_files]]).
 
 ## (earlier) Status 2026-10-02 — idle, waiting on the coder's one pick pass
 All architect-directed work done and accepted (latest 0b799a5d1). Open items are the coder's / core:
