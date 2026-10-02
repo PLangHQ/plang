@@ -137,6 +137,40 @@ public class PickOptionTests : System.IAsyncDisposable
         await Assert.That(valued.ToString()).StartsWith("Template=\"");
     }
 
+    // issue 40: a common action named weakly at stage 1 (goal.call 0.46) that stage 2 confirms through its module (also
+    // 0.98, its choice "call") is picked on stage 2's answer — one pick, the stronger evidence; unconfirmed, the stage-1
+    // score stands (under Possible: not listed)
+    [Test]
+    [Arguments(0.98, true)]
+    [Arguments(0.2, false)]
+    public async Task ACommonActionStage2Confirms_IsPickedOnTheStrongerEvidence(double also, bool listed)
+    {
+        var step = Step("call /system/builder/EmitBuildEvent kind=\"properties\"");
+        await step.Pick.Take(Answer(
+            ("s0_goal.call", Yes(0.46)),
+            ("s0_@module", Choice("goal", 0.87, new Dictionary<string, object?> { ["goal"] = 0.87, ["variable"] = 0.13 }))), [], Ctx);
+        await step.Pick.Take(Answer(
+            ("s0_@also.goal", Yes(also)),
+            ("s0_goal", Choice("call", 1.0))), [], Ctx);
+
+        await Assert.That(step.Pick.Listed.Any(l => l.Name == "goal.call")).IsEqualTo(listed);
+    }
+
+    // a common action certain on its own stands, whatever stage 2 says through a module the decider is unsure of
+    [Test]
+    public async Task ACommonActionCertainOnItsOwn_StaysCertain()
+    {
+        var step = Step("call /system/builder/EmitBuildEvent kind=\"properties\"");
+        await step.Pick.Take(Answer(
+            ("s0_goal.call", Yes(0.95)),
+            ("s0_@module", Choice("goal", 0.87, new Dictionary<string, object?> { ["goal"] = 0.87, ["variable"] = 0.13 }))), [], Ctx);
+        await step.Pick.Take(Answer(
+            ("s0_@also.goal", Yes(0.98)),
+            ("s0_goal", Choice("call", 1.0))), [], Ctx);
+
+        await Assert.That(step.Pick.Listed.Single(l => l.Name == "goal.call").Mark).IsEqualTo(global::app.goal.step.pick.listed.Mark.Certain);
+    }
+
     // the step's write-to is where its answer goes, never an option's value
     [Test]
     public async Task AnOptionsOffers_LeaveOutTheStepsWriteTo()

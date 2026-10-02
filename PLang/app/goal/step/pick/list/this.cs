@@ -514,13 +514,20 @@ public sealed class @this
             string? action = module.Count == 1 ? module.ActionNames.Single() : _choice.GetValueOrDefault(m).Action;
             if (action == null) continue;
             var name = $"{m}.{action}";
-            // a common action keeps its own stage-1 score — the one the Near rule reads
-            if (picks.Any(p => p.Name == name)) continue;
             var asked = yesNo.Contains(m);
+            var score = asked ? _also.GetValueOrDefault(m) : _module.GetValueOrDefault(m);
+            // one pick per action, on the stronger evidence: a common action certain on its own stage-1 score (the one
+            // the Near rule reads) stands — stage 2 can't add to it, and its module may be one the decider is unsure
+            // of; below that, stage 2's answer is the pick when it is the stronger, as its own (module) pick
+            if (picks.FirstOrDefault(p => p.Name == name) is { } common)
+            {
+                if (common.Score is { } own && (own >= (number)Near || score is not { } confirmed || confirmed <= own)) continue;
+                picks.Remove(common);
+            }
             picks.Add(new pick.@this
             {
                 Name = name,
-                Score = asked ? _also.GetValueOrDefault(m) : _module.GetValueOrDefault(m),
+                Score = score,
                 From = asked ? From.YesNo : From.Choice,
             });
         }
