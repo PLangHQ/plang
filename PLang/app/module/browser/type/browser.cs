@@ -34,6 +34,8 @@ public sealed class Browser : global::app.type.item.@this, global::app.type.item
     internal System.Diagnostics.Process? Os { get; set; }
     /// <summary>The Chromium it runs, to open more windows in it.</summary>
     internal global::app.type.item.path.file.@this? Program { get; set; }
+    /// <summary>Its profile folder (/.browser), authorized when it started: more windows open with it.</summary>
+    internal global::app.type.item.path.file.@this? Profile { get; set; }
     /// <summary>DevTools' port, on 127.0.0.1: the pages of its windows.</summary>
     internal int Port { get; set; }
     /// <summary>DevTools for the whole browser (its pages and windows), beside Page (the first page).</summary>

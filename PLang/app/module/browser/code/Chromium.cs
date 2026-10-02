@@ -9,6 +9,7 @@ using app.error;
 using app.Utils;
 using Text = app.type.item.text.@this;
 using FilePath = app.type.item.path.file.@this;
+using Verb = app.type.item.permission.Verb;
 
 namespace app.module.browser.code;
 
@@ -51,6 +52,8 @@ public sealed partial class Chromium : IBrowser
         var format = (await action.Format.Value())!.Clr<string>()!;
         var quality = (int)(await action.Quality.Value())!.ToDouble();
         var onFrame = action.OnFrame == null ? null : await action.OnFrame.Value();
+        var (profile, refused) = await Profile(context);
+        if (profile == null) return data.@this<Browser>.From(refused!);
 
         var info = new ProcessStartInfo(program.Absolute)
         {
@@ -63,7 +66,7 @@ public sealed partial class Chromium : IBrowser
         foreach (var arg in new[] {
             "--headless", "--disable-gpu", "--hide-scrollbars", "--no-first-run", "--no-default-browser-check",
             $"--window-size={width},{height}",
-            $"--user-data-dir={PathHelper.Combine(context.App.AbsolutePath, ".browser")}",
+            $"--user-data-dir={profile.Absolute}",
             "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=0",   // Chromium picks a free port
             $"--user-agent={UserAgent}", url })
             info.ArgumentList.Add(arg);
@@ -122,12 +125,14 @@ public sealed partial class Chromium : IBrowser
         // on 127.0.0.1 inside PlangOS, lets the page talk to plang: plang(text) → OnMessage,
         // browser.post → the page's message event.
         var url = (await action.Url.Value())!.Clr<string>()!;
+        var (profile, refused) = await Profile(context);
+        if (profile == null) return data.@this<Browser>.From(refused!);
         // a Chromium that was killed (PlangOS closed hard) leaves its profile's lock naming its process;
         // in a new PlangOS another process can have that number, and the new Chromium would hand its
         // page to "the running one" and exit. None of ours runs yet: the lock is stale. (Not there: NotFound, and fine.)
         foreach (var name in new[] { "SingletonLock", "SingletonSocket", "SingletonCookie" })
-            await FilePath.Resolve(PathHelper.Combine(context.App.AbsolutePath, ".browser", name), context).Delete(recursive: false, context);
-        var chrome = Process.Start(Chrome(chromium, screen, context, "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=0", "--app=" + url))!;
+            await FilePath.Resolve(Profiled + "/" + name, context).Delete(recursive: false, context);
+        var chrome = Process.Start(Chrome(chromium, screen, context, profile, "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=0", "--app=" + url))!;
         chrome.StandardInput.Close();
         _ = Drain(chrome.StandardOutput);
         var port = await PortOf(chrome.StandardError, TimeSpan.FromSeconds(30), line => context.App.Debug?.Write("chromium: " + line) ?? Task.CompletedTask);
@@ -140,7 +145,7 @@ public sealed partial class Chromium : IBrowser
 
         var browser = new Browser
         {
-            Url = url, Width = screen.Width, Height = screen.Height, Os = chrome, Screen = screen, Program = chromium, Port = port!.Value,
+            Url = url, Width = screen.Width, Height = screen.Height, Os = chrome, Screen = screen, Program = chromium, Profile = profile, Port = port!.Value,
             Report = error => global::app.module.on.code.Gate.Report(context.Error(error), context),
             Roots = new[] { context.App.AbsolutePath, context.App.OsAbsolutePath }
                 .Where(folder => !string.IsNullOrEmpty(folder)).Select(folder => new Uri(folder!.TrimEnd('/') + "/").AbsoluteUri).ToArray(),
@@ -179,7 +184,8 @@ public sealed partial class Chromium : IBrowser
 
     /// <summary>Chromium drawing onto the screen, with the app's own profile: the first start runs
     /// it, a later one hands its page to the running one and exits.</summary>
-    private static ProcessStartInfo Chrome(FilePath chromium, global::app.module.screen.Screen screen, actor.context.@this context, params string[] args)
+    private static ProcessStartInfo Chrome(FilePath chromium, global::app.module.screen.Screen screen, actor.context.@this context,
+        FilePath profile, params string[] args)
     {
         var info = new ProcessStartInfo(chromium.Absolute)
         {
@@ -206,7 +212,7 @@ public sealed partial class Chromium : IBrowser
             // no spare renderer kept waiting for a next site; no preloaded address-bar drop-downs
             // (PlangOS draws its own address field)
             "--disable-features=SpareRendererForSitePerProcess,WebUIOmniboxPopup,WebUIOmniboxAimPopup",
-            $"--user-data-dir={PathHelper.Combine(context.App.AbsolutePath, ".browser")}" }.Concat(args))
+            $"--user-data-dir={profile.Absolute}" }.Concat(args))
             info.ArgumentList.Add(arg);
         // sound: PulseAudio finds its server in XDG_RUNTIME_DIR unless PULSE_SERVER names one — and
         // XDG_RUNTIME_DIR is the screen's now, where there is none. WSL's own (WSLg's server) is named.
@@ -238,12 +244,24 @@ public sealed partial class Chromium : IBrowser
 
     private static readonly HttpClient DevTools = new() { Timeout = TimeSpan.FromSeconds(3) };
 
+    /// <summary>The app's browser profile, as a plang path (from the app's root).</summary>
+    private const string Profiled = "/.browser";
+
+    /// <summary>The profile folder Chromium keeps its data in — through the path gate (it writes there), before its
+    /// <c>.Absolute</c> goes to Chromium; a refusal is the answer.</summary>
+    private static async Task<(FilePath? folder, data.@this? refused)> Profile(actor.context.@this context)
+    {
+        var folder = FilePath.Resolve(Profiled, context);
+        var allowed = await folder.Authorize(Verb.Write, context);
+        return allowed.Success && !allowed.Exits ? (folder, null) : (null, allowed);
+    }
+
     /// <summary>A page in a window of its own (<c>window.open</c>): an app window, title bar only.
     /// The running Chromium opens it; the one started here hands it over and exits.</summary>
     internal static void Open(Browser browser, string url, actor.context.@this context)
     {
-        if (browser is not { Program: { } program, Screen: { } screen }) return;
-        var handOver = Process.Start(Chrome(program, screen, context, "--app=" + url))!;
+        if (browser is not { Program: { } program, Screen: { } screen, Profile: { } profile }) return;
+        var handOver = Process.Start(Chrome(program, screen, context, profile, "--app=" + url))!;
         handOver.StandardInput.Close();
         _ = Drain(handOver.StandardOutput);
         _ = Drain(handOver.StandardError);
