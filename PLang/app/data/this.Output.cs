@@ -30,6 +30,22 @@ public partial class @this
     private static readonly System.Threading.AsyncLocal<int> _outputDepth = new();
 
     /// <summary>
+    /// The digest of this Data as it crosses the wire in <paramref name="view"/> — the bytes its own <see cref="Output"/>
+    /// writes at a layer (its <c>@schema</c>, type, value, properties; no signature), hashed by
+    /// <paramref name="algorithm"/>'s kind. What a signature binds: sign and verify both write the same bytes, so they
+    /// agree. Null when no kind of hash goes by that name. A value hashed for a person (<c>crypto.hash</c>) is its own
+    /// bytes, not these.
+    /// </summary>
+    internal async System.Threading.Tasks.ValueTask<global::app.module.crypto.type.hash.@this?> Digest(View view, string algorithm,
+        global::app.actor.context.@this context)
+    {
+        using var bytes = new System.IO.MemoryStream();
+        await using (var utf8 = new System.Text.Json.Utf8JsonWriter(bytes))
+            await Output(new global::app.type.item.kind.json.Writer(utf8, view, emitsSchema: true), view, context, layer: true);
+        return global::app.module.crypto.type.hash.@this.Of(bytes.ToArray(), algorithm, context);
+    }
+
+    /// <summary>
     /// Data writes ITSELF to the wire — it owns its <c>@schema</c> layer (its identity), then its
     /// <c>type</c>, then the underlying <c>value</c> (delegated to the item), then <c>properties</c>.
     /// One async pass, resolving lazily at each node — no pre-resolve walk, no Normalize tree. A Data

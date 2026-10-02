@@ -180,11 +180,13 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         return _actor.Setting.Of<setting.@this>();
     }
 
-    // Saves the grants as the actor's own permission setting — one row, whole.
+    // Saves the grants as the actor's own permission setting — one row, whole: a copy of what the settings hold,
+    // with the grants, never the setting they handed out.
     private async Task<global::app.data.@this> Save(setting.@this setting, List<Grant> grants)
     {
-        setting.Grant = new global::app.type.item.list.@this<Grant>(grants);
-        return await _actor.Setting.Save(setting);
+        var saved = (global::app.actor.permission.setting.@this)setting.Copy();
+        saved.Grant = new global::app.type.item.list.@this<Grant>(grants);
+        return await _actor.Setting.Save(saved);
     }
 
     private async Task<bool> TryCover(global::app.data.@this grantData, Grant request)

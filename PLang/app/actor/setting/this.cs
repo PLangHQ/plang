@@ -23,6 +23,27 @@ public sealed class @this
     // While the rows are being read, a setting read inside that (the store reading a row back) builds
     // without them — it can't wait on the read it is part of.
     private readonly AsyncLocal<bool> _reading = new();
+    // What this scope built, per setting path, with the version it was built at — read-only by contract (a caller
+    // that changes a setting changes its Copy). Read from parallel branches, so concurrent.
+    private readonly ConcurrentDictionary<string, (long Version, global::app.type.item.setting.@this Built)> _built =
+        new(StringComparer.OrdinalIgnoreCase);
+    // The settings' version — held by the root of every chain (the system's): any write anywhere moves it, so a
+    // built setting knows it is stale whichever scope was written.
+    private long _version;
+
+    // The root of the chain — the scope with no parent, whose version every scope reads.
+    private @this Root
+    {
+        get
+        {
+            var s = this;
+            while (s._parent != null) s = s._parent;
+            return s;
+        }
+    }
+
+    // The settings changed somewhere: every setting built before this is stale.
+    private void Move() => System.Threading.Interlocked.Increment(ref Root._version);
 
     /// <summary>A context's layer, chaining up to <paramref name="parent"/>.</summary>
     public @this(actor.context.@this context, @this? parent = null)
@@ -47,7 +68,12 @@ public sealed class @this
     public async Task<data.@this> Load()
     {
         for (@this? s = this; s != null; s = s._parent)
-            if (s._rows != null && !s._reading.Value) s._held = await s._rows.Value;
+            if (s._rows != null && !s._reading.Value && s._held == null)
+            {
+                s._held = await s._rows.Value;
+                // a setting built before the rows were read was built without them
+                Move();
+            }
         for (@this? s = this; s != null; s = s._parent)
             if (s._unread != null) return _context.Error(s._unread);
         return _context.Ok();
@@ -156,6 +182,7 @@ public sealed class @this
     // Every actor's own settings up the chain hears a write — the one place what holds a setting learns it.
     private void Tell(string key)
     {
+        Move();
         for (@this? s = this; s != null; s = s._parent)
             s.Written?.Invoke(key);
     }
@@ -230,17 +257,31 @@ public sealed class @this
     {
         get
         {
-            var kind = Class(path) ?? throw new KeyNotFoundException($"'{path}' names no setting class.");
-            var instance = kind.Create();
-            if (Saved(path)?.Peek() is global::app.type.item.setting.@this held)
-                foreach (var option in held.Options) option.SetValue(instance, option.GetValue(held));
-            // this run's values for its own options — a longer path under it (llm.query.cache under llm)
-            // is another setting's
-            var own = Under(path).Where(kv => instance.Option(kv.Key) != null).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
-            var applied = instance.Apply(own, _context);
-            if (!applied.Success) throw new global::app.error.AppException(applied.Error!);
-            return instance;
+            // built once per version: a read is a lookup until a setting is written somewhere (read-only by
+            // contract — a caller that changes one changes its Copy)
+            var version = System.Threading.Interlocked.Read(ref Root._version);
+            if (_built.TryGetValue(path, out var held) && held.Version == version) return held.Built;
+            var built = Build(path);
+            _built[path] = (version, built);
+            return built;
         }
+    }
+
+    // The setting at path as this scope sees it: the class's defaults ← the saved row ← this run's values.
+    private global::app.type.item.setting.@this Build(string path)
+    {
+        var kind = Class(path) ?? throw new KeyNotFoundException($"'{path}' names no setting class.");
+        var instance = kind.Create();
+        // the saved row's options, an owned setting copied — this run's values below never reach the row
+        if (Saved(path)?.Peek() is global::app.type.item.setting.@this held)
+            foreach (var option in held.Options)
+                option.SetValue(instance, option.GetValue(held) is global::app.type.item.setting.@this owned ? owned.Copy() : option.GetValue(held));
+        // this run's values for its own options — a longer path under it (llm.query.cache under llm)
+        // is another setting's
+        var own = Under(path).Where(kv => instance.Option(kv.Key) != null).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+        var applied = instance.Apply(own, _context);
+        if (!applied.Success) throw new global::app.error.AppException(applied.Error!);
+        return instance;
     }
 
     /// <summary>The setting class <typeparamref name="T"/>, as this scope sees it — the class says its own

@@ -5,22 +5,13 @@ namespace app.module.crypto;
 [Action("hash", Cacheable = false)]
 public partial class Hash : IContext
 {
-    /// <summary>The data to hash — as it is: a failed result hashes its error, the face it writes.</summary>
+    /// <summary>The value to hash — its own bytes: a text its UTF-8, binary its bytes, anything else its json text (a
+    /// dict or list in its own key order), so the digest matches any other tool's.</summary>
     [IsNotNull, Whole]
     public partial data.@this Data { get; init; }
 
     [Default("keccak256")]
     public partial data.@this<global::app.type.item.text.@this> Algorithm { get; init; }
-
-    /// <summary>
-    /// Canonicalize the value in the Store view (all <c>[Store]</c> fields) rather than the
-    /// default Out view. The hash must be taken in the SAME view the data is serialized in:
-    /// a stored value's wire-reconstruction is a property-bag carrying every <c>[Store]</c>
-    /// field, so re-hashing it in Out view (a subset) diverges from the typed value's Out
-    /// hash. Sign and verify both pass the data's destination view here so the digest is
-    /// over the exact bytes that cross the wire. Default false (Out, for transport).
-    /// </summary>
-    public partial data.@this<global::app.type.item.@bool.@this>? StoreView { get; init; }
 
     [Code]
     public partial ICrypto Crypto { get; }

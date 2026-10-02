@@ -1,12 +1,65 @@
 {
   "name": "Start",
-  "comment": "\"if <file> exists\" must ask file.exists, not test the quoted name as truthy text. missing.json does not\nexist, so %seen% is never set. With the bug (condition.if(Left=\"missing.json\")), the name is truthy text\nand %seen% gets set — this test goes red.",
+  "comment": "\"if <file> exists\" must ask file.exists and branch on ITS result, not test whatever the previous step\nleft in %!data%. A data-leaving step first makes %!data% truthy, so the old shape\n(condition.if(Left=%!data%)) would fire for a missing file too. An existing file must fire, a missing one\nmust not — the missing-file branch is the discriminator.",
   "step": [
     {
       "index": 0,
-      "text": "if 'missing.json' exists, set %seen% = true",
+      "text": "write out \"something before\"",
       "line": {
-        "number": 5
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "something before"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "save \"hi\" to file 'here.json'",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "here.json"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hi"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "if 'here.json' exists, set %seen% = true",
+      "line": {
+        "number": 8
       },
       "code": [
         {
@@ -18,7 +71,7 @@
               "type": {
                 "name": "path"
               },
-              "value": "missing.json"
+              "value": "here.json"
             }
           ]
         },
@@ -50,7 +103,7 @@
               "index": 0,
               "text": "variable.set(Name=%seen%, Value=true)",
               "line": {
-                "number": 5
+                "number": 8
               },
               "code": [
                 {
@@ -98,24 +151,116 @@
           ]
         }
       ],
-      "warning": [
+      "waitForExecution": true
+    },
+    {
+      "index": 3,
+      "text": "if 'gone.json' exists, set %missing% = true",
+      "line": {
+        "number": 9
+      },
+      "code": [
         {
-          "key": "Unsure",
-          "message": "step 0 uses file.exists, which the decider was not sure of (0.94)"
+          "module": "file",
+          "name": "exists",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "gone.json"
+            }
+          ]
+        },
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%missing%, Value=true)",
+              "line": {
+                "number": 9
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%missing%",
+                      "variable": [
+                        {
+                          "text": "%missing%",
+                          "code": [
+                            {
+                              "variable": "missing"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ],
+              "waitForExecution": true
+            }
+          ]
         }
       ],
       "waitForExecution": true
     },
     {
-      "index": 1,
-      "text": "assert %seen% is empty",
+      "index": 4,
+      "text": "assert %seen% is true",
       "line": {
-        "number": 6
+        "number": 10
       },
       "code": [
         {
           "module": "assert",
-          "name": "isFalse",
+          "name": "isTrue",
           "property": [
             {
               "name": "Value",
@@ -139,13 +284,47 @@
         }
       ],
       "waitForExecution": true
+    },
+    {
+      "index": 5,
+      "text": "assert %missing% is empty",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isFalse",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%missing%",
+              "variable": [
+                {
+                  "text": "%missing%",
+                  "code": [
+                    {
+                      "variable": "missing"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
     }
   ],
   "child": [],
   "visibility": "Public",
   "path": "/module/file/exists/IfExists.test.goal",
   "prPath": "/module/file/exists/.build/ifexists.test.pr",
-  "hash": "e23e757bcf0a795a8c52d13e85bc0e909d60625b6edffed64f7b59f2c3b3bf65",
+  "hash": "179b3888ce88946393dad4900163a2250a5d3a8984c5d8709da769e34a7f7e3c",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
