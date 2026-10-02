@@ -454,4 +454,28 @@ read-then-hash, but 1/5 hashes the name's letters. No path-coercion (`as path`) 
 `file.read` before the hash. **Reported, not fixed:** whether a text naming a file should always hash
 the file's bytes is Ingi's call, not a builder teaching change.
 
+## Element-kind change (coder 328b7aee3) — `list<action>` new form + leaf-list guard
+
+Measured fresh, cache off, 5 each.
+
+**1. `list<action>` (on.error's Recovery — the record-element list).** `read 'notes.txt', on error call
+Fix` → **5/5 built, `on.error(Recovery=[goal.call(Name="Fix")])`** — the writer still writes it right;
+no regression. The new teaching form renders in the Types section:
+`- list<action> — An ordered list of values, each of any type. (e.g. [goal.call(Name="Show")])`.
+First `.pr` line: `"text": "read 'notes.txt', on error call Fix, write to %c%"` → the error action's
+`Recovery` list holds `{module:goal, name:call, Name:"Fix"}`.
+
+**2. Guard (non-record / leaf list).** There is **no user-facing `list<text>` step-slot** on
+app-systems (only `debug.setting.Variables`, a setting, and the code-provider internal) — so I used a
+`foreach`'s Collection (a plain `list`, element `item` — not a record) as the leaf-list guard:
+`foreach %items% as %i%` → **built fine (Collection + Item)**, and its type renders **plainly**:
+`- list — An ordered list of values, each of any type. (e.g. [1, 2, 3])` — the generic example, NOT a
+record-element `[<element>]` form. So the element form fires only for record elements; a leaf list is
+unchanged. (A `list<text>` would render the same way — text is a leaf item type, not a record.)
+
+**Conclusion:** the element-kind change adds `[<element example>]` for a record-element list
+(`list<action>` now shows `[goal.call(…)]`) with no regression to how the writer builds it, and leaves
+leaf/non-record lists plain. If a literal `list<text>` slot is wanted measured, it rides with the
+terminal module's `list<permission>` (a record list) — blocked here.
+
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).
