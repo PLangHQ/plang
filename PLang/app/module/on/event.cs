@@ -67,12 +67,12 @@ public partial class OnEvent : IContext
         if (reached.Peek() is not global::app.@event.@this named || reached.Parent?.Parent?.Peek() is not global::app.type.item.@this item)
             return Context.Error<global::app.@event.binding.@this>(global::app.@event.on.@this.Empty.NoEvent(path));
 
+        // each carrier is opened through its door: the first that doesn't resolve (a %variable% holding nothing, a
+        // name that is none of the choice's) is the answer
         var own = item.Own();
         var @event = own[named.Name]!;
-        var call = (await Action.Value())!;
-        global::app.@event.binding.Scope scope = await Scope.Value();
-        var binding = own.Bind(named.Name, await When.Value(),
-            side => new global::app.@event.binding.action.@this(side, @event, call, Context.Actor!, scope));
-        return Context.Ok<global::app.@event.binding.@this>(binding);
+        return data.@this<global::app.@event.binding.@this>.From(await When.Use(when => Scope.Use(scope => Action.Use(call =>
+            Task.FromResult<data.@this>(Context.Ok<global::app.@event.binding.@this>(own.Bind(named.Name, when.Value,
+                side => new global::app.@event.binding.action.@this(side, @event, call, Context.Actor!, scope.Value))))))));
     }
 }

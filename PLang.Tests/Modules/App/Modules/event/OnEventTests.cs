@@ -147,6 +147,16 @@ public class OnEventTests
     }
 
     [Test]
+    public async Task AWhenHoldingNothing_IsTheAnswer_NothingBound()
+    {
+        var bound = await On("%!app.type.goal.on.start%", "%unset%", "Log");
+
+        await bound.IsFailure();
+        await Assert.That(bound.Error!.Key).IsEqualTo("VariableNotFound");
+        await Assert.That(_app.type.list["goal"].on.start.before.Count).IsEqualTo(0);
+    }
+
+    [Test]
     public async Task AfterAGoal_TheCallRuns_WithItsArguments()
     {
         Goal("AfterCallback");
