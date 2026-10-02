@@ -29,10 +29,12 @@ public sealed class Default : IScreen
         var onInput = action.OnInput == null ? null : await action.OnInput.Value();
         var onClose = action.OnClose == null ? null : await action.OnClose.Value();
 
-        var events = System.Threading.Channels.Channel.CreateUnbounded<string>();
+        // what the window says: input and the clipboard as values; the rest as text, until each has its type
+        var events = System.Threading.Channels.Channel.CreateUnbounded<global::app.type.item.@this>();
+        Text closedLine = "{\"closed\":true}";
         var window = new Window(title, width, height,
             onEvent: e => events.Writer.TryWrite(e),
-            onClosed: () => events.Writer.TryWrite("{\"closed\":true}"));
+            onClosed: () => events.Writer.TryWrite(closedLine));
         var failed = window.Show();
         if (failed != null)
             return data.@this<Screen>.From(context.Error(new ActionError("Could not open the screen: " + failed, "ScreenOpenFailed", 500)));
@@ -45,17 +47,18 @@ public sealed class Default : IScreen
         {
             await foreach (var e in events.Reader.ReadAllAsync())
             {
-                if (e.StartsWith("{\"stats\":", StringComparison.Ordinal))
+                var said = e is Text t ? t.ToString() : null;
+                if (said != null && said.StartsWith("{\"stats\":", StringComparison.Ordinal))
                 {
-                    var line = "{\"at\":\"" + DateTime.Now.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "\"," + e[1..] + "\n";
+                    var line = "{\"at\":\"" + DateTime.Now.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "\"," + said[1..] + "\n";
                     var file = global::app.type.item.path.file.@this.Resolve(stats, context);
                     await (recorded++ % 10_000 == 0 ? file.WriteText(line, context) : file.Append(line, context));
                 }
-                var closed = e == "{\"closed\":true}";
+                var closed = ReferenceEquals(e, closedLine);
                 var call = closed ? onClose : onInput;
+                // an input reaches the goal as itself (is input, is mouse); the rest as its text
                 if (call != null)
-                    await global::app.module.on.code.Gate.Call(call,
-                        new data.@this("!data", e, context.App.type.list["text"], context: context), context);
+                    await global::app.module.on.code.Gate.Call(call, new data.@this("!data", e, context: context), context);
                 if (closed) break;
             }
         });
