@@ -121,6 +121,24 @@ public class FormalReaderTests : System.IAsyncDisposable
         await conversation.IsSuccess();
     }
 
+    // an event written as a value (a goal's path where the event's path goes) is refused saying how an event is
+    // reached — never a missing reader thrown at whoever reads the .pr back
+    [Test]
+    public async Task AnEventWrittenAsAValue_IsRefused_SayingItsPath()
+    {
+        var read = Read("on.event(Event=\"/events/Runtime/DebugErrorInIde\", When=after, Action=goal.call(Name=\"Y\"))", out _);
+        var ctx = app.actor.list.User.Context;
+        var goal = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
+            global::PLang.Tests.Shared.Make.Step("on", ((global::app.goal.step.action.list.@this)read.Peek()!)[0])));
+
+        var ev = goal.Step[0].Code[0].Property["Event"]!.Data(ctx);
+        await ev.Value();
+
+        await ev.IsFailure();
+        await Assert.That(ev.Error!.Key).IsEqualTo("NotAnEvent");
+        await Assert.That(ev.Error.Message).Contains("%!app.type.step.on.before%");
+    }
+
     // a conversation writes what it continues as written — the reference, never what it names now (unset at build)
     [Test]
     public async Task AConversation_WritesItsReferenceAsWritten()
