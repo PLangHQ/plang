@@ -36,11 +36,16 @@ internal sealed class @this
     /// <summary>Starts the run — once its list holds it.</summary>
     internal void Begin() => _cold.Start(System.Threading.Tasks.TaskScheduler.Default);
 
-    /// <summary>The run's result, once it ends: the goal's answer, what it failed with, or Cancelled.</summary>
-    public async System.Threading.Tasks.Task<global::app.data.@this> Wait()
+    /// <summary>The run's result, once it ends: the goal's answer, what it failed with, or Cancelled. The wait itself
+    /// stops when its waiter's <paramref name="token"/> is cancelled (Cancelled) — the run goes on.</summary>
+    public async System.Threading.Tasks.Task<global::app.data.@this> Wait(System.Threading.CancellationToken token = default)
     {
         _asked.TrySetResult();
-        return await _run;
+        try { return await _run.WaitAsync(token); }
+        catch (System.OperationCanceledException) when (token.IsCancellationRequested)
+        {
+            return _actor.Context.Error(new global::app.error.Error($"the wait for the task running {Goal.Name} was cancelled", "Cancelled", 499));
+        }
     }
 
     /// <summary>Stops the run: ended already, its result; else its cancellation is cancelled and the answer is

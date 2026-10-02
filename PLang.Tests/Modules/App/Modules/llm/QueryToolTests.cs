@@ -156,8 +156,13 @@ public class QueryToolTests
     [Test]
     public async Task Query_MixedBatch_APlainToolEndsBeforeTheNextIsCalled_AParallelOneRunsOn_ResultsInCallOrder()
     {
+        // A is held on a gate only C opens (C cancels it): A reads %kept.order% only after B and C have run. Load slows
+        // this, never flips it; the gate's own goal ends after 20s, so a loop that ran A first ends, reading "".
         await Ctx.Variable.Set("kept", new Dictionary<string, object?> { ["order"] = "" });
-        Reads("A", 1500); Marks("B", 100); Marks("C", 0);
+        _app.goal.list.Add(Make.Goal(Ctx, "Gate", Make.Step("sleep", Make.Action(Ctx, "timer", "sleep", ("Ms", 20_000)))));
+        var gate = (global::app.task.@this)(await Make.Action(Ctx, "goal", "call", ("Name", "Gate"), ("Parallel", true)).Start(Ctx)).Peek()!;
+        await Ctx.Variable.Set("gate", gate);
+        HeldOnTheGate("A"); Marks("B", 100); Marks("C", 0, opensTheGate: true);
         int callIndex = 0;
         _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(++callIndex == 1
             ? LlmTestHelper.MakeToolCallResponse(("call_1", "A", "{}"), ("call_2", "B", "{}"), ("call_3", "C", "{}"))
@@ -178,10 +183,12 @@ public class QueryToolTests
         await Assert.That(second[..a]).Contains("\\u0022,B,C\\u0022");
     }
 
-    // A tool goal named <paramref name="name"/>: sleeps <paramref name="ms"/>, then returns %kept.order% as it reads then.
-    private void Reads(string name, int ms)
+    // A tool goal named <paramref name="name"/>: waits for %gate% (its cancel is the opening), then returns
+    // %kept.order% as it reads then.
+    private void HeldOnTheGate(string name)
         => _app.goal.list.Add(Make.Goal(Ctx, name,
-            Make.Step("sleep", Make.Action(Ctx, "timer", "sleep", ("Ms", ms))),
+            Make.Step("wait for the gate", Make.Action(Ctx, "task", "wait", ("Task", "%gate%")),
+                Make.Action(Ctx, "on", "error", ("Key", "Cancelled"), ("Ignore", true))),
             Make.Step("return", Make.Action(Ctx, "goal", "return", ("Data", "%kept.order%")))));
 
     // A Parallel tool runs as a task in a context of its own, and still reads the argument the model supplied
@@ -205,11 +212,12 @@ public class QueryToolTests
     }
 
     // A tool goal named <paramref name="name"/>: sleeps <paramref name="ms"/>, appends its name to %kept.order%, returns its name.
-    private void Marks(string name, int ms)
+    private void Marks(string name, int ms, bool opensTheGate = false)
     {
         var steps = new List<Make.StepDef>();
         if (ms > 0) steps.Add(Make.Step("sleep", Make.Action(Ctx, "timer", "sleep", ("Ms", ms))));
         steps.Add(Make.Step("mark", Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "%kept.order%", "variable"), ("Value", "%kept.order%," + name))));
+        if (opensTheGate) steps.Add(Make.Step("open the gate", Make.Action(Ctx, "task", "cancel", ("Task", "%gate%"))));
         steps.Add(Make.Step("return", Make.Action(Ctx, "goal", "return", ("Data", name))));
         _app.goal.list.Add(Make.Goal(Ctx, name, steps.ToArray()));
     }

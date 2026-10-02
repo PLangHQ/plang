@@ -33,8 +33,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private System.Collections.Generic.IEnumerable<@this> Written
         => (_replaced?.Written ?? []).Append(this);
 
-    /// <summary>Its run's result, once it ends: the goal's answer, what it failed with, or Cancelled.</summary>
-    public System.Threading.Tasks.Task<global::app.data.@this> Wait() => _run.Wait();
+    /// <summary>Its run's result, once it ends: the goal's answer, what it failed with, or Cancelled; the wait stops
+    /// when <paramref name="token"/> (its waiter's) is cancelled.</summary>
+    public System.Threading.Tasks.Task<global::app.data.@this> Wait(System.Threading.CancellationToken token = default)
+        => _run.Wait(token);
 
     /// <summary>Stops its run: ended already, its result; else nothing (null), and the run ends Cancelled.</summary>
     public System.Threading.Tasks.Task<global::app.data.@this> Cancel() => _run.Cancel();

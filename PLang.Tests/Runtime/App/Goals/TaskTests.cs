@@ -194,6 +194,21 @@ public class TaskTests
         await Assert.That(await Texts(await Ctx.Variable.Get("items"))).IsEquivalentTo(new[] { "a" });
     }
 
+    // a typed list copies as itself: the task's copy is a list<text>, the caller's untouched
+    [Test]
+    public async Task AnAddInATask_ToItsCallersTypedList_CopiesItAsATypedList()
+    {
+        await Ctx.Variable.Set("items", new global::app.type.item.list.@this<global::app.type.item.text.@this>(
+            new global::app.type.item.@this[] { new global::app.type.item.text.@this("a") }));
+        await Load("Adds", Make.Step("add x", Add("items", "x")), Make.Step("return items", Return("%items%")));
+
+        var waited = await (await Started("Adds")).Wait();
+
+        await Assert.That(waited.Peek()).IsTypeOf<global::app.type.item.list.@this<global::app.type.item.text.@this>>();
+        await Assert.That(await Texts(waited)).IsEquivalentTo(new[] { "a", "x" });
+        await Assert.That(await Texts(await Ctx.Variable.Get("items"))).IsEquivalentTo(new[] { "a" });
+    }
+
     [Test]
     public async Task TwoSiblingsAddingToTheirCallersList_NeverSeeEachOthersAdditions()
     {
@@ -213,18 +228,32 @@ public class TaskTests
     [Test]
     public async Task ATimeoutInOneTask_DoesNotCancelItsSibling()
     {
-        // TimesOut's deadline stands from its start until it times out at 1000ms; the sibling's second sleep starts at
-        // ~300ms, inside that window, so it reads the token while the deadline is in play
-        await Load("TimesOut", Make.Step("sleep, timeout after 1000ms", Sleep(5000),
+        // TimesOut can't end on its own: its deadline is the only way out. The sibling's sleep reads its own token, which
+        // nothing cancels, so it always ends "done". Load slows this, never flips it. (That the two never share a token
+        // is the next pin: each runs in a context of its own.)
+        await Load("TimesOut", Make.Step("sleep, timeout after 1000ms", Sleep(60_000),
             Make.Action(Ctx, "on", "timeout", ("After", System.TimeSpan.FromMilliseconds(1000)))));
-        await Load("Sibling", Make.Step("sleep", Sleep(300)), Make.Step("sleep again", Sleep(1500)),
-            Make.Step("return done", Return("done")));
+        await Load("Sibling", Make.Step("sleep", Sleep(2000)), Make.Step("return done", Return("done")));
 
         var timesOut = await Started("TimesOut");
         var sibling = await Started("Sibling");
 
         await Assert.That((await timesOut.Wait()).Error?.Key).IsEqualTo("Timeout");
         await Assert.That((await (await sibling.Wait()).Value())?.ToString()).IsEqualTo("done");
+    }
+
+    // each task runs in a context of its own — not its caller's, not its sibling's: its memory, its cancellation (a
+    // deadline one pushes is never another's)
+    [Test]
+    public async Task TwoTasks_EachRunInAContextOfItsOwn()
+    {
+        await Load("Where", Make.Step("return the context", Return("%!context.Id%")));
+
+        var first = await (await Started("Where")).Wait();
+        var second = await (await Started("Where")).Wait();
+
+        var ids = new[] { Ctx.Id, (await first.Value())?.ToString(), (await second.Value())?.ToString() };
+        await Assert.That(ids.Distinct().Count()).IsEqualTo(3);
     }
 
     private async Task<global::app.data.@this> Action(string module, string action, params (string name, object? value)[] properties)

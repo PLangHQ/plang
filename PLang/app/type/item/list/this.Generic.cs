@@ -54,6 +54,12 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     /// a list&lt;T&gt; instead of degrading to the non-generic base.</summary>
     protected override global::app.type.item.list.@this Empty() => new @this<T>();
 
+    private @this(System.Collections.Generic.List<object?> rows, bool wrapped) : base(rows, wrapped, null) { }
+
+    /// <summary>A copy is a <c>list&lt;T&gt;</c> too; a program's node list (a subtype) is itself.</summary>
+    private protected override global::app.type.item.list.@this Holding(System.Collections.Generic.List<object?> rows)
+        => GetType() == typeof(@this<T>) ? new @this<T>(rows, wrapped: true) { Template = Template } : this;
+
     /// <summary>Value-membership typed to the element — because the parameter is
     /// <typeparamref name="T"/>, a caller can pass what converts to T (e.g. a bare
     /// <c>string</c> to a <c>list&lt;text&gt;</c>: <c>Contains("http")</c> lifts via
