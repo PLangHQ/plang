@@ -517,15 +517,29 @@ What happened, in order:
    (l.5712-5722). So FixSteps' **`llm.query` retry never runs** — there is no re-answer. The build ends
    `StepsRefused` with the original refusal (l.6453).
 
-**So the architect's two options don't apply: the writer doesn't copy the placeholder `name` or
-re-drop the arg on retry — the retry doesn't happen.** The ~1/10 non-recovery is **FixSteps failing to
-form its retry** because `%!error%` isn't resolvable at its `set %fixMessages%` step (it was usable at
-step 0's EmitBuildEvent, gone by step 2 — the sub-goal call between them appears to clear the recovery
-scope's `%!error%`). **Core (the coder's):** keep `%!error%` live across FixSteps' steps. (Caveat: the
-`(undefined)` is a debug listing, but the set genuinely raised an error from that step, so the failure
-is real — the coder should pin whether it's `%!error%` wholly or `.Details.steps` specifically.)
-Secondary note for the coder: the refusal's `{name: …}` uses `name` as a placeholder; if a retry *did*
-run, that could mislead the writer toward a literal `name` key — worth making the refusal name the
-step's own arg — but that's moot until the retry actually runs.
+**CORRECTION (my first read of this was wrong — the retry DOES run).** I misread two things: the
+`%!error% = (undefined)` in the DEBUG listings is the **debug-watch artifact** (the same false-undefined
+the architect flagged on cache:false), and the `Error` goals are the error-**channel** displaying the
+rejection (EmitBuildEvent writes it), not the set throwing. The DEBUG **AFTER** of FixSteps step 1
+(log l.5790-5792) shows `%fixMessages%` **populated** (`"Steps 0, 1, 2 were refused: …"`), and step 2
+(l.5797) runs the **`llm.query` retry**. So the set succeeds and the retry runs.
+
+**The real cause: the retry's re-answer drops the argument's name again.** The retry response
+(l.5828-5834) is:
+```
+[0] goal.call(Name="Page", Parameter=%!app.module.file%)
+[1] goal.call(Name="Page", Parameter=%!app.module.condition%)
+[2] goal.call(Name="Page", Parameter=%!app.module.loop%)
+```
+The writer writes `Parameter=%!app.module.file%` — a **bare nameless value**, not `Parameter={module:
+%!app.module.file%}`. It does **NOT** copy the placeholder `name`; it **drops the arg name `module`**.
+build.match refuses it again (same "one value with no name, binds nothing") → NO PR. So (answering the
+architect) the writer **drops the argument**, both initially and on retry — Name="Page" is right (the
+offers fix), but the `module=` arg's **name** is lost. The teaching is present (the Parameter note has
+`source=%!a.b.c%` → `{source: %!a.b.c%}`) yet doesn't land for `module=` — "module" being a plang word
+may be the pull. **Fix candidates (architect/coder):** the refusal should name the step's **own arg**
+(`{module: %!app.module.file%}`), not the placeholder `name`, so the retry has the name to use; and/or
+teaching that an arg whose name is a plang word (`module`, `file`, `goal`) is still an arg name. Core
+is the refusal wording + possibly the writer/offers extending to the Parameter arg name.
 
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).
