@@ -502,4 +502,30 @@ The 36 fix holds — the Option no longer offers `%item%` (foreach's default), s
 So 36 is fixed with both guards holding, and 37's cast is gone (32b 9/10, one FixSteps-recovery edge on
 the goal.call Parameter-rows refusal).
 
+## The 32(b) ~1/10 FixSteps non-recovery — diagnosed (retry never runs)
+
+Caught a failing build with full `--debug={"llm":{"user":true,"response":true}}` (log `/tmp/m8_2.txt`).
+What happened, in order:
+1. **Initial writer answer dropped the arg's name.** For `call goal Page module=%!app.module.file%` it
+   wrote the Parameter as a **nameless value** (`%!app.module.file%` alone, not `{module:
+   %!app.module.file%}`). The new refusal fires correctly: *"goal.call: Parameter takes named rows:
+   {name: %!app.module.file%} — %!app.module.file% is one value with no name, which binds nothing"* —
+   where `name` is the **placeholder** the refusal uses for the missing name slot.
+2. **FixSteps then dies before its retry.** At FixSteps' `set %fixMessages% = [… %!error.Details.steps%
+   … %!error.Message% …]` (step 2, log l.5684) the debug lists **`%!error% = (undefined)`**, the set
+   fails, and the error-channel `Error` shortcut fires with call-stack `at FixSteps.set (step 2)`
+   (l.5712-5722). So FixSteps' **`llm.query` retry never runs** — there is no re-answer. The build ends
+   `StepsRefused` with the original refusal (l.6453).
+
+**So the architect's two options don't apply: the writer doesn't copy the placeholder `name` or
+re-drop the arg on retry — the retry doesn't happen.** The ~1/10 non-recovery is **FixSteps failing to
+form its retry** because `%!error%` isn't resolvable at its `set %fixMessages%` step (it was usable at
+step 0's EmitBuildEvent, gone by step 2 — the sub-goal call between them appears to clear the recovery
+scope's `%!error%`). **Core (the coder's):** keep `%!error%` live across FixSteps' steps. (Caveat: the
+`(undefined)` is a debug listing, but the set genuinely raised an error from that step, so the failure
+is real — the coder should pin whether it's `%!error%` wholly or `.Details.steps` specifically.)
+Secondary note for the coder: the refusal's `{name: …}` uses `name` as a placeholder; if a retry *did*
+run, that could mislead the writer toward a literal `name` key — worth making the refusal name the
+step's own arg — but that's moot until the retry actually runs.
+
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).
