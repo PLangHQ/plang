@@ -425,4 +425,33 @@ grep after the `-A3` window missed the value — no code change, extractor fix o
 The quoting change is safe — every fixed issue holds. (32(b)'s NOPR is a flaky build-completion issue
 on the educator's nested goal, not a mapping regression; when it builds, the Name is `Page`.)
 
+## Three investigations (architect, 2026-10-02)
+
+### 1. The 32(b) "NOPR" has a cause — a CORE cast bug, not flaky (NEW ISSUE)
+edu built 6/10 this time; the 4 failures were **all the same**, during `Properties rejected —
+retrying`:
+> `InvalidCastException: cannot lower a app.module(plang module) into list: the target owns no Clr
+> projection for this shape. A cross-shape convert (list→list, dict→record, raw→plang) belongs on the
+> TARGET's own Clr or its type family, not this lower door.`
+So building `call goal Page module=%!app.module.<m>%` sometimes lowers the `%!app.module.<m>%` value (a
+plang **module**) into a **list** and the cross-shape convert throws — the retry dies there, no `.pr`.
+**Core** (the lower door / the target's Clr family), **the coder's** — a new issue, not a 32(b)
+mapping regression (when it builds, `Name="Page"`). Rate ~4/10 on the educator's nested goal.
+
+### 2. Issue 36 reproduces — `%item%` in foreach's Key slot
+`foreach %x%, call Y y=%item%` builds `loop.foreach(Collection=%x%, **Key=%item%**)` with **no Item**
+(~2/5). The auto-bound iteration var `%item%` is wrongly placed in Key. Same lever as issue-2-with-key:
+the Key Option offers the step's variables and the decider fills Key with `%item%`. The fix: the Key
+Option must not be filled from `%item%` (foreach's own iteration var) — Key defaults to none, Item to
+`%item%`, unless the step says `with key`. **Guard holds:** `foreach %items% as %i%` → Item=%i%, no Key
+(5/5, direct inspection). Core (the pick/Option) + teaching; shape with the architect.
+
+### 3. "hash the file 'x.bin' with sha256" — file vs text (measure-only, Ingi's question)
+Built (fresh, cache off, 5): **reads the file first 4/5** — `file.read('x.bin') → %!data%`, then
+`crypto.hash(Content=%!data%, Algorithm=sha256)`; **hashes the literal text `"x.bin"` 1/5**
+(`crypto.hash(Content="x.bin")`, no read). So the builder mostly treats "the file 'x.bin'" as a file to
+read-then-hash, but 1/5 hashes the name's letters. No path-coercion (`as path`) appears — it's a
+`file.read` before the hash. **Reported, not fixed:** whether a text naming a file should always hash
+the file's bytes is Ingi's call, not a builder teaching change.
+
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).
