@@ -181,8 +181,20 @@ Idle pending:
 - **Issue 34 (5-build) + 35 (10-build) measurements BLOCKED** — terminal module not on app-systems
   (`start //bin/sh …` / `list<permission>` unbuildable here). Run on plang-os-stable or once merged.
 - **Coder follow-up incoming:** offers become items via `formal.Writer` — re-run the 32(b) guard after.
+  (DONE 94d8ed814: nothing dropped, all 5 hold.)
 - Terminal module → the 34 `ask:` line + teaching (shape ready).
 - decider-key storage scope — Ingi.
+
+### Issues logged 2026-10-02 (architect) + my re-measure triggers
+- **36** (`foreach %x%, call Y y=%item%` → Key=%item%, no Item): **coder's pick change** — the Option
+  must leave out every variable the action itself writes (the write-to + Item's `[Default("item")]`),
+  so Key is never offered `%item%`. **Re-measure 36 + the `as %i%` guard when it lands.**
+- **37** (the Properties-retry `InvalidCastException: lower app.module into list`, the 32b NOPR cause):
+  core, coder's. When it lands, the edu NOPR should stop (32b builds reliably) — re-measure.
+- **38** (1/5 `hash the file 'x.bin'` hashes the name's letters): waits on Ingi (hashing a path's content).
+- **34 type-Example** (element-kind change): coder's. When it lands → measure a `list<T>` slot on
+  app-systems whose element has an Example (+ `list<text>` guard).
+- **34 (5-build) / 35 (10-build)**: blocked — terminal module not on app-systems.
 
 ## (earlier) Status 2026-10-02 — idle, waiting on the coder's one pick pass
 All architect-directed work done and accepted (latest 0b799a5d1). Open items are the coder's / core:
