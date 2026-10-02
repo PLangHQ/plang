@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 internal enum Shown { Normal, Maximized, Minimized }
 

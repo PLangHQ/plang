@@ -1,4 +1,4 @@
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 /// <summary>
 /// Something plang-screen shows under a window's title bar, above everything (one at a time): the

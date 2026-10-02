@@ -1,4 +1,4 @@
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 /// <summary>
 /// The seat's keyboard: the keyboard map (xkb, the layout PlangOS types in), the keys held, and

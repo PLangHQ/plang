@@ -1,4 +1,4 @@
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 // The input protocol objects. They only speak: the seat's Pointer and Keyboard decide.
 

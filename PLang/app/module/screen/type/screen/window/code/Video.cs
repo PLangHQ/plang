@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
-namespace app.module.screen.code;
+namespace app.module.screen.type.screen.window.code;
 
 /// <summary>
 /// A video from PlangOS's screen — one H.264 stream (baseline, BT.709 video range) — decoded with

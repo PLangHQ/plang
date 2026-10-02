@@ -1,4 +1,4 @@
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 /// <summary>
 /// The windows, bottom to top — the desktop always at the bottom — and which one is active (has

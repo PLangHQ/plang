@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 /// <summary>
 /// Where a window is. <see cref="Path"/> is what the globe shows — plang's path for plang's own

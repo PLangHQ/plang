@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
 
-namespace app.module.screen.code;
+namespace app.module.screen.type.screen.window.code;
 
 /// <summary>
 /// A plain Win32 window on its own thread: frames are BGRA pixels blitted with SetDIBitsToDevice;
