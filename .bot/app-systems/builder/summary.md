@@ -45,7 +45,13 @@ confirm a fix still need the key.
   `goal.call(Name="%!app.module.file%")`, `Page` lost. goal.call's note is **already correct**; the
   *writer* misreads the dotted `%!a.b.c%` variable as the name. Evidence for the architect's
   decider/writer-opaque-variable direction (they own it); hold per their instruction.
-- **Issue 30 pass 2** — now unblocked (key available); not yet run this session.
+- **Issue 30 pass 2 — DONE.** 15 remaining os/ goals; all build clean / have current valid .pr; no
+  writer-mis-map/core/write-in-formal refusals left (the v2-era failures were in the 24 swept goals).
+  5 rebuilt this session (dropped deprecated isSetup/etc. per 819f239c6; kept). Two needed one
+  FixSteps retry (issue-17 class, recovered). **Key mechanic:** `cache:false` bypasses only the LLM
+  cache, not the source-unchanged skip (build.md ll.69-71) — a full `os/ cache:false` build finds 15,
+  rebuilds 0 (all current). Forcing a rebuild needs a fresh `.build` (off-limits for os/). Table in
+  `v3/result.md`.
 - **Item 6** (goal.call `Parallel`/task teaching) — gated on the coder's stages 1–2 of
   `test/plan/task/`, not started.
 
@@ -63,6 +69,8 @@ when the action is *certain*; a listed-but-uncertain action needs it too (the v3
    add the `ask:` note lines (loop.foreach Item/Key; llm Conversation) and measure issue 2 at 5/5.
 3. Issue 25 `listed.Option` (if architect still wants it): apply the `properties.template` render
    after the coder lands the field; re-measure a *low-score* load-vars read (C4 itself is 10/10 now).
-4. Issue 32: wait for the architect's masked-step-text direction; (b) is writer-misreads-variable.
-5. Issue 30 pass 2: the per-goal rebuild table (now unblocked).
+4. Issue 32: coder builds the opaque-variable core (step's variables → opaque placeholders for both
+   decider and writer); I own the template side when the architect sends the shape.
+5. Issue 30 pass 2: DONE (all current/clean). Architect to decide if a forced fresh rebuild of the 10
+   skipped goals is wanted (needs fresh .build, off-limits for os/).
 6. Item 6 after the coder's `test/plan/task/` stages 1–2 (coder v19 plan just landed).

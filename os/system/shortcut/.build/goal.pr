@@ -61,9 +61,5 @@
   "visibility": "Public",
   "path": "/system/shortcut/goal.goal",
   "prPath": "/system/shortcut/.build/goal.pr",
-  "hash": "4a85105224e58f2e076172acaa0279fea108fd19e69b8f9d49f1a4b808b68c62",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false
+  "hash": "4a85105224e58f2e076172acaa0279fea108fd19e69b8f9d49f1a4b808b68c62"
 }

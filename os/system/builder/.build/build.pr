@@ -46,12 +46,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set default %path% = \"/\"': variable.set: 'AsDefault' is not a property of this action. Its properties are: Name, Value, Type, Default."
-        }
       ]
     },
     {
@@ -94,13 +88,15 @@
                 "name": "bool"
               },
               "value": true
-            },
+            }
+          ],
+          "default": [
             {
-              "name": "Default",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
-              "value": true
+              "value": false
             }
           ]
         }
@@ -108,15 +104,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 1 uses variable.set, which the decider was not sure of (0.73)"
-        },
-        {
-          "key": "Reopened",
-          "message": "step 1's saved code no longer holds — rebuilt: step 1 'set default %!build.setting.cache% = true': variable.set: 'AsDefault' is not a property of this action. Its properties are: Name, Value, Type, Default."
-        },
-        {
-          "key": "Unsure",
-          "message": "step 1 uses variable.set, which the decider was not sure of (0.69)"
+          "message": "step 1 uses variable.set, which the decider was not sure of (0.63)"
         }
       ]
     },
@@ -166,12 +154,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 2's saved code no longer holds — rebuilt: step 2 'set %traceGoals% = []': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
@@ -216,6 +198,13 @@
                       "name": "bool"
                     },
                     "value": false
+                  },
+                  {
+                    "name": "wait",
+                    "type": {
+                      "name": "bool"
+                    },
+                    "value": true
                   }
                 ]
               }
@@ -257,14 +246,15 @@
                 "name": "bool"
               },
               "value": false
+            },
+            {
+              "name": "wait",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
             }
           ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Unsure",
-          "message": "step 4 uses goal.call, which the decider was not sure of (0.80)"
         }
       ]
     },
@@ -338,12 +328,6 @@
               "value": false
             }
           ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 5's saved code no longer holds — rebuilt: step 5 'build.load, write to %app%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
         }
       ]
     },
@@ -428,12 +412,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Reopened",
-          "message": "step 6's saved code no longer holds — rebuilt: step 6 'build.goals path=%path%, write to %goals%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
-        }
       ]
     },
     {
@@ -469,6 +447,13 @@
                 "name": "bool"
               },
               "value": false
+            },
+            {
+              "name": "wait",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
             }
           ]
         }
@@ -476,7 +461,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 7 uses goal.call, which the decider was not sure of (0.85)"
+          "message": "step 7 uses goal.call, which the decider was not sure of (0.89)"
         }
       ]
     },
@@ -556,6 +541,13 @@
                 "name": "bool"
               },
               "value": false
+            },
+            {
+              "name": "wait",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
             }
           ]
         }
@@ -648,9 +640,5 @@
   "visibility": "Public",
   "path": "/system/builder/Build.goal",
   "prPath": "/system/builder/.build/build.pr",
-  "hash": "66899595e3622b5a9d92854ed8663235dbf4ef23852d107e5f0fb4570e8cc894",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false
+  "hash": "66899595e3622b5a9d92854ed8663235dbf4ef23852d107e5f0fb4570e8cc894"
 }

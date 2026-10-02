@@ -166,10 +166,49 @@ gap in `Code()` is a secondary coder fix for the Known-hint path.
 
 ---
 
-## Issue 30 pass 2 — BLOCKED (needs real builds)
+## Issue 30 pass 2 — DONE (key available). All 15 remaining os/ goals build clean.
 
-Rebuilding each reopened `os/` goal individually, cache off, requires the decider → 403. Cannot
-produce the table this session. Deferred until the key is available.
+The sweep left **15** hand-authored os/ goals. Rebuilt per-file and as a full `os/` build, cache off.
+
+**Key mechanic found:** `cache:false` bypasses only the **LLM cache**, not the **source-unchanged
+skip** (build.md §Cache, ll.69-71: "a step whose source is unchanged … its saved `code` stands and
+the LLM never sees it (decided before any LLM call)"). A fresh folder rebuilds because `.build` is
+empty; the os/ `.build` is kept (the "NEVER delete .build" rule), so an unchanged goal is skipped.
+So a full `os/ cache:false` build reports **"Found 15 goals"** and rebuilds **0** — all are current.
+(The v2 note that "414a1cfa3 makes cache:false rebuild an unchanged goal" conflated the two senses;
+the educator's fresh-folder measurements rebuilt because the folder had no `.pr`, not because of
+cache:false.) **Consequence:** a forced full-rebuild table of the os/ goals isn't producible without
+deleting their `.pr` (off-limits). Only goals whose `.pr` was stale this session actually rebuilt.
+
+| goal | result | note | class |
+|---|---|---|---|
+| Start.goal | ✅ rebuilt (2 goals +sub HandleBuildFailure) | saved 21.7s | clean |
+| system/builder/Build.goal | ✅ rebuilt | saved | clean |
+| system/builder/BuildGoal.goal | ✅ current (skipped) | valid .pr | current |
+| BuildGoal/Decide.goal | ✅ rebuilt (1 FixSteps retry) | `%!app.module.list% is in the step but not in your answer` → recovered, saved | clean (issue-17 class) |
+| BuildGoal/Properties.goal | ✅ current | valid .pr | current |
+| BuildGoal/Start.goal | ✅ current | valid .pr | current |
+| BuilderChannel.goal | ✅ current | valid .pr | current |
+| EmitBuildEvent.goal | ✅ current | valid .pr | current |
+| error/Show.goal | ✅ current | valid .pr | current |
+| shortcut/channel.goal | ✅ current | valid .pr | current |
+| shortcut/error.goal | ✅ current | valid .pr | current |
+| shortcut/goal.goal | ✅ rebuilt (1 FixSteps retry) | `%!app.callstack.scope.caller.goal% …not in your answer` → recovered, saved | clean (issue-17 class) |
+| shortcut/step.goal | ✅ current | valid .pr | current |
+| shortcut/test.goal | ✅ current | valid .pr | current |
+| system/test.goal | ✅ current | valid .pr | current |
+
+**Outcome:** no `writer-mis-map`, `core`, or `write-in-formal` refusal remains among the kept goals —
+the v2-era failures (SetupApp, the events cluster, …) were all in the 24 goals the sweep deleted. The
+5 goals that rebuilt this session (start, build, decide, buildgoal/start, shortcut/goal `.pr`) dropped
+the deprecated `isSetup/isEvent/isSystem/isTest` fields (format update, 819f239c6; hash + steps
+unchanged) — kept per "keep rebuilt .pr". The only noise is the **issue-17 class** (a `%!x%` the
+answer carries differently reads as "in the step but not in your answer") — known, logged, and
+FixSteps recovers it in one retry.
+
+**Open for the architect:** to observe a forced rebuild of the 10 currently-skipped goals (to catch a
+`.pr` that's current-but-stale-builder), the only lever is a fresh `.build` — off-limits for os/ under
+the rule. Want a one-time authorized fresh rebuild, or is "current + the 5 clean rebuilds" enough?
 
 ## Item 5 — DONE
 `os/system/Build_dpricated.goal2` deleted (`git rm`). v0.1 builder sketch, non-`.goal` extension,

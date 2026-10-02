@@ -970,13 +970,27 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Drafted Option-question v2 shape (architect's request): a non-choice option (Item/Key/Conversation) offers the step's own variables + none; add question.Variable member, extend Values; ask: note lines + Conversation {continue:} wrapper open question. For architect review before coder builds core."
+          "context": "Drafted Option-question v2 shape, then updated to the architect's accepted design: offer comes from one member on the property's type (no choice-or-not branch, no question.Variable); Prefill writes the plain pick incl. Conversation=%answer% (conversation.Create does the {continue:} shaping, coder). My part: ask: note lines on loop.foreach Item/Key + llm Conversation, landed with the core."
+        },
+        {
+          "paths": ["os/system/modules/goal/call.examples.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Issue 32b: tried the architect's cheap lever (a generic goal.call example), measured 5/5 - still Name=%!app.module.file%. Writer gets a clean goal.call(Name) slot (decider 0.96) and fills it with the dotted variable; examples reach the decider (decider.state.template) not the writer (properties.template). Example REVERTED - no in-lane lever. Goes to the opaque-variable core direction (coder); I own the template side later."
+        },
+        {
+          "paths": ["os/.build/start.pr", "os/system/builder/.build/build.pr", "os/system/builder/BuildGoal/.build/decide.pr", "os/system/builder/BuildGoal/.build/start.pr", "os/system/shortcut/.build/goal.pr"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Issue 30 pass 2: rebuilt the stale os/ .pr (cache off). All 15 remaining os/ goals build clean / have current valid .pr; no writer-mis-map/core/write-in-formal refusals remain. These 5 rebuilt and dropped the deprecated isSetup/isEvent/isSystem/isTest fields (819f239c6 format; hash+steps unchanged) - kept per keep-rebuilt-pr. Finding: cache:false does NOT force-rebuild unchanged goals (build.md 69-71, source-unchanged skip is separate from LLM cache); full os/ build found 15 rebuilt 0. Table in v3/result.md."
         }
       ],
       "after": {
-        "status": "Item 5 done. Key unblocked mid-session: C4 measured 10/10 (resolved on head), issue 2 reproduces 3/5, issue 32b reproduces 5/5. Option-v2 drafted for architect. Issue 25 listed.Option shape now latent-robustness (architect's call).",
-        "health": "green (clean rebuild; builds run with the key)",
-        "notes": "Static diagnoses confirmed by measurement. C4 symptom gone on head (file.read scores 0.98 Certain now). Shapes: v3/result.md, v3/option-v2-shape.md, to-architect.md. Key still owed in a settings table (passed via env this session)."
+        "status": "Item 5 done. C4 10/10 (resolved on head). Issue 2 reproduces 3/5 -> Option-v2 drafted+accepted. Issue 32b reproduces 5/5, cheap example-lever failed -> opaque-variable core (coder). Issue 30 pass 2 DONE: all 15 os/ goals build clean/current, no refusals left.",
+        "health": "green (builds run with the key; os/ 15 goals all valid .pr)",
+        "notes": "Key finding: cache:false bypasses only the LLM cache, not the source-unchanged skip (build.md 69-71) - a kept .build skips unchanged goals. Key stays in env per architect (storage is a security Q for Ingi); do NOT write it into any app store. Shapes: v3/result.md, v3/option-v2-shape.md. Next: coder's Option-v2 core + listed.Option, then my ask:-lines + measure; item 6 after coder task stages."
       }
     }
   ]
