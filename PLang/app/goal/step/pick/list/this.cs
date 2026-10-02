@@ -388,9 +388,22 @@ public sealed class @this
     {
         _option.Remove(key);
         var at = key.LastIndexOf('.');
-        if (choice is null or question.@this.None || at < 0 || Catalog(key[..at], context)?[key[(at + 1)..]] is not { } property) return;
-        foreach (var offer in await property.Type.Offers(_step))
+        if (choice is null or question.@this.None || at < 0 || Catalog(key[..at], context) is not { } action
+            || action[key[(at + 1)..]] is not { } property) return;
+        foreach (var offer in await Offered(action, property, context))
             if (Shown(offer, context) == choice) { _option[key] = (property, offer); return; }
+    }
+
+    // What `property` of `action` is offered in this step: what its type offers (a closed set its options, a
+    // collection the members the step can name, any other the step's variables) — but never a variable the action
+    // itself writes: the step's write-to, where its answer goes, or one the action binds when the step names none
+    // (foreach's %item%), which is choosing none. The question shows these, and a pick is matched against these.
+    private async Task<List<global::app.type.item.@this>> Offered(global::app.goal.step.action.@this action,
+        global::app.type.property.@this property, global::app.actor.context.@this context)
+    {
+        var written = action.Bound.Cast<global::app.type.item.@this>().Append(Destination())
+            .OfType<global::app.type.item.@this>().Select(v => Shown(v, context)).ToHashSet(StringComparer.Ordinal);
+        return (await property.Type.Offers(_step)).Where(o => !written.Contains(Shown(o, context))).ToList();
     }
 
     // An offer as the decider is shown it: its text, as a text channel writes it (`%field%`, `plang`, `Page`).
@@ -539,18 +552,14 @@ public sealed class @this
         var actions = _items.Where(p => p.Score is { } s && s >= (number)Near).Select(p => Catalog(p.Name, context))
             .Concat(asked.SelectMany(m => _modules[m].ActionNames.Select(a => _modules[m][a])))
             .Where(a => a != null).Select(a => a!).Distinct();
-        // the variable the step writes is where its answer goes, never what an option is
-        var writes = Destination()?.Text;
         foreach (var action in actions)
         {
             await action.Note.Value(context.Ok());
             foreach (var line in action.Note.Line)
             {
                 if (line is not { Ask: not null, Name: { } named } || action[named.ToString()] is not { } property) continue;
-                // what the option's type offers for this step (a closed set its options, a collection the members the
-                // step can name, any other the step's variables); an option with nothing to offer isn't asked
-                var offers = (await property.Type.Offers(_step)).Select(o => Shown(o, context))
-                    .Where(o => !string.Equals(o, writes, StringComparison.Ordinal)).ToList();
+                // an option with nothing to offer isn't asked
+                var offers = (await Offered(action, property, context)).Select(o => Shown(o, context)).ToList();
                 if (offers.Count == 0) continue;
                 questions.Add(new question.@this
                 {

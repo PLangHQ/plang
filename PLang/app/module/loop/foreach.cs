@@ -17,7 +17,7 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
         if (!Collection.IsVariable || await Collection.Follow(Context) is not { IsInitialized: true } known
             || known.Type?.kind is not { IsEmpty: false } kind || !Context.App.type.list.Contains(kind.Name)) return;
         var element = Context.App.type.list[kind.Name];
-        var named = (Item == null ? null : await Item.Value()) ?? new app.type.item.variable.@this("item");
+        if (await Item!.Value() is not { } named) return;
         await named.Set(new data.@this(named.Name, element.Empty(Context), element, context: Context), Context);
     }
 
@@ -37,7 +37,8 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
         if (collectionValue == null || collectionValue.IsNull || collectionValue.Peek() == null)
             return await Result(count: 0, complete: true);
 
-        var itemVariable = (Item == null ? null : await Item.Value()) ?? new app.type.item.variable.@this("item");
+        // Item is %item% unless the step names one ([Default])
+        if (await Item!.Value() is not { } itemVariable) return Item;
         var keyVariable = Key is { IsInitialized: true } ? await Key.Value() : null;
         int count = 0;
 

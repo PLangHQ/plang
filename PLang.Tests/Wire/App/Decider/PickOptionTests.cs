@@ -101,6 +101,22 @@ public class PickOptionTests : System.IAsyncDisposable
         await Assert.That(call.Pick.Formal!).Contains("goal.call(Name)");
     }
 
+    // issue 36: the variable an action binds when the step names none (foreach's %item%) is never offered — choosing it
+    // is choosing none — and a pick of it chooses nothing
+    [Test]
+    public async Task TheVariableAnActionBindsByDefault_IsNeverOffered()
+    {
+        var step = Step("foreach %x%, call Y y=%item%");
+        await step.Pick.Take(Answer(("s0_loop.foreach", Yes(0.99))), [], Ctx);
+
+        var key = step.Pick.Question.Single(q => q.Property?.Name == "Key");
+        await Assert.That(key.Values).Contains("%x%");
+        await Assert.That(key.Values).DoesNotContain("%item%");
+
+        await step.Pick.Take(Answer(("s0_@option.loop.foreach.Key", Choice("%item%"))), [], Ctx);
+        await Assert.That(step.Pick.Formal!).DoesNotContain("Key=");
+    }
+
     // the step's write-to is where its answer goes, never an option's value
     [Test]
     public async Task AnOptionsOffers_LeaveOutTheStepsWriteTo()

@@ -2860,7 +2860,6 @@
         "instructions": "Step 8 is `foreach %goals%, call BuildGoal goal=%item%`. which of the step's variables does it bind each element to (`as %name%`)?",
         "criteria": {
           "%goals%": null,
-          "%item%": null,
           "none": null
         }
       },
@@ -2869,7 +2868,6 @@
         "instructions": "Step 8 is `foreach %goals%, call BuildGoal goal=%item%`. which of the step's variables does it bind the key to (`with key %name%`)?",
         "criteria": {
           "%goals%": null,
-          "%item%": null,
           "none": null
         }
       },
@@ -6556,7 +6554,6 @@
         "instructions": "Step 6 is `foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%`. which of the step's variables does it bind each element to (`as %name%`)?",
         "criteria": {
           "%parentGoal.Child%": null,
-          "%item%": null,
           "none": null
         }
       },
@@ -6565,7 +6562,6 @@
         "instructions": "Step 6 is `foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%`. which of the step's variables does it bind the key to (`with key %name%`)?",
         "criteria": {
           "%parentGoal.Child%": null,
-          "%item%": null,
           "none": null
         }
       },
@@ -9375,7 +9371,6 @@
         "instructions": "Step 3 is `foreach %goal.Step%, call AddStepToState step=%item%`. which of the step's variables does it bind each element to (`as %name%`)?",
         "criteria": {
           "%goal.Step%": null,
-          "%item%": null,
           "none": null
         }
       },
@@ -9384,7 +9379,6 @@
         "instructions": "Step 3 is `foreach %goal.Step%, call AddStepToState step=%item%`. which of the step's variables does it bind the key to (`with key %name%`)?",
         "criteria": {
           "%goal.Step%": null,
-          "%item%": null,
           "none": null
         }
       },
@@ -9404,7 +9398,6 @@
         "instructions": "Step 4 is `foreach %modules%, call AddModuleToState module=%item%`. which of the step's variables does it bind each element to (`as %name%`)?",
         "criteria": {
           "%modules%": null,
-          "%item%": null,
           "none": null
         }
       },
@@ -9413,7 +9406,6 @@
         "instructions": "Step 4 is `foreach %modules%, call AddModuleToState module=%item%`. which of the step's variables does it bind the key to (`with key %name%`)?",
         "criteria": {
           "%modules%": null,
-          "%item%": null,
           "none": null
         }
       },
@@ -14722,7 +14714,6 @@
         "instructions": "Step 2 is `foreach %files%, call ScanFile file=%item%`. which of the step's variables does it bind each element to (`as %name%`)?",
         "criteria": {
           "%files%": null,
-          "%item%": null,
           "none": null
         }
       },
@@ -14731,7 +14722,6 @@
         "instructions": "Step 2 is `foreach %files%, call ScanFile file=%item%`. which of the step's variables does it bind the key to (`with key %name%`)?",
         "criteria": {
           "%files%": null,
-          "%item%": null,
           "none": null
         }
       },
@@ -17792,7 +17782,6 @@
         "instructions": "Step 0 is `foreach %module.Action%, call goal Unmatched action=%item%`. which of the step's variables does it bind each element to (`as %name%`)?",
         "criteria": {
           "%module.Action%": null,
-          "%item%": null,
           "none": null
         }
       },
@@ -17801,7 +17790,6 @@
         "instructions": "Step 0 is `foreach %module.Action%, call goal Unmatched action=%item%`. which of the step's variables does it bind the key to (`with key %name%`)?",
         "criteria": {
           "%module.Action%": null,
-          "%item%": null,
           "none": null
         }
       },
@@ -17821,7 +17809,6 @@
         "instructions": "Step 1 is `foreach %list%, call ShowEntry entry=%item%`. which of the step's variables does it bind each element to (`as %name%`)?",
         "criteria": {
           "%list%": null,
-          "%item%": null,
           "none": null
         }
       },
@@ -17830,7 +17817,6 @@
         "instructions": "Step 1 is `foreach %list%, call ShowEntry entry=%item%`. which of the step's variables does it bind the key to (`with key %name%`)?",
         "criteria": {
           "%list%": null,
-          "%item%": null,
           "none": null
         }
       },
