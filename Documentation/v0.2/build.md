@@ -62,8 +62,9 @@ Full detail: [`builder.code.md`](../../os/system/builder/builder.code.md).
 
 There is **one** cache: the LLM layer hashes each request (messages + model + temperature
 + schema + format) and stores the result in `.data/data.sqlite` (`LlmCache`). A hit returns
-the stored result without calling the provider — that's the `[≡]` marker in build output,
-versus `[✓]` for a fresh call. (`llm.decider` is not cached.)
+the stored result without calling the provider. (`llm.decider` is not cached.) The cache
+hit/miss is at the LLM layer and isn't surfaced per step: the build-output template defines
+`[≡]` (cached) / `[✓]` (fresh) step markers, but no goal currently emits them.
 
 `cache:skip` bypasses the lookup. **Always use `cache:skip` when validating a prompt,
 template, or catalog change** — a stale hit hides whether your fix worked. Separately, a
@@ -81,8 +82,9 @@ plang build '--build={"cache":"skip"}' '--debug={"llm":{"system":true,"user":tru
 ```
 
 The `llm` debug object's flags (`system`, `user`, `response`, `schema`) each emit their own
-`=== LLM … ===` block to stderr. Scope to a stage with `{"goal":"Decide"}` or
-`{"goal":"Properties"}`. See [debug.md](debug.md) for the full property bag.
+`=== LLM … ===` block to stderr. These hooks fire on **every** LLM request — they are not
+goal-scoped; `{"goal":"Decide"}` scopes the step and goal trace blocks, not the LLM ones.
+See [debug.md](debug.md) for the full property bag.
 
 ## Diagnosing a wrong `.pr`
 
@@ -91,8 +93,8 @@ runbook pins the failure to the decider, the writer, or the rendered prompt befo
 touch anything: [`debugging.code.md`](../../os/system/builder/debugging.code.md).
 
 The short version: capture what the LLM actually received and returned with
-`--debug={"llm":{"system":true,"user":true,"response":true}}` (scoped to `Decide` or
-`Properties`). If your newly added action is missing from the rendered catalog entirely,
+`--debug={"llm":{"system":true,"user":true,"response":true}}` (the LLM blocks fire for
+every request, so each stage's system/user/response is shown). If your newly added action is missing from the rendered catalog entirely,
 the problem is catalog discovery, not the model — common causes:
 
 - the teaching file's name doesn't match the action (`<action>.description.md`);
