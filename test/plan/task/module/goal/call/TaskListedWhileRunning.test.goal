@@ -1,0 +1,10 @@
+/ A running task is listed under the actor that runs it: %!app.actor.current.task% finds it by its id while Slow
+/ sleeps. (That it leaves the list when it ends, and %task% still holds it, is read through `wait for` in stage 2, and
+/ in C# TaskTests.)
+Start
+- goal.call(Name="Slow", Parallel=true); variable.set(Name=%task%, Value=%!data%)
+- variable.set(Name=%listed%, Value=%!app.actor.current.task[%task.id%]%)
+- assert.equals(Expected=%task.id%, Actual=%listed.id%, Message="the running task is listed under its actor")
+
+Slow
+- timer.sleep(Ms=1000)

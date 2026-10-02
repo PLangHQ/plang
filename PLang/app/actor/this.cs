@@ -62,6 +62,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// </summary>
     public global::app.channel.list.@this Channel => _channels;
 
+    private readonly global::app.task.list.@this _tasks;
+
+    /// <summary>The tasks this actor runs — the goal calls made in parallel on it, each listed while it runs.</summary>
+    public global::app.task.list.@this Task => _tasks;
+
     /// <summary>
     /// Back-reference to the app.
     /// </summary>
@@ -101,6 +106,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         CallStack = new global::app.callstack.@this(Context.Setting);
         Permission = new permission.@this(this);
         _channels = new global::app.channel.list.@this(app, this);
+        _tasks = new global::app.task.list.@this(this);
 
         // Register %!app% — navigates the App object graph (e.g., %!app.goal.list%)
         Context.Variable.Set("!app", new data.DynamicData("!app", asker => asker.Ok(app), Context));

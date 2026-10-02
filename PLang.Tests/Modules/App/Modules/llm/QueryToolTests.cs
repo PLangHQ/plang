@@ -151,8 +151,43 @@ public class QueryToolTests
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("parallel done");
     }
 
+    // In a mixed batch each call is as its own Parallel says: the Parallel A runs on while the plain B runs to its end
+    // before C is called; the marks are what the goals wrote, and the results go back in call order.
     [Test]
-    public async Task Query_MixedParallelFlags_ForcesSequential()
+    public async Task Query_MixedBatch_APlainToolEndsBeforeTheNextIsCalled_AParallelOneRunsOn_ResultsInCallOrder()
+    {
+        await Ctx.Variable.Set("kept", new Dictionary<string, object?> { ["order"] = "" });
+        Marks("A", 1500); Marks("B", 100); Marks("C", 0);
+        int callIndex = 0;
+        _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(++callIndex == 1
+            ? LlmTestHelper.MakeToolCallResponse(("call_1", "A", "{}"), ("call_2", "B", "{}"), ("call_3", "C", "{}"))
+            : LlmTestHelper.MakeCompletionResponse("mixed done")));
+
+        var action = new query(Ctx) { Message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = "mixed" } }.ToListData<LlmMessage>(Ctx),
+            Tool = new List<global::app.goal.step.action.@this>
+                { Make.Tool(Ctx, "A", parallel: true), Make.Tool(Ctx, "B", parallel: false), Make.Tool(Ctx, "C", parallel: false) }.ToListData(Ctx) };
+        await action.Attach(null, Ctx);
+        await (await action.Start()).IsSuccess();
+
+        await Assert.That((await (await Kept("order")).Value())?.ToString()).IsEqualTo(",B,C,A");
+        var second = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
+        var (a, b, c) = (second.IndexOf("\"tool_call_id\":\"call_1\""), second.IndexOf("\"tool_call_id\":\"call_2\""), second.IndexOf("\"tool_call_id\":\"call_3\""));
+        await Assert.That(a > 0 && a < b && b < c).IsTrue();
+        await Assert.That(second[..a]).Contains("\\u0022A\\u0022");
+    }
+
+    // A tool goal named <paramref name="name"/>: sleeps <paramref name="ms"/>, appends its name to %kept.order%, returns its name.
+    private void Marks(string name, int ms)
+    {
+        var steps = new List<Make.StepDef>();
+        if (ms > 0) steps.Add(Make.Step("sleep", Make.Action(Ctx, "timer", "sleep", ("Ms", ms))));
+        steps.Add(Make.Step("mark", Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "%kept.order%", "variable"), ("Value", "%kept.order%," + name))));
+        steps.Add(Make.Step("return", Make.Action(Ctx, "goal", "return", ("Data", name))));
+        _app.goal.list.Add(Make.Goal(Ctx, name, steps.ToArray()));
+    }
+
+    [Test]
+    public async Task Query_MixedParallelFlags_Succeeds()
     {
         int callIndex = 0;
         _handler.Handler = _ =>

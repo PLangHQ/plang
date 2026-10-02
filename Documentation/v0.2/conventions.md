@@ -87,4 +87,4 @@ A boolean option is false by default, and true only when something says so. Name
 
 **How to apply:** an action option that is a bool gets `[Default(false)]` (or no default), and its name is the positive thing a step says to turn it on. A negated name (`DontWait`, `NoCache`) glues a negation onto the word; name the behaviour instead. A setting can also be read where nothing is written, so the same rule holds for setting options.
 
-**Still to fix:** five action options are `[Default(true)]` today: `goal.call` `Wait` (`module/goal/call.cs:36–37`), `list.split` `Empty` (`module/list/split.cs`), `test.discover` `Recursive` (`module/test/discover.cs`), `llm.query` `Cache` (`module/llm/query.cs`), `file.copy` `Subfolder` (`module/file/copy.cs`). Each rename is visible in plang, so each comes to Ingi with its new name.
+**Still to fix:** four action options are `[Default(true)]` today: `list.split` `Empty` (`module/list/split.cs`), `test.discover` `Recursive` (`module/test/discover.cs`), `llm.query` `Cache` (`module/llm/query.cs`), `file.copy` `Subfolder` (`module/file/copy.cs`). Each rename is visible in plang, so each comes to Ingi with its new name.

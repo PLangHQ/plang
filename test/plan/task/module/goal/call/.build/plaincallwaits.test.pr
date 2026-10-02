@@ -1,0 +1,298 @@
+{
+  "name": "Start",
+  "comment": "A plain call (Parallel false by default) waits: it answers the goal's result, and what the goal wrote is there when\nthe next step runs.",
+  "step": [
+    {
+      "index": 0,
+      "text": "goal.call(Name=\"Slow\"); variable.set(Name=%got%, Value=%!data%)",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Slow"
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%got%",
+              "variable": [
+                {
+                  "text": "%got%",
+                  "code": [
+                    {
+                      "variable": "got"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert.equals(Expected=\"slow done\", Actual=%got%, Message=\"a plain call answers the goal's result\")",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "slow done"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%got%",
+              "variable": [
+                {
+                  "text": "%got%",
+                  "code": [
+                    {
+                      "variable": "got"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a plain call answers the goal's result"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"slow\", Actual=%wrote%, Message=\"the goal ended before the next step\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "slow"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%wrote%",
+              "variable": [
+                {
+                  "text": "%wrote%",
+                  "code": [
+                    {
+                      "variable": "wrote"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the goal ended before the next step"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Slow",
+      "step": [
+        {
+          "index": 0,
+          "text": "timer.sleep(Ms=100)",
+          "line": {
+            "number": 9
+          },
+          "code": [
+            {
+              "module": "timer",
+              "name": "sleep",
+              "property": [
+                {
+                  "name": "Ms",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 100
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "variable.set(Name=%wrote%, Value=\"slow\")",
+          "line": {
+            "number": 10
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%wrote%",
+                  "variable": [
+                    {
+                      "text": "%wrote%",
+                      "code": [
+                        {
+                          "variable": "wrote"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "slow"
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "goal.return(Data=\"slow done\")",
+          "line": {
+            "number": 11
+          },
+          "code": [
+            {
+              "module": "goal",
+              "name": "return",
+              "property": [
+                {
+                  "name": "Data",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "slow done"
+                }
+              ],
+              "default": [
+                {
+                  "name": "depth",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/module/goal/call/PlainCallWaits.test.goal",
+      "prPath": "/plan/task/module/goal/call/.build/plaincallwaits.test.pr",
+      "hash": "e267290b126650aef5dc4932ef7da3bd7dcc962dcc65174c2aecb1ba207368aa"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/task/module/goal/call/PlainCallWaits.test.goal",
+  "prPath": "/plan/task/module/goal/call/.build/plaincallwaits.test.pr",
+  "hash": "88a38c8b43180dbda030cda376b6a85100a9fc5f34c26ad524e14916c7124107"
+}

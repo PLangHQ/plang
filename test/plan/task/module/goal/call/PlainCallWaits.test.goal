@@ -1,0 +1,11 @@
+/ A plain call (Parallel false by default) waits: it answers the goal's result, and what the goal wrote is there when
+/ the next step runs.
+Start
+- goal.call(Name="Slow"); variable.set(Name=%got%, Value=%!data%)
+- assert.equals(Expected="slow done", Actual=%got%, Message="a plain call answers the goal's result")
+- assert.equals(Expected="slow", Actual=%wrote%, Message="the goal ended before the next step")
+
+Slow
+- timer.sleep(Ms=100)
+- variable.set(Name=%wrote%, Value="slow")
+- goal.return(Data="slow done")
