@@ -135,7 +135,15 @@ public sealed partial class Chromium : IBrowser
         var chrome = Process.Start(Chrome(chromium, screen, context, profile, "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=0", "--app=" + url))!;
         chrome.StandardInput.Close();
         _ = Drain(chrome.StandardOutput);
-        var port = await PortOf(chrome.StandardError, TimeSpan.FromSeconds(30), line => context.App.Debug?.Write("chromium: " + line) ?? Task.CompletedTask);
+        // what Chromium says on its error output is kept (its last words, if it stops) and goes to --debug
+        Browser? started = null;
+        var early = new List<string>();
+        var port = await PortOf(chrome.StandardError, TimeSpan.FromSeconds(30), line =>
+        {
+            if (started != null) started.Heard(line);
+            else lock (early) early.Add(line);
+            return context.App.Debug?.Write("chromium: " + line) ?? Task.CompletedTask;
+        });
         var pageUrl = port == null ? null : await PageOf(port.Value);
         if (pageUrl == null)
         {
@@ -150,6 +158,12 @@ public sealed partial class Chromium : IBrowser
             Roots = new[] { context.App.AbsolutePath, context.App.OsAbsolutePath }
                 .Where(folder => !string.IsNullOrEmpty(folder)).Select(folder => new Uri(folder!.TrimEnd('/') + "/").AbsoluteUri).ToArray(),
         };
+        lock (early) foreach (var line in early) browser.Heard(line);
+        started = browser;
+        // Chromium stopping by itself is said, with what it said last — never a black screen without a word
+        chrome.EnableRaisingEvents = true;
+        chrome.Exited += (_, _) => _ = browser.Exited();
+        if (chrome.HasExited) _ = browser.Exited();
         var onMessage = action.OnMessage == null ? null : await action.OnMessage.Value();
         if (onMessage != null)
             browser.Message = said => global::app.module.on.code.Gate.Call(onMessage, Payload(said, context), context);
@@ -336,6 +350,8 @@ public sealed partial class Chromium : IBrowser
     {
         var browser = await action.Browser.Value();
         if (browser == null) return action.Context.Ok();
+        // stopped by plang: its exit is no failure
+        browser.Stopping = true;
         // the whole browser's connection on a screen, the page's off-screen
         var speaks = browser.Control is { State: WebSocketState.Open } control ? control : browser.Page;
         try { if (speaks is { State: WebSocketState.Open }) await Cdp(browser, "Browser.close", new JsonObject(), speaks); } catch { }
