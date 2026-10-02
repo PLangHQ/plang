@@ -17,16 +17,25 @@ public class ModulePageTests
         return dir!;
     }
 
-    // The spec's golden page: the markdown block under "Golden output", without its annotation lines.
-    private static string[] Golden() =>
-        Golden(System.IO.File.ReadAllLines(System.IO.Path.Combine(RepoRoot(), "Documentation", "v0.2", "module-reference-generation.md")));
+    private static string SpecPath() =>
+        System.IO.Path.Combine(RepoRoot(), "Documentation", "v0.2", "module-reference-generation.md");
+
+    // A module's golden page: the ```markdown block under its "## Golden output — <module> module"
+    // heading, without annotation lines.
+    private static string[] Golden(string module)
+    {
+        var spec = System.IO.File.ReadAllLines(SpecPath());
+        var from = System.Array.FindIndex(spec, line =>
+            line.StartsWith("## Golden output") &&
+            line.Contains(module, System.StringComparison.OrdinalIgnoreCase));
+        return GoldenFrom(spec, from);
+    }
 
     // The golden ends at the bare fence that closes the outer ```markdown. A fence with an info string
     // (```plang, ```markdown) opens a block one level deeper and a bare ``` closes one level, so a code block
     // inside the golden (a module's ## Examples) does not cut it short.
-    private static string[] Golden(string[] spec)
+    private static string[] GoldenFrom(string[] spec, int from)
     {
-        var from = System.Array.FindIndex(spec, line => line.StartsWith("## Golden output"));
         var open = System.Array.FindIndex(spec, from, line => line == "```markdown");
         var depth = 1;
         var close = open + 1;
@@ -57,7 +66,7 @@ public class ModulePageTests
             "outside the golden",
         };
 
-        var golden = Golden(spec);
+        var golden = GoldenFrom(spec, System.Array.FindIndex(spec, l => l.StartsWith("## Golden output")));
 
         await Assert.That(golden).IsEquivalentTo(new[]
         {
@@ -141,12 +150,12 @@ public class ModulePageTests
         }
     }
 
-    [Test]
-    public async Task TheFilePage_IsTheSpecsGolden()
+    // Render a module's learner page through the template and compare it, line by line, to its golden.
+    private static async Task ComparePageToGolden(string module)
     {
         await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
         var context = os.actor.list.User.Context;
-        context.Variable.Set(new global::app.data.@this("module", os.Module("file")!, context: context));
+        context.Variable.Set(new global::app.data.@this("module", os.Module(module)!, context: context));
         var render = new Render(context)
         {
             Template = (global::app.type.item.text.@this)System.IO.File.ReadAllText(
@@ -158,10 +167,19 @@ public class ModulePageTests
 
         await result.IsSuccess();
         var page = (await result.Value())!.ToString()!.TrimEnd('\n').Split('\n');
-        var golden = Golden();
+        var golden = Golden(module);
         var at = Enumerable.Range(0, System.Math.Max(page.Length, golden.Length))
             .FirstOrDefault(i => i >= page.Length || i >= golden.Length || page[i] != golden[i], -1);
-        await Assert.That(at < 0 ? "" : $"line {at + 1}\n  page:   {(at < page.Length ? page[at] : "<end>")}\n  golden: {(at < golden.Length ? golden[at] : "<end>")}")
+        await Assert.That(at < 0 ? "" : $"{module} line {at + 1}\n  page:   {(at < page.Length ? page[at] : "<end>")}\n  golden: {(at < golden.Length ? golden[at] : "<end>")}")
             .IsEqualTo("");
     }
+
+    [Test]
+    public Task TheFilePage_IsTheSpecsGolden() => ComparePageToGolden("file");
+
+    [Test]
+    public Task TheConditionPage_IsTheSpecsGolden() => ComparePageToGolden("condition");
+
+    [Test]
+    public Task TheLoopPage_IsTheSpecsGolden() => ComparePageToGolden("loop");
 }
