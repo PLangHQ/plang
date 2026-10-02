@@ -329,43 +329,35 @@ public sealed class @this
         var step = context.call.Step;
         if (step == null) return;
 
-        var varNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        // the variables the step's values hold, each shown by the name it lives under
+        // the variables the step's values hold, each shown by the name it lives under, then each watched one whole — a
+        // path (%!build.setting.cache%) reaches what it names, which its root alone never shows
+        var shown = new List<global::app.type.item.variable.@this>();
+        var named = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var action in step.Code.Items())
             foreach (var p in action.Property)
                 if (p.Value is { } value)
                     foreach (var v in value.Variable)
-                        varNames.Add(v.Code.Root.Name);
-
-        // explicitly watched variables are read whole, as the step would read them — a path (%!build.setting.cache%)
-        // reaches what it names, which its root alone (a setting's isn't in memory) never shows
-        var watched = new List<global::app.type.item.variable.@this>();
+                        if (named.Add(v.Code.Root.Name)) shown.Add(new global::app.type.item.variable.@this(v.Code.Root.Name));
         if (context.App?.Debug is { } debug)
             foreach (var name in debug.Watched)
-                if (new global::app.type.item.variable.parser.@this(name).Whole is { } variable && !varNames.Contains(variable.Name))
-                    watched.Add(variable);
+                if (new global::app.type.item.variable.parser.@this(name).Whole is { } variable && named.Add(variable.Name))
+                    shown.Add(variable);
 
-        if (varNames.Count == 0 && watched.Count == 0) return;
+        if (shown.Count == 0) return;
 
-        sb.AppendLine($"  Variables ({varNames.Count + watched.Count}):");
-        foreach (var variable in watched)
+        // each read as the step reads it: an engine path (%!app%) or a shortcut (%!error%, through its goal) is no
+        // variable in memory, and reads all the same
+        sb.AppendLine($"  Variables ({shown.Count}):");
+        foreach (var variable in shown)
         {
-            var read = await variable.Start(context);
-            sb.AppendLine(read is { IsInitialized: true, Success: true }
-                ? $"    %{variable.Name}% = {await FormatValue(read.Peek(), context)} ({read.Type?.Name ?? "?"})"
-                : $"    %{variable.Name}% = (undefined)");
-        }
-        foreach (var name in varNames)
-        {
-            var data = context.Variable.Peek(name);
-            if (data == null || !data.IsInitialized)
+            var data = await variable.Start(context);
+            if (data is not { IsInitialized: true, Success: true })
             {
-                sb.AppendLine($"    %{name}% = (undefined)");
+                sb.AppendLine($"    %{variable.Name}% = (undefined)");
                 continue;
             }
 
-            sb.AppendLine($"    %{name}% = {await FormatValue(data.Peek(), context)} ({data.Type?.Name ?? "?"})");
+            sb.AppendLine($"    %{variable.Name}% = {await FormatValue(data.Peek(), context)} ({data.Type?.Name ?? "?"})");
 
             if (data.Properties.Count > 0)
             {
