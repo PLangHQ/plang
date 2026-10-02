@@ -29,8 +29,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
@@ -70,7 +69,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -78,8 +77,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
@@ -95,7 +93,7 @@
             {
               "name": "Event",
               "type": {
-                "name": "app.event",
+                "name": "event",
                 "template": "plang"
               },
               "value": "%!app.type.file.on.create%",
@@ -142,7 +140,7 @@
                   {
                     "name": "Name",
                     "type": {
-                      "name": "text"
+                      "name": "goal"
                     },
                     "value": "CountCreated"
                   }
@@ -170,8 +168,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 3,
@@ -190,15 +187,6 @@
                 "name": "path"
               },
               "value": "spec_create.txt"
-            }
-          ],
-          "default": [
-            {
-              "name": "resolvevariables",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
             }
           ]
         },
@@ -253,7 +241,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -261,8 +249,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 4,
@@ -309,8 +296,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 5,
@@ -333,13 +319,6 @@
           ],
           "default": [
             {
-              "name": "ignoreifnotfound",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            },
-            {
               "name": "recursive",
               "type": {
                 "name": "bool"
@@ -348,8 +327,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [
@@ -454,7 +432,7 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
@@ -463,26 +441,23 @@
               ]
             }
           ],
-          "waitForExecution": true
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 0 uses math.add, which the decider was not sure of (0.98)"
+            }
+          ]
         }
       ],
       "child": [],
       "visibility": "Private",
       "path": "/plan/app-systems/app/type/file/CreateFiresOnBirth.test.goal",
       "prPath": "/plan/app-systems/app/type/file/.build/createfiresonbirth.test.pr",
-      "hash": "03662325b967596fa340c431eaf3101b0f776b007b149191a8b1746ad25f8a46",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": true
+      "hash": "03662325b967596fa340c431eaf3101b0f776b007b149191a8b1746ad25f8a46"
     }
   ],
   "visibility": "Public",
   "path": "/plan/app-systems/app/type/file/CreateFiresOnBirth.test.goal",
   "prPath": "/plan/app-systems/app/type/file/.build/createfiresonbirth.test.pr",
-  "hash": "492d9976ad1a8c588e59c5bd382489664191978ace11754d84fed93e5072c3b0",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "hash": "492d9976ad1a8c588e59c5bd382489664191978ace11754d84fed93e5072c3b0"
 }

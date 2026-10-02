@@ -74,6 +74,19 @@ A param the writer must set from a droppable trigger word (load-vars→Template,
 value so the writer copies it. Issue 25's remaining gap: the surfaced value reaches the writer only
 when the action is *certain*; a listed-but-uncertain action needs it too (the v3 shape).
 
+## on.event slot `app.event`→`event` on two test .pr (architect task) — 1 done, 1 held
+43441c5c9 renamed the event type's PLang word to `event`. Caught a **stale binary** first (built before
+43441c5c9 entered my tree via rebase → emitted `app.event` + a phantom goal.call-name mis-map); clean
+`dotnet build PlangConsole` fixed both. Then rebuilt each alone (cache off, cwd=test/):
+- **CreateFiresOnBirth (file): DONE** — `event`, test Pass, committed. (Build flaky on issue-17 class;
+  saved on retry.)
+- **AsPathIsABirth (path): HELD at committed `app.event` (test green).** Rebuilding to `event` fails two
+  ways, both core/out-of-lane: (1) `set %p% = "a.txt" as path` drops `Type=path` ~3/5 (the writer loses
+  the `as path` coercion — the droppable-trigger-word / Option-question class; no `as path` example, and
+  examples don't reach the writer anyway); (2) even with `Type=path`, runtime fails `'app.event.on.create'
+  has no wire contract` — the path create event has no `[Out]/[Store]` face, a gap the rename surfaced
+  (file.on.create has one). Handed to architect/coder. Detail in `v3/result.md`.
+
 ## Next session (in order)
 1. **Decider key:** pass `TYPESAFE_API_KEY="$(cat /shared/hopkaup/secrets/typesafe.txt)"` to every
    `plang build`; still owed — store it in a settings table so the runner doesn't need the env each time.

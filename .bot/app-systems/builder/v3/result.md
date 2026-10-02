@@ -216,4 +216,44 @@ the rule. Want a one-time authorized fresh rebuild, or is "current + the 5 clean
 `os/system/Build_dpricated.goal2` deleted (`git rm`). v0.1 builder sketch, non-`.goal` extension,
 only `.bot` bookkeeping referenced it.
 
+## on.event slot type `app.event` → `event` — two test .pr rebuilt (architect task)
+
+Two built test `.pr` under `test/` still typed `on.event`'s `Event` slot as `app.event`; the type is
+`event` since `43441c5c9` ("the event type declares its word: event", 11:53 today).
+
+**Stale-binary catch:** my binary was built near session start, *before* `43441c5c9` entered my tree
+via a later rebase — so the first rebuild still emitted `app.event` AND showed a phantom `goal.call
+Name = <whole step text>` mis-map. Rebuilt the binary clean (`dotnet build PlangConsole`) → both
+anomalies gone. (My earlier cache fix is unaffected — Build.goal doesn't touch the event type.)
+
+Rebuilt each alone, cache off, from `cwd=test/` (app root `test/.build/app.pr`).
+
+### CreateFiresOnBirth (file one) — DONE, `event`, test green, COMMITTED
+`app.event`→`event`; **test Pass**. Build flaky on the issue-17 class (step 4's assert message literal
+refused ~2/3, FixSteps recovers ~1/3; saved on attempt 2). Diff besides the type: `asdefault`→
+`default`; `goal.call Name` type `text`→`goal` (value unchanged); dropped default-false options
+`resolvevariables=false` (file.write), `ignoreifnotfound=false` (file.delete); format drops
+(`waitForExecution`, `isSetup/isEvent/isSystem/isTest`); one benign warning (math.add unsure 0.98).
+
+### AsPathIsABirth (path one) — HELD at committed (`app.event`, green); two blockers, both not my lane
+Rebuilding it to `event` does NOT stay green. Two separate problems:
+1. **`as path` coercion dropped ~3/5** — the writer drops `Type=path` from `set %p% = "a.txt" as path`
+   (measured: Type=path present only 2/5; `app.event`→`event` 5/5). Without `Type=path` the conversion
+   isn't a birth, `%created%` stays 0, assert fails. This is the droppable-trigger-word class (the
+   Option-question lever): `Type` is like a chosen option the writer loses. `set.notes.md:3` teaches
+   `as <type>` generically and examples cover `as text/int/date/duration/image` but **not `as path`**;
+   notes reach the writer, examples only the decider, so neither reliably lands `path`.
+2. **Even with `Type=path` present, the runtime fails** `'app.event.on.create' has no wire contract —
+   declares no [Out]/[Store]`. So renaming the slot to `event` (per 43441c5c9) surfaces a **core gap**:
+   the path create event has no wire-serializable face, while `file.on.create` does (file test passes).
+   The old `app.event`-typed `.pr` passed because that path didn't hit the contract check.
+
+So the path `.pr` is **kept at its committed state** (`app.event`, Type=path, **test green**). Its
+event-type update waits on the core wire-contract fix (and the `as path` mapping is a separate builder
+reliability gap). Both handed to the architect/coder. **Verified both tests green in the end:
+AsPathIsABirth Pass (committed .pr), CreateFiresOnBirth Pass (rebuilt .pr).**
+
+Stale-binary note kept (above): the first rebuild emitted `app.event` + a phantom goal.call-name
+mis-map because the binary predated 43441c5c9; a clean `dotnet build` fixed both.
+
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).
