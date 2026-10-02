@@ -111,15 +111,20 @@ guards hold.** ### DIRECTION CHANGE (Ingi, 2026-10-02): masking is a hack — RE
 Ingi ruled `step.Mask` out. The coder removes `step.Mask` + the restore (core); **I revert the four
 templates from `s.Mask.Text` back to `s.Text`, in a commit paired with the coder's hash.** The `ask:`
 lines (Option v2), `listed.Option` render, and the goal.call note all STAY (not masking).
-**New lever — teach what `%!…%` is.** Neither decider template nor `Properties.llm:32` explains `%!…%`,
-so the decider reads `condition` inside `%!app.module.condition%` as a step word (32a). Add a short
-teaching once in `decider.state.template` (shared state) and `Properties.llm`'s variable line:
-`%name%` is a variable (a value the step uses, never words of the step); `%!…%` reads a value from the
-app (`%!app.module.file%` = the file module as a value, `%!llm.setting.cache%` = the llm setting's cache
-option, `%!data%` = the prior action's result); the words inside `%…%` are its name, never what the
-step does. Then re-pin, Wire, and measure fresh 5 each: 32a (condition step), 32b (educator's exact
-`modules-nocomment` goal), control (`save %!llm.setting.cache%`), issue 2 (key), named continue, guards.
-**Pending the coder's Mask-removal hash** (template revert + teaching land together).
+**New lever — teach what `%!…%` is (FINAL wording, architect-approved).** Put BOTH sentences, once, in
+`decider.state.template` (shared state) and on `Properties.llm`'s variable line:
+> `%name%` is a variable — a value the step uses, never words of the step. `%!…%` reads a value from
+> the app itself: `%!app.module.file%` is the file module as a value, `%!llm.setting.cache%` is the llm
+> setting's cache option, `%!data%` is the result of the action before it. The words inside `%…%` are
+> its name, never what the step does.
+> In `call X name=value`, `name` is what the called goal reads the value as (`%name%`), even when it's
+> a plang word such as `module`, `file` or `goal`; it is never a module or action of the step.
+
+Then re-pin, Wire, and measure fresh, cache off, 5 each: **set A** (educator's exact `modules-nocomment`
+goal, `module=`) **and set C** (`m=`) — to see if the teaching closes the 0/5 vs 4/5 gap — plus 32a
+(condition step), control (`save %!llm.setting.cache%`), issue 2 (key), named continue, guards. One table.
+**Pending the coder's Mask-removal hash** (template revert `s.Mask.Text`→`s.Text` + this teaching land
+together in one commit paired with that hash).
 
 **32(b) note-lever CORRECTED:** my earlier "4/5" did not reproduce — on the educator's exact goal it is
 **0/5** (`module=`), matching their 0/8; a clean guards-goal run is 2/5; and `m=` instead of `module=`
