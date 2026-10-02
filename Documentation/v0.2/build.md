@@ -29,10 +29,10 @@ plang build '--build={"files":"myfile.goal"}'
 plang build '--build={"files":["file1.goal","file2.goal"]}'
 
 # Build without the LLM cache (forces fresh LLM calls)
-plang build '--build={"cache":false}'
+plang build '--build={"cache":"skip"}'
 
 # Combine options
-plang build '--build={"files":"myfile.goal","cache":false}'
+plang build '--build={"files":"myfile.goal","cache":"skip"}'
 ```
 
 `plang build` scopes to the current working directory, so `cd` into the project (or the
@@ -43,7 +43,7 @@ plang build '--build={"files":"myfile.goal","cache":false}'
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `files` | string or string[] | (all) | File filter. Single string or array; only matching `.goal` files are built, in the order given. Each entry is matched against the `.goal` path — path-qualify it (`system/builder/Build.goal`) to avoid fanning out across same-named files. |
-| `cache` | bool | true | Whether to use the LLM response cache. `false` forces fresh LLM calls. |
+| `cache` | `use` \| `skip` | `use` | Whether to use the LLM response cache. `skip` forces fresh LLM calls. |
 
 ## How it works
 
@@ -65,7 +65,7 @@ There is **one** cache: the LLM layer hashes each request (messages + model + te
 the stored result without calling the provider — that's the `[≡]` marker in build output,
 versus `[✓]` for a fresh call. (`llm.decider` is not cached.)
 
-`cache:false` bypasses the lookup. **Always use `cache:false` when validating a prompt,
+`cache:skip` bypasses the lookup. **Always use `cache:skip` when validating a prompt,
 template, or catalog change** — a stale hit hides whether your fix worked. Separately, a
 step whose source is unchanged since its last build is *cached* in a different sense: its
 saved `code` stands and the LLM never sees it (decided before any LLM call).
@@ -74,10 +74,10 @@ saved `code` stands and the LLM never sees it (decided before any LLM call).
 
 ```bash
 # Build one file, watch a builder variable
-plang build '--build={"files":"myfile.goal","cache":false}' '--debug={"variables":["answer","goal"]}'
+plang build '--build={"files":"myfile.goal","cache":"skip"}' '--debug={"variables":["answer","goal"]}'
 
 # See the exact LLM system/user messages and raw response
-plang build '--build={"cache":false}' '--debug={"llm":{"system":true,"user":true,"response":true},"length":{"max":50000}}'
+plang build '--build={"cache":"skip"}' '--debug={"llm":{"system":true,"user":true,"response":true},"length":{"max":50000}}'
 ```
 
 The `llm` debug object's flags (`system`, `user`, `response`, `schema`) each emit their own

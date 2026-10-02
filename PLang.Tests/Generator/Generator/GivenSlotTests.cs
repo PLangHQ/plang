@@ -16,10 +16,10 @@ public class GivenSlotTests
         return ((await result.Value()) as global::app.type.item.list.@this)?.Count.ToString();
     }
 
-    // list.split's Empty is [Default(true)]: written false drops the empty piece.
+    // list.split's Empty is [Default(empty.keep)]: written drop drops the empty piece.
     [Test]
-    public async Task WrittenFalse_IsGiven_NotTheDefault()
-        => await Assert.That(await Split("list.split(Value=\"a,,b\", Empty=false)")).IsEqualTo("2");
+    public async Task WrittenDrop_IsGiven_NotTheDefault()
+        => await Assert.That(await Split("list.split(Value=\"a,,b\", Empty=drop)")).IsEqualTo("2");
 
     [Test]
     public async Task LeftOut_TakesTheDefault()

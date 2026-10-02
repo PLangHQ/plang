@@ -35,7 +35,8 @@ public class DiscoverDenialPathTests
         var action = new global::app.module.test.discover(app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
                 global::app.type.item.path.@this.Resolve(outOfRoot, app.actor.list.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
-            Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", false)
+            Subfolder = new global::app.data.@this<global::app.type.item.choice.@this<global::app.module.file.type.subfolder>>("Subfolder",
+                new global::app.type.item.choice.@this<global::app.module.file.type.subfolder>(global::app.module.file.type.subfolder.skip))
         };
         var result = await action.Start();
         // Denial surfaces as Fail, not as an empty list of tests.
@@ -49,7 +50,8 @@ public class DiscoverDenialPathTests
         var action = new global::app.module.test.discover(app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
                 global::app.type.item.path.@this.Resolve("//../../../etc", app.actor.list.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
-            Recursive = new global::app.data.@this<global::app.type.item.@bool.@this>("Recursive", false)
+            Subfolder = new global::app.data.@this<global::app.type.item.choice.@this<global::app.module.file.type.subfolder>>("Subfolder",
+                new global::app.type.item.choice.@this<global::app.module.file.type.subfolder>(global::app.module.file.type.subfolder.skip))
         };
         var result = await action.Start();
         // Either denial → Fail, or the resolved path lands under root → empty.

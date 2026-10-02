@@ -59,7 +59,7 @@ public class LlmIntegrationTests
         var result = await RunWithSnapshot("SimpleCalculation", messages, new query(Ctx) { Message = messages.ToListData<LlmMessage>(Ctx),
             Temperature = (global::app.type.item.number.@this)0.0,
             Limit = new global::app.module.llm.type.limit.@this(50, 10, 0),
-            Cache = (global::app.type.item.@bool.@this)false
+            Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(global::app.module.cache.type.cache.skip)
         });
         if (result == null) return; // skipped, no API key
 
@@ -83,7 +83,7 @@ public class LlmIntegrationTests
             Schema = Ctx.Ok("{\"sentiment\": \"string\", \"score\": \"number\"}"),
             Temperature = (global::app.type.item.number.@this)0.0,
             Limit = new global::app.module.llm.type.limit.@this(100, 10, 0),
-            Cache = (global::app.type.item.@bool.@this)false
+            Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(global::app.module.cache.type.cache.skip)
         });
         if (result == null) return;
 
@@ -111,7 +111,7 @@ public class LlmIntegrationTests
             Format = (global::app.type.item.text.@this)"python",
             Temperature = (global::app.type.item.number.@this)0.0,
             Limit = new global::app.module.llm.type.limit.@this(200, 10, 0),
-            Cache = (global::app.type.item.@bool.@this)false
+            Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(global::app.module.cache.type.cache.skip)
         });
         if (result == null) return;
 
@@ -137,7 +137,7 @@ public class LlmIntegrationTests
         var result1 = await RunWithSnapshot("ConvPart1", messages1, new query(Ctx) { Message = messages1.ToListData<LlmMessage>(Ctx),
             Temperature = (global::app.type.item.number.@this)0.0,
             Limit = new global::app.module.llm.type.limit.@this(50, 10, 0),
-            Cache = (global::app.type.item.@bool.@this)false
+            Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(global::app.module.cache.type.cache.skip)
         });
         if (result1 == null) return;
         await result1.IsSuccess();
@@ -152,7 +152,7 @@ public class LlmIntegrationTests
             Conversation = new global::app.module.llm.type.conversation.@this(result1),
             Temperature = (global::app.type.item.number.@this)0.0,
             Limit = new global::app.module.llm.type.limit.@this(50, 10, 0),
-            Cache = (global::app.type.item.@bool.@this)false
+            Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(global::app.module.cache.type.cache.skip)
         });
         if (result2 == null) return;
 
@@ -261,7 +261,7 @@ public class LlmIntegrationTests
             Tool = tools.ToListData(Ctx),
             Temperature = (global::app.type.item.number.@this)0.0,
             Limit = new global::app.module.llm.type.limit.@this(200, 10, 0),
-            Cache = (global::app.type.item.@bool.@this)false
+            Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(global::app.module.cache.type.cache.skip)
         };
 
         await action.Attach(null, Ctx);

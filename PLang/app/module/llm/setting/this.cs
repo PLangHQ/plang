@@ -6,6 +6,7 @@ namespace app.module.llm.setting;
 /// </summary>
 public sealed class @this : global::app.type.item.setting.module.@this
 {
-    /// <summary>Whether an answer is cached. A build with <c>--build={"cache":false}</c> turns it off.</summary>
-    [Out, Store] public global::app.type.item.@bool.@this Cache { get; set; } = true;
+    /// <summary>Whether an answer kept from before is used — used, unless a step or this setting skips it.</summary>
+    [Out, Store] public global::app.type.item.choice.@this<global::app.module.cache.type.cache> Cache { get; set; }
+        = new(global::app.module.cache.type.cache.use);
 }

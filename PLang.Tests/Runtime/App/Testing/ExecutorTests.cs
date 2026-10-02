@@ -109,21 +109,21 @@ public class ExecutorTests
         await Assert.That(engine!.Build != null).IsTrue();
         // %!build.setting.cache% — what the builder's goals hand llm.query (`cache=%!build.setting.cache%`)
         var cacheVar = await new global::app.type.item.variable.@this("!build.setting.cache").Start(engine.actor.list.User.Context);
-        await Assert.That((await cacheVar.Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await cacheVar.Value())?.ToString()).IsEqualTo("use");
         await using var _ = engine;
     }
 
-    // --build={"cache":false} reaches %!build.setting.cache% — llm.query in the builder's goals gets false.
+    // --build={"cache":"skip"} reaches %!build.setting.cache% — llm.query in the builder's goals gets skip.
     [Test]
-    public async Task Configure_BuildCacheOff_ReachesBuildCacheSetting()
+    public async Task Configure_BuildCacheSkip_ReachesBuildCacheSetting()
     {
         var executor = NewExecutor();
-        var (engine, error) = executor.Configure(new[] { "--build={\"cache\":false}" });
+        var (engine, error) = executor.Configure(new[] { "--build={\"cache\":\"skip\"}" });
 
         await Assert.That(error).IsNull();
         await using var _ = engine!;
         var cacheVar = await new global::app.type.item.variable.@this("!build.setting.cache").Start(engine!.actor.list.User.Context);
-        await Assert.That((await cacheVar.Value())?.ToString()).IsEqualTo("false");
+        await Assert.That((await cacheVar.Value())?.ToString()).IsEqualTo("skip");
     }
 
     // Positional "build" arg is normalized to --build — equivalent invocation.

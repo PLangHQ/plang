@@ -104,12 +104,13 @@ namespace PLang
 					userVars.Set("path", startupDirectory);
 				if (Flag<global::app.module.build.setting.@this>("!build") is { } buildError) return (null, buildError);
 
-				// A cache-off build flows DOWN to llm.query as llm's cache setting, so llm.query reads its
+				// A build that skips the cache flows DOWN to llm.query as llm's cache setting, so llm.query reads its
 				// own `action.Cache` (which resolves %!llm.query.setting.cache% → %!llm.setting.cache% →
-				// [Default]) instead of sniffing the build. The cache-off default reaches every llm.query
-				// without threading. The run's value is in memory, so the sync Configure sets it at once.
-				if (!app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Cache.Value)
-					app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this().Path + ".cache", app.actor.list.System.Context.Ok(false))
+				// [Default]) instead of sniffing the build. The skip reaches every llm.query without threading.
+				// The run's value is in memory, so the sync Configure sets it at once.
+				var cache = app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Cache;
+				if (cache.Value == global::app.module.cache.type.cache.skip)
+					app.actor.list.System.Setting.Set(new global::app.module.llm.setting.@this().Path + ".cache", app.actor.list.System.Context.Ok(cache))
 						.GetAwaiter().GetResult();
 			}
 

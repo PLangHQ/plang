@@ -125,11 +125,11 @@ public class SettingRowTests
     {
         await using var app = new global::app.@this(_dir).Testing();
         var llm = (global::app.module.llm.setting.@this)(await Read("%!llm.setting%", app.actor.list.User.Context)).Peek()!;
-        llm.Cache = false;
+        llm.Cache = new(global::app.module.cache.type.cache.skip);
         await (await app.actor.list.User.Setting.Save(llm)).IsSuccess();
 
         var seam = await app.actor.list.User.Context.Setting.Get(app.Module("llm")["query"]!, "cache");
-        await Assert.That((await seam.Value())?.ToString()).IsEqualTo("false");
-        await Assert.That((await (await Read("%!llm.query.setting.cache%", app.actor.list.User.Context)).Value())?.ToString()).IsEqualTo("false");
+        await Assert.That((await seam.Value())?.ToString()).IsEqualTo("skip");
+        await Assert.That((await (await Read("%!llm.query.setting.cache%", app.actor.list.User.Context)).Value())?.ToString()).IsEqualTo("skip");
     }
 }

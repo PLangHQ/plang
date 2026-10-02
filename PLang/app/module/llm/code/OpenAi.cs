@@ -152,14 +152,12 @@ public sealed class OpenAi : ILlm
                 await hook(messages, schema);
 
         // --- Cache check ---
-        // Cache decision reads only action.Cache — no build-mode sniff. A cache-off build
-        // (--build={"cache":false}) flows in as the `llm.cache` setting (set by Executor), so an
-        // unthreaded action.Cache resolves to false without this layer knowing build mode exists
-        // (build-mode-inversion §6.D, Case A). Gating cacheKey also skips the write below (guarded
-        // by cacheKey != null), so cache:false is a full bypass: no read, no stale entry left behind.
+        // The cache decision reads only action.Cache — no build-mode sniff: a build that skips the cache says so in
+        // its own setting, which its steps hand to the query. Gating cacheKey also skips the write below (guarded by
+        // cacheKey != null), so skip is a full bypass: no read, no stale entry left behind.
         List<Tool>? goalTools = await ToolsOf(action);
         string? cacheKey = null;
-        if (await action.Cache.ToBooleanAsync() && goalTools == null)
+        if ((await action.Cache.Value())?.Value == global::app.module.cache.type.cache.use && goalTools == null)
         {
             cacheKey = ComputeCacheKey(messages, model, (await action.Temperature.Value())!.ToDouble(), schema, await FormatOf(action));
             var cached = await settings.Get<global::app.type.item.@this>(CacheTable, cacheKey);

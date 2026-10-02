@@ -43,13 +43,13 @@ public class SettingsDataTests
     {
         var ctx = _app.actor.list.System.Context;
         var llm = Llm(ctx);
-        llm.Cache = false;
+        llm.Cache = new(global::app.module.cache.type.cache.skip);
 
         var result = await new global::app.module.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start();
         await result.IsSuccess();
         // no value rides out — a setting may hold secrets
         await Assert.That(result.Peek() is null or global::app.type.item.@null.@this).IsTrue();
-        await Assert.That(Llm(ctx).Cache == false).IsTrue();
+        await Assert.That(Llm(ctx).Cache.Value).IsEqualTo(global::app.module.cache.type.cache.skip);
     }
 
     [Test]
@@ -57,12 +57,12 @@ public class SettingsDataTests
     {
         var ctx = _app.actor.list.System.Context;
         var llm = Llm(ctx);
-        llm.Cache = false;
+        llm.Cache = new(global::app.module.cache.type.cache.skip);
         await (await new global::app.module.setting.Save(ctx) { Setting = Given(llm, ctx) }.Start()).IsSuccess();
 
         var result = await new global::app.module.setting.Remove(ctx) { Setting = Given(Llm(ctx), ctx) }.Start();
         await result.IsSuccess();
-        await Assert.That(Llm(ctx).Cache == true).IsTrue();
+        await Assert.That(Llm(ctx).Cache.Value).IsEqualTo(global::app.module.cache.type.cache.use);
     }
 
     [Test]

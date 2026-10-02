@@ -16,11 +16,11 @@ public partial class discover : IContext
     [Default("*.test.goal")]
     public partial data.@this<global::app.type.item.text.@this> Pattern { get; init; }
 
-    /// <summary>Walk subdirectories. Default true.</summary>
-    [Default(true)]
-    public partial data.@this<global::app.type.item.@bool.@this> Recursive { get; init; }
+    /// <summary>Whether the tests in subfolders are found too — included, unless the step skips them.</summary>
+    [Default(global::app.module.file.type.subfolder.include)]
+    public partial data.@this<global::app.type.item.choice.@this<global::app.module.file.type.subfolder>> Subfolder { get; init; }
 
     public async Task<data.@this<global::app.type.item.list.@this<global::app.test.@this>>> Start()
         => data.@this<global::app.type.item.list.@this<global::app.test.@this>>.From(
-            await Path.Use(root => Context.App.test.list.Discover(root, Pattern, Recursive, Context)));
+            await Path.Use(root => Context.App.test.list.Discover(root, Pattern, Subfolder, Context)));
 }

@@ -41,18 +41,18 @@ public class SettingReadTests
     [Test] public async Task ModuleOption_FallsBackToTheSystem()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await app.actor.list.System.Setting.Set("llm.setting.cache", app.actor.list.System.Context.Ok(false));
+        await app.actor.list.System.Setting.Set("llm.setting.cache", app.actor.list.System.Context.Ok("skip"));
 
         var read = await Read("%!llm.setting.cache%", app.actor.list.User.Context);
-        await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
+        await Assert.That((await read.Value())?.ToString()).IsEqualTo("skip");
     }
 
     // Outside a build the app holds no build: %!build% is the module, its settings the build's class.
-    [Test] public async Task BuildCache_IsTrueByDefault()
+    [Test] public async Task BuildCache_IsUsedByDefault()
     {
         await using var app = new global::app.@this("/test").Testing();
         var read = await Read("%!build.setting.cache%", app.actor.list.User.Context);
-        await Assert.That((await read.Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await read.Value())?.ToString()).IsEqualTo("use");
     }
 
     // An action's option: its default, then this run's (the action's own, then the module's).
@@ -60,13 +60,13 @@ public class SettingReadTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("true");
+        await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("use");
 
-        await ctx.Setting.Set("llm.setting.cache", ctx.Ok(false));
-        await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("false");
+        await ctx.Setting.Set("llm.setting.cache", ctx.Ok("skip"));
+        await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("skip");
 
-        await ctx.Setting.Set("llm.query.setting.cache", ctx.Ok(true));
-        await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("true");
+        await ctx.Setting.Set("llm.query.setting.cache", ctx.Ok("use"));
+        await Assert.That((await (await Read("%!llm.query.setting.cache%", ctx)).Value())?.ToString()).IsEqualTo("use");
     }
 
     // A record option: its members' defaults, then this run's record — a member it leaves out keeps its default.

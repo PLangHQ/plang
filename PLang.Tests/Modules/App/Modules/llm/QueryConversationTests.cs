@@ -45,8 +45,8 @@ public class QueryConversationTests
     {
         var message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = user } }.ToListData<LlmMessage>(Ctx);
         var action = continues == null
-            ? new query(Ctx) { Message = message, Schema = schema, Cache = (global::app.type.item.@bool.@this)cache }
-            : new query(Ctx) { Message = message, Schema = schema, Cache = (global::app.type.item.@bool.@this)cache,
+            ? new query(Ctx) { Message = message, Schema = schema, Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(cache ? global::app.module.cache.type.cache.use : global::app.module.cache.type.cache.skip) }
+            : new query(Ctx) { Message = message, Schema = schema, Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(cache ? global::app.module.cache.type.cache.use : global::app.module.cache.type.cache.skip),
                 Conversation = new global::app.module.llm.type.conversation.@this(continues) };
         await action.Attach(null, Ctx);
         return await action.Start();
@@ -158,12 +158,12 @@ public class QueryConversationTests
     public async Task Step_ContinueNamesTheResponseVariable()
     {
         Answers("answer");
-        await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"remember 7\"}], Cache=false)").Start(Ctx);
+        await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"remember 7\"}], Cache=skip)").Start(Ctx);
         await (await Ctx.Action("variable.set(Name=%answer%, Value=%!data%)").Start(Ctx)).IsSuccess();
         var answer = await Ctx.Variable.Get("answer");
         await Assert.That(answer.Properties.Contains("Messages")).IsTrue();
 
-        var next = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"what was it\"}], Cache=false, Conversation={continue: %answer%})").Start(Ctx);
+        var next = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"what was it\"}], Cache=skip, Conversation={continue: %answer%})").Start(Ctx);
         await next.IsSuccess();
         var continued = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         await Assert.That(continued).Contains("remember 7");
@@ -175,10 +175,10 @@ public class QueryConversationTests
     public async Task Step_ConversationIsTheResponseItself()
     {
         Answers("answer");
-        await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"remember 7\"}], Cache=false)").Start(Ctx);
+        await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"remember 7\"}], Cache=skip)").Start(Ctx);
         await (await Ctx.Action("variable.set(Name=%answer%, Value=%!data%)").Start(Ctx)).IsSuccess();
 
-        var next = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"what was it\"}], Cache=false, Conversation=%answer%)").Start(Ctx);
+        var next = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"what was it\"}], Cache=skip, Conversation=%answer%)").Start(Ctx);
 
         await next.IsSuccess();
         await Assert.That(await _handler.LastRequest!.Content!.ReadAsStringAsync()).Contains("remember 7");
@@ -191,7 +191,7 @@ public class QueryConversationTests
         Answers("answer");
         await Ctx.Variable.Set("greeting", "hello");
 
-        var read = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"x\"}], Cache=false, Conversation=%greeting%)").Start(Ctx);
+        var read = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"x\"}], Cache=skip, Conversation=%greeting%)").Start(Ctx);
 
         await Assert.That(read.Success).IsFalse();
         await Assert.That(read.Error!.Message).Contains("a conversation continues an llm answer; %greeting% isn't one");
@@ -202,7 +202,7 @@ public class QueryConversationTests
     public async Task Step_ContinueTrue_IsRefused()
     {
         Answers("answer");
-        var read = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"x\"}], Cache=false, Conversation={continue: true})").Start(Ctx);
+        var read = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"x\"}], Cache=skip, Conversation={continue: true})").Start(Ctx);
         await Assert.That(read.Success).IsFalse();
         await Assert.That(read.Error!.Message).Contains("continue which conversation");
     }

@@ -84,18 +84,19 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     }
 
     /// <summary>
-    /// The tests under <paramref name="root"/>: every file matching <paramref name="pattern"/> (walking
-    /// subfolders when <paramref name="recursive"/>), listed through the path's gate — an out-of-root root is
-    /// a prompt or a denial, never a silent empty list. A file whose built goal is fresh becomes its test as a
+    /// The tests under <paramref name="root"/>: every file matching <paramref name="pattern"/> (its subfolders'
+    /// too unless <paramref name="subfolder"/> skips them), listed through the path's gate — an out-of-root root
+    /// is a prompt or a denial, never a silent empty list. A file whose built goal is fresh becomes its test as a
     /// run takes it; one that isn't (no .pr, a stale or refused .pr) is a Stale test naming why. A pattern or
-    /// a flag that didn't resolve is its own answer.
+    /// a choice that didn't resolve is its own answer.
     /// </summary>
     public Task<data.@this> Discover(global::app.type.item.path.@this root,
-        data.@this<global::app.type.item.text.@this> pattern, data.@this<global::app.type.item.@bool.@this> recursive,
+        data.@this<global::app.type.item.text.@this> pattern,
+        data.@this<global::app.type.item.choice.@this<global::app.module.file.type.subfolder>> subfolder,
         actor.context.@this context)
-        => pattern.Use(match => recursive.Use(async deep =>
+        => pattern.Use(match => subfolder.Use(async under =>
         {
-            var listed = await root.List(match.ToString(), deep.Value, context);
+            var listed = await root.List(match.ToString(), under.Value == global::app.module.file.type.subfolder.include, context);
             if (!listed.Success) return listed;
             var found = new List<data.@this>();
             if (await listed.Value() is global::app.type.item.list.@this files)
