@@ -144,6 +144,10 @@ public class @this
     /// closed set); any other kind answers none, and its type's own apply.</summary>
     public virtual System.Collections.Generic.IReadOnlyList<string>? Values => null;
 
+    /// <summary>What a value of this kind can be in <paramref name="step"/>, as the decider is offered it: one of the
+    /// step's own variables, by the placeholder it reads it as (<c>%v1%</c>). A closed set offers its options.</summary>
+    public virtual System.Collections.Generic.IReadOnlyList<string> Offers(global::app.goal.step.@this step) => step.Mask.Placeholder;
+
     /// <summary>Whether a value of C# class <paramref name="clr"/> rides as this kind — its
     /// <see cref="ClrForm"/> takes it.</summary>
     public virtual bool Carries(System.Type clr) => ClrForm is { } form && form.IsAssignableFrom(clr);

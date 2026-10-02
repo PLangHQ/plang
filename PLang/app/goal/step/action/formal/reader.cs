@@ -42,9 +42,12 @@ public sealed class Reader
         _modules = modules;
     }
 
-    /// <summary>The step's actions read from <paramref name="text"/> — Ok(action.list), or the error.</summary>
+    /// <summary>The step's actions read from <paramref name="text"/> — Ok(action.list), or the error. An answer written
+    /// in the step's placeholders (<c>%v1%</c>, as the decider and the writer read the step) is restored to its variables
+    /// first, before anything is read or bound.</summary>
     public global::app.data.@this Read(string text, global::app.actor.context.@this context)
     {
+        text = _step.Mask.Restore(text);
         try
         {
             var cursor = new Cursor(text, _step, context, _step.Index, _modules);

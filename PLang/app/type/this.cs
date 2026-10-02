@@ -600,6 +600,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public IReadOnlyList<string>? Values { get => kind.Values ?? Family._values; init => _values = value; }
     private IReadOnlyList<string>? _values;
 
+    /// <summary>What a value of this type can be in <paramref name="step"/>, as the decider is offered it — the kind
+    /// answers: a closed set its options, any other the step's own variables.</summary>
+    public IReadOnlyList<string> Offers(global::app.goal.step.@this step) => kind.Offers(step);
+
     /// <summary>Scalar wire shape (the underlying primitive form, e.g. "string" for path).</summary>
     public string? Shape { get => Family._shape; init => _shape = value; }
     private string? _shape;
