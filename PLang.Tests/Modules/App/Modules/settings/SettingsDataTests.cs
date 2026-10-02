@@ -90,6 +90,28 @@ public class SettingsDataTests
         await Assert.That(System.IO.Directory.Exists(dbDir)).IsTrue();
     }
 
+    // settings are no app data: a saved setting lands in the settings' own store, /.data/setting/data.sqlite, and a new
+    // app on the same root reads it back
+    [Test]
+    public async Task ASavedSetting_LivesInTheSettingsOwnStore()
+    {
+        await using (var onDisk = new global::app.@this(_tempDir).TestSigning())
+        {
+            var ctx = onDisk.actor.list.System.Context;
+            var llm = Llm(ctx);
+            llm.Cache = new(global::app.module.cache.type.cache.skip);
+            await (await onDisk.actor.list.System.Setting.Save(llm)).IsSuccess();
+
+            await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(_tempDir, ".data", "setting", "data.sqlite"))).IsTrue();
+            var inData = await onDisk.store.Get<global::app.type.item.@this>("settings", $"system!{llm.Path}");
+            await Assert.That(inData.IsInitialized && inData.Peek() is { IsNull: false }).IsFalse();
+        }
+
+        await using var again = new global::app.@this(_tempDir).TestSigning();
+        var read = await new global::app.type.item.variable.@this("!llm.setting.cache").Start(again.actor.list.System.Context);
+        await Assert.That((await read.Value())?.ToString()).IsEqualTo("skip");
+    }
+
     // --- Store-level error path ---
 
     [Test]

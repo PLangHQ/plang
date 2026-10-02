@@ -38,8 +38,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>
     /// Per-actor permission view — signed grants on paths, keyed by verb
     /// + sub-options. <c>Find/Add/Revoke</c>. Routes "y" grants to an
-    /// in-memory list (live for the App's lifetime) and "a" grants to
-    /// <c>app.store</c> under the <c>permission</c> table.
+    /// in-memory list (live for the App's lifetime) and "a" grants to the
+    /// actor's permission setting, saved in the settings' store.
     /// </summary>
     public permission.@this Permission { get; private set; } = null!;
 
@@ -133,5 +133,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _cts.Dispose();
         Context.Dispose();
         await _channels.DisposeAsync();
+        // the settings' store, when this actor's settings are the chain's root that made it
+        _setting?.Dispose();
     }
 }

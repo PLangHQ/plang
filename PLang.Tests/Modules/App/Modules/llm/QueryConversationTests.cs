@@ -197,6 +197,41 @@ public class QueryConversationTests
         await Assert.That(read.Error!.Message).Contains("a conversation continues an llm answer; %greeting% isn't one");
     }
 
+    // the key a query is sent with is the llm module's setting: this run's value wins over the environment's default
+    [Test]
+    public async Task Query_SendsTheSettingsKey()
+    {
+        Answers("answer");
+        await Ctx.Setting.Set("llm.setting.key", Ctx.Ok("sk-from-the-setting"));
+
+        await Ask("hello");
+
+        await Assert.That(_handler.LastRequest!.Headers.Authorization?.ToString()).IsEqualTo("Bearer sk-from-the-setting");
+    }
+
+    // with nothing saved, the key is the environment's; and it never shows where a setting is written out
+    [Test]
+    public async Task TheKey_DefaultsToTheEnvironment_AndNeverShows()
+    {
+        var llm = new global::app.module.llm.setting.@this();
+        await Assert.That(llm.Key.ToString()).IsEqualTo(System.Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? "");
+
+        llm.Key = "sk-never-shown";
+        var written = await Ctx.Pr(llm, global::app.View.Out);
+        await Assert.That(written).DoesNotContain("sk-never-shown");
+    }
+
+    // a setting's options are described where anyone reads them (the builder's prompt, a type's face): a sensitive
+    // option shows no default — the environment's key would be its default
+    [Test]
+    public async Task ASensitiveOption_IsDescribedWithNoDefault()
+    {
+        var options = ((global::app.type.item.setting.kind.@this)_app.type.list["setting"].kind["llm.setting"]!).Property;
+
+        await Assert.That(options["key"]!.HasDefault).IsFalse();
+        await Assert.That(options["endpoint"]!.HasDefault).IsTrue();
+    }
+
     // continue takes a response, never a yes: a bare true names no conversation.
     [Test]
     public async Task Step_ContinueTrue_IsRefused()

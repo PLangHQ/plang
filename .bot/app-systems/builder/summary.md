@@ -190,13 +190,38 @@ Idle pending:
   no `Key=%item%` 5/5; guards hold (`as %i%` → Item,no Key; `with key %field%` → Item+Key), 5/5 each.
 - **37 — cast FIXED** (coder 6c136ec1a): no more `InvalidCastException: lower app.module into list`.
   32(b) edu now 9/10 `Name="Page"`.
-- **39 (the ~1/10 non-recovery) — diagnosed, CORRECTED:** NOT a FixSteps set failure. The set
+- **39 — FIXED** (coder's refusal reword `ceb9899cb`, gate 105): jq-verified **10/10** RIGHT on the
+  educator's goal (`Name="Page"`×3 + `Parameter={module: %!app.module.file%}`×3), 0 NO-PR — the reword
+  ("write each argument as the step names it, `{<the name before =>: …}`") closed the bare-value slip
+  (was 7/10 right / 3/10 NO-PR). History below kept for the record (incl. my retracted grep-artifact
+  reads).
+- **39 (original diagnosis trail) — CORRECTED:** NOT a FixSteps set failure. The set
   succeeds and the retry `llm.query` runs; the retry's re-answer is `goal.call(Name="Page",
   Parameter=%!app.module.file%)` — the writer writes the Parameter as a **bare nameless value** (drops
   the arg name `module`), both initially and on retry, and does NOT copy the placeholder `name`. So
   build.match refuses again → NO PR. Fix (architect/coder): the refusal should name the step's own arg
   (`{module: …}`) not the placeholder `name`; and/or teach that a plang-word arg name is still a name.
   Same plang-word pull as 32(b), on the Parameter side.
+  - **Teaching lever TRIED, FAILED (1cb12dd3f):** extended call.notes Parameter + a call.examples entry
+    (arg name kept even when a plang word). Before/after, 10 edu builds each: module arg kept **0/3 both
+    before and after**; plain-arg guard (`item`) kept 5/5. Teaching isn't the lever — the **coder's
+    refusal reword** (± offers→Parameter arg) is. Teaching kept (accurate, may compose). Also surfaced:
+    32(b)'s earlier "9/10 saved" were **silently dropping the module arg** (SAVED, 0 module-args) — worse
+    than the loud refusal. Re-measure after the reword lands.
+  - **RETRACTED + CORRECTED (jq):** the "module arg dropped 0/3" was a **grep whitespace artifact**
+    (inner Parameter rows are compact JSON `"name":"module"`; my grep required a space). Writer raw
+    answer is `goal.call(Name="Page", Parameter={module: %!app.module.file%})` and the `.pr` stores it
+    correctly. True rate: **7/10 fully right, 3/10 NO PR** (intermittent writer slip to a bare nameless
+    `Parameter=%!app.module.file%` → the named-rows refusal; FixSteps retry sometimes slips too). So
+    neither writer-rename nor reader-key-change — the only defect is the ~3/10 bare-value slip.
+  - **Measurement rule (architect, now logged):** every count from a **JSON parser (jq)** over the
+    `.pr`, never a text grep; a surprising/contradicted count is checked against one raw `.pr` + one raw
+    LLM answer before reporting. [[feedback_verify_pr_raw_not_grep]]
+  - **Next (GATED on gate 105 — do NOT build before the architect's go):** rebuild binary from head
+    (carries `ceb9899cb` — refusal reworded to "write each argument as the step names it,
+    {<the name before =>: …}"); measure edu 10 builds fresh/cache off **with jq**: fully right, no `.pr`,
+    and for each no-`.pr` build whether the retry repeated the bare value.
+  - **Coming:** coder's side branch `app-systems-choices`; architect will send steps to rebuild test.pr there.
   - **⚠️ Lesson (twice now):** the DEBUG `[BEFORE]`/watch `%x% = (undefined)` listing is UNRELIABLE
     (debug/this.cs:344,351 — it fooled me on cache:false AND here). **Never conclude a variable is
     undefined from the debug listing — check the step's DEBUG [AFTER] / the actual effect first.** My

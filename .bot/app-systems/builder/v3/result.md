@@ -542,4 +542,69 @@ may be the pull. **Fix candidates (architect/coder):** the refusal should name t
 teaching that an arg whose name is a plang word (`module`, `file`, `goal`) is still an arg name. Core
 is the refusal wording + possibly the writer/offers extending to the Parameter arg name.
 
+## ⚠️ RETRACTION — the "module arg dropped" was a grep artifact; writer+reader are CORRECT
+
+The architect caught it: Cover refuses an answer missing any `%!…%` the step contains, so a truly
+dropped `%!app.module.<m>%` couldn't save. Direct evidence settles it:
+- **Writer raw answer** (`--debug llm response`): `[0] goal.call(Name="Page", Parameter={module:
+  %!app.module.file%})` — the arg is **correctly named `module`**. No rename.
+- **Built `.pr`** (`m10/edu` l.27): `Parameter` value = `[{"name":"module","type":{"name":"item",
+  "template":"plang"},"value":"%!app.module.file%", …}]` — stored correctly as a named row. **No
+  reader key-collision.**
+
+My `"name": "module"` count returned 0 only because the inner Parameter rows are **compact JSON**
+(`"name":"module"`, no space) while my grep required the space — a **whitespace artifact**. So
+everything below framed as "module arg dropped / silently dropped / 0/3 before+after" is **RETRACTED**,
+including the teaching before/after (both read 0/3 falsely).
+
+**Corrected measurement (compact grep, 10 edu builds): 7/10 fully correct** (`Name="Page"` +
+`Parameter={module: %!app.module.file%}` on all 3 steps), **3/10 NO PR** — the residual is an
+**intermittent writer slip** to a bare nameless `Parameter=%!app.module.file%` on ≥1 step (→ the
+"Parameter takes named rows" refusal; FixSteps' retry sometimes slips the same way → NO PR). So the
+writer *usually* names the arg correctly; ~3/10 it writes a bare value. Answering the architect:
+**neither the writer renames nor the reader changes the key — `{module: …}` is written and read
+correctly**; the only defect is the intermittent bare-value slip.
+
+The teaching (call.notes/examples: an arg name is kept even when a plang word) is **accurate and kept**
+(may trim the slip rate; I can't claim a before/after since my prior numbers were the grep artifact).
+Third measurement slip of this investigation (debug-watch `(undefined)`, then compact-JSON grep) —
+lesson reinforced: inspect the actual `.pr`/raw answer before reporting a count.
+
+## Issue 39 — FIXED by the reworded refusal (ceb9899cb), jq-verified 10/10
+
+After the refusal reword ("write each argument as the step names it, `{<the name before =>: …}`",
+`ceb9899cb`, gate 105), re-measured the educator's goal — 10 builds, fresh, cache off, **counts via jq**
+(Name values + first Parameter row name per `call goal Page` step):
+
+| metric | result |
+|---|---|
+| RIGHT (`Name="Page"`×3 AND `Parameter.module`×3) | **10/10** |
+| NO PR | **0/10** |
+| saved-but-other | 0/10 |
+
+So the reworded refusal closed the intermittent bare-value slip: **before** (7/10 right, 3/10 NO PR on a
+bare nameless `Parameter`) → **after 10/10 right**. 32(b)/39 fully fixed — `Name="Page"` +
+`Parameter={module: %!app.module.file%}` every build. (Measured with jq per the new rule; no grep.)
+
+## (superseded by the retraction above) Issue 39 teaching lever — before/after numbers were a grep artifact
+
+The residual: the writer drops the Parameter arg name when it is a plang word (`module=%!app.module.file%`
+→ either omitted silently or a bare nameless `Parameter=%!app.module.file%` → refused). Tried the
+teaching lever: extended `call.notes` Parameter ("the word before `=` is the argument's name and MUST
+be kept, even when a plang word `module`/`file`/`goal`; never a bare value, never dropped") + a matching
+`call.examples` entry. Fresh, cache off, 10 edu builds + a plain-arg guard, before and after:
+
+| | edu (module arg kept, want 3/3) | guard `call goal Show item=%x%` |
+|---|---|---|
+| **before** | 0/3 in all saved builds; 9 SAVED (module arg silently dropped) + 1 NO PR (nameless → refused) | item arg kept **5/5** |
+| **after (teaching)** | 0/3 in all saved builds; 8 SAVED + 2 NO PR | item arg kept **5/5** |
+
+**The teaching did not move it** — the writer still never emits `Parameter={module: …}` (it omits the
+arg or writes it nameless), despite the note now saying so plainly. So **teaching is not the lever**;
+the fix is the coder's **refusal reword** (point at the step's own arg name) ± extending the offers to
+the Parameter arg. The guard confirms this is **specific to plang-word arg names** — a plain `item`
+arg is kept 5/5. The teaching is accurate and kept (may compose with the reword), but on its own it's
+insufficient. Also newly visible: the "9/10 saved" from the earlier 32(b) run were **silently dropping
+the module arg** (SAVED with 0 module-args), not cleanly building it — worse than the loud refusal.
+
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).

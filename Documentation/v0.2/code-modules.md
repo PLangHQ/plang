@@ -117,7 +117,7 @@ This means `SignedData.Verified` needs a lazy resolution pattern (similar to `Id
 
 **PLang type name mapping:** `"llm"` / `"illm"` → `ILlm`.
 
-**Config resolution:** `llm.endpoint` / `llm.apiKey` / `llm.model` read from SettingsStore → environment variables (`OPENAI_API_KEY`, `OPENAI_API_ENDPOINT`) → hard defaults (`gpt-4.1-mini`).
+**Config resolution:** the llm module's settings — `%!llm.setting.key%` (sensitive, never shown), `%!llm.setting.endpoint%`, `%!llm.setting.model%` — a saved value wins; when none is saved, the key and endpoint are the environment's (`OPENAI_API_KEY`, `OPENAI_API_ENDPOINT`), the endpoint else OpenAI's, the model `gpt-5.4-nano`.
 
 **Tool execution loop:** The implementation calls `app.RunGoalAsync(GoalCall)` for each tool the LLM requests. Tool errors are sent back to the LLM as tool result text ("Error: ..."), letting the LLM decide how to proceed. `MaxToolCalls` is a hard budget — tool calls are sliced to the remaining budget before execution.
 

@@ -7,7 +7,7 @@
       "set %!app.test.setting.parallel% = 1",
       "set %!build.setting.files% = [\"a.goal\"]"
     ],
-    "block": "\n\nSettings\n- %!build.setting%(cache: choice<cache> = use, files: list = [])\n- %!llm.setting%(cache: choice<cache> = use)\n- %!app.test.setting%(actor: choice<actor> = user, timeout: duration = 30s, parallel: number = 0, format: choice<format> = json, include: list<text> = [], exclude: list<text> = [])"
+    "block": "\n\nSettings\n- %!build.setting%(cache: choice<cache> = use, files: list = [])\n- %!llm.setting%(cache: choice<cache> = use, key: text, endpoint: text = https://api.openai.com/v1/chat/completions, model: text = gpt-5.4-nano)\n- %!app.test.setting%(actor: choice<actor> = user, timeout: duration = 30s, parallel: number = 0, format: choice<format> = json, include: list<text> = [], exclude: list<text> = [])"
   },
   {
     "goal": "NoneNamed",
@@ -31,6 +31,6 @@
       "set %!llm.setting.cache% = false",
       "write out %!app.goal[\"/checkout\"].name%"
     ],
-    "block": "\n\nSettings\n- %!llm.setting%(cache: choice<cache> = use)\n\nKeys\n- %!app.goal[\"/show\"]% is one goal by its key: one element of %!app.goal.list% (so too %!app.module[\"file\"]%)"
+    "block": "\n\nSettings\n- %!llm.setting%(cache: choice<cache> = use, key: text, endpoint: text = https://api.openai.com/v1/chat/completions, model: text = gpt-5.4-nano)\n\nKeys\n- %!app.goal[\"/show\"]% is one goal by its key: one element of %!app.goal.list% (so too %!app.module[\"file\"]%)"
   }
 ]
