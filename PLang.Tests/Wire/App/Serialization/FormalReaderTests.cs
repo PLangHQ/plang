@@ -100,6 +100,25 @@ public class FormalReaderTests : System.IAsyncDisposable
         await Assert.That((System.TimeSpan)(global::app.type.item.duration.@this)duration!).IsEqualTo(System.TimeSpan.FromMinutes(5));
     }
 
+    // a list of dicts is a value for a list option (llm.query's messages); only goal.call's parameters, which are
+    // argument rows, are refused written as a list
+    [Test]
+    public async Task AListOfDicts_ReadsAsAValue_ForAListOption()
+    {
+        var read = Read("llm.query(Message=[{Role: \"system\", Content: \"be brief\"}, {Role: \"user\", Content: \"hi\"}])", out _);
+
+        await read.IsSuccess();
+    }
+
+    [Test]
+    public async Task GoalCallsParameters_WrittenAsAListOfDicts_AreRefused()
+    {
+        var read = Read("goal.call(Name=\"X\", Parameter=[{kind: \"a\"}])", out _);
+
+        await read.IsFailure();
+        await Assert.That(read.Error!.Message).Contains("arguments are written as one dict");
+    }
+
     [Test]
     public async Task AClause_LeadingTheStep_IsRefused()
     {
