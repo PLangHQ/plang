@@ -1,4 +1,6 @@
-# Friction: what makes building, debugging and tracing harder
+# Friction: reviews from plang's own users
+
+The bots are the users of plang and its builder. We eat our own dog food (Ingi: "they are the user's og the plang builder, they should bring reviews … we can make it amazing with everybody's help"). So this is a user review as much as a bug list: where the builder misunderstood what you wrote, where an error didn't tell you what to do, what you had to work around, what you wished the language did, and anything that made building, debugging or tracing harder.
 
 Collected by the architect from every bot, to go over with Ingi. Each entry: **who**, **what** (the flaw or weakness), **cost** (what it cost, with evidence), **if I had** (the wish: "if I had X, I could do Y"). Bots send entries to the architect or keep them in `.bot/app-systems/<bot>/friction.md`; the architect gathers them here and marks each **new**, **discussed** (with Ingi's answer) or **done** (with the commit).
 
