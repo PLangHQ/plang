@@ -1,4 +1,4 @@
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 /// <summary>A color, premultiplied BGRA (as the screen's pixels are).</summary>
 internal readonly record struct Color(float B, float G, float R, float A)

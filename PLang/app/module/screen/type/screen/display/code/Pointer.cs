@@ -1,4 +1,4 @@
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 /// <summary>
 /// The seat's pointer: where it is, which client surface has it, the buttons held, the shape to

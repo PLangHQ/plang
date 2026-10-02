@@ -1,4 +1,4 @@
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 // xdg-shell (windows and menus) and xdg-decoration (who draws the frame). The protocol objects
 // speak; a toplevel's Window and a popup's placement are the display's.

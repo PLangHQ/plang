@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 /// <summary>
 /// A part of the screen playing a video: its pictures go to the host as an H.264 stream, not as

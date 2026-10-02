@@ -3,7 +3,7 @@ using System.Net.Sockets;
 using System.Text.Json.Nodes;
 using System.Threading.Channels;
 
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 /// <summary>
 /// PlangOS's display: a Wayland compositor inside plang. Clients (Chromium) connect to its socket
