@@ -1,0 +1,318 @@
+{
+  "name": "Start",
+  "comment": "A value packed into an archive unpacks back to itself, losslessly.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %original% = 'The quick brown fox jumps over the lazy dog.', type=text/plain",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%original%",
+              "variable": [
+                {
+                  "text": "%original%",
+                  "code": [
+                    {
+                      "variable": "original"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "The quick brown fox jumps over the lazy dog."
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "pack %original%, write to %archived%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "archive",
+          "name": "pack",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%original%",
+              "variable": [
+                {
+                  "text": "%original%",
+                  "code": [
+                    {
+                      "variable": "original"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%archived%",
+              "variable": [
+                {
+                  "text": "%archived%",
+                  "code": [
+                    {
+                      "variable": "archived"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %archived!type.name% equals 'archive'",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "archive"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%archived!type.name%",
+              "variable": [
+                {
+                  "text": "%archived!type.name%",
+                  "code": [
+                    {
+                      "variable": "archived"
+                    },
+                    {
+                      "property": "!type"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "unpack %archived%, write to %restored%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "archive",
+          "name": "unpack",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "archive",
+                "template": "plang"
+              },
+              "value": "%archived%",
+              "variable": [
+                {
+                  "text": "%archived%",
+                  "code": [
+                    {
+                      "variable": "archived"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%restored%",
+              "variable": [
+                {
+                  "text": "%restored%",
+                  "code": [
+                    {
+                      "variable": "restored"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %restored% equals 'The quick brown fox jumps over the lazy dog.'",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "The quick brown fox jumps over the lazy dog."
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%restored%",
+              "variable": [
+                {
+                  "text": "%restored%",
+                  "code": [
+                    {
+                      "variable": "restored"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/serialization/CompressRoundTrip.test.goal",
+  "prPath": "/serialization/.build/compressroundtrip.test.pr",
+  "hash": "a40906af1f68bd6383893bd81a07c01ee2c4d4fce1daba1fe5a7f941eb2d3166"
+}
