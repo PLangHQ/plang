@@ -37,6 +37,9 @@ internal sealed class Pointer(Display display)
 
     private void Focus(Target? target)
     {
+        // a surface the client destroyed (a dropdown, a tooltip, once picked or gone) is no longer the pointer's:
+        // it gets no leave — an event naming an object the client deleted is a protocol error that ends Chromium
+        if (focus is { Alive: false }) focus = null;
         if (target is { } t && ReferenceEquals(t.Surface, focus))
         {
             corner = t.Corner;
@@ -79,7 +82,7 @@ internal sealed class Pointer(Display display)
 
     private void Frame()
     {
-        if (focus != null)
+        if (focus is { Alive: true })
             foreach (var b in Of(focus)) b.Frame();
     }
 
