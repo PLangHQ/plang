@@ -25,8 +25,9 @@ public partial class open : IContext
     public partial data.@this<global::app.type.item.path.@this>? WorkingDirectory { get; init; }
 
     /// <summary>The folders the program is held to — <c>{read: [...], write: [...]}</c>: the kernel lets it touch
-    /// nothing else. Each folder is first this app's to read or write. No jail, no hold.</summary>
-    public partial data.@this<global::app.module.terminal.type.jail.@this>? Jail { get; init; }
+    /// nothing else. Each folder is first this app's to read or write. Left out, the program runs free; named, it
+    /// never does (a %ref% holding none is refused).</summary>
+    public partial data.@this<global::app.module.terminal.type.sandbox.@this>? Sandbox { get; init; }
 
     /// <summary>Goal called for each line the program writes to stdout, the line as <c>%!data%</c>.</summary>
     public partial data.@this<global::app.goal.step.action.@this>? OnOutput { get; init; }
