@@ -102,6 +102,18 @@ judge, already `[Skip]`); its only shared helper `RepoRoot()` was byte-identical
 `Documentation/` mentions → proposal (`claude-md-proposals.md`, builder v3), not edited (others' files).
 **Wire: 480 pass (unchanged), 9 fail (baseline), no decider golden regressed.** One commit.
 
+## Pick-pass integration (coder 814ca5209) — builder half DONE + measured
+Landed (d08a129df): four LLM-facing templates read `s.Mask.Text`; `properties.template` `=> decider:`
+renders `listed.Option`; `ask:` lines on loop.foreach Item/Key + llm.query Conversation; `pick_golden`
+re-pinned; Wire 487 pass / 9 baseline. Measurements (fresh, cache off, 5 each; table in `v3/result.md`,
+commit 2f73f5479): **issue 2 Item+Key 5/5 FIXED, named continue 5/5 FIXED, plain-foreach/plain-read
+guards hold.** Open edges sent to the architect: (a) **control regression** — `save %!llm.setting.cache%`
+masks to `save %v1%`, loses the `setting` signal → file.save mis-map, 0/5 (masking cost for
+`%!…setting…%` steps); (b) **32(b) not fixed** — the writer still picks the variable as goal Name over
+`Page` even masked (32(a) decider half IS fixed); (c) **33** — Option question doesn't reach `set.Type`
+(no ask:, offers would be type-names not placeholders); (d) bare-continue guard flaky 2/5. Awaiting the
+architect's calls on these.
+
 ## Status 2026-10-02 (end) — idle, waiting on the coder's one pick pass
 All architect-directed work done and accepted (latest 0b799a5d1). Open items are the coder's / core:
 - **Coder's pick pass** (Option-v2 core + `listed.Option` + issue-32 masking core; coder plan v22 =
