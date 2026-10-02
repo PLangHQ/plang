@@ -68,6 +68,16 @@ public class TypeAccessorTests
         await Assert.That(p.Shape).IsNotNull();
     }
 
+    // what the builder shows the model for a permission: its {path, verbs} form
+    [Test] public async Task APermission_ShowsItsPathAndVerbsForm()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        var p = app.type.list["permission"];
+        await Assert.That(p.Example).IsEqualTo("{\"path\": \"/src/os\", \"verbs\": [\"read\", \"write\"]}");
+        await Assert.That(p.Shape).IsEqualTo("object");
+        await Assert.That(p.Description).IsNotNull();
+    }
+
     [Test] public async Task AppType_IndexByName_Example_FoldedFromEntry_ReadsOffTheEntity()
     {
         // Example may be null for many types — just check the surface exists.

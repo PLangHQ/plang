@@ -48,6 +48,10 @@ public enum Verb
 [global::app.Attributes.PlangType("permission")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
+    public static string Example => "{\"path\": \"/src/os\", \"verbs\": [\"read\", \"write\"]}";
+    public static string Description => "What may be done where: a path (a glob matches many) and the verbs allowed on it — read, write, delete, execute.";
+    public static string Shape => "object";
+
     [Out, Store] public string Actor { get; }
     [Out, Store] public string Path { get; }
     [Out, Store] public IReadOnlySet<Verb> Verbs { get; }
