@@ -315,10 +315,12 @@ public class FormalReaderTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task AGoalCallsNamedRows_Pass()
+    [Arguments("{module: %!app.module.file%}")]
+    [Arguments("{}")]
+    public async Task AGoalCallsNamedRows_OrNone_Pass(string parameter)
     {
         var ctx = app.actor.list.User.Context;
-        var read = Read("goal.call(Name=\"Page\", Parameter={module: %!app.module.file%})", out _);
+        var read = Read($"goal.call(Name=\"Page\", Parameter={parameter})", out _);
         var action = ((global::app.goal.step.action.list.@this)read.Peek()!)[0];
         global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal", global::PLang.Tests.Shared.Make.Step("call", action));
 
