@@ -22,36 +22,36 @@ The decider answers `given` when the step names read/write; `none` when it doesn
 not a word-match: the decider reads the step's meaning against that question, which is allowed (the
 banned thing is a C# check grepping the step text).
 
-### Where the presence rule lives — core, pick's `Agree`
-`Agree` (`PLang/app/goal/step/pick/list/this.cs` ~l.219) already refuses a `Mark.Certain` action the
-answer leaves out. Add the twin: **for each Option answered a non-`none` presence value (`given`),
-the built action must carry that property; if absent, refuse** — "the step says what the program may
-read or write, so `terminal.start` must set `Permission`." `FixSteps` retries with that reason, as it
-does for a left-out certain action. (Core; I shape, the coder builds.)
+### Where the presence rule lives — core, pick's `Agree` (GENERIC — architect, refined)
+**One rule for every option, not a presence-special case:** any option the decider answered with
+something other than `none` **must be present in the built action, or it is refused** — a chosen
+`sha256` missing `Algorithm`, a chosen `plang` missing `Template`, a `given` missing `Permission`, all
+refused the same way. `Agree` (`PLang/app/goal/step/pick/list/this.cs` ~l.219) already refuses a
+`Mark.Certain` action left out; this is the twin over `_option`. `FixSteps` retries with the reason.
+So **no `Kind.Presence`, no type marker for Agree** — one generic rule.
 
-### No value to prefill
-Unlike `Template=plang` (a literal) or `Item=%x%` (a chosen variable), `given` has **no value** to put
-in the `=> formal:` line — `Call`/`Prefill` append nothing for a presence-gate. `_option[{m}.{a}.
-Permission] = "given"` is a *presence signal*, not a value. The writer builds the actual
-`Permission = {path, verbs}` from the step words, helped by the permission type's `Example`/`Shape`/
-`Description` the coder is adding (so the model sees `{path, verbs}`, fixing try-2's flat list).
+### No value to prefill — the type answers how its offer enters the line (no Call fork)
+`Call`/`Prefill` must **not** branch on a presence flag. Instead the **type answers how its chosen
+offer enters the formal line**, the same way it already answers what it offers: a choice's value
+writes `Name=value` (`Template=plang`), a variable writes `Name=%x%` (`Item=%field%`), and the
+permission list's `given` writes **nothing** (a presence signal). `Call` asks the type and has no
+branch. The writer builds the actual `Permission = {path, verbs}` from the step words, helped by the
+permission type's `Example`/`Shape`/`Description` the coder is adding (so the model sees
+`{path, verbs}`, fixing try-2's flat list).
 
-## Split
-- **Core (coder, after architect review):**
-  - the permission type's `Offers(step)` returns the `given`/`none` presence choice, marked as
-    *presence-only* (no value) so `Call`/`Prefill` skip it and `Agree` enforces it;
-  - `Agree`'s presence rule (refuse a `given` option whose property is absent from the built action);
+## Split (architect-finalized — one generic rule, type answers the rest; goes to the coder after the offers batch)
+- **Core (coder):**
+  - the permission type's `Offers(step)` returns the `given`/`none` presence choice (just another
+    type answering its offers — no `Kind.Presence`, no marker);
+  - the type answers **how its chosen offer enters the line** (value → `Name=value`, variable →
+    `Name=%x%`, `given` → nothing), so `Call` asks the type and does not fork;
+  - `Agree`'s **generic** rule: any option answered non-`none` must be present in the built action, or
+    refuse (covers Template/Algorithm/Permission alike);
   - the permission type's `Example`/`Shape`/`Description` (`{path, verbs}`) — already queued.
 - **Builder (mine):** the `ask:` line on `terminal.start`/`terminal.open`'s `Permission`
-  ("does the step say what the program may read or write?") + the per-action teaching. (Lands when the
-  terminal module reaches app-systems — it's not here yet; the shape is module-agnostic and reusable
-  for any action with a must-be-present-when-named option.)
-
-## Open question for the architect/coder
-Is the presence-gate a **distinct `Kind`** (e.g. `Kind.Presence`) or **`Kind.Option` with a
-given/none Values + a type-supplied "presence-only" marker**? I lean on keeping it in the **type**
-(the type says "I offer presence, not a value"), so the question stays `Kind.Option` and only `Call`
-(skip prefill) and `Agree` (enforce) branch on the marker — no new Kind, one place each.
+  ("does the step say what the program may read or write?") + the per-action teaching. **Lands when
+  the terminal module reaches app-systems** — not here yet; the shape is module-agnostic and reusable
+  for any action with a must-be-present-when-named option.
 
 ---
 

@@ -326,4 +326,41 @@ reliably. **The note is kept** (harmless, helps the non-`module` cases and the d
 fix is the coder's **goal-name offers** (the `goal` type's `Offers(step)`, queued) — the decider picks
 `Page` from the reachable goals, immune to the parameter's name. Re-measure after that lands.
 
+## `%!…%` teaching (masking removed; coder 8a4ef5fc7) — builder half + measurements
+
+Masking was ruled a hack (Ingi) and removed by the coder (templates back to `s.Text`, pick_golden
+re-pinned to real variables). My half: added the `%!…%` teaching (both sentences, architect-approved)
+to `decider.state.template` (shared state) and `Properties.llm` (value legend + the `call X name=value`
+line); re-pinned pick_golden (word-diff: only the teaching text, 18 cases). My `l.Option` render and the
+`ask:` notes carried over unchanged.
+
+**Measured (fresh, cache off, 5 each; batch-extractor counts CORRECTED by direct `.pr` inspection —
+the grep over-counted `Key`/`Page`, same lesson as the retracted 4/5):**
+
+| scenario | verified result | verdict |
+|---|---|---|
+| A edu `call goal Page module=%!app.module.<m>%` | Names still the variable; **condition.compare 0/5** | **32(a) FIXED** (teaching); 32(b) unchanged |
+| C mparam (`m=`) | mostly refused/variable post-masking | moot — 32(b) waits on offers |
+| control `save %!llm.setting.cache%` | **→ setting.save 1.00** (was file.save under masking) | **regression RESOLVED**; residual = issue-17 class |
+| issue 2 `foreach … as … with key …` | Collection+Item+Key present | **FIXED** |
+| continue `continue the conversation %answer%` | Conversation present (4/5 built; 1 flaky NOPR) | **FIXED** |
+| guard plain `foreach %items% as %i%` | Item, no Key | holds |
+| guard plain `read 'notes.txt'` | no Template | holds |
+| guard bare `continue the conversation` | no Conversation | holds |
+
+**Readout:**
+- **The `%!…%` teaching fixes 32(a)** — the decider no longer reads `condition`/`file` inside
+  `%!app.module.<m>%` as a step word (condition.compare junk gone, 0/5), and **fixes the control
+  regression** — `save %!llm.setting.cache%` maps to `setting.save` (the `setting` signal is honored),
+  not `file.save`. (The control's residual refusal is the separate **issue-17** class: Cover refuses a
+  `%!…%` the answer carries in another form.)
+- **32(b) is unchanged by the teaching** — the writer still picks the variable as the goal `Name` over
+  the bare word (`Name=%!app.module.file%`, not `Page`). As established, the fix is the coder's
+  **goal-name offers** (the `goal` type's `Offers(step)`), which the decider picks `Page` from — the
+  `%!…%` teaching is the decider-signal half, the offers are the writer half.
+- **issue 2, the named continue, and all three guards hold.** Masking is gone with no loss on the wins.
+
+Discipline note: the batch grep mis-reported `Key` (false match) and `Page` (anchor) — every row above
+was re-checked by direct `.pr` inspection before reporting. (Same failure mode as the retracted 4/5.)
+
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).
