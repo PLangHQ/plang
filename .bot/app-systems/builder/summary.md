@@ -87,6 +87,21 @@ when the action is *certain*; a listed-but-uncertain action needs it too (the v3
   has no wire contract` — the path create event has no `[Out]/[Store]` face, a gap the rename surfaced
   (file.on.create has one). Handed to architect/coder. Detail in `v3/result.md`.
 
+## Status 2026-10-02 (end) — idle, waiting on the coder's one pick pass
+All architect-directed work done and accepted (latest 0b799a5d1). Open items are the coder's / core:
+- **Coder's pick pass** (Option-v2 core + `listed.Option` + issue-32 masking core, after task 2b).
+  When its hash lands: I add the `ask:` note lines (loop.foreach Item/Key, llm Conversation), switch
+  the four LLM-facing templates to `s.Masked`, the `=> formal:` masking, then measure (issue 2 → 5/5,
+  the control set, issue 33's `as path`).
+- **Issue 33 (new, logged by architect):** `set %p% = "a.txt" as path` drops `Type=path` ~3/5 — the
+  drop class of 25 & 28 (a droppable coercion trigger word). Likely lever: the **Option question with
+  type names as its offers**. Waits for the coder's pick pass. (Surfaced via the AsPathIsABirth .pr,
+  held green at `app.event` until this + the path-create wire-contract fix land.)
+- **Core, with the coder:** the `.setting` projection (`%!build.setting.cache%` reading undefined —
+  cache:false regression root), `app.event.on.create` wire contract (path create event), and the
+  pick-pass core.
+- **With Ingi:** where the decider key lives (settings scope) — still env-only, not written to any store.
+
 ## Next session (in order)
 1. **Decider key:** pass `TYPESAFE_API_KEY="$(cat /shared/hopkaup/secrets/typesafe.txt)"` to every
    `plang build`; still owed — store it in a settings table so the runner doesn't need the env each time.
