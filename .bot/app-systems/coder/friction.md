@@ -42,6 +42,16 @@ One entry each: what, what it cost (evidence), the wish.
 - **Cost:** one failed build, and the message speaks C# (Clr projection, lower door), not CLI.
 - **Wish:** a lone value given where a list is wanted is a list of one. Failing that, the error says "files is a list: --build={\"files\":[\"x.goal\"]}".
 
+## Watch: `grep`'s lines keep their `n: ` prefix
+- **What:** `%x.grep("b")%` answers `list<text>`, each element as the matcher writes it (`"2: b"`; with context, `>`-marked and `--`-separated). The number is the only thing telling a match from its neighbour.
+- **Cost:** none yet.
+- **Wish (if it happens):** if a goal ever strips the prefix, the element wants to be a record `{line, text, match}`, not text.
+
+## In Liquid an empty string is truthy
+- **What:** moving a type's description to markdown made a missing one an empty string. `{% if p.Type.Description %}` then held true, and the prompt printed `—  (e.g. )` for every type without one. Liquid's only falsy values are nil and false.
+- **Cost:** one golden diff to trace. Fixed: empty prose is the null value.
+- **Wish:** the template door lowers an empty plang text to nil, or the builder templates test `!= blank`. Then "no value" means the same in a template as in plang.
+
 ## 323 plang tests are "stale: no .pr" in every run
 - **What:** `plang --test` reports 323 of 380 as stale because they have never been built, and ends in `TestRunFailed`.
 - **Cost:** every gate ends red, so a real stale test (a goal changed but not rebuilt) is invisible among the 323.
