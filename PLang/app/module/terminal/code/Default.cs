@@ -378,7 +378,7 @@ public sealed class Default : ITerminal
 
     // A line from a plang that didn't read as Data: said on the error channel, never swallowed.
     private static Task Unread(global::app.error.Error why, actor.context.@this context)
-        => global::app.module.on.code.Gate.Report(context.Error(why), context);
+        => context.Actor.Channel.Report(context.Error(why));
 
     /// <summary>Runs the held goal call once for one line, the line as <c>%!data%</c>. A failing call is
     /// reported on the error channel and the program keeps running.</summary>
@@ -386,7 +386,7 @@ public sealed class Default : ITerminal
     {
         await context.Variable.Set("!data", Line(line, context));
         var result = await held.Start(context);
-        if (!result.Success) await global::app.module.on.code.Gate.Report(result, context);
+        if (!result.Success) await context.Actor.Channel.Report(result);
     }
 
     private static data.@this<Text> Result(actor.context.@this context, string output, string error, int exitCode,

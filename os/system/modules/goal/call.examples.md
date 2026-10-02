@@ -32,6 +32,3 @@ Properties: `{"Name": "Backup", "Parallel": true}` — `in parallel` is the para
 
 Step text: `call goal Claude in %!app.parent%, message=%text%, write to %reply%`
 Properties: `{"Name": "%!app.parent.goal[\"Claude\"]%", "Parameter": [{"name": "message", "value": "%text%"}]}` — a goal of the app that started this one (`%!app.parent%`), picked by name: it runs there, and its result comes back.
-
-Step text: `call Turn content=%content%, don't wait`
-Properties: `{"Name": "Turn", "Parameter": [{"name": "content", "value": "%content%"}], "Wait": false}` — "don't wait", "in the background", "and go on": the goal starts on its own and the step goes on at once; there is no result to write to.
