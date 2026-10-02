@@ -326,8 +326,16 @@ public class source : @this
         }
         if (IsVariable)
         {
+            // the bound value itself, in the value's place — never the binding's Data around it, which would read
+            // back as a value of its own (a dict of type and value)
             var resolved = await Get(context);
-            if (resolved is { IsInitialized: true }) { await resolved.Output(writer, mode, context); return; }
+            if (resolved is { IsInitialized: true })
+            {
+                var bound = await resolved.Value();
+                if (!resolved.Success) throw new global::app.error.AppException(resolved.Error!);
+                await bound.Output(writer, mode, context);
+                return;
+            }
             throw new global::app.error.VariableNotFoundException(resolved?.Name ?? template.Trim('%'));
         }
         // a partial template is a text's to render: hand over to one
