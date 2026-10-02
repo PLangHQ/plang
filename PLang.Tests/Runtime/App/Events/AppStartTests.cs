@@ -10,7 +10,8 @@ public class AppStartTests
 {
     private string _root = null!;
 
-    // An app root holding one current .pr, /.build/entry.pr — a goal that sets %x% — written the way the builder does.
+    // An app root holding one current .pr, /.build/entry.pr (entry.goal's build) — a goal that sets %x% — written the
+    // way the builder does.
     [Before(Test)]
     public async Task Setup()
     {
@@ -28,7 +29,7 @@ public class AppStartTests
     private async Task<global::app.@this> App()
     {
         var app = new global::app.@this(_root).Testing();
-        await app.actor.list.System.Context.Variable.Set("goalFile", "/.build/entry.pr");
+        await app.actor.list.System.Context.Variable.Set("goalFile", "/entry.goal");
         return app;
     }
 

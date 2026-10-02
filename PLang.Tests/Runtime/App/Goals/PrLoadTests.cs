@@ -21,7 +21,7 @@ public class PrLoadTests : System.IAsyncDisposable
     private async Task<global::app.data.@this> Load(string file, string pr)
     {
         System.IO.File.WriteAllText(System.IO.Path.Combine(_root, ".build", file), pr);
-        return await _app.goal.Load("/.build/" + file);
+        return await _app.goal.Load("/" + System.IO.Path.ChangeExtension(file, ".goal"));
     }
 
     [Test]
@@ -100,16 +100,16 @@ public class PrLoadTests : System.IAsyncDisposable
         await Assert.That(loaded.Error!.Message).Contains("it has no 'name'");
     }
 
-    // The runtime loads /system/.build/test.pr for `plang --test`; /system/error/.build/show.pr is
-    // loaded and run by ErrorShowTests.
+    // The runtime loads /system/test.goal for `plang --test`; /system/error/show.goal is loaded and run by
+    // ErrorShowTests.
     [Test]
-    [Arguments("/system/.build/test.pr", 4)]
-    [Arguments("/system/error/.build/show.pr", 3)]
-    public async Task TheLiveSystemPr_StillLoads(string pr, int steps)
+    [Arguments("/system/test.goal", 4)]
+    [Arguments("/system/error/show.goal", 3)]
+    public async Task TheLiveSystemPr_StillLoads(string source, int steps)
     {
         await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
 
-        var loaded = await os.goal.Load(pr);
+        var loaded = await os.goal.Load(source);
 
         await loaded.IsSuccess();
         await Assert.That((await loaded.Value() as global::app.goal.@this)!.Step.Count).IsEqualTo(steps);

@@ -199,7 +199,7 @@ public class CallSnapshotTests : System.IAsyncDisposable
             await dst.Restore(snap, dst.actor.list.User.Context);
 
             // Same instances — Restore is read-only on the registry.
-            await Assert.That(await dst.goal.list.Find("PureGoal")).IsSameReferenceAs(goalBefore);
+            await Assert.That(await dst.goal.list.Find("PureGoal").Found()).IsSameReferenceAs(goalBefore);
             await Assert.That(goalBefore.Step[0]).IsSameReferenceAs(stepBefore);
             await Assert.That(stepBefore.Code[0]).IsSameReferenceAs(actionBefore);
         }

@@ -14,7 +14,7 @@ public partial class @this
         // each named goal, as written, selected from the goal this action sits in
         foreach (var property in Property)
             if (Declares(property) && property.Value is { HasVariable: false, RawText: { Length: > 0 } key }
-                && await context.App.goal.list.Find(key, Step?.Goal) is { } goal)
+                && (await context.App.goal.list.Find(key, Step?.Goal)).Peek() is global::app.goal.@this goal)
                 callee.Add(goal);
 
         foreach (var held in Held)

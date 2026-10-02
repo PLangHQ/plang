@@ -316,8 +316,9 @@ public class Fluid : ITemplate
         if (string.IsNullOrEmpty(goalName))
             throw new global::app.error.AppException("callGoal requires a goal name", "MissingGoalName", 400);
 
-        var goal = await app.goal.list.Find(goalName);
-        if (goal == null)
+        var found = await app.goal.list.Find(goalName);
+        if (!found.Success) throw new global::app.error.AppException(found.Error!);
+        if (found.Peek() is not global::app.goal.@this goal)
             throw new global::app.error.GoalNotFoundException(goalName);
 
         var result = await goal.Start(plangContext);

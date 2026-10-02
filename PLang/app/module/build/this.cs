@@ -73,7 +73,7 @@ public sealed partial class @this : global::app.type.item.setting.ISetting<setti
         var builtIsOs = string.Equals(app.AbsolutePath.TrimEnd(separator), app.OsAbsolutePath.TrimEnd(separator),
             System.OperatingSystem.IsWindows() ? System.StringComparison.OrdinalIgnoreCase : System.StringComparison.Ordinal);
         var builder = (builtIsOs ? app.actor.list.System : app.actor.list.User).Context;
-        var loaded = await app.goal.Load("/system/builder/.build/build.pr");
+        var loaded = await app.goal.Load("/system/builder/Build.goal");
         if (!loaded.Success) return loaded;
         return await ((await loaded.Value()) as global::app.goal.@this)!.Start(builder);
     }

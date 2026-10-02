@@ -59,7 +59,7 @@ public class SaveGoalsTests
         await result.IsSuccess();
 
         // the saved .pr loads back through the goal's own door
-        var loaded = await _app.goal.Load("/.build/start.pr");
+        var loaded = await _app.goal.Load("/Start.goal");
         await loaded.IsSuccess();
         var saved = (Goal)(await loaded.Value())!;
         await Assert.That(saved.Name).IsEqualTo("Start");
@@ -108,7 +108,7 @@ public class SaveGoalsTests
         await result.IsSuccess();
 
         // one file holds the public goal and its private child; it loads back through the goal's own door
-        var loaded = await _app.goal.Load("/.build/multi.pr");
+        var loaded = await _app.goal.Load("/Multi.goal");
         await loaded.IsSuccess();
         var saved = (Goal)(await loaded.Value())!;
 

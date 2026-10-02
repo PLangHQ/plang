@@ -78,22 +78,19 @@ public sealed partial class @this
     /// Null for a goal with no Path.</summary>
     public global::app.type.item.path.@this? Folder => Path?.Parent;
 
+    /// <summary>The .pr this goal is built to (<see cref="Pr"/>); none without a Path.</summary>
     [Store, Debug]
     public global::app.type.item.path.@this? PrPath
     {
-        get
-        {
-            // Empty or null Path → no PrPath. Treat "" the same as null so the
-            // old IsNullOrEmpty(Path) → null shape (pre-Stage-3) still holds.
-            if (Path == null || string.IsNullOrEmpty(Path.Absolute)) return null;
-            // Derive via the generic verbs: parent dir → .build folder → lowercase stem + .pr
-            var stem = Path.FileNameWithoutExtension.ToLowerInvariant();
-            var parent = Path.Parent;
-            if (parent == null) return null;
-            return parent.Combine(".build").Combine(stem + ".pr");
-        }
+        get => Path is { Absolute.Length: > 0 } source ? Pr(source) : null;
         init { } // PrPath is derived from Path; init no-op so JSON round-trip's serialized prPath is swallowed
     }
+
+    /// <summary>The .pr a .goal is built to: <c>X.goal</c> → <c>.build/x.pr</c> beside it. A static on the goal type by
+    /// exception — a rule about where a goal's build lands, read before there is a goal: by <see cref="PrPath"/>,
+    /// <see cref="Load"/> and setup's discovery, nothing else.</summary>
+    public static global::app.type.item.path.@this Pr(global::app.type.item.path.@this source)
+        => source.Parent.Combine(".build").Combine(source.FileNameWithoutExtension.ToLowerInvariant() + ".pr");
 
     [Store, Debug]
     public string? Hash
@@ -305,14 +302,16 @@ public sealed partial class @this
     }
 
     /// <summary>
-    /// The goal <paramref name="pr"/> holds, loaded as <paramref name="app"/> itself: the one already held from
-    /// there, else read through its <c>on.load</c> — what is bound before a goal loads is the goal type's, handed
-    /// the .pr (there is no goal yet), and a failure or a Handled answer is the load's answer with nothing read;
-    /// the path reads itself into a goal, the app's goals hold it, and what is bound after it runs across the
-    /// goal's levels, handed the goal. A setup goal is refused — it runs only through setup.
+    /// The goal <paramref name="source"/> (a <c>.goal</c>) is built to, loaded as <paramref name="app"/> itself from
+    /// its <see cref="Pr"/>: the one already held from there, else read through its <c>on.load</c> — what is bound
+    /// before a goal loads is the goal type's, handed the .pr (there is no goal yet), and a failure or a Handled
+    /// answer is the load's answer with nothing read; the path reads itself into a goal, the app's goals hold it,
+    /// and what is bound after it runs across the goal's levels, handed the goal. A setup goal is refused — it runs
+    /// only through setup.
     /// </summary>
-    public static async Task<data.@this> Load(global::app.type.item.path.@this pr, global::app.@this app)
+    public static async Task<data.@this> Load(global::app.type.item.path.@this source, global::app.@this app)
     {
+        var pr = Pr(source);
         var context = app.actor.list.System.Context;
         var loaded = app.goal.list[pr] is { } held ? context.Ok(held) : await Read(pr, app);
         if (loaded.Success && await loaded.Value() is @this { IsSetup: true })

@@ -87,7 +87,8 @@ public interface ICreate<TSelf> where TSelf : @this, ICreate<TSelf>
     static virtual bool IsSelected => false;
 
     /// <summary>The one <paramref name="key"/> names, as <paramref name="asker"/> sees it — a selection, never a
-    /// birth; null when the key names none, or this type isn't selected by key.</summary>
-    static virtual System.Threading.Tasks.ValueTask<TSelf?> Select(@this key, global::app.actor.context.@this asker)
+    /// birth: the one found, a miss (NotFound, not initialized) when the key names none, or why the one it names
+    /// can't be had (a goal not built). Null when this type isn't selected by key.</summary>
+    static virtual System.Threading.Tasks.ValueTask<global::app.data.@this<TSelf>?> Select(@this key, global::app.actor.context.@this asker)
         => default;
 }

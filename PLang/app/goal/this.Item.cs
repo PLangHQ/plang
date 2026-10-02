@@ -83,7 +83,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>The goal a text names, as seen from the goal the asker is running — its own chain, its folder, then
     /// the app (<see cref="global::app.goal.list.@this.Find"/>); a goal not read yet loads. Any other value names
     /// none.</summary>
-    public static async System.Threading.Tasks.ValueTask<@this?> Select(global::app.type.item.@this key,
+    public static async System.Threading.Tasks.ValueTask<global::app.data.@this<@this>?> Select(global::app.type.item.@this key,
         global::app.actor.context.@this asker)
         => key is global::app.type.item.text.@this name
             ? await asker.App.goal.list.Find(name.Clr<string>() ?? "", asker.CallStack.Goal)

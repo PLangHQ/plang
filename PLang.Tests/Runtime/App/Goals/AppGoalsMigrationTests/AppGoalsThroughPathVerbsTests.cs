@@ -26,7 +26,7 @@ public class AppGoalsThroughPathVerbsTests
         System.IO.Directory.CreateDirectory(buildDir);
         var prAbs = System.IO.Path.Combine(buildDir, "start.pr");
         System.IO.File.WriteAllText(prAbs, "{\"name\":\"Start\",\"path\":\"/Start.goal\"}");
-        var result = await app.goal.Load("/.build/start.pr");
+        var result = await app.goal.Load("/Start.goal");
         await result.IsSuccess();
         var goal = (await result.Value()) as Goal;
         await Assert.That(goal!.Name).IsEqualTo("Start");
@@ -42,9 +42,9 @@ public class AppGoalsThroughPathVerbsTests
         var prAbs = System.IO.Path.Combine(buildDir, "start.pr");
         System.IO.File.WriteAllText(prAbs, "{\"name\":\"Start\",\"path\":\"/Start.goal\"}");
 
-        var byRel = await app.goal.Load("/.build/start.pr");
+        var byRel = await app.goal.Load("/Start.goal");
         await byRel.IsSuccess();
-        var byAbs = await app.goal.Load(prAbs);
+        var byAbs = await app.goal.Load(System.IO.Path.Combine(root, "Start.goal"));
         await byAbs.IsSuccess();
         await Assert.That(await byAbs.Value()).IsSameReferenceAs(await byRel.Value());
     }
@@ -59,8 +59,8 @@ public class AppGoalsThroughPathVerbsTests
         };
         app.goal.list.Add(goal);
         // Fuzzy by-name lookup: case-insensitive, picks up the goal.
-        await Assert.That(await app.goal.list.Find("ProcessData")).IsNotNull();
-        await Assert.That(await app.goal.list.Find("processdata")).IsNotNull();
+        await Assert.That(await app.goal.list.Find("ProcessData").Found()).IsNotNull();
+        await Assert.That(await app.goal.list.Find("processdata").Found()).IsNotNull();
     }
 
     [Test] public async Task AppLoad_OnColdStart_NoAppPr_ReturnsEmptyState_NoThrow()

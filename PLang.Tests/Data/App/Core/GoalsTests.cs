@@ -50,7 +50,7 @@ public class GoalsTests : System.IAsyncDisposable
         goals.Add(Named("Start", "/Start.goal", comment: "Second"));
 
         await Assert.That(goals.CountRaw).IsEqualTo(1);
-        await Assert.That((await goals.Find("Start"))!.Comment).IsEqualTo("Second");
+        await Assert.That((await goals.Find("Start").Found())!.Comment).IsEqualTo("Second");
     }
 
     [Test]
@@ -94,8 +94,8 @@ public class GoalsTests : System.IAsyncDisposable
         var goal = Named("TestGoal", "/TestGoal.goal");
         goals.Add(goal);
 
-        await Assert.That(await goals.Find("TestGoal")).IsEqualTo(goal);
-        await Assert.That(await goals.Find("testgoal")).IsEqualTo(goal);
+        await Assert.That(await goals.Find("TestGoal").Found()).IsEqualTo(goal);
+        await Assert.That(await goals.Find("testgoal").Found()).IsEqualTo(goal);
     }
 
     [Test]
@@ -103,8 +103,8 @@ public class GoalsTests : System.IAsyncDisposable
     {
         var goals = Goals();
 
-        await Assert.That(await goals.Find("")).IsNull();
-        await Assert.That(await goals.Find("NoSuchGoalAnywhere")).IsNull();
+        await Assert.That(await goals.Find("").Found()).IsNull();
+        await Assert.That(await goals.Find("NoSuchGoalAnywhere").Found()).IsNull();
     }
 
     [Test]
@@ -114,9 +114,9 @@ public class GoalsTests : System.IAsyncDisposable
         var goal = Named("test", "/goals/test.goal");
         goals.Add(goal);
 
-        await Assert.That(await goals.Find("/goals/test.goal")).IsEqualTo(goal);
-        await Assert.That(await goals.Find("goals/test")).IsEqualTo(goal);
-        await Assert.That(await goals.Find("goals\\test")).IsEqualTo(goal);
+        await Assert.That(await goals.Find("/goals/test.goal").Found()).IsEqualTo(goal);
+        await Assert.That(await goals.Find("goals/test").Found()).IsEqualTo(goal);
+        await Assert.That(await goals.Find("goals\\test").Found()).IsEqualTo(goal);
     }
 
     [Test]
@@ -126,8 +126,8 @@ public class GoalsTests : System.IAsyncDisposable
         goals.Add(Named("SetupDb", "/SetupDb.goal", setup: true));
         goals.Add(Named("NormalGoal", "/NormalGoal.goal"));
 
-        await Assert.That(await goals.Find("SetupDb")).IsNull();
-        await Assert.That(await goals.Find("NormalGoal")).IsNotNull();
+        await Assert.That(await goals.Find("SetupDb").Found()).IsNull();
+        await Assert.That(await goals.Find("NormalGoal").Found()).IsNotNull();
     }
 
     [Test]
@@ -138,8 +138,8 @@ public class GoalsTests : System.IAsyncDisposable
         var later = Named("Helper", "/b/Helper.goal");
         goals.Add(later);
 
-        await Assert.That(await goals.Find("Helper")).IsEqualTo(later);
-        await Assert.That((await goals.Find("a/Helper"))!.Path!.ToString()).IsEqualTo("/a/Helper.goal");
+        await Assert.That(await goals.Find("Helper").Found()).IsEqualTo(later);
+        await Assert.That((await goals.Find("a/Helper").Found())!.Path!.ToString()).IsEqualTo("/a/Helper.goal");
     }
 
     [Test]
@@ -153,9 +153,11 @@ public class GoalsTests : System.IAsyncDisposable
                 """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","step":[]}""");
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "setupdb.pr"),
                 """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","step":[]}""");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "NormalGoal.goal"), "NormalGoal\n");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "SetupDb.goal"), "SetupDb\n");
 
-            await Assert.That((await engine.goal.list.Find("NormalGoal"))!.Name).IsEqualTo("NormalGoal");
-            await Assert.That(await engine.goal.list.Find("SetupDb")).IsNull();
+            await Assert.That((await engine.goal.list.Find("NormalGoal").Found())!.Name).IsEqualTo("NormalGoal");
+            await Assert.That(await engine.goal.list.Find("SetupDb").Found()).IsNull();
         }
         finally { System.IO.Directory.Delete(dir, true); }
     }
@@ -172,7 +174,7 @@ public class GoalsTests : System.IAsyncDisposable
             var pr = System.IO.Path.Combine(dir, ".build", "setupdb.pr");
             System.IO.File.WriteAllText(pr, """{"name":"SetupDb","isSetup":true,"path":"/SetupDb.goal","step":[]}""");
 
-            var result = await engine.goal.Load(pr);
+            var result = await engine.goal.Load(System.IO.Path.Combine(dir, "SetupDb.goal"));
 
             await Assert.That(result.Error?.Key).IsEqualTo("SetupGoal");
         }
@@ -186,7 +188,7 @@ public class GoalsTests : System.IAsyncDisposable
         await using var app = new global::app.@this(this.app.AbsolutePath).Testing();
         app.goal.list.Add(Named("SetupDb", "/SetupDb.goal", setup: true));
 
-        var result = await app.goal.Load("/.build/setupdb.pr");
+        var result = await app.goal.Load("/SetupDb.goal");
 
         await Assert.That(result.Error?.Key).IsEqualTo("SetupGoal");
     }
@@ -243,7 +245,7 @@ public class GoalsTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task All_ListsTheAppsPrFiles_PublicByDefault_PrivateWhenAsked()
+    public async Task All_ListsTheAppsGoals_PublicByDefault_PrivateWhenAsked()
     {
         var dir = TempApp();
         try
@@ -251,6 +253,11 @@ public class GoalsTests : System.IAsyncDisposable
             await using var engine = new global::app.@this(dir).Testing();
             System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".build", "start.pr"),
                 """{"name":"Start","path":"/Start.goal","step":[],"child":[{"name":"Show","path":"/Start.goal","step":[]}]}""");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "Start.goal"), "Start\n");
+            // a goal not built, and one in a dot-folder, are no goals of the app
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, "Draft.goal"), "Draft\n");
+            System.IO.Directory.CreateDirectory(System.IO.Path.Combine(dir, ".bot"));
+            System.IO.File.WriteAllText(System.IO.Path.Combine(dir, ".bot", "Old.goal"), "Old\n");
             var context = engine.actor.list.User.Context;
 
             var appOnly = new global::app.type.item.dict.@this();

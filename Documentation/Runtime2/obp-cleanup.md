@@ -348,3 +348,11 @@ graph (a sub-goal and its parent reach each other), so cloning a store that hold
 sub-goal builds — recurses until the stack overflows: the process segfaults with no .NET message. The step check
 no longer clones the builder's store, but the trap stays for the next caller. Clone should stop at items that hold
 a graph by reference (a goal, a step, an action are shared, not copied), or not deep-copy structural items at all.
+
+## goal.IsSystem / IsSetup / IsTest are stored copies of the goal's Path [logged 2026-10-02]
+
+*flat copy.* `goal/this.cs` holds `IsSystem`, `IsSetup` and `IsTest` as stored flags, stamped once by the goal
+parser from the path (`normalizedPath.StartsWith("system/")`, `.EndsWith(".test.goal")`, …) and read back from the
+`.pr`. They are facts about `Path` and drift from it: a goal made in C# with a `/system/` path is not a system goal
+until something stamps it (tests do it by hand). Each should derive from `Path` (`IsSystem => Path` is under
+`/system/`) and leave the `.pr` (the reader skipping the old keys by name).

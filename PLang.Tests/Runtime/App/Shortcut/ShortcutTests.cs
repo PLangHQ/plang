@@ -29,13 +29,17 @@ public class ShortcutTests
 
     private global::app.actor.context.@this Ctx => _app.actor.list.User.Context;
 
-    // A shortcut goal on disk: /shortcut/<name>.goal, its .pr in /shortcut/.build/, returning `value`.
-    private async Task Shortcut(string name, string value)
+    // A shortcut goal on disk: <folder>/<name>.goal, its .pr in <folder>/.build/, returning `value`.
+    private async Task Shortcut(string name, string value, string folder = "shortcut")
     {
-        var goal = Make.Goal(Ctx, name, $"/shortcut/{name}.goal",
+        var goal = Make.Goal(Ctx, name, $"/{folder}/{name}.goal",
             Make.Step($"return {value}", Make.Action(Ctx, "goal", "return", ("Data", value))));
-        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_root, "shortcut", ".build", name.ToLowerInvariant() + ".pr"),
-            await Ctx.Pr(goal));
+        // as the build stamps it: a goal under system/ is a system goal
+        goal.IsSystem = folder.StartsWith("system/");
+        var at = System.IO.Path.Combine(_root, folder);
+        System.IO.Directory.CreateDirectory(System.IO.Path.Combine(at, ".build"));
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(at, ".build", name.ToLowerInvariant() + ".pr"), await Ctx.Pr(goal));
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(at, name + ".goal"), name + "\n");
     }
 
     // a reference the build wrote, born as the build births it
@@ -89,5 +93,29 @@ public class ShortcutTests
 
         await read.IsSuccess();
         await Assert.That(_app.shortcut.list.Items().Select(s => s.Name)).Contains("where");
+    }
+
+    // the app's own /system/shortcut/ is the system's: it reads as the shortcut and its name is sealed
+    [Test]
+    public async Task TheAppsSystemShortcut_ReadsAsTheShortcut_AndIsSealed()
+    {
+        await Shortcut("here", "mine", folder: "system/shortcut");
+
+        await Assert.That((await Reference("%!here%").Value())?.ToString()).IsEqualTo("mine");
+        await Assert.That(_app.shortcut.list.Items().Single(s => s.Name == "here").IsSystem).IsTrue();
+    }
+
+    // an app shortcut taking a system name is refused, saying how to override it
+    [Test]
+    public async Task AnAppShortcut_TakingASystemName_IsRefused_SayingHowToOverride()
+    {
+        await Shortcut("here", "system", folder: "system/shortcut");
+        await Shortcut("here", "app");
+
+        var read = await _app.shortcut.list.Read();
+
+        await read.IsFailure();
+        await Assert.That(read.Error!.Key).IsEqualTo("ShortcutCollision");
+        await Assert.That(read.Error.Message).Contains("/system/shortcut/here.goal");
     }
 }

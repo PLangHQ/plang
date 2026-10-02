@@ -47,7 +47,7 @@ public partial class Call : IContext
     {
         // at build, the goal is the one the name selects from the goal being built (the frame is the builder's)
         if (!Name.HasVariable && __action?["Name"] is { Value.RawText: { Length: > 0 } authored } name
-            && await Context.App.goal.list.Find(authored, __action.Step?.Goal) is { } target
+            && (await Context.App.goal.list.Find(authored, __action.Step?.Goal)).Peek() is global::app.goal.@this target
             && target.Reference(__action.Step?.Goal) is { } address
             && !string.Equals(address, authored, System.StringComparison.OrdinalIgnoreCase))
             __action.Property.Set(name.Holding(new global::app.type.item.text.@this(address)));

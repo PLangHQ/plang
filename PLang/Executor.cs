@@ -117,14 +117,13 @@ namespace PLang
 			// Tester mode routes to system test runner instead of Start.goal
 			if (app.Mode.Value == global::app.Mode.Test && goalFile == "Start.goal")
 			{
-				app.actor.list.System.Context.Variable.Set("goalFile", "/system/.build/test.pr");
+				app.actor.list.System.Context.Variable.Set("goalFile", "/system/test.goal");
 				return (app, null);
 			}
 
-			var prPath = goalFile.Replace(".goal", ".pr", StringComparison.OrdinalIgnoreCase);
-			if (!prPath.StartsWith(".build"))
-				prPath = ".build/" + prPath;
-			app.actor.list.System.Context.Variable.Set("goalFile", "/" + prPath.ToLowerInvariant());
+			// the .goal to run; the goal finds its own .pr
+			var source = goalFile.EndsWith(".goal", StringComparison.OrdinalIgnoreCase) ? goalFile : goalFile + ".goal";
+			app.actor.list.System.Context.Variable.Set("goalFile", "/" + source.TrimStart('/', '\\'));
 
 			return (app, null);
 		}

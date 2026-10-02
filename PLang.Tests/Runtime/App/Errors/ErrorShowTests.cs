@@ -32,7 +32,7 @@ public class ErrorShowTests : System.IAsyncDisposable
     private async Task<string> Show(global::app.error.Error error)
     {
         var context = _app.actor.list.User.Context;
-        var loaded = await _app.goal.Load("/system/error/.build/show.pr");
+        var loaded = await _app.goal.Load("/system/error/show.goal");
         await loaded.IsSuccess();
         var show = (await loaded.Value() as Goal)!;
         global::app.data.@this shown;
