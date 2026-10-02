@@ -41,6 +41,28 @@ public text? Ask => Action?.Note.Line.FirstOrDefault(l => l.Name == Property.Nam
 - **Algorithm** (issue 28): `Algorithm` as `choice<hash.kind>` asks `{sha256, keccak256, none}` through the same
   question; "none" leaves it out and the `[Default]` applies. No count==1 yes/no path.
 
+## 3. A choice over a kind family (needed by both template.kind and hash.kind)
+Today `choice<T>` resolves a name by `Enum.Parse` or T's `ctor(string)` (`choice/this.cs:80-97`), and its set lists an
+enum's names or a static `Choices(context)` (`choice/set/this.cs:41-55`). A kind family — an abstract base whose
+kinds are its subclasses (`hash.kind` → `sha256`, `keccak256`, each `new() : base("name")`) — has neither, so
+`choice<hash.kind>` can't resolve a written value nor list its options.
+
+Proposed: the set owns resolution, one door for every closed set:
+```csharp
+// choice/set/this.cs — the set already knows its options; it also answers the member a symbol names
+public object Member(string symbol)   // enum → Enum.Parse; a named-set class → its ctor(string);
+                                      // a kind family (T : type.kind.@this) → the family's kind of that name
+public override IReadOnlyList<string> Values  // + a kind family's kinds' names
+```
+`choice.Parse(symbol)` becomes `new((T)_set.Member(symbol))` — the enum/ctor branch moves from choice into the set,
+where the options already are. A family's kinds are its concrete subclasses, each built once (they hold no state;
+the registry's instances answer `Name` the same, so equality by name holds).
+
+**The default** (`property/this.cs:44-47`): a choice-typed option's `[Default]` — an enum member *or a name* — is born
+through `choice<T>.Create(default)`, the same door a written value takes; the `is System.Enum` special case goes.
+Pin: `choice<hash.kind>` — no value → keccak256 the kind; "sha256" written → sha256 the kind; "md5" → ChoiceInvalid
+naming sha256, keccak256.
+
 ## Limits to know
 - **Stage**: questions are computed in `Take` after each decider answer from that stage's picks; there is no stage
   3. An option is asked only of an action already picked at stage 1 (a near-certain common action — `file.read`
