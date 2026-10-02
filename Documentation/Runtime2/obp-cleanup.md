@@ -218,15 +218,6 @@ Not a blocker — the settings reshape (c13532536) already avoids `CountRaw` in 
 a hole value the writer writes as `?`, and the prefill built as catalog actions with hole rows, written by
 the writer. The eval twin (`tools/decider/prompt_c.py` `Line`/`prefill`) moves with it.
 
-## type.list.Full copies every fact by hand [logged 2026-09-28, stage 9a]
-
-`type/list/this.cs` `Full(type, name)` makes a kind/strict/template variant of a registered type by
-listing each fact of the entry in an initializer (`Alias`, `Owned`, `From`, `Internal`, `Property`, `Values`,
-`Shape`, `ConstructorSignature`, `Example`, `Description`, `Namespace`). Flat copy: a new fact on the type
-has to be remembered here too, and a forgotten one makes the variant silently lack it (a template-marked
-`file` didn't know it is born `From` a path until it was added). The variant should hold its entry (the
-facts read through it) or the type should copy itself with only the declaration changed.
-
 ## list.Add chooses extend or append by asking what the value is [logged 2026-09-28, stage 9b list]
 
 `type/item/list/this.cs` `Add(value, at, ctx)` asks `await value.Value() is @this items` to decide whether the
