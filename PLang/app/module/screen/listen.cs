@@ -40,9 +40,41 @@ public partial class listen : IContext
                 _ = Called(call, display);
                 continue;
             }
-            display.Input(line);
+            // the mouse, a key, typed text, back/forward/reload, what the host copied: read as values, each handing
+            // itself to the display. A line that claims to be one but isn't is said, never dropped quietly.
+            global::app.type.item.@this? value;
+            try { value = Value(line); }
+            catch (Exception ex) when (ex is FormatException or System.Text.Json.JsonException or InvalidOperationException)
+            {
+                await Context.Actor.Channel.Report(Context.Error(new global::app.error.ActionError(
+                    $"The host sent an input the screen can't read: {ex.Message} — {(line.Length > 200 ? line[..200] + "…" : line)}", "InputInvalid", 400)));
+                continue;
+            }
+            if (value != null) display.Take(value);
+            else display.Input(line);
         }
         return Context.Ok<global::app.type.item.number.@this>(lines);
+    }
+
+    /// <summary>The value a line from the host is, when it is an input or a clipboard — by its first member, read by
+    /// its type's own reader; null for the lines that aren't values yet (stats, video, ui, host, window).</summary>
+    private global::app.type.item.@this? Value(string line)
+    {
+        var bytes = Encoding.UTF8.GetBytes(line);
+        var peek = new System.Text.Json.Utf8JsonReader(bytes);
+        if (!peek.Read() || peek.TokenType != System.Text.Json.JsonTokenType.StartObject
+            || !peek.Read() || peek.TokenType != System.Text.Json.JsonTokenType.PropertyName) return null;
+        var type = peek.GetString() switch
+        {
+            "mouse" or "key" or "text" or "nav" => "input",
+            "clipboard" => "clipboard",
+            _ => null,
+        };
+        if (type == null) return null;
+        var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
+        utf8.Read();
+        var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
+        return Context.App.type.list.Reader.Typed(type, null)!.Read(ref reader, null, new global::app.type.reader.ReadContext(Context));
     }
 
     /// <summary>Runs the shell's goal the host called, its parameters bound by name, and answers it:
