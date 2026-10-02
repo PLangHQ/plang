@@ -170,14 +170,18 @@ line — no Kind.Presence/marker, no Call fork) → coder after the offers batch
 land when the terminal module reaches app-systems.
 **Issue 35:** not path normalization (path type preserves `//`); writer dropped the slash — architect
 asked the os bot for the raw `.pr` `Program`.
-**Gate 94 (2c148b7a8): %!…% teaching accepted (decision 542); 32(a) and control CLOSED.**
+**CLOSED this session:** 32(a) + control (decision 542, gate 94); **32(b) + 33** (offers d2aa1358d +
+my `ask:` lines on goal.call Name / variable.set Type, b55b64358 — Name="Page" 4/5, Type="path" 5/5);
+AsPathIsABirth `.pr` committed with the `event` slot (1e90307be — the wire-contract error no longer
+reproduces on current core; verified Pass).
 Idle pending:
-- **Coder's goal-name offers batch** (built, gate running). When it lands: add the `ask:` lines on
-  **`goal.call` Name** (offers = reachable goal names → picks `Page`, fixes 32b) and **`variable.set`
-  Type** (offers = plang type names → picks `path`, fixes 33); re-measure **32(b)** and **33** fresh,
-  cache off, 5 each; re-pin + Wire. Then one table.
-- Terminal module reaching app-systems → the 34 `ask:` line + teaching (shape ready, decision pending).
-- issue-17 class (control's residual refusal) — core/coder.
+- **Issue 34 (type-Example, architect-refined to core → coder):** `list<permission>` answers its own
+  Example (from its element's), template unchanged. My part when it lands: measure a `list<T>` slot on
+  app-systems whose element has an Example (find one / name the gap) + a `list<text>` guard.
+- **Issue 34 (5-build) + 35 (10-build) measurements BLOCKED** — terminal module not on app-systems
+  (`start //bin/sh …` / `list<permission>` unbuildable here). Run on plang-os-stable or once merged.
+- **Coder follow-up incoming:** offers become items via `formal.Writer` — re-run the 32(b) guard after.
+- Terminal module → the 34 `ask:` line + teaching (shape ready).
 - decider-key storage scope — Ingi.
 
 ## (earlier) Status 2026-10-02 — idle, waiting on the coder's one pick pass

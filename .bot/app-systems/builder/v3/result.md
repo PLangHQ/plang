@@ -388,11 +388,18 @@ the fields are `p.Type.{Description,Values,Example}`. For a `list<permission>` s
 **list type's own face** (and the kind name `permission`) and **never recurses into the `permission`
 element** — so the `{path, verbs}` Example/Shape is not shown. This matches the underlying type face
 `PLang/app/type/this.cs:76`: a kinded type writes only `writer.String(kind.Name)`, not the element's
-Example/Shape. **Confirmed the architect's hypothesis.** Fix direction (mine): the Types section shows
-a `list<T>`/kinded slot's **element** form (its Example/Shape), with a `list<text>` guard (unchanged).
-**Measurement blocked:** the terminal module (`list<permission>` is `terminal.start`'s slot) is **not
-on app-systems** — I can't build the `start //bin/sh …` step here. The trace + direction are done; the
-5-build measurement + guard run on a tree with terminal (plang-os-stable) or once terminal merges.
+Example/Shape. **Confirmed the architect's hypothesis.**
+
+**Fix (architect-refined) — the TYPE answers its own Example, NOT the template.** The type is the one
+door: `properties.template:86` reads `p.Type.{Description,Values,Example}`, and so does the
+`%!app.type.x%` Out face (`type/this.cs:62-83`). If the template recursed into the kind, that second
+reader would need the same recursion — **stored twice**. So `list<permission>` answers its own
+`Example` built from its element's (`[{"path": …, "verbs": […]}]`) and its `Description` names the
+element; the template stays unchanged. **Core → the coder.**
+**My part (when it lands):** measure a `list<T>` slot on app-systems whose element has an `Example`
+(find one, or name the gap), guard `list<text>` prints as today. **34's 5-build and 35's 10-build
+terminal measurements are BLOCKED** until the terminal module reaches app-systems (`start //bin/sh …`
+and the `list<permission>` slot aren't buildable here).
 
 ## Issue 35 (os bot) — `//` drop rate: measurement blocked (terminal not on app-systems)
 Already diagnosed as the writer dropping `//` (the path type preserves it). The os bot confirms the
