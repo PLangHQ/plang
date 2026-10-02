@@ -4,7 +4,7 @@
   "step": [
     {
       "index": 0,
-      "text": "return %!app.callstack.scope.caller.step%",
+      "text": "return %!app.call.scope.caller.step%",
       "line": {
         "number": 3
       },
@@ -19,16 +19,16 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!app.callstack.scope.caller.step%",
+              "value": "%!app.call.scope.caller.step%",
               "variable": [
                 {
-                  "text": "%!app.callstack.scope.caller.step%",
+                  "text": "%!app.call.scope.caller.step%",
                   "code": [
                     {
                       "variable": "!app"
                     },
                     {
-                      "property": "callstack"
+                      "property": "call"
                     },
                     {
                       "property": "scope"
@@ -61,9 +61,5 @@
   "visibility": "Public",
   "path": "/system/shortcut/step.goal",
   "prPath": "/system/shortcut/.build/step.pr",
-  "hash": "2ed43f52e6e5f312816c2340fb38fd1e8c771813ad75c13d7e06231e277b5120",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false
+  "hash": "5d2a0bc12dd69affa39c1352e23dd4fe392d0056be53ba07281a7f801ff86803"
 }

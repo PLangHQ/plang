@@ -1,0 +1,15 @@
+/ cancel %task%, write to %result%: the result when the task had already ended, nothing when the cancel stopped it.
+Start
+- goal.call(Name="Quick", Parallel=true); variable.set(Name=%quick%, Value=%!data%)
+- task.wait(Task=%quick%)
+- task.cancel(Task=%quick%); variable.set(Name=%ended%, Value=%!data%)
+- assert.equals(Expected="quick done", Actual=%ended%, Message="an ended task's cancel answers its result")
+- goal.call(Name="Slow", Parallel=true); variable.set(Name=%slow%, Value=%!data%)
+- task.cancel(Task=%slow%); variable.set(Name=%stopped%, Value=%!data%)
+- assert.isNull(Value=%stopped%, Message="a cancel that stopped the task answers nothing")
+
+Quick
+- goal.return(Data="quick done")
+
+Slow
+- timer.sleep(Ms=2000)

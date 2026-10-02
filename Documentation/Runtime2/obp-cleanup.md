@@ -292,3 +292,11 @@ so nothing breaks; one instance per kind would need the set born with the app's 
 A goal now answers IsSetup/IsSystem/IsTest from its plang path (and IsEvent, never set, is gone), so the `.pr` no
 longer writes the four keys. The goal reader (`goal/serializer/Reader.cs`) skips them by name so a `.pr` built
 before still reads — as it skips `waitForExecution`. Both skips go once every tracked `.pr` is rebuilt.
+
+## A task's first change to its caller's container copies all of it [logged 2026-10-02]
+
+*cost, not shape.* A task's first in-place change to a value it read from its caller (the variable store's `Own`)
+copies the whole container through `item.Copy()`: every nested dict and list, recursively, every other value shared.
+Correct, and a write deeper down later finds everything its own. But a task's first write into a 100k-row list of
+dicts copies every dict. The cheaper shape: copy only the containers on the written path, and keep the set of copies
+the task owns, so a later write deeper down copies just the next level it reaches.

@@ -15,10 +15,10 @@ public class AppNodesTests
         await using var app = NewApp();
         var user = app.actor.list.User.Context;
 
-        var read = await Read("%!app.callstack%", user);
+        var read = await Read("%!app.call%", user);
 
         await Assert.That(read.IsInitialized).IsTrue();
-        await Assert.That(ReferenceEquals(read.Peek(), user.CallStack)).IsTrue();
+        await Assert.That(ReferenceEquals(read.Peek(), user.call)).IsTrue();
     }
 
     // Every way a program reads the call stack still reads through, the stack being a plang value.
@@ -28,19 +28,19 @@ public class AppNodesTests
         await using var app = NewApp();
         var user = app.actor.list.User.Context;
         var goal = new global::app.goal.@this { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", user) };
-        await using var frame = user.CallStack.Push(goal);
+        await using var frame = user.call.Push(goal);
         frame.Tag(new global::app.type.item.dict.@this(new System.Collections.Generic.Dictionary<string, object?> { ["owner"] = "ingi" }), user);
         frame.Record(new global::app.error.Error("seen", "Seen", 400), user);
 
-        await Assert.That((await (await Read("%!callStack.Current.Depth%", user)).Value())?.ToString()).IsEqualTo("1");
-        await Assert.That((await Read("%!callStack.Scope%", user)).Peek()).IsSameReferenceAs(frame);
-        await Assert.That((await (await Read("%!callStack.Scope.Tags.owner%", user)).Value())?.ToString()).IsEqualTo("ingi");
-        await Assert.That((await (await Read("%!callStack.Audit.Count%", user)).Value())?.ToString()).IsEqualTo("1");
-        await Assert.That((await Read("%!callStack.Audit%", user)).IsInitialized).IsTrue();
-        await Assert.That((await (await Read("%!callStack.Audit[0].Message%", user)).Value())?.ToString()).IsEqualTo("seen");
-        await Assert.That((await (await Read("%!callStack.Current.Errors.Count%", user)).Value())?.ToString()).IsEqualTo("1");
-        await Assert.That((await Read("%!callStack.Current.Diffs%", user)).Success).IsTrue();
-        await Assert.That((await Read("%!callStack%", user)).Peek()).IsSameReferenceAs(user.CallStack);
+        await Assert.That((await (await Read("%!call.Current.Depth%", user)).Value())?.ToString()).IsEqualTo("1");
+        await Assert.That((await Read("%!call.Scope%", user)).Peek()).IsSameReferenceAs(frame);
+        await Assert.That((await (await Read("%!call.Scope.Tags.owner%", user)).Value())?.ToString()).IsEqualTo("ingi");
+        await Assert.That((await (await Read("%!call.Audit.Count%", user)).Value())?.ToString()).IsEqualTo("1");
+        await Assert.That((await Read("%!call.Audit%", user)).IsInitialized).IsTrue();
+        await Assert.That((await (await Read("%!call.Audit[0].Message%", user)).Value())?.ToString()).IsEqualTo("seen");
+        await Assert.That((await (await Read("%!call.Current.Errors.Count%", user)).Value())?.ToString()).IsEqualTo("1");
+        await Assert.That((await Read("%!call.Current.Diffs%", user)).Success).IsTrue();
+        await Assert.That((await Read("%!call%", user)).Peek()).IsSameReferenceAs(user.call);
     }
 
     // The call stack is a plang value: written, it shows its frame in play and the run's errors — never the
@@ -52,12 +52,12 @@ public class AppNodesTests
         var user = app.actor.list.User.Context;
         var goal = new global::app.goal.@this { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", user) };
         await user.Variable.Set("secret", user.Ok("s3cr3t-value"));
-        await using var frame = user.CallStack.Push(goal);
+        await using var frame = user.call.Push(goal);
         var error = new global::app.error.Error("it failed here", "Boom", 400) { Variables = user.Variable.Snapshot() };
         frame.Record(error, user);
 
         using var ms = new System.IO.MemoryStream();
-        var written = await user.Format("application/json").Encode(ms, user.Ok(user.CallStack), user);
+        var written = await user.Format("application/json").Encode(ms, user.Ok(user.call), user);
         await written.IsSuccess();
         var json = System.Text.Encoding.UTF8.GetString(ms.ToArray());
         await Assert.That(json).Contains(frame.Id.ToString()!);
@@ -66,7 +66,7 @@ public class AppNodesTests
         await Assert.That(json.ToLowerInvariant()).DoesNotContain("\"variables\"");
         await Assert.That(json.ToLowerInvariant()).DoesNotContain("\"params\"");
 
-        var dumped = await user.CallStack.Debug(user);
+        var dumped = await user.call.Debug(user);
         await Assert.That(dumped).Contains(frame.Id.ToString()!);
     }
 
@@ -77,14 +77,14 @@ public class AppNodesTests
         await using var app = NewApp();
         var user = app.actor.list.User.Context;
         var goal = new global::app.goal.@this { Name = "Main", Path = global::app.type.item.path.@this.Resolve("/Main.goal", user) };
-        await using var frame = user.CallStack.Push(goal);
+        await using var frame = user.call.Push(goal);
         frame.Record(new global::app.error.Error("seen", "Seen", 400), user);
 
         async Task<string> In(global::app.View view)
         {
             using var ms = new System.IO.MemoryStream();
             await using (var utf8 = new System.Text.Json.Utf8JsonWriter(ms))
-                await user.CallStack.Output(new global::app.type.item.kind.json.Writer(utf8, view), view, user);
+                await user.call.Output(new global::app.type.item.kind.json.Writer(utf8, view), view, user);
             return System.Text.Encoding.UTF8.GetString(ms.ToArray());
         }
 

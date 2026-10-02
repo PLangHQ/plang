@@ -1,6 +1,6 @@
 / After a called goal returns, the Caller-chain depth restores to its pre-call value.
 TestDepthRestoresAfterCall
-- set %before% = %!callStack.Current.Depth%
+- set %before% = %!call.Current.Depth%
 - call Inner
-- set %after% = %!callStack.Current.Depth%
+- set %after% = %!call.Current.Depth%
 - assert %after% equals %before%

@@ -7,7 +7,7 @@ public class BuilderPinTests
 {
     private static async Task<global::app.goal.@this> Installed(global::app.@this os) =>
         await RealGoalLoad.Read(os, await System.IO.File.ReadAllTextAsync(System.IO.Path.Combine(
-            BootstrapTests.RepoRoot(), "os", "system", "builder", "BuildGoal", ".build", "start.pr")));
+            Fixture.Root(), "os", "system", "builder", "BuildGoal", ".build", "start.pr")));
 
     // a property's value as written (a text literal reads back quoted)
     private static string? Value(global::app.goal.step.action.@this action, string name) => action[name]?.Value?.ToString()?.Trim('"');
@@ -20,7 +20,7 @@ public class BuilderPinTests
     [Test]
     public async Task Start_ACachedGoalReturnsItsCache()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os")).Testing();
+        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing();
         var start = await Installed(os);
 
         var guard = start.Step[0].Code[0];
@@ -39,7 +39,7 @@ public class BuilderPinTests
     [Test]
     public async Task Compile_ARefusedAnswerIsConfirmedOrFixed_InTheOrderWritten()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os")).Testing();
+        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing();
         var compile = (await Installed(os)).Child.Items().Single(g => g.Name == "Compile");
 
         var step = compile.Step.Items().Single(s => s.Code[0] is { Module.Name: "build", Name: "match" });
@@ -54,7 +54,7 @@ public class BuilderPinTests
     [Test]
     public async Task FixSteps_MatchesAgain_AndConfirmsNumbers()
     {
-        await using var os = new global::app.@this(System.IO.Path.Combine(BootstrapTests.RepoRoot(), "os")).Testing();
+        await using var os = new global::app.@this(System.IO.Path.Combine(Fixture.Root(), "os")).Testing();
         var fix = (await Installed(os)).Child.Items().Single(g => g.Name == "FixSteps");
 
         var step = fix.Step.Items().Single(s => s.Code[0] is { Module.Name: "build", Name: "match" });

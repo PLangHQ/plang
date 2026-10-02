@@ -28,7 +28,7 @@ public sealed class @this : global::app.@event.binding.@this
         running.Properties.Set("item", item);
         running.Properties.Set("result", result.Peek());
 
-        var frame = context.CallStack.Current;
+        var frame = context.call.Current;
         if (frame == null) return await _call.Start(context);
         var outer = frame.Event;
         frame.Event = running;

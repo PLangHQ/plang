@@ -16,23 +16,23 @@ public class SettingOwnerTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        await Assert.That(app.actor.list.User.CallStack.Timing.Value).IsFalse();
+        await Assert.That(app.actor.list.User.Context.call.Timing.Value).IsFalse();
 
-        var set = await new global::app.type.item.variable.parser.@this("%!app.actor[\"user\"].callstack.setting.timing%").Variable.Single()
+        var set = await new global::app.type.item.variable.parser.@this("%!app.actor[\"user\"].context.call.setting.timing%").Variable.Single()
             .Set(new global::app.data.@this("timing", true, context: ctx), ctx);
         await set.IsSuccess();
 
-        await Assert.That(app.actor.list.User.CallStack.Timing.Value).IsTrue();
-        await Assert.That(app.actor.list.System.CallStack.Timing.Value).IsFalse();
+        await Assert.That(app.actor.list.User.Context.call.Timing.Value).IsTrue();
+        await Assert.That(app.actor.list.System.Context.call.Timing.Value).IsFalse();
     }
 
     // The system's value (a CLI flag) reaches both actors' stacks — the user falls back to it.
     [Test] public async Task CallStack_TakesTheSystemsValue()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await app.actor.list.System.Setting.Set("app.callstack.setting", new Dictionary<string, object?> { ["history"] = true }).IsSuccess();
-        await Assert.That(app.actor.list.System.CallStack.History.Value).IsTrue();
-        await Assert.That(app.actor.list.User.CallStack.History.Value).IsTrue();
+        await app.actor.list.System.Setting.Set("app.call.setting", new Dictionary<string, object?> { ["history"] = true }).IsSuccess();
+        await Assert.That(app.actor.list.System.Context.call.History.Value).IsTrue();
+        await Assert.That(app.actor.list.User.Context.call.History.Value).IsTrue();
     }
 
     // A call stack reads through its actor's context's settings: a value written there (a goal's own set) reaches
@@ -40,9 +40,9 @@ public class SettingOwnerTests
     [Test] public async Task CallStack_TakesItsContextsValue_AndNoOthers()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await app.actor.list.User.Context.Setting.Set("app.callstack.setting", new Dictionary<string, object?> { ["timing"] = true }).IsSuccess();
-        await Assert.That(app.actor.list.User.CallStack.Timing.Value).IsTrue();
-        await Assert.That(app.actor.list.System.CallStack.Timing.Value).IsFalse();
+        await app.actor.list.User.Context.Setting.Set("app.call.setting", new Dictionary<string, object?> { ["timing"] = true }).IsSuccess();
+        await Assert.That(app.actor.list.User.Context.call.Timing.Value).IsTrue();
+        await Assert.That(app.actor.list.System.Context.call.Timing.Value).IsFalse();
     }
 
     // Debug, once born, takes a later value under its path.
@@ -74,6 +74,30 @@ public class SettingOwnerTests
 
         await app.actor.list.System.Setting.Set("app.setting", new Dictionary<string, object?> { ["create"] = true }).IsSuccess();
         await Assert.That((await (await Read("%!app.setting.create%", app.actor.list.User.Context)).Value())?.ToString()).IsEqualTo("true");
+    }
+
+    // A setting always has a value — its class default, or the one written: the CLI's --build={"cache":false} reads as
+    // false in a goal, and a `set default` on it leaves the CLI's value.
+    [Test] public async Task ASettingTheCliWrote_ReadsAsWritten_AndASetDefaultLeavesIt()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        // as the CLI does it: build mode born, then the flag's values written
+        app.Build = new global::app.module.build.@this(app.actor.list.System.Context);
+        var path = new global::app.module.build.setting.@this().Path;
+        await app.actor.list.System.Setting.Set(path, new Dictionary<string, object?> { ["cache"] = false }).IsSuccess();
+
+        foreach (var ctx in new[] { app.actor.list.System.Context, app.actor.list.User.Context })
+        {
+            var read = await Read("%!build.setting.cache%", ctx);
+            await Assert.That(read.IsInitialized).IsTrue();
+            await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
+        }
+
+        var system = app.actor.list.System.Context;
+        await (await global::PLang.Tests.Shared.Make.Action(system, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(system, "Name", "%!build.setting.cache%", "variable"),
+            ("Value", true), ("Default", true)).Start(system)).IsSuccess();
+        await Assert.That((await (await Read("%!build.setting.cache%", system)).Value())?.ToString()).IsEqualTo("false");
     }
 
     // The saved rows are read when the app loads; after it the in-memory door has them.

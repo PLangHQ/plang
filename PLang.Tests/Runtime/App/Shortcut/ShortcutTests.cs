@@ -49,7 +49,7 @@ public class ShortcutTests
     [Test]
     public async Task AShortcut_ReadsAsItsGoalsAnswer_ForItsAsker()
     {
-        await Shortcut("where", "%!app.callstack.scope.caller.goal%");
+        await Shortcut("where", "%!app.call.scope.caller.goal%");
         var caller = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(_app,
             Make.Goal(Ctx, "Caller", "/Caller.goal", Make.Step("set %got% = %!where%", Set("got", "%!where%"))));
         _app.goal.list.Add(caller);
@@ -85,7 +85,7 @@ public class ShortcutTests
     [Test]
     public async Task TheShortcuts_AreTheAppsList()
     {
-        await Shortcut("where", "%!app.callstack.scope.caller.goal%");
+        await Shortcut("where", "%!app.call.scope.caller.goal%");
 
         var read = await _app.shortcut.list.Read();
 

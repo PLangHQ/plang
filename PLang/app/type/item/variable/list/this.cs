@@ -20,15 +20,6 @@ public partial class @this
     private readonly ConcurrentDictionary<string, data.@this> _variables = new(Comparer);
     private actor.context.@this _context;
 
-    /// <summary>
-    /// Per-call parameter scopes. <see cref="Get"/> consults <c>Calls.Current</c> before
-    /// falling back to the actor-shared dictionary — that's how goal-call parameters
-    /// (e.g. <c>%!data%</c> on a goal channel) avoid racing across concurrent calls on
-    /// the same actor.
-    /// </summary>
-    [JsonIgnore]
-    public call.list.@this Calls { get; } = new();
-
     /// <summary>How deep a chain of references this flow is resolving (a variable holding a variable…) —
     /// the variable's read counts it, and a chain past its limit is a cycle.</summary>
     internal System.Threading.AsyncLocal<int> Resolving { get; } = new();
@@ -37,10 +28,14 @@ public partial class @this
     /// variable holding a template that names it) is a cycle.</summary>
     internal System.Threading.AsyncLocal<System.Collections.Immutable.ImmutableHashSet<object>?> Rendering { get; } = new();
 
-    /// <summary>True when the current flow's frame was pushed for <paramref name="call"/> and its
-    /// runner supplied <paramref name="name"/> — the supplied value wins over the call's own row.</summary>
+    /// <summary>True when a frame of this flow was pushed for <paramref name="call"/> and its runner supplied
+    /// <paramref name="name"/> — the supplied value wins over the call's own row.</summary>
     public bool Supplies(global::app.goal.step.action.@this call, string name)
-        => Calls.Current?.Supplies(call, name) ?? false;
+    {
+        for (var frame = _context.call.Current; frame != null; frame = frame.Caller)
+            if (frame.Supplies(call, name)) return true;
+        return false;
+    }
 
     [JsonIgnore]
     internal actor.context.@this Context
@@ -53,6 +48,11 @@ public partial class @this
     /// Production ctor — born from the owning context. Every Variables in a running
     /// App belongs to exactly one context, passed in here.
     /// </summary>
+    // The memory a name its frames and this memory hold nothing for is read from: a task's context, whose calls
+    // continue its caller's (its root frame's caller is the frame its caller was in), reads its caller's, live. None
+    // for every other memory.
+    private @this? Outer => _context.call.Root?.Caller != null ? _context.Parent?.Variable : null;
+
     public @this(actor.context.@this context)
     {
         Context = context;
@@ -99,6 +99,9 @@ public partial class @this
             var bound = await reference.Settle();
             value = bound.IsInitialized ? bound.Copy(name) : _context.NotFound(name);
         }
+        // what the value becomes where the name's value was (a task keeps the task written before it)
+        if (value is data.@this written)
+            value = await written.Replace(async () => (await Get(name)).Peek());
 
         // The name is a variable's root; a write deeper in is the variable's own (variable.Set).
 
@@ -113,10 +116,10 @@ public partial class @this
     // and what it held before (null when it was new).
     private (data.@this Stored, bool Changed, object? Before) Bind(string name, object? value)
     {
-        // Inside a call, the write lands in the frame that binds the name (a loop's %item%, a call's
-        // parameter), or — none does — in the actor's memory, as it would without the call. Reads cascade
-        // frame → caller chain → memory, so later gets see the new value.
-        var frame = Calls.Current?.Keeper(name);
+        // Inside a call, the write lands in the frame that keeps the name (a loop's %item%, a call's parameter, a frame
+        // with memory of its own), or — none does — in this context's memory, as it would without the call. Reads
+        // cascade frame → caller chain → memory, so later gets see the new value.
+        var frame = _context.call.Current?.Keeper(name);
 
         // Data value: replace under `name`. In-place mutation of prev
         // is wrong: a Data may be aliased under multiple keys (e.g. Action stores the step result
@@ -144,7 +147,7 @@ public partial class @this
         {
             // The binding exists in the keeping frame: rebind it — mint a new Data, never mutate in
             // place, so a value a caller already captured stays independent.
-            if (frame.ContainsLocal(name) && frame.TryGet(name, out var existingFrame))
+            if (frame.Holds(name) && frame.TryGet(name, out var existingFrame))
             {
                 var rebound = new data.@this(name, value, context: _context);
                 var prevValue = existingFrame.Peek();
@@ -197,7 +200,7 @@ public partial class @this
     // what is bound after the set starts on the stored Data — its answer is the set's.
     private System.Threading.Tasks.ValueTask<data.@this> After(string name, object? before, data.@this stored)
     {
-        _context.CallStack.Record(this, name, before);
+        _context.call.Record(this, name, before);
         return Events?.set is { after.Count: > 0 } set ? set.After(Named(name), stored, _context) : new(stored);
     }
 
@@ -216,13 +219,33 @@ public partial class @this
         var born = await value();
         if (!born.Success || born.Handled) return born;
         var made = born.Peek();
-        if (Calls.Current?.Keeper(name) != null)
+        if (_context.call.Current?.Keeper(name) != null)
             return await Set(name, made);
 
         if (await Before(Events?.set, name, made) is { } refused) return refused;
         data.@this? stored = null;
         var held = _variables.GetOrAdd(name, _ => stored = new data.@this(name, made, context: _context));
         return ReferenceEquals(held, stored) ? await After(name, null, held) : held;
+    }
+
+    /// <summary>What <paramref name="name"/> holds, as this run's own to change in place: held where a write to it lands
+    /// (the frame that keeps it, else this memory), as it is; read from beyond that — a frame with memory of its own (a
+    /// task's run, a tool's goal) reading what its caller holds — a copy of it
+    /// (<see cref="global::app.type.item.@this.Copy"/>) bound where the write lands first, so a change never reaches the
+    /// caller. Its content is touched first (lazy content is copied as what it is). Answers what the name holds now.</summary>
+    public async System.Threading.Tasks.ValueTask<data.@this> Own(string name)
+    {
+        var keeper = _context.call.Current?.Keeper(name);
+        if (keeper != null ? keeper.Holds(name) : _variables.ContainsKey(name)) return await Get(name);
+        var read = await Get(name);
+        if (read.Success && read.IsInitialized) await read.Value();
+        if (!read.Success || !read.IsInitialized || read.Peek() is not { } value) return read;
+        var copy = value.Copy();
+        if (ReferenceEquals(copy, value)) return read;
+        var own = new data.@this(name, copy, context: _context);
+        if (keeper == null) return _variables.GetOrAdd(name, own);
+        keeper.Set(name, own);
+        return own;
     }
 
     /// <summary>Stores <paramref name="value"/> under <paramref name="name"/> only if the name still
@@ -235,7 +258,9 @@ public partial class @this
         if (ReferenceEquals(expected.Peek(), value)) return expected;
         if (await Before(Events?.set, name, value) is { } refused) return refused;
 
-        var frame = Calls.Current?.Keeper(name);
+        // the frame a write lands in reads what it holds outward — a frame with memory of its own (a task's run) reading
+        // its caller's — and the write lands in it: the caller's stays as it was
+        var frame = _context.call.Current?.Keeper(name);
         if (frame != null ? !(frame.TryGet(name, out var held) && ReferenceEquals(held, expected))
                           : !_variables.TryGetValue(name, out held) || !ReferenceEquals(held, expected))
             return held ?? expected;
@@ -257,8 +282,8 @@ public partial class @this
     public data.@this? Peek(string name)
     {
         if (string.IsNullOrEmpty(name)) return null;
-        if (Calls.Current is { } frame && frame.TryGet(name, out var framed)) return framed;
-        return _variables.TryGetValue(name, out var v) ? v : null;
+        if (_context.call.Current is { } frame && frame.TryGet(name, out var framed)) return framed;
+        return _variables.TryGetValue(name, out var v) ? v : Outer?.Peek(name);
     }
 
     /// <summary>The value-counterpart to <see cref="Get"/>: hand back the VALUE a
@@ -268,16 +293,16 @@ public partial class @this
         => await (await Get(name)).Value();
 
     /// <summary>What <paramref name="name"/> holds — a variable's root; a variable reaches deeper
-    /// through its own code. A per-call parameter scope wins over the actor-shared variables
-    /// (<see cref="Calls"/>). NotFound when nothing is bound.</summary>
+    /// through its own code. The frames of this context's calls win, inner first, over its memory; a task's reads
+    /// fall through to its caller's. NotFound when nothing is bound.</summary>
     public System.Threading.Tasks.ValueTask<data.@this> Get(string name)
     {
         if (string.IsNullOrEmpty(name))
             return System.Threading.Tasks.ValueTask.FromResult(_context.NotFound(name ?? ""));
-        if (Calls.Current is { } frame && frame.TryGet(name, out var framed))
+        if (_context.call.Current is { } frame && frame.TryGet(name, out var framed))
             return System.Threading.Tasks.ValueTask.FromResult(framed);
-        return System.Threading.Tasks.ValueTask.FromResult(
-            _variables.TryGetValue(name, out var root) ? root : _context.NotFound(name));
+        if (_variables.TryGetValue(name, out var root)) return System.Threading.Tasks.ValueTask.FromResult(root);
+        return Outer?.Get(name) ?? System.Threading.Tasks.ValueTask.FromResult(_context.NotFound(name));
     }
 
     /// <summary>
@@ -308,9 +333,9 @@ public partial class @this
     /// </summary>
     public bool Contains(string name)
     {
-        if (Calls.Current is { } frame && frame.TryGet(name, out _))
+        if (_context.call.Current is { } frame && frame.TryGet(name, out _))
             return true;
-        return _variables.ContainsKey(name);
+        return _variables.ContainsKey(name) || (Outer?.Contains(name) ?? false);
     }
 
     /// <summary>
@@ -348,7 +373,7 @@ public partial class @this
     {
         get
         {
-            var names = (Calls.Current?.Names ?? []).Concat(_variables.Keys)
+            var names = (_context.call.Current?.Names ?? []).Concat(_variables.Keys)
                 .Where(n => !n.StartsWith('!'))
                 .Distinct(StringComparer.OrdinalIgnoreCase);
             var held = new global::app.type.item.list.@this<global::app.type.item.variable.@this>();
@@ -376,7 +401,7 @@ public partial class @this
     {
         // what a read sees: the current call's names first (they shadow the actor's), then the memory
         var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        if (Calls.Current is { } frame)
+        if (_context.call.Current is { } frame)
             foreach (var name in frame.Names)
                 if (!name.StartsWith('!') && seen.Add(name) && frame.TryGet(name, out var framed))
                     yield return new(name, framed);

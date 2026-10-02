@@ -39,7 +39,7 @@ public partial class OnTimeout : IContext, IClause
         var cts = CancellationTokenSource.CreateLinkedTokenSource(parent);
         cts.CancelAfter(after);
         context.PushCancellation(cts);
-        context.CallStack.Current?.SetItem(new Deadline(cts, parent, after, Spent: false));
+        context.call.Current?.SetItem(new Deadline(cts, parent, after, Spent: false));
         return result;
     }
 
@@ -47,7 +47,7 @@ public partial class OnTimeout : IContext, IClause
     /// arrives late is late, whether or not the work also failed.</summary>
     public Task<global::app.data.@this> End(global::app.data.@this result, actor.context.@this context)
     {
-        var frame = context.CallStack.Current;
+        var frame = context.call.Current;
         if (frame?.GetItem<Deadline>() is not { Spent: false } deadline) return Task.FromResult(result);
         frame.SetItem(deadline with { Spent = true });
         context.PopCancellation();

@@ -1,3 +1,0 @@
-[0] condition.if(Left=%goal.IsCached%) { goal.return(Data=%goal.Cache%) }
-[1] condition.if(Left=%items%) { output.write(Data="There are items") }
-[2] error.throw(Data=%!error%, FixSuggestion=%hint%)

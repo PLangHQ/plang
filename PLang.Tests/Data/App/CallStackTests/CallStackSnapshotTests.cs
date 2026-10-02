@@ -32,7 +32,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var (g2, _, a2) = MakeFrame("Inner");
         var app = BuildAppWithGoals(g1, g2);
 
-        var stack = app.actor.list.User.CallStack;
+        var stack = app.actor.list.User.Context.call;
         await using var outer = stack.Push(a1);
         await using var inner = stack.Push(a2);
 
@@ -52,7 +52,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var (g1, _, a1) = MakeFrame("Parent");
         var (g2, _, a2) = MakeFrame("CompletedChild");
         var app = BuildAppWithGoals(g1, g2);
-        var stack = app.actor.list.User.CallStack;
+        var stack = app.actor.list.User.Context.call;
         // Turn History on so completed children stay in the tree — we'll assert the snapshot
         // still excludes them because they're not on the *active* chain.
         stack.Setting.History = true;
@@ -76,8 +76,8 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var (g2, _, a2) = MakeFrame("Inner2");
         var src = BuildAppWithGoals(g1, g2);
 
-        await using (var outer = src.actor.list.User.CallStack.Push(a1))
-        await using (var inner = src.actor.list.User.CallStack.Push(a2))
+        await using (var outer = src.actor.list.User.Context.call.Push(a1))
+        await using (var inner = src.actor.list.User.Context.call.Push(a2))
         {
             var snap = src.Snapshot(src.actor.list.User.Context);
 
@@ -88,13 +88,13 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
 
             await dst.Restore(snap, dst.actor.list.User.Context);
 
-            var chain = dst.actor.list.User.CallStack.RestoredChain!;
+            var chain = dst.actor.list.User.Context.call.RestoredChain!;
             await Assert.That(chain.Count).IsEqualTo(2);
             await Assert.That(chain[0].Goal.PrPath?.ToString()).IsEqualTo(g1.PrPath?.ToString());
             await Assert.That(chain[^1].Goal.PrPath?.ToString()).IsEqualTo(g2.PrPath?.ToString());
 
-            await Assert.That(dst.actor.list.User.CallStack.BottomFrame).IsNotNull();
-            await Assert.That(dst.actor.list.User.CallStack.BottomFrame!.Goal.PrPath?.ToString()).IsEqualTo(g2.PrPath?.ToString());
+            await Assert.That(dst.actor.list.User.Context.call.BottomFrame).IsNotNull();
+            await Assert.That(dst.actor.list.User.Context.call.BottomFrame!.Goal.PrPath?.ToString()).IsEqualTo(g2.PrPath?.ToString());
         }
     }
 
@@ -106,7 +106,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var (g1, s1, a1) = MakeFrame("FrOuter");
         var (g2, s2, a2) = MakeFrame("FrInner");
         var src = BuildAppWithGoals(g1, g2);
-        var stack = src.actor.list.User.CallStack;
+        var stack = src.actor.list.User.Context.call;
 
         await using (stack.Push(g1))
         await using (stack.Push(s1))
@@ -122,7 +122,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
             var dst = BuildAppWithGoals(dg1, dg2);
             await dst.Restore(snap, dst.actor.list.User.Context);
 
-            var chain = dst.actor.list.User.CallStack.RestoredChain!;
+            var chain = dst.actor.list.User.Context.call.RestoredChain!;
             await Assert.That(chain.Count).IsEqualTo(2);
             await Assert.That(chain[0].Goal.Name).IsEqualTo("FrOuter");
             await Assert.That(chain[^1].Goal.Name).IsEqualTo("FrInner");
@@ -138,7 +138,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var (g1, s1, a1) = MakeFrame("BfOuter");
         var (g2, s2, _) = MakeFrame("BfInner");
         var app = BuildAppWithGoals(g1, g2);
-        var stack = app.actor.list.User.CallStack;
+        var stack = app.actor.list.User.Context.call;
 
         await using var goal = stack.Push(g1);
         await using var step = stack.Push(s1);
@@ -156,7 +156,7 @@ public class CallStackSnapshotTests : System.IAsyncDisposable
         var (g1, _, a1) = MakeFrame("LBOuter");
         var (g2, _, a2) = MakeFrame("LBInner");
         var app = BuildAppWithGoals(g1, g2);
-        var stack = app.actor.list.User.CallStack;
+        var stack = app.actor.list.User.Context.call;
         await using var outer = stack.Push(a1);
         await using var inner = stack.Push(a2);
 

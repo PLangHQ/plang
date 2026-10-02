@@ -169,6 +169,34 @@ public class QueryConversationTests
         await Assert.That(continued).Contains("remember 7");
     }
 
+    // The plain pick, as the decider writes it: Conversation=%answer% continues the answer — the conversation is born
+    // from the response.
+    [Test]
+    public async Task Step_ConversationIsTheResponseItself()
+    {
+        Answers("answer");
+        await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"remember 7\"}], Cache=false)").Start(Ctx);
+        await (await Ctx.Action("variable.set(Name=%answer%, Value=%!data%)").Start(Ctx)).IsSuccess();
+
+        var next = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"what was it\"}], Cache=false, Conversation=%answer%)").Start(Ctx);
+
+        await next.IsSuccess();
+        await Assert.That(await _handler.LastRequest!.Content!.ReadAsStringAsync()).Contains("remember 7");
+    }
+
+    // A value that is no llm answer continues nothing: the query says so, naming it.
+    [Test]
+    public async Task Step_ConversationOfAText_IsRefused_NamingIt()
+    {
+        Answers("answer");
+        await Ctx.Variable.Set("greeting", "hello");
+
+        var read = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"x\"}], Cache=false, Conversation=%greeting%)").Start(Ctx);
+
+        await Assert.That(read.Success).IsFalse();
+        await Assert.That(read.Error!.Message).Contains("a conversation continues an llm answer; %greeting% isn't one");
+    }
+
     // continue takes a response, never a yes: a bare true names no conversation.
     [Test]
     public async Task Step_ContinueTrue_IsRefused()

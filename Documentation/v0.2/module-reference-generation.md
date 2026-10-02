@@ -1,6 +1,6 @@
 # Module Reference Generation
 
-The learner-facing module pages (`docs/modules/<module>.md`) are **generated** from
+The learner-facing module pages (`system/modules/<module>/start.md`) are **generated** from
 the same source the builder already uses — never hand-written. Every fact on a page
 has exactly one home, so a page can never disagree with the code.
 
@@ -53,7 +53,7 @@ its audience needs — nothing is rendered raw, so no tag can leak:
 
 | Consumer | Shows |
 |---|---|
-| Learner page (`docs/modules/*.md`) | `name`, `prose`, `say` |
+| Learner page (`system/modules/<module>/start.md`) | `name`, `prose`, `say` |
 | Compile teaching (build prompt) | `name`, `prose`, `builder` |
 
 > Because the compile teaching reads `notes.md` today, the tagged `notes.md` files
@@ -523,7 +523,7 @@ existing compile template shows the builder fields (`name`, `prose`, `builder`).
   the golden sample.
 - **Coder / architect:** parse each `notes.md` line into `{name, prose, say, builder}`;
   the learner Fluid template + the per-module plang goal that emits
-  `docs/modules/<module>.md`; the learner fields on the compile side so the existing
+  `system/modules/<module>/start.md`; the learner fields on the compile side so the existing
   builder template shows `builder` (not raw). The tagged `notes.md` files land in the
   same change as the parse.
 

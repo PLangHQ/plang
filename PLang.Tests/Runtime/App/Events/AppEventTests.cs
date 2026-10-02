@@ -20,7 +20,7 @@ public class AppEventTests
         var running = new global::app.data.@this("!event", fired, context: ctx);
         running.Properties.Set("item", goal);
         running.Properties.Set("result", new global::app.type.item.text.@this("so far"));
-        await using var frame = ctx.CallStack.Push(goal);
+        await using var frame = ctx.call.Push(goal);
         frame.Event = running;
 
         var read = await Read("%!app.event%", ctx);

@@ -20,7 +20,6 @@ public class StartMdTests
     [Arguments("PLang")]
     [Arguments("PlangConsole")]
     [Arguments("Skill")]
-    [Arguments("tools/decider")]
     public async Task ReadmeIsACopyOfStartMd(string folder)
     {
         var dir = System.IO.Path.Combine(RepoRoot(), folder);

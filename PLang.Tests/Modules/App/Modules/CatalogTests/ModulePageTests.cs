@@ -3,7 +3,7 @@ using app.module.ui;
 namespace PLang.Tests.App.Modules.CatalogTests;
 
 /// <summary>
-/// A module's learner page (docs/modules/&lt;name&gt;.md) is its catalog rendered through docs/templates/module.template
+/// A module's learner page (system/modules/&lt;name&gt;/start.md) is its catalog rendered through docs/templates/module.template
 /// (decision 411). The file module's page is the spec's golden — Documentation/v0.2/module-reference-generation.md,
 /// "Golden output", its annotation lines left out: the docs' own check, run without the goal's .pr.
 /// </summary>

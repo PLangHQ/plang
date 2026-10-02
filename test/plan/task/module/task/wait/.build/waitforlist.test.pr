@@ -1,0 +1,464 @@
+{
+  "name": "Start",
+  "comment": "A task written where a task was keeps it: %task.list% is every task written there, in order, and wait for\n%task.list% answers all their results in that order.",
+  "step": [
+    {
+      "index": 0,
+      "text": "goal.call(Name=\"First\", Parallel=true); variable.set(Name=%task%, Value=%!data%)",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "First"
+            },
+            {
+              "name": "Parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "goal.call(Name=\"Second\", Parallel=true); variable.set(Name=%task%, Value=%!data%)",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Second"
+            },
+            {
+              "name": "Parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "task.wait(List=%task.list%); variable.set(Name=%results%, Value=%!data%)",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "task",
+          "name": "wait",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": "%task.list%",
+              "variable": [
+                {
+                  "text": "%task.list%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    },
+                    {
+                      "property": "list"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%results%",
+              "variable": [
+                {
+                  "text": "%results%",
+                  "code": [
+                    {
+                      "variable": "results"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=\"first\", Actual=%results[0]%, Message=\"the task written first\")",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "first"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%results[0]%",
+              "variable": [
+                {
+                  "text": "%results[0]%",
+                  "code": [
+                    {
+                      "variable": "results"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the task written first"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert.equals(Expected=\"second\", Actual=%results[1]%, Message=\"the task written last\")",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "second"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%results[1]%",
+              "variable": [
+                {
+                  "text": "%results[1]%",
+                  "code": [
+                    {
+                      "variable": "results"
+                    },
+                    {
+                      "index": {
+                        "number": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the task written last"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "First",
+      "step": [
+        {
+          "index": 0,
+          "text": "timer.sleep(Ms=200)",
+          "line": {
+            "number": 11
+          },
+          "code": [
+            {
+              "module": "timer",
+              "name": "sleep",
+              "property": [
+                {
+                  "name": "Ms",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 200
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "goal.return(Data=\"first\")",
+          "line": {
+            "number": 12
+          },
+          "code": [
+            {
+              "module": "goal",
+              "name": "return",
+              "property": [
+                {
+                  "name": "Data",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "first"
+                }
+              ],
+              "default": [
+                {
+                  "name": "depth",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/module/task/wait/WaitForList.test.goal",
+      "prPath": "/plan/task/module/task/wait/.build/waitforlist.test.pr",
+      "hash": "e19b685531d1fb179c85b8b53e1d0484e7af7052493acc12b8f7a5e35ac2a523"
+    },
+    {
+      "name": "Second",
+      "step": [
+        {
+          "index": 0,
+          "text": "goal.return(Data=\"second\")",
+          "line": {
+            "number": 15
+          },
+          "code": [
+            {
+              "module": "goal",
+              "name": "return",
+              "property": [
+                {
+                  "name": "Data",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "second"
+                }
+              ],
+              "default": [
+                {
+                  "name": "depth",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/module/task/wait/WaitForList.test.goal",
+      "prPath": "/plan/task/module/task/wait/.build/waitforlist.test.pr",
+      "hash": "807bd1483a9f4e9445811c4a6f8bd8424cbbfa8e56eb16a5c90e611a0dc9a1b6"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/task/module/task/wait/WaitForList.test.goal",
+  "prPath": "/plan/task/module/task/wait/.build/waitforlist.test.pr",
+  "hash": "489c79432cc8d783688042d047fa882ffe9e7731af9162e861afb45227ae1ff5"
+}

@@ -31,7 +31,7 @@ public class VariableCodeTests
     [Test]
     public async Task Set_ThroughANodeThatHoldsNothing_IsAnError_NamingIt()
     {
-        var written = await One("%!app.user.callstack.setting.timing%").Set(Context.Ok(true), Context);
+        var written = await One("%!app.user.call.setting.timing%").Set(Context.Ok(true), Context);
 
         await written.IsFailure();
         await Assert.That(written.Error!.Key).IsEqualTo("VariableNotFound");
@@ -42,7 +42,7 @@ public class VariableCodeTests
     [Test]
     public async Task Read_ThroughANodeThatHoldsNothing_IsNotSet()
     {
-        var read = await One("%!app.user.callstack%").Start(Context);
+        var read = await One("%!app.user.call%").Start(Context);
 
         await Assert.That(read.IsInitialized).IsFalse();
         await read.IsSuccess();

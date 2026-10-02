@@ -153,17 +153,18 @@ public class FormalReaderTests : System.IAsyncDisposable
         await Assert.That(written).DoesNotContain("null");
     }
 
-    // a conversation written as text is refused saying its shape — never a reader's exception
+    // a conversation written as text reads as the value it continues — never a reader's exception; that a text is no
+    // llm answer is the query's to say (QueryConversationTests)
     [Test]
-    public async Task AConversationWrittenAsText_IsRefused_SayingItsShape()
+    public async Task AConversationWrittenAsText_ReadsAsTheValueItContinues()
     {
         var conversation = await Continuing("\"{continue: %answer%}\"");
 
-        await conversation.Value();
+        var opened = await conversation.Value();
 
-        await conversation.IsFailure();
-        await Assert.That(conversation.Error!.Key).IsEqualTo("ConversationInvalid");
-        await Assert.That(conversation.Error.Message).Contains("a conversation is {continue: %answer%}");
+        await conversation.IsSuccess();
+        await Assert.That(opened).IsTypeOf<global::app.module.llm.type.conversation.@this>();
+        await Assert.That(((global::app.module.llm.type.conversation.@this)opened!).Continue).IsNotNull();
     }
 
     // llm.query's Conversation as written, through a real .pr load, with %answer% set

@@ -239,7 +239,7 @@ public class EngineTests : System.IAsyncDisposable
 
         await Assert.That(context).IsNotNull();
         await Assert.That(context.App).IsEqualTo(engine);
-        await Assert.That(context.CallStack).IsNotNull();
+        await Assert.That(context.call).IsNotNull();
     }
 
     [Test]
@@ -302,8 +302,8 @@ public class EngineTests : System.IAsyncDisposable
 
         // Goal is restored after execution, but during execution context.Goal was set.
         // After RunAsync completes, Goal is restored to previous (null for root) and
-        // CallStack.Current rewinds to null on the AsyncLocal flow.
-        await Assert.That(context.CallStack!.Current).IsNull();
+        // call.Current rewinds to null on the AsyncLocal flow.
+        await Assert.That(context.call!.Current).IsNull();
     }
 
     [Test]
@@ -317,7 +317,7 @@ public class EngineTests : System.IAsyncDisposable
         await engine.Start(goal, context);
 
         // After completion, AsyncLocal Current is restored to its pre-Push value (null).
-        await Assert.That(context.CallStack!.Current).IsNull();
+        await Assert.That(context.call!.Current).IsNull();
     }
 
     [Test]

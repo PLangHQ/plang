@@ -1,1 +1,0 @@
-[0] condition.if(Left=%goal.IsCached%, Operator==, Right=true) { goal.return(Data=%goal.Cache%) }

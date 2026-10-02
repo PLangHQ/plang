@@ -2,7 +2,7 @@
 The decider's questions for confirming numbers (BuildGoal/Start.goal ConfirmNumbers): one yes/no per number a step's
 code writes that its words don't write as digits, under the number's id (goal.step.unwritten Id). A no refuses the
 number as invented; the check that found it reads no human language — the decider does the reading.
-The eval's shape (tools/decider/prompt_c.py confirm_questions); keep the two equal.
+Its shape is pinned by ConfirmTemplateTests (PLang.Tests/Wire/App/Decider/confirm_golden.json).
 Needs: numbers (the UnwrittenNumber error's Details.numbers).
 {% endcomment %}
 {

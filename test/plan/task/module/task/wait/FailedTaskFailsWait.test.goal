@@ -1,0 +1,11 @@
+/ A failed task fails the wait step; on error handles it as anywhere.
+Start
+- goal.call(Name="Fails", Parallel=true); variable.set(Name=%task%, Value=%!data%)
+- task.wait(Task=%task%); on.error(Key="Broke", Recovery=[goal.call(Name="Caught")])
+- assert.equals(Expected="Broke", Actual=%caught%, Message="the task's failure fails the wait")
+
+Fails
+- error.throw(Message="it broke", Key="Broke")
+
+Caught
+- variable.set(Name=%caught%, Value=%!error.Key%)

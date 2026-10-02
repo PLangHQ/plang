@@ -57,7 +57,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -66,7 +66,12 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 0's saved code no longer holds — rebuilt: step 0 'set %modules% = %!app.module.list%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 1,
@@ -85,15 +90,6 @@
                 "name": "path"
               },
               "value": "/system/builder/llm/decider.json"
-            }
-          ],
-          "default": [
-            {
-              "name": "resolvevariables",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
             }
           ]
         },
@@ -149,7 +145,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -158,7 +154,12 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 1's saved code no longer holds — rebuilt: step 1 'read \"/system/builder/llm/decider.json\", write to %decider%': file.read: the default frozen for 'resolvevariables' is no option of this action any more.; variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 2,
@@ -198,7 +199,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -207,7 +208,12 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 2's saved code no longer holds — rebuilt: step 2 'set %stage% = 1': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 3,
@@ -271,7 +277,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -280,7 +286,12 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 3's saved code no longer holds — rebuilt: step 3 'render template \"/system/builder/llm/templates/decider.state.template\", write to %state%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 4,
@@ -344,7 +355,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -353,7 +364,12 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 4's saved code no longer holds — rebuilt: step 4 'render template \"/system/builder/llm/templates/decider1.template\", write to %questions%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 5,
@@ -455,7 +471,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -464,7 +480,12 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 5's saved code no longer holds — rebuilt: step 5 'llm.decider State=%state%, Question=%questions%, write to %answer%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 6,
@@ -536,8 +557,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 7,
@@ -577,7 +597,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -586,7 +606,12 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 7's saved code no longer holds — rebuilt: step 7 'set %stage% = 2': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 8,
@@ -650,7 +675,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -659,7 +684,12 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 8's saved code no longer holds — rebuilt: step 8 'render template \"/system/builder/llm/templates/decider.state.template\", write to %state%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 9,
@@ -723,7 +753,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -732,7 +762,12 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 9's saved code no longer holds — rebuilt: step 9 'render template \"/system/builder/llm/templates/decider2.template\", write to %questions%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 10,
@@ -834,7 +869,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -843,7 +878,12 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 10's saved code no longer holds — rebuilt: step 10 'llm.decider State=%state%, Question=%questions%, write to %answer%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 11,
@@ -915,8 +955,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 12,
@@ -960,17 +999,12 @@
           "key": "Unsure",
           "message": "step 12 uses goal.call, which the decider was not sure of (0.77)"
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [],
   "visibility": "Public",
   "path": "/system/builder/BuildGoal/Decide.goal",
   "prPath": "/system/builder/BuildGoal/.build/decide.pr",
-  "hash": "09fe926fe798b2b26fdb776ec952666a3495e58b2fba00854e31c043123d56cd",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": true,
-  "isTest": false
+  "hash": "09fe926fe798b2b26fdb776ec952666a3495e58b2fba00854e31c043123d56cd"
 }

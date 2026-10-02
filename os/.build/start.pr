@@ -28,9 +28,5 @@
   "visibility": "Public",
   "path": "/Start.goal",
   "prPath": "/.build/start.pr",
-  "hash": "526a1753f2771e234a2558a4d2733f7bd603677ef8c782c2a6e370df23c8a5cd",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": false
+  "hash": "526a1753f2771e234a2558a4d2733f7bd603677ef8c782c2a6e370df23c8a5cd"
 }

@@ -123,9 +123,13 @@ public sealed class OpenAi : ILlm
         schema = await SchemaOf(action);
         if (conversation.Continue is { } continued)
         {
+            // a conversation continues an llm answer — the response carries its messages; a value that carries none
+            // continues nothing
             var previous = await continued.Follow(context);
-            if (await previous.Properties.Value("Messages") is global::app.type.item.@this history)
-                messages.InsertRange(0, history.Clr<List<LlmMessage>>() ?? new List<LlmMessage>());
+            if (await previous.Properties.Value("Messages") is not global::app.type.item.@this history)
+                return context.Error(new global::app.error.Error(
+                    $"a conversation continues an llm answer; %{previous.Name}% isn't one", "ConversationInvalid", 400));
+            messages.InsertRange(0, history.Clr<List<LlmMessage>>() ?? new List<LlmMessage>());
             schema ??= (await previous.Properties.Value("Schema"))?.ToString();
         }
 
@@ -404,7 +408,7 @@ public sealed class OpenAi : ILlm
             {
                 // The answer is the validator's %response%, in a frame for it — never the caller's own variables.
                 data.@this validationResult;
-                await using (context.Variable.Calls.Push([new data.@this("response", extracted, context: context)], validator))
+                await using (context.call.Push([new data.@this("response", extracted, context: context)], validator))
                     validationResult = await validator.Start(context);
 
                 if (!validationResult.Success)
@@ -515,7 +519,7 @@ public sealed class OpenAi : ILlm
         // OnToolCall — starting. The run-state binds in a frame for the held call (never the caller's own
         // variables: a user's %name% stays theirs); the held call runs as itself.
         if (action.OnToolCall != null && await action.OnToolCall.Value() is { } onToolCall)
-            await using (context.Variable.Calls.Push(toolCall.State("starting", null, context), onToolCall))
+            await using (context.call.Push(toolCall.State("starting", null, context), onToolCall))
                 await onToolCall.Start(context);
 
         if (tools?.Find(t => t.Name == toolCall.Name) is not { } tool)
@@ -527,7 +531,7 @@ public sealed class OpenAi : ILlm
         // keeps the frame it was started in).
         var parameters = tool.Arguments(toolCall.Arguments, context);
         if (parameters.Find(p => !p.Success) is { } unread) return unread;
-        await using (context.Variable.Calls.Isolate(parameters, tool.Held))
+        await using (context.call.Isolate(parameters, tool.Held))
             return await tool.Held.Start(context);
     }
 
@@ -551,7 +555,7 @@ public sealed class OpenAi : ILlm
 
         // OnToolCall — completed
         if (action.OnToolCall != null && await action.OnToolCall.Value() is { } onToolCall)
-            await using (context.Variable.Calls.Push(toolCall.State("completed", result, context), onToolCall))
+            await using (context.call.Push(toolCall.State("completed", result, context), onToolCall))
                 await onToolCall.Start(context);
 
         return result;

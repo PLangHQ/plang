@@ -2,7 +2,7 @@
 The decider's state for confirming numbers (BuildGoal/Start.goal ConfirmNumbers): a step's code writes a number its
 words don't write as digits ("retry once" → RetryCount=1). The words may give it in any language, or the number is
 invented; the decider says which. Each step asked about, and each action named, with what its properties mean.
-The eval's shape (tools/decider/prompt_c.py confirm_state); keep the two equal.
+Its shape is pinned by ConfirmTemplateTests (PLang.Tests/Wire/App/Decider/confirm_golden.json).
 Needs: numbers (the UnwrittenNumber error's Details.numbers), modules (%!app.module.list%).
 {% endcomment %}
 {%- capture nl %}

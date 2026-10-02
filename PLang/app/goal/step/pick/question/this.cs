@@ -49,9 +49,10 @@ public sealed class @this
     /// <summary>What "none" answers: the option left out.</summary>
     public const string None = "none";
 
-    /// <summary>What an <see cref="Kind.Option"/> question offers: the option's own values, then <see cref="None"/> —
+    /// <summary>What an <see cref="Kind.Option"/> question offers: what the option's type offers for the step (a
+    /// closed set its options, any other the step's variables as the decider reads them), then <see cref="None"/> —
     /// always a choice. Empty for any other question.</summary>
-    public IReadOnlyList<string> Values => Property?.Type.Values is { } own ? [.. own, None] : [];
+    public IReadOnlyList<string> Values { get; init; } = [];
 
     /// <summary>The words the option's notes line asks it in (<c>ask:</c>); null for any other question.</summary>
     public global::app.type.item.text.@this? Ask

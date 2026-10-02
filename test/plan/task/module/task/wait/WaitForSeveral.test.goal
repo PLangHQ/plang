@@ -1,0 +1,14 @@
+/ wait for %a%, %b% answers a list of their results, in the order named — not the order they ended.
+Start
+- goal.call(Name="Late", Parallel=true); variable.set(Name=%a%, Value=%!data%)
+- goal.call(Name="Early", Parallel=true); variable.set(Name=%b%, Value=%!data%)
+- task.wait(List=[%a%, %b%]); variable.set(Name=%results%, Value=%!data%)
+- assert.equals(Expected="late", Actual=%results[0]%, Message="the first named is first")
+- assert.equals(Expected="early", Actual=%results[1]%, Message="the second named is second")
+
+Late
+- timer.sleep(Ms=300)
+- goal.return(Data="late")
+
+Early
+- goal.return(Data="early")

@@ -1,6 +1,6 @@
 using app.actor.context;
 using Goal = app.goal.@this;
-using Call = app.callstack.call.@this;
+using Call = app.call.@this;
 using Action = app.goal.step.action.@this;
 
 namespace app.error;
@@ -26,13 +26,13 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
     protected internal override global::app.type.@this Type => new(typeof(Error));
 
     /// <summary>The error in play for the asker (<c>%!app.error.current%</c>) — its call stack's, not yet handled.</summary>
-    public static Error? Current(global::app.actor.context.@this context) => context.CallStack.Error;
+    public static Error? Current(global::app.actor.context.@this context) => context.call.Error;
 
     /// <summary>The app holds no errors of its own: every error is an asker's.</summary>
     public static global::app.error.list.@this List(global::app.@this app) => new();
 
     /// <summary>The errors the asker sees (<c>%!app.error.list%</c>) — every error on its call stack, handled or not.</summary>
-    public static global::app.error.list.@this? Of(global::app.actor.context.@this context) => context.CallStack.Audit;
+    public static global::app.error.list.@this? Of(global::app.actor.context.@this context) => context.call.Audit;
 
     /// <summary>A key names this error by its id or its key (<c>%!app.error["DiskFull"]%</c>).</summary>
     public System.Threading.Tasks.ValueTask<Error?> Match(string key)
@@ -246,11 +246,11 @@ public class Error : global::app.type.item.@this, global::app.type.item.ICreate<
     /// Creates an error from an execution context. Captures step, goal, and Call chain automatically.
     /// </summary>
     public Error(string message, actor.context.@this context, string key = "Error", global::app.type.item.status.@this? status = null)
-        : this(message, context.CallStack.Step, key, status)
+        : this(message, context.call.Step, key, status)
     {
-        Goal = context.CallStack.Goal;
+        Goal = context.call.Goal;
         Context = context;
-        CallFrames = context.CallStack.Current?.SnapshotChain() ?? (IReadOnlyList<Call>)Array.Empty<Call>();
+        CallFrames = context.call.Current?.Chain ?? (IReadOnlyList<Call>)Array.Empty<Call>();
     }
 
     /// <summary>

@@ -29,4 +29,8 @@ public sealed class @this
     /// as the prompt prints it (<c>file 0.56, variable 0.36</c>) — the action's score is its certainty within its
     /// module, not the module's. Null for any other action.</summary>
     public string? Module { get; init; }
+
+    /// <summary>The options the decider chose a value of for this action (<c>Template=plang</c>), as the starting line
+    /// writes them — carried whether the action is certain or not, so an uncertain one keeps them too.</summary>
+    public IReadOnlyList<string> Option { get; init; } = [];
 }

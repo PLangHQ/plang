@@ -9,18 +9,18 @@ public class DiffCaptureTests : System.IAsyncDisposable
 
     // The User actor's call stack with these diff options written through its context's settings — the stack a store
     // of the User's context records its changes on.
-    private CallStack Stack(bool deep = false)
+    private Calls Stack(bool deep = false)
     {
-        var set = _app.actor.list.User.Context.Setting.Set(new global::app.callstack.setting.@this().Path,
+        var set = _app.actor.list.User.Context.Setting.Set(new global::app.call.setting.@this().Path,
             new Dictionary<string, object?> { ["diff"] = new Dictionary<string, object?> { ["enabled"] = true, ["deep"] = deep } });
         if (!set.Success) throw new System.InvalidOperationException(set.Error!.Message);
-        return _app.actor.list.User.CallStack;
+        return _app.actor.list.User.Context.call;
     }
 
     [Test]
     public async Task Diff_FlagOff_DiffsListIsNull()
     {
-        var stack = new CallStack(TestCallStack.Settings());
+        var stack = new Calls(TestCalls.Settings());
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
         await Assert.That(call.Diffs).IsNull();
@@ -116,7 +116,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
 
         await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
-        await using (vars.Calls.Push(new[] { new Data("greeting", "hello", context: _app.actor.list.User.Context) }))
+        await using (stack.Push(new[] { new Data("greeting", "hello", context: _app.actor.list.User.Context) }))
             await vars.Set("greeting", "bye");
 
         await Assert.That(call.Diffs!.Count).IsEqualTo(1);

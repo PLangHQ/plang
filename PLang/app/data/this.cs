@@ -380,6 +380,17 @@ public partial class @this
         return given.Success ? await then(given) : given;
     }
 
+    /// <summary>This Data as written to a variable where <paramref name="previous"/> was: itself — unless its value
+    /// keeps what it replaces (<see cref="global::app.type.item.@this.Replace"/>, a task keeping the tasks written
+    /// before it), then a Data of what the value became. Asked once, by the write, after the value settled.</summary>
+    public virtual async System.Threading.Tasks.ValueTask<@this> Replace(
+        System.Func<System.Threading.Tasks.ValueTask<global::app.type.item.@this?>> previous)
+    {
+        if (Peek() is not { } held) return this;
+        var became = await held.Replace(previous);
+        return ReferenceEquals(became, held) ? this : new @this(Name, became, context: Context);
+    }
+
     /// <summary>What this carrier holds, handed to <paramref name="then"/> as a <typeparamref name="TAs"/> —
     /// or, when it failed or exits the goal (an ask the gate suspends on), this carrier itself; when what it
     /// holds isn't one, a NotA error. A reference (<c>%x%</c>) is followed to what it names first (as the typed
@@ -890,6 +901,11 @@ public class DynamicData : @this
 
     /// <summary>In memory now = the current computation, lifted with this Data's context.</summary>
     public override global::app.type.item.@this Peek() => _cell.Compute(Context);
+
+    /// <summary>A computed value is computed at each read — written to a variable it is itself, never computed then
+    /// (its answer may not exist yet, as an actor's identity while the actor is born).</summary>
+    public override System.Threading.Tasks.ValueTask<@this> Replace(
+        System.Func<System.Threading.Tasks.ValueTask<global::app.type.item.@this?>> previous) => new(this);
 
     /// <summary>A copy captures the current answer — `set %start% = %Now%` holds the moment of the
     /// set, not a live cell. Computed with the copy's context (the asker's).</summary>

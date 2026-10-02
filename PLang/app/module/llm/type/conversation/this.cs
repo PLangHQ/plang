@@ -27,17 +27,14 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal @this(Data? @continue) => Continue = @continue;
 
     public override bool IsLeaf => false;
-    /// <summary>A conversation is made from a dict of its members; a member that is no member of a conversation, or
-    /// a continue that names no response, declines with why.</summary>
+    /// <summary>A conversation is made from a dict of its members — a member that is no member of a conversation, or a
+    /// continue that names no response, declines with why — or from the response it continues
+    /// (<c>Conversation=%answer%</c>). Whether that is an llm answer is known only when the query reads it, so the query
+    /// says so then.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, Data data)
     {
         if (raw is @this conversation) return conversation;
-        if (raw is not global::app.type.item.dict.@this dict)
-        {
-            data.Fail(new global::app.error.Error(
-                $"a conversation is {{continue: %answer%}} — not a {(raw as global::app.type.item.@this)?.Type.Name ?? raw?.GetType().Name}", "ConversationInvalid", 400));
-            return null;
-        }
+        if (raw is not global::app.type.item.dict.@this dict) return new @this(data);
         Data? @continue = null;
         foreach (var entry in dict.Entries(data.Context!))
             switch (entry.Name.ToLowerInvariant())

@@ -83,7 +83,7 @@
     <Using Include="app.type.item.path.file.@this" Alias="filepath" />
     <Using Include="app.type.item.path.http.@this" Alias="httppath" />
     <Using Include="app.module.cache.ICache" Alias="ICache" />
-    <Using Include="app.callstack.@this" Alias="CallStack" />
+    <Using Include="app.call.list.@this" Alias="Calls" />
     <Using Include="app.module.debug.@this" Alias="Debug" />
     <Using Include="app.test.@this" Alias="Tester" />
     <Using Include="app.snapshot.@this" Alias="Snapshot" />

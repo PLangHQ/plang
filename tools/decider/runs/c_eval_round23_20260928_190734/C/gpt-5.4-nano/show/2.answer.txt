@@ -1,1 +1,0 @@
-[1] ui.render(Template=%template%, Parameter={error: %error%}); on.error(StatusCode=404, Recovery=[goal.call(Name="Fallback")], RetryCount=1, Order="GoalFirst"); variable.set(Name=%text%, Value=%!data%)

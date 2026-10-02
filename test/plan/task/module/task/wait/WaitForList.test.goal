@@ -1,0 +1,15 @@
+/ A task written where a task was keeps it: %task.list% is every task written there, in order, and wait for
+/ %task.list% answers all their results in that order.
+Start
+- goal.call(Name="First", Parallel=true); variable.set(Name=%task%, Value=%!data%)
+- goal.call(Name="Second", Parallel=true); variable.set(Name=%task%, Value=%!data%)
+- task.wait(List=%task.list%); variable.set(Name=%results%, Value=%!data%)
+- assert.equals(Expected="first", Actual=%results[0]%, Message="the task written first")
+- assert.equals(Expected="second", Actual=%results[1]%, Message="the task written last")
+
+First
+- timer.sleep(Ms=200)
+- goal.return(Data="first")
+
+Second
+- goal.return(Data="second")

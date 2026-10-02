@@ -7,8 +7,8 @@ namespace PLang.Tests.Shared;
 /// </summary>
 public static class TestFrame
 {
-    public static global::app.callstack.call.@this Live(global::app.actor.context.@this context)
-        => context.CallStack.Push(
+    public static global::app.call.@this Live(global::app.actor.context.@this context)
+        => context.call.Push(
             context.Action("variable.set(Name=%frame%, Value=\"1\")"),
             context.Variable);
 }

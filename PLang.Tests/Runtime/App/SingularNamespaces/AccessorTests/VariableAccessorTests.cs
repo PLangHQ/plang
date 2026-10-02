@@ -71,7 +71,7 @@ public class VariableAccessorTests
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         await ctx.Variable.Set("user", "outer");
-        await using (ctx.Variable.Calls.Push([new global::app.data.@this("place", "here", context: ctx)]))
+        await using (ctx.call.Push([new global::app.data.@this("place", "here", context: ctx)]))
         {
             var names = ctx.Variable.list.Items().Select(v => v.Name).ToList();
             await Assert.That(names.IndexOf("place")).IsEqualTo(0);

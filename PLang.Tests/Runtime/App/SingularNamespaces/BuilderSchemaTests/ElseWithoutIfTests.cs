@@ -161,8 +161,7 @@ public class ElseWithoutIfTests : System.IAsyncDisposable
 
     // BuildGoal/Start.goal Settle — `call Apply step=%step%, on error key "ElseWithoutIf" call SourceError,
     // on error call FixProperties, then retry 2 times` — with Apply failing ElseWithoutIf. SourceError's
-    // llm.query is replaced by a set of the fix the LLM would write (the prompt is checked for real in
-    // tools/decider/source_fix_check.py).
+    // llm.query is replaced by a set of the fix the LLM would write.
     [Test]
     public async Task ElseWithoutIf_InSettle_GoesToSourceErrorOnly_AndCarriesTheFix()
     {

@@ -34,12 +34,12 @@ public class AppRunScaffoldingTests
     public async Task AppRun_PushesAndPopsCallstackFrame_AroundHandler()
     {
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
-        var currentBefore = _app.actor.list.User.Context.CallStack?.Current;
+        var currentBefore = _app.actor.list.User.Context.call?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
         await action.Start(_app.actor.list.User.Context);
 
-        await Assert.That(_app.actor.list.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
+        await Assert.That(_app.actor.list.User.Context.call?.Current).IsEqualTo(currentBefore);
     }
 
     // The step in play is the action's while it runs, and the caller's again once it ends — its frame popped.
@@ -50,7 +50,7 @@ public class AppRunScaffoldingTests
         var ctx = _app.actor.list.User.Context;
 
         var stepBefore = new Step { Index = 9, Text = "before-step" };
-        await using var caller = ctx.CallStack.Push(stepBefore);
+        await using var caller = ctx.call.Push(stepBefore);
 
         var dispatchStep = new Step { Index = 0, Text = "dispatch-step" };
         var action = MakeAction("matrix.plain", "stringplain", ("path", "hello"));
@@ -58,14 +58,14 @@ public class AppRunScaffoldingTests
         Step? during = null;
         _app.type.list["action"].Own().Bind("start", global::app.@event.When.before, (_, _, c) =>
         {
-            during = c.CallStack.Step;
+            during = c.call.Step;
             return Task.FromResult(c.Ok());
         }, _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
         await action.Start(ctx);
 
         await Assert.That(ReferenceEquals(during, dispatchStep)).IsTrue();
-        await Assert.That(ReferenceEquals(ctx.CallStack.Step, stepBefore)).IsTrue();
+        await Assert.That(ReferenceEquals(ctx.call.Step, stepBefore)).IsTrue();
     }
 
     // The goal in play is the caller's again once an action of another goal ends.
@@ -76,7 +76,7 @@ public class AppRunScaffoldingTests
         var ctx = _app.actor.list.User.Context;
 
         var goalBefore = new Goal { Name = "before-goal", Path = global::app.type.item.path.@this.Resolve("/g.goal", _app.actor.list.User.Context) };
-        await using var caller = ctx.CallStack.Push(goalBefore);
+        await using var caller = ctx.call.Push(goalBefore);
 
         var step = new Step { Index = 0, Text = "s" };
         var action = MakeAction("matrix.plain", "stringplain", ("path", "x"));
@@ -84,7 +84,7 @@ public class AppRunScaffoldingTests
 
         await action.Start(ctx);
 
-        await Assert.That(ReferenceEquals(ctx.CallStack.Goal, goalBefore)).IsTrue();
+        await Assert.That(ReferenceEquals(ctx.call.Goal, goalBefore)).IsTrue();
     }
 
     // Handler throws → catch translates to Data.FromError with a ServiceError, frame is popped.
@@ -94,14 +94,14 @@ public class AppRunScaffoldingTests
         // The matrix snapshot handler returns FromError but doesn't throw; this one throws.
         _app.module.Register("matrix.throwing", "throw", typeof(ThrowingMatrixHandler));
 
-        var currentBefore = _app.actor.list.User.Context.CallStack?.Current;
+        var currentBefore = _app.actor.list.User.Context.call?.Current;
         var action = MakeAction("matrix.throwing", "throw");
         var result = await action.Start(_app.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ServiceError");
 
-        await Assert.That(_app.actor.list.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
+        await Assert.That(_app.actor.list.User.Context.call?.Current).IsEqualTo(currentBefore);
     }
 
     // Handler succeeds → finally still runs (frame popped, context restored).
@@ -109,13 +109,13 @@ public class AppRunScaffoldingTests
     public async Task AppRun_OnSuccess_FinallySnapshotsAndPops()
     {
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
-        var currentBefore = _app.actor.list.User.Context.CallStack?.Current;
+        var currentBefore = _app.actor.list.User.Context.call?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "ok"));
         var result = await action.Start(_app.actor.list.User.Context);
 
         await result.IsSuccess();
-        await Assert.That(_app.actor.list.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
+        await Assert.That(_app.actor.list.User.Context.call?.Current).IsEqualTo(currentBefore);
     }
 
     // Two consecutive App.Run calls → push/pop happens twice (no leakage).
@@ -124,13 +124,13 @@ public class AppRunScaffoldingTests
     {
         MatrixRunner.EnsureRegistered<StringPlain>(_app);
 
-        var currentBefore = _app.actor.list.User.Context.CallStack?.Current;
+        var currentBefore = _app.actor.list.User.Context.call?.Current;
 
         var action = MakeAction("matrix.plain", "stringplain", ("path", "first"));
         await action.Start(_app.actor.list.User.Context);
         await action.Start(_app.actor.list.User.Context);
 
-        await Assert.That(_app.actor.list.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
+        await Assert.That(_app.actor.list.User.Context.call?.Current).IsEqualTo(currentBefore);
     }
 
     // App.Run DELIBERATELY catches OperationCanceledException and translates to ServiceError.
@@ -179,11 +179,11 @@ public class AppRunScaffoldingTests
     {
         // The Handled-override path lives in Action.RunAsync, not App.Run. We exercise App.Run
         // directly here: not calling App.Run at all means no callstack frame is pushed.
-        var currentBefore = _app.actor.list.User.Context.CallStack?.Current;
+        var currentBefore = _app.actor.list.User.Context.call?.Current;
 
         // Simulate the override path: Action.RunAsync would short-circuit before invoking App.Run.
         // Therefore the call we DON'T make should leave the call stack untouched.
-        await Assert.That(_app.actor.list.User.Context.CallStack?.Current).IsEqualTo(currentBefore);
+        await Assert.That(_app.actor.list.User.Context.call?.Current).IsEqualTo(currentBefore);
     }
 }
 

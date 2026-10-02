@@ -99,9 +99,9 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public global::app.type.item.text.@this Environment(global::app.actor.context.@this context)
         => context.Setting.Of<global::app.setting.@this>().Environment;
 
-    /// <summary>The call stack of <paramref name="context"/>'s actor — <c>%!app.callstack%</c> answers as its asker.</summary>
+    /// <summary>The calls of <paramref name="context"/> — <c>%!app.call%</c> answers as its asker.</summary>
     [global::app.LlmBuilder]
-    public global::app.callstack.@this callstack(global::app.actor.context.@this context) => context.CallStack;
+    public global::app.call.list.@this call(global::app.actor.context.@this context) => context.call;
 
     /// <summary>The trace of <paramref name="context"/>'s run — <c>%!app.trace%</c> answers as its asker.</summary>
     [global::app.LlmBuilder]
@@ -117,7 +117,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// result so far (<c>%!app.event!result%</c>). Unset outside one.</summary>
     [global::app.LlmBuilder]
     public global::app.data.@this @event(global::app.actor.context.@this context)
-        => context.CallStack.Event ?? context.NotFound("event");
+        => context.call.Event ?? context.NotFound("event");
 
     /// <summary>
     /// When the app was started.
@@ -505,7 +505,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         }
 
         data.@this shown;
-        await using (context.Variable.Calls.Push(new[] { new data.@this("error", error, context: context) }))
+        await using (context.call.Push(new[] { new data.@this("error", error, context: context) }))
             shown = await show.Start(context);
         if (shown.Success) failed.Properties.Set("shown", true);
         else await (Debug?.Write($"error show: /system/error/Show failed — {shown.Error}") ?? Task.CompletedTask);

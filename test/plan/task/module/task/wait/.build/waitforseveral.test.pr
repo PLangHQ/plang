@@ -1,0 +1,469 @@
+{
+  "name": "Start",
+  "comment": "wait for %a%, %b% answers a list of their results, in the order named — not the order they ended.",
+  "step": [
+    {
+      "index": 0,
+      "text": "goal.call(Name=\"Late\", Parallel=true); variable.set(Name=%a%, Value=%!data%)",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Late"
+            },
+            {
+              "name": "Parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%a%",
+              "variable": [
+                {
+                  "text": "%a%",
+                  "code": [
+                    {
+                      "variable": "a"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "goal.call(Name=\"Early\", Parallel=true); variable.set(Name=%b%, Value=%!data%)",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Early"
+            },
+            {
+              "name": "Parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%b%",
+              "variable": [
+                {
+                  "text": "%b%",
+                  "code": [
+                    {
+                      "variable": "b"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "task.wait(List=[%a%, %b%]); variable.set(Name=%results%, Value=%!data%)",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "task",
+          "name": "wait",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": ["%a%","%b%"],
+              "variable": [
+                {
+                  "text": "%a%",
+                  "code": [
+                    {
+                      "variable": "a"
+                    }
+                  ]
+                },
+                {
+                  "text": "%b%",
+                  "code": [
+                    {
+                      "variable": "b"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%results%",
+              "variable": [
+                {
+                  "text": "%results%",
+                  "code": [
+                    {
+                      "variable": "results"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=\"late\", Actual=%results[0]%, Message=\"the first named is first\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "late"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%results[0]%",
+              "variable": [
+                {
+                  "text": "%results[0]%",
+                  "code": [
+                    {
+                      "variable": "results"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the first named is first"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert.equals(Expected=\"early\", Actual=%results[1]%, Message=\"the second named is second\")",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "early"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%results[1]%",
+              "variable": [
+                {
+                  "text": "%results[1]%",
+                  "code": [
+                    {
+                      "variable": "results"
+                    },
+                    {
+                      "index": {
+                        "number": 1
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the second named is second"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Late",
+      "step": [
+        {
+          "index": 0,
+          "text": "timer.sleep(Ms=300)",
+          "line": {
+            "number": 10
+          },
+          "code": [
+            {
+              "module": "timer",
+              "name": "sleep",
+              "property": [
+                {
+                  "name": "Ms",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 300
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "goal.return(Data=\"late\")",
+          "line": {
+            "number": 11
+          },
+          "code": [
+            {
+              "module": "goal",
+              "name": "return",
+              "property": [
+                {
+                  "name": "Data",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "late"
+                }
+              ],
+              "default": [
+                {
+                  "name": "depth",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/module/task/wait/WaitForSeveral.test.goal",
+      "prPath": "/plan/task/module/task/wait/.build/waitforseveral.test.pr",
+      "hash": "46cf0b77c63724678df9b3558af847c8b646aeb4e51bfa4bec4b3d5263884007"
+    },
+    {
+      "name": "Early",
+      "step": [
+        {
+          "index": 0,
+          "text": "goal.return(Data=\"early\")",
+          "line": {
+            "number": 14
+          },
+          "code": [
+            {
+              "module": "goal",
+              "name": "return",
+              "property": [
+                {
+                  "name": "Data",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "early"
+                }
+              ],
+              "default": [
+                {
+                  "name": "depth",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/module/task/wait/WaitForSeveral.test.goal",
+      "prPath": "/plan/task/module/task/wait/.build/waitforseveral.test.pr",
+      "hash": "b2f81cef4f863620df156dd27f8203a27bf335c34a6b47a67e48bcea5fefbd2b"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/task/module/task/wait/WaitForSeveral.test.goal",
+  "prPath": "/plan/task/module/task/wait/.build/waitforseveral.test.pr",
+  "hash": "5ba54fe3462266b4e4cc2d73e4fd1e2ac946b94d67d7c1aa2cd0453cd0d5b074"
+}

@@ -970,13 +970,60 @@
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Drafted Option-question v2 shape (architect's request): a non-choice option (Item/Key/Conversation) offers the step's own variables + none; add question.Variable member, extend Values; ask: note lines + Conversation {continue:} wrapper open question. For architect review before coder builds core."
+          "context": "Drafted Option-question v2 shape, then updated to the architect's accepted design: offer comes from one member on the property's type (no choice-or-not branch, no question.Variable); Prefill writes the plain pick incl. Conversation=%answer% (conversation.Create does the {continue:} shaping, coder). My part: ask: note lines on loop.foreach Item/Key + llm Conversation, landed with the core."
+        },
+        {
+          "paths": ["os/system/modules/goal/call.examples.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Issue 32b: tried the architect's cheap lever (a generic goal.call example), measured 5/5 - still Name=%!app.module.file%. Writer gets a clean goal.call(Name) slot (decider 0.96) and fills it with the dotted variable; examples reach the decider (decider.state.template) not the writer (properties.template). Example REVERTED - no in-lane lever. Goes to the opaque-variable core direction (coder); I own the template side later."
+        },
+        {
+          "paths": ["os/.build/start.pr", "os/system/builder/.build/build.pr", "os/system/builder/BuildGoal/.build/decide.pr", "os/system/builder/BuildGoal/.build/start.pr", "os/system/shortcut/.build/goal.pr"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Issue 30 pass 2 (closed by architect): rebuilt the stale os/ .pr (cache off). All 15 remaining os/ goals build clean / current valid .pr; no refusals remain. These 5 dropped the deprecated isSetup/isEvent/isSystem/isTest fields (819f239c6; hash+steps unchanged) - kept. Table in v3/result.md."
+        },
+        {
+          "paths": ["os/system/builder/Build.goal", "os/system/builder/.build/build.pr", ".bot/app-systems/builder/v3/cache-false-diagnosis.md"],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "cache:false regression, builder-lane fix (architect-directed): deleted Build.goal:7 'set default %!build.setting.cache% = true' - the setting class already defaults Cache=true (build/setting/this.cs:10), so the line was a redundant default; removing it let cache-off rebuild. Rebuilt Build.goal .pr (bootstrap cwd=os/, cache:false). VALIDATED on hash-take: unchanged cache:false now rebuilds (Building goal: Start / Saved 8.0s, .pr mtime changes; md5 identical = deterministic/correct). Wire: 9 failed/480 passed, all 9 baseline, zero new. CORRECTION (coder): my earlier 'reads undefined / .setting projection bug' claim came from a buggy debug watch (debug/this.cs:344,351 reduced the watched var to its root and read only the store, so every watched setting printed undefined); the setting actually reads correctly, no separate core bug owed. Diag at v3/cache-false-diagnosis.md."
+        },
+        {
+          "paths": [".bot/app-systems/builder/v3/issue32-masking-shape.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Drafted issue 32 opaque-variable masking shape (architect's request): step variables -> %vN% placeholders for decider+writer via new step.Masked + reverse map (core); templates read s.Masked; formal answer's %vN% restored before parse. Couples with Option-v2 (shared mask). I own template side + measurements; core to coder after review."
         }
       ],
+      "after_note_retire_python_decider": {
+        "task": "Ingi (via architect): retire the Python decider validation; make PickListTests pure C#.",
+        "done": "Deleted tools/decider/ (5442 files). Scrubbed twin/tools-decider provenance from 6 decider templates (comment-only, no re-pin) + Decide.code.md. Deleted dead BootstrapTests.cs ([Skip] python-twin judge); repointed its only external helper RepoRoot() -> Fixture.Root() (byte-identical) in BuilderPinTests/FormalStepTests. Removed [Arguments(\"tools/decider\")] from StartMdTests; scrubbed source_fix_check.py comment in ElseWithoutIfTests. PickListTests was already a pure C# golden (pick_golden.json + C# re-pin) - left as-is.",
+        "proposal": "character-memory (architect, os) + Documentation/ mentions of tools/decider filed in claude-md-proposals.md (builder v3), not edited.",
+        "verify": "Wire 480 pass (unchanged from pre-change), 9 fail (baseline), 8 skip; no decider golden (PickList/Confirm/BuilderPin/FormalStep/LineTwin) regressed. StartMd/ElseWithoutIf compile."
+      },
+      "after_note_shortcut_2b": {
+        "task": "After coder 2b (1dc8a4606: callstack -> the call concept): rebuild os/system/shortcut/goal.goal + step.goal whose .pr still hold %!app.callstack...%.",
+        "done": "Rebuilt binary (2b is C#), then rebuilt both .pr each alone cache off cwd=os/. Clean diffs: %!app.callstack.scope.caller.{goal,step}% -> %!app.call...% (text, value, variable text, property callstack->call), hash updated, nothing else; each after one self-recovering issue-17 retry.",
+        "tests": "SystemShortcutTests 5/5, ReturnTests 22/22, ShortcutTests 5/6. The 4 named tests pass (ReturnGoal, ReturnStep, TheCallersData, TheGoalAndStep). AShortcut_ReadsAsItsGoalsAnswer_ForItsAsker still fails, NOT the .pr: the test hardcodes the old path (ShortcutTests.cs:52, Shortcut(\"where\", \"%!app.callstack.scope.caller.goal%\")) -> %!where% empty after 2b. The coder's test string to update; flagged, not edited (their test).",
+        "commit": "two .pr committed for the architect to gate with the coder's 2b."
+      },
+      "after_note_eventtype": {
+        "task": "Rebuild two test .pr still typing on.event slot as app.event (should be event since 43441c5c9).",
+        "file_CreateFiresOnBirth": "DONE: rebuilt, app.event->event, test Pass, committed (test/plan/app-systems/app/type/file/.build/createfiresonbirth.test.pr). Build flaky on issue-17 class, saved on retry.",
+        "path_AsPathIsABirth": "HELD at committed app.event (test green). Rebuilding to event fails two core/out-of-lane ways: (1) writer drops Type=path from 'set %p%=\"a.txt\" as path' ~3/5 (droppable-trigger / Option-question class; no as-path example, examples don't reach writer); (2) with Type=path, runtime fails 'app.event.on.create has no wire contract' - path create event has no [Out]/[Store] face, gap surfaced by the rename (file.on.create has one). Handed to architect/coder.",
+        "stale_binary": "First rebuild emitted app.event + phantom goal.call-name mis-map because binary predated 43441c5c9; clean dotnet build fixed both.",
+        "detail": ".bot/app-systems/builder/v3/result.md"
+      },
       "after": {
-        "status": "Item 5 done. Key unblocked mid-session: C4 measured 10/10 (resolved on head), issue 2 reproduces 3/5, issue 32b reproduces 5/5. Option-v2 drafted for architect. Issue 25 listed.Option shape now latent-robustness (architect's call).",
-        "health": "green (clean rebuild; builds run with the key)",
-        "notes": "Static diagnoses confirmed by measurement. C4 symptom gone on head (file.read scores 0.98 Certain now). Shapes: v3/result.md, v3/option-v2-shape.md, to-architect.md. Key still owed in a settings table (passed via env this session)."
+        "status": "Item 5 done. C4 10/10 (resolved). Issue 2 3/5 -> Option-v2 accepted. Issue 32b 5/5, example-lever failed -> masking shape drafted. Issue 30 pass 2 DONE (closed). cache:false regression diagnosed (file:line). Issue 32 masking shape drafted.",
+        "health": "green (builds run; os/ 15 goals valid). One known regression: cache:false doesn't rebuild unchanged goals (handed to architect/coder).",
+        "notes": "Shapes/diagnoses: v3/result.md, v3/option-v2-shape.md, v3/issue32-masking-shape.md, v3/cache-false-diagnosis.md. Decider key stays in env per architect (storage is Ingi's security call); NOT written to any store. Next: coder's Option-v2 core + listed.Option + masking core, then my template side + ask:-lines + measurements; item 6 after coder task stages."
       }
     }
   ]

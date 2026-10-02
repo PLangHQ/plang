@@ -4,7 +4,7 @@ The decider's state — how plang is structured and the goal's steps, then:
   and the common actions asked by name;
 - stage 2: only the modules stage 2 is about (each step's Pick.Module, and condition where an if was
   picked), each with its actions in full, and the popular actions when a step was unsure.
-The eval's shape (tools/decider/harness.py state_for); a twin test holds the two equal.
+Its shape is pinned by PickListTests (PLang.Tests/Wire/App/Decider/pick_golden.json).
 Needs: stage (1 or 2), goal, modules (%!app.module.list%), decider (decider.json).
 {% endcomment %}
 {%- capture nl %}
@@ -24,7 +24,7 @@ How plang is structured:
 This is a plang goal called {{ goal.Name }}. Its steps are numbered from 0.
 {{ nl }}
 {%- for s in goal.Step -%}
-step {{ s.Index }}: {% if s.Line.Indent > 0 %}{% for i in (1..s.Line.Indent) %}    {% endfor %}{% endif %}{{ s.Text }}{{ nl }}
+step {{ s.Index }}: {% if s.Line.Indent > 0 %}{% for i in (1..s.Line.Indent) %}    {% endfor %}{% endif %}{{ s.Mask.Text }}{{ nl }}
 {%- endfor -%}
 {{ nl }}These are the plang modules you may choose from:
 {%- if stage == 2 -%}

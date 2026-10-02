@@ -692,7 +692,7 @@ public class RenderTests : IDisposable
             Path = global::app.type.item.path.@this.Resolve("/goals/SubGoal.goal", context)
         };
         _app.goal.list.Add(goal);
-        await using var inGoal = context.CallStack.Push(goal);
+        await using var inGoal = context.call.Push(goal);
         // The include should resolve relative to the goal's directory (goals/)
         var action = new Render(context) { Template = (global::app.type.item.text.@this)"{% include 'templates/footer.html' %}",
             IsFile = (global::app.type.item.@bool.@this)false

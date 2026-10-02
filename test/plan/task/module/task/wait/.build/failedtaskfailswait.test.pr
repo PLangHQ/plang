@@ -1,0 +1,344 @@
+{
+  "name": "Start",
+  "comment": "A failed task fails the wait step; on error handles it as anywhere.",
+  "step": [
+    {
+      "index": 0,
+      "text": "goal.call(Name=\"Fails\", Parallel=true); variable.set(Name=%task%, Value=%!data%)",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Fails"
+            },
+            {
+              "name": "Parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "task.wait(Task=%task%); on.error(Key=\"Broke\", Recovery=[goal.call(Name=\"Caught\")])",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "task",
+          "name": "wait",
+          "property": [
+            {
+              "name": "Task",
+              "type": {
+                "name": "task",
+                "template": "plang"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "Broke"
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "Caught"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "parallel",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"Broke\", Actual=%caught%, Message=\"the task's failure fails the wait\")",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "Broke"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%caught%",
+              "variable": [
+                {
+                  "text": "%caught%",
+                  "code": [
+                    {
+                      "variable": "caught"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the task's failure fails the wait"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Fails",
+      "step": [
+        {
+          "index": 0,
+          "text": "error.throw(Message=\"it broke\", Key=\"Broke\")",
+          "line": {
+            "number": 8
+          },
+          "code": [
+            {
+              "module": "error",
+              "name": "throw",
+              "property": [
+                {
+                  "name": "Message",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "it broke"
+                },
+                {
+                  "name": "Key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "Broke"
+                }
+              ],
+              "default": [
+                {
+                  "name": "status",
+                  "type": {
+                    "name": "status"
+                  },
+                  "value": 400
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/module/task/wait/FailedTaskFailsWait.test.goal",
+      "prPath": "/plan/task/module/task/wait/.build/failedtaskfailswait.test.pr",
+      "hash": "36c841985bf722c12aa42cf024f92a023b5d796e5df450a2b63b213b664fd141"
+    },
+    {
+      "name": "Caught",
+      "step": [
+        {
+          "index": 0,
+          "text": "variable.set(Name=%caught%, Value=%!error.Key%)",
+          "line": {
+            "number": 11
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%caught%",
+                  "variable": [
+                    {
+                      "text": "%caught%",
+                      "code": [
+                        {
+                          "variable": "caught"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!error.Key%",
+                  "variable": [
+                    {
+                      "text": "%!error.Key%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Key"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/module/task/wait/FailedTaskFailsWait.test.goal",
+      "prPath": "/plan/task/module/task/wait/.build/failedtaskfailswait.test.pr",
+      "hash": "1c82b97e2056f80bcbcad9e9db5ab5b387ba5b6e2872e4d16535ad2b53cd4937"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/task/module/task/wait/FailedTaskFailsWait.test.goal",
+  "prPath": "/plan/task/module/task/wait/.build/failedtaskfailswait.test.pr",
+  "hash": "b9dd4739f3226e32f17b93a9b4a705fd033377588802d32a90cce1615ff8b92b"
+}

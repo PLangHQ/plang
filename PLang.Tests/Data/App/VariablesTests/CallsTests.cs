@@ -2,7 +2,7 @@ using AppVars = global::app.type.item.variable.list.@this;
 
 namespace PLang.Tests.App.VariablesTests;
 
-// Variables.Calls — per-flow AsyncLocal scope (mutable overlay).
+// A context's calls — frames binding names, per flow (AsyncLocal), read before the memory.
 // Pushed by fork operators (channel fire, parallel foreach iteration, ...).
 // Sequential goal.call does *not* push — it shares the caller's flow.
 // Inside an active overlay, both reads and writes route through the overlay,
@@ -19,7 +19,7 @@ public class CallsTests : System.IAsyncDisposable
     public async Task Push_BindsParametersForGet()
     {
         var vars = new AppVars(_app.actor.list.User.Context);
-        await using var _ = vars.Calls.Push(new[] { _app.Data("greeting", "hello") });
+        await using var _ = _app.actor.list.User.Context.call.Push(new[] { _app.Data("greeting", "hello") });
 
         var got = await vars.Get("greeting");
         await Assert.That(got).IsNotNull();
@@ -30,7 +30,7 @@ public class CallsTests : System.IAsyncDisposable
     public async Task Push_FrameDisposes_ParameterGoneFromGet()
     {
         var vars = new AppVars(_app.actor.list.User.Context);
-        var scope = vars.Calls.Push(new[] { _app.Data("ephemeral", "v1") });
+        var scope = _app.actor.list.User.Context.call.Push(new[] { _app.Data("ephemeral", "v1") });
         await Assert.That((await (await vars.Get("ephemeral")).Value())?.ToString()).IsEqualTo("v1");
         await scope.DisposeAsync();
 
@@ -43,7 +43,7 @@ public class CallsTests : System.IAsyncDisposable
     {
         var vars = new AppVars(_app.actor.list.User.Context);
         vars.Set("x", "underlying");
-        await using var _ = vars.Calls.Push(new[] { _app.Data("x", "framed") });
+        await using var _ = _app.actor.list.User.Context.call.Push(new[] { _app.Data("x", "framed") });
 
         await Assert.That((await (await vars.Get("x")).Value())?.ToString()).IsEqualTo("framed");
     }
@@ -52,8 +52,8 @@ public class CallsTests : System.IAsyncDisposable
     public async Task Push_NestedFrames_InnerWins()
     {
         var vars = new AppVars(_app.actor.list.User.Context);
-        await using var outer = vars.Calls.Push(new[] { _app.Data("k", "outer") });
-        await using var inner = vars.Calls.Push(new[] { _app.Data("k", "inner") });
+        await using var outer = _app.actor.list.User.Context.call.Push(new[] { _app.Data("k", "outer") });
+        await using var inner = _app.actor.list.User.Context.call.Push(new[] { _app.Data("k", "inner") });
 
         await Assert.That((await (await vars.Get("k")).Value())?.ToString()).IsEqualTo("inner");
     }
@@ -62,8 +62,8 @@ public class CallsTests : System.IAsyncDisposable
     public async Task Push_NestedFrames_PoppingInnerRestoresOuter()
     {
         var vars = new AppVars(_app.actor.list.User.Context);
-        await using var outer = vars.Calls.Push(new[] { _app.Data("k", "outer") });
-        var inner = vars.Calls.Push(new[] { _app.Data("k", "inner") });
+        await using var outer = _app.actor.list.User.Context.call.Push(new[] { _app.Data("k", "outer") });
+        var inner = _app.actor.list.User.Context.call.Push(new[] { _app.Data("k", "inner") });
         await Assert.That((await (await vars.Get("k")).Value())?.ToString()).IsEqualTo("inner");
         await inner.DisposeAsync();
 
@@ -86,13 +86,13 @@ public class CallsTests : System.IAsyncDisposable
 
         async Task<string> TaskA(AppVars v)
         {
-            await using var _ = v.Calls.Push(new[] { _app.Data("who", "flow-A") });
+            await using var _ = _app.actor.list.User.Context.call.Push(new[] { _app.Data("who", "flow-A") });
             await Task.Yield();
             return (await (await v.Get("who")).Value())!.ToString()!;
         }
         async Task<string> TaskB(AppVars v)
         {
-            await using var _ = v.Calls.Push(new[] { _app.Data("who", "flow-B") });
+            await using var _ = _app.actor.list.User.Context.call.Push(new[] { _app.Data("who", "flow-B") });
             await Task.Yield();
             return (await (await v.Get("who")).Value())!.ToString()!;
         }
@@ -117,7 +117,7 @@ public class CallsTests : System.IAsyncDisposable
             int mine = i;
             tasks[i] = Task.Run(async () =>
             {
-                await using var _ = vars.Calls.Push(new[] { _app.Data("seen", mine) });
+                await using var _ = _app.actor.list.User.Context.call.Push(new[] { _app.Data("seen", mine) });
                 await Task.Yield();
                 var observed = (await vars.Get("seen")).Peek();
                 return observed is global::app.type.item.number.@this v && v.ToInt32() == mine;
@@ -135,7 +135,7 @@ public class CallsTests : System.IAsyncDisposable
         // x=1, `set %x% = 2` then `get %x%` reads 2 — not 1. The overlay is a
         // mutable scope, not a read-only param shadow.
         var vars = new AppVars(_app.actor.list.User.Context);
-        await using var _ = vars.Calls.Push(new[] { _app.Data("x", 1) });
+        await using var _ = _app.actor.list.User.Context.call.Push(new[] { _app.Data("x", 1) });
 
         await Assert.That((await (await vars.Get("x")).Value())?.ToString()).IsEqualTo("1");
         vars.Set("x", 2);
@@ -147,7 +147,7 @@ public class CallsTests : System.IAsyncDisposable
     {
         var vars = new AppVars(_app.actor.list.User.Context);
         vars.Set("k", "underlying");
-        var scope = vars.Calls.Push(new[] { _app.Data("own", 1) });
+        var scope = _app.actor.list.User.Context.call.Push(new[] { _app.Data("own", 1) });
         vars.Set("k", "written");
         vars.Set("own", 2);
 
@@ -163,7 +163,7 @@ public class CallsTests : System.IAsyncDisposable
         // actor-shared dict is unchanged.
         var vars = new AppVars(_app.actor.list.User.Context);
         vars.Set("k", "underlying");
-        var scope = vars.Calls.Isolate(null);
+        var scope = _app.actor.list.User.Context.call.Isolate(null);
         vars.Set("k", "scoped");
         await Assert.That((await (await vars.Get("k")).Value())?.ToString()).IsEqualTo("scoped");
 
@@ -177,7 +177,7 @@ public class CallsTests : System.IAsyncDisposable
         // A name that didn't exist before the push, written inside an isolated frame,
         // is gone after dispose.
         var vars = new AppVars(_app.actor.list.User.Context);
-        var scope = vars.Calls.Isolate(null);
+        var scope = _app.actor.list.User.Context.call.Isolate(null);
         vars.Set("fresh", 42);
         await Assert.That((await (await vars.Get("fresh")).Value())?.ToString()).IsEqualTo("42");
 
@@ -199,7 +199,7 @@ public class CallsTests : System.IAsyncDisposable
 
         async Task<string> Writer()
         {
-            await using var _ = vars.Calls.Isolate(null);
+            await using var _ = _app.actor.list.User.Context.call.Isolate(null);
             vars.Set("k", "writer-only");
             writerStarted.TrySetResult(true);
             await readerCanRead.Task;          // hold the overlay open
@@ -208,7 +208,7 @@ public class CallsTests : System.IAsyncDisposable
         async Task<string> Reader()
         {
             await writerStarted.Task;          // ensure writer's overlay is live
-            await using var _ = vars.Calls.Push(null);
+            await using var _ = _app.actor.list.User.Context.call.Push((IEnumerable<Data>?)null);
             var seen = (await (await vars.Get("k")).Value())!.ToString()!;
             readerCanRead.TrySetResult(true);
             return seen;
@@ -224,7 +224,7 @@ public class CallsTests : System.IAsyncDisposable
     {
         var vars = new AppVars(_app.actor.list.User.Context);
         vars.Set("x", "underlying");
-        await using var _ = vars.Calls.Push(null);
+        await using var _ = _app.actor.list.User.Context.call.Push((IEnumerable<Data>?)null);
 
         await Assert.That((await (await vars.Get("x")).Value())?.ToString()).IsEqualTo("underlying");
     }
@@ -233,7 +233,7 @@ public class CallsTests : System.IAsyncDisposable
     public async Task Contains_ConsultsFrame()
     {
         var vars = new AppVars(_app.actor.list.User.Context);
-        await using var _ = vars.Calls.Push(new[] { _app.Data("frameOnly", 42) });
+        await using var _ = _app.actor.list.User.Context.call.Push(new[] { _app.Data("frameOnly", 42) });
         await Assert.That(vars.Contains("frameOnly")).IsTrue();
     }
 }

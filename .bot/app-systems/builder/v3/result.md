@@ -20,8 +20,16 @@ static diagnoses below:**
 - **Issue 32(b): REPRODUCES 5/5** — `call goal Page module=%!app.module.file%` →
   `goal.call(Name="%!app.module.file%")`, `Page` lost; the dotted variable takes the Name slot.
   **goal.call's note is already correct** (`call goal Page …` → Name="Page", Parameter={module:…});
-  the *writer* misreads the `%!a.b.c%` variable as the name. This is evidence for the architect's
-  decider/writer-opaque-variable direction, not a note gap. (Repro: `/shared/educator/work/modules-probe`.)
+  the *writer* misreads the `%!a.b.c%` variable as the name. (Repro: `/shared/educator/work/modules-probe`.)
+  - **Cheap in-lane lever TRIED and FAILED (architect's suggestion):** added a generic goal.call
+    example (`call goal BuildPage source=%a.b.c%` → Name="BuildPage"), measured 5/5 — **still
+    `Name=%!app.module.file%`**. Root confirmed by the writer's own prompt: it receives a clean
+    `=> formal: goal.call(Name)` slot (decider 0.96) and fills `Name` with the variable anyway. An
+    **example reaches the decider, not the writer** (`properties.template` renders notes + type
+    examples only; the action's Examples are in `decider.state.template`). So no teaching lever in my
+    lane moves it — the note (writer-side) is already right, the example (decider-side) can't help.
+    Example reverted. → **opaque-variable direction** (mask the step's variables in the *writer's*
+    step text too, so `call goal Page module=%v1%` can't tempt the writer). Core, architect's.
 
 The static code-path diagnoses below remain accurate about *mechanism*; the measured counts above
 are the current-head truth. Original blocker note kept for the record.
@@ -158,13 +166,135 @@ gap in `Code()` is a secondary coder fix for the Known-hint path.
 
 ---
 
-## Issue 30 pass 2 — BLOCKED (needs real builds)
+## Issue 30 pass 2 — DONE (key available). All 15 remaining os/ goals build clean.
 
-Rebuilding each reopened `os/` goal individually, cache off, requires the decider → 403. Cannot
-produce the table this session. Deferred until the key is available.
+The sweep left **15** hand-authored os/ goals. Rebuilt per-file and as a full `os/` build, cache off.
+
+**Why 0 rebuilt — a current regression (full diagnosis: `v3/cache-false-diagnosis.md`).** On head,
+`cache:false` does NOT rebuild an unchanged goal **in any folder** (reproduced on the educator's
+`hash-take`: build fresh, then rebuild unchanged with cache:false → "Found 1 goals", md5 unchanged).
+Cause (corrected — see `v3/cache-false-diagnosis.md`): `Build.goal:7` `set default %!build.setting.cache%
+= true` was a **redundant** copy of the class default (`build/setting/this.cs:10`), and it overrode a
+CLI-provided `cache:false` so `Default.cs:116` merged the prior `.pr` → `goal.IsCached`
+(`goal/this.cs:288`) → `BuildGoal/Start.goal` `if %goal.IsCached%, return` (skip). Deleting the line
+fixed it; cache-off now rebuilds. (My first draft blamed a `%!build.setting.cache%`-reads-undefined /
+`.setting`-projection bug — that was a **buggy debug watch** (`debug/this.cs:344,351` read only the
+store for a reduced name); the coder confirms the setting reads correctly. No separate core bug.)
+The LLM-cache half always worked (`Executor.cs:111`). build.md ll.69-71 (source-unchanged skip) are
+correct. **At the time of pass 2 (before this fix landed)** a forced os/ rebuild needed a fresh
+`.build` (off-limits); only stale-`.pr` goals rebuilt. With the fix in, cache-off rebuilds in place.
+
+| goal | result | note | class |
+|---|---|---|---|
+| Start.goal | ✅ rebuilt (2 goals +sub HandleBuildFailure) | saved 21.7s | clean |
+| system/builder/Build.goal | ✅ rebuilt | saved | clean |
+| system/builder/BuildGoal.goal | ✅ current (skipped) | valid .pr | current |
+| BuildGoal/Decide.goal | ✅ rebuilt (1 FixSteps retry) | `%!app.module.list% is in the step but not in your answer` → recovered, saved | clean (issue-17 class) |
+| BuildGoal/Properties.goal | ✅ current | valid .pr | current |
+| BuildGoal/Start.goal | ✅ current | valid .pr | current |
+| BuilderChannel.goal | ✅ current | valid .pr | current |
+| EmitBuildEvent.goal | ✅ current | valid .pr | current |
+| error/Show.goal | ✅ current | valid .pr | current |
+| shortcut/channel.goal | ✅ current | valid .pr | current |
+| shortcut/error.goal | ✅ current | valid .pr | current |
+| shortcut/goal.goal | ✅ rebuilt (1 FixSteps retry) | `%!app.callstack.scope.caller.goal% …not in your answer` → recovered, saved | clean (issue-17 class) |
+| shortcut/step.goal | ✅ current | valid .pr | current |
+| shortcut/test.goal | ✅ current | valid .pr | current |
+| system/test.goal | ✅ current | valid .pr | current |
+
+**Outcome:** no `writer-mis-map`, `core`, or `write-in-formal` refusal remains among the kept goals —
+the v2-era failures (SetupApp, the events cluster, …) were all in the 24 goals the sweep deleted. The
+5 goals that rebuilt this session (start, build, decide, buildgoal/start, shortcut/goal `.pr`) dropped
+the deprecated `isSetup/isEvent/isSystem/isTest` fields (format update, 819f239c6; hash + steps
+unchanged) — kept per "keep rebuilt .pr". The only noise is the **issue-17 class** (a `%!x%` the
+answer carries differently reads as "in the step but not in your answer") — known, logged, and
+FixSteps recovers it in one retry.
+
+**Open for the architect:** to observe a forced rebuild of the 10 currently-skipped goals (to catch a
+`.pr` that's current-but-stale-builder), the only lever is a fresh `.build` — off-limits for os/ under
+the rule. Want a one-time authorized fresh rebuild, or is "current + the 5 clean rebuilds" enough?
 
 ## Item 5 — DONE
 `os/system/Build_dpricated.goal2` deleted (`git rm`). v0.1 builder sketch, non-`.goal` extension,
 only `.bot` bookkeeping referenced it.
+
+## on.event slot type `app.event` → `event` — two test .pr rebuilt (architect task)
+
+Two built test `.pr` under `test/` still typed `on.event`'s `Event` slot as `app.event`; the type is
+`event` since `43441c5c9` ("the event type declares its word: event", 11:53 today).
+
+**Stale-binary catch:** my binary was built near session start, *before* `43441c5c9` entered my tree
+via a later rebase — so the first rebuild still emitted `app.event` AND showed a phantom `goal.call
+Name = <whole step text>` mis-map. Rebuilt the binary clean (`dotnet build PlangConsole`) → both
+anomalies gone. (My earlier cache fix is unaffected — Build.goal doesn't touch the event type.)
+
+Rebuilt each alone, cache off, from `cwd=test/` (app root `test/.build/app.pr`).
+
+### CreateFiresOnBirth (file one) — DONE, `event`, test green, COMMITTED
+`app.event`→`event`; **test Pass**. Build flaky on the issue-17 class (step 4's assert message literal
+refused ~2/3, FixSteps recovers ~1/3; saved on attempt 2). Diff besides the type: `asdefault`→
+`default`; `goal.call Name` type `text`→`goal` (value unchanged); dropped default-false options
+`resolvevariables=false` (file.write), `ignoreifnotfound=false` (file.delete); format drops
+(`waitForExecution`, `isSetup/isEvent/isSystem/isTest`); one benign warning (math.add unsure 0.98).
+
+### AsPathIsABirth (path one) — HELD at committed (`app.event`, green); two blockers, both not my lane
+Rebuilding it to `event` does NOT stay green. Two separate problems:
+1. **`as path` coercion dropped ~3/5** — the writer drops `Type=path` from `set %p% = "a.txt" as path`
+   (measured: Type=path present only 2/5; `app.event`→`event` 5/5). Without `Type=path` the conversion
+   isn't a birth, `%created%` stays 0, assert fails. This is the droppable-trigger-word class (the
+   Option-question lever): `Type` is like a chosen option the writer loses. `set.notes.md:3` teaches
+   `as <type>` generically and examples cover `as text/int/date/duration/image` but **not `as path`**;
+   notes reach the writer, examples only the decider, so neither reliably lands `path`.
+2. **Even with `Type=path` present, the runtime fails** `'app.event.on.create' has no wire contract —
+   declares no [Out]/[Store]`. So renaming the slot to `event` (per 43441c5c9) surfaces a **core gap**:
+   the path create event has no wire-serializable face, while `file.on.create` does (file test passes).
+   The old `app.event`-typed `.pr` passed because that path didn't hit the contract check.
+
+So the path `.pr` is **kept at its committed state** (`app.event`, Type=path, **test green**). Its
+event-type update waits on the core wire-contract fix (and the `as path` mapping is a separate builder
+reliability gap). Both handed to the architect/coder. **Verified both tests green in the end:
+AsPathIsABirth Pass (committed .pr), CreateFiresOnBirth Pass (rebuilt .pr).**
+
+Stale-binary note kept (above): the first rebuild emitted `app.event` + a phantom goal.call-name
+mis-map because the binary predated 43441c5c9; a clean `dotnet build` fixed both.
+
+## Pick-pass integration (coder 814ca5209) — builder half + measurements
+
+**Landed (d08a129df):** the four LLM-facing templates read `s.Mask.Text`; `properties.template`'s
+`=> decider:` line renders `listed.Option` (`[Template=plang]`); `ask:` lines on loop.foreach
+Item/Key and llm.query Conversation (reworded off the old `{continue: %x%}`); `pick_golden.json`
+re-pinned (masked step text + the new Option questions); Wire 487 pass / 9 fail (baseline) / 8 skip.
+
+**Measurements — fresh, cache off, 5 each:**
+
+| # | step | result (5 builds) | verdict |
+|---|------|-------------------|---------|
+| control | `save %!llm.setting.cache%` | file.save mis-map → refused, **0/5 build** | ⚠️ **masking REGRESSES it** |
+| 2 | `foreach %person% as %value% with key %field%` | Item+Key **5/5** | ✅ fixed (was 3/5) |
+| 32(b) | `call goal Page module=%!app.module.file%` | Name=`%!app.module.file%` **5/5** | ❌ not fixed |
+| continue | `continue the conversation %answer%` | Conversation **5/5** | ✅ fixed |
+| 33 | `set %p% = "a.txt" as path` | Type absent **5/5** | ❌ Option doesn't reach Type |
+| guard | plain `foreach %items% as %i%` | Item, no Key **5/5** | ✅ |
+| guard | plain `read 'notes.txt'` | no Template **5/5** | ✅ |
+| guard | bare `continue the conversation` | none 3/5, Conversation **2/5** | ⚠️ flaky |
+
+**Readout:**
+- **Issue 2 and the named continue are fixed** by Option-v2 (offers = the step's placeholders);
+  the plain-foreach and plain-read guards hold.
+- **Control regression (the architect's worry, confirmed):** `save %!llm.setting.cache%` masks to
+  `save %v1%`, which strips the only module signal (`setting`, inside the variable path) → the decider
+  picks `file`, the writer writes `file.save(Path=%!llm.setting.cache%)`, and it refuses (a bool can't
+  be a Path). So masking costs a step whose module is decided by a `%!…setting…%` variable's name.
+  Decision for the architect: accept (rare), or exempt `%!…%` paths from masking, or keep that signal.
+- **32(b) NOT fixed by masking.** The writer receives the correctly-masked
+  `[0] - call goal Page module=%v1% => formal: goal.call(Name)` and still answers `Name=%v1%`
+  (restored to `%!app.module.file%`), dropping `Page` — 5/5. Masking fixed **32(a)** (the decider no
+  longer reads `file`/`condition` inside the variable), but 32(b) is a **writer** bug: it prefers the
+  variable over the bare word `Page` as the goal name. Needs goal.call teaching or more — still open.
+- **33 (`as path`) not covered.** The Option question does **not** reach `set.Type` — `set.notes.md`'s
+  Type line has no `ask:`, and `Type`'s offers would be **type names** (a choice), not the step's
+  placeholders, so it needs a different Values source, not just an `ask:` tag. `Type=path` drops 5/5.
+- **Bare-continue guard flaky:** 2/5 the decider picks `%answer%` (in scope from the prior step)
+  instead of `none`, adding Conversation where Ingi ruled a bare continue is null.
 
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).

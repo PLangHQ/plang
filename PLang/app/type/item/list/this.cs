@@ -124,6 +124,27 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// The program nodes (action.list / step.list) are born here too.</summary>
     protected internal @this(List<object?> backing) => _items = backing;
 
+    private protected @this(List<object?> backing, bool wrapped, global::app.type.kind.@this? kind) : this(backing)
+    {
+        _hasWrapped = wrapped;
+        _kind = kind;
+    }
+
+    /// <summary>A list no other holder's change reaches: its rows copied, in order (a nested container or a joined
+    /// list copied, every other value shared), as a list of its own kind (<see cref="Holding"/>).</summary>
+    public override global::app.type.item.@this Copy()
+    {
+        List<object?> rows;
+        lock (_gate) rows = _items.Select(slot => slot is Chunk chunk ? new Chunk((@this)chunk.List.Copy()) : Copied(slot)).ToList();
+        return Holding(rows);
+    }
+
+    /// <summary>A list of this one's kind holding <paramref name="rows"/> — a plain list keeps its element kind; a typed
+    /// list (<c>list&lt;T&gt;</c>) answers its own. A list that is a program's node (its steps, its actions) is itself:
+    /// a program is shared, never copied.</summary>
+    private protected virtual @this Holding(List<object?> rows)
+        => GetType() == typeof(@this) ? new @this(rows, _hasWrapped, _kind) { Template = Template } : this;
+
     /// <summary>Adopt another list's rows into a fresh instance of THIS (sub)type — the value→slot
     /// materialization when a typed node slot (<c>list&lt;action&gt;</c>) is set from a value the
     /// generic list reader produced as a base <c>list</c>. The rows are already the right elements

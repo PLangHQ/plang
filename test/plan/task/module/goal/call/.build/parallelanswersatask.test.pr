@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "comment": "A call in parallel answers a task, and the next step runs before the called goal ends: Slow sleeps, then writes\n%order%; the step after the call writes it first, so right after, %order% is the caller's alone. (That the task\nthen ends with \"caller,task\" is read through `wait for` in stage 2, and in C# TaskTests.)",
+  "comment": "A call in parallel answers a task, and the next step runs before the called goal ends: Slow sleeps, then reads\n%order% — its reads fall through to the caller's memory, live — so it reads what the step after the call wrote.\nWhat the task writes stays in it: the caller's %order% is its own.",
   "step": [
     {
       "index": 0,
@@ -184,9 +184,150 @@
     },
     {
       "index": 3,
-      "text": "assert.equals(Expected=\"caller\", Actual=%order%, Message=\"the next step ran before the called goal ended\")",
+      "text": "task.wait(Task=%task%); variable.set(Name=%result%, Value=%!data%)",
       "line": {
         "number": 8
+      },
+      "code": [
+        {
+          "module": "task",
+          "name": "wait",
+          "property": [
+            {
+              "name": "Task",
+              "type": {
+                "name": "task",
+                "template": "plang"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert.equals(Expected=\"caller,task\", Actual=%result%, Message=\"the next step ran before the called goal read %order%\")",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "caller,task"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "the next step ran before the called goal read %order%",
+              "variable": [
+                {
+                  "text": "%order%",
+                  "code": [
+                    {
+                      "variable": "order"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert.equals(Expected=\"caller\", Actual=%order%, Message=\"what the task wrote stayed in it\")",
+      "line": {
+        "number": 10
       },
       "code": [
         {
@@ -223,7 +364,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "the next step ran before the called goal ended"
+              "value": "what the task wrote stayed in it"
             }
           ]
         }
@@ -238,7 +379,7 @@
           "index": 0,
           "text": "timer.sleep(Ms=1000)",
           "line": {
-            "number": 11
+            "number": 13
           },
           "code": [
             {
@@ -260,7 +401,7 @@
           "index": 1,
           "text": "variable.set(Name=%order%, Value=\"%order%,task\")",
           "line": {
-            "number": 12
+            "number": 14
           },
           "code": [
             {
@@ -314,17 +455,59 @@
               ]
             }
           ]
+        },
+        {
+          "index": 2,
+          "text": "goal.return(Data=%order%)",
+          "line": {
+            "number": 15
+          },
+          "code": [
+            {
+              "module": "goal",
+              "name": "return",
+              "property": [
+                {
+                  "name": "Data",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%order%",
+                  "variable": [
+                    {
+                      "text": "%order%",
+                      "code": [
+                        {
+                          "variable": "order"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "depth",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ]
+            }
+          ]
         }
       ],
       "child": [],
       "visibility": "Private",
       "path": "/plan/task/module/goal/call/ParallelAnswersATask.test.goal",
       "prPath": "/plan/task/module/goal/call/.build/parallelanswersatask.test.pr",
-      "hash": "121714f3b1dea64ca6a4dc8620d1c1160f03282e813cf9350d9c3ef680479040"
+      "hash": "c52d9cdbac03339b87e9738a79ea571aa37bd0c62b5f4fed5df6b144495962d1"
     }
   ],
   "visibility": "Public",
   "path": "/plan/task/module/goal/call/ParallelAnswersATask.test.goal",
   "prPath": "/plan/task/module/goal/call/.build/parallelanswersatask.test.pr",
-  "hash": "6ebaebb99eb847c1b5a4b5dea34652e58f4c277f8a236ae74200a6497090e636"
+  "hash": "bd3a8733179ed3eac61d05457272a0321dd8201d5f7340a25b570f69307cc6d2"
 }

@@ -11,7 +11,7 @@ public class CallStackAuditTests : System.IAsyncDisposable
     [Test]
     public async Task Audit_AppendsErrorOnFailingAction()
     {
-        var stack = new CallStack(TestCallStack.Settings());
+        var stack = new Calls(TestCalls.Settings());
         await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         var err = new Error("Boom");
         call.Errors.Add(err);
@@ -22,7 +22,7 @@ public class CallStackAuditTests : System.IAsyncDisposable
     [Test]
     public async Task Audit_RetainsErrorAfterPop()
     {
-        var stack = new CallStack(TestCallStack.Settings());
+        var stack = new Calls(TestCalls.Settings());
         var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         var err = new Error("Boom");
         stack.Audit.Add(err);
@@ -33,7 +33,7 @@ public class CallStackAuditTests : System.IAsyncDisposable
     [Test]
     public async Task Audit_AccumulatesBothHandledAndUnhandled()
     {
-        var stack = new CallStack(TestCallStack.Settings());
+        var stack = new Calls(TestCalls.Settings());
         var c1 = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         stack.Audit.Add(new Error("e1"));
         c1.Handled = true;
@@ -60,7 +60,7 @@ public class CallStackAuditTests : System.IAsyncDisposable
     [Test]
     public async Task Audit_OrderIsInsertion()
     {
-        var stack = new CallStack(TestCallStack.Settings());
+        var stack = new Calls(TestCalls.Settings());
         stack.Audit.Add(new Error("first"));
         stack.Audit.Add(new Error("second"));
         stack.Audit.Add(new Error("third"));
@@ -74,7 +74,7 @@ public class CallStackAuditTests : System.IAsyncDisposable
     {
         // App.Run translates a thrown Exception into a ServiceError and adds it to both
         // call.Errors and stack.Audit. Test the data wiring by simulating the same writes.
-        var stack = new CallStack(TestCallStack.Settings());
+        var stack = new Calls(TestCalls.Settings());
         await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         var sv = new ServiceError("crash", call.Step!);
         call.Errors.Add(sv);

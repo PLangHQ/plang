@@ -286,6 +286,7 @@ public sealed class @this
                      ? listed.Mark.Popular
                  : listed.Mark.Possible,
             Module = modules.Length > 0 && Through(p.Name) ? modules : null,
+            Option = Chosen(p.Name),
         }).ToList();
     }
 
@@ -311,7 +312,8 @@ public sealed class @this
         var line = new line.@this(nests);
         foreach (var action in certain) action.Prefill(line, Call(action));
         if (known != null) line.Append($"variable.set(Name={known.Text}, Value=%!data%)");
-        return line.ToString();
+        // written as the writer reads the step: its variables placeholders
+        return line.ToString() is { } written ? _step.Mask.Hide(written) : null;
     }
 
     // The known code, written in formal and read the way an answer is read. A line that doesn't read
@@ -355,12 +357,20 @@ public sealed class @this
     // a Parameter, a RetryCount), as the examples teach.
     private string Call(global::app.goal.step.action.@this action)
     {
-        var given = action.Property.Where(p => p.Required).Select(p => p.Name).ToList();
-        var asked = $"{action.Module.Name}.{action.Name}.";
-        foreach (var (key, chosen) in _option)
-            if (key.StartsWith(asked, StringComparison.Ordinal) && chosen is { Length: > 0 } value && value != question.@this.None)
-                given.Add($"{key[asked.Length..]}={value}");
+        var given = action.Property.Where(p => p.Required).Select(p => p.Name).Concat(Chosen($"{action.Module.Name}.{action.Name}"));
         return $"{action.Module.Name}.{action.Name}({string.Join(", ", given)})";
+    }
+
+    // The options the decider chose a value of for the action <paramref name="name"/> (`Template=plang`) — "none"
+    // left out. What the starting line writes and what the listed action carries: one reading, so they never drift.
+    private List<string> Chosen(string name)
+    {
+        var asked = name + ".";
+        var chosen = new List<string>();
+        foreach (var (key, value) in _option)
+            if (key.StartsWith(asked, StringComparison.Ordinal) && value is { Length: > 0 } && value != question.@this.None)
+                chosen.Add($"{key[asked.Length..]}={value}");
+        return chosen;
     }
 
     private global::app.goal.step.action.@this? Catalog(string name, global::app.actor.context.@this context)
@@ -504,11 +514,14 @@ public sealed class @this
         {
             await action.Note.Value(context.Ok());
             foreach (var line in action.Note.Line)
-                if (line is { Ask: not null, Name: { } named } && action[named.ToString()] is { } property)
+                // what the option's type offers for this step (a closed set its options, any other the step's variables);
+                // an option with nothing to offer isn't asked
+                if (line is { Ask: not null, Name: { } named } && action[named.ToString()] is { } property
+                    && property.Type.Offers(_step) is { Count: > 0 } offers)
                     questions.Add(new question.@this
                     {
                         Id = Key($"{OptionKey}{action.Module.Name}.{action.Name}.{property.Name}"), Kind = Kind.Option,
-                        Action = action, Property = property,
+                        Action = action, Property = property, Values = [.. offers, question.@this.None],
                     });
         }
         return questions;

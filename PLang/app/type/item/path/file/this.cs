@@ -77,7 +77,7 @@ public sealed partial class @this : global::app.type.item.path.@this
 
         // Relative paths resolve against the running goal's folder.
         if (!rawPath.StartsWith('/') && !rawPath.StartsWith('\\') && !rawPath.Contains("://")
-            && context.CallStack.Goal?.Folder is { } folder)
+            && context.call.Goal?.Folder is { } folder)
             resolved = PathHelper.Combine(folder.Absolute, rawPath);
 
         var absolute = ValidatePath(resolved, context.App);

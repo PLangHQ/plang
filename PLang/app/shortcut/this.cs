@@ -41,7 +41,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// the read.</summary>
     public async System.Threading.Tasks.Task<global::app.data.@this> Read(global::app.actor.context.@this asker)
     {
-        await using (asker.Variable.Calls.Isolate(null))
+        await using (asker.call.Isolate(null))
             return await Goal.Start(asker);
     }
 
