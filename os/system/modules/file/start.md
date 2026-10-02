@@ -85,7 +85,7 @@ Copy a file or folder from Source to Destination, optionally overwriting and inc
 | Source | the first path, inline | path | yes | — | the file or folder to copy from |
 | Destination | `to '<path>'` | path | yes | — | where the copy goes |
 | Overwrite | `overwrite` | bool | no | false | replace the destination if it already exists |
-| Subfolder | (on by default) | bool | no | true | when copying a folder, copy its sub-folders too |
+| Subfolder | (on by default) | choice<subfolder> | no | include | when copying a folder, copy its sub-folders too |
 
 **Returns:** the destination path.
 
