@@ -40,20 +40,9 @@ public sealed class Property : Hop
         if (member != null)
             return new global::app.data.@this(key, member.GetValue(previous), parent: previous);
 
-        // The value's own typed metadata (!path, !host, !size, !length) without materialising content.
-        // NonPublic included: the raw derivations (path.Relative/.Extension/.Absolute) are internal C#
-        // but ARE the !relative/!extension/!absolute projections.
-        var peeked = previous.Peek();
-        var own = peeked.GetType().GetProperty(key, Public | System.Reflection.BindingFlags.NonPublic);
-        if (own != null)
-            return new global::app.data.@this(key, own.GetValue(peeked), parent: previous);
-
-        // A member that needs the asker's context is a method taking one context — !relative,
-        // !mimetype, !kind answer with the binding's own context.
-        var asks = peeked.GetType().GetMethod(key, Public | System.Reflection.BindingFlags.NonPublic,
-            binder: null, types: [typeof(global::app.actor.context.@this)], modifiers: null);
-        if (asks != null)
-            return new global::app.data.@this(key, asks.Invoke(peeked, [previous.Context]), parent: previous);
+        // A fact about the thing the value is — a reference's own (a file's !path, !size, !kind; a url's !host), never
+        // its content's. A plain value has none: its members are read with a dot.
+        if (previous.Peek().Fact(key, previous) is { } fact) return fact;
 
         return previous.Context?.NotFound(key) ?? context.NotFound(key);
     }

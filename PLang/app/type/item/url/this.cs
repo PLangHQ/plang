@@ -41,7 +41,7 @@ public sealed class @this : global::app.type.item.content.@this, global::app.typ
     {
         var contentType = await read.Properties.Get<string>("contentType");
         var mime = !string.IsNullOrEmpty(contentType) ? contentType
-            : !string.IsNullOrEmpty(Path.Extension) ? Path.MimeType(context)
+            : Path.Extension.IsTruthy() ? Path.MimeType(context)
             : "text/plain";
         return context.App.type.list.Mime(mime);
     }

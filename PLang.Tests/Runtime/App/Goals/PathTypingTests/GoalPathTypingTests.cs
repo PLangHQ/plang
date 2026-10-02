@@ -35,7 +35,7 @@ public class GoalPathTypingTests
             Path = global::app.type.item.path.@this.Resolve("/Cache/Start.goal", context)
         };
         await Assert.That(goal.PrPath).IsNotNull();
-        var rel = goal.PrPath!.Relative(context).Replace('\\', '/');
+        var rel = goal.PrPath!.Relative(context).Raw.Replace('\\', '/');
         await Assert.That(rel).IsEqualTo("/Cache/.build/start.pr");
     }
 
@@ -51,7 +51,7 @@ public class GoalPathTypingTests
             Path = global::app.type.item.path.@this.Resolve("/Start.goal", context),
             PrPath = global::app.type.item.path.@this.Resolve("/SomeOther/junk.pr", context)
         };
-        var rel = goal.PrPath!.Relative(context).Replace('\\', '/');
+        var rel = goal.PrPath!.Relative(context).Raw.Replace('\\', '/');
         // Init was a no-op — derived from Path, not the explicitly-passed PrPath.
         await Assert.That(rel).IsEqualTo("/.build/start.pr");
     }
@@ -63,7 +63,7 @@ public class GoalPathTypingTests
         var goal = new Goal { Name = "Test", Path = global::app.type.item.path.@this.Resolve("/Cache/test.goal", context) };
         var dir = goal.Folder;
         await Assert.That(dir).IsNotNull();
-        await Assert.That(dir!.Relative(context).Replace('\\', '/').TrimEnd('/')).IsEqualTo("/Cache");
+        await Assert.That(dir!.Relative(context).Raw.Replace('\\', '/').TrimEnd('/')).IsEqualTo("/Cache");
     }
 
     [Test] public async Task Goal_JsonRoundTrip_PreservesPathAsRelativeString()
@@ -100,7 +100,7 @@ public class GoalPathTypingTests
         var loaded = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app2, goal);
         await Assert.That(loaded).IsNotNull();
         await Assert.That(loaded!.Path).IsNotNull();
-        await Assert.That(loaded.Path!.Relative(ctx2)).IsEqualTo("/Start.goal");
+        await Assert.That(loaded.Path!.Relative(ctx2).Raw).IsEqualTo("/Start.goal");
         await Assert.That(loaded.Path!.Absolute).StartsWith(app2.AbsolutePath);
     }
 
@@ -115,7 +115,7 @@ public class GoalPathTypingTests
         };
         // The goal writes its own .pr and reads itself back.
         var loaded = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, goal);
-        await Assert.That(loaded!.Path!.Relative(context)).IsEqualTo("/Start.goal");
+        await Assert.That(loaded!.Path!.Relative(context).Raw).IsEqualTo("/Start.goal");
     }
 
 }

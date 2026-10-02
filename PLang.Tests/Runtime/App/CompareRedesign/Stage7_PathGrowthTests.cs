@@ -2,11 +2,9 @@ using System.Reflection;
 
 namespace PLang.Tests.App.CompareRedesign;
 
-// Stage 7 — `path`'s interior string-math moves onto the type (OBP smell #5).
-// `path.IsUnder(root)` replaces `f.Relative.StartsWith(rootRel)`; `path.Kind`
-// answers its extension's type (`app.type.list.Extension`). Raw `.Relative` /
-// `.Extension` become `internal`, feeding the new methods + the `!relative` /
-// `!extension` derived projections.
+// `path`'s string math lives on the type: `path.IsUnder(root)` for containment, `path.Kind` for its extension's
+// type (`app.type.list.Extension`). `relative` (a path) and `extension` (text) are its public members, read with a
+// dot.
 public class Stage7_PathGrowthTests
 {
     private static (global::app.@this app, global::app.actor.context.@this context, string dir) MakeApp()
@@ -45,31 +43,35 @@ public class Stage7_PathGrowthTests
     }
 
     [Test]
-    public async Task PathRelative_NowInternal_NotOnPublicSurface()
+    public async Task PathRelative_IsAPublicPath_ThatNeedsTheAskersRoot()
     {
-        // Relative needs the asker's root, so it is a one-context method.
+        // Relative needs the asker's root, so it is a one-context method; it answers a path, so it chains.
         var m = typeof(global::app.type.item.path.@this).GetMethod("Relative",
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
+            BindingFlags.Public | BindingFlags.Instance,
             binder: null, new[] { typeof(global::app.actor.context.@this) }, modifiers: null);
         await Assert.That(m).IsNotNull();
-        await Assert.That(m!.IsPublic).IsFalse();
-        await Assert.That(m.IsAssembly).IsTrue();
+        await Assert.That(m!.ReturnType).IsEqualTo(typeof(global::app.type.item.path.@this));
     }
 
     [Test]
-    public async Task PathExtension_NowInternal_PublicViaBangExtension()
+    public async Task PathExtension_IsAPublicText_ReadWithADot()
     {
-        var prop = typeof(global::app.type.item.path.@this).GetProperty("Extension",
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        var prop = typeof(global::app.type.item.path.@this).GetProperty("Extension", BindingFlags.Public | BindingFlags.Instance);
         await Assert.That(prop).IsNotNull();
-        await Assert.That(prop!.GetMethod!.IsAssembly).IsTrue();
-        // the `!extension` projection still answers on the property plane
+        await Assert.That(prop!.PropertyType).IsEqualTo(typeof(global::app.type.item.text.@this));
         var (app, context, _) = MakeApp();
         await using var __ = app;
         var p = global::app.type.item.path.@this.Resolve("docs/readme.md", context);
-        var data = new Data("p", p, context: context);
-        var ext = await data.Get("!extension");
-        await Assert.That(ext.Peek()?.ToString()).IsEqualTo("md");
+        var ext = await new global::app.type.item.variable.parser.@this("%p.extension%").Variable.Single()
+            .Start(await Bound(context, "p", p));
+        await Assert.That((await ext.Value())?.ToString()).IsEqualTo("md");
+    }
+
+    // a context holding %name% = value, for a read through plang's own variable door
+    private static async Task<global::app.actor.context.@this> Bound(global::app.actor.context.@this context, string name, object value)
+    {
+        await context.Variable.Set(name, new Data(name, value, context: context));
+        return context;
     }
 
     private static string RepoRoot()

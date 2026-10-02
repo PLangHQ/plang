@@ -104,7 +104,7 @@ public class Stage3_PathDemolitionTests
     }
 
     [Test]
-    public async Task PathBangAbsolute_DerivedProjection_GatedAndUnserialised()
+    public async Task PathAbsolute_StaysOffTheWire_AndIsNoFact()
     {
         // the resolved absolute stays OFF the wire — it leaks the install root
         var (app, context, dir) = MakeApp();
@@ -113,21 +113,21 @@ public class Stage3_PathDemolitionTests
         var data = new Data("p", p, context: context);
         var json = await SerializePlang(app, data);
         await Assert.That(json).DoesNotContain(dir);
-        // the projection itself is still derivable on the property plane
+        // nor does plang read it: the absolute form is C#'s, no member of the path and no fact
         var abs = await data.Get("!absolute");
-        await Assert.That(abs.Peek()?.ToString()).Contains("note.txt");
+        await Assert.That(abs.IsInitialized).IsFalse();
     }
 
     [Test]
-    public async Task PathBangExtension_Derived_Serialised()
+    public async Task PathExtension_Derived_Serialised()
     {
-        // %path!extension% derives from the location; the wire form (the
+        // %path.extension% derives from the location; the wire form (the
         // location string) carries it
         var (app, context, _) = MakeApp();
         await using var __ = app;
         var p = global::app.type.item.path.@this.Resolve("docs/readme.md", context);
         var data = new Data("p", p, context: context);
-        var ext = await data.Get("!extension");
+        var ext = await data.Get("extension");
         await Assert.That(ext.Peek()?.ToString()).IsEqualTo("md");
         var json = await SerializePlang(app, data);
         await Assert.That(json).Contains(".md");

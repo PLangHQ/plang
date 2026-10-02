@@ -21,8 +21,52 @@ public class PathAskerContextTests
         var p = global::app.type.item.path.@this.Resolve("/data/config.json", ctx);
         var d = new global::app.data.@this("p", p, context: ctx);
 
-        await Assert.That(await Nav(d, "!relative")).IsEqualTo("/data/config.json");
-        await Assert.That(await Nav(d, "!mimetype")).IsEqualTo("application/json");
+        await Assert.That(await Nav(d, "relative")).IsEqualTo("/data/config.json");
+        await Assert.That(await Nav(d, "mimetype")).IsEqualTo("application/json");
+    }
+
+    // A step's read: %name.member% through plang's own variable door, as the asker.
+    private static async Task<string?> Read(global::app.actor.context.@this ctx, string variable)
+    {
+        var read = await new global::app.type.item.variable.parser.@this(variable).Variable.Single().Start(ctx);
+        return read.Success ? (await read.Value())?.ToString() : "refused: " + read.Error?.Key;
+    }
+
+    [Test] public async Task APathsRelativeAndExtension_AreReadWithADot()
+    {
+        await using var app = NewApp();
+        var ctx = app.actor.list.User.Context;
+        await ctx.Variable.Set("p", new global::app.data.@this("p", global::app.type.item.path.@this.Resolve("/data/config.json", ctx), context: ctx));
+
+        await Assert.That(await Read(ctx, "%p.relative%")).IsEqualTo("/data/config.json");
+        await Assert.That(await Read(ctx, "%p.extension%")).IsEqualTo("json");
+        await Assert.That(await Read(ctx, "%p.relative.extension%")).IsEqualTo("json");
+    }
+
+    // `!` reads facts about the thing — a Data's own and a reference's own; a plain path's members are read with a dot.
+    [Test] public async Task APlainPathsRelative_IsNoBangFact()
+    {
+        await using var app = NewApp();
+        var ctx = app.actor.list.User.Context;
+        await ctx.Variable.Set("p", new global::app.data.@this("p", global::app.type.item.path.@this.Resolve("/data/config.json", ctx), context: ctx));
+
+        await Assert.That(await Read(ctx, "%p!relative%")).IsNotEqualTo("/data/config.json");
+    }
+
+    // A read file: its dot is its content (the JSON's own `path` key); its `!path` is the file's location, whose
+    // members read with a dot.
+    [Test] public async Task AReadFile_BangPathIsItsLocation_DotIsItsContent()
+    {
+        await using var app = NewApp();
+        var ctx = app.actor.list.User.Context;
+        System.IO.Directory.CreateDirectory(System.IO.Path.Combine(app.AbsolutePath, "data"));
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(app.AbsolutePath, "data", "config.json"), "{\"path\": \"its own key\"}");
+        var read = await global::app.type.item.path.@this.Resolve("/data/config.json", ctx).Read(ctx);
+        await read.IsSuccess();
+        await ctx.Variable.Set("config", read);
+
+        await Assert.That(await Read(ctx, "%config!path.relative%")).IsEqualTo("/data/config.json");
+        await Assert.That(await Read(ctx, "%config.path%")).IsEqualTo("its own key");
     }
 
     [Test] public async Task OsLocation_ShowsItsPlangForm_NeverTheInstallRoot()
@@ -61,8 +105,8 @@ public class PathAskerContextTests
         await using var app2 = NewApp();
         var p = global::app.type.item.path.@this.Resolve("/data/x.txt", app1.actor.list.User.Context);
 
-        await Assert.That(p.Relative(app1.actor.list.User.Context)).IsEqualTo("/data/x.txt");
+        await Assert.That(p.Relative(app1.actor.list.User.Context).Raw).IsEqualTo("/data/x.txt");
         // Outside the asker's root the relative form is the location itself.
-        await Assert.That(p.Relative(app2.actor.list.User.Context)).IsEqualTo(p.Absolute);
+        await Assert.That(p.Relative(app2.actor.list.User.Context).Raw).IsEqualTo(p.Absolute);
     }
 }

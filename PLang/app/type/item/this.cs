@@ -707,6 +707,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         return context.Ok();
     }
 
+    /// <summary>A fact about the thing this value is, read with <c>!</c> (<c>%config!path%</c>) — null: a plain value
+    /// has none, its members are read with a dot. A reference answers its own (a file's path, size, kind).</summary>
+    internal virtual global::app.data.@this? Fact(string key, global::app.data.@this parent) => null;
+
     /// <summary>What packing this value writes into <paramref name="into"/>, and what that holds — so unpacking gives
     /// it back: a value packs as its Data whole, <paramref name="self"/>, in plang's own format (held: <c>data</c>); a
     /// file answers its contents and its name. Ok, or why it can't be packed.</summary>

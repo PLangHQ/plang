@@ -52,10 +52,10 @@ public abstract class @this : kind.@this
             }
             if (into == null)
                 return context.Error(new global::app.error.ServiceError(
-                    $"an archived {held.Kind} unpacks into a folder: say where (unpack … into /folder)", "UnpackNeedsFolder", 400));
+                    $"an archived {held.Of} unpacks into a folder: say where (unpack … into /folder)", "UnpackNeedsFolder", 400));
             var (at, refused) = await Under(into, held.Name?.ToString() ?? "unpacked", context);
             if (at == null) return refused ?? context.Error(new global::app.error.ServiceError(
-                $"an archived {held.Kind} named {held.Name} has no place inside {into.Raw}", "UnpackFailed", 400));
+                $"an archived {held.Of} named {held.Name} has no place inside {into.Raw}", "UnpackFailed", 400));
             await Clear(at, context);
             var written = await at.Write(read, context);
             return written.Success ? context.Ok<global::app.type.item.path.@this>(at) : written;

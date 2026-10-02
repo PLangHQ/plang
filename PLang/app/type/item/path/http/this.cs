@@ -182,7 +182,7 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     /// <summary>The URL's own extension: its path's, without the query or fragment (<c>…/data.json?v=2</c> is
     /// <c>.json</c>).</summary>
-    internal override string Extension
+    public override global::app.type.item.text.@this Extension
     {
         get
         {

@@ -92,8 +92,10 @@ public partial class @this
     [LlmIgnore]
     public global::app.type.item.signature.@this? Signature { get; private init; }
 
+    /// <summary>Where this Data sits under its parents (<c>config.items[0]</c>) — its navigation's own bookkeeping,
+    /// never a plang fact: <c>!path</c> is a reference's location.</summary>
     [JsonIgnore]
-    public string Path { get; }
+    internal string Path { get; }
 
     [JsonIgnore]
     [LlmIgnore]

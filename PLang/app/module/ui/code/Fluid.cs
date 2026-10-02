@@ -46,7 +46,7 @@ public class Fluid : ITemplate
                 return action.Context.Error<global::app.type.item.text.@this>(new ServiceError(
                     $"Template file not found: {templateContent}", "NotFound", 404));
 
-            sourceFile = pathData.Relative(action.Context);
+            sourceFile = pathData.Relative(action.Context).Raw;
             kind = pathData.Kind(action.Context).kind is { IsEmpty: false } format ? format.Name : null;
             var readResult = await pathData.Read(action.Context);
             var read = readResult.Success ? await readResult.Value() : null;

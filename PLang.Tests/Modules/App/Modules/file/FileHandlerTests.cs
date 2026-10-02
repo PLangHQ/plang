@@ -47,7 +47,7 @@ public class FileHandlerTests : IDisposable
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
         await Assert.That(f!.Absolute).IsEqualTo(TempPath("test.txt"));
-        await Assert.That(f.Relative(_app.actor.list.User.Context)).IsEqualTo("/test.txt");
+        await Assert.That(f.Relative(_app.actor.list.User.Context).Raw).IsEqualTo("/test.txt");
     }
 
     [Test]
@@ -222,7 +222,7 @@ public class FileHandlerTests : IDisposable
         await result.IsSuccess();
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(f!.Relative(_app.actor.list.User.Context)).IsEqualTo("/dst.txt");
+        await Assert.That(f!.Relative(_app.actor.list.User.Context).Raw).IsEqualTo("/dst.txt");
     }
 
     [Test]
@@ -261,7 +261,7 @@ public class FileHandlerTests : IDisposable
         await result.IsSuccess();
         var f = (await result.Value()) as PLangPath;
         await Assert.That(f).IsNotNull();
-        await Assert.That(f!.Relative(_app.actor.list.User.Context)).IsEqualTo("/move_dst.txt");
+        await Assert.That(f!.Relative(_app.actor.list.User.Context).Raw).IsEqualTo("/move_dst.txt");
     }
 
     [Test]

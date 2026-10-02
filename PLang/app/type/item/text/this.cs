@@ -316,6 +316,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key, bool isIndex)
     {
+        // its own members first (%s.length%) — the ones it shows plang
+        if (!isIndex && GetType().GetProperty(key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
+                | System.Reflection.BindingFlags.IgnoreCase) is { } member && System.Attribute.IsDefined(member, typeof(global::app.LlmBuilderAttribute)))
+            return System.Threading.Tasks.ValueTask.FromResult(new global::app.data.@this(key, member.GetValue(this), parent: parent));
         if (Opened(parent.Context) is { } opened)
             return opened.Success ? opened.Peek().Get(parent, key, isIndex) : System.Threading.Tasks.ValueTask.FromResult(opened);
         var who = string.IsNullOrEmpty(parent.Name) ? "value" : $"%{parent.Name}%";
@@ -412,7 +416,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>Codepoint (Unicode scalar) count — surrogate pairs count once.
     /// Returns the PLang <c>number</c> (the public surface answers in PLang values).</summary>
-    public global::app.type.item.number.@this Length
+    [LlmBuilder] public global::app.type.item.number.@this Length
     {
         get
         {

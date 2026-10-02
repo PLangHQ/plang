@@ -31,7 +31,7 @@ public class TypeOwnedReadParityTests : System.IAsyncDisposable
             var prior = global::app.type.item.path.@this.Resolve(raw, ctx);
             await Assert.That(viaRead).IsNotNull();
             await Assert.That(viaRead!.GetType()).IsEqualTo(prior.GetType());
-            await Assert.That(viaRead.Relative(ctx)).IsEqualTo(prior.Relative(ctx));
+            await Assert.That(viaRead.Relative(ctx).Raw).IsEqualTo(prior.Relative(ctx).Raw);
         }
     }
 

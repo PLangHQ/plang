@@ -138,6 +138,7 @@ public class ArchiveActionTests : IDisposable
 
         var back = await _app.type.list["wire"].kind["plang"]!.Decode(wire.ToArray(), Ctx);
 
+        await Assert.That(System.Text.Encoding.UTF8.GetString(wire.ToArray())).Contains("\"held\":{\"type\":\"data\"");
         await back.IsSuccess();
         var read = (Archive)(await back.Value())!;
         await Assert.That(read.Format!.Name).IsEqualTo("gzip");
@@ -156,7 +157,7 @@ public class ArchiveActionTests : IDisposable
         var archive = (Archive)(await (await Pack(file)).Value())!;
         var unpacked = await Unpack(archive, into: "/out");
 
-        await Assert.That(archive.Held!.Kind.ToString()).IsEqualTo("file");
+        await Assert.That(archive.Held!.Of.ToString()).IsEqualTo("file");
         await Assert.That(archive.Held.Name!.ToString()).IsEqualTo("a.txt");
         await unpacked.IsSuccess();
         await Assert.That(File.ReadAllText(OnDisk("/out/a.txt"))).IsEqualTo("file content");
@@ -266,7 +267,7 @@ public class ArchiveActionTests : IDisposable
         var archive = (Archive)(await (await Pack(Folder("/photos"), "zip")).Value())!;
         var unpacked = await Unpack(archive, into: "/restored");
 
-        await Assert.That(archive.Held!.Kind.ToString()).IsEqualTo("folder");
+        await Assert.That(archive.Held!.Of.ToString()).IsEqualTo("folder");
         await unpacked.IsSuccess();
         await Assert.That(File.ReadAllText(OnDisk("/restored/2024/b.jpg"))).IsEqualTo("b");
     }
