@@ -258,4 +258,43 @@ AsPathIsABirth Pass (committed .pr), CreateFiresOnBirth Pass (rebuilt .pr).**
 Stale-binary note kept (above): the first rebuild emitted `app.event` + a phantom goal.call-name
 mis-map because the binary predated 43441c5c9; a clean `dotnet build` fixed both.
 
+## Pick-pass integration (coder 814ca5209) — builder half + measurements
+
+**Landed (d08a129df):** the four LLM-facing templates read `s.Mask.Text`; `properties.template`'s
+`=> decider:` line renders `listed.Option` (`[Template=plang]`); `ask:` lines on loop.foreach
+Item/Key and llm.query Conversation (reworded off the old `{continue: %x%}`); `pick_golden.json`
+re-pinned (masked step text + the new Option questions); Wire 487 pass / 9 fail (baseline) / 8 skip.
+
+**Measurements — fresh, cache off, 5 each:**
+
+| # | step | result (5 builds) | verdict |
+|---|------|-------------------|---------|
+| control | `save %!llm.setting.cache%` | file.save mis-map → refused, **0/5 build** | ⚠️ **masking REGRESSES it** |
+| 2 | `foreach %person% as %value% with key %field%` | Item+Key **5/5** | ✅ fixed (was 3/5) |
+| 32(b) | `call goal Page module=%!app.module.file%` | Name=`%!app.module.file%` **5/5** | ❌ not fixed |
+| continue | `continue the conversation %answer%` | Conversation **5/5** | ✅ fixed |
+| 33 | `set %p% = "a.txt" as path` | Type absent **5/5** | ❌ Option doesn't reach Type |
+| guard | plain `foreach %items% as %i%` | Item, no Key **5/5** | ✅ |
+| guard | plain `read 'notes.txt'` | no Template **5/5** | ✅ |
+| guard | bare `continue the conversation` | none 3/5, Conversation **2/5** | ⚠️ flaky |
+
+**Readout:**
+- **Issue 2 and the named continue are fixed** by Option-v2 (offers = the step's placeholders);
+  the plain-foreach and plain-read guards hold.
+- **Control regression (the architect's worry, confirmed):** `save %!llm.setting.cache%` masks to
+  `save %v1%`, which strips the only module signal (`setting`, inside the variable path) → the decider
+  picks `file`, the writer writes `file.save(Path=%!llm.setting.cache%)`, and it refuses (a bool can't
+  be a Path). So masking costs a step whose module is decided by a `%!…setting…%` variable's name.
+  Decision for the architect: accept (rare), or exempt `%!…%` paths from masking, or keep that signal.
+- **32(b) NOT fixed by masking.** The writer receives the correctly-masked
+  `[0] - call goal Page module=%v1% => formal: goal.call(Name)` and still answers `Name=%v1%`
+  (restored to `%!app.module.file%`), dropping `Page` — 5/5. Masking fixed **32(a)** (the decider no
+  longer reads `file`/`condition` inside the variable), but 32(b) is a **writer** bug: it prefers the
+  variable over the bare word `Page` as the goal name. Needs goal.call teaching or more — still open.
+- **33 (`as path`) not covered.** The Option question does **not** reach `set.Type` — `set.notes.md`'s
+  Type line has no `ask:`, and `Type`'s offers would be **type names** (a choice), not the step's
+  placeholders, so it needs a different Values source, not just an `ask:` tag. `Type=path` drops 5/5.
+- **Bare-continue guard flaky:** 2/5 the decider picks `%answer%` (in scope from the prior step)
+  instead of `none`, adding Conversation where Ingi ruled a bare continue is null.
+
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).
