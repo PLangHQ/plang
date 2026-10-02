@@ -46,6 +46,17 @@ popular options); this template only writes their words. Keys and wording are th
 {%- assign osep = ", " -%}
 {%- endfor -%}
 }
+{%- when "Option" -%}
+{%- capture ask %}Step {{ s.Index }} is `{{ text }}`. {{ q.Ask }}{% endcapture %}
+    "type": "choice",
+    "instructions": {{ ask | json }},
+    "criteria": {
+{%- assign osep = "" -%}
+{%- for v in q.Values -%}
+{{ osep }}{{ v | json }}: null
+{%- assign osep = ", " -%}
+{%- endfor -%}
+}
 {%- endcase %}
   }
 {%- assign sep = "," -%}
