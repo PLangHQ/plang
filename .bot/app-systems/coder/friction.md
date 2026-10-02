@@ -47,6 +47,11 @@ One entry each: what, what it cost (evidence), the wish.
 - **Cost:** none yet.
 - **Wish (if it happens):** if a goal ever strips the prefix, the element wants to be a record `{line, text, match}`, not text.
 
+## A member added to a variable reads two ways
+- **What:** `set %name.lang% = "is"` keeps `lang` in the binding's Properties, so both `%name.lang%` and `%name!lang%` answer it. The dot is the taught form; `!` works because `!` reads Properties first.
+- **Cost:** none yet. A reader may wonder which is right, or think they're two things.
+- **Wish:** if it confuses anyone, teach only the dot and let `!` stay the Data's own facts.
+
 ## In Liquid an empty string is truthy
 - **What:** moving a type's description to markdown made a missing one an empty string. `{% if p.Type.Description %}` then held true, and the prompt printed `—  (e.g. )` for every type without one. Liquid's only falsy values are nil and false.
 - **Cost:** one golden diff to trace. Fixed: empty prose is the null value.

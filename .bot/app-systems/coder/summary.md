@@ -20,8 +20,14 @@
   reference's (`item.Fact`, answered by `content`); `Data.Path` internal.
 - e69c0ae86 (567 part 1): the type catalog lists every `[LlmBuilder]` member; methods carry `Arguments`.
 - e04350246: a whole-`%ref%` template source writes the bound value (plang's format round-trips a signed one).
-- Next: 567 part 2 (markdown loader for `os/system/type/<type>/…`, statics removed per type as markdown lands),
-  then 564 (App.Statics removal + dynamic members) — shape first. Friction: `.bot/app-systems/coder/friction.md`.
+- 41056f6f6: text's `grep(pattern, lines?)` is one member answering `list<text>`; `grepCount` a number; a call may
+  leave out trailing optional arguments.
+- 8e330566b (567 part 2): every type's Description/Example static moved verbatim to `os/system/type/<type>/
+  type.{description,examples}.md`; read through `type/item/prose` (lazy, trimmed, empty = no value); Notes/Guide and
+  members' notes as lazy files. Prompts byte-identical.
+- 1c8d0f402 + e7ef584fd (564): App.Statics gone; a member a program adds lands on the nearest thing that lives on
+  (`item.Kept`, placeholder name `kept` until Ingi names it); a variable's own value keeps it in its binding.
+- Known C# failures: 17 (`.bot/app-systems/coder/baseline-failures.txt`).
 
 ## After v22 (2026-10-02), each gated (the 18) and accepted by the architect
 - 14de729af: an unknown `.pr` property fails the run at `action.Instance()` ("goal.call has no property Wait;
