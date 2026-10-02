@@ -1,0 +1,3 @@
+/ %!channel% — the channels of its asker's actor
+Channel
+- return %!app.actor.current.channel%

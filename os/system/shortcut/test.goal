@@ -1,0 +1,3 @@
+/ %!test% — the test its asker is running
+Test
+- return %!app.test.current%

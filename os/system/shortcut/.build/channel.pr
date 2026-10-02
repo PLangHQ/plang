@@ -1,0 +1,66 @@
+{
+  "name": "Channel",
+  "comment": "%!channel% — the channels of its asker's actor",
+  "step": [
+    {
+      "index": 0,
+      "text": "return %!app.actor.current.channel%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "return",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.actor.current.channel%",
+              "variable": [
+                {
+                  "text": "%!app.actor.current.channel%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "actor"
+                    },
+                    {
+                      "property": "current"
+                    },
+                    {
+                      "property": "channel"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "depth",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/system/shortcut/channel.goal",
+  "prPath": "/system/shortcut/.build/channel.pr",
+  "hash": "21a0b9fca0043d55ff0baffd2f99dc02a799230b7a6c3f350e4f253b942fe200",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false
+}
