@@ -1,2 +1,0 @@
-User is giving values that should be mapped to:
-%list%
