@@ -50,7 +50,7 @@ public class UnpackTests : IDisposable
         global::app.module.archive.type.archive.kind.bundle.@this bundle = layer
             ? new global::app.module.archive.type.archive.kind.oci.layer.@this()
             : new global::app.module.archive.type.archive.kind.tar.@this();
-        return await bundle.Unpack(archive, new File(Path.Combine(_root, folder)), new global::app.type.item.size.@this(max, Context), Context);
+        return await bundle.Unpack(archive, null, new File(Path.Combine(_root, folder)), new global::app.type.item.size.@this(max, Context), Context);
     }
 
     [Test]
@@ -170,6 +170,19 @@ public class UnpackTests : IDisposable
         var mode = System.IO.File.GetUnixFileMode(Path.Combine(_root, "root/bin/su"));
         await Assert.That(mode.HasFlag(UnixFileMode.SetUser)).IsFalse();
         await Assert.That(mode.HasFlag(UnixFileMode.UserRead | UnixFileMode.UserWrite)).IsTrue();
+    }
+
+    // An entry named the folder itself — `..` or `a/..` — never lands: nothing is written over the folder, and nothing
+    // over the folder above it.
+    [Test]
+    public async Task AnEntryNamedTheFolderItself_NeverLands()
+    {
+        if (!OperatingSystem.IsLinux()) return;
+        System.IO.File.WriteAllText(Path.Combine(_root, "beside.txt"), "kept");
+        var archive = Tar(File_("a/x.txt", "x"), File_("..", "over the parent"), File_("a/..", "over the folder"));
+        await (await Into(archive, "root")).IsSuccess();
+        await Assert.That(System.IO.File.ReadAllText(Path.Combine(_root, "beside.txt"))).IsEqualTo("kept");
+        await Assert.That(System.IO.File.ReadAllText(Path.Combine(_root, "root/a/x.txt"))).IsEqualTo("x");
     }
 
     [Test]

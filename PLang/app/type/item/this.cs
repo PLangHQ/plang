@@ -707,6 +707,13 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         return context.Ok();
     }
 
+    /// <summary>What packing this value writes into <paramref name="into"/>, and what that holds — so unpacking gives
+    /// it back: a value packs as its Data whole, <paramref name="self"/>, in plang's own format (held: <c>data</c>); a
+    /// file answers its contents and its name. Ok, or why it can't be packed.</summary>
+    internal virtual async System.Threading.Tasks.Task<(global::app.data.@this result, string held, string? name)> Pack(
+        global::app.data.@this self, System.IO.Stream into, actor.context.@this context)
+        => (await context.App.type.list["wire"].kind["plang"]!.Encode(into, self, context, ct: context.CancellationToken), "data", null);
+
     /// <summary>
     /// Write this value into the format-neutral <see cref="global::app.type.format.IWriter"/>.
     /// A value writes WHAT it is through the writer's primitives (String, Number, Bytes, …);

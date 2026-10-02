@@ -57,26 +57,6 @@ public class FailureMatrixTests : System.IAsyncDisposable
         await Assert.That(back!.Properties.ContainsKey("unknown")).IsFalse();
     }
 
-    [Test] public async Task Decompress_OnNonArchivedType_ReturnsSelfNoError()
-    {
-        var d = new global::app.data.@this("x", "y", app.actor.list.User.Context.App.type.list[new global::app.type.@this("text", "plain"), app.actor.list.User.Context], context: app.actor.list.User.Context);
-        var result = d.Decompress();
-        await Assert.That(ReferenceEquals(d, result)).IsTrue();
-        await result.IsSuccess();
-    }
-
-    [Test] public async Task Decompress_OnArchiveWithCorruptBytes_ReturnsDataWithDecompressError()
-    {
-        // An archive whose bytes are not valid gzip — gunzip throws, surfaced as
-        // a clean DecompressError rather than an unhandled exception. (A Data that
-        // is not an archive at all is a no-op passthrough, not an error.)
-        var d = new global::app.data.@this("x",
-            new global::app.type.item.archive.@this(new byte[] { 1, 2, 3, 4 }, "gzip"));
-        var result = d.Decompress();
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
-    }
-
     [Test] public async Task CryptoHash_WithUnsupportedAlgorithm_ReturnsTheChoicesRefusal()
     {
         var crypto = new global::app.module.crypto.code.Default();

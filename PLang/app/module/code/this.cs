@@ -226,6 +226,7 @@ public sealed partial class @this : IAsyncDisposable
         RegisterBuiltIn<ICrypto>(new global::app.module.crypto.code.Default());
         RegisterBuiltIn<global::app.module.math.code.IMath>(new global::app.module.math.code.Default());
         RegisterBuiltIn<global::app.module.http.code.IHttp>(new global::app.module.http.code.Default());
+        RegisterBuiltIn<global::app.module.archive.code.IArchive>(new global::app.module.archive.code.Default());
         RegisterBuiltIn<global::app.module.condition.code.IEvaluator>(new global::app.module.condition.code.Default());
         RegisterBuiltIn<global::app.module.assert.code.IAssert>(new global::app.module.assert.code.Default());
         // global::app.module.file.code.IFile registration removed in Stage 3.

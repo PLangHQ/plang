@@ -1,4 +1,4 @@
-namespace app.module.archive.type.archive.kind.bundle.cap;
+namespace app.module.archive.type.archive.kind.cap;
 
 /// <summary>
 /// How much an unpack may still write: the most the whole unpack lands, counted as every file's content is read, so a

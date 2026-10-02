@@ -211,6 +211,17 @@ public sealed partial class @this
         }
     }
 
+    /// <summary>A file packs as its contents, read as they stream (gated as a read), holding <c>file</c> with its name; a
+    /// folder has no bytes of its own — a bundle packs it.</summary>
+    internal override async Task<(data.@this result, string held, string? name)> Pack(data.@this self, System.IO.Stream into,
+        actor.context.@this context)
+    {
+        if (context.FileSystem.IsFolder(this))
+            return (context.Error(new global::app.error.ServiceError(
+                $"{Raw} is a folder, and a folder has no bytes of its own: name a bundle — tar.gz, zip", "PackNeedsBundle", 400)), "file", null);
+        return (await Pour(into, context), "file", FileName);
+    }
+
     /// <summary>The file, to read as it streams — gated as a read; or why it can't be (not allowed, not there). The
     /// caller disposes the stream.</summary>
     internal async Task<(System.IO.Stream? stream, data.@this? refused)> Open(actor.context.@this context)

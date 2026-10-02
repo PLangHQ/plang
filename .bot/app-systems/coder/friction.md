@@ -32,6 +32,16 @@ One entry each: what, what it cost (evidence), the wish.
 - **Cost:** one failed build. The fix is to spell it unqualified, which is evading the check rather than honoring it.
 - **Wish:** PLNG002 looks only at members that touch the disk (File, Directory, FileInfo, Path.Combine…), not at exception types named in a catch.
 
+## Two closed sets with one plang name clash silently
+- **What:** I gave the archive's compression-level enum `[PlangType("level")]`. The debug module's `Level` enum already had that name. Nothing complained at load: `debug.setting.level = "action"` just stopped resolving, and a debug smoke test failed far from the cause.
+- **Cost:** a full gate plus a class rerun to trace it back to a name I had picked an hour earlier.
+- **Wish:** the type registry refuses a second type or closed set with a name already taken (as it already does for a MIME type or extension, TypeLoadCollision), naming both classes.
+
+## `--build={"files": "x.goal"}` refuses a single file
+- **What:** `plang '--build={"files":"serialization/CompressRoundTrip.test.goal"}'` fails with "cannot lower a String into list: the target owns no Clr projection for this shape". It needs `["…"]`.
+- **Cost:** one failed build, and the message speaks C# (Clr projection, lower door), not CLI.
+- **Wish:** a lone value given where a list is wanted is a list of one. Failing that, the error says "files is a list: --build={\"files\":[\"x.goal\"]}".
+
 ## 323 plang tests are "stale: no .pr" in every run
 - **What:** `plang --test` reports 323 of 380 as stale because they have never been built, and ends in `TestRunFailed`.
 - **Cost:** every gate ends red, so a real stale test (a goal changed but not rebuilt) is invisible among the 323.

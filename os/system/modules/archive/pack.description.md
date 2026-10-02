@@ -1,0 +1,1 @@
+Pack a value, a file or a folder into an archive; the value decides what is packed — a value as itself (unpacking gives it back), a file as its contents and name, a folder into a bundle (tar.gz, zip), whose format is named or comes from the To path's name

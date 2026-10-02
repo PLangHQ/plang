@@ -14,18 +14,17 @@ public sealed class @this : tar.@this
 
     public @this() : base("oci.layer") { }
 
+    /// <summary>A layer has no suffix of its own: it is named (<c>as oci.layer</c>).</summary>
+    public override string? Suffix => null;
+
     /// <summary>A layer is a tar, gzip-compressed when its first bytes say so.</summary>
     protected override System.IO.Stream Open(System.IO.Stream from)
     {
-        var magic = new byte[2];
-        var read = from.ReadAtLeast(magic, 2, throwOnEndOfStream: false);
-        var whole = new joined(new System.IO.MemoryStream(magic, 0, read), from);
-        return read == 2 && magic[0] == 0x1f && magic[1] == 0x8b
-            ? new GZipStream(whole, CompressionMode.Decompress)
-            : whole;
+        var start = new code.peeked(from);
+        return start.Start is [0x1f, 0x8b, ..] ? new GZipStream(start, CompressionMode.Decompress) : start;
     }
 
-    protected override async Task<global::app.data.@this> Land(bundle.entry.@this entry, File into, bundle.cap.@this cap,
+    protected override async Task<global::app.data.@this> Land(bundle.entry.@this entry, File into, cap.@this cap,
         global::app.actor.context.@this context)
     {
         if (!entry.Leaf.StartsWith(Whiteout, StringComparison.Ordinal)) return await base.Land(entry, into, cap, context);
@@ -40,33 +39,9 @@ public sealed class @this : tar.@this
                 if (child is File gone) await Clear(gone, context);
             return context.Ok();
         }
-        await Clear(new File(folder.Absolute.TrimEnd('/') + "/" + entry.Leaf[Whiteout.Length..]), context);
+        var (removed, unfollowed) = await Under(folder, entry.Leaf[Whiteout.Length..], context);
+        if (removed == null) return unfollowed ?? context.Ok();
+        await Clear(removed, context);
         return context.Ok();
-    }
-
-    // the bytes peeked at, then the rest of the stream
-    private sealed class joined(System.IO.Stream first, System.IO.Stream rest) : System.IO.Stream
-    {
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            var read = first.Read(buffer, offset, count);
-            return read > 0 ? read : rest.Read(buffer, offset, count);
-        }
-
-        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
-        {
-            var read = await first.ReadAsync(buffer, ct);
-            return read > 0 ? read : await rest.ReadAsync(buffer, ct);
-        }
-
-        public override bool CanRead => true;
-        public override bool CanSeek => false;
-        public override bool CanWrite => false;
-        public override long Length => throw new System.NotSupportedException();
-        public override long Position { get => throw new System.NotSupportedException(); set => throw new System.NotSupportedException(); }
-        public override void Flush() { }
-        public override long Seek(long offset, System.IO.SeekOrigin origin) => throw new System.NotSupportedException();
-        public override void SetLength(long value) => throw new System.NotSupportedException();
-        public override void Write(byte[] buffer, int offset, int count) => throw new System.NotSupportedException();
     }
 }

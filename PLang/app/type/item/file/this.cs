@@ -52,6 +52,11 @@ public sealed class @this : global::app.type.item.content.@this, global::app.typ
     public override System.Threading.Tasks.Task<bool> AsBooleanAsync(global::app.actor.context.@this context)
         => Path.AsBooleanAsync(context);
 
+    /// <summary>A file packs as its location does — its contents and its name.</summary>
+    internal override System.Threading.Tasks.Task<(global::app.data.@this result, string held, string? name)> Pack(
+        global::app.data.@this self, System.IO.Stream into, global::app.actor.context.@this context)
+        => Path.Pack(self, into, context);
+
     /// <summary>Stat byte-size — the file's `!size` (a <c>size</c>), as its asker may read it; never reads
     /// content.</summary>
     public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.size.@this>> Size(global::app.actor.context.@this context)
