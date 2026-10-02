@@ -910,6 +910,60 @@
       },
       "id": "b968a773-fcc7-4ced-9462-342a56c30d2c",
       "timestamp_end": "2026-10-02T00:09:51Z"
+    },
+    {
+      "id": "f3a7c1d2-9b4e-4a6f-8c21-5d0e7b2a1f33",
+      "bot": "builder",
+      "timestamp_start": "2026-10-02T04:05:00Z",
+      "timestamp_end": "2026-10-02T04:45:00Z",
+      "intent": "Diagnose issues 25(C4), 32a/b, 2(key); shape core fixes to architect; os/ rebuild table; delete stray .goal2",
+      "before": {
+        "assumptions": "Issue 25 C4 4/6 is Prefill-only-for-certain (pick is core); 32 is decider reading words inside variable paths; 2-with-key needs Option v2",
+        "risk": "Several items are core (pick/decider) so shape-and-hand not fix; stale binary could mislead measurements"
+      },
+      "plan": ".bot/app-systems/builder/v3/plan.md",
+      "actions": [
+        {
+          "paths": ["os/system/Build_dpricated.goal2"],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "stray v0.1 builder sketch with non-.goal extension; only .bot bookkeeping referenced it (item 5)"
+        },
+        {
+          "paths": ["PLang/app/goal/step/pick/list/this.cs", "PLang/app/goal/step/pick/listed/this.cs", "os/system/builder/llm/templates/properties.template"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Issue 25 C4: confirmed STATICALLY that a chosen option (Template=plang) is placed only by Call() <- Prefill() over Mark.Certain entries, so a listed-but-uncertain file.read never gets it. No trace needed (403 blocked builds anyway); the code path is unambiguous. Shape: add listed.Option (coder), render on => decider: line (builder)."
+        },
+        {
+          "paths": ["os/system/builder/llm/templates/decider1.template", "PLang/app/goal/step/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Issue 32: decider1.template renders s.Text raw, so a module name inside a variable path is read as a step word. No masked-text property on step. Direction (architect-flagged, not committed): core masked-text + template use; measure against a control. Needs the key."
+        },
+        {
+          "paths": ["PLang/app/goal/step/pick/list/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Issue 2 with key: Code() reads 'as %x%' (As regex) but no 'with key %k%' anywhere in pick/. Robust fix = Option-question v2 (decision 496, Ingi gate). Shape with architect before building."
+        },
+        {
+          "paths": [".bot/app-systems/builder/v3/result.md", ".bot/app-systems/builder/to-architect.md"],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Flagged the no-decider-key blocker and wrote the three diagnoses+shapes for the architect. Issues 25/32/2 core (pick/decider/step); issue 30 pass 2 blocked on the key."
+        }
+      ],
+      "after": {
+        "status": "Item 5 done (stray deleted). Issues 25/32/2 diagnosed statically and shaped for architect/coder; issue 30 pass 2 blocked. No code mapping measured.",
+        "health": "green (clean rebuild ok); builds non-runnable here (decider 403 - no TypeSafe key)",
+        "notes": "HARD BLOCKER: no TypeSafe decider key in this env, so no plang build can run. All diagnoses are static source reads (reliable for code-path questions). Shapes in v3/result.md + to-architect.md. Next session needs the key to measure."
+      }
     }
   ]
 }

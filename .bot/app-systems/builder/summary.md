@@ -1,84 +1,65 @@
 # builder — summary
 
 ## Version
-v2 (2026-10-02) — builder bug-fixing round (continuous, driven by architect's issue queue
-`.bot/app-systems/architect/builder-issues-2026-10-01.md` + cross-session reports). v1 was the
-docs/familiarization pass (see v1/plan.md).
+v3 (2026-10-02) — architect's `builder-next-session.md` queue. Continuation of the v2 bug-fixing
+round (issue queue `.bot/app-systems/architect/builder-issues-2026-10-01.md`). v1 = docs pass,
+v2 = the bulk of the bug fixes (see v2/).
 
 ## What this is
-The builder's role: other bots report mapping bugs (a natural-language step compiling to the wrong
-`.pr`); builder maps each to the PLang-written builder and fixes the builder's own source
-(`os/system/builder/**`, `os/system/modules/**` teaching, `PLang/app/module/build/**`) so a developer
-gets a correct mapping first try. Core (`goal/step/**`, `app/**`, `type/**`) → diagnose + hand to the
-coder via architect. Fixes are measured in fresh folders, cache off (a cache:false rebuild of an
-UNCHANGED goal now really rebuilds — see the cache fix below; before it, same-folder loops silently
-skipped).
+The builder owns `os/system/**` (goals, `.llm` prompts, templates, teaching under
+`os/system/modules/**`) and the module C# under `PLang/app/module/**`. Core (`goal/**`, `type/**`,
+`event`, `actor`) is the coder's, through the architect. Other bots report mapping bugs; builder
+diagnoses each against the PLang-written builder and either fixes the builder's own source or shapes
+a core fix for the architect/coder.
 
-## Landed this session (all pushed, accepted unless noted)
-- **Write-back** (cd4fdcc62 + 7a45c0ebb): destination-less `list.query` writes its answer back
-  (`build.Match`→`WriteBack`), + insert-position/parsed-variable follow-ups. Goldens + pins.
-- **cache:false fix** (414a1cfa3): `build.Goals` skips `MergePrData` when cache is off, so an unchanged
-  goal rebuilds in full — every measurement depends on this. Automated test still owed.
-- **Issue 21** (9b928dcd8 decider principle + 37d795cb6 golden): `if <file> exists` surfaces file.exists
-  (decider.state principle) and the coder's `[Question]`/`action.Place` leads it before the if.
-- **Issue 9** (5523eeb46 + pin 53e9e2022): a json/dict `body` post → http.request (not http.upload) —
-  disambiguated the request/upload descriptions; build-only C# pin `HttpBuildPinTests`.
-- **Issue 29** (c28f03b6e): `assert X contains Y` → Container=X, Value=Y (was swapped) — the mapping was
-  taught only in the description's 2nd paragraph, which never reaches the writer; moved to notes.
-- **Issue 28 partial** (910a7b8dd): hash Algorithm note. Full fix rides issue 25's Option question.
-- **Issues 1 & 31** (2829786ff): `call goal X`/`call the goal X` drops the keyword (it's the word "goal",
-  not the slash — slash paths resolve fine).
-- **Issue 25 rename→revert**: Variables rename (5ad2929a5) then superseded — Ingi chose `Template` as a
-  choice of template-kind + a decider stage-2 Option question (decisions 496/506). Shape handed to coder.
-- **Issue 30 cleanup**: deleted unused MapVariables + leftover Run.goal + /system/Build.goal; rebuilt the
-  reopened os/ .pr (AsDefault→Default) + tracked StartWindow.pr. os/ build now reaches SetupApp.
-- Removed a premature LoadVars golden (42410d4d4); .bot bookkeeping.
+## ⛔ Session blocker — no decider key (read this first)
+This environment has **no TypeSafe decider key** (`TYPESAFE_API_KEY`/`decider.apiKey` unset — not in
+env, not in `os/.db` or `test/.db`). The decider (`PLang/app/module/llm/code/TypeSafe.cs`,
+`api.typesafe.ai`) is the only `IDecider`, with no offline/mock path for `plang build`. So **every
+`plang build` 403s at `llm.decider`** and no mapping can be *measured* this session. Previous
+builder/educator sessions had the key provisioned.
+
+To measure: provision `TYPESAFE_API_KEY` in env, or `set %!decider.apiKey% = "…"` in the build
+folder's settings. Until then, items 1–4 of the queue are diagnose-and-shape only.
+
+## What was done (v3)
+Full detail: `v3/result.md`. Shapes relayed in `to-architect.md` (v3 section). All diagnoses are
+**static** (reading pick/decider source) — reliable for which-branch questions, but the counts that
+confirm a fix still need the key.
+
+- **Issue 5 (stray `.goal2`) — DONE.** `git rm os/system/Build_dpricated.goal2` (v0.1 builder
+  sketch, non-`.goal` ext, only `.bot` referenced it).
+- **Issue 25 reopened (C4 4/6) — diagnosis CONFIRMED, shape ready.** Root: in
+  `PLang/app/goal/step/pick/list/this.cs`, a chosen option (`Template=plang`) is placed into the
+  formal only by `Call()` (ll.356-364), called only from `Prefill()` over `Mark.Certain` entries
+  (l.299). `file.read` under Near (0.90) → `Possible` → `Call` never runs → `Template` never reaches
+  the writer. Confirms the architect's "Prefill fills a chosen option only for a certain action."
+  **Shape:** carry the option onto the `=> decider:` listed line — coder adds `listed.Option` +
+  populates `Listing()` (reuse `Call`'s option-gather, factored to one reader); builder renders it in
+  `properties.template` l.40 (prepared, lands with the C#). `prompt_c.py` twin + `PickListTests` move
+  in lockstep.
+- **Issue 32 (a/b) — root found (static).** `decider1.template` l.13 renders `s.Text` raw, so the
+  decider reads a module name *inside* a variable path (`%!app.module.condition%`) as a step word. No
+  masked step text exists. Shape (direction): core `step` masked-text property + templates use it;
+  measure against a control first. (b) also check goal.call's post-`2829786ff` path-name note.
+- **Issue 2 with key — static.** `pick/list/this.cs` `Code()` reads `as %x%` but there is **no
+  `with key %k%`** handling in `pick/`. Robust fix = Option-question **v2** (decision 496, Ingi's
+  gate; same lever as Conversation 26(1)). Shape with architect before building.
+- **Issue 30 pass 2 — BLOCKED** (needs real builds → 403).
+- **Item 6** (goal.call `Parallel`/task teaching) — gated on the coder's stages 1–2 of
+  `test/plan/task/`, not started.
 
 ## Key pattern (teach the writer, not the dev's goal)
-The Properties writer reads an action's **notes** (not examples, not a description's 2nd+ paragraph) and
-anchors on the decider's `=> formal:` starting line. Two recurring lessons:
-1. Teaching that must reach the writer goes in `*.notes.md` (tagged `say:`/`builder:`), never only in
-   examples or a description's later paragraphs.
-2. A param the writer must set from a trigger word it can **drop** (Algorithm's "with sha256", load-vars'
-   "load vars", Conversation's "%answer%") is unreliable by teaching alone (~1-3/5) — the fix is the
-   decider surfacing it into the starting line (issue 25's Option question), so the writer copies it.
+The Properties writer reads an action's **notes** and the decider's `=> decider:`/`=> formal:` lines.
+A param the writer must set from a droppable trigger word (load-vars→Template, `with key`→Key,
+"continue"→Conversation) is unreliable by teaching alone — the fix is the decider surfacing the
+value so the writer copies it. Issue 25's remaining gap: the surfaced value reaches the writer only
+when the action is *certain*; a listed-but-uncertain action needs it too (the v3 shape).
 
-## Blocked on the coder (I measure/finish after)
-- Issue 25 v1 Option question: core = template-kind type, `Kind.Option`, `pick/list` Questions/Take/
-  Prefill, reading the option's note `ask:` tag. Then I write decider2.template's `when "Option"` case +
-  the `ask:` lines + teaching. **Finalized shape:** always a choice over the kind's Values + "none";
-  Prefill enters the chosen value; Template first, then Algorithm (now `choice<hash>`, 82346436f).
-- Issue 26(1) Conversation: Option v2 for a non-choice option — offers = the step's own variables + none.
-- Issue 30: SetupApp `app.event` has no serializer Reader (`app/type/app.event/serializer/Reader.cs`);
-  then `set as developer` over-fill is mine.
-- Issue 24, 26(2) BeginArray: fixed by the coder (closed).
-
-## Blocked on Ingi
-- `Wait`→`Parallel` collapse (goal.call): `Parallel` already means "concurrent AND wait" (tool loop),
-  so folding "don't wait" in would make `call X in parallel, write to %r%` lose the result. Paused.
-
-## Closed since (later in v2)
-- **Issues 25 & 28** — the decider **Option question** (coder's core 26eef5568; mine: decider2.template's
-  `when "Option"` case + the `ask:` note lines on file.read Template & crypto.hash Algorithm). load-vars →
-  `Template=plang` 5/5, hash → `Algorithm=sha256` 5/5, guards clean. The lever teaching couldn't be.
-- **Issues 1 & 31** — `call goal X`/`call the goal X` drops the keyword (it's the word "goal", not the slash).
-- **on.event** — the event is `start`/`error`, never the fused `on.before`/`on.after`/`on.end` (the When).
-- **Condition/loop notes tagged** (decision 411); plang-d2 owns the page render + goldens.
-- **Leftovers deleted** (unused, unreferenced): MapVariables, Run.goal, /system/Build.goal, AskSystem.
-
-## The os/ build tail — HANDED TO A FRESH SESSION
-`plang build` from os/ no longer dies early (llm regression, formal reader, SetupApp all fixed), but each
-reopened hand-authored system goal surfaces its own step the builder can't cleanly rebuild. Architect's
-two-pass plan (note: 819f239c6 moved **no** goals — it changed only C#/tests, the four goal flags now
-derive from the goal's path, and the `.pr` dropped IsSetup/IsSystem/IsTest/IsEvent; AskSystem was already
-under `os/system/events/`):
-1. **Sweep** every `os/**/*.goal` for who references it (C#/.goal/template/.llm/doc/`call`-by-name); send
-   architect the unreferenced list → delete in one commit.
-2. **Rebuild each remaining reopened goal** individually (`--build={"files":[…],"cache":false}`), don't stop
-   at the first failure; one table: goal, built/not, refusal, class — **leftover** (delete), **writer
-   mis-map** (builder's teaching fix), **missing action param/core** (coder, e.g. output.ask has no Actor),
-   **write in formal**. Architect routes from the table; builder does the writer-mis-map rows.
-
-## Blocked on Ingi
-- `Wait`→`Parallel` collapse (goal.call): `Parallel` already means "concurrent AND wait" (llm tool loop),
-  so folding "don't wait" in would make `call X in parallel, write to %r%` lose the result. Paused for Ingi.
+## Next session (in order)
+1. **Get the decider key** — otherwise 1–4 stay diagnose-only.
+2. Issue 25: once the coder lands `listed.Option`, apply the `properties.template` render and measure
+   C4 `c4-1`/`c4-2` (target `Template=plang` 6/6; guard a plain read stays Template-free).
+3. Issue 32/2: shape with architect (core masked-text / Option v2), then build+measure.
+4. Issue 30 pass 2: the per-goal rebuild table.
+5. Item 6 after the coder's task stages.
