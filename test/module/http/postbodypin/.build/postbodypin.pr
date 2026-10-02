@@ -1,0 +1,297 @@
+{
+  "name": "Start",
+  "comment": "Build-only pin (never run — it would hit the network). A json/dict body post builds http.request with\na Body; sending a file builds http.upload. HttpBuildPinTests (C#) asserts this committed .pr so a later\nrebuild that drifts post-with-body back to http.upload goes red.",
+  "step": [
+    {
+      "index": 0,
+      "text": "post 'https://api.example.com/speech', headers Authorization: \"Bearer %key%\", body {\"model\": \"tts\", \"input\": \"hi\"}, write to %audio%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "http",
+          "name": "request",
+          "property": [
+            {
+              "name": "Url",
+              "type": {
+                "name": "text"
+              },
+              "value": "https://api.example.com/speech"
+            },
+            {
+              "name": "Method",
+              "type": {
+                "name": "choice",
+                "kind": "httpmethod"
+              },
+              "value": "POST"
+            },
+            {
+              "name": "Header",
+              "type": {
+                "name": "dict",
+                "template": "plang"
+              },
+              "value": {"Authorization":"Bearer %key%"},
+              "variable": [
+                {
+                  "text": "%key%",
+                  "code": [
+                    {
+                      "variable": "key"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Body",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"model":"tts","input":"hi"}
+            }
+          ],
+          "default": [
+            {
+              "name": "content",
+              "type": {
+                "name": "entity"
+              },
+              "value": {
+                "mime": "application/json",
+                "encoding": "utf-8"
+              }
+            },
+            {
+              "name": "timeout",
+              "type": {
+                "name": "duration"
+              },
+              "value": "30s"
+            },
+            {
+              "name": "unsigned",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "redirect",
+              "type": {
+                "name": "redirect"
+              },
+              "value": {
+                "follow": true,
+                "max": 10
+              }
+            },
+            {
+              "name": "maxresponsesize",
+              "type": {
+                "name": "number"
+              },
+              "value": 104857600
+            },
+            {
+              "name": "maxssebuffersize",
+              "type": {
+                "name": "number"
+              },
+              "value": 10485760
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%audio%",
+              "variable": [
+                {
+                  "text": "%audio%",
+                  "code": [
+                    {
+                      "variable": "audio"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "upload 'photo.png' to 'https://api.example.com/images', write to %result%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "http",
+          "name": "upload",
+          "property": [
+            {
+              "name": "Url",
+              "type": {
+                "name": "text"
+              },
+              "value": "https://api.example.com/images"
+            },
+            {
+              "name": "Content",
+              "type": {
+                "name": "text"
+              },
+              "value": "photo.png"
+            }
+          ],
+          "default": [
+            {
+              "name": "method",
+              "type": {
+                "name": "choice",
+                "kind": "httpmethod"
+              },
+              "value": "POST"
+            },
+            {
+              "name": "encoding",
+              "type": {
+                "name": "text"
+              },
+              "value": "utf-8"
+            },
+            {
+              "name": "timeout",
+              "type": {
+                "name": "duration"
+              },
+              "value": "30s"
+            },
+            {
+              "name": "unsigned",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "redirect",
+              "type": {
+                "name": "redirect"
+              },
+              "value": {
+                "follow": true,
+                "max": 10
+              }
+            },
+            {
+              "name": "maxresponsesize",
+              "type": {
+                "name": "number"
+              },
+              "value": 104857600
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/http/postbodypin/PostBodyPin.goal",
+  "prPath": "/module/http/postbodypin/.build/postbodypin.pr",
+  "hash": "f0e9dc65f07ec9b6c85c997fcb474b5c15dbfec4d94679a9c743e81ca9bedd70",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}
