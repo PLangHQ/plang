@@ -144,9 +144,19 @@ public class @this
     /// closed set); any other kind answers none, and its type's own apply.</summary>
     public virtual System.Collections.Generic.IReadOnlyList<string>? Values => null;
 
+    /// <summary>An example of a value of this kind, when the kind shows one of its own (a list of records shows one of
+    /// its element); null: the type's own.</summary>
+    public virtual string? Example => null;
+
+    /// <summary>What a value of this kind is, when the kind says it itself (a list of records names its element); null:
+    /// the type's own.</summary>
+    public virtual string? Description => null;
+
     /// <summary>What a value of this kind can be in <paramref name="step"/>, as the decider is offered it: one of the
-    /// step's own variables, by the placeholder it reads it as (<c>%v1%</c>). A closed set offers its options.</summary>
-    public virtual System.Collections.Generic.IReadOnlyList<string> Offers(global::app.goal.step.@this step) => step.Mask.Placeholder;
+    /// step's own variables (<c>%field%</c>), each once. A closed set offers its options.</summary>
+    public virtual System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
+        => new(new global::app.type.item.variable.parser.@this(step.Text).Variable
+            .DistinctBy(v => v.Text).Cast<global::app.type.item.@this>().ToList());
 
     /// <summary>Whether a value of C# class <paramref name="clr"/> rides as this kind — its
     /// <see cref="ClrForm"/> takes it.</summary>

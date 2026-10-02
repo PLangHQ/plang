@@ -45,8 +45,8 @@ public class QueryConversationTests
     {
         var message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = user } }.ToListData<LlmMessage>(Ctx);
         var action = continues == null
-            ? new query(Ctx) { Message = message, Schema = schema, Cache = (global::app.type.item.@bool.@this)cache }
-            : new query(Ctx) { Message = message, Schema = schema, Cache = (global::app.type.item.@bool.@this)cache,
+            ? new query(Ctx) { Message = message, Schema = schema, Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(cache ? global::app.module.cache.type.cache.use : global::app.module.cache.type.cache.skip) }
+            : new query(Ctx) { Message = message, Schema = schema, Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(cache ? global::app.module.cache.type.cache.use : global::app.module.cache.type.cache.skip),
                 Conversation = new global::app.module.llm.type.conversation.@this(continues) };
         await action.Attach(null, Ctx);
         return await action.Start();
@@ -158,12 +158,12 @@ public class QueryConversationTests
     public async Task Step_ContinueNamesTheResponseVariable()
     {
         Answers("answer");
-        await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"remember 7\"}], Cache=false)").Start(Ctx);
+        await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"remember 7\"}], Cache=skip)").Start(Ctx);
         await (await Ctx.Action("variable.set(Name=%answer%, Value=%!data%)").Start(Ctx)).IsSuccess();
         var answer = await Ctx.Variable.Get("answer");
         await Assert.That(answer.Properties.Contains("Messages")).IsTrue();
 
-        var next = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"what was it\"}], Cache=false, Conversation={continue: %answer%})").Start(Ctx);
+        var next = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"what was it\"}], Cache=skip, Conversation={continue: %answer%})").Start(Ctx);
         await next.IsSuccess();
         var continued = await _handler.LastRequest!.Content!.ReadAsStringAsync();
         await Assert.That(continued).Contains("remember 7");
@@ -175,10 +175,10 @@ public class QueryConversationTests
     public async Task Step_ConversationIsTheResponseItself()
     {
         Answers("answer");
-        await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"remember 7\"}], Cache=false)").Start(Ctx);
+        await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"remember 7\"}], Cache=skip)").Start(Ctx);
         await (await Ctx.Action("variable.set(Name=%answer%, Value=%!data%)").Start(Ctx)).IsSuccess();
 
-        var next = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"what was it\"}], Cache=false, Conversation=%answer%)").Start(Ctx);
+        var next = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"what was it\"}], Cache=skip, Conversation=%answer%)").Start(Ctx);
 
         await next.IsSuccess();
         await Assert.That(await _handler.LastRequest!.Content!.ReadAsStringAsync()).Contains("remember 7");
@@ -191,10 +191,45 @@ public class QueryConversationTests
         Answers("answer");
         await Ctx.Variable.Set("greeting", "hello");
 
-        var read = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"x\"}], Cache=false, Conversation=%greeting%)").Start(Ctx);
+        var read = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"x\"}], Cache=skip, Conversation=%greeting%)").Start(Ctx);
 
         await Assert.That(read.Success).IsFalse();
         await Assert.That(read.Error!.Message).Contains("a conversation continues an llm answer; %greeting% isn't one");
+    }
+
+    // the key a query is sent with is the llm module's setting: this run's value wins over the environment's default
+    [Test]
+    public async Task Query_SendsTheSettingsKey()
+    {
+        Answers("answer");
+        await Ctx.Setting.Set("llm.setting.key", Ctx.Ok("sk-from-the-setting"));
+
+        await Ask("hello");
+
+        await Assert.That(_handler.LastRequest!.Headers.Authorization?.ToString()).IsEqualTo("Bearer sk-from-the-setting");
+    }
+
+    // with nothing saved, the key is the environment's; and it never shows where a setting is written out
+    [Test]
+    public async Task TheKey_DefaultsToTheEnvironment_AndNeverShows()
+    {
+        var llm = new global::app.module.llm.setting.@this();
+        await Assert.That(llm.Key.ToString()).IsEqualTo(System.Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? "");
+
+        llm.Key = "sk-never-shown";
+        var written = await Ctx.Pr(llm, global::app.View.Out);
+        await Assert.That(written).DoesNotContain("sk-never-shown");
+    }
+
+    // a setting's options are described where anyone reads them (the builder's prompt, a type's face): a sensitive
+    // option shows no default — the environment's key would be its default
+    [Test]
+    public async Task ASensitiveOption_IsDescribedWithNoDefault()
+    {
+        var options = ((global::app.type.item.setting.kind.@this)_app.type.list["setting"].kind["llm.setting"]!).Property;
+
+        await Assert.That(options["key"]!.HasDefault).IsFalse();
+        await Assert.That(options["endpoint"]!.HasDefault).IsTrue();
     }
 
     // continue takes a response, never a yes: a bare true names no conversation.
@@ -202,7 +237,7 @@ public class QueryConversationTests
     public async Task Step_ContinueTrue_IsRefused()
     {
         Answers("answer");
-        var read = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"x\"}], Cache=false, Conversation={continue: true})").Start(Ctx);
+        var read = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"x\"}], Cache=skip, Conversation={continue: true})").Start(Ctx);
         await Assert.That(read.Success).IsFalse();
         await Assert.That(read.Error!.Message).Contains("continue which conversation");
     }

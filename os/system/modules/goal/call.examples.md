@@ -12,6 +12,9 @@ Properties: `{"Name": "/system/builder/EmitBuildEvent", "Parameter": [{"name": "
 Step text: `call goal Render source=%!a.b.c%`
 Properties: `{"Name": "Render", "Parameter": [{"name": "source", "value": "%!a.b.c%"}]}` — the name is the token right after `call goal`; `source=%!a.b.c%` is an argument even though its value is a dotted variable — the variable never becomes the Name.
 
+Step text: `call goal Render module=%!a.b.c%`
+Properties: `{"Name": "Render", "Parameter": [{"name": "module", "value": "%!a.b.c%"}]}` — the word before `=` is the argument's name and is kept even when it is a plang word (`module`, `file`, `goal`); never a bare `Parameter` value with no name, never dropped.
+
 Step text: `if %total% > 5, call MarkBig`
 Properties: `{"Name": "MarkBig"}` — the condition is its own action; this one is only the call.
 

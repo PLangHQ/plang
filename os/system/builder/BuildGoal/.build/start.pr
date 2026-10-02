@@ -119,13 +119,6 @@
                 "name": "bool"
               },
               "value": false
-            },
-            {
-              "name": "wait",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
             }
           ]
         }
@@ -133,7 +126,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 1 uses goal.call, which the decider was not sure of (0.79)"
+          "message": "step 1 uses goal.call, which the decider was not sure of (0.85)"
         }
       ]
     },
@@ -266,6 +259,13 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "dict"
             }
           ],
           "default": [
@@ -306,13 +306,6 @@
                 "name": "bool"
               },
               "value": false
-            },
-            {
-              "name": "wait",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
             }
           ]
         },
@@ -346,13 +339,6 @@
                         "name": "bool"
                       },
                       "value": false
-                    },
-                    {
-                      "name": "wait",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": true
                     }
                   ]
                 }
@@ -509,13 +495,6 @@
                 "name": "bool"
               },
               "value": false
-            },
-            {
-              "name": "wait",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
             }
           ]
         }
@@ -1061,13 +1040,6 @@
                         "name": "bool"
                       },
                       "value": false
-                    },
-                    {
-                      "name": "wait",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": true
                     }
                   ]
                 }
@@ -1312,13 +1284,6 @@
                     "name": "bool"
                   },
                   "value": false
-                },
-                {
-                  "name": "wait",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": true
                 }
               ]
             }
@@ -1350,13 +1315,6 @@
                     "name": "bool"
                   },
                   "value": false
-                },
-                {
-                  "name": "wait",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": true
                 }
               ]
             }
@@ -1448,13 +1406,6 @@
                             "name": "bool"
                           },
                           "value": false
-                        },
-                        {
-                          "name": "wait",
-                          "type": {
-                            "name": "bool"
-                          },
-                          "value": true
                         }
                       ]
                     }
@@ -1508,13 +1459,6 @@
                             "name": "bool"
                           },
                           "value": false
-                        },
-                        {
-                          "name": "wait",
-                          "type": {
-                            "name": "bool"
-                          },
-                          "value": true
                         }
                       ]
                     }
@@ -1561,13 +1505,6 @@
                             "name": "bool"
                           },
                           "value": false
-                        },
-                        {
-                          "name": "wait",
-                          "type": {
-                            "name": "bool"
-                          },
-                          "value": true
                         }
                       ]
                     }
@@ -1630,13 +1567,6 @@
                     "name": "bool"
                   },
                   "value": false
-                },
-                {
-                  "name": "wait",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": true
                 }
               ]
             }
@@ -1758,7 +1688,8 @@
                 {
                   "name": "Cache",
                   "type": {
-                    "name": "bool",
+                    "name": "choice",
+                    "kind": "cache",
                     "template": "plang"
                   },
                   "value": "%!build.setting.cache%",
@@ -1957,13 +1888,6 @@
                             "name": "bool"
                           },
                           "value": false
-                        },
-                        {
-                          "name": "wait",
-                          "type": {
-                            "name": "bool"
-                          },
-                          "value": true
                         }
                       ]
                     }
@@ -2484,21 +2408,8 @@
                     "name": "bool"
                   },
                   "value": false
-                },
-                {
-                  "name": "wait",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": true
                 }
               ]
-            }
-          ],
-          "warning": [
-            {
-              "key": "Unsure",
-              "message": "step 1 uses goal.call, which the decider was not sure of (0.83)"
             }
           ]
         },
@@ -2590,13 +2501,6 @@
                     "name": "bool"
                   },
                   "value": false
-                },
-                {
-                  "name": "wait",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": true
                 }
               ]
             },
@@ -2630,13 +2534,6 @@
                             "name": "bool"
                           },
                           "value": false
-                        },
-                        {
-                          "name": "wait",
-                          "type": {
-                            "name": "bool"
-                          },
-                          "value": true
                         }
                       ]
                     }
@@ -2936,6 +2833,13 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Type",
+                  "type": {
+                    "name": "type"
+                  },
+                  "value": "number"
                 }
               ],
               "default": [
@@ -2983,21 +2887,8 @@
                     "name": "bool"
                   },
                   "value": false
-                },
-                {
-                  "name": "wait",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": true
                 }
               ]
-            }
-          ],
-          "warning": [
-            {
-              "key": "Unsure",
-              "message": "step 7 uses goal.call, which the decider was not sure of (0.89)"
             }
           ]
         }
@@ -3213,7 +3104,8 @@
                 {
                   "name": "Cache",
                   "type": {
-                    "name": "bool",
+                    "name": "choice",
+                    "kind": "cache",
                     "template": "plang"
                   },
                   "value": "%!build.setting.cache%",
@@ -3426,13 +3318,6 @@
                     "name": "bool"
                   },
                   "value": false
-                },
-                {
-                  "name": "wait",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": true
                 }
               ]
             }

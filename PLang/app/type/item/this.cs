@@ -311,8 +311,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         => new(this);
 
     /// <summary>This value as named rows — each a Data under its name: a list its rows (a goal call's written
-    /// parameters), a dict its entries (parameters given as one value at run). A single value has none.</summary>
-    public virtual System.Collections.Generic.IEnumerable<global::app.data.@this> Rows(global::app.actor.context.@this context) => [];
+    /// parameters), a dict its entries (parameters given as one value at run); either may hold none. A single value is
+    /// no rows at all: null.</summary>
+    public virtual System.Collections.Generic.IEnumerable<global::app.data.@this>? Rows(global::app.actor.context.@this context) => null;
 
     /// <summary>
     /// Whether the holding <c>Data</c> may keep (rebind to) <see cref="Value"/>'s
@@ -693,6 +694,18 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// null is a real instance, so <c>!= null</c> wrongly reads it as present.
     /// </summary>
     public virtual bool IsNull => false;
+
+    /// <summary>This value's own bytes, poured into <paramref name="into"/> as they come — what a digest of the value
+    /// takes, so it matches any other tool's: a value's json text in its own key order (a dict's entries as they were
+    /// added); a text, binary or file answers its own. Ok, or why the bytes could not be had (a file the actor may not
+    /// read).</summary>
+    public virtual async System.Threading.Tasks.Task<global::app.data.@this> Pour(System.IO.Stream into, actor.context.@this context)
+    {
+        await using (var utf8 = new System.Text.Json.Utf8JsonWriter(into))
+            await Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, emitsSchema: false),
+                global::app.View.Out, context);
+        return context.Ok();
+    }
 
     /// <summary>
     /// Write this value into the format-neutral <see cref="global::app.type.format.IWriter"/>.

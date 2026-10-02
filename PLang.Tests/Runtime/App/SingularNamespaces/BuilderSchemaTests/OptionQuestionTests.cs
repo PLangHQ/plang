@@ -2,7 +2,8 @@ namespace PLang.Tests.App.SingularNamespaces.BuilderSchemaTests;
 
 /// <summary>
 /// An option whose notes line asks (<c>· ask:</c>) is asked of the decider beside the step's actions — a choice over
-/// its own values and "none" — and a chosen value enters the starting line (<c>file.read(Path, Template=plang)</c>)
+/// its own values and "none" — and a chosen value enters the starting line as it writes itself
+/// (<c>file.read(Path, Template="plang")</c>)
 /// when its action is certain.
 /// </summary>
 public class OptionQuestionTests : System.IAsyncDisposable
@@ -60,7 +61,7 @@ public class OptionQuestionTests : System.IAsyncDisposable
 
     [Test]
     public async Task AChosenValue_EntersTheStartingLine()
-        => await Assert.That((await Pick(0.99, "plang")).Formal).Contains("file.read(Path, Template=plang)");
+        => await Assert.That((await Pick(0.99, "plang")).Formal).Contains("file.read(Path, Template=\"plang\")");
 
     [Test]
     public async Task None_LeavesTheOptionOut()
@@ -79,6 +80,31 @@ public class OptionQuestionTests : System.IAsyncDisposable
         await goal.Step[0].Pick.Take(Make.Dict(first, Ctx), [], Ctx);
 
         await Assert.That(goal.Step[0].Pick.Question.Select(q => q.Id)).Contains("s0_@option.file.read.Template");
+    }
+
+    // an option the decider says the step gives, chosen and left out of the code, refuses it — as a certain action left
+    // out does; written, it agrees
+    [Test]
+    [Arguments("text.md", "Template", "plang", "file.read(Path=\"n.txt\")", true)]
+    [Arguments("text.md", "Template", "plang", "file.read(Path=\"n.txt\", Template=plang)", false)]
+    [Arguments("hash", "Algorithm", "sha256", "crypto.hash(Data=\"x\")", true)]
+    [Arguments("hash", "Algorithm", "keccak256", "crypto.hash(Data=\"x\")", false)]
+    public async Task AChosenOptionLeftOut_IsRefused(string _, string option, string chosen, string code, bool refused)
+    {
+        var action = option == "Template" ? "file.read" : "crypto.hash";
+        var goal = Make.Goal(_app.actor.list.User.Context, "G", Make.Step("do it"));
+        var step = goal.Step[0];
+        await step.Pick.Take(Make.Dict(new Dictionary<string, object?>
+        {
+            [$"s0_{action}"] = new Dictionary<string, object?> { ["type"] = "noul", ["noul"] = 0.99 },
+            [$"s0_@option.{action}.{option}"] = new Dictionary<string, object?> { ["choice"] = chosen, ["confidence"] = 0.9 },
+        }, Ctx), [], Ctx);
+        var read = new global::app.goal.step.action.formal.Reader(step, _app.module.list).Read(code, Ctx);
+        await read.IsSuccess();
+
+        var (refusals, _) = step.Pick.Agree((global::app.goal.step.action.list.@this)read.Peek()!);
+
+        await Assert.That(refusals.Any(r => r.Contains($"leaves out {option}"))).IsEqualTo(refused);
     }
 
     // an action the decider isn't certain of starts no line: its option's answer is unused

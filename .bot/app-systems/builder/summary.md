@@ -107,7 +107,32 @@ Landed (d08a129df): four LLM-facing templates read `s.Mask.Text`; `properties.te
 renders `listed.Option`; `ask:` lines on loop.foreach Item/Key + llm.query Conversation; `pick_golden`
 re-pinned; Wire 487 pass / 9 baseline. Measurements (fresh, cache off, 5 each; table in `v3/result.md`,
 commit 2f73f5479): **issue 2 Item+Key 5/5 FIXED, named continue 5/5 FIXED, plain-foreach/plain-read
-guards hold.** ### Edges resolved by the architect (core → coder batch; my ask: lines + re-measure follow)
+guards hold.** ### DIRECTION CHANGE (Ingi, 2026-10-02): masking is a hack — REMOVED
+Ingi ruled `step.Mask` out. The coder removes `step.Mask` + the restore (core); **I revert the four
+templates from `s.Mask.Text` back to `s.Text`, in a commit paired with the coder's hash.** The `ask:`
+lines (Option v2), `listed.Option` render, and the goal.call note all STAY (not masking).
+**New lever — teach what `%!…%` is (FINAL wording, architect-approved).** Put BOTH sentences, once, in
+`decider.state.template` (shared state) and on `Properties.llm`'s variable line:
+> `%name%` is a variable — a value the step uses, never words of the step. `%!…%` reads a value from
+> the app itself: `%!app.module.file%` is the file module as a value, `%!llm.setting.cache%` is the llm
+> setting's cache option, `%!data%` is the result of the action before it. The words inside `%…%` are
+> its name, never what the step does.
+> In `call X name=value`, `name` is what the called goal reads the value as (`%name%`), even when it's
+> a plang word such as `module`, `file` or `goal`; it is never a module or action of the step.
+
+Then re-pin, Wire, and measure fresh, cache off, 5 each: **set A** (educator's exact `modules-nocomment`
+goal, `module=`) **and set C** (`m=`) — to see if the teaching closes the 0/5 vs 4/5 gap — plus 32a
+(condition step), control (`save %!llm.setting.cache%`), issue 2 (key), named continue, guards. One table.
+**Pending the coder's Mask-removal hash** (template revert `s.Mask.Text`→`s.Text` + this teaching land
+together in one commit paired with that hash).
+
+**32(b) note-lever CORRECTED:** my earlier "4/5" did not reproduce — on the educator's exact goal it is
+**0/5** (`module=`), matching their 0/8; a clean guards-goal run is 2/5; and `m=` instead of `module=`
+is 4/5 — so the parameter *name* `module` (a plang concept echoing `app.module.file`) is the aggravator,
+not something the note fixes. The goal-name offers (now folded into the no-masking plan via the `%!…%`
+teaching + the `goal` type) are the real fix. Full table in `v3/result.md`.
+
+### Edges resolved by the architect (core → coder batch; my ask: lines + re-measure follow) [SUPERSEDED by the no-masking direction above for the mask parts; ask: lines + offers still stand]
 1. **Control regression →** do NOT exempt `%!…%` paths (that revives 32a). Instead **the mask carries
    each variable's type** where the build knows it: `save %v1% (setting)`, `call goal Page module=%v1%
    (module)` — same annotation `write to` already gets (`%x% (hash)`). The type is the honest signal,
@@ -130,7 +155,101 @@ masks to `save %v1%`, loses the `setting` signal → file.save mis-map, 0/5 (mas
 (no ask:, offers would be type-names not placeholders); (d) bare-continue guard flaky 2/5. Awaiting the
 architect's calls on these.
 
-## Status 2026-10-02 (end) — idle, waiting on the coder's one pick pass
+## Status (latest) — masking removed, %!…% teaching landed; 32a + control fixed
+Masking removed (Ingi; coder 8a4ef5fc7, templates reverted to `s.Text`). My `%!…%` teaching landed
+(47a568651) in `decider.state.template` + `Properties.llm`; re-pinned pick_golden; Wire 489/9 baseline.
+Measured (fresh, cache off, 5 each; direct `.pr` inspection):
+- **32(a) FIXED** — no condition.compare junk from `%!app.module.<m>%` (0/5).
+- **control FIXED** — `save %!llm.setting.cache%` → setting.save 1.00 (was file.save under masking);
+  residual refusal = the separate issue-17 class.
+- **32(b) unchanged** — writer still picks the variable as goal `Name`; fix = the coder's goal-name
+  offers (`goal` type `Offers(step)`, queued). Teaching = decider half; offers = writer half.
+- issue 2 (Item+Key), named continue (Conversation), 3 guards all hold.
+**Issue 34 shape** refined (generic Agree rule over all options; type answers how its offer enters the
+line — no Kind.Presence/marker, no Call fork) → coder after the offers batch; my `ask:` line + teaching
+land when the terminal module reaches app-systems.
+**Issue 35:** not path normalization (path type preserves `//`); writer dropped the slash — architect
+asked the os bot for the raw `.pr` `Program`.
+**CLOSED this session:** 32(a) + control (decision 542, gate 94); **32(b) + 33** (offers d2aa1358d +
+my `ask:` lines on goal.call Name / variable.set Type, b55b64358 — Name="Page" 4/5, Type="path" 5/5);
+AsPathIsABirth `.pr` committed with the `event` slot (1e90307be — the wire-contract error no longer
+reproduces on current core; verified Pass).
+Idle pending:
+- **Issue 34 (type-Example, architect-refined to core → coder):** `list<permission>` answers its own
+  Example (from its element's), template unchanged. My part when it lands: measure a `list<T>` slot on
+  app-systems whose element has an Example (find one / name the gap) + a `list<text>` guard.
+- **Issue 34 (5-build) + 35 (10-build) measurements BLOCKED** — terminal module not on app-systems
+  (`start //bin/sh …` / `list<permission>` unbuildable here). Run on plang-os-stable or once merged.
+- **Coder follow-up incoming:** offers become items via `formal.Writer` — re-run the 32(b) guard after.
+  (DONE 94d8ed814: nothing dropped, all 5 hold.)
+- Terminal module → the 34 `ask:` line + teaching (shape ready).
+- decider-key storage scope — Ingi.
+
+### Issues logged 2026-10-02 (architect) + my re-measure triggers
+- **36 — FIXED** (coder 220b07145/ae2bc8549; measured 5a586e25a): `foreach %x%, call Y y=%item%` →
+  no `Key=%item%` 5/5; guards hold (`as %i%` → Item,no Key; `with key %field%` → Item+Key), 5/5 each.
+- **37 — cast FIXED** (coder 6c136ec1a): no more `InvalidCastException: lower app.module into list`.
+  32(b) edu now 9/10 `Name="Page"`.
+- **39 — FIXED** (coder's refusal reword `ceb9899cb`, gate 105): jq-verified **10/10** RIGHT on the
+  educator's goal (`Name="Page"`×3 + `Parameter={module: %!app.module.file%}`×3), 0 NO-PR — the reword
+  ("write each argument as the step names it, `{<the name before =>: …}`") closed the bare-value slip
+  (was 7/10 right / 3/10 NO-PR). History below kept for the record (incl. my retracted grep-artifact
+  reads).
+- **39 (original diagnosis trail) — CORRECTED:** NOT a FixSteps set failure. The set
+  succeeds and the retry `llm.query` runs; the retry's re-answer is `goal.call(Name="Page",
+  Parameter=%!app.module.file%)` — the writer writes the Parameter as a **bare nameless value** (drops
+  the arg name `module`), both initially and on retry, and does NOT copy the placeholder `name`. So
+  build.match refuses again → NO PR. Fix (architect/coder): the refusal should name the step's own arg
+  (`{module: …}`) not the placeholder `name`; and/or teach that a plang-word arg name is still a name.
+  Same plang-word pull as 32(b), on the Parameter side.
+  - **Teaching lever TRIED, FAILED (1cb12dd3f):** extended call.notes Parameter + a call.examples entry
+    (arg name kept even when a plang word). Before/after, 10 edu builds each: module arg kept **0/3 both
+    before and after**; plain-arg guard (`item`) kept 5/5. Teaching isn't the lever — the **coder's
+    refusal reword** (± offers→Parameter arg) is. Teaching kept (accurate, may compose). Also surfaced:
+    32(b)'s earlier "9/10 saved" were **silently dropping the module arg** (SAVED, 0 module-args) — worse
+    than the loud refusal. Re-measure after the reword lands.
+  - **RETRACTED + CORRECTED (jq):** the "module arg dropped 0/3" was a **grep whitespace artifact**
+    (inner Parameter rows are compact JSON `"name":"module"`; my grep required a space). Writer raw
+    answer is `goal.call(Name="Page", Parameter={module: %!app.module.file%})` and the `.pr` stores it
+    correctly. True rate: **7/10 fully right, 3/10 NO PR** (intermittent writer slip to a bare nameless
+    `Parameter=%!app.module.file%` → the named-rows refusal; FixSteps retry sometimes slips too). So
+    neither writer-rename nor reader-key-change — the only defect is the ~3/10 bare-value slip.
+  - **Measurement rule (architect, now logged):** every count from a **JSON parser (jq)** over the
+    `.pr`, never a text grep; a surprising/contradicted count is checked against one raw `.pr` + one raw
+    LLM answer before reporting. [[feedback_verify_pr_raw_not_grep]]
+  - **Next (GATED on gate 105 — do NOT build before the architect's go):** rebuild binary from head
+    (carries `ceb9899cb` — refusal reworded to "write each argument as the step names it,
+    {<the name before =>: …}"); measure edu 10 builds fresh/cache off **with jq**: fully right, no `.pr`,
+    and for each no-`.pr` build whether the retry repeated the bare value.
+  - **Coming:** coder's side branch `app-systems-choices`; architect will send steps to rebuild test.pr there.
+  - **⚠️ Lesson (twice now):** the DEBUG `[BEFORE]`/watch `%x% = (undefined)` listing is UNRELIABLE
+    (debug/this.cs:344,351 — it fooled me on cache:false AND here). **Never conclude a variable is
+    undefined from the debug listing — check the step's DEBUG [AFTER] / the actual effect first.** My
+    first issue-39 read ("set fails, retry never runs") was wrong because of this; corrected after
+    reading the AFTER state (fixMessages populated, retry ran). [[feedback_use_debug_not_csharp]]
+- **38** (1/5 `hash the file 'x.bin'` hashes the name's letters): waits on Ingi (hashing a path's content).
+- **34 type-Example** (element-kind change): coder's. When it lands → measure a `list<T>` slot on
+  app-systems whose element has an Example (+ `list<text>` guard).
+- **34 (5-build) / 35 (10-build)**: blocked — terminal module not on app-systems.
+- **40 — FIXED + re-measured** (coder `85e8d27d2`, gate 109). `pick.list.Picks` kept a module's
+  weak stage-1 common score and skipped stage-2's stronger confirmation of the same action, so
+  Properties.goal step 4's `goal.call` (0.46, under the 0.5 Possible floor) dropped and the step
+  built with no actions 6/10. Fix: a common action certain on its own stage-1 score (≥ Near) stands
+  (stage 2 can't add to it, its module may be one the decider is unsure of); below that, stage 2's
+  stronger answer is the pick, as its own module pick. **Re-measure** (binary clean from head
+  `f7b8d7377`, Properties.goal in place, 10 fresh builds, `--build={"cache":"skip"}`, jq-counted step 4):
+  goal.call LISTED **10/10** (was 4/10), NO-SAVE **0/10** (was 6/10). Guard `write out "hi"` → single
+  `output.write`, no alternatives = Certain, holds. `properties.pr` kept — only change vs committed is
+  the recorded decider confidence 0.55 → 0.98; mapped actions byte-identical.
+  Detail: `v3/issue40-remeasure.md`.
+
+## `cache` is now a choice (choices merge `aa45d0ca7`)
+On app-systems the build `cache` flag is a `choice<cache>` (`use`|`skip`), not a boolean.
+**Use `--build={"cache":"skip"}`** to force fresh LLM calls. `--build={"cache":false}` is REFUSED
+("holds a Boolean — choice<cache> cannot be created from it"). Memory updated
+([[reference_plang_cli]], [[feedback_builder_scope]], [[feedback_keep_rebuilt_pr_files]]).
+
+## (earlier) Status 2026-10-02 — idle, waiting on the coder's one pick pass
 All architect-directed work done and accepted (latest 0b799a5d1). Open items are the coder's / core:
 - **Coder's pick pass** (Option-v2 core + `listed.Option` + issue-32 masking core; coder plan v22 =
   `1ea0f67bf`). When its hash lands, my part:

@@ -45,17 +45,17 @@ public class ExecuteVerbTests
 
     [Test] public async Task ExecuteVerb_ExistsInVerbTaxonomy()
     {
-        await Assert.That(System.Enum.IsDefined(global::app.type.item.permission.Verb.Execute)).IsTrue();
+        await Assert.That(System.Enum.IsDefined(global::app.type.item.permission.Verb.execute)).IsTrue();
     }
 
     [Test] public async Task ExecuteVerb_JsonRoundTrip_PreservesShape()
     {
-        var verb = global::app.type.item.permission.Verb.Execute;
+        var verb = global::app.type.item.permission.Verb.execute;
         var opts = new JsonSerializerOptions { Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() } };
         var json = JsonSerializer.Serialize(verb, opts);
-        await Assert.That(json).Contains("Execute");
+        await Assert.That(json).Contains("execute");
         var loaded = JsonSerializer.Deserialize<Verb>(json, opts);
-        await Assert.That(loaded).IsEqualTo(global::app.type.item.permission.Verb.Execute);
+        await Assert.That(loaded).IsEqualTo(global::app.type.item.permission.Verb.execute);
     }
 
     [Test] public async Task ExecuteVerb_PromptCopy_DistinguishesFromRead()
@@ -83,12 +83,12 @@ public class ExecuteVerbTests
         var permission = new global::app.type.item.permission.@this(
             Actor: app.actor.list.User.Name,
             Path: p.Absolute,
-            Verbs: new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.Read },
-            Match: global::app.type.item.permission.Match.Exact);
+            Verbs: new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read },
+            Match: global::app.type.item.permission.Match.exact);
         var grantData = new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: app.actor.list.User.Context);
         await app.actor.list.User.Permission.Add(grantData, persist: true);
         // Execute should NOT be covered.
-        var executeMatch = await app.actor.list.User.Permission.Find(p, global::app.type.item.permission.Verb.Execute);
+        var executeMatch = await app.actor.list.User.Permission.Find(p, global::app.type.item.permission.Verb.execute);
         await Assert.That(executeMatch).IsNull();
     }
 

@@ -127,9 +127,9 @@ public class FileSystemPermissionFlowTests
 
         var verb = method switch
         {
-            "WriteText" or "WriteBytes" or "Append" or "Mkdir" => global::app.type.item.permission.Verb.Write,
-            "Delete" => global::app.type.item.permission.Verb.Delete,
-            _ => global::app.type.item.permission.Verb.Read,
+            "WriteText" or "WriteBytes" or "Append" or "Mkdir" => global::app.type.item.permission.Verb.write,
+            "Delete" => global::app.type.item.permission.Verb.delete,
+            _ => global::app.type.item.permission.Verb.read,
         };
         await Assert.That(await app.actor.list.User.Permission.Find(path, verb)).IsNotNull();
     }

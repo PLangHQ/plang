@@ -197,14 +197,14 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     internal override async Task<data.@this<global::app.type.item.binary.@this>> Bytes(actor.context.@this context)
     {
-        var verb = Verb.Read;
+        var verb = Verb.read;
         if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.binary.@this>.From(early);
         return data.@this<global::app.type.item.binary.@this>.From(await Send(HttpMethod.Get, content: null, readBody: true, verb, context));
     }
 
     public override async Task<data.@this<global::app.type.item.@bool.@this>> Exists(actor.context.@this context)
     {
-        if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.@bool.@this>.From(early);
+        if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.@bool.@this>.From(early);
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Head, _uri);
@@ -231,7 +231,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// </summary>
     public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> List(global::app.type.item.text.@this pattern, global::app.type.item.@bool.@this recursive, actor.context.@this context)
     {
-        if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
+        if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
         return context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new Error(
             "HTTP scheme does not support directory listing.", "NotSupported", 400));
     }
@@ -248,7 +248,7 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     public override async Task<data.@this<global::app.type.item.path.@this.StatInfo>> Stat(actor.context.@this context)
     {
-        if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.path.@this.StatInfo>.From(early);
+        if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.path.@this.StatInfo>.From(early);
         try
         {
             using var req = new HttpRequestMessage(HttpMethod.Head, _uri);
@@ -276,7 +276,7 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     public override async Task<data.@this<global::app.type.item.path.@this>> WriteText(string content, actor.context.@this context)
     {
-        var verb = Verb.Write;
+        var verb = Verb.write;
         if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb, context);
         return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
@@ -284,7 +284,7 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     public override async Task<data.@this<global::app.type.item.path.@this>> WriteBytes(byte[] content, actor.context.@this context)
     {
-        var verb = Verb.Write;
+        var verb = Verb.write;
         if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         var sent = await Send(HttpMethod.Post, new ByteArrayContent(content), readBody: false, verb, context);
         return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
@@ -294,7 +294,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// appending interpret it; others overwrite or 405. "Let the server respond."</summary>
     public override async Task<data.@this<global::app.type.item.path.@this>> Append(string content, actor.context.@this context)
     {
-        var verb = Verb.Write;
+        var verb = Verb.write;
         if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         var sent = await Send(HttpMethod.Post, new StringContent(content, Encoding.UTF8), readBody: false, verb, context);
         return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);
@@ -306,7 +306,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// </summary>
     public override async Task<data.@this<global::app.type.item.path.@this>> Mkdir(actor.context.@this context)
     {
-        if (await AuthGate(Verb.Write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         return context.Error<global::app.type.item.path.@this>(new Error(
             "HTTP scheme does not support directory creation.", "NotSupported", 400));
     }
@@ -331,7 +331,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// </summary>
     public override async Task<data.@this<global::app.type.item.path.@this>> Delete(global::app.type.item.@bool.@this recursive, actor.context.@this context)
     {
-        var verb = Verb.Delete;
+        var verb = Verb.delete;
         if (await AuthGate(verb, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         var sent = await Send(HttpMethod.Delete, content: null, readBody: false, verb, context);
         return sent.Success ? context.Ok<global::app.type.item.path.@this>(this) : data.@this<global::app.type.item.path.@this>.From(sent);

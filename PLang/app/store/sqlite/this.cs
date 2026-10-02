@@ -77,7 +77,7 @@ public sealed class @this : global::app.store.@this
 
         // Take-over API: authorize before passing .Absolute. Out-of-root paths the actor hasn't granted
         // fail the open — sqlite never sees them.
-        var auth = await _file.Authorize(global::app.type.item.permission.Verb.Write, Context);
+        var auth = await _file.Authorize(global::app.type.item.permission.Verb.write, Context);
         if (!auth.Success) throw new global::app.error.AppException(auth.Error!);
         if (_file.Parent is { } parent)
             await parent.Mkdir(Context);

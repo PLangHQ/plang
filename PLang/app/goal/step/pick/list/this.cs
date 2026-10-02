@@ -38,7 +38,8 @@ public sealed class @this
     private readonly Dictionary<string, number?> _also = new();                          // stage 2: module → does the step use it
     private readonly Dictionary<string, number?> _branch = new();                        // stage 2: branch → yes/no
     private Dictionary<string, number?>? _popular;                                       // stage 2: popular action → share; null when not asked
-    private readonly Dictionary<string, string?> _option = new();                        // stage 2: module.action.Option → the value chosen
+    // stage 2: module.action.Option → the offer chosen for it, with the option it is for
+    private readonly Dictionary<string, (global::app.type.property.@this Property, global::app.type.item.@this Value)> _option = new();
 
     private List<pick.@this> _items = new();
     private List<question.@this> _question = new();
@@ -188,7 +189,7 @@ public sealed class @this
             if (id == "@module") await Share(a, context, _module);
             else if (id == "@popular") await Share(a, context, _popular = new());
             else if (id.StartsWith("@also.", StringComparison.Ordinal)) _also[id["@also.".Length..]] = noul;
-            else if (id.StartsWith(OptionKey, StringComparison.Ordinal)) _option[id[OptionKey.Length..]] = await Choice(a, context);
+            else if (id.StartsWith(OptionKey, StringComparison.Ordinal)) await Choose(id[OptionKey.Length..], await Choice(a, context), context);
             else if (Branch(context).Any(b => $"{b.Module.Name}.{b.Name}" == id)) _branch[id] = noul;
             else if (id.Contains('.')) _named[id] = noul;
             else _choice[id] = (await Choice(a, context), a.Get<number>("confidence", context));
@@ -218,6 +219,19 @@ public sealed class @this
         var anywhere = every.Select(a => $"{a.Module.Name}.{a.Name}").Concat(used).ToHashSet();
         var refused = _listed.Where(l => l.Mark == listed.Mark.Certain && !anywhere.Contains(l.Name))
             .Select(l => $"step {i} leaves out {l.Name}, which the decider is certain of ({l.Shown})").ToList();
+        // an option the decider says the step gives is in the code: chosen and left out refuses it, as a certain action
+        // left out does — unless the value chosen is the option's default, which the code holds by leaving it out
+        foreach (var (key, (property, value)) in _option)
+        {
+            var name = key[..key.LastIndexOf('.')];
+            var built = every.Where(a => $"{a.Module.Name}.{a.Name}" == name).ToList();
+            if (built.Count > 0 && built.All(a => a[property.Name] == null) && !property.IsDefault(value))
+            {
+                var option = new global::app.goal.step.action.formal.Writer();
+                option.Option(property.Name, value);
+                refused.Add($"step {i}'s {name} leaves out {property.Name}, which the decider says the step gives: write {option}");
+            }
+        }
         refused.AddRange(Unlisted(used));
         refused.AddRange(Held(code.Items()).Distinct().Where(a => a != "goal.call" && _listed.All(l => l.Name != a))
             .Select(a => $"step {i} holds {a}, which is not listed; only goal.call may be held without being listed"));
@@ -286,7 +300,7 @@ public sealed class @this
                      ? listed.Mark.Popular
                  : listed.Mark.Possible,
             Module = modules.Length > 0 && Through(p.Name) ? modules : null,
-            Option = Chosen(p.Name),
+            Option = Chosen(Catalog(p.Name, context)).Select(c => c.Written).ToList(),
         }).ToList();
     }
 
@@ -312,8 +326,7 @@ public sealed class @this
         var line = new line.@this(nests);
         foreach (var action in certain) action.Prefill(line, Call(action));
         if (known != null) line.Append($"variable.set(Name={known.Text}, Value=%!data%)");
-        // written as the writer reads the step: its variables placeholders
-        return line.ToString() is { } written ? _step.Mask.Hide(written) : null;
+        return line.ToString();
     }
 
     // The known code, written in formal and read the way an answer is read. A line that doesn't read
@@ -357,20 +370,62 @@ public sealed class @this
     // a Parameter, a RetryCount), as the examples teach.
     private string Call(global::app.goal.step.action.@this action)
     {
-        var given = action.Property.Where(p => p.Required).Select(p => p.Name).Concat(Chosen($"{action.Module.Name}.{action.Name}"));
+        var chosen = Chosen(action);
+        // a required property the decider chose a value of is written with it, not as a slot still to fill
+        var given = action.Property.Where(p => p.Required && chosen.All(c => c.Property != p))
+            .Select(p => p.Name).Concat(chosen.Select(c => c.Written));
         return $"{action.Module.Name}.{action.Name}({string.Join(", ", given)})";
     }
 
-    // The options the decider chose a value of for the action <paramref name="name"/> (`Template=plang`) — "none"
-    // left out. What the starting line writes and what the listed action carries: one reading, so they never drift.
-    private List<string> Chosen(string name)
+    // The options the decider chose a value of for <paramref name="action"/>, each as formal writes an option
+    // (`Template="plang"`, `Item=%value%`, `Name="Page"`, a bare `Permission` the writer fills). What the starting line
+    // writes and what the listed action carries: one reading, so they never drift.
+    private List<(global::app.type.property.@this Property, string Written)> Chosen(global::app.goal.step.action.@this? action)
     {
-        var asked = name + ".";
-        var chosen = new List<string>();
-        foreach (var (key, value) in _option)
-            if (key.StartsWith(asked, StringComparison.Ordinal) && value is { Length: > 0 } && value != question.@this.None)
-                chosen.Add($"{key[asked.Length..]}={value}");
+        if (action == null) return [];
+        var asked = $"{action.Module.Name}.{action.Name}.";
+        var chosen = new List<(global::app.type.property.@this, string)>();
+        foreach (var (key, (property, value)) in _option)
+            if (key.StartsWith(asked, StringComparison.Ordinal))
+            {
+                var writer = new global::app.goal.step.action.formal.Writer();
+                writer.Option(property.Name, value);
+                chosen.Add((property, writer.ToString()));
+            }
         return chosen;
+    }
+
+    // The option `key` (module.action.Option) takes the offer the decider chose — the one shown as `choice`; "none", or
+    // a text no offer shows, leaves the option out.
+    private async Task Choose(string key, string? choice, global::app.actor.context.@this context)
+    {
+        _option.Remove(key);
+        var at = key.LastIndexOf('.');
+        if (choice is null or question.@this.None || at < 0 || Catalog(key[..at], context) is not { } action
+            || action[key[(at + 1)..]] is not { } property) return;
+        foreach (var offer in await Offered(action, property, context))
+            if (Shown(offer, context) == choice) { _option[key] = (property, offer); return; }
+    }
+
+    // What `property` of `action` is offered in this step: what its type offers (a closed set its options, a
+    // collection the members the step can name, any other the step's variables) — but never a variable the action
+    // itself writes: the step's write-to, where its answer goes, or one the action binds when the step names none
+    // (foreach's %item%), which is choosing none. The question shows these, and a pick is matched against these.
+    private async Task<List<global::app.type.item.@this>> Offered(global::app.goal.step.action.@this action,
+        global::app.type.property.@this property, global::app.actor.context.@this context)
+    {
+        var written = action.Bound.Cast<global::app.type.item.@this>().Append(Destination())
+            .OfType<global::app.type.item.@this>().Select(v => Shown(v, context)).ToHashSet(StringComparer.Ordinal);
+        return (await property.Type.Offers(_step)).Where(o => !written.Contains(Shown(o, context))).ToList();
+    }
+
+    // An offer as the decider is shown it: its text, as a text channel writes it (`%field%`, `plang`, `Page`).
+    private string Shown(global::app.type.item.@this offer, global::app.actor.context.@this context)
+    {
+        using var stream = new System.IO.MemoryStream();
+        offer.Write(new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8,
+            context.Setting.Of<global::app.setting.@this>().Culture));
+        return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
 
     private global::app.goal.step.action.@this? Catalog(string name, global::app.actor.context.@this context)
@@ -459,13 +514,20 @@ public sealed class @this
             string? action = module.Count == 1 ? module.ActionNames.Single() : _choice.GetValueOrDefault(m).Action;
             if (action == null) continue;
             var name = $"{m}.{action}";
-            // a common action keeps its own stage-1 score — the one the Near rule reads
-            if (picks.Any(p => p.Name == name)) continue;
             var asked = yesNo.Contains(m);
+            var score = asked ? _also.GetValueOrDefault(m) : _module.GetValueOrDefault(m);
+            // one pick per action, on the stronger evidence: a common action certain on its own stage-1 score (the one
+            // the Near rule reads) stands — stage 2 can't add to it, and its module may be one the decider is unsure
+            // of; below that, stage 2's answer is the pick when it is the stronger, as its own (module) pick
+            if (picks.FirstOrDefault(p => p.Name == name) is { } common)
+            {
+                if (common.Score is { } own && (own >= (number)Near || score is not { } confirmed || confirmed <= own)) continue;
+                picks.Remove(common);
+            }
             picks.Add(new pick.@this
             {
                 Name = name,
-                Score = asked ? _also.GetValueOrDefault(m) : _module.GetValueOrDefault(m),
+                Score = score,
                 From = asked ? From.YesNo : From.Choice,
             });
         }
@@ -514,15 +576,17 @@ public sealed class @this
         {
             await action.Note.Value(context.Ok());
             foreach (var line in action.Note.Line)
-                // what the option's type offers for this step (a closed set its options, any other the step's variables);
+            {
+                if (line is not { Ask: not null, Name: { } named } || action[named.ToString()] is not { } property) continue;
                 // an option with nothing to offer isn't asked
-                if (line is { Ask: not null, Name: { } named } && action[named.ToString()] is { } property
-                    && property.Type.Offers(_step) is { Count: > 0 } offers)
-                    questions.Add(new question.@this
-                    {
-                        Id = Key($"{OptionKey}{action.Module.Name}.{action.Name}.{property.Name}"), Kind = Kind.Option,
-                        Action = action, Property = property, Values = [.. offers, question.@this.None],
-                    });
+                var offers = (await Offered(action, property, context)).Select(o => Shown(o, context)).ToList();
+                if (offers.Count == 0) continue;
+                questions.Add(new question.@this
+                {
+                    Id = Key($"{OptionKey}{action.Module.Name}.{action.Name}.{property.Name}"), Kind = Kind.Option,
+                    Action = action, Property = property, Values = [.. offers, question.@this.None],
+                });
+            }
         }
         return questions;
     }

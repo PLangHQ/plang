@@ -20,6 +20,6 @@ public sealed class @this : global::app.type.kind.@this
     /// name door; null when no type has that name.</summary>
     public override global::app.type.kind.@this? Coin(string name)
         => _types.Contains(name)
-            ? _coined.GetOrAdd(_types[name].Name, n => new element.@this(n, _types[n].ClrType))
+            ? _coined.GetOrAdd(_types[name].Name, n => new element.@this(_types[n]))
             : null;
 }

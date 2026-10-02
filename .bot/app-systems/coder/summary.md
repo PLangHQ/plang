@@ -2,6 +2,22 @@
 
 **Version:** v22 (all pushed; reviews by the architect, plang-21, gate by gate)
 
+## After v22 (2026-10-02), each gated (the 18) and accepted by the architect
+- 14de729af: an unknown `.pr` property fails the run at `action.Instance()` ("goal.call has no property Wait;
+  rebuild the goal"); a list made from one value holds it (`list<T>.Create`, `list.Create`).
+- 54d452dea: a new `/system/` file lands where its folder is (`ValidatePath`: present → housed → as written).
+- 6cbf36046: permission `Verb`/`Match` lowercase, Regex dropped, `VerbLabel` gone. The member-type change is
+  held: a `.pr` written from CLR values holds dict members as unread Data rows that `Create`'s type-tests miss
+  (pinned, skipped) — (i) dict reader opens leaf rows vs (ii) async birth, with Ingi.
+- 8a4ef5fc7: masking removed (Ingi): the step is read as written; templates read `s.Text`.
+- d6ae465ca: permission declares Example/Shape/Description.
+- d2aa1358d + 4af605b25: offers. `type.Offers(step)` async, items; `type<T,L>` offers its collection's (goal
+  names reachable via `goal.list.Chain`/`Beside`, the walk `Find` shares; type names), then the step's
+  variables; the write-to is left out; a chosen offer writes itself through `formal.Writer`.
+  `variable.set` Type is `data<type>`; a type is born from its name or `{name,…}`.
+- 701ae4049: a list of records shows one of its element (`list<permission>` → `[{path, verbs}]`).
+- The event-slot "no wire contract" no longer reproduces on the current core.
+
 ## v22 — the pick pass (814ca5209)
 - `step.Mask` (`PLang/app/goal/step/mask/this.cs`): the step's variables as placeholders `%v1%…`, with a stem the
   step doesn't use. The `=> formal:` prefill is written through `Hide`, and `formal.Reader.Read` restores at its one door.

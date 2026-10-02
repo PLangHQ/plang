@@ -1025,6 +1025,46 @@
         "health": "green (builds run; os/ 15 goals valid). One known regression: cache:false doesn't rebuild unchanged goals (handed to architect/coder).",
         "notes": "Shapes/diagnoses: v3/result.md, v3/option-v2-shape.md, v3/issue32-masking-shape.md, v3/cache-false-diagnosis.md. Decider key stays in env per architect (storage is Ingi's security call); NOT written to any store. Next: coder's Option-v2 core + listed.Option + masking core, then my template side + ask:-lines + measurements; item 6 after coder task stages."
       }
+    },
+    {
+      "id": "c9f1a2b7-6d3e-4f08-9a51-2e8b4c7d0a19",
+      "bot": "builder",
+      "timestamp_start": "2026-10-02T20:30:00Z",
+      "timestamp_end": "2026-10-02T21:05:00Z",
+      "intent": "Re-measure issue 40 after coder fix 85e8d27d2; update build-cache command refs (cache:false -> cache:skip)",
+      "before": {
+        "assumptions": "Fix 85e8d27d2 landed; binary must be rebuilt clean from head before measuring; cache flag now a choice",
+        "risk": "Stale binary or stale LLM cache would hide the fix"
+      },
+      "plan": ".bot/app-systems/builder/v3/issue40-remeasure.md",
+      "actions": [
+        {
+          "paths": ["os/system/builder/BuildGoal/.build/properties.pr"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "10 fresh builds of Properties.goal in place, cache:skip, jq-counted step 4 goal.call: 10/10 LISTED (was 4/10), 0 NO-SAVE (was 6/10). Kept rebuilt .pr (decider confidence 0.55->0.98, mapped actions identical)."
+        },
+        {
+          "paths": [".bot/app-systems/builder/v3/issue40-remeasure.md", ".bot/app-systems/builder/summary.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Recorded the re-measure table + guard (write out 'hi' stays Certain) and the cache-choice note."
+        },
+        {
+          "paths": ["memory/reference_plang_cli.md", "memory/feedback_builder_scope.md", "memory/feedback_keep_rebuilt_pr_files.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "cache:false -> cache:skip; noted cache is choice<cache> on app-systems and the boolean form is refused (files under ~/.claude memory)."
+        }
+      ],
+      "after": {
+        "status": "done",
+        "health": "green",
+        "notes": "Issue 40 confirmed fixed by measurement (10/10). Guard holds. No core/builder source changes by me this session - coder owned the fix."
+      }
     }
   ]
 }

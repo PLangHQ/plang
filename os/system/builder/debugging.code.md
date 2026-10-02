@@ -53,7 +53,7 @@ Read this one block and the origin is usually obvious:
 
 ## Triage commands
 
-Work in `Tests/`. Pick a deterministic repro goal. A `cache:false` rebuild **overwrites the
+Work in `Tests/`. Pick a deterministic repro goal. A `cache:skip` rebuild **overwrites the
 committed `.pr`** — copy it aside first and restore after, so a diagnostic run never lands a
 bad `.pr` in git:
 
@@ -68,7 +68,7 @@ The decider runs in `BuildGoal/Decide.goal` (the `Decide` goal). Watch its rende
 its questions, and its answers:
 
 ```bash
-$BIN build '--build={"files":["<goal>"],"cache":false}' \
+$BIN build '--build={"files":["<goal>"],"cache":"skip"}' \
   '--debug={"goal":"Decide","variables":["state","questions","answer"]}' > /tmp/decide.txt 2>&1
 cp /tmp/good.pr <restore the .pr>
 ```
@@ -87,7 +87,7 @@ a common/popular action), not the writer.
 The writer runs in `BuildGoal/Properties.goal` (the `Properties` goal), one `llm.query`:
 
 ```bash
-$BIN build '--build={"files":["<goal>"],"cache":false}' \
+$BIN build '--build={"files":["<goal>"],"cache":"skip"}' \
   '--debug={"goal":"Properties","variables":["propertiesUserMsg"],"llm":{"system":true,"response":true},"length":{"max":50000}}' > /tmp/props.txt 2>&1
 cp /tmp/good.pr <restore the .pr>
 ```
@@ -137,7 +137,7 @@ value at the step boundary. Fix: drop `type=json` so the literal borns as a nati
 
 - The trace (`.build/traces/{id}/`) does **not** carry the LLM payloads any more — it's goal
   names + timing + any `buildError`. For payloads use `--debug` (above).
-- A `cache:false` rebuild overwrites the committed `.pr` — `cp` it aside and restore.
+- A `cache:skip` rebuild overwrites the committed `.pr` — `cp` it aside and restore.
 - **Stale-binary trap:** `plang build`/`--test` use the pre-built
   `PlangConsole/bin/Debug/net10.0/plang`. After a C# change, `dotnet build PlangConsole` before
   trusting any result. See the repo `CLAUDE.md`.

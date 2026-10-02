@@ -40,7 +40,7 @@ public partial class @this
         // string verbatim to the local sqlite. Base returns "".
         var hint = AuthorizationHint(verb);
         var hintSuffix = string.IsNullOrEmpty(hint) ? "" : " " + hint;
-        return await actor.Permission.Ask($"Allow {actor.Name} to {VerbLabel(verb)} {Absolute}?{hintSuffix} (y/n/a)",
+        return await actor.Permission.Ask($"Allow {actor.Name} to {verb} {Absolute}?{hintSuffix} (y/n/a)",
             BuildRequest(actor, verb), context, persist => SignAndStore(actor, verb, persist, context));
     }
 
@@ -56,7 +56,7 @@ public partial class @this
     }
 
     protected permission.@this BuildRequest(actor.@this actor, Verb verb) =>
-        permission.@this.Request(actor.Name, Absolute, verb, MatchMode.Exact);
+        permission.@this.Request(actor.Name, Absolute, verb, MatchMode.exact);
 
     // A child app inherits its parent's filesystem scope: paths under the
     // parent's root are still in-root from a child's perspective. The os folder
@@ -93,15 +93,6 @@ public partial class @this
         return Absolute.StartsWith(rootWithSeparator, cmp)
             || string.Equals(Absolute, rootCandidate, cmp);
     }
-
-    private static string VerbLabel(Verb verb) => verb switch
-    {
-        Verb.Read    => "read",
-        Verb.Write   => "write",
-        Verb.Delete  => "delete",
-        Verb.Execute => "execute",
-        _ => "access",
-    };
 
     /// <summary>
     /// Scheme-specific extra text appended to the Authorize prompt before the

@@ -59,7 +59,7 @@ public sealed partial class @this : global::app.type.item.setting.ISetting<setti
             var userContext = _context.App.actor.list.User.Context;
             var asker = userContext.Actor!;
             var consent = await asker.Permission.Ask($"No app found at {_context.App.AbsolutePath}. Create new app? (y/n)",
-                global::app.type.item.permission.@this.Request(asker.Name, _context.App.AbsolutePath, global::app.type.item.permission.Verb.Write),
+                global::app.type.item.permission.@this.Request(asker.Name, _context.App.AbsolutePath, global::app.type.item.permission.Verb.write),
                 userContext, _ => System.Threading.Tasks.Task.FromResult(userContext.Ok()));
             if (!consent.Success) return consent;
         }

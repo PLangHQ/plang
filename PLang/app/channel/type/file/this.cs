@@ -25,7 +25,7 @@ public sealed class @this : global::app.channel.@this
     public override async Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
     {
         var context = data.Context;
-        var allowed = await Path.Authorize(Verb.Write, context);
+        var allowed = await Path.Authorize(Verb.write, context);
         if (!allowed.Success || allowed.Exits) return allowed;
         try
         {

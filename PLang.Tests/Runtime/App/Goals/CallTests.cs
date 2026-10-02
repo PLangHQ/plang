@@ -104,6 +104,23 @@ public class CallTests
         await Assert.That((await (await Ctx.Variable.Get("got")).Value())?.ToString()).IsEqualTo("Reykjavik for 3");
     }
 
+    // a variable that holds one value at run, where the named rows go, refuses the call saying the form — never binds
+    // it as nothing
+    [Test]
+    public async Task ParametersGivenAsOneValue_RefuseTheCall()
+    {
+        await Ctx.Variable.Set("asked", "Reykjavik");
+        await Load("Weather", Make.Step("set got", Set("got", "%city%")));
+        var caller = await Load("Caller", Make.Step("call Weather with %asked%",
+            Make.Action(Ctx, "goal", "call", ("Name", "Weather"),
+                Make.Param(Ctx, "Parameter", "%asked%", new global::app.type.@this("list", template: new global::app.type.item.template.kind.plang.@this())))));
+
+        var ran = await caller.Start(Ctx);
+
+        await Assert.That(ran.Success).IsFalse();
+        await Assert.That(ran.Error!.Key).IsEqualTo("ParameterUnnamed");
+    }
+
     // a plain list slot given a dict converts as it always has (to no rows) — only a goal call reads a dict's entries
     // as its named rows
     [Test]

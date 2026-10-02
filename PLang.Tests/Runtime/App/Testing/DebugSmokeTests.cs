@@ -82,6 +82,32 @@ public class DebugSmokeTests
         await Assert.That(debugOut).Contains("ACTION [AFTER]");
     }
 
+    // the step's variables are listed as the step reads them: a shortcut (%!error%, in a recovery) is no variable in
+    // memory, and is still shown, never "(undefined)"
+    [Test]
+    public async Task Debug_AShortcutTheStepReads_IsListedAsTheStepReadsIt()
+    {
+        _app.Debug = new global::app.module.debug.@this(_app.actor.list.System.Context);
+        _app.actor.list.System.Setting.Set("debug.setting", new Dictionary<string, object?> { ["level"] = "action" });
+        _app.Debug.Activate();
+        var ctx = _app.actor.list.User.Context;
+        var show = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "Show",
+            Make.Step("set seen", Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "seen", "variable"), ("Value", "%!error.Message%")))));
+        _app.goal.list.Add(show);
+        var failing = new global::app.goal.step.@this { Text = "fail" };
+        var line = (global::app.goal.step.action.list.@this)new global::app.goal.step.action.formal.Reader(failing, _app.module.list)
+            .Read("error.throw(Message=\"it broke\", Key=\"Broke\"); on.error(Recovery=[goal.call(Name=\"Show\")])", ctx).Peek()!;
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(ctx, "Dbg", Make.Step("fail", line.Items().ToArray())));
+        _app.goal.list.Add(goal);
+
+        await _app.Start(goal, ctx);
+
+        var debugOut = ReadCapture();
+        await Assert.That((await (await ctx.Variable.Get("seen")).Value())?.ToString()).IsEqualTo("it broke");
+        await Assert.That(debugOut).Contains("%!error% = ");
+        await Assert.That(debugOut).DoesNotContain("%!error% = (undefined)");
+    }
+
     // --debug={"variables":["trace"]} binds through the setting walk as a list of names.
     [Test]
     public async Task Debug_Variables_BindAsNames()

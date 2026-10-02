@@ -139,8 +139,8 @@ public class MoveCopyBundledConsentTests
         await src.MoveTo(dst, overwrite: true, app.actor.list.User.Context);
 
         // Both grants landed.
-        await Assert.That(await app.actor.list.User.Permission.Find(src, global::app.type.item.permission.Verb.Read)).IsNotNull();
-        await Assert.That(await app.actor.list.User.Permission.Find(dst, global::app.type.item.permission.Verb.Write)).IsNotNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(src, global::app.type.item.permission.Verb.read)).IsNotNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(dst, global::app.type.item.permission.Verb.write)).IsNotNull();
     }
 
     private sealed class StatelessChannel : global::app.channel.type.message.@this
@@ -218,8 +218,8 @@ public class MoveCopyBundledConsentTests
         await result.IsFailure();
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
         // No grants stored, no filesystem mutation.
-        await Assert.That(await app.actor.list.User.Permission.Find(src, global::app.type.item.permission.Verb.Read)).IsNull();
-        await Assert.That(await app.actor.list.User.Permission.Find(dst, global::app.type.item.permission.Verb.Write)).IsNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(src, global::app.type.item.permission.Verb.read)).IsNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(dst, global::app.type.item.permission.Verb.write)).IsNull();
         await Assert.That(System.IO.File.Exists(srcFile)).IsTrue();
         await Assert.That(System.IO.File.Exists(dstFile)).IsFalse();
     }

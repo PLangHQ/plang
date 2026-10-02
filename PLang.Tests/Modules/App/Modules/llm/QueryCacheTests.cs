@@ -133,7 +133,7 @@ public class QueryCacheTests
             {
                 new LlmMessage { Role = "user", Content = "same question" }
             }.ToListData<LlmMessage>(Ctx),
-            Cache = (global::app.type.item.@bool.@this)false
+            Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(global::app.module.cache.type.cache.skip)
         };
 
         await action.Attach(null, Ctx);
@@ -154,7 +154,7 @@ public class QueryCacheTests
             {
                 new LlmMessage { Role = "user", Content = "use tools" }
             }.ToListData<LlmMessage>(Ctx),
-            Cache = (global::app.type.item.@bool.@this)true,
+            Cache = new global::app.type.item.choice.@this<global::app.module.cache.type.cache>(global::app.module.cache.type.cache.use),
             Tool = new List<global::app.goal.step.action.@this>
             {
                 Make.Call(Ctx, "TestTool")

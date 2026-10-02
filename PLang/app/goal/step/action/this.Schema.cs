@@ -37,6 +37,13 @@ public partial class @this
     [JsonIgnore]
     public bool IsQuestion => Handler?.IsDefined(typeof(global::app.Attributes.QuestionAttribute), inherit: false) == true;
 
+    /// <summary>The variables this action binds when the step names none — each write-target option's default
+    /// (foreach's <c>%item%</c>). Choosing one for an option is choosing none, so no option is offered them.</summary>
+    [JsonIgnore]
+    public IEnumerable<global::app.type.item.variable.@this> Bound
+        => Property.Where(p => p.Type.IsName && p.Default?.ToString() is { Length: > 0 })
+            .Select(p => new global::app.type.item.variable.@this(p.Default!.ToString()!));
+
     /// <summary>The property this action reads and answers a new value of, changing nothing (<c>list.query</c>'s
     /// <c>List</c>) — where a step with no destination writes the answer; null when the action has none.</summary>
     [JsonIgnore]

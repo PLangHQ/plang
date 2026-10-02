@@ -70,6 +70,72 @@ public class HashActionTests
         await Assert.That(digest.ToBase64()).IsEqualTo("TgNleupFqU/H1HuoJsjWZ8DR5uM6ZKA27ET1j6EtbEU=");
     }
 
+    // ---- each value pours its own bytes into the digest ----
+
+    // a dict hashes its json text in its own key order, as before the value poured itself
+    [Test]
+    public async Task ADict_HashesItsJsonText_AsBefore()
+    {
+        var dict = global::PLang.Tests.Shared.Make.Dict(new Dictionary<string, object?> { ["b"] = 2, ["a"] = "x" }, Ctx);
+        var digest = await Hashed(dict, "sha256");
+        var json = System.Text.Encoding.UTF8.GetBytes("{\"b\":2,\"a\":\"x\"}");
+        await Assert.That(digest.Bytes).IsEquivalentTo(System.Security.Cryptography.SHA256.HashData(json));
+    }
+
+    // a path hashes its file's contents — read by stream, gated as a read; a text naming a file is its letters
+    [Test]
+    public async Task APath_HashesItsFile_ATextItsLetters()
+    {
+        var bytes = new byte[3 * 1024 * 1024];
+        new Random(3).NextBytes(bytes);
+        System.IO.File.WriteAllBytes(System.IO.Path.Combine(_tempDir, "x.bin"), bytes);
+
+        var ofPath = await Hashed(global::app.type.item.path.@this.Resolve("/x.bin", Ctx), "sha256");
+        var ofText = await Hashed("x.bin", "sha256");
+        var ofKeccak = await Hashed(global::app.type.item.path.@this.Resolve("/x.bin", Ctx), "keccak256");
+
+        await Assert.That(ofPath.Bytes).IsEquivalentTo(System.Security.Cryptography.SHA256.HashData(bytes));
+        await Assert.That(ofText.Bytes).IsEquivalentTo(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes("x.bin")));
+        await Assert.That(ofKeccak.Bytes).IsEquivalentTo(new Nethereum.Util.Sha3Keccack().CalculateHash(bytes));
+    }
+
+    // a path the actor may not read is refused as a read, never hashed
+    [Test]
+    public async Task APathOutsideTheGrant_IsRefusedAsARead()
+    {
+        var outside = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_hash_out_" + Guid.NewGuid().ToString("N")[..8] + ".bin");
+        System.IO.File.WriteAllBytes(outside, new byte[] { 1, 2, 3 });
+        try
+        {
+            var user = _app.actor.list.User.Context;
+            var action = new Hash(user)
+            {
+                Data = user.Ok(global::app.type.item.path.@this.Resolve("//" + outside.TrimStart('/'), user)),
+                Algorithm = new global::app.data.@this("Algorithm", "sha256", context: user).As<global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>>(),
+            };
+            await action.Attach(null, user);
+            var result = await action.Start();
+            await Assert.That(result.Success).IsFalse();
+        }
+        finally { System.IO.File.Delete(outside); }
+    }
+
+    // a hash written <algorithm>:<digest> reads with its algorithm; a prefix that names no kind is refused
+    [Test]
+    public async Task AHashWrittenWithItsAlgorithm_Reads_AnUnknownOneIsRefused()
+    {
+        var hex = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
+        var read = global::app.data.@this<hash>.From(new global::app.data.@this("h", "sha256:" + hex, context: Ctx));
+        var value = await read.Value();
+        await Assert.That(value!.Algorithm).IsEqualTo("sha256");
+        await Assert.That(value.Written).IsEqualTo("sha256:" + hex);
+
+        var unknown = global::app.data.@this<hash>.From(new global::app.data.@this("h", "md5:" + hex, context: Ctx));
+        await unknown.Value();
+        await Assert.That(unknown.Error?.Key).IsEqualTo("HashInvalid");
+        await Assert.That(unknown.Error!.Message).Contains("sha256");
+    }
+
     [Test]
     public async Task Bytes_HashAsThemselves()
     {

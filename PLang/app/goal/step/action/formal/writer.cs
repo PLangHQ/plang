@@ -81,6 +81,20 @@ public sealed class Writer : IWriter
     /// <summary>A variable, bare: <c>%content%</c>.</summary>
     public void Variable(string name) => Raw($"%{name}%");
 
+    /// <summary>A slot still to fill writes nothing: its option stands as its bare name (<see cref="Option"/>).</summary>
+    public void Given() { }
+
+    /// <summary>An option as a starting line writes it: <c>Template="plang"</c>, or its bare name — a slot still to
+    /// fill — when its value writes nothing (<c>Permission</c>: the step gives it, the writer fills it).</summary>
+    public void Option(string name, global::app.type.item.@this value)
+    {
+        var written = new Writer();
+        value.Write(written);
+        Element();
+        _out.Append(name);
+        if (written._out.Length > 0) _out.Append('=').Append(written._out);
+    }
+
     // A text in double quotes, escaped as JSON escapes it — quote, backslash and control characters;
     // every other character as itself.
     private void Quote(string value)

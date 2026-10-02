@@ -207,8 +207,8 @@ temperature + schema + format) and looks it up in `.data/data.sqlite` (`LlmCache
 returns the stored result without calling the provider; that's the `[≡]` marker in build
 output, versus `[✓]` for a fresh call. `llm.decider` is **not** cached.
 
-`--build={"cache":false}` bypasses the lookup and forces fresh calls. **Always use
-`cache:false` when validating a prompt, template, or catalog change** — a stale hit hides
+`--build={"cache":"skip"}` bypasses the lookup and forces fresh calls. **Always use
+`cache:skip` when validating a prompt, template, or catalog change** — a stale hit hides
 whether your fix worked. There is no second "kept mapping" cache on top; the step-level
 "cached" in §6 is a *source-unchanged* skip, decided before any LLM call.
 
@@ -237,7 +237,7 @@ To see exactly what the LLM received and returned, use `--debug` rather than add
 diagnostics:
 
 ```bash
-plang build '--build={"cache":false}' '--debug={"llm":{"system":true,"response":true},"length":{"max":50000}}'
+plang build '--build={"cache":"skip"}' '--debug={"llm":{"system":true,"response":true},"length":{"max":50000}}'
 ```
 
 Full options: [`../../../Documentation/v0.2/debug.md`](../../../Documentation/v0.2/debug.md).
@@ -274,7 +274,7 @@ writer** `llm.query` over the whole goal that writes each step's actions in **fo
 reads the formal in with no LLM, and `build.fold` nests indented sub-steps under their
 condition. The candidate catalog is generated from the C# action handlers, so new actions
 appear automatically, and their markdown teaching is the main quality lever. Everything
-flows through one LLM cache (`cache:false` to bypass). The output is a `.pr` per file
+flows through one LLM cache (`cache:skip` to bypass). The output is a `.pr` per file
 holding the public goal plus its private sub-goals. Because the running builder executes
 from its own `.pr`, changing it is a bootstrap: edit the `.goal`/prompt, rebuild on the
 old `.pr`, and let the recovery goals (`FixSteps`, `ConfirmNumbers`, `SourceError`) absorb

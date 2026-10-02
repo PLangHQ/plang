@@ -101,6 +101,12 @@ public abstract partial class @this
     // Writes return the path itself wrapped — caller can chain or read .Exists.
     public abstract Task<data.@this<@this>> WriteText(string content, actor.context.@this context);
     public abstract Task<data.@this<@this>> WriteBytes(byte[] content, actor.context.@this context);
+
+    /// <summary>Writes <paramref name="content"/> here as it is read, never held whole — gated as a write. Only a file
+    /// location has a place to write a stream; any other refuses.</summary>
+    public virtual Task<data.@this<@this>> Write(System.IO.Stream content, actor.context.@this context)
+        => Task.FromResult(context.Error<@this>(new global::app.error.Error(
+            $"{Raw} has no place to write a stream: only a file does", "NotSupported", 400)));
     public abstract Task<data.@this<@this>> Append(string content, actor.context.@this context);
     public abstract Task<data.@this<@this>> Mkdir(actor.context.@this context);
 

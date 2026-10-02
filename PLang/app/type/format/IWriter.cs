@@ -78,6 +78,11 @@ public interface IWriter
     /// text <c>%name%</c> as a string; a writer with a bare variable form (formal) writes that.</summary>
     void Variable(string name) => String($"%{name}%");
 
+    /// <summary>A value the step gives that is not named here — a slot still to fill (a permission the writer fills
+    /// from the step's words). Default: the word <c>given</c>; a writer where an unfilled slot is its bare name
+    /// (formal) writes nothing.</summary>
+    void Given() => String("given");
+
     /// <summary>
     /// Begin an array bracket. <paramref name="count"/> is -1 when the writer
     /// cannot determine the length up front; format encoders that need a

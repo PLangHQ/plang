@@ -169,8 +169,8 @@ public class SharedProgramTests
         var grant = new global::app.type.item.permission.@this(
             Actor: _app.actor.list.User.Name,
             Path: file,
-            Verbs: new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.Read },
-            Match: global::app.type.item.permission.Match.Exact);
+            Verbs: new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read },
+            Match: global::app.type.item.permission.Match.exact);
         await _app.actor.list.User.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: _app.actor.list.User.Context), persist: false);
         // Out of the app root: the root and the file both sit under the temp folder.
         var read = await ActionFromPr("file", "read", ("Path", "../" + System.IO.Path.GetFileName(dir) + "/data.txt"));

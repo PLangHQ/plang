@@ -256,6 +256,23 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public new System.Threading.Tasks.ValueTask<global::app.data.@this> Create(object? raw, global::app.actor.context.@this context)
         => Create(raw, context, "");
 
+    /// <summary>A type is made from what names it, among the app's types: a type passes; a text is the type it names
+    /// (<c>path</c>); a dict describes one (<c>{name: "number", kind: "int", strict: true}</c>). Anything else declines.</summary>
+    public static @this? Create(object? raw, @this? declared, global::app.data.@this data)
+    {
+        if (raw is @this self) return self;
+        var context = data.Context!;
+        if (raw is item.dict.@this dict && dict.Get<item.text.@this>("name", context)?.ToString() is { Length: > 0 } described)
+            return context.App.type.list[new @this(described, dict.Get<item.text.@this>("kind", context)?.ToString(),
+                dict.Get<item.@bool.@this>("strict", context)?.Value == true), context];
+        if (raw is item.@this { IsLeaf: true } leaf && leaf.RawText is { Length: > 0 } named)
+            return context.App.type.list[new @this(named), context];
+        data.Fail(new global::app.error.Error(
+            $"%{data.Name}% holds a {(raw as item.@this)?.Type.Name ?? raw?.GetType().Name} — a type is its name (path) or {{name, kind?, strict?}}",
+            "CreateItemDeclined", 400));
+        return null;
+    }
+
     /// <summary>The birth (<see cref="Create(object?, actor.context.@this)"/>) of a value named <paramref name="name"/>
     /// — content read off <paramref name="origin"/> (a file) is born knowing it.</summary>
     public System.Threading.Tasks.ValueTask<global::app.data.@this> Create(object? raw,
@@ -600,24 +617,33 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public IReadOnlyList<string>? Values { get => kind.Values ?? Family._values; init => _values = value; }
     private IReadOnlyList<string>? _values;
 
-    /// <summary>What a value of this type can be in <paramref name="step"/>, as the decider is offered it — the kind
-    /// answers: a closed set its options, any other the step's own variables.</summary>
-    public IReadOnlyList<string> Offers(global::app.goal.step.@this step) => kind.Offers(step);
+    /// <summary>What a value of this type can be in <paramref name="step"/>, as the decider is offered it — what its
+    /// class declares it is offered (a permission: that the step gives one), else the kind's answer: a closed set its
+    /// options, any other the step's own variables. A collected concept's type offers its collection's members first.</summary>
+    public virtual System.Threading.Tasks.ValueTask<IReadOnlyList<item.@this>> Offers(global::app.goal.step.@this step)
+        => Family._offer is { } declared ? new(declared) : kind.Offers(step);
+    private IReadOnlyList<item.@this>? _offer;
 
     /// <summary>Scalar wire shape (the underlying primitive form, e.g. "string" for path).</summary>
     public string? Shape { get => Family._shape; init => _shape = value; }
     private string? _shape;
 
+    /// <summary>A value of this type is written as an object: a record (its builder properties, no shape of its own),
+    /// or a type that declares the object shape (limit, permission).</summary>
+    public bool IsRecord => Shape is null ? Property != null : Shape == "object";
+
     /// <summary>Constructor signature for scalar types (<c>"name: shape"</c>).</summary>
     public string? ConstructorSignature { get => Family._constructorSignature; init => _constructorSignature = value; }
     private string? _constructorSignature;
 
-    /// <summary>Canonical example from a static <c>Example</c> property on the type.</summary>
-    public string? Example { get => Family._example; init => _example = value; }
+    /// <summary>Canonical example — the kind's own when it shows one (a list of records, one of its element), else
+    /// the static <c>Example</c> property on the type.</summary>
+    public string? Example { get => kind.Example ?? Family._example; init => _example = value; }
     private string? _example;
 
-    /// <summary>Semantic description from a static <c>Description</c> property on the type.</summary>
-    public string? Description { get => Family._description; init => _description = value; }
+    /// <summary>Semantic description — the kind's own when it says one (a list of records names its element), else
+    /// the static <c>Description</c> property on the type.</summary>
+    public string? Description { get => kind.Description ?? Family._description; init => _description = value; }
     private string? _description;
 
     /// <summary>The other names this type answers to (<c>string</c> for text, <c>map</c> for dict),
@@ -686,6 +712,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
         var example = Declared<string>("Example");
         var description = Declared<string>("Description");
+        _offer = Declared<IReadOnlyList<item.@this>>("Offer");
         if (global::app.type.item.choice.set.@this.For(clr) is { } set)
         {
             Values = set.Values;

@@ -34,13 +34,6 @@ public sealed partial class @this
     [JsonIgnore]
     public bool IsCached => PriorText != null && PriorText == Text && Code.Count > 0;
 
-    /// <summary>The step as the decider and the writer read it — its variables placeholders (<c>%v1%</c>), so a
-    /// variable's own words are never read as the step's; an answer is restored through it. Made from the step's text,
-    /// again when the text changes. Build-time only.</summary>
-    [JsonIgnore]
-    public mask.@this Mask => _mask is { } held && held.Of(Text) ? held : _mask = new(Text);
-    private mask.@this? _mask;
-
     // an action call at the start of the text: module.action(
     private static readonly System.Text.RegularExpressions.Regex FormalHead = new(@"^[a-z]+\.[A-Za-z_]+\(");
 

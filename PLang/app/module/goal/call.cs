@@ -50,6 +50,27 @@ public partial class Call : IContext
         return Context.Ok();
     }
 
+    /// <summary>Build-time: the parameters are named rows, read as <see cref="Run"/> reads them. A %variable% known
+    /// only at run is the run's to read.</summary>
+    public async Task<global::app.error.Error?> Validate()
+    {
+        if (Parameter == null) return null;
+        var given = await Parameter.Follow(Context);
+        if (!given.IsInitialized || !given.Success || await given.Value() is not { IsNull: false } value) return null;
+        return Unnamed(value);
+    }
+
+    // Why the parameters bind nothing, or null when each is a named row: a value that is no rows at all (a module by
+    // its %!…% path) or a row with no name binds nothing, so the call is refused saying the form.
+    private global::app.error.Error? Unnamed(global::app.type.item.@this value)
+    {
+        if (value.Rows(Context) is { } rows && rows.All(row => row.Name.Length > 0)) return null;
+        var written = __action?["Parameter"]?.Value?.RawText ?? value.ToString();
+        return new global::app.error.Error(
+            $"Parameter takes named rows — write each argument as the step names it, {{<the name before =>: {written}}}: {written} alone is one value with no name, which binds nothing",
+            "ParameterUnnamed", 400);
+    }
+
     public async Task<data.@this> Start()
     {
         // The goal is the one the name selects, as seen from the goal this call sits in; a %variable% name
@@ -85,8 +106,11 @@ public partial class Call : IContext
         // The parameters are named rows: the written list's, or a dict's entries when they are given as one value
         // at run (`Parameter=%asked.parameters%`) — read as what the reference names, never converted to a list.
         var bound = new List<data.@this>();
-        if (Parameter != null && await (await Parameter.Follow(Context)).Value() is { } parameters)
-            foreach (var parameter in parameters.Rows(Context))
+        // a null holds no parameters: it binds nothing, as none written does
+        if (Parameter != null && await (await Parameter.Follow(Context)).Value() is { IsNull: false } parameters)
+        {
+            if (Unnamed(parameters) is { } unnamed) return Context.Error(unnamed);
+            foreach (var parameter in parameters.Rows(Context)!)
             {
                 if (parameter.Peek() is not { IsNull: false }) continue;
                 if (execContext.Variable.Supplies(__action, parameter.Name)) continue;
@@ -99,6 +123,7 @@ public partial class Call : IContext
                 if (settled.IsInitialized && !settled.Success) return settled;
                 bound.Add(settled.IsInitialized ? settled.Copy(parameter.Name) : Context.NotFound(parameter.Name));
             }
+        }
 
         return await goal.Start(execContext, bound);
     }

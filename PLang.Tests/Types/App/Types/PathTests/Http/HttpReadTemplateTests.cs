@@ -24,7 +24,7 @@ public class HttpReadTemplateTests
         var ctx = app.actor.list.User.Context;
         var address = server.MapStoredBody(System.Text.Encoding.UTF8.GetBytes("Hello %name%!"), "text/plain");
         var grant = new global::app.type.item.permission.@this("User", new global::app.type.item.path.http.@this(address).Absolute,
-            global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.Exact);
+            global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.exact);
         await ctx.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: ctx), persist: false);
         await ctx.Variable.Set("name", "World");
 

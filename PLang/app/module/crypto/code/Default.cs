@@ -20,33 +20,23 @@ public class Default : ICrypto
         if (data.Error == null && !data.HasValue)
             return action.Context.Error<global::app.module.crypto.type.hash.@this>(new ActionError(
                 "Hash requires a value to hash", "ValueRequired", 400));
-        // The value's own bytes, read through its door (a %variable% hashes what it holds): a text its UTF-8, binary
-        // its bytes, anything else its json text — so a digest matches any other tool's. A signature's digest is the
-        // Data's wire bytes instead (data.Digest), never this.
+        // The value, read through its door (a %variable% hashes what it holds). A signature's digest is the Data's
+        // wire bytes instead (data.Digest), never this.
         var value = await data.Value();
         if (!data.Success)
             return action.Context.Error<global::app.module.crypto.type.hash.@this>(data.Error!);
-        byte[] bytes;
-        if (value is global::app.type.item.binary.@this bin) bytes = bin.Value;
-        else if (value is global::app.type.item.text.@this text) bytes = Encoding.UTF8.GetBytes(text.ToString());
-        else
-        {
-            // a dict or list is its json text in its own key order (insertion): the same entries added in another
-            // order give another digest
-            using var json = new MemoryStream();
-            await using (var utf8 = new System.Text.Json.Utf8JsonWriter(json))
-                await value.Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, emitsSchema: false),
-                    global::app.View.Out, action.Context);
-            bytes = json.ToArray();
-        }
 
         // the kind of hash chosen; a name that is no kind of hash is the choice's own refusal, naming the kinds
         if (await action.Algorithm.Value() is not { } chosen)
             return global::app.data.@this<global::app.module.crypto.type.hash.@this>.From(action.Algorithm);
-        // The value IS a hash (a digest that knows its algorithm), stamped {name: hash, kind: <algorithm>}, so the
-        // builder annotates the write-to as `%x% (hash)` and verify reads the algorithm off the value. The kind
-        // digests the bytes itself.
-        var hash = global::app.module.crypto.type.hash.@this.Of(bytes, chosen.Value);
+        // The value pours its own bytes into the kind's digest — a text its UTF-8, binary its bytes, a file its contents
+        // as they stream (gated as a read), anything else its json text in its own key order — so a digest matches any
+        // other tool's. The value IS then a hash (a digest that knows its algorithm), stamped {name: hash, kind:
+        // <algorithm>}, so the builder annotates the write-to as `%x% (hash)` and verify reads the algorithm off it.
+        using var digest = chosen.Value.Digest();
+        var poured = await value!.Pour(digest, action.Context);
+        if (!poured.Success) return global::app.data.@this<global::app.module.crypto.type.hash.@this>.From(poured);
+        var hash = digest.Hash;
         return action.Context.Ok<global::app.module.crypto.type.hash.@this>(hash,
             action.Context.App.type.list[new global::app.type.@this("hash", hash.Algorithm), action.Context]);
     }

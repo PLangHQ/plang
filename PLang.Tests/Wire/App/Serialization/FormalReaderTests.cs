@@ -141,6 +141,224 @@ public class FormalReaderTests : System.IAsyncDisposable
         await Assert.That(ev.Error.Message).DoesNotContain("on.before");
     }
 
+    // an event reached by its path, read back through a real .pr, binds: the slot is the event the path names
+    [Test]
+    public async Task AnEventByItsPath_ReadsThePr_AndBinds()
+    {
+        var read = Read("on.event(Event=%!app.type.path.on.create%, When=after, Action=goal.call(Name=\"Y\"))", out _);
+        var ctx = app.actor.list.User.Context;
+        var goal = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
+            global::PLang.Tests.Shared.Make.Step("on", ((global::app.goal.step.action.list.@this)read.Peek()!)[0])));
+
+        var bound = await goal.Step[0].Code[0].Start(ctx);
+
+        await bound.IsSuccess();
+        await Assert.That(await bound.Value()).IsTypeOf<global::app.@event.binding.action.@this>();
+    }
+
+    // a value made from a dict of literal members keeps them through a real .pr load
+    [Test]
+    public async Task ALimitsLiteralMembers_RideThePr()
+    {
+        var limit = await Slot("llm.query(Message=[{Role: \"user\", Content: \"x\"}], Limit={token: 5})", "Limit");
+
+        var opened = await limit.Value();
+
+        await limit.IsSuccess();
+        await Assert.That(((global::app.module.llm.type.limit.@this)opened!).Token.ToString()).IsEqualTo("5");
+    }
+
+    [Test]
+    public async Task AQuerysLiteralMembers_RideThePr()
+    {
+        var query = await Slot("list.query(List=%users%, Query={group: \"name\"})", "Query");
+
+        var opened = await query.Value();
+
+        await query.IsSuccess();
+        await Assert.That(opened).IsAssignableTo<global::app.module.list.type.query.@this>();
+        var writer = new global::app.goal.step.action.formal.Writer();
+        await opened!.Output(writer, global::app.View.Store, app.actor.list.User.Context);
+        await Assert.That(writer.ToString()).Contains("group").And.Contains("name");
+    }
+
+    // a permission written as its dict, read back through a real .pr and then as a permission, keeps its members
+    [Test]
+    public async Task APermissionsLiteralMembers_RideThePr()
+    {
+        var value = await Slot("variable.set(Name=%p%, Value={actor: \"u\", path: \"/granted\", verbs: [\"write\"]})", "Value");
+
+        var grant = await global::app.data.@this<global::app.type.item.permission.@this>.From(value).Value();
+
+        await Assert.That(grant!.Path.ToString()).IsEqualTo("/granted");
+        await Assert.That(grant.Verbs.Count).IsEqualTo(1);
+    }
+
+    // as a list of them, each row taken as a permission
+    [Test]
+    public async Task PermissionsLiteralMembers_RideThePr_AsAList()
+    {
+        var value = await Slot("variable.set(Name=%p%, Value=[{actor: \"u\", path: \"/granted\", verbs: [\"write\"]}])", "Value");
+
+        var grants = await global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.permission.@this>>.From(value).Value();
+        var grant = await grants!.Rows(app.actor.list.User.Context).Single().Value<global::app.type.item.permission.@this>();
+
+        await Assert.That(grant!.Path.ToString()).IsEqualTo("/granted");
+        await Assert.That(grant.Verbs.Count).IsEqualTo(1);
+    }
+
+    // made from CLR values (as a C# test makes a step), written as a .pr and read back
+    [Test]
+    [Skip("a .pr written from CLR values holds each dict member as a whole Data row, read back unread; permission.Create type-tests the held value (Get<Text>), so the path comes back empty — waits on how a Create opens its members")]
+    public async Task PermissionsMadeFromClr_RideThePr_AsAList()
+    {
+        var ctx = app.actor.list.User.Context;
+        var may = new List<object?> { new Dictionary<string, object?> { ["path"] = "/granted", ["verbs"] = new List<object?> { "write" } } };
+        var goal = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
+            global::PLang.Tests.Shared.Make.Step("slot", global::PLang.Tests.Shared.Make.Action(ctx, "variable", "set",
+                global::PLang.Tests.Shared.Make.Param(ctx, "Name", "p", "variable"), ("Value", may)))));
+        var value = goal.Step[0].Code[0].Property["Value"]!.Data(ctx);
+
+        var grants = await global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.permission.@this>>.From(value).Value();
+        var grant = await grants!.Rows(ctx).Single().Value<global::app.type.item.permission.@this>();
+
+        await Assert.That(grant!.Path.ToString()).IsEqualTo("/granted");
+        await Assert.That(grant.Verbs.Count).IsEqualTo(1);
+    }
+
+    [Test]
+    [Skip("a .pr written from CLR values holds each dict member as a whole Data row, read back unread; limit.Create type-tests the held value (Peek() is number) and refuses 'token' — waits on how a Create opens its members")]
+    public async Task ALimitMadeFromClr_RidesThePr()
+    {
+        var ctx = app.actor.list.User.Context;
+        var goal = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
+            global::PLang.Tests.Shared.Make.Step("slot", global::PLang.Tests.Shared.Make.Action(ctx, "variable", "set",
+                global::PLang.Tests.Shared.Make.Param(ctx, "Name", "p", "variable"), ("Value", new Dictionary<string, object?> { ["token"] = 5 })))));
+        var value = goal.Step[0].Code[0].Property["Value"]!.Data(ctx);
+
+        var limit = global::app.data.@this<global::app.module.llm.type.limit.@this>.From(value);
+        var opened = await limit.Value();
+
+        await limit.IsSuccess();
+        await Assert.That(opened!.Token.ToString()).IsEqualTo("5");
+    }
+
+    // variable.set's Type is a type: the .pr row is {name: Type, type: {name: type}, value: {name: path}}
+    [Test]
+    public async Task ASetsType_IsWrittenAsAType()
+    {
+        var ctx = app.actor.list.User.Context;
+        async Task<string> Row(string type)
+        {
+            var read = Read($"variable.set(Name=%p%, Value=\"a.txt\", Type={type})", out _);
+            await read.IsSuccess();
+            var goal = global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
+                global::PLang.Tests.Shared.Make.Step("set", ((global::app.goal.step.action.list.@this)read.Peek()!)[0]));
+            var pr = System.Text.Json.Nodes.JsonNode.Parse(await ctx.Pr(goal))!;
+            return pr["step"]![0]!["code"]![0]!["property"]!.AsArray().Single(p => (string?)p!["name"] == "Type")!.ToJsonString();
+        }
+
+        await Assert.That(await Row("{name: \"path\"}")).IsEqualTo("{\"name\":\"Type\",\"type\":{\"name\":\"type\"},\"value\":{\"name\":\"path\"}}");
+        await Assert.That(await Row("\"path\"")).IsEqualTo("{\"name\":\"Type\",\"type\":{\"name\":\"type\"},\"value\":\"path\"}");
+    }
+
+    // a .pr built before Type was a type holds it as a dict or a text: it still sets the value as that type
+    [Test]
+    [Arguments("{\"name\":\"dict\"}", "{\"name\":\"path\"}")]
+    [Arguments("{\"name\":\"text\"}", "\"path\"")]
+    public async Task ASetsTypeBuiltAsADictOrAText_StillSetsThatType(string rowType, string rowValue)
+    {
+        var ctx = app.actor.list.User.Context;
+        var read = Read("variable.set(Name=%p%, Value=\"a.txt\", Type=\"path\")", out _);
+        var built = global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
+            global::PLang.Tests.Shared.Make.Step("set", ((global::app.goal.step.action.list.@this)read.Peek()!)[0]));
+        var pr = (await ctx.Pr(built)).Replace(
+            "\"type\": {\n                \"name\": \"type\"\n              },\n              \"value\": \"path\"",
+            $"\"type\": {rowType},\n              \"value\": {rowValue}");
+        await Assert.That(pr).Contains(rowType);
+        var goal = await global::PLang.Tests.Shared.RealGoalLoad.Read(app, pr);
+
+        await (await goal.Step[0].Code[0].Start(ctx)).IsSuccess();
+
+        await Assert.That(await (await ctx.Variable.Get("p")).Value()).IsAssignableTo<global::app.type.item.path.@this>();
+    }
+
+    // a list slot given one value the build reads (a module, by its %!…% path) walks: the value is a list of one,
+    // never a cast the build dies on
+    [Test]
+    public async Task AListSlotGivenAModule_Walks_NeverACast()
+    {
+        var ctx = app.actor.list.User.Context;
+        var read = Read("goal.call(Name=\"Page\", Parameter=%!app.module.file%)", out _);
+        await read.IsSuccess();
+        var action = ((global::app.goal.step.action.list.@this)read.Peek()!)[0];
+        var goal = global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal", global::PLang.Tests.Shared.Make.Step("call", action));
+
+        var declined = await goal.Step[0].Scope(ctx);
+
+        await Assert.That(declined).IsEmpty();
+    }
+
+    // a goal call given one value where its named rows go is refused at build, saying the form — never bound as
+    // nothing
+    [Test]
+    public async Task AGoalCallGivenAModuleForItsParameters_IsRefused_SayingTheForm()
+    {
+        var ctx = app.actor.list.User.Context;
+        var read = Read("goal.call(Name=\"Page\", Parameter=%!app.module.file%)", out _);
+        var action = ((global::app.goal.step.action.list.@this)read.Peek()!)[0];
+        global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal", global::PLang.Tests.Shared.Make.Step("call", action));
+
+        var refused = await action.Validate(ctx);
+
+        await Assert.That(refused?.Message).Contains("write each argument as the step names it, {<the name before =>: %!app.module.file%}");
+    }
+
+    [Test]
+    [Arguments("{module: %!app.module.file%}")]
+    [Arguments("{}")]
+    public async Task AGoalCallsNamedRows_OrNone_Pass(string parameter)
+    {
+        var ctx = app.actor.list.User.Context;
+        var read = Read($"goal.call(Name=\"Page\", Parameter={parameter})", out _);
+        var action = ((global::app.goal.step.action.list.@this)read.Peek()!)[0];
+        global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal", global::PLang.Tests.Shared.Make.Step("call", action));
+
+        await Assert.That(await action.Validate(ctx)).IsNull();
+    }
+
+    // a choice slot given a %variable% reads: what the variable holds is the run's to check, as every typed slot's is
+    [Test]
+    public async Task AChoiceSlotGivenAVariable_Reads_TheRunChecksWhatItHolds()
+    {
+        var read = Read("crypto.hash(Data=\"x\", Algorithm=%alg%)", out _);
+        await read.IsSuccess();
+
+        var ctx = app.actor.list.User.Context;
+        var action = ((global::app.goal.step.action.list.@this)read.Peek()!)[0];
+        await ctx.Variable.Set("alg", "sha256");
+        await (await action.Start(ctx)).IsSuccess();
+        await ctx.Variable.Set("alg", "no-such-hash");
+        var refused = await action.Start(ctx);
+        await Assert.That(refused.Success).IsFalse();
+    }
+
+    // the builder's own: its query's Cache is the build's setting, by its path
+    [Test]
+    public async Task AChoiceSlotGivenASettingPath_Reads()
+        => await Read("llm.query(Message=[{Role: \"user\", Content: \"x\"}], Cache=%!build.setting.cache%)", out _).IsSuccess();
+
+    // a property of the one action a formal line reads, through a real .pr load
+    private async Task<global::app.data.@this> Slot(string formal, string property)
+    {
+        var read = Read(formal, out _);
+        await read.IsSuccess();
+        var ctx = app.actor.list.User.Context;
+        var goal = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
+            global::PLang.Tests.Shared.Make.Step("slot", ((global::app.goal.step.action.list.@this)read.Peek()!)[0])));
+        return goal.Step[0].Code[0].Property[property]!.Data(ctx);
+    }
+
     // a conversation writes what it continues as written — the reference, never what it names now (unset at build)
     [Test]
     public async Task AConversation_WritesItsReferenceAsWritten()

@@ -56,11 +56,11 @@ public class PathAuthorizeTests
         var path = new Path("/p");
 
         // Pre-seed a grant covering the request.
-        var grant = new PermissionRecord(app.actor.list.User.Name, "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.Exact);
+        var grant = new PermissionRecord(app.actor.list.User.Name, "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact);
         var grantData = new global::app.data.@this<PermissionRecord>("", grant, context: context);
         await app.actor.list.User.Permission.Add(grantData, persist: true);
 
-        var result = await path.Authorize(global::app.type.item.permission.Verb.Read, app.actor.list.User.Context);
+        var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         await result.IsSuccess();
     }
 
@@ -71,22 +71,22 @@ public class PathAuthorizeTests
         var context = app.actor.list.User.Context;
         var path = new Path("/p");
 
-        var result = await path.Authorize(global::app.type.item.permission.Verb.Read, app.actor.list.User.Context);
+        var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         await result.IsSuccess();
         // Subsequent Find should hit since Add ran.
-        await Assert.That(await app.actor.list.User.Permission.Find(path, global::app.type.item.permission.Verb.Read)).IsNotNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(path, global::app.type.item.permission.Verb.read)).IsNotNull();
     }
 
     [Test] public async Task Authorize_SamePath_ChecksTheCallersActor_NotTheCreators()
     {
         var app = NewApp();
         var path = new Path("/p");
-        var grant = new PermissionRecord(app.actor.list.User.Name, "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.Exact);
+        var grant = new PermissionRecord(app.actor.list.User.Name, "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact);
         await app.actor.list.User.Permission.Add(new global::app.data.@this<PermissionRecord>("", grant, context: app.actor.list.User.Context), persist: false);
         app.actor.list.System.Channel.Register(new CannedAnswerChannel(new[] { "n" }));
 
-        var asUser = await path.Authorize(Verb.Read, app.actor.list.User.Context);
-        var asSystem = await path.Authorize(Verb.Read, app.actor.list.System.Context);
+        var asUser = await path.Authorize(Verb.read, app.actor.list.User.Context);
+        var asSystem = await path.Authorize(Verb.read, app.actor.list.System.Context);
 
         await asUser.IsSuccess();
         await asSystem.IsFailure();
@@ -100,9 +100,9 @@ public class PathAuthorizeTests
         var context = app.actor.list.User.Context;
         var path = new Path("/p");
 
-        var result = await path.Authorize(global::app.type.item.permission.Verb.Read, app.actor.list.User.Context);
+        var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         await result.IsSuccess();
-        await Assert.That(await app.actor.list.User.Permission.Find(path, global::app.type.item.permission.Verb.Read)).IsNotNull();
+        await Assert.That(await app.actor.list.User.Permission.Find(path, global::app.type.item.permission.Verb.read)).IsNotNull();
     }
 
     [Test] public async Task Authorize_StatefulAnswerN_ReturnsFail_PermissionDenied()
@@ -112,7 +112,7 @@ public class PathAuthorizeTests
         var context = app.actor.list.User.Context;
         var path = new Path("/p");
 
-        var result = await path.Authorize(global::app.type.item.permission.Verb.Read, app.actor.list.User.Context);
+        var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         await result.IsFailure();
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
     }
@@ -137,7 +137,7 @@ public class PathAuthorizeTests
         app.actor.list.User.Channel.Register(new FailingAskChannel(new global::app.error.NoAnswer("Channel 'input' has no interactive answerer")) { Name = "input", Direction = global::app.channel.ChannelDirection.Bidirectional });
         var path = new Path("/p");
 
-        var result = await path.Authorize(global::app.type.item.permission.Verb.Read, app.actor.list.User.Context);
+        var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>()
@@ -151,7 +151,7 @@ public class PathAuthorizeTests
         app.actor.list.User.Channel.Register(new FailingAskChannel("ChannelBroken") { Name = "input", Direction = global::app.channel.ChannelDirection.Bidirectional });
         var path = new Path("/p");
 
-        var result = await path.Authorize(global::app.type.item.permission.Verb.Read, app.actor.list.User.Context);
+        var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
 
         await result.IsFailure();
         await Assert.That(result.Error!.Key).IsEqualTo("ChannelBroken");
@@ -165,7 +165,7 @@ public class PathAuthorizeTests
         var context = app.actor.list.User.Context;
         var path = new Path("/p");
 
-        var result = await path.Authorize(global::app.type.item.permission.Verb.Read, app.actor.list.User.Context);
+        var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         await result.IsSuccess();
     }
 
@@ -176,7 +176,7 @@ public class PathAuthorizeTests
         var context = app.actor.list.User.Context;
         var path = new Path("/p");
 
-        var result = await path.Authorize(global::app.type.item.permission.Verb.Read, app.actor.list.User.Context);
+        var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         // Stateless: bubble the Exit-typed Data up so the step loop short-circuits.
         await Assert.That(result.Type?.Name).IsEqualTo("ask");
         await Assert.That(result.Snapshot).IsNotNull();
@@ -188,14 +188,14 @@ public class PathAuthorizeTests
         app.actor.list.User.Channel.Register(new CannedAnswerChannel(new[] { "a" }));
         var context = app.actor.list.User.Context;
         var path = new Path("/apps/Email/file.txt");
-        var verb = global::app.type.item.permission.Verb.Read;
+        var verb = global::app.type.item.permission.Verb.read;
 
         await path.Authorize(verb, app.actor.list.User.Context);
         var grant = await app.actor.list.User.Permission.Find(path, verb);
         await Assert.That(grant).IsNotNull();
         await Assert.That((await grant!.Value<PermissionRecord>())!.Actor).IsEqualTo(app.actor.list.User.Name);
         await Assert.That((await grant!.Value<PermissionRecord>())!.Path).IsEqualTo("/apps/Email/file.txt");
-        await Assert.That((await grant!.Value<PermissionRecord>())!.Match).IsEqualTo(MatchMode.Exact);
+        await Assert.That((await grant!.Value<PermissionRecord>())!.Match).IsEqualTo(MatchMode.exact);
     }
 
     [Test] public async Task PermissionDenied_Error_CarriesConstructedPermission()
@@ -205,7 +205,7 @@ public class PathAuthorizeTests
         var context = app.actor.list.User.Context;
         var path = new Path("/secret");
 
-        var result = await path.Authorize(global::app.type.item.permission.Verb.Read, app.actor.list.User.Context);
+        var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         var denied = (global::app.error.PermissionDenied)result.Error!;
         await Assert.That(denied.Permission.Path).IsEqualTo("/secret");
         await Assert.That(denied.Permission.Actor).IsEqualTo(app.actor.list.User.Name);
@@ -228,7 +228,7 @@ public class PathAuthorizeTests
         var uppered = app.AbsolutePath.ToUpperInvariant() + "/file.txt";
         var path = new Path(uppered);
 
-        var result = await path.Authorize(global::app.type.item.permission.Verb.Read, app.actor.list.User.Context);
+        var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         await result.IsFailure();
         await Assert.That(result.Error).IsTypeOf<global::app.error.PermissionDenied>();
     }
@@ -246,13 +246,13 @@ public class PathAuthorizeTests
         var osPath = System.IO.Path.Combine(osDir, "system", "test", "fixture.goal");
         var path = new Path(osPath);
 
-        var result = await path.Authorize(global::app.type.item.permission.Verb.Read, app.actor.list.User.Context);
+        var result = await path.Authorize(global::app.type.item.permission.Verb.read, app.actor.list.User.Context);
         await result.IsSuccess();
     }
 
     [Test] public async Task PermissionDenied_Error_RoundTripsThroughErrorShape()
     {
-        var perm = new PermissionRecord("user", "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.Exact);
+        var perm = new PermissionRecord("user", "/p", global::app.type.item.permission.@this.AllVerbs, MatchMode.exact);
         var err = new global::app.error.PermissionDenied(perm);
         await Assert.That(err.Key).IsEqualTo("PermissionDenied");
         await Assert.That(err.Status.Code.ToInt32()).IsEqualTo(403);

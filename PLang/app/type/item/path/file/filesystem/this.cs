@@ -23,6 +23,18 @@ public class @this
         await System.IO.File.WriteAllBytesAsync(p.Absolute, content);
     }
 
+    /// <summary>Writes the file from <paramref name="content"/> as it is read, never held whole, making its folder when
+    /// there is none.</summary>
+    public virtual async Task Write(file.@this p, System.IO.Stream content, CancellationToken ct = default)
+    {
+        Parent(p);
+        await using var file = System.IO.File.Create(p.Absolute);
+        await content.CopyToAsync(file, ct);
+    }
+
+    /// <summary>The file, to be read as it streams.</summary>
+    public virtual Task<System.IO.Stream> Open(file.@this p) => Task.FromResult<System.IO.Stream>(System.IO.File.OpenRead(p.Absolute));
+
     public virtual async Task Append(file.@this p, string text)
     {
         Parent(p);

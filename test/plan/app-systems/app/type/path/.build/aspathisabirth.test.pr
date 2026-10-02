@@ -36,11 +36,18 @@
                 "name": "number"
               },
               "value": 0
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
             }
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -48,8 +55,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
@@ -65,7 +71,7 @@
             {
               "name": "Event",
               "type": {
-                "name": "app.event",
+                "name": "event",
                 "template": "plang"
               },
               "value": "%!app.type.path.on.create%",
@@ -112,7 +118,7 @@
                   {
                     "name": "Name",
                     "type": {
-                      "name": "text"
+                      "name": "goal"
                     },
                     "value": "CountCreated"
                   }
@@ -140,8 +146,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
@@ -181,14 +186,14 @@
             {
               "name": "Type",
               "type": {
-                "name": "text"
+                "name": "type"
               },
               "value": "path"
             }
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -196,8 +201,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 3,
@@ -244,8 +248,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [
@@ -346,11 +349,18 @@
                       ]
                     }
                   ]
+                },
+                {
+                  "name": "Type",
+                  "type": {
+                    "name": "type"
+                  },
+                  "value": "number"
                 }
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
@@ -359,26 +369,23 @@
               ]
             }
           ],
-          "waitForExecution": true
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 0 uses math.add, which the decider was not sure of (0.98)"
+            }
+          ]
         }
       ],
       "child": [],
       "visibility": "Private",
       "path": "/plan/app-systems/app/type/path/AsPathIsABirth.test.goal",
       "prPath": "/plan/app-systems/app/type/path/.build/aspathisabirth.test.pr",
-      "hash": "03662325b967596fa340c431eaf3101b0f776b007b149191a8b1746ad25f8a46",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": true
+      "hash": "03662325b967596fa340c431eaf3101b0f776b007b149191a8b1746ad25f8a46"
     }
   ],
   "visibility": "Public",
   "path": "/plan/app-systems/app/type/path/AsPathIsABirth.test.goal",
   "prPath": "/plan/app-systems/app/type/path/.build/aspathisabirth.test.pr",
-  "hash": "f7dbef5f8e1d83dbef6fef457186ce6ba1a2bd5306fc53221251060923850a51",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "hash": "f7dbef5f8e1d83dbef6fef457186ce6ba1a2bd5306fc53221251060923850a51"
 }

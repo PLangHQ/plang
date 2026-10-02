@@ -22,7 +22,9 @@ public sealed class @this : global::app.type.kind.@this
     /// <c>30</c>, <c>[]</c>, a node's members).</summary>
     public global::app.type.property.list.@this Property => _property.Value;
 
-    // The option rows, read off a fresh one of the class (its defaults).
+    // The option rows, read off a fresh one of the class (its defaults). A sensitive option (a key) shows no default:
+    // its default may be a secret (the environment's key), and these rows are written where anyone reads them — the
+    // builder's prompt, a type's face.
     private global::app.type.property.list.@this Options(global::app.type.list.@this types)
     {
         var fresh = Create();
@@ -35,7 +37,8 @@ public sealed class @this : global::app.type.kind.@this
                 Name = char.ToLowerInvariant(option.Name[0]) + option.Name[1..],
                 Type = reflected.Type,
                 Nullable = reflected.Nullable,
-                Default = option.GetValue(fresh) is global::app.type.item.@this { IsNull: false } value ? value : null,
+                Default = !option.IsDefined(typeof(global::app.SensitiveAttribute), inherit: true)
+                          && option.GetValue(fresh) is global::app.type.item.@this { IsNull: false } value ? value : null,
             });
         }
         return rows;

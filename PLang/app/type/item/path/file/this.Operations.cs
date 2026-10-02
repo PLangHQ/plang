@@ -25,7 +25,7 @@ public sealed partial class @this
     /// </summary>
     public override async Task<data.@this> LoadAssemblyAsync(actor.context.@this context)
     {
-        if (await AuthGate(Verb.Execute, context) is { } early)
+        if (await AuthGate(Verb.execute, context) is { } early)
             return early;
         if (!context.FileSystem.IsFile(this))
             return context.Error(new global::app.error.ServiceError($"Not found: {this}", "NotFound", 404));
@@ -90,7 +90,7 @@ public sealed partial class @this
 
     internal override async Task<data.@this<global::app.type.item.binary.@this>> Bytes(actor.context.@this context)
     {
-        if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.binary.@this>.From(early);
+        if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.binary.@this>.From(early);
         if (!context.FileSystem.IsFile(this))
             return context.Error<global::app.type.item.binary.@this>(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404));
         try
@@ -105,7 +105,7 @@ public sealed partial class @this
 
     public override async Task<data.@this<global::app.type.item.@bool.@this>> Exists(actor.context.@this context)
     {
-        if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.@bool.@this>.From(early);
+        if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.@bool.@this>.From(early);
         return context.Ok<global::app.type.item.@bool.@this>(context.FileSystem.IsFile(this) || context.FileSystem.IsFolder(this));
     }
 
@@ -128,7 +128,7 @@ public sealed partial class @this
     /// </summary>
     public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> List(global::app.type.item.text.@this pattern, global::app.type.item.@bool.@this recursive, actor.context.@this context)
     {
-        if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
+        if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
         if (!context.FileSystem.IsFolder(this))
             return context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
         try
@@ -149,7 +149,7 @@ public sealed partial class @this
 
     public override async Task<data.@this<global::app.type.item.path.@this.StatInfo>> Stat(actor.context.@this context)
     {
-        if (await AuthGate(Verb.Read, context) is { } early) return data.@this<global::app.type.item.path.@this.StatInfo>.From(early);
+        if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.path.@this.StatInfo>.From(early);
         return context.Ok<global::app.type.item.path.@this.StatInfo>(context.FileSystem.Stat(this));
     }
 
@@ -157,7 +157,7 @@ public sealed partial class @this
 
     public override async Task<data.@this<global::app.type.item.path.@this>> WriteText(string content, actor.context.@this context)
     {
-        if (await AuthGate(Verb.Write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         await context.FileSystem.Write(this, Encoding.UTF8.GetBytes(content));
         return context.Ok<global::app.type.item.path.@this>(this);
     }
@@ -179,21 +179,48 @@ public sealed partial class @this
 
     public override async Task<data.@this<global::app.type.item.path.@this>> WriteBytes(byte[] content, actor.context.@this context)
     {
-        if (await AuthGate(Verb.Write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         await context.FileSystem.Write(this, content);
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
+    /// <summary>Writes the file from <paramref name="content"/> as it is read — never held whole (a download's body) —
+    /// gated as a write.</summary>
+    public override async Task<data.@this<global::app.type.item.path.@this>> Write(System.IO.Stream content, actor.context.@this context)
+    {
+        if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        await context.FileSystem.Write(this, content, context.CancellationToken);
+        return context.Ok<global::app.type.item.path.@this>(this);
+    }
+
+    /// <summary>A file's bytes are its contents — read as they stream, gated as a read, never held whole.</summary>
+    public override async Task<data.@this> Pour(System.IO.Stream into, actor.context.@this context)
+    {
+        if (await AuthGate(Verb.read, context) is { } early) return early;
+        if (!context.FileSystem.IsFile(this))
+            return context.Error(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404));
+        try
+        {
+            await using var file = await context.FileSystem.Open(this);
+            await file.CopyToAsync(into, context.CancellationToken);
+            return context.Ok();
+        }
+        catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
+        {
+            return context.Error(new global::app.error.ServiceError(ex.Message, "IOError", 500));
+        }
+    }
+
     public override async Task<data.@this<global::app.type.item.path.@this>> Append(string content, actor.context.@this context)
     {
-        if (await AuthGate(Verb.Write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         await context.FileSystem.Append(this, content);
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
     public override async Task<data.@this<global::app.type.item.path.@this>> Mkdir(actor.context.@this context)
     {
-        if (await AuthGate(Verb.Write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         context.FileSystem.Create(this);
         return context.Ok<global::app.type.item.path.@this>(this);
     }
@@ -208,7 +235,7 @@ public sealed partial class @this
     /// </summary>
     public override async Task<data.@this<global::app.type.item.path.@this>> Delete(global::app.type.item.@bool.@this recursive, actor.context.@this context)
     {
-        if (await AuthGate(Verb.Delete, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        if (await AuthGate(Verb.delete, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
         try
         {
             var files = context.FileSystem;
@@ -263,8 +290,8 @@ public sealed partial class @this
     /// </summary>
     private async Task<data.@this<global::app.type.item.path.@this>> BundledTransfer(@this destination, bool isMove, bool overwrite, bool subfolder, actor.context.@this context)
     {
-        var sourceVerb = Verb.Read;
-        var destVerb   = Verb.Write;
+        var sourceVerb = Verb.read;
+        var destVerb   = Verb.write;
 
         var sourceAuth = await TryAuthorizeWithoutAsk(sourceVerb, context);
         var destAuth   = await destination.TryAuthorizeWithoutAsk(destVerb, context);

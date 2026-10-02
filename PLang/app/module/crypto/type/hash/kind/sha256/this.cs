@@ -5,5 +5,12 @@ public sealed class @this : kind.@this
 {
     public @this() : base("sha256") { }
 
-    internal override byte[] Digest(byte[] bytes) => System.Security.Cryptography.SHA256.HashData(bytes);
+    public override digest.@this Digest()
+    {
+        var sha = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256);
+        return new digest.@this(this, sha.AppendData, () =>
+        {
+            using (sha) return sha.GetHashAndReset();
+        });
+    }
 }

@@ -52,6 +52,7 @@ public class MutationInvalidatesRawTests
 
         var wire = (await app.actor.list.User.Context.Format("application/plang").Serialize(d, app.actor.list.User.Context).Value())!.Clr<string>()!;
         await Assert.That(wire).Contains("\"value\":\"mutated\""); // renderer output
-        await Assert.That(wire).DoesNotContain("8080");           // not the stale raw
+        // not the stale raw — its key, never its number: a signature's timestamp can hold any digits
+        await Assert.That(wire).DoesNotContain("\"port\"");
     }
 }

@@ -71,6 +71,21 @@ public class TypedListKindTests
         await Assert.That((await row.Value())?.ToString()).IsEqualTo("/granted");
     }
 
+    // a value that is no leaf and no list (a module) is one value too: a list of one, never lowered to a list it
+    // has no form of
+    [Test] public async Task OneModuleMadeAList_IsAListOfOne()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var ctx = app.actor.list.User.Context;
+
+        var asked = global::app.data.@this<global::app.type.item.list.@this>.From(new global::app.data.@this("p", app.Module("file"), context: ctx));
+
+        var list = await asked.Value();
+
+        await asked.IsSuccess();
+        await Assert.That(list!.Rows(ctx).Count()).IsEqualTo(1);
+    }
+
     [Test] public async Task AnUnknownElement_IsNoClosedList()
     {
         await using var app = new global::app.@this("/app").Testing();

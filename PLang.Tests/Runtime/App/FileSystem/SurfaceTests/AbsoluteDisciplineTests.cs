@@ -36,7 +36,7 @@ public class AbsoluteDisciplineTests
         var outOfRoot = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-foreign-" + System.Guid.NewGuid().ToString("N")[..8], "db.sqlite");
         var p = new FilePath(outOfRoot);
-        var auth = await p.Authorize(global::app.type.item.permission.Verb.Write, app.actor.list.User.Context);
+        var auth = await p.Authorize(global::app.type.item.permission.Verb.write, app.actor.list.User.Context);
         await auth.IsFailure();
     }
 
@@ -44,7 +44,7 @@ public class AbsoluteDisciplineTests
     {
         var app = NewApp(out var root);
         var p = new FilePath(System.IO.Path.Combine(root, "db.sqlite"));
-        var auth = await p.Authorize(global::app.type.item.permission.Verb.Write, app.actor.list.User.Context);
+        var auth = await p.Authorize(global::app.type.item.permission.Verb.write, app.actor.list.User.Context);
         await auth.IsSuccess();
         // .Absolute is now safe to read.
         await Assert.That(p.Absolute).IsNotNull();

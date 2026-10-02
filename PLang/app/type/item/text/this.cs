@@ -394,6 +394,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     public override string ToString() => _value;
 
+    /// <summary>A text's bytes are its UTF-8.</summary>
+    public override async System.Threading.Tasks.Task<global::app.data.@this> Pour(System.IO.Stream into, actor.context.@this context)
+    {
+        await into.WriteAsync(System.Text.Encoding.UTF8.GetBytes(_value));
+        return context.Ok();
+    }
+
     /// <summary>A diagnostic shows text quoted, apart from a number or a name.</summary>
     public override System.Threading.Tasks.ValueTask<string> Debug(global::app.actor.context.@this context) => new($"\"{_value}\"");
 
