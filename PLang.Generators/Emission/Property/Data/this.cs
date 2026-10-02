@@ -49,13 +49,16 @@ public sealed record @this(
     /// <summary>The [Default] literal, unwrapped of the inner-type cast so the Data borns it
     /// with context instead of a context-less <c>({T})(literal)</c> operator. For choice&lt;X&gt;
     /// a [Default(X.Member)] arrives as X's underlying value, so keep the <c>(X)</c> cast
-    /// (int -&gt; X) — the Data then borns X into choice&lt;X&gt;.</summary>
+    /// (int -&gt; X) — the Data then borns X into choice&lt;X&gt;. A default given by name
+    /// (<c>[Default("keccak256")]</c>) rides as the name: the choice makes its member from it, as from a
+    /// written value.</summary>
     private string DefaultRaw
     {
         get
         {
             const string ChoicePrefix = "global::app.type.item.choice.@this<";
-            return (InnerType != null && InnerType.StartsWith(ChoicePrefix, System.StringComparison.Ordinal))
+            return (InnerType != null && InnerType.StartsWith(ChoicePrefix, System.StringComparison.Ordinal)
+                    && DefaultValue?.StartsWith("\"", System.StringComparison.Ordinal) != true)
                 ? $"({InnerType.Substring(ChoicePrefix.Length, InnerType.Length - ChoicePrefix.Length - 1)})({DefaultValue})"
                 : $"{DefaultValue}";
         }

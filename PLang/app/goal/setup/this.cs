@@ -6,7 +6,7 @@ namespace app.goal.setup;
 /// <summary>
 /// Run-once setup execution system.
 /// Setup goals execute once-per-step at app startup. Steps are tracked
-/// persistently in the "setup" table of app.actor.list.System.DataSource (system.sqlite),
+/// persistently in the "setup" table of the app's store (.data/data.sqlite),
 /// keyed by step.Hash. New steps run on next startup. Changed steps (different hash) re-run.
 /// </summary>
 public sealed class @this
@@ -28,9 +28,9 @@ public sealed class @this
         .ThenBy(g => g.Name, StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
-    /// Discovers setup goals by convention:
-    /// 1. Root .build/setup.pr (the app's main Setup.goal)
-    /// 2. Setup/.build/setup.pr (a dedicated Setup/ folder)
+    /// Discovers setup goals by convention, each read from the .pr it is built to:
+    /// 1. /Setup.goal (the app's main setup)
+    /// 2. /Setup/Setup.goal (a dedicated Setup/ folder)
     /// Does NOT scan all .pr files — there could be thousands.
     /// </summary>
     private async Task<data.@this> DiscoverAsync(app.@this app, CancellationToken ct = default)
@@ -38,8 +38,8 @@ public sealed class @this
         var context = app.actor.list.System.Context!;
         var candidates = new global::app.type.item.path.@this[]
         {
-            global::app.type.item.path.@this.Resolve("/.build/setup.pr", context),
-            global::app.type.item.path.@this.Resolve("/Setup/.build/setup.pr", context),
+            global::app.goal.@this.Pr(global::app.type.item.path.@this.Resolve("/Setup.goal", context)),
+            global::app.goal.@this.Pr(global::app.type.item.path.@this.Resolve("/Setup/Setup.goal", context)),
         };
 
         foreach (var file in candidates)

@@ -52,8 +52,7 @@
           "key": "Reopened",
           "message": "step 0's saved code no longer holds — rebuilt: step 0 'set default %path% = \"/\"': variable.set: 'AsDefault' is not a property of this action. Its properties are: Name, Value, Type, Default."
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
@@ -119,8 +118,7 @@
           "key": "Unsure",
           "message": "step 1 uses variable.set, which the decider was not sure of (0.69)"
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
@@ -160,7 +158,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -169,7 +167,12 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 2's saved code no longer holds — rebuilt: step 2 'set %traceGoals% = []': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 3,
@@ -219,8 +222,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 4,
@@ -264,8 +266,7 @@
           "key": "Unsure",
           "message": "step 4 uses goal.call, which the decider was not sure of (0.80)"
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 5,
@@ -330,7 +331,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -339,7 +340,12 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 5's saved code no longer holds — rebuilt: step 5 'build.load, write to %app%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 6,
@@ -414,7 +420,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -423,7 +429,12 @@
           ]
         }
       ],
-      "waitForExecution": true
+      "warning": [
+        {
+          "key": "Reopened",
+          "message": "step 6's saved code no longer holds — rebuilt: step 6 'build.goals path=%path%, write to %goals%': variable.set: the default frozen for 'asdefault' is no option of this action any more."
+        }
+      ]
     },
     {
       "index": 7,
@@ -467,8 +478,7 @@
           "key": "Unsure",
           "message": "step 7 uses goal.call, which the decider was not sure of (0.85)"
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 8,
@@ -549,8 +559,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 9,
@@ -564,8 +573,7 @@
           "name": "unreached",
           "property": []
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 10,
@@ -619,8 +627,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 11,
@@ -634,8 +641,7 @@
           "name": "appSave",
           "property": []
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [],

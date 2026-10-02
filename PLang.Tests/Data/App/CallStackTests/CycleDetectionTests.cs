@@ -11,7 +11,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     [Test]
     public async Task Push_ExceedsMaxDepth_ThrowsCallStackOverflowException()
     {
-        var stack = new CallStack { MaxDepth = 3 };
+        var stack = new CallStack(TestCallStack.Settings()) { MaxDepth = 3 };
         await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
         await using var c = stack.Push(MakeAction(app.actor.list.User.Context, "C"));
@@ -25,7 +25,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     [Test]
     public async Task CallStackOverflowException_IncludesMaxDepth()
     {
-        var stack = new CallStack { MaxDepth = 2 };
+        var stack = new CallStack(TestCallStack.Settings()) { MaxDepth = 2 };
         await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
 
@@ -42,7 +42,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     {
         // Recursion is allowed — a goal that calls itself forever (directly or A → B → A) is
         // stopped by the depth limit alone: each call is born one deeper than its caller.
-        var stack = new CallStack { MaxDepth = 5 };
+        var stack = new CallStack(TestCallStack.Settings()) { MaxDepth = 5 };
         var calls = new List<global::app.callstack.call.@this>();
         CallStackOverflowException? caught = null;
         try
@@ -95,7 +95,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     {
         // Build → EmitBuildEvent → the builder channel's call, which was written in Build: running it
         // does not enter Build (only a goal's entry does), so it is no cycle.
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var build = stack.Push(MakeAction(app.actor.list.User.Context, "Build"));
         await using var emit = stack.Push(MakeAction(app.actor.list.User.Context, "EmitBuildEvent"));
 
@@ -107,7 +107,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     [Test]
     public async Task Push_RepeatedSiblingNotInChain_DoesNotThrow()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
         await b.DisposeAsync();

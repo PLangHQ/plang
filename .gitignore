@@ -10,7 +10,7 @@
 *.ncrunchsolution.user
 *.cache
 *.db
-/Documentation/.db/system.sqlite
+.data/
 /Documentation/output
 /.deploy/
 /publish/*.zip

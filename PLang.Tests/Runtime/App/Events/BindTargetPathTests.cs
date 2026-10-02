@@ -52,8 +52,8 @@ public class BindTargetPathTests
     [Test]
     [Arguments("!app.actor[\"user\"].channel.output")]
     [Arguments("!app.actor[\"user\"].channel[\"output\"]")]
-    [Arguments("!channels.output")]
-    [Arguments("!channels[\"output\"]")]
+    [Arguments("!channel.output")]
+    [Arguments("!channel[\"output\"]")]
     public async Task AChannelByName_IsTheChannel(string path)
     {
         var at = await At(path);

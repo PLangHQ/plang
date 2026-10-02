@@ -31,6 +31,11 @@ public partial class Call : IContext
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Parallel { get; init; }
 
+    /// <summary>Whether the step waits for the goal to end (<c>call X, don't wait</c> is false): not waiting, the goal
+    /// runs on its own and the step goes on at once; what it fails with is reported on its actor's error channel.</summary>
+    [Default(true)]
+    public partial data.@this<global::app.type.item.@bool.@this> Wait { get; init; }
+
     /// <summary>
     /// Build-time: the name becomes the goal's own address — one truth, a dictionary hit at run. A %variable%
     /// name is only known at run and stays authored; a goal in the caller's own file stays bare
@@ -42,7 +47,7 @@ public partial class Call : IContext
     {
         // at build, the goal is the one the name selects from the goal being built (the frame is the builder's)
         if (!Name.HasVariable && __action?["Name"] is { Value.RawText: { Length: > 0 } authored } name
-            && await Context.App.goal.list.Find(authored, __action.Step?.Goal) is { } target
+            && (await Context.App.goal.list.Find(authored, __action.Step?.Goal)).Peek() is global::app.goal.@this target
             && target.Reference(__action.Step?.Goal) is { } address
             && !string.Equals(address, authored, System.StringComparison.OrdinalIgnoreCase))
             __action.Property.Set(name.Holding(new global::app.type.item.text.@this(address)));
@@ -56,7 +61,22 @@ public partial class Call : IContext
         if (await Name.Value() is not { } goal) return Name;
 
         // the actor named runs it; none named, this one
-        return await Context.App.actor.list.Use(Actor, Context, runner => Run(goal, runner.Context));
+        if (await Wait.ToBooleanAsync())
+            return await Context.App.actor.list.Use(Actor, Context, runner => Run(goal, runner.Context));
+
+        // not waited for: it runs on its own, and a failure nothing waits for goes to its actor's error channel
+        var context = Context;
+        _ = Task.Run(async () =>
+        {
+            data.@this ran;
+            try { ran = await context.App.actor.list.Use(Actor, context, runner => Run(goal, runner.Context)); }
+            catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
+            {
+                ran = context.Error(global::app.error.Error.FromException(ex));
+            }
+            if (!ran.Success) await (ran.Context ?? context).Actor.Channel.Report(ran);
+        });
+        return Context.Ok();
     }
 
     private async Task<data.@this> Run(global::app.goal.@this goal, global::app.actor.context.@this execContext)
@@ -71,9 +91,11 @@ public partial class Call : IContext
         // supplies, and a supplied name wins.
         // Each parameter binds as its own Data: `place=%city%` is the caller's %city% as it is now, and the
         // shared row never enters the callee's variables. The list loads on this run's own copy, never the row.
+        // The parameters are named rows: the written list's, or a dict's entries when they are given as one value
+        // at run (`Parameter=%asked.parameters%`) — read as what the reference names, never converted to a list.
         var bound = new List<data.@this>();
-        if (Parameter != null && await Parameter.Value() is global::app.type.item.list.@this parameters)
-            foreach (var parameter in parameters.Items(Context))
+        if (Parameter != null && await (await Parameter.Follow(Context)).Value() is { } parameters)
+            foreach (var parameter in parameters.Rows(Context))
             {
                 if (parameter.Peek() is not { IsNull: false }) continue;
                 if (execContext.Variable.Supplies(__action, parameter.Name)) continue;

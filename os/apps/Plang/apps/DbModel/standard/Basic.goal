@@ -1,3 +1,0 @@
-Basic
-- read %file.path%, write to %content%
-- return %content%

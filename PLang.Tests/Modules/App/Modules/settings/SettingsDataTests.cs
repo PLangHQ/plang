@@ -81,7 +81,7 @@ public class SettingsDataTests
     {
         // an app kept on disk (a test session's store is in memory): the store opens where it lives on first use
         await using var onDisk = new global::app.@this(_tempDir).TestSigning();
-        var dbDir = System.IO.Path.Combine(_tempDir, ".db");
+        var dbDir = System.IO.Path.Combine(_tempDir, ".data");
         await Assert.That(onDisk.store).IsNotNull();
         await Assert.That(System.IO.Directory.Exists(dbDir)).IsFalse();
 
@@ -99,7 +99,7 @@ public class SettingsDataTests
         await using var onDisk = new global::app.@this(_tempDir).TestSigning();
 
         // Corrupt the database file — overwrite with garbage
-        var dbPath = System.IO.Path.Combine(_tempDir, ".db", "system.sqlite");
+        var dbPath = System.IO.Path.Combine(_tempDir, ".data", "data.sqlite");
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(dbPath)!);
         System.IO.File.WriteAllText(dbPath, "NOT A VALID SQLITE DATABASE FILE");
 

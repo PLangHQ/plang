@@ -511,9 +511,14 @@ public partial class @this
         var value = await Value();
         // a read that failed has said why — nothing is made from it
         if (!Success) return null;
-        // a type selected by key answers the one the value names (a goal by its name), as this Data's asker sees it
-        if (T.IsSelected && value is not T && Context != null && await T.Select(value, Context) is { } chosen)
-            return chosen;
+        // a type selected by key answers the one the value names (a goal by its name), as this Data's asker sees it;
+        // one it names but can't hand (a goal not built) says why; a key naming none goes on to the type's birth
+        if (T.IsSelected && value is not T && Context != null && await T.Select(value, Context) is { IsInitialized: true } chosen)
+        {
+            if (chosen.Success) return chosen.Peek() as T;
+            Fail(chosen.Error!);
+            return null;
+        }
         return value.Refuses(new global::app.type.@this(typeof(T)), this) ? null : T.Create(value, null, this);
     }
 
@@ -821,6 +826,8 @@ public class @this<T> : @this
         // isn't T rides whole so its own type and exit semantics survive the boundary.
         if (source.Item != null)
             copy.SetValueDirect(source.Item);
+        // a miss retyped is still a miss, never a present null
+        copy.IsInitialized = source.IsInitialized;
         copy.Handled = source.Handled;
         copy.Returned = source.Returned;
         copy.ReturnDepth = source.ReturnDepth;

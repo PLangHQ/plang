@@ -1,0 +1,8 @@
+/ "assert X contains Y" must build Container=X (the haystack), Value=Y (the needle), not swapped.
+/ %t% = "hello world" contains "world" and does not contain "xyz". With the operands swapped
+/ (Container="world", Value=%t%) the first assert asks "does 'world' contain 'hello world'" and fails —
+/ that is how the .pr mutation proves this red.
+Start
+- set %t% = "hello world"
+- assert that %t% contains "world"
+- assert that %t% does not contain "xyz"

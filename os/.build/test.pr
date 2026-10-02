@@ -1,47 +1,47 @@
 {
   "name": "Test",
-  "description": null,
-  "comment": null,
-  "steps": [
+  "step": [
     {
       "index": 0,
-      "text": "write out \u0022Hello %name%\u0022",
-      "lineNumber": 2,
-      "indent": 0,
-      "comment": null,
-      "actions": [
+      "text": "write out \"Hello %name%\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
         {
           "module": "output",
-          "action": "write",
-          "parameters": [
+          "name": "write",
+          "property": [
             {
               "name": "Data",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
               "value": "Hello %name%",
-              "type": "tstring"
+              "variable": [
+                {
+                  "text": "%name%",
+                  "code": [
+                    {
+                      "variable": "name"
+                    }
+                  ]
+                }
+              ]
             }
-          ],
-          "defaults": null,
-          "modifiers": []
+          ]
         }
-      ],
-      "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
-      "source": null,
-      "waitForExecution": true
+      ]
     }
   ],
-  "goals": [],
-  "visibility": 1,
+  "child": [],
+  "visibility": "Public",
   "path": "/Test.goal",
   "prPath": "/.build/test.pr",
-  "hash": "01e6641e11452e2b6b4df6df36b232498a95ef3a16bbe01a167d203cd900c791",
-  "builderVersion": null,
+  "hash": "bdd3f7be18eb89458b29911af1dbfd776f4128a4c2e56d4e26b8eab790b969d7",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
-  "isTest": false,
-  "inputParameters": null
+  "isTest": false
 }

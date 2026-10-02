@@ -74,7 +74,7 @@ public class @this<T, L> : @this
         return data.@this<T>.FromError(new global::app.error.Error($"no {Name} '{key}'", "NotFound", 404));
     }
 
-    /// <summary>The one <paramref name="location"/> holds (<c>app.goal.Load("/system/error/.build/show.pr")</c>),
+    /// <summary>The one <paramref name="location"/> holds (<c>app.goal.Load("/system/error/Show.goal")</c>),
     /// resolved and read as the app itself; the element says how it loads.</summary>
     public System.Threading.Tasks.Task<data.@this> Load(string location)
         => T.Load(item.path.@this.Resolve(location, _app.actor.list.System.Context), _app);
@@ -117,8 +117,8 @@ public class @this<T, L> : @this
     // asker sees.
     private async System.Threading.Tasks.ValueTask<data.@this> Named(data.@this parent, string key)
     {
-        if (await T.Select(new global::app.type.item.text.@this(key), parent.Context) is { } selected)
-            return new data.@this(key, selected, parent: parent);
+        if (await T.Select(new global::app.type.item.text.@this(key), parent.Context) is { IsInitialized: true } selected)
+            return selected.Success ? new data.@this(key, selected.Peek(), parent: parent) : selected;
         var found = await Find(Of(parent.Context).Walk(null, parent.Context), key);
         if (!found.Success) return found;
         return new data.@this(key, (await found.Value())!, parent: parent);

@@ -73,6 +73,23 @@ public sealed class @this : global::app.type.item.@this, IAsyncDisposable
     }
 
     /// <summary>
+    /// A failure nothing waits for (a goal called without waiting, a callback run outside the step loop): shown on these
+    /// channels' <c>error</c> — the actor's own, where it shows its errors. When that channel can't take it (its own
+    /// write failed — a goal channel whose goal fails too), both go to the system actor's <c>error</c> channel: an error is
+    /// never lost. The end of the line, so it answers nothing.
+    /// </summary>
+    public async Task Report(data.@this failed)
+    {
+        var shown = Get(Error) is { } error ? await error.WriteAsync(failed) : null;
+        if (shown is { Success: true }) return;
+        // the last line: the system's error channel — these are the system's, there is no further one
+        var system = _app.actor.list.System.Channel;
+        if (ReferenceEquals(system, this) || system.Get(Error) is not { } last) return;
+        await last.WriteAsync(failed);
+        if (shown != null) await last.WriteAsync(shown);
+    }
+
+    /// <summary>
     /// The channel registered under <paramref name="name"/> that takes writes now (<see cref="channel.@this.Available"/>),
     /// or null — a user-named channel's miss is the caller's result to make. Sibling and late-registered
     /// channels stay visible.

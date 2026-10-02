@@ -1,0 +1,6 @@
+/ Build-only pin (never run — it would hit the network). A json/dict body post builds http.request with
+/ a Body; sending a file builds http.upload. HttpBuildPinTests (C#) asserts this committed .pr so a later
+/ rebuild that drifts post-with-body back to http.upload goes red.
+Start
+- post 'https://api.example.com/speech', headers Authorization: "Bearer %key%", body {"model": "tts", "input": "hi"}, write to %audio%
+- upload 'photo.png' to 'https://api.example.com/images', write to %result%

@@ -682,7 +682,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
         var example = Declared<string>("Example");
         var description = Declared<string>("Description");
-        if (new global::app.type.item.choice.set.@this(clr) is { IsClosed: true } set)
+        if (global::app.type.item.choice.set.@this.For(clr) is { } set)
         {
             Values = set.Values;
             Description = description;

@@ -43,15 +43,25 @@ public sealed partial class @this : global::app.type.item.@this
     private readonly AsyncLocal<call.@this?> _current = new();
     private call.@this? _root;
 
-    /// <summary>What this stack captures (<c>%!app.callstack.setting%</c>) — held, since every push reads it;
-    /// the app builds it again when a value under its path is written.</summary>
-    public setting.@this Setting { get; internal set; } = new();
+    // The settings this stack reads what it captures through — its actor's context's.
+    private readonly global::app.actor.setting.@this _settings;
+
+    /// <summary>A call stack reading what it captures through <paramref name="settings"/>.</summary>
+    public @this(global::app.actor.setting.@this settings) => _settings = settings;
+
+    /// <summary>What this stack captures (<c>%!app.callstack.setting%</c>), as its settings have it now — a read is
+    /// a lookup in their cache, built again only after a write. A push reads it once.</summary>
+    public setting.@this Setting => _settings.Of<setting.@this>();
 
     // An open diff scope (DiffScope) turns Diff on for as long as it's open, whatever the setting says.
     private int _diffScopes;
 
     public @bool  Timing    => Setting.Timing;
-    public @bool  Diff      => Volatile.Read(ref _diffScopes) > 0 ? @bool.True : Setting.Diff.Enabled;
+    public @bool  Diff      => IsDiffing(Setting) ? @bool.True : @bool.False;
+
+    /// <summary>Whether a push captures diffs under <paramref name="setting"/>: an open diff scope says yes whatever
+    /// the setting says.</summary>
+    internal bool IsDiffing(setting.@this setting) => Volatile.Read(ref _diffScopes) > 0 || setting.Diff.Enabled.Value;
     public @bool  Tags      => Setting.Tags;
     public @bool  History   => Setting.History;
 

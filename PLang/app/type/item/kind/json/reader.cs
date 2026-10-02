@@ -54,9 +54,8 @@ public ref struct Reader : IReader
     public bool Bool() => _r.GetBoolean();
     public int Int() => _r.GetInt32();
     public long Long() => _r.GetInt64();
-    // Natural precision: long when it fits as an integer, else double — the cast
-    // to object keeps the integer from widening to a float (a bare ?: would unify).
-    public object Number() => _r.TryGetInt64(out var l) ? (object)l : _r.GetDouble();
+    // The token's raw text, read by number's one rule (an integer long or past it exact, else double).
+    public object Number() => global::app.type.item.number.@this.Parse(System.Text.Encoding.UTF8.GetString(_r.ValueSpan))!;
     public float Float() => _r.GetSingle();
     public double Double() => _r.GetDouble();
     public decimal Decimal() => _r.GetDecimal();

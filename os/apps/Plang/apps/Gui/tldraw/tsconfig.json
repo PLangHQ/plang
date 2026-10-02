@@ -1,9 +1,0 @@
-{
-    "compilerOptions": {
-      "jsx": "react",
-      "module": "esnext",
-      "target": "es2015",
-      "strict": true
-    }
-  }
-  

@@ -137,7 +137,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         var timedOut = () => cts.IsCancellationRequested && !context.CancellationToken.IsCancellationRequested;
         try
         {
-            var loaded = await app.goal.Load(Goal.PrPath!.ToString());
+            var loaded = await app.goal.Load(Goal.Path!.ToString());
             var result = loaded.Success
                 ? await ((await loaded.Value()) as global::app.goal.@this)!.Start(own)
                 : loaded;

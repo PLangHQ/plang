@@ -40,13 +40,15 @@ public class Default : ICrypto
             bytes = json.ToArray();
         }
 
-        string algorithm = (await action.Algorithm.Value())!.ToString()!.ToLowerInvariant();
+        // the kind of hash chosen; a name that is no kind of hash is the choice's own refusal, naming the kinds
+        if (await action.Algorithm.Value() is not { } chosen)
+            return global::app.data.@this<global::app.module.crypto.type.hash.@this>.From(action.Algorithm);
         // The value IS a hash (a digest that knows its algorithm), stamped {name: hash, kind: <algorithm>}, so the
-        // builder annotates the write-to as `%x% (hash)` and verify reads the algorithm off the value.
-        if (global::app.module.crypto.type.hash.@this.Of(bytes, algorithm, action.Context) is not { } hash)
-            return action.Context.Error<global::app.module.crypto.type.hash.@this>(new ActionError($"Algorithm '{action.Algorithm.Peek()}' is not supported", "UnsupportedAlgorithm", 400));
+        // builder annotates the write-to as `%x% (hash)` and verify reads the algorithm off the value. The kind
+        // digests the bytes itself.
+        var hash = global::app.module.crypto.type.hash.@this.Of(bytes, chosen.Value);
         return action.Context.Ok<global::app.module.crypto.type.hash.@this>(hash,
-            action.Context.App.type.list[new global::app.type.@this("hash", algorithm), action.Context]);
+            action.Context.App.type.list[new global::app.type.@this("hash", hash.Algorithm), action.Context]);
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> Verify(Verify action)
@@ -84,7 +86,8 @@ public class Default : ICrypto
         var hashResult = await Hash(new Hash(action.Context)
         {
             Data = action.Data,
-            Algorithm = new global::app.data.@this<global::app.type.item.text.@this>("Algorithm", algorithm, context: action.Context),
+            Algorithm = new global::app.data.@this("Algorithm", algorithm, context: action.Context)
+                .As<global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>>(),
         });
         if (!hashResult.Success) return action.Context.Error<global::app.type.item.@bool.@this>(hashResult.Error!);
 

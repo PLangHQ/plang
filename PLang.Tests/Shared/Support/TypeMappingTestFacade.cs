@@ -28,9 +28,7 @@ internal static class TypeMapping
             held = held.GetGenericArguments()[0];
         if (held.IsGenericType && held.GetGenericTypeDefinition() == typeof(global::app.type.item.choice.@this<>))
             held = held.GetGenericArguments()[0];
-        var closed = held.IsEnum || held.GetMethod("Choices", System.Reflection.BindingFlags.Public
-            | System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.FlattenHierarchy) != null;
-        return closed && new global::app.type.item.choice.set.@this(held) is { IsClosed: true } set ? set.Values : null;
+        return global::app.type.item.choice.set.@this.For(held)?.Values;
     }
 }
 

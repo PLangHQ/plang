@@ -11,7 +11,7 @@ public class ServiceErrorChainTests : System.IAsyncDisposable
     [Test]
     public async Task ServiceError_CallFrames_TypedAsReadOnlyListOfCall()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         var chain = call.SnapshotChain();
         var sv = new ServiceError("crash", call.Action.Step!, chain);
@@ -22,7 +22,7 @@ public class ServiceErrorChainTests : System.IAsyncDisposable
     [Test]
     public async Task ServiceError_ChainIndexZero_IsFailingCall()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
         await using var failing = stack.Push(MakeAction(app.actor.list.User.Context, "Failing"));
         var chain = failing.SnapshotChain();
@@ -33,7 +33,7 @@ public class ServiceErrorChainTests : System.IAsyncDisposable
     [Test]
     public async Task ServiceError_ChainWalksCallerToRoot()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var root = stack.Push(MakeAction(app.actor.list.User.Context, "Root"));
         await using var middle = stack.Push(MakeAction(app.actor.list.User.Context, "Middle"));
         await using var leaf = stack.Push(MakeAction(app.actor.list.User.Context, "Leaf"));

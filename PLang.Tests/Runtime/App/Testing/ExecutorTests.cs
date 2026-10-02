@@ -34,7 +34,7 @@ public class ExecutorTests
 
     private Executor NewExecutor() => new(_tempDir);
 
-    // --test flag turns on test mode and routes to system/.build/test.pr when the
+    // --test flag turns on test mode and routes to /system/test.goal when the
     // default Start.goal is the target. Users expect `plang --test` to run the test
     // runner, not Start.goal.
     [Test]
@@ -47,7 +47,7 @@ public class ExecutorTests
         await Assert.That(engine).IsNotNull();
         await Assert.That(engine!.test.list.Session != null).IsTrue();
         await Assert.That((string?)await engine.actor.list.System.Context.Variable.GetValue("goalFile"))
-            .IsEqualTo("/system/.build/test.pr");
+            .IsEqualTo("/system/test.goal");
         await using var _ = engine;
     }
 
@@ -155,8 +155,8 @@ public class ExecutorTests
         await using var _ = engine;
     }
 
-    // No special flags: goalFile is computed from the positional arg, routed into
-    // .build/start.pr. Test mode is disabled, Debug is disabled, Building is disabled.
+    // No special flags: goalFile is the positional arg's .goal (the goal finds its own .pr).
+    // Test mode is disabled, Debug is disabled, Building is disabled.
     [Test]
     public async Task Configure_NoSpecialFlags_RoutesToGoalPrPath()
     {
@@ -169,8 +169,23 @@ public class ExecutorTests
         await Assert.That(engine.Debug != null).IsFalse();
         await Assert.That(engine.Build != null).IsFalse();
         await Assert.That((string?)await engine.actor.list.System.Context.Variable.GetValue("goalFile"))
-            .IsEqualTo("/.build/start.pr");
+            .IsEqualTo("/Start.goal");
         await using var _ = engine;
+    }
+
+    // A goal in a subfolder runs from that folder's own .build (sub/.build/run.pr), not the root's.
+    [Test]
+    public async Task Configure_ASubfolderGoal_IsThatGoal()
+    {
+        var executor = NewExecutor();
+        var (engine, error) = executor.Configure(new[] { "sub/Run" });
+        await using var _ = engine;
+
+        await Assert.That(error).IsNull();
+        var goalFile = (string?)await engine!.actor.list.System.Context.Variable.GetValue("goalFile");
+        await Assert.That(goalFile).IsEqualTo("/sub/Run.goal");
+        await Assert.That(global::app.goal.@this.Pr(global::app.type.item.path.@this.Resolve(goalFile!, engine.actor.list.System.Context)).ToString())
+            .IsEqualTo("/sub/.build/run.pr");
     }
 
     // --test AND --debug can compose: test mode on, debug handlers attached.

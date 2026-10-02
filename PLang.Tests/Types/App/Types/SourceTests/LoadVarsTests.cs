@@ -23,7 +23,7 @@ public class LoadVarsTests
     private static async Task<global::app.data.@this> LoadVars(global::app.actor.context.@this ctx, string root, string file, string content)
     {
         System.IO.File.WriteAllText(System.IO.Path.Combine(root, file), content);
-        var read = await global::app.type.item.path.@this.Resolve(file, ctx).Read(ctx, true);
+        var read = await global::app.type.item.path.@this.Resolve(file, ctx).Read(ctx, new global::app.type.item.template.kind.plang.@this());
         await read.IsSuccess();
         return read;
     }
@@ -104,7 +104,7 @@ public class LoadVarsTests
             global::app.type.item.permission.@this.AllVerbs, global::app.type.item.permission.Match.Exact);
         await ctx.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: ctx), persist: false);
 
-        var read = await global::app.type.item.path.@this.Resolve(address, ctx).Read(ctx, true);
+        var read = await global::app.type.item.path.@this.Resolve(address, ctx).Read(ctx, new global::app.type.item.template.kind.plang.@this());
 
         await Assert.That(await Text(read)).IsEqualTo("Hi World n=%!app.type.list.count%");
     }

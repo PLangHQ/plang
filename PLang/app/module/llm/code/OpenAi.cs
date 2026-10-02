@@ -985,7 +985,7 @@ public sealed class OpenAi : ILlm
                     object? value = prop.Value.ValueKind switch
                     {
                         JsonValueKind.String => prop.Value.GetString(),
-                        JsonValueKind.Number => prop.Value.TryGetInt64(out var l) ? l : prop.Value.GetDouble(),
+                        JsonValueKind.Number => global::app.type.item.number.@this.Parse(prop.Value.GetRawText()),
                         JsonValueKind.True => true,
                         JsonValueKind.False => false,
                         JsonValueKind.Null => null,

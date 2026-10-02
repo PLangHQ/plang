@@ -324,7 +324,7 @@ public sealed class Reader
                 _pos += span.Length;
                 value = Scalar(System.Text.Json.JsonSerializer.Serialize(span), System.Text.Json.JsonValueKind.String);
             }
-            else value = Value(declared.Type.Name);
+            else value = Value(Face(declared.Type));
 
             var raw = value.Json != null && value.Kind == System.Text.Json.JsonValueKind.String
                 ? System.Text.Json.JsonSerializer.Deserialize<string>(value.Json) : null;
@@ -488,8 +488,9 @@ public sealed class Reader
             }
             if (c == '[')
             {
-                // argument rows written as a list — only where the slot takes rows (a list slot); in an
-                // open slot `[{Role: "user", …}]` is a list of dicts
+                // argument rows written as a list — only where the slot takes rows (a list of nothing in
+                // particular, goal.call's Parameter); in a list of a kind (llm.query's list<message>) or an open
+                // slot, `[{Role: "user", …}]` is a list of dicts
                 if (declared == "list" && Match(@"\[\s*(\{\s*)?[A-Za-z_]\w*\s*[=:]") != null)
                     Fail("arguments are written as one dict: Parameter={name: \"value\", other: %x%}");
                 _pos++;

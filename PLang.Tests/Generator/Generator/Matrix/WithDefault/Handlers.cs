@@ -1,5 +1,6 @@
 namespace app.module.matrix.withdefault;
 
+[global::app.Attributes.PlangType("matrixenum")]
 public enum MatrixEnum { A, B, C }
 
 [global::app.module.Action("stringwithdefault")]

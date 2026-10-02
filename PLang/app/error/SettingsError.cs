@@ -41,11 +41,11 @@ public class SettingsError : Error
             return ("The disk may be full or the database file may be on a read-only filesystem.", "DiskError");
 
         if (msg.Contains("corrupt", StringComparison.OrdinalIgnoreCase))
-            return ("The database file may be corrupt. Delete the .db file and let it be recreated.", "DatabaseCorrupt");
+            return ("The database file may be corrupt. Delete the .sqlite file under .data/ and let it be recreated.", "DatabaseCorrupt");
 
         if (msg.Contains("permission", StringComparison.OrdinalIgnoreCase) ||
             msg.Contains("access", StringComparison.OrdinalIgnoreCase))
-            return ("Check file system permissions on the .db directory.", "PermissionDenied");
+            return ("Check file system permissions on the .data/ directory.", "PermissionDenied");
 
         return (null, "SettingsError");
     }

@@ -77,15 +77,15 @@ public class FailureMatrixTests : System.IAsyncDisposable
         await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
     }
 
-    [Test] public async Task CryptoHash_WithUnsupportedAlgorithm_ReturnsDataWithUnsupportedAlgorithmError()
+    [Test] public async Task CryptoHash_WithUnsupportedAlgorithm_ReturnsTheChoicesRefusal()
     {
         var crypto = new global::app.module.crypto.code.Default();
         var action = new global::app.module.crypto.Hash(app.actor.list.User.Context) { Data = app.Ok("x"),
-            Algorithm = new global::app.data.@this<global::app.type.item.text.@this>("", "md5")
+            Algorithm = new global::app.data.@this("", "md5", context: app.actor.list.User.Context).As<global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>>()
         };
         var result = await crypto.Hash(action);
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedAlgorithm");
+        await Assert.That(result.Error!.Key).IsEqualTo("ChoiceInvalid");
     }
 
     [Test] public async Task ChannelWrite_OnInputOnlyChannel_ReturnsServiceErrorChannelReadOnly()

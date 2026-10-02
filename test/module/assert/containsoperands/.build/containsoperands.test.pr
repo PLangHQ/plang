@@ -1,0 +1,146 @@
+{
+  "name": "Start",
+  "comment": "\"assert X contains Y\" must build Container=X (the haystack), Value=Y (the needle), not swapped.\n%t% = \"hello world\" contains \"world\" and does not contain \"xyz\". With the operands swapped\n(Container=\"world\", Value=%t%) the first assert asks \"does 'world' contain 'hello world'\" and fails —\nthat is how the .pr mutation proves this red.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %t% = \"hello world\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%t%",
+              "variable": [
+                {
+                  "text": "%t%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello world"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 1,
+      "text": "assert that %t% contains \"world\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%t%",
+              "variable": [
+                {
+                  "text": "%t%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "world"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    },
+    {
+      "index": 2,
+      "text": "assert that %t% does not contain \"xyz\"",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "notContains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%t%",
+              "variable": [
+                {
+                  "text": "%t%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "xyz"
+            }
+          ]
+        }
+      ],
+      "waitForExecution": true
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/assert/containsoperands/ContainsOperands.test.goal",
+  "prPath": "/module/assert/containsoperands/.build/containsoperands.test.pr",
+  "hash": "01acd27fc3736f79852ac2b17527191ddb75d5578e25e92b89a4867aec49fb63",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": true
+}

@@ -1,0 +1,96 @@
+{
+  "name": "StartWindow",
+  "step": [
+    {
+      "index": 0,
+      "text": "start window, call RenderDesktop, 1400x900",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "RenderDesktop"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": ["1400x900"]
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "wait",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "RenderDesktop",
+      "step": [
+        {
+          "index": 0,
+          "text": "render \"ui/desktop.html\"",
+          "line": {
+            "number": 5
+          },
+          "code": [
+            {
+              "module": "ui",
+              "name": "render",
+              "property": [
+                {
+                  "name": "Template",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "ui/desktop.html"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/StartWindow.goal",
+      "prPath": "/.build/startwindow.pr",
+      "hash": "0b5feeea07c2eabb89d637968f4182212d4929fe88ca1e66d5b717d152675b56",
+      "isSetup": false,
+      "isEvent": false,
+      "isSystem": false,
+      "isTest": false
+    }
+  ],
+  "visibility": "Public",
+  "path": "/StartWindow.goal",
+  "prPath": "/.build/startwindow.pr",
+  "hash": "003d2d8a85c9d692c163b46dd60c9f341eee5a23a838361adb65614de87b9ec8",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": false,
+  "isTest": false
+}

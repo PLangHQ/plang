@@ -17,7 +17,6 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         where TReader : global::app.type.format.IReader, allows ref struct
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("list", kind);
-        reader.BeginArray();
         var parser = new global::app.type.item.serializer.json(ctx.Context);
         // An authored list (ctx carries "plang") is born a template and re-resolves its `%ref%` string
         // leaves on read — list.@this.Value → Resolve. A runtime-ingest read (ctx.Template null) stays literal.
@@ -31,6 +30,13 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         var elementReader = kind is { } elementType
             ? ctx.Context.App.type.list.Reader.Typed(elementType, null)
             : null;
+        // a list given one value (a prompt written as text for a list of messages) holds that one element
+        if (reader.Peek() != global::app.type.format.TokenKind.Array)
+        {
+            list.AddRaw(elementReader is null ? parser.Entry(ref reader, ctx) : elementReader.Read(ref reader, null, ctx));
+            return list;
+        }
+        reader.BeginArray();
         while (reader.NextElement())
         {
             if (elementReader is null) list.AddRaw(parser.Entry(ref reader, ctx));

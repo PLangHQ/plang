@@ -41,16 +41,19 @@ public class GoalCallResolutionTests
     }
 
     /// <summary>Writes a `.pr` for a goal named <paramref name="goalName"/> at the given path, through
-    /// the goal's own writer (the shape the reader reads back).</summary>
+    /// the goal's own writer (the shape the reader reads back), and its `.goal` beside the `.build` folder.</summary>
     private async Task WritePr(string relativePrPath, string goalName)
     {
         var ctx = _app.actor.list.User.Context;
-        var goal = new PLangGoal { Name = goalName, Path = global::app.type.item.path.@this.Resolve("/" + goalName + ".goal", ctx) };
+        var abs = System.IO.Path.Combine(_tempDir, relativePrPath.Replace('/', System.IO.Path.DirectorySeparatorChar));
+        var source = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.IO.Path.GetDirectoryName(abs)!)!, goalName + ".goal");
+        var relative = "/" + System.IO.Path.GetRelativePath(_tempDir, source).Replace('\\', '/');
+        var goal = new PLangGoal { Name = goalName, Path = global::app.type.item.path.@this.Resolve(relative, ctx) };
         var pr = await ctx.Pr(goal);
 
-        var abs = System.IO.Path.Combine(_tempDir, relativePrPath.Replace('/', System.IO.Path.DirectorySeparatorChar));
         System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(abs)!);
         await System.IO.File.WriteAllTextAsync(abs, pr);
+        await System.IO.File.WriteAllTextAsync(source, goalName + "\n");
     }
 
     /// <summary>A caller goal whose Path anchors the folder walk.</summary>
@@ -91,7 +94,7 @@ public class GoalCallResolutionTests
         // /system/builder/BuildGoal/ — the walk shrinks to /system/builder, where the join hits.
         await WritePr("system/builder/BuildStep/.build/start.pr", "Start");
 
-        var goal = await _app.goal.list.Find("BuildStep/Start", CallerAt("/system/builder/BuildGoal/Start.goal"));
+        var goal = await _app.goal.list.Find("BuildStep/Start", CallerAt("/system/builder/BuildGoal/Start.goal")).Found();
 
         await Assert.That(goal).IsNotNull();
         await Assert.That(goal!.Name).IsEqualTo("Start");
@@ -104,7 +107,7 @@ public class GoalCallResolutionTests
         // root is the tier that answers.
         await WritePr("BuildStep/.build/start.pr", "Start");
 
-        var goal = await _app.goal.list.Find("BuildStep/Start", CallerAt("/elsewhere/Caller.goal"));
+        var goal = await _app.goal.list.Find("BuildStep/Start", CallerAt("/elsewhere/Caller.goal")).Found();
 
         await Assert.That(goal).IsNotNull();
         await Assert.That(goal!.Name).IsEqualTo("Start");
@@ -119,13 +122,13 @@ public class GoalCallResolutionTests
         _app.goal.list.Add(caller);
         _app.goal.list.Add(new PLangGoal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/other/Start.goal", ctx) });
 
-        var none = await _app.goal.list.Find("BuildGoal/Start", caller);
+        var none = await _app.goal.list.Find("BuildGoal/Start", caller).Found();
 
         await Assert.That(none).IsNull();
 
         var start = new PLangGoal { Name = "Start", Path = global::app.type.item.path.@this.Resolve("/builder/BuildGoal/Start.goal", ctx) };
         _app.goal.list.Add(start);
-        await Assert.That(await _app.goal.list.Find("BuildGoal/Start", caller)).IsSameReferenceAs(start);
+        await Assert.That(await _app.goal.list.Find("BuildGoal/Start", caller).Found()).IsSameReferenceAs(start);
     }
 
     [Test]
@@ -134,10 +137,89 @@ public class GoalCallResolutionTests
         // .pr at /foo/.build/other.pr — sibling of the caller in /foo/Caller.
         await WritePr("foo/.build/other.pr", "Other");
 
-        var goal = await _app.goal.list.Find("Other", CallerAt("/foo/Caller.goal"));
+        var goal = await _app.goal.list.Find("Other", CallerAt("/foo/Caller.goal")).Found();
 
         await Assert.That(goal).IsNotNull();
         await Assert.That(goal!.Name).IsEqualTo("Other");
+    }
+
+    // an app's own /system/ goal is found before the os's of the same name
+    [Test]
+    public async Task TheAppsSystemGoal_BeatsTheOs()
+    {
+        await WritePr("system/error/.build/show.pr", "show");
+
+        var goal = await _app.goal.list.Find("/system/error/show").Found();
+
+        await Assert.That(goal?.Path?.ToString()).IsEqualTo("/system/error/show.goal");
+        await Assert.That(goal!.Step.Count).IsEqualTo(0);
+    }
+
+    // an os goal calling a goal beside it finds the app's own copy first: the os's builder, calling BuildGoal,
+    // gets the app's /system/builder/BuildGoal.goal
+    [Test]
+    public async Task AnOsGoal_CallingAGoalBesideIt_FindsTheAppsCopy()
+    {
+        await WritePr("system/builder/.build/buildgoal.pr", "BuildGoal");
+        var caller = CallerAt(_app.OsAbsolutePath + "/system/builder/Build.goal");
+
+        var goal = await _app.goal.list.Find("BuildGoal", caller).Found();
+
+        await Assert.That(goal?.Path?.ToString()).IsEqualTo("/system/builder/BuildGoal.goal");
+        await Assert.That(goal!.Step.Count).IsEqualTo(0);
+    }
+
+    // a goal in a subfolder is read from the .build beside it
+    [Test]
+    public async Task ASubfolderGoal_ReadsTheBuildBesideIt()
+    {
+        await WritePr("sub/.build/inner.pr", "Inner");
+
+        var loaded = await _app.goal.Load("/sub/Inner.goal");
+
+        await loaded.IsSuccess();
+        await Assert.That((await loaded.Value() as PLangGoal)?.Name).IsEqualTo("Inner");
+        await Assert.That(PLangGoal.Pr(global::app.type.item.path.@this.Resolve("/sub/Inner.goal", _app.actor.list.User.Context)).ToString())
+            .IsEqualTo("/sub/.build/inner.pr");
+    }
+
+    // a goal's name is a plang name: `call other` is Other.goal, on a case-sensitive disk too
+    [Test]
+    public async Task ACallNamingAGoalInAnotherCase_FindsIt()
+    {
+        await WritePr("foo/.build/other.pr", "Other");
+
+        var goal = await _app.goal.list.Find("other", CallerAt("/foo/Caller.goal")).Found();
+
+        await Assert.That(goal?.Name).IsEqualTo("Other");
+    }
+
+    // the os's /system/error/Show.goal answers to /system/error/show, the app having none of its own
+    [Test]
+    public async Task AnOsGoal_NamedInAnotherCase_IsFound()
+    {
+        var goal = await _app.goal.list.Find("/system/error/show").Found();
+
+        await Assert.That(goal).IsNotNull();
+        await Assert.That(goal!.Step.Count).IsEqualTo(3);
+    }
+
+    // a .goal with no .pr: the call says it isn't built, not that it isn't there
+    [Test]
+    public async Task AGoalNotBuilt_AnswersGoalNotBuilt()
+    {
+        System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "Fresh.goal"), "Fresh\n- write out 1\n");
+
+        var found = await _app.goal.list.Find("Fresh");
+        var slot = new global::app.data.@this("", new global::app.type.item.text.@this("Fresh"), context: _app.actor.list.User.Context)
+            .As<PLangGoal>();
+        var selected = await slot.Value();
+
+        await found.IsFailure();
+        await Assert.That(found.Error!.Key).IsEqualTo("GoalNotBuilt");
+        await Assert.That(found.Error.Message).Contains("run plang build");
+        await Assert.That(selected).IsNull();
+        await Assert.That(slot.Error?.Key).IsEqualTo("GoalNotBuilt");
     }
 
     [Test]
@@ -147,7 +229,7 @@ public class GoalCallResolutionTests
         var child = new PLangGoal { Name = "Helper", Path = caller.Path, Parent = caller };
         caller.Child.Add(child);
 
-        var goal = await _app.goal.list.Find("Helper", caller);
+        var goal = await _app.goal.list.Find("Helper", caller).Found();
 
         await Assert.That(goal).IsSameReferenceAs(child);
     }

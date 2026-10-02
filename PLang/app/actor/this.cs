@@ -43,7 +43,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// actor's own flows via the AsyncLocal Current — that isolation is about parallel
     /// Task branches, orthogonal to actor identity.
     /// </summary>
-    public global::app.callstack.@this CallStack { get; } = new();
+    public global::app.callstack.@this CallStack { get; }
 
     /// <summary>
     /// Per-actor permission view — signed grants on paths, keyed by verb
@@ -97,6 +97,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             ? new CancellationTokenSource()
             : CancellationTokenSource.CreateLinkedTokenSource(parentToken);
         Context = new context.@this(app, this, parentToken: _cts.Token);
+        // the call stack reads what it captures through its actor's context's settings
+        CallStack = new global::app.callstack.@this(Context.Setting);
         Permission = new permission.@this(this);
         _channels = new global::app.channel.list.@this(app, this);
 

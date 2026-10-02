@@ -1,0 +1,63 @@
+{
+  "name": "Error",
+  "comment": "%!error% — the error in play where its asker is",
+  "step": [
+    {
+      "index": 0,
+      "text": "return %!app.error.current%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "return",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.error.current%",
+              "variable": [
+                {
+                  "text": "%!app.error.current%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "error"
+                    },
+                    {
+                      "property": "current"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "depth",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/system/shortcut/error.goal",
+  "prPath": "/system/shortcut/.build/error.pr",
+  "hash": "1f252b8de9ae9797f1b81f8d5f6fc2c456b48fffbf615ac028e7066d9f82956f",
+  "isSetup": false,
+  "isEvent": false,
+  "isSystem": true,
+  "isTest": false
+}

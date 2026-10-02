@@ -11,11 +11,15 @@ public partial class Read : IContext
     [IsNotNull]
     public partial data.@this<path> Path { get; init; }
 
-    /// <summary>Whether to fill in the %variables% written in the file's text before returning it ("load vars").</summary>
-    [Default(false)]
-    public partial data.@this<global::app.type.item.@bool.@this> Variables { get; init; }
+    /// <summary>The kind of template the content is ("load vars": plang — its %variables% filled from memory); none,
+    /// it is read as written.</summary>
+    public partial data.@this<global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>>? Template { get; init; }
 
-    public Task<data.@this> Start() => Path.Use(path => Variables.Use(fill => path.Read(Context, fill)));
+    // none given reads as written; one given is opened once and its kind handed to the read — a name that is none of
+    // the kinds is the choice's own refusal
+    public Task<data.@this> Start() => Path.Use(path => Template is not { IsInitialized: true }
+        ? path.Read(Context)
+        : Template.Use(kind => path.Read(Context, kind.Value)));
 
     /// <summary>A literal path's reference type, for the step that captures it — and a warning when it isn't
     /// there now; a path holding a variable is known only at run.</summary>

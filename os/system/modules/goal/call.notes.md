@@ -5,4 +5,4 @@ Parallel — true only when the step says the call may run beside others.
 
 - The arguments belong to the called goal; they are never properties of goal.call.
 - `foreach %list%, call X item=%y%` is loop.foreach, then goal.call with `item` as its argument.
-- `call goal X a=%y%` calls X: `goal` is only a word, never the name or an argument — `call goal Unmatched action=%item%` → goal.call(Name="Unmatched", Parameter={action: %item%}).
+- `call goal X` and `call the goal X` call X: the leading `goal` / `the goal` is only a word, never part of the name or an argument — the same whether X is a bare name, a `Folder/Goal`, or a `/path/name`. `call goal Unmatched action=%item%` → goal.call(Name="Unmatched", Parameter={action: %item%}); `call goal /builder/Build` → goal.call(Name="/builder/Build") (the path is the whole name, `goal` dropped). A name that itself starts with Goal keeps it: `call goal GoalSetup` → Name="GoalSetup".

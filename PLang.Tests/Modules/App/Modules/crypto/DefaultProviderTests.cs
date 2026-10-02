@@ -12,8 +12,13 @@ public class DefaultCryptoProviderTests : System.IAsyncDisposable
 
     private readonly global::app.module.crypto.code.Default _provider = new();
 
+    // crypto.hash's Algorithm as a step gives it: the kind's name, made the choice
+    private global::app.data.@this<global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>> Kind(string name)
+        => new global::app.data.@this("Algorithm", name, context: app.actor.list.User.Context)
+            .As<global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>>();
+
     private Hash HashAction(object data, string algorithm = "keccak256")
-        => new(app.actor.list.User.Context) {  Data = app.actor.list.User.Context.Ok(data), Algorithm = (global::app.type.item.text.@this)algorithm };
+        => new(app.actor.list.User.Context) {  Data = app.actor.list.User.Context.Ok(data), Algorithm = Kind(algorithm) };
 
     private Verify VerifyAction(object data, string expectedHash, string algorithm = "keccak256")
         => new(app.actor.list.User.Context) {  Data = app.actor.list.User.Context.Ok(data), Hash = app.actor.list.User.Context.Ok(expectedHash), Algorithm = (global::app.type.item.text.@this)algorithm };
@@ -46,7 +51,7 @@ public class DefaultCryptoProviderTests : System.IAsyncDisposable
         var result = await _provider.Hash(HashAction("test", "md5"));
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedAlgorithm");
+        await Assert.That(result.Error!.Key).IsEqualTo("ChoiceInvalid");
     }
 
     [Test]
@@ -138,6 +143,6 @@ public class DefaultCryptoProviderTests : System.IAsyncDisposable
         var result = await _provider.Verify(VerifyAction("test", Convert.ToBase64String(new byte[32]), "md5"));
 
         await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedAlgorithm");
+        await Assert.That(result.Error!.Key).IsEqualTo("ChoiceInvalid");
     }
 }

@@ -49,8 +49,8 @@ public class SetupTests
         _app.goal.list.Add(new Goal { Name = "SetupGoal", IsSetup = true, Path = global::app.type.item.path.@this.Resolve("/SetupGoal.goal", _app.actor.list.User.Context) });
         _app.goal.list.Add(new Goal { Name = "NormalGoal", IsSetup = false, Path = global::app.type.item.path.@this.Resolve("/NormalGoal.goal", _app.actor.list.User.Context) });
 
-        var found = await _app.goal.list.Find("SetupGoal");
-        var normal = await _app.goal.list.Find("NormalGoal");
+        var found = await _app.goal.list.Find("SetupGoal").Found();
+        var normal = await _app.goal.list.Find("NormalGoal").Found();
 
         await Assert.That(found).IsNull();
         await Assert.That(normal).IsNotNull();
@@ -269,6 +269,7 @@ public class SetupTests
         System.IO.File.WriteAllText(
             System.IO.Path.Combine(buildDir, "normalgoal.pr"),
             """{"name":"NormalGoal","isSetup":false,"path":"/NormalGoal.goal","step":[]}""");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "NormalGoal.goal"), "NormalGoal\n");
 
         // RunAsync discovers and runs setup goals internally
         await _app.goal.list.Setup.Start(_app, _app.actor.list.User.Context);
@@ -277,7 +278,7 @@ public class SetupTests
         await Assert.That(_app.goal.list.Items().Any(g => g.Name == "NormalGoal")).IsFalse();
 
         // But a call finds it, reading its .pr
-        var lazyLoaded = await _app.goal.list.Find("NormalGoal");
+        var lazyLoaded = await _app.goal.list.Find("NormalGoal").Found();
         await Assert.That(lazyLoaded).IsNotNull();
         await Assert.That(lazyLoaded!.Name).IsEqualTo("NormalGoal");
     }

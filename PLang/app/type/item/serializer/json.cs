@@ -120,7 +120,7 @@ public partial class json
             return element.ValueKind switch
             {
                 System.Text.Json.JsonValueKind.String => TextLeaf(element.GetString() ?? "", ctx),
-                System.Text.Json.JsonValueKind.Number => NumberLeaf(element),
+                System.Text.Json.JsonValueKind.Number => number.@this.Parse(element.GetRawText())!,
                 System.Text.Json.JsonValueKind.True => new @bool.@this(true),
                 System.Text.Json.JsonValueKind.False => new @bool.@this(false),
                 System.Text.Json.JsonValueKind.Null => @null.@this.Instance,
@@ -178,10 +178,8 @@ public partial class json
         return element.ValueKind switch
         {
             System.Text.Json.JsonValueKind.String => StringSlot(element.GetString() ?? "", ctx),
-            // Cast to object so the ?: does NOT unify long and double to double
-            // (a bare `long : double` ternary widens the integer to a float).
-            System.Text.Json.JsonValueKind.Number =>
-                element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
+            // a number: its raw text, read by number's one rule
+            System.Text.Json.JsonValueKind.Number => number.@this.Parse(element.GetRawText()),
             System.Text.Json.JsonValueKind.True => true,
             System.Text.Json.JsonValueKind.False => false,
             System.Text.Json.JsonValueKind.Null => null,
@@ -211,13 +209,5 @@ public partial class json
         else if (s.Contains('%') && new global::app.type.item.variable.parser.@this(s).Variable.Count > 0)
             return s;
         return new text.@this(s);
-    }
-
-    private static object NumberLeaf(System.Text.Json.JsonElement element)
-    {
-        if (element.TryGetInt64(out var l)) return (number.@this)l;
-        // Bare decimal-point literal → double by default (decimal is opt-in
-        // via `as number/decimal`), matching universal language convention.
-        return (number.@this)element.GetDouble();
     }
 }

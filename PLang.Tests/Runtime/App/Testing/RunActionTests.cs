@@ -535,6 +535,7 @@ public class RunActionTests
         // Write via the plang serializer (goal.Output, Store) — the real build path — not raw STJ,
         // so the reader can read it back (see BuildFixture).
         System.IO.File.WriteAllText(helperPrAbs, await _app.actor.list.User.Context.Pr(helperGoal));
+        System.IO.File.WriteAllText(System.IO.Path.Combine(_tempDir, "Helper.goal"), "Helper\n");
 
         // Entry goal: 3 top-level steps. Step 1 calls Helper (which has its own
         // 2 steps). Timings should record exactly steps 0, 1, 2 of the entry.

@@ -114,12 +114,10 @@ Context
 
 ### Context variables (lazy)
 
-All prefixed with `!`, resolved on access via `DynamicData`:
-
-```
-%!app%  %!context%  %!goal%  %!step%
-%!variables%  %!callStack%  %!channels%  %!event%  %!test%
-```
+All prefixed with `!`. Two live in the context's memory, resolved on access via `DynamicData`: `%!app%` and
+`%!context%`. The place in play is the system's shortcuts (`/system/shortcut/*.goal`, each a goal returning its
+asker's place): `%!goal%`, `%!step%`, `%!error%`, `%!test%`, `%!channel%`. Any other `%!x%` is the app's member
+(`%!callStack%`, `%!event%`, `%!trace%`, …).
 
 ### Child contexts
 

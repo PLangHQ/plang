@@ -25,16 +25,6 @@ public class ContextVariableTests
     }
 
     [Test]
-    public async Task ContextVar_Variables_ReturnsVariables()
-    {
-        var vars = _app.actor.list.User.Context.Variable;
-        var value = await vars.GetValue("!variables");
-
-        await Assert.That(value).IsNotNull();
-        await Assert.That(value).IsTypeOf<Variables>();
-    }
-
-    [Test]
     public async Task ContextVar_Context_ReturnsPLangContext()
     {
         var vars = _app.actor.list.User.Context.Variable;
@@ -55,59 +45,17 @@ public class ContextVariableTests
         await Assert.That(read.Peek()).IsSameReferenceAs(context.CallStack);
     }
 
+    // the goal, step, error, test and channels in play are shortcuts, not memory: SystemShortcutTests
     [Test]
-    public async Task ContextVar_Channels_ReturnsChannels()
+    [Arguments("!goal")]
+    [Arguments("!step")]
+    [Arguments("!error")]
+    [Arguments("!test")]
+    [Arguments("!channels")]
+    [Arguments("!variables")]
+    public async Task ThePlaceInPlay_IsNoContextVariable(string name)
     {
-        var vars = _app.actor.list.User.Context.Variable;
-        var value = await vars.GetValue("!channels");
-
-        await Assert.That(value).IsNotNull();
-    }
-
-    [Test]
-    public async Task ContextVar_Goal_IsNullInitially()
-    {
-        var vars = _app.actor.list.User.Context.Variable;
-        var value = await vars.GetValue("!goal");
-
-        await Assert.That(value).IsNull();
-    }
-
-    [Test]
-    public async Task ContextVar_Step_IsNullInitially()
-    {
-        var vars = _app.actor.list.User.Context.Variable;
-        var value = await vars.GetValue("!step");
-
-        await Assert.That(value).IsNull();
-    }
-
-    [Test]
-    public async Task ContextVar_Goal_ReturnsDynamic_WhenSet()
-    {
-        var context = _app.actor.list.User.Context;
-        var goal = new Goal { Name = "TestGoal" };
-        await using var inGoal = context.CallStack.Push(goal);
-
-        var vars = _app.actor.list.User.Context.Variable;
-        var value = await vars.GetValue("!goal");
-
-        await Assert.That(value).IsNotNull();
-        await Assert.That(value).IsEqualTo(goal);
-    }
-
-    [Test]
-    public async Task ContextVar_Step_ReturnsDynamic_WhenSet()
-    {
-        var context = _app.actor.list.User.Context;
-        var step = new Step { Index = 0, Text = "test step" };
-        await using var inStep = context.CallStack.Push(step);
-
-        var vars = _app.actor.list.User.Context.Variable;
-        var value = await vars.GetValue("!step");
-
-        await Assert.That(value).IsNotNull();
-        await Assert.That(value).IsEqualTo(step);
+        await Assert.That(_app.actor.list.User.Context.Variable.Contains(name)).IsFalse();
     }
 
     [Test]
@@ -181,14 +129,8 @@ public class ContextVariableTests
         await Assert.That(nowValue).IsNotNull();
         await Assert.That(nowValue).IsTypeOf<DateTimeOffset>();
 
-        // !goal is a DynamicData registered by RegisterContextVariables
-        var context = _app.actor.list.User.Context;
-        var goal = new Goal { Name = "DynamicTest" };
-        await using var inGoal = context.CallStack.Push(goal);
-
-        var goalValue = await vars.GetValue("!goal");
-        await Assert.That(goalValue).IsNotNull();
-        await Assert.That(goalValue).IsEqualTo(goal);
+        // !context is a DynamicData registered by RegisterContextVariables
+        await Assert.That(await vars.GetValue("!context")).IsSameReferenceAs(_app.actor.list.User.Context);
     }
 
     [Test]

@@ -301,14 +301,10 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     private error.Error? Enlist(Assembly assembly)
     {
         var seen = new HashSet<System.Type>();
+        foreach (var kind in global::app.type.kind.@this.Every(assembly))
+            if (kind.Owner is { } owner && Items().Any(type => type.Names(owner))) Hold(kind);
         foreach (var t in assembly.GetTypes())
         {
-            if (typeof(global::app.type.kind.@this).IsAssignableFrom(t) && t is { IsAbstract: false }
-                && t != typeof(global::app.type.kind.@this) && t.GetConstructor(System.Type.EmptyTypes) != null)
-            {
-                var kind = (global::app.type.kind.@this)Activator.CreateInstance(t)!;
-                if (kind.Owner is { } owner && Items().Any(type => type.Names(owner))) Hold(kind);
-            }
             // each format a type's class declares, a kind of that type — written by the class's own encode, read by
             // its own decode when it has one
             if (t.IsDefined(typeof(global::app.Attributes.FormatAttribute), inherit: false)
@@ -338,9 +334,8 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 if (!held.IsGenericType || held.GetGenericTypeDefinition() != typeof(global::app.type.item.choice.@this<>)
                     || !seen.Add(held)) continue;
                 var inner = held.GetGenericArguments()[0];
-                var set = new global::app.type.item.choice.set.@this(inner);
-                if (!set.IsClosed)
-                    return new error.Error($"{inner.FullName} is not a closed set — no enum members, no Choices(context?).", "TypeLoadOpenSet", 400);
+                if (global::app.type.item.choice.set.@this.For(inner) is not { } set)
+                    return new error.Error($"{inner.FullName} is not a closed set — no enum members, no Choices(context?), no kinds of its own.", "TypeLoadOpenSet", 400);
                 Hold(set);
                 // the closed reader for this set — one reflective instantiation, then typed reads.
                 Reader.Register("choice", set.Name,

@@ -10,11 +10,12 @@ public sealed class @this : global::app.type.kind.@this
 {
     private readonly string _owner;
     private readonly System.Collections.Generic.List<global::app.type.kind.@this> _kinds = new();
-    // The held kinds by every key each answers to (Names): its name, its aliases, its MIMEs, its extensions without
-    // the dot — the first kind that answers, in the order they came. Made as a kind comes in (Add), so a key finds its
-    // kind in one look, never by asking each kind in turn; none while the type holds no kind (a type object made
-    // for a value, the common case, never pays for one).
+    // The held kinds by every key each answers to (Names): its name, its aliases, its MIMEs — and apart, by its
+    // extensions without the dot — the first kind that answers, in the order they came. Made as a kind comes in
+    // (Add), so a key finds its kind in one look, never by asking each kind in turn; none while the type holds no kind
+    // (a type object made for a value, the common case, never pays for one).
     private System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>? _keys;
+    private System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>? _extensions;
     private readonly object _gate = new();
     // The type's own format — its class's [Format("", …)]: plain text is {text}, opaque bytes {binary}.
     private global::app.type.kind.@this? _format;
@@ -60,12 +61,15 @@ public sealed class @this : global::app.type.kind.@this
         get
         {
             if (Names(name)) return this;
-            // as Names reads a key: as it is, as a MIME without its parameters, as an extension without its dot
+            // as Names reads a key: a key written with its dot is an extension, and only an extension answers it
+            // (`.template` is a file's, never a kind named template); any other as it is, as a MIME without its
+            // parameters, else as an extension
             var semicolon = name.IndexOf(';');
             lock (_gate)
-                return _keys?.GetValueOrDefault(name)
-                       ?? (semicolon >= 0 ? _keys?.GetValueOrDefault(name[..semicolon].Trim()) : null)
-                       ?? _keys?.GetValueOrDefault(name.TrimStart('.'));
+                return name.StartsWith('.') ? _extensions?.GetValueOrDefault(name[1..])
+                       : _keys?.GetValueOrDefault(name)
+                         ?? (semicolon >= 0 ? _keys?.GetValueOrDefault(name[..semicolon].Trim()) : null)
+                         ?? _extensions?.GetValueOrDefault(name);
         }
     }
 
@@ -109,10 +113,14 @@ public sealed class @this : global::app.type.kind.@this
             _kinds.RemoveAll(k => string.Equals(k.Name, kind.Name, System.StringComparison.OrdinalIgnoreCase));
             _kinds.Add(kind);
             var keys = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
+            var extensions = new System.Collections.Generic.Dictionary<string, global::app.type.kind.@this>(System.StringComparer.OrdinalIgnoreCase);
             foreach (var held in _kinds)
-                foreach (var key in held.Alias.Prepend(held.Name).Concat(held.Mime).Concat(held.Extension.Select(e => e.TrimStart('.'))))
-                    keys.TryAdd(key, held);
+            {
+                foreach (var key in held.Alias.Prepend(held.Name).Concat(held.Mime)) keys.TryAdd(key, held);
+                foreach (var extension in held.Extension) extensions.TryAdd(extension.TrimStart('.'), held);
+            }
             _keys = keys;
+            _extensions = extensions;
         }
     }
 }

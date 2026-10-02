@@ -175,7 +175,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public ICache Cache { get; internal set; } = new global::app.module.cache.Memory();
 
     /// <summary>
-    /// The app's store — <c>.db/system.sqlite</c> (in memory while testing, under this app's id). One per
+    /// The app's store — <c>.data/data.sqlite</c> (in memory while testing, under this app's id). One per
     /// app — actors share it; its owners keep their tables (<c>settings</c>, setup's steps, the LLM cache, …).
     /// Born with the app and opened at its first verb, so an app that never touches it pays for no SQLite file.
     /// </summary>
@@ -319,8 +319,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         step = type.list["step"];
         action = type.list["action"];
         channel = type.list["channel"];
-        actor.list.System.Setting.Written += Refresh;
-        actor.list.User.Setting.Written += Refresh;
 
         Code.RegisterDefaults();
         // path's schemes, each a kind of path that builds its own path subclass. (The types' own
@@ -341,7 +339,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         }
 
         store = new global::app.store.sqlite.@this(
-            global::app.type.item.path.@this.Resolve("/.db/system.sqlite", actor.list.System.Context),
+            global::app.type.item.path.@this.Resolve("/.data/data.sqlite", actor.list.System.Context),
             () => Mode.Value == global::app.Mode.Test ? $"system-{Id}" : null,
             actor.list.System.Context);
 
@@ -421,27 +419,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         if (!identity.Success) return identity;
         // the actors' saved settings, read once: after this a setting is built in memory
         await actor.list.User.Setting.Load();
-        Refresh("");
         return identity;
-    }
-
-    /// <summary>
-    /// What reads its settings on every step holds them — each call stack, Debug — and is built again
-    /// when a value under their path is written (<paramref name="written"/>; empty: everything). The one
-    /// place a holder learns of a write; it becomes a binding on the setting's <c>on.set.after</c>.
-    /// </summary>
-    private void Refresh(string written)
-    {
-        bool Covers(string path) => written.Length == 0
-            || written.Equals(path, StringComparison.OrdinalIgnoreCase)
-            || written.StartsWith(path + ".", StringComparison.OrdinalIgnoreCase)
-            || path.StartsWith(written + ".", StringComparison.OrdinalIgnoreCase);
-
-        if (Covers(new global::app.callstack.setting.@this().Path))
-            foreach (var one in actor.list.Items())
-                one.CallStack.Setting = one.Context.Setting.Of<global::app.callstack.setting.@this>();
-        if (Debug != null && Covers(new global::app.module.debug.setting.@this().Path))
-            Debug.Setting = actor.list.System.Context.Setting.Of<global::app.module.debug.setting.@this>();
     }
 
     // The app's identity, from .build/app.pr when there is one — read back through the face Save writes: the
@@ -519,7 +497,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     {
         if (failed.Error is not { } error) return failed;
         var context = actor.list.User.Context;
-        var loaded = await goal.Load("/system/error/.build/show.pr");
+        var loaded = await goal.Load("/system/error/Show.goal");
         if (!loaded.Success || await loaded.Value() is not Goal show)
         {
             await (Debug?.Write($"error show: /system/error/Show could not load — {loaded.Error}") ?? Task.CompletedTask);

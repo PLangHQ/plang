@@ -200,11 +200,12 @@ public sealed class @this : global::app.type.kind.@this
         return default;
     }
 
-    // A json scalar → its raw CLR face; the Data ctor lifts it to the plang scalar.
+    // A json scalar → its raw CLR face (a number: its raw text read by number's one rule); the Data ctor lifts it
+    // to the plang scalar.
     private static object? Scalar(JsonElement e) => e.ValueKind switch
     {
         JsonValueKind.String => e.GetString(),
-        JsonValueKind.Number => e.TryGetInt64(out var l) ? l : e.GetDouble(),
+        JsonValueKind.Number => global::app.type.item.number.@this.Parse(e.GetRawText()),
         JsonValueKind.True => true,
         JsonValueKind.False => false,
         _ => null,

@@ -149,7 +149,7 @@ public class FileHandlerTests : IDisposable
         _app.actor.list.User.Context.Variable.Set("name", "Ingi");
 
         var action = new Read(_app.actor.list.User.Context) { Path = MakePath("template.txt"),
-            Variables = new global::app.data.@this<global::app.type.item.@bool.@this>("Variables", true, context: _app.actor.list.User.Context)
+            Template = new global::app.data.@this("Template", "plang", context: _app.actor.list.User.Context).As<global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>>()
         };
         var result = await action.Start();
 
@@ -165,8 +165,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(TempPath("literal.txt"), "Hello %name%, welcome");
         _app.actor.list.User.Context.Variable.Set("name", "Ingi");
 
-        var action = new Read(_app.actor.list.User.Context) { Path = MakePath("literal.txt"),
-            Variables = new global::app.data.@this<global::app.type.item.@bool.@this>("Variables", false, context: _app.actor.list.User.Context)
+        var action = new Read(_app.actor.list.User.Context) { Path = MakePath("literal.txt")
         };
         var result = await action.Start();
 
@@ -181,7 +180,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(TempPath("marked.txt"), "Hello %name%");
 
         var action = new Read(_app.actor.list.User.Context) { Path = MakePath("marked.txt"),
-            Variables = new global::app.data.@this<global::app.type.item.@bool.@this>("Variables", true, context: _app.actor.list.User.Context)
+            Template = new global::app.data.@this("Template", "plang", context: _app.actor.list.User.Context).As<global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>>()
         };
         var result = await action.Start();
 
@@ -202,7 +201,7 @@ public class FileHandlerTests : IDisposable
         _app.actor.list.User.Context.Variable.Set("name", "before");
 
         var action = new Read(_app.actor.list.User.Context) { Path = MakePath("late.txt"),
-            Variables = new global::app.data.@this<global::app.type.item.@bool.@this>("Variables", true, context: _app.actor.list.User.Context)
+            Template = new global::app.data.@this("Template", "plang", context: _app.actor.list.User.Context).As<global::app.type.item.choice.@this<global::app.type.item.template.kind.@this>>()
         };
         var result = await action.Start();
         _app.actor.list.User.Context.Variable.Set("name", "after");

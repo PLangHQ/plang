@@ -100,6 +100,91 @@ public class FormalReaderTests : System.IAsyncDisposable
         await Assert.That((System.TimeSpan)(global::app.type.item.duration.@this)duration!).IsEqualTo(System.TimeSpan.FromMinutes(5));
     }
 
+    // a list of dicts is a value for a list option (llm.query's messages); only goal.call's parameters, which are
+    // argument rows, are refused written as a list
+    [Test]
+    public async Task AListOfDicts_ReadsAsAValue_ForAListOption()
+    {
+        var read = Read("llm.query(Message=[{Role: \"system\", Content: \"be brief\"}, {Role: \"user\", Content: \"hi\"}])", out _);
+
+        await read.IsSuccess();
+    }
+
+    // `continue the conversation` as FixSteps writes it: the formal reads, rides its .pr (an object template), and
+    // opens as the conversation
+    [Test]
+    public async Task AConversationContinuing_ReadsRidesThePr_AndOpens()
+    {
+        var conversation = await Continuing("{continue: %answer%}");
+
+        await Assert.That(await conversation.Value()).IsTypeOf<global::app.module.llm.type.conversation.@this>();
+        await conversation.IsSuccess();
+    }
+
+    // an event written as a value (a goal's path where the event's path goes) is refused saying how an event is
+    // reached — never a missing reader thrown at whoever reads the .pr back
+    [Test]
+    public async Task AnEventWrittenAsAValue_IsRefused_SayingItsPath()
+    {
+        var read = Read("on.event(Event=\"/events/Runtime/DebugErrorInIde\", When=after, Action=goal.call(Name=\"Y\"))", out _);
+        var ctx = app.actor.list.User.Context;
+        var goal = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
+            global::PLang.Tests.Shared.Make.Step("on", ((global::app.goal.step.action.list.@this)read.Peek()!)[0])));
+
+        var ev = goal.Step[0].Code[0].Property["Event"]!.Data(ctx);
+        await ev.Value();
+
+        await ev.IsFailure();
+        await Assert.That(ev.Error!.Key).IsEqualTo("NotAnEvent");
+        await Assert.That(ev.Error.Message).Contains("%!app.type.step.on.before%");
+    }
+
+    // a conversation writes what it continues as written — the reference, never what it names now (unset at build)
+    [Test]
+    public async Task AConversation_WritesItsReferenceAsWritten()
+    {
+        var formal = "llm.query(Message=[{Role: \"user\", Content: \"again\"}], Conversation={continue: %answer%})";
+
+        var written = await Written(Read(formal, out _));
+
+        await Assert.That(written).Contains("%answer%");
+        await Assert.That(written).DoesNotContain("null");
+    }
+
+    // a conversation written as text is refused saying its shape — never a reader's exception
+    [Test]
+    public async Task AConversationWrittenAsText_IsRefused_SayingItsShape()
+    {
+        var conversation = await Continuing("\"{continue: %answer%}\"");
+
+        await conversation.Value();
+
+        await conversation.IsFailure();
+        await Assert.That(conversation.Error!.Key).IsEqualTo("ConversationInvalid");
+        await Assert.That(conversation.Error.Message).Contains("a conversation is {continue: %answer%}");
+    }
+
+    // llm.query's Conversation as written, through a real .pr load, with %answer% set
+    private async Task<global::app.data.@this> Continuing(string written)
+    {
+        var read = Read("llm.query(Message=[{Role: \"user\", Content: \"again\"}], Conversation=" + written + ")", out _);
+        await read.IsSuccess();
+        var ctx = app.actor.list.User.Context;
+        var goal = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
+            global::PLang.Tests.Shared.Make.Step("continue", ((global::app.goal.step.action.list.@this)read.Peek()!)[0])));
+        await ctx.Variable.Set("answer", "earlier");
+        return goal.Step[0].Code[0].Property["Conversation"]!.Data(ctx);
+    }
+
+    [Test]
+    public async Task GoalCallsParameters_WrittenAsAListOfDicts_AreRefused()
+    {
+        var read = Read("goal.call(Name=\"X\", Parameter=[{kind: \"a\"}])", out _);
+
+        await read.IsFailure();
+        await Assert.That(read.Error!.Message).Contains("arguments are written as one dict");
+    }
+
     [Test]
     public async Task AClause_LeadingTheStep_IsRefused()
     {

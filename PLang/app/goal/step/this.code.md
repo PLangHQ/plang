@@ -21,6 +21,12 @@ step.list Build (read the answers)                      goal/step/list/this.cs:1
 
 Each refusal is a line `step N ("text") — why`; a refused step's code is emptied so it is asked again.
 
+## Reading a step from its .pr
+
+`goal/step/serializer/Reader.cs` reads every key the step writes and refuses one it doesn't know
+(`PrFormatOutdatedException`: another builder wrote it). One old key is passed over by name: `waitForExecution`, which
+every older .pr carries — a step no longer says whether it waits; a goal call does (`goal.call`'s `Wait`).
+
 ## Tests
 
 - `PLang.Tests/Runtime/App/SingularNamespaces/BuilderSchemaTests/MatchTests.cs` — a number the step writes and the

@@ -1,5 +1,0 @@
-ShowGuiBuilder
-- render template ui/tldraw.template, write to output stream
-
-OpenVsCode
-- terminal app: "code", param:"%path%", dont show

@@ -12,13 +12,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     global::app.type.item.IMatch<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, list.@this>
 {
-    /// <summary>The shortcut <paramref name="goal"/> is, named by its file; <paramref name="system"/> when it is
-    /// one of <c>/system/shortcut/</c>, whose names an app may not take.</summary>
-    internal @this(global::app.goal.@this goal, bool system)
-    {
-        Goal = goal;
-        IsSystem = system;
-    }
+    /// <summary>The shortcut <paramref name="goal"/> is, named by its file.</summary>
+    internal @this(global::app.goal.@this goal) => Goal = goal;
 
     /// <summary>Its name — its goal's file (<c>goal.goal</c> → <c>goal</c>), read as <c>%!goal%</c>.</summary>
     [global::app.Out]
@@ -27,8 +22,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>The goal a read starts.</summary>
     public global::app.goal.@this Goal { get; }
 
-    /// <summary>One of <c>/system/shortcut/</c>: its name is sealed.</summary>
-    internal bool IsSystem { get; }
+    /// <summary>One of <c>/system/shortcut/</c> (the app's own copy or the os's) — its goal is a system goal: its
+    /// name is sealed.</summary>
+    internal bool IsSystem => Goal.IsSystem;
 
     /// <summary>A structure, not a single-token leaf.</summary>
     public override bool IsLeaf => false;

@@ -35,15 +35,16 @@ public sealed class @this
         var value = isDataGeneric ? bare.GetGenericArguments()[0] : bare;
         Type = value == typeof(global::app.data.@this) ? types["item"] : types[value];
 
-        // A closed-set default is born as its choice, so it names itself (`Promote`), never its number. Without
-        // [Default], a type with a default of its own (IDefault<T>) gives it.
+        // A closed-set default — an enum member or a name — is born as its choice through the door a written value
+        // takes (choice.Create), so it names itself (`Promote`, keccak256 the kind), never its number or a bare string.
+        // Without [Default], a type with a default of its own (IDefault<T>) gives it.
         var declaredDefault = prop.GetCustomAttribute<global::app.module.DefaultAttribute>()?.Value;
         var ownDefault = value.GetInterfaces().Any(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.IDefault<>))
             ? value.GetProperty("Default", BindingFlags.Public | BindingFlags.Static)?.GetValue(null)
             : null;
-        Default = declaredDefault is System.Enum && value.IsGenericType
+        Default = declaredDefault != null && value.IsGenericType
                   && value.GetGenericTypeDefinition() == typeof(global::app.type.item.choice.@this<>)
-            ? System.Activator.CreateInstance(value, declaredDefault)
+            ? value.GetMethod("Create", BindingFlags.Public | BindingFlags.Static, new[] { typeof(object) })!.Invoke(null, new[] { declaredDefault })
             : declaredDefault ?? ownDefault;
         IsInput = prop.GetCustomAttribute<global::app.Attributes.InputAttribute>() != null;
     }

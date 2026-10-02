@@ -110,7 +110,11 @@ public class Default : IBuilder
             var goal = Goal.Parse(text, file, context);
             if (goal == null) continue;
 
-            await MergePrData(goal, context);
+            // The .pr IS the build's cache: merging it sets goal.Cache (→ IsCached skips the goal) and carries
+            // each step's prior code (→ step.IsCached skips the step). cache:false means no cached answer of any
+            // kind, so a fresh source rebuilds in full — skip the merge entirely and the goal is built anew.
+            if (context.Setting.Of<global::app.module.build.setting.@this>().Cache.Value)
+                await MergePrData(goal, context);
             allGoals.Add(goal);
         }
 

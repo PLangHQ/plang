@@ -27,7 +27,7 @@ public class LoadTests
 
     private string Fixtures() => _root;
 
-    private const string Pr = "/.build/fullpipeline.pr";
+    private const string Pr = "/FullPipeline.goal";
 
     [Test] public async Task BeforeLoad_IsHandedThePr_AfterLoad_TheGoal()
     {
@@ -56,7 +56,7 @@ public class LoadTests
 
         await loaded.IsFailure();
         await Assert.That(loaded.Error!.Key).IsEqualTo("Refused");
-        await Assert.That(await app.goal.list.Find("FullPipeline")).IsNull();
+        await Assert.That(await app.goal.list.Find("FullPipeline").Found()).IsNull();
     }
 
     [Test] public async Task ACancellingBeforeLoad_IsTheAnswer_AndNothingIsRead()

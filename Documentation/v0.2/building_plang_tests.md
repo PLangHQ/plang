@@ -207,7 +207,7 @@ plang --build --debug={"goal":"BuildGoal"}                             # Build w
 
 ## LLM Cache
 
-The builder caches LLM responses by default in `.db/system.sqlite` (`LlmCache` table). Same input produces the same output — fast rebuilds.
+The builder caches LLM responses by default in `.data/data.sqlite` (`LlmCache` table). Same input produces the same output — fast rebuilds.
 
 To force fresh LLM calls (e.g., after changing the builder prompt):
 ```
@@ -218,7 +218,7 @@ To clear the cache manually:
 ```sql
 DELETE FROM LlmCache;
 ```
-Don't delete the whole `system.sqlite` — it contains other data.
+Don't delete the whole `data.sqlite` — it contains other data.
 
 ## v2 .pr File Format
 

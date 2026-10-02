@@ -137,7 +137,8 @@ public class CommandLineParser
 				// --debug/--test/--app consumers branch on IDictionary<string,object?>.
 				JsonValueKind.Object => ElementToRaw(element),
 				JsonValueKind.Array => ElementToRaw(element),
-				JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
+				// a number by number's one rule, as the raw CLR value the flag bag holds
+				JsonValueKind.Number => global::app.type.item.number.@this.Parse(element.GetRawText())!.BoxedValue,
 				JsonValueKind.True => true,
 				JsonValueKind.False => false,
 				JsonValueKind.Null => null!,
@@ -162,7 +163,8 @@ public class CommandLineParser
 		JsonValueKind.Array => element.EnumerateArray()
 			.Select(ElementToRaw).ToList(),
 		JsonValueKind.String => element.GetString(),
-		JsonValueKind.Number => element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
+		// a number by number's one rule, as the raw CLR value the flag bag holds
+		JsonValueKind.Number => global::app.type.item.number.@this.Parse(element.GetRawText())!.BoxedValue,
 		JsonValueKind.True => true,
 		JsonValueKind.False => false,
 		_ => null,

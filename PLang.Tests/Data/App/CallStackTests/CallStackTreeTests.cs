@@ -10,7 +10,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Push_SetsCurrentToNewCall()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var call = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await Assert.That(stack.Current).IsEqualTo(call);
     }
@@ -18,7 +18,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Push_NestedPush_SetsCallerToOuter()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using var inner = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
         await Assert.That(inner.Caller).IsEqualTo(outer);
@@ -27,7 +27,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Push_AppendsCallToCallerChildren()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using var inner = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
         await Assert.That(outer.Children.Contains(inner)).IsTrue();
@@ -36,7 +36,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Pop_RestoresCurrentToCaller()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using (var inner = stack.Push(MakeAction(app.actor.list.User.Context, "B")))
         {
@@ -48,7 +48,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Pop_RemovesFromCallerChildren_WhenHistoryFalse()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         var snapshotInner = (object?)null;
         await using (var inner = stack.Push(MakeAction(app.actor.list.User.Context, "B")))
@@ -62,7 +62,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Pop_RetainsInCallerChildren_WhenHistoryTrue()
     {
-        var stack = new CallStack { Setting = new() { History = true } };
+        var stack = new CallStack(TestCallStack.Settings(new Dictionary<string, object?> { ["history"] = true }));
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using (var inner = stack.Push(MakeAction(app.actor.list.User.Context, "B")))
         {
@@ -74,7 +74,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Root_IsFirstPushedCall()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var first = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using var second = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
         await Assert.That(stack.Root).IsEqualTo(first);
@@ -83,16 +83,17 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Root_NullBeforeAnyPush()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await Assert.That(stack.Root).IsNull();
     }
 
     [Test]
     public async Task MaxFrames_FifoEvictsOldestSibling_WhenHistoryTrue()
     {
-        var stack = new CallStack { Setting = new() {
-            History = true, Frame = new() { Max = 2 }
-        } };
+        var stack = new CallStack(TestCallStack.Settings(new Dictionary<string, object?>
+        {
+            ["history"] = true, ["frame"] = new Dictionary<string, object?> { ["max"] = 2 },
+        }));
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
 
         // Push and pop three siblings; with history retention, all three start as Children
@@ -110,7 +111,7 @@ public class CallStackTreeTests : System.IAsyncDisposable
     [Test]
     public async Task Audit_StartsEmpty()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await Assert.That(stack.Audit.Count).IsEqualTo(0);
     }
 }

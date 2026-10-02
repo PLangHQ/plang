@@ -88,9 +88,6 @@ public sealed partial class @this
     [Debug]
     public global::app.warning.list.@this Warning { get; init; } = new();
 
-    [Store, Debug, Default]
-    public bool WaitForExecution { get; internal set; } = true;
-
     /// <summary>The goal this step belongs to — a BIRTH FACT. The reader constructs the goal shell
     /// first and hands it to each step at construction, so this is set once and never reassigned.
     /// <c>init</c> is the enforcement: there is no stamping it in afterwards, and no repair getter.</summary>

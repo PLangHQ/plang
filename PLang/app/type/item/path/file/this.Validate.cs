@@ -44,21 +44,7 @@ public sealed partial class @this
         else if (IsPlangRooted(path))
         {
             if (!path.StartsWith(rootAbsolutePath) && !path.StartsWith(osAbsolutePath))
-            {
-                var resolved = PathHelper.GetFullPath(PathHelper.Join(rootAbsolutePath, path));
-
-                // /system/ paths fall back to <os>/system/ when absent under the root.
-                var sysPrefix = PathHelper.DirectorySeparatorChar + "system" + PathHelper.DirectorySeparatorChar;
-                if (path.AdjustPathToOs().StartsWith(sysPrefix, StringComparison.OrdinalIgnoreCase)
-                    && !Present(resolved))
-                {
-                    var afterPrefix = path.AdjustPathToOs().Substring(sysPrefix.Length);
-                    var osResolved = PathHelper.GetFullPath(PathHelper.Join(osAbsolutePath, "system", afterPrefix));
-                    if (Present(osResolved))
-                        resolved = osResolved;
-                }
-                path = resolved;
-            }
+                path = PathHelper.GetFullPath(PathHelper.Join(rootAbsolutePath, path));
         }
         else
         {
@@ -69,21 +55,31 @@ public sealed partial class @this
         if (!path.StartsWith(rootAbsolutePath, global::app.type.item.path.@this.RootComparison))
             return path;
 
-        // <root>/system/ → <os>/system/ fallback for non-existent paths.
-        var rootSystemDir = rootAbsolutePath + PathHelper.DirectorySeparatorChar + "system" + PathHelper.DirectorySeparatorChar;
-        if (path.StartsWith(rootSystemDir, StringComparison.OrdinalIgnoreCase)
-            && !Present(path))
-        {
-            var afterSystem = path.Substring(rootSystemDir.Length);
-            var osFallback = PathHelper.GetFullPath(PathHelper.Join(osAbsolutePath, "system", afterSystem));
-            if (Present(osFallback))
-                path = osFallback;
-        }
-
-        return path;
+        // of the places it names, the first that is there; else where it was written
+        var places = Places(path, app);
+        return places.FirstOrDefault(Present) ?? path;
 
         // Where a /system/ path is found is decided on the app's disk: the runtime's own files are never a build's.
         bool Present(string absolute) => new @this(absolute) is var at && (app.FileSystem.IsFile(at) || app.FileSystem.IsFolder(at));
+    }
+
+    /// <summary>The places this path names, the app's own first: a <c>/system/</c> path is the app's own
+    /// (<c>&lt;root&gt;/system/…</c>) and then the os's (<c>&lt;os&gt;/system/…</c>), whichever of them it resolved to;
+    /// any other path is the one place it is. What is there is the caller's to ask.</summary>
+    public override IReadOnlyList<global::app.type.item.path.@this> Place(actor.context.@this context)
+        => Places(Absolute, context.App).Select(place => (global::app.type.item.path.@this)new @this(place, context)).ToList();
+
+    // The /system/ overlay, stated once: an absolute under the app's /system/ or the os's names both, the app's first.
+    private static IReadOnlyList<string> Places(string absolute, global::app.@this app)
+    {
+        var separator = PathHelper.DirectorySeparatorChar;
+        var own = PathHelper.GetFullPath(app.AbsolutePath).AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
+        var os = PathHelper.GetFullPath(app.OsAbsolutePath).AdjustPathToOs().TrimEnd(separator) + separator + "system" + separator;
+        if (absolute.StartsWith(own, StringComparison.OrdinalIgnoreCase))
+            return [absolute, PathHelper.GetFullPath(os + absolute[own.Length..])];
+        if (absolute.StartsWith(os, StringComparison.OrdinalIgnoreCase))
+            return [PathHelper.GetFullPath(own + absolute[os.Length..]), absolute];
+        return [absolute];
     }
 
     /// <summary>True for an OS-absolute path — <c>//x</c> on Unix, <c>C:\</c> on Windows.</summary>

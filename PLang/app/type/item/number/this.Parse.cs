@@ -1,9 +1,10 @@
 namespace app.type.item.number;
 
 /// <summary>
-/// String → number parse path. Narrowest-fit: no decimal/exponent
-/// → int → long (past long → decimal); a decimal point, an exponent, NaN or Infinity → double. A decimal is
-/// asked for by name (<c>as decimal</c>), never read from a decimal point — every reader agrees (json reads double).
+/// String → number parse path — the one rule for a number written as text, so every reader agrees by handing its
+/// token's raw text here. No decimal/exponent → long (plang's integer; past long → biginteger, exact at any size); a
+/// decimal point, an exponent, NaN or Infinity → double. A decimal is asked for by name (<c>as decimal</c>), never
+/// read from a decimal point.
 ///
 /// <para><c>Resolve(string, context)</c> is the source-generator-recognized
 /// factory — the catalog reads it via reflection to render <c>number</c> as
@@ -28,15 +29,11 @@ public sealed partial class @this
         {
             if (long.TryParse(s, System.Globalization.NumberStyles.Integer,
                 System.Globalization.CultureInfo.InvariantCulture, out var l))
-            {
-                if (l >= int.MinValue && l <= int.MaxValue)
-                    return (@this)((int)l);
-                return (@this)(l);
-            }
-            // Past long — try decimal for very large integers.
-            if (decimal.TryParse(s, System.Globalization.NumberStyles.Integer,
-                System.Globalization.CultureInfo.InvariantCulture, out var bigDec))
-                return (@this)(bigDec);
+                return (@this)l;
+            // Past long — an integer stays an integer, exact at any size.
+            if (System.Numerics.BigInteger.TryParse(s, System.Globalization.NumberStyles.Integer,
+                System.Globalization.CultureInfo.InvariantCulture, out var big))
+                return (@this)big;
             return null;
         }
 

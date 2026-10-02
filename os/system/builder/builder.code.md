@@ -203,7 +203,7 @@ rebuilt — you'll see a `Reopened` warning in the `.pr`.
 ## 7. Caching: there is only one cache
 
 When `cache` is not `false`, the LLM layer hashes each request (messages + model +
-temperature + schema + format) and looks it up in `.db/system.sqlite` (`LlmCache`). A hit
+temperature + schema + format) and looks it up in `.data/data.sqlite` (`LlmCache`). A hit
 returns the stored result without calling the provider; that's the `[≡]` marker in build
 output, versus `[✓]` for a fresh call. `llm.decider` is **not** cached.
 
