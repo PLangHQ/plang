@@ -1,52 +1,52 @@
 {
   "name": "Build",
-  "description": null,
-  "comment": null,
-  "steps": [
+  "step": [
     {
       "index": 0,
       "text": "call goal /builder/Build",
-      "lineNumber": 2,
-      "indent": 0,
-      "comment": null,
-      "actions": [
+      "line": {
+        "number": 2
+      },
+      "code": [
         {
           "module": "goal",
-          "action": "call",
-          "parameters": [
+          "name": "call",
+          "property": [
             {
-              "name": "GoalName",
-              "value": {
-                "name": "goal /builder/Build",
-                "parallel": false,
-                "parameters": [],
-                "prPath": null
+              "name": "Name",
+              "type": {
+                "name": "goal"
               },
-              "type": "goal.call"
+              "value": "Build"
             }
           ],
-          "defaults": null,
-          "modifiers": []
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "wait",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
         }
-      ],
-      "intent": null,
-      "guidance": "The step text is a direct goal invocation: \u0060call goal /builder/Build\u0060. The @known annotation indicates the prior mapping is authoritative, so we must emit the keep:true form only.",
-      "level": "high",
-      "confidence": 95,
-      "formal": null,
-      "source": null,
-      "waitForExecution": true
+      ]
     }
   ],
-  "goals": [],
-  "visibility": 1,
+  "child": [],
+  "visibility": "Public",
   "path": "/system/Build.goal",
   "prPath": "/system/.build/build.pr",
-  "hash": "c73e799da0870eabbaaaabffa1683b9e654da2b41f5984db5efda0d76f46d30c",
-  "builderVersion": null,
+  "hash": "7b0abe35950558dc1c83df9473f61f20cbf851b3eceb788c6cb55de5aeb9611a",
   "isSetup": false,
   "isEvent": false,
   "isSystem": true,
-  "isTest": false,
-  "inputParameters": null
+  "isTest": false
 }

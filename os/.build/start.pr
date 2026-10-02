@@ -1,47 +1,36 @@
 {
   "name": "Start",
-  "description": null,
-  "comment": null,
-  "steps": [
+  "step": [
     {
       "index": 0,
-      "text": "write out \u0027hello plang world\u0027",
-      "lineNumber": 2,
-      "indent": 0,
-      "comment": null,
-      "actions": [
+      "text": "write out 'hello plang world'",
+      "line": {
+        "number": 2
+      },
+      "code": [
         {
           "module": "output",
-          "action": "write",
-          "parameters": [
+          "name": "write",
+          "property": [
             {
               "name": "Data",
-              "value": "hello plang world",
-              "type": "tstring"
+              "type": {
+                "name": "text"
+              },
+              "value": "hello plang world"
             }
-          ],
-          "defaults": null,
-          "modifiers": []
+          ]
         }
-      ],
-      "intent": null,
-      "guidance": null,
-      "level": null,
-      "confidence": null,
-      "formal": null,
-      "source": null,
-      "waitForExecution": true
+      ]
     }
   ],
-  "goals": [],
-  "visibility": 1,
+  "child": [],
+  "visibility": "Public",
   "path": "/Start.goal",
   "prPath": "/.build/start.pr",
-  "hash": "f4c2fa67d24d391b600c41abeeb3ec3273f76c27b99fcd455f3fe610368f9a71",
-  "builderVersion": null,
+  "hash": "526a1753f2771e234a2558a4d2733f7bd603677ef8c782c2a6e370df23c8a5cd",
   "isSetup": false,
   "isEvent": false,
   "isSystem": false,
-  "isTest": false,
-  "inputParameters": null
+  "isTest": false
 }
