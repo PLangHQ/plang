@@ -1,1 +1,1 @@
-Send an HTTP request (GET/POST/PUT/DELETE etc.) and return the parsed response body
+Send an HTTP request (GET, POST, PUT, DELETE, …), optionally with a body — a json object or a dict — and return the parsed response body. Posting data (`post <url>, body {…}`) is a request; only sending a file or form parts is an upload.
