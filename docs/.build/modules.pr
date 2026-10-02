@@ -5,9 +5,9 @@
       "index": 0,
       "text": "call goal Page module=%!app.module.file%",
       "line": {
-        "number": 8
+        "number": 9
       },
-      "comment": "The learner pages in modules/, each written from the module catalog, never by hand (decision 411; the spec is\nDocumentation/v0.2/module-reference-generation.md): the module's description, then each action's description,\nthe steps of its examples, its properties (how a step says each, its type, whether it is required, its default,\nwhat it changes) and what it returns.\nOnly the file module's notes are tagged yet, so only its page is written. The loop over %!app.module.list% comes\nwhen the other modules' notes are tagged.",
+      "comment": "The learner pages, each module's start.md in its own os folder (Ingi; a new /system/… file lands where its folder\nis, the app's own /system/ first, else the os's: decision 522), each written from the module catalog, never by hand (decision 411; the spec is\nDocumentation/v0.2/module-reference-generation.md): the module's description, then each action's description,\nthe steps of its examples, its properties (how a step says each, its type, whether it is required, its default,\nwhat it changes) and what it returns.\nOnly the file, condition and loop modules' notes are tagged (with a golden page each), so only their pages are\nwritten. The loop over %!app.module.list% comes when every module's notes are tagged.",
       "code": [
         {
           "module": "goal",
@@ -38,8 +38,83 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
+    },
+    {
+      "index": 1,
+      "text": "call goal Page module=%!app.module.condition%",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Page"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"module","type":{"name":"item","template":"plang"},"value":"%!app.module.condition%","variable":[{"text":"%!app.module.condition%","code":[{"variable":"!app"},{"property":"module"},{"property":"condition"}]}]}]
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "call goal Page module=%!app.module.loop%",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Page"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"module","type":{"name":"item","template":"plang"},"value":"%!app.module.loop%","variable":[{"text":"%!app.module.loop%","code":[{"variable":"!app"},{"property":"module"},{"property":"loop"}]}]}]
+            }
+          ],
+          "default": [
+            {
+              "name": "parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
     }
   ],
   "child": [
@@ -50,9 +125,9 @@
           "index": 0,
           "text": "render template \"/templates/module.template\", write to %page%",
           "line": {
-            "number": 12
+            "number": 15
           },
-          "comment": "One module's page, modules/<name>.md, then what its actions' notes and properties don't agree on.",
+          "comment": "One module's page, system/modules/<name>/start.md, then what its actions' notes and properties don't agree on.",
           "code": [
             {
               "module": "ui",
@@ -117,14 +192,13 @@
                 }
               ]
             }
-          ],
-          "waitForExecution": true
+          ]
         },
         {
           "index": 1,
-          "text": "save %page% to \"/modules/%module.Name%.md\"",
+          "text": "save %page% to \"/system/modules/%module.Name%/start.md\"",
           "line": {
-            "number": 13
+            "number": 16
           },
           "code": [
             {
@@ -137,7 +211,7 @@
                     "name": "path",
                     "template": "plang"
                   },
-                  "value": "/modules/%module.Name%.md",
+                  "value": "/system/modules/%module.Name%/start.md",
                   "variable": [
                     {
                       "text": "%module.Name%",
@@ -172,14 +246,13 @@
                 }
               ]
             }
-          ],
-          "waitForExecution": true
+          ]
         },
         {
           "index": 2,
           "text": "foreach %module.Action%, call Unmatched action=%item%",
           "line": {
-            "number": 14
+            "number": 17
           },
           "code": [
             {
@@ -257,19 +330,14 @@
                 }
               ]
             }
-          ],
-          "waitForExecution": true
+          ]
         }
       ],
       "child": [],
       "visibility": "Private",
       "path": "/Modules.goal",
       "prPath": "/.build/modules.pr",
-      "hash": "9886e9e805680340d72533651d5737b04959b02eac87227c5b20db587a2e7b0e",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": false
+      "hash": "c3a55697e4fb78863491d825f31e2ae682ca10052aadfd9a32e522b2ba9abaf6"
     },
     {
       "name": "Unmatched",
@@ -278,7 +346,7 @@
           "index": 0,
           "text": "foreach %action.Note.Warning%, call Warn warning=%item%",
           "line": {
-            "number": 19
+            "number": 22
           },
           "comment": "What one action's notes and properties don't agree on: a notes line that names no property, a property that no\nline names. The notes find them (action.Note.Warning); this writes each one.",
           "code": [
@@ -360,19 +428,14 @@
                 }
               ]
             }
-          ],
-          "waitForExecution": true
+          ]
         }
       ],
       "child": [],
       "visibility": "Private",
       "path": "/Modules.goal",
       "prPath": "/.build/modules.pr",
-      "hash": "be5de25a39b52311fab3e2e17fd45503dd5f4408a30e9fe6c0bd52d1903fff85",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": false
+      "hash": "be5de25a39b52311fab3e2e17fd45503dd5f4408a30e9fe6c0bd52d1903fff85"
     },
     {
       "name": "Warn",
@@ -381,7 +444,7 @@
           "index": 0,
           "text": "write %warning.Message% to \"error\" channel",
           "line": {
-            "number": 22
+            "number": 25
           },
           "code": [
             {
@@ -418,27 +481,18 @@
                 }
               ]
             }
-          ],
-          "waitForExecution": true
+          ]
         }
       ],
       "child": [],
       "visibility": "Private",
       "path": "/Modules.goal",
       "prPath": "/.build/modules.pr",
-      "hash": "f6ed3ccca47c73ff64ee3cbd74155a288496d7cd0b8156e1c48b1e15f1086867",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": false
+      "hash": "f6ed3ccca47c73ff64ee3cbd74155a288496d7cd0b8156e1c48b1e15f1086867"
     }
   ],
   "visibility": "Public",
   "path": "/Modules.goal",
   "prPath": "/.build/modules.pr",
-  "hash": "c6874f1ad103573ee84307c754ffe673fac83345126cdeb7f87d954161c63ea0",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": false
+  "hash": "f931a7e26442a91a6b782a77da6a61ddc496fb8667e8414fd57108f115f7b1e7"
 }
