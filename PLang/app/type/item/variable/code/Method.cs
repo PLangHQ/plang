@@ -58,10 +58,12 @@ public sealed class Method : Hop
         if (!previous.Success) return previous;
 
         var given = Parameter.Items(context).ToList();
+        // a method takes the values given in order; the ones left out at its end are those it says are optional
         var method = target.GetType().GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .FirstOrDefault(m => string.Equals(m.Name, Name, System.StringComparison.OrdinalIgnoreCase)
                 && System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute))
-                && m.GetParameters().Count(p => p.ParameterType != typeof(global::app.actor.context.@this)) == given.Count);
+                && m.GetParameters().Where(p => p.ParameterType != typeof(global::app.actor.context.@this)).ToList() is var takes
+                && takes.Count >= given.Count && takes.Skip(given.Count).All(p => p.IsOptional));
         if (method == null)
             return context.Error(new global::app.error.Error(
                 $"{target.Type.Name} has no method '{Name}' taking {given.Count} value{(given.Count == 1 ? "" : "s")}.",
@@ -72,6 +74,7 @@ public sealed class Method : Hop
         foreach (var p in method.GetParameters())
         {
             if (p.ParameterType == typeof(global::app.actor.context.@this)) { args.Add(context); continue; }
+            if (at >= given.Count) { args.Add(p.DefaultValue); continue; }
             var row = given[at++];
             var item = await row.Value();
             if (!row.Success) return row;

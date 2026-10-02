@@ -443,23 +443,30 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return limit <= 0 || _value.Length <= limit ? this : new(_value[..limit] + "...");
     }
 
-    /// <summary>The lines matching <paramref name="pattern"/>, through the grep provider.</summary>
+    /// <summary>The lines matching <paramref name="pattern"/> — each <c>line number: line</c> — with <paramref name="lines"/>
+    /// lines around each when asked (0, none, by default), through the grep the app registered (<c>app.Code</c>), else
+    /// the default line matcher.</summary>
     [LlmBuilder]
-    public global::app.data.@this Grep(@this pattern, global::app.actor.context.@this context)
-        => Grep(pattern, 0, context);
-
-    /// <summary>The lines matching <paramref name="pattern"/> with <paramref name="lines"/> lines around
-    /// each, through the grep the app registered (<c>app.Code</c>), else the default line matcher.</summary>
-    [LlmBuilder]
-    public global::app.data.@this Grep(@this pattern, global::app.type.item.number.@this lines, global::app.actor.context.@this context)
-        => (context.App.Code.Get<global::app.data.code.IGrep>().Provider ?? new global::app.data.code.Default())
-            .Grep(new global::app.data.@this("", this, context: context), pattern._value, lines.Clr<int>());
+    public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.list.@this<@this>>> Grep(@this pattern,
+        global::app.actor.context.@this context, global::app.type.item.number.@this? lines = null)
+    {
+        var found = (context.App.Code.Get<global::app.data.code.IGrep>().Provider ?? new global::app.data.code.Default())
+            .Grep(new global::app.data.@this("", this, context: context), pattern._value, lines?.Clr<int>() ?? 0);
+        if (!found.Success) return global::app.data.@this<global::app.type.item.list.@this<@this>>.From(found);
+        var text = (await found.Value())?.ToString() ?? "";
+        return context.Ok(new global::app.type.item.list.@this<@this>(
+            text.Length == 0 ? [] : [.. text.Split('\n').Select(line => (@this)line.TrimEnd('\r'))]));
+    }
 
     /// <summary>How many lines match <paramref name="pattern"/>.</summary>
     [LlmBuilder]
-    public global::app.data.@this GrepCount(@this pattern, global::app.actor.context.@this context)
-        => (context.App.Code.Get<global::app.data.code.IGrep>().Provider ?? new global::app.data.code.Default())
+    public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.number.@this>> GrepCount(@this pattern,
+        global::app.actor.context.@this context)
+    {
+        var counted = (context.App.Code.Get<global::app.data.code.IGrep>().Provider ?? new global::app.data.code.Default())
             .GrepCount(new global::app.data.@this("", this, context: context), pattern._value);
+        return counted.Success ? counted.As<global::app.type.item.number.@this>() : global::app.data.@this<global::app.type.item.number.@this>.From(counted);
+    }
 
     /// <summary>The item membership hook — substring, same policy as below.</summary>
     public override System.Threading.Tasks.ValueTask<bool> Contains(global::app.data.@this needle)

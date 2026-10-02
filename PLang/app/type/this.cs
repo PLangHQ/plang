@@ -754,12 +754,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         {
             var answers = m.ReturnType is { IsGenericType: true } task && task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>)
                 ? task.GenericTypeArguments[0] : m.ReturnType;
+            // a member answering through a Data (so a failure rides it) answers what the Data holds
+            if (answers is { IsGenericType: true } data && data.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
+                answers = data.GenericTypeArguments[0];
             var parameters = m.GetParameters();
             if (parameters is [{ ParameterType: var only }] && only == typeof(actor.context.@this))
                 return types.Property(m.Name, answers);
             return types.Property(m.Name, answers, parameters
                 .Where(p => p.ParameterType != typeof(actor.context.@this) && p.ParameterType != typeof(System.Threading.CancellationToken))
-                .Select(p => types.Property(p.Name!, p.ParameterType))
+                .Select(p => types.Property(p.Name!, p.ParameterType, optional: p.IsOptional))
                 .ToList());
         }
 
