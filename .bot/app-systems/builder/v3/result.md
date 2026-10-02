@@ -307,12 +307,23 @@ value is a dotted variable** (`call goal Render source=%!a.b.c%` → `Name="Rend
 Added one example in that shape. Re-pinned `pick_golden.json` (word-diff: only the goal.call teaching
 text moved).
 
-**Measured (fresh, cache off, 5 builds; `/shared/educator/work/b32`): the three module-var Page calls
-(file/condition/loop) → `Name="Page"` 4/5, the variable-as-Name bug 1/5** (was 6/6). Guards held every
-build: `call goal /builder/Build` → `Name="/system/builder/Build"`, `call goal Unmatched action=%item%`
-→ `Name="Unmatched"`. So the note lifts 32(b) from consistently-broken to mostly-right, but **not
-deterministic** — 1/5 still picks the variable. Keep the note (net-positive, no regression); the
-coder's **goal-name offers** (the `goal` type's `Offers(step)`, queued) remain the fix that makes it
-5/5. Lands alongside that core.
+**CORRECTED (my first 4/5 did not reproduce).** The educator got 0/8; a clean rebuild + 3-way
+re-measure (fresh, cache off, 5 each, educator's command `plang build '--app={"create":true}'
+'--build={"cache":false}'`, direct step-0 Name inspection):
+
+| set | goal | step-0 Name ×5 | Page |
+|---|---|---|---|
+| A edu (educator's exact, `module=`, `%module%` used in Page) | — | `%!app.module.file%` ×5 | **0/5** (reproduces 0/8) |
+| B guards (my earlier b32 shape, `module=` + 2 guard steps) | — | Page, Page, bug, bug, bug | **2/5** |
+| C mparam (`m=` instead of `module=`, `%m%` used) | — | Page, Page, bug, Page, Page | **4/5** |
+
+So: **the note does NOT fix 32(b) for `module=`** (my earlier 4/5 was a flaky/extraction artifact on
+the guards goal — retracted; the honest number for `module=` is 0–2/5, 0/5 on the educator's exact
+goal). **The parameter name is the aggravator** (educator's guess confirmed): `module` is a plang
+concept and echoes the variable path `%!app.module.file%`, so the writer reads the value as the name;
+rename it `m=` and it jumps to 4/5. The guard steps (more goal.call context) nudge it 0→2/5 but not
+reliably. **The note is kept** (harmless, helps the non-`module` cases and the decider), but the real
+fix is the coder's **goal-name offers** (the `goal` type's `Offers(step)`, queued) — the decider picks
+`Page` from the reachable goals, immune to the parameter's name. Re-measure after that lands.
 
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).

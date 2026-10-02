@@ -107,7 +107,27 @@ Landed (d08a129df): four LLM-facing templates read `s.Mask.Text`; `properties.te
 renders `listed.Option`; `ask:` lines on loop.foreach Item/Key + llm.query Conversation; `pick_golden`
 re-pinned; Wire 487 pass / 9 baseline. Measurements (fresh, cache off, 5 each; table in `v3/result.md`,
 commit 2f73f5479): **issue 2 Item+Key 5/5 FIXED, named continue 5/5 FIXED, plain-foreach/plain-read
-guards hold.** ### Edges resolved by the architect (core → coder batch; my ask: lines + re-measure follow)
+guards hold.** ### DIRECTION CHANGE (Ingi, 2026-10-02): masking is a hack — REMOVED
+Ingi ruled `step.Mask` out. The coder removes `step.Mask` + the restore (core); **I revert the four
+templates from `s.Mask.Text` back to `s.Text`, in a commit paired with the coder's hash.** The `ask:`
+lines (Option v2), `listed.Option` render, and the goal.call note all STAY (not masking).
+**New lever — teach what `%!…%` is.** Neither decider template nor `Properties.llm:32` explains `%!…%`,
+so the decider reads `condition` inside `%!app.module.condition%` as a step word (32a). Add a short
+teaching once in `decider.state.template` (shared state) and `Properties.llm`'s variable line:
+`%name%` is a variable (a value the step uses, never words of the step); `%!…%` reads a value from the
+app (`%!app.module.file%` = the file module as a value, `%!llm.setting.cache%` = the llm setting's cache
+option, `%!data%` = the prior action's result); the words inside `%…%` are its name, never what the
+step does. Then re-pin, Wire, and measure fresh 5 each: 32a (condition step), 32b (educator's exact
+`modules-nocomment` goal), control (`save %!llm.setting.cache%`), issue 2 (key), named continue, guards.
+**Pending the coder's Mask-removal hash** (template revert + teaching land together).
+
+**32(b) note-lever CORRECTED:** my earlier "4/5" did not reproduce — on the educator's exact goal it is
+**0/5** (`module=`), matching their 0/8; a clean guards-goal run is 2/5; and `m=` instead of `module=`
+is 4/5 — so the parameter *name* `module` (a plang concept echoing `app.module.file`) is the aggravator,
+not something the note fixes. The goal-name offers (now folded into the no-masking plan via the `%!…%`
+teaching + the `goal` type) are the real fix. Full table in `v3/result.md`.
+
+### Edges resolved by the architect (core → coder batch; my ask: lines + re-measure follow) [SUPERSEDED by the no-masking direction above for the mask parts; ask: lines + offers still stand]
 1. **Control regression →** do NOT exempt `%!…%` paths (that revives 32a). Instead **the mask carries
    each variable's type** where the build knows it: `save %v1% (setting)`, `call goal Page module=%v1%
    (module)` — same annotation `write to` already gets (`%x% (hash)`). The type is the honest signal,
