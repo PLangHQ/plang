@@ -175,7 +175,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public ICache Cache { get; internal set; } = new global::app.module.cache.Memory();
 
     /// <summary>
-    /// The app's store — <c>.db/system.sqlite</c> (in memory while testing, under this app's id). One per
+    /// The app's store — <c>.data/data.sqlite</c> (in memory while testing, under this app's id). One per
     /// app — actors share it; its owners keep their tables (<c>settings</c>, setup's steps, the LLM cache, …).
     /// Born with the app and opened at its first verb, so an app that never touches it pays for no SQLite file.
     /// </summary>
@@ -341,7 +341,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         }
 
         store = new global::app.store.sqlite.@this(
-            global::app.type.item.path.@this.Resolve("/.db/system.sqlite", actor.list.System.Context),
+            global::app.type.item.path.@this.Resolve("/.data/data.sqlite", actor.list.System.Context),
             () => Mode.Value == global::app.Mode.Test ? $"system-{Id}" : null,
             actor.list.System.Context);
 

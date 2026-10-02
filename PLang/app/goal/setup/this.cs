@@ -6,7 +6,7 @@ namespace app.goal.setup;
 /// <summary>
 /// Run-once setup execution system.
 /// Setup goals execute once-per-step at app startup. Steps are tracked
-/// persistently in the "setup" table of app.actor.list.System.DataSource (system.sqlite),
+/// persistently in the "setup" table of the app's store (.data/data.sqlite),
 /// keyed by step.Hash. New steps run on next startup. Changed steps (different hash) re-run.
 /// </summary>
 public sealed class @this

@@ -7,7 +7,7 @@ namespace PLang.Tests.App.Context;
 /// Coverage for the app-level SettingsStore. Per-actor allocation was dead drift
 /// — only System's store ever had real consumers. After stage 13's settings
 /// rework, there's a single shared <c>app.store</c> backed by
-/// <c>.db/system.sqlite</c> (or in-memory under Testing).
+/// <c>.data/data.sqlite</c> (or in-memory under Testing).
 /// </summary>
 public class ActorSettingsStoreTests
 {
@@ -29,7 +29,7 @@ public class ActorSettingsStoreTests
     [Test]
     public async Task SettingsStore_DuringBuilding_PersistsAcrossEngineInstances()
     {
-        // Build mode → on-disk system.sqlite — survives App lifetime so
+        // Build mode → on-disk data.sqlite — survives App lifetime so
         // LLM cache and other persistent system data live across builds.
         await using (var engine = new global::app.@this(_testDir).TestSigning())
         {

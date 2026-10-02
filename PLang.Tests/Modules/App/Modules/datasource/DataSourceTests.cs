@@ -370,7 +370,7 @@ public class DataSourceTests
         await using var engine = new global::app.@this(_tempDir).TestSigning();
         engine.test.list.Open();
 
-        // app.store is in-memory under Testing — no .db directory created.
+        // app.store is in-memory under Testing — no .data directory created.
         var ds = engine.store;
         var setResult = await ds.Set("test_table", "k", new Data("k", "v", context: _app.actor.list.System.Context!));
         await setResult.IsSuccess();
@@ -378,8 +378,8 @@ public class DataSourceTests
         var getResult = await ds.Get<global::app.type.item.@this>("test_table", "k");
         await Assert.That((await getResult.Value())?.ToString()).IsEqualTo("v");
 
-        // Verify no .db directory was created on disk
-        var dbDir = System.IO.Path.Combine(_tempDir, ".db");
+        // Verify no .data directory was created on disk
+        var dbDir = System.IO.Path.Combine(_tempDir, ".data");
         await Assert.That(System.IO.Directory.Exists(dbDir)).IsFalse();
     }
 
@@ -387,14 +387,14 @@ public class DataSourceTests
     public async Task App_UsesFileBacked_ByDefault()
     {
         await using var engine = new global::app.@this(_tempDir).TestSigning();
-        // Testing not enabled → file-backed system.sqlite.
+        // Testing not enabled → file-backed .data/data.sqlite.
 
         var ds = engine.store;
         var setResult = await ds.Set("file_table", "k", new Data("k", "v", context: _app.actor.list.System.Context!));
         await setResult.IsSuccess();
 
-        // Verify .db directory WAS created on disk
-        var dbDir = System.IO.Path.Combine(_tempDir, ".db");
+        // Verify .data directory WAS created on disk
+        var dbDir = System.IO.Path.Combine(_tempDir, ".data");
         await Assert.That(System.IO.Directory.Exists(dbDir)).IsTrue();
     }
 }

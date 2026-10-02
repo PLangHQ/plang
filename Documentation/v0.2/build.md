@@ -61,7 +61,7 @@ Full detail: [`builder.code.md`](../../os/system/builder/builder.code.md).
 ## Cache
 
 There is **one** cache: the LLM layer hashes each request (messages + model + temperature
-+ schema + format) and stores the result in `.db/system.sqlite` (`LlmCache`). A hit returns
++ schema + format) and stores the result in `.data/data.sqlite` (`LlmCache`). A hit returns
 the stored result without calling the provider — that's the `[≡]` marker in build output,
 versus `[✓]` for a fresh call. (`llm.decider` is not cached.)
 

@@ -43,7 +43,7 @@ public class AppFactsTests
         try
         {
             await using (var app = new global::app.@this(root).Testing()) { _ = app.store; }
-            await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(root, ".db", "system.sqlite"))).IsFalse();
+            await Assert.That(System.IO.File.Exists(System.IO.Path.Combine(root, ".data", "data.sqlite"))).IsFalse();
         }
         finally { System.IO.Directory.Delete(root, recursive: true); }
     }

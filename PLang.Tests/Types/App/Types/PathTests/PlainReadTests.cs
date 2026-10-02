@@ -78,7 +78,7 @@ public class PlainReadTests
     }
 
     // as the builder writes `read 'x', write to %raw%`: the set holds the read as a file (Type=file); the assert
-    // reads %raw% as its Value
+    // asks whether %raw% (the container) holds "World" (the value)
     [Test] public async Task APlainRead_HeldAsAFile_AfterALoadVarsRead_StaysLiteral()
     {
         var (app, ctx) = await NewApp("Hello %name%!");
@@ -96,7 +96,7 @@ public class PlainReadTests
             Make.Step("write out %raw%", Make.Action(ctx, "output", "write",
                 Make.Param(ctx, "Data", "%raw%", new global::app.type.@this("item", template: "plang")))),
             Make.Step("assert that %raw% does not contain World", Make.Action(ctx, "assert", "notContains",
-                Make.Param(ctx, "Value", "%raw%", new global::app.type.@this("item", template: "plang")), ("Container", "World")))));
+                ("Value", "World"), Make.Param(ctx, "Container", "%raw%", new global::app.type.@this("item", template: "plang"))))));
 
         await (await goal.Start(ctx)).IsSuccess();
 
