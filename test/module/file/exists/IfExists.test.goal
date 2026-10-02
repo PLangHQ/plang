@@ -1,6 +1,11 @@
-/ "if <file> exists" must ask file.exists, not test the quoted name as truthy text. missing.json does not
-/ exist, so %seen% is never set. With the bug (condition.if(Left="missing.json")), the name is truthy text
-/ and %seen% gets set — this test goes red.
+/ "if <file> exists" must ask file.exists and branch on ITS result, not test whatever the previous step
+/ left in %!data%. A data-leaving step first makes %!data% truthy, so the old shape
+/ (condition.if(Left=%!data%)) would fire for a missing file too. An existing file must fire, a missing one
+/ must not — the missing-file branch is the discriminator.
 Start
-- if 'missing.json' exists, set %seen% = true
-- assert %seen% is empty
+- write out "something before"
+- save "hi" to file 'here.json'
+- if 'here.json' exists, set %seen% = true
+- if 'gone.json' exists, set %missing% = true
+- assert %seen% is true
+- assert %missing% is empty
