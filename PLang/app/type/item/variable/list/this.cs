@@ -53,6 +53,18 @@ public partial class @this
     /// Production ctor — born from the owning context. Every Variables in a running
     /// App belongs to exactly one context, passed in here.
     /// </summary>
+    /// <summary>A task's store: its own memory, reading through to <paramref name="reads"/> (its caller's), live, for a
+    /// name it holds nothing for; its writes stay in it. Its frames continue the caller's — a frame its caller ran it
+    /// in (a tool's arguments) is still the frame it reads first.</summary>
+    public @this(actor.context.@this context, @this reads) : this(context)
+    {
+        _reads = reads;
+        Calls = reads.Calls;
+    }
+
+    // the caller's store a task's store reads through to; null for every other store
+    private readonly @this? _reads;
+
     public @this(actor.context.@this context)
     {
         Context = context;
@@ -99,6 +111,9 @@ public partial class @this
             var bound = await reference.Settle();
             value = bound.IsInitialized ? bound.Copy(name) : _context.NotFound(name);
         }
+        // what the value becomes where the name's value was (a task keeps the task written before it)
+        if (value is data.@this written)
+            value = await written.Replace(async () => (await Get(name)).Peek());
 
         // The name is a variable's root; a write deeper in is the variable's own (variable.Set).
 
@@ -225,6 +240,21 @@ public partial class @this
         return ReferenceEquals(held, stored) ? await After(name, null, held) : held;
     }
 
+    /// <summary>What <paramref name="name"/> holds, as this store's own to change in place: held here (or by a call's
+    /// frame), as it is; read through from its caller's store (a task's), a copy of it (<see cref="global::app.type.item.@this.Copy"/>)
+    /// bound here first, so a change never reaches the caller. Its content is touched first (lazy content is copied as
+    /// what it is). Answers what the name holds now.</summary>
+    public async System.Threading.Tasks.ValueTask<data.@this> Own(string name)
+    {
+        if (_reads == null || Calls.Current?.Keeper(name) != null || _variables.ContainsKey(name)) return await Get(name);
+        var read = await _reads.Get(name);
+        if (read.Success && read.IsInitialized) await read.Value();
+        if (!read.Success || !read.IsInitialized || read.Peek() is not { } value) return read;
+        var copy = value.Copy();
+        if (ReferenceEquals(copy, value)) return read;
+        return _variables.GetOrAdd(name, new data.@this(name, copy, context: _context));
+    }
+
     /// <summary>Stores <paramref name="value"/> under <paramref name="name"/> only if the name still
     /// holds <paramref name="expected"/> — the Data the caller read — in one step; a newer value set
     /// in between is left alone, and is the answer. When <paramref name="expected"/> already holds the
@@ -236,14 +266,17 @@ public partial class @this
         if (await Before(Events?.set, name, value) is { } refused) return refused;
 
         var frame = Calls.Current?.Keeper(name);
-        if (frame != null ? !(frame.TryGet(name, out var held) && ReferenceEquals(held, expected))
-                          : !_variables.TryGetValue(name, out held) || !ReferenceEquals(held, expected))
+        // a task's store changing what it read from its caller writes its own: the caller's stays as it was
+        var readThrough = frame == null && !_variables.ContainsKey(name) && ReferenceEquals(_reads?.Peek(name), expected);
+        data.@this? held = null;
+        if (!readThrough && (frame != null ? !(frame.TryGet(name, out held) && ReferenceEquals(held, expected))
+                                           : !_variables.TryGetValue(name, out held) || !ReferenceEquals(held, expected)))
             return held ?? expected;
 
         // Rebind — the same rebind Set does.
         var rebound = new data.@this(name, value, context: _context);
         if (frame != null) frame.Set(name, rebound);
-        else if (!_variables.TryUpdate(name, rebound, expected)) return await Get(name);
+        else if (readThrough ? !_variables.TryAdd(name, rebound) : !_variables.TryUpdate(name, rebound, expected)) return await Get(name);
         return await After(name, expected.Peek(), rebound);
     }
 
@@ -258,7 +291,7 @@ public partial class @this
     {
         if (string.IsNullOrEmpty(name)) return null;
         if (Calls.Current is { } frame && frame.TryGet(name, out var framed)) return framed;
-        return _variables.TryGetValue(name, out var v) ? v : null;
+        return _variables.TryGetValue(name, out var v) ? v : _reads?.Peek(name);
     }
 
     /// <summary>The value-counterpart to <see cref="Get"/>: hand back the VALUE a
@@ -276,8 +309,8 @@ public partial class @this
             return System.Threading.Tasks.ValueTask.FromResult(_context.NotFound(name ?? ""));
         if (Calls.Current is { } frame && frame.TryGet(name, out var framed))
             return System.Threading.Tasks.ValueTask.FromResult(framed);
-        return System.Threading.Tasks.ValueTask.FromResult(
-            _variables.TryGetValue(name, out var root) ? root : _context.NotFound(name));
+        if (_variables.TryGetValue(name, out var root)) return System.Threading.Tasks.ValueTask.FromResult(root);
+        return _reads?.Get(name) ?? System.Threading.Tasks.ValueTask.FromResult(_context.NotFound(name));
     }
 
     /// <summary>
@@ -310,7 +343,7 @@ public partial class @this
     {
         if (Calls.Current is { } frame && frame.TryGet(name, out _))
             return true;
-        return _variables.ContainsKey(name);
+        return _variables.ContainsKey(name) || (_reads?.Contains(name) ?? false);
     }
 
     /// <summary>

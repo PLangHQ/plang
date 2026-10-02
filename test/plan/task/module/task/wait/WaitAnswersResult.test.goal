@@ -1,0 +1,9 @@
+/ wait for %task% answers the goal's result, once the task has ended.
+Start
+- goal.call(Name="Slow", Parallel=true); variable.set(Name=%task%, Value=%!data%)
+- task.wait(Task=%task%); variable.set(Name=%result%, Value=%!data%)
+- assert.equals(Expected="slow done", Actual=%result%, Message="wait for a task answers its result")
+
+Slow
+- timer.sleep(Ms=200)
+- goal.return(Data="slow done")

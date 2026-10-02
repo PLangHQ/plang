@@ -63,7 +63,8 @@ public class TaskTests
     [Test]
     public async Task AParallelCall_AnswersATask_AndTheNextStepRunsBeforeTheGoalEnds()
     {
-        await Load("Slow", Make.Step("sleep", Sleep(1000)), Make.Step("append task", Set("order", "%order%,task")));
+        await Load("Slow", Make.Step("sleep", Sleep(1000)), Make.Step("append task", Set("order", "%order%,task")),
+            Make.Step("return order", Return("%order%")));
         var caller = await Load("Caller",
             Make.Step("call Slow in parallel, write to %task%", InParallel("Slow"), Set("task", "%!data%")),
             Make.Step("set order", Set("order", "caller")));
@@ -71,9 +72,33 @@ public class TaskTests
         await (await caller.Start(Ctx)).IsSuccess();
         var task = (await Ctx.Variable.Get("task")).Peek() as global::app.task.@this;
         await Assert.That(task).IsNotNull();
-        await (await task!.Wait()).IsSuccess();
+        var waited = await task!.Wait();
 
-        await Assert.That((await (await Ctx.Variable.Get("order")).Value())?.ToString()).IsEqualTo("caller,task");
+        // the step after the call ran before the task read %order% (its reads fall through to the caller's, live);
+        // what the task wrote stays in it
+        await Assert.That((await waited.Value())?.ToString()).IsEqualTo("caller,task");
+        await Assert.That((await (await Ctx.Variable.Get("order")).Value())?.ToString()).IsEqualTo("caller");
+    }
+
+    private global::app.goal.step.action.@this Return(string value) => Make.Action(Ctx, "goal", "return", ("Data", value));
+
+    // a task's writes stay in it — a member written into a value it read from its caller included; two tasks writing one
+    // name never overwrite each other
+    [Test]
+    public async Task ATasksWrites_StayInIt_AndSiblingsNeverOverwriteEachOther()
+    {
+        await Ctx.Variable.Set("kept", new Dictionary<string, object?> { ["order"] = "caller" });
+        await Load("A", Make.Step("set v", Set("v", "a")), Make.Step("set kept mark", Set("%kept.mark%", "a")),
+            Make.Step("sleep", Sleep(500)), Make.Step("return v", Return("%v%")));
+        await Load("B", Make.Step("set v", Set("v", "b")), Make.Step("return v", Return("%v%")));
+        var a = await Started("A");
+        var b = await Started("B");
+
+        await Assert.That((await (await a.Wait()).Value())?.ToString()).IsEqualTo("a");
+        await Assert.That((await (await b.Wait()).Value())?.ToString()).IsEqualTo("b");
+        await Assert.That((await Ctx.Variable.Get("v")).IsInitialized).IsFalse();
+        var kept = await Ctx.Variable.Get("kept");
+        await Assert.That((await ((global::app.type.item.@this)(await kept.Value())!).Get(kept, "mark")).IsInitialized).IsFalse();
     }
 
     [Test]
@@ -136,15 +161,165 @@ public class TaskTests
     [Test]
     public async Task TheActorNamed_RunsIt_AndListsIt()
     {
-        await Load("Mark", Make.Step("sleep", Sleep(1000)), Make.Step("set ran", Set("ran", 1)));
+        await Load("Mark", Make.Step("sleep", Sleep(1000)), Make.Step("return actor", Return("%!context.Actor.Name%")));
         var task = await Started("Mark", ("Actor", "system"));
 
         await Assert.That(_app.actor.list.System.Task.list).Contains(task);
         await Assert.That(_app.actor.list.User.Task.list).DoesNotContain(task);
-        await (await task.Wait()).IsSuccess();
 
-        await Assert.That((await _app.actor.list.System.Context.Variable.Get("ran")).IsInitialized).IsTrue();
-        await Assert.That((await Ctx.Variable.Get("ran")).IsInitialized).IsFalse();
+        await Assert.That((await (await task.Wait()).Value())?.ToString()).IsEqualTo("System");
+    }
+
+    private global::app.goal.step.action.@this Add(string list, string value)
+        => Make.Action(Ctx, "list", "add", Make.Param(Ctx, "ListName", list, "variable"), ("Value", value));
+
+    private async Task<List<string?>> Texts(global::app.data.@this held)
+    {
+        var rows = new List<string?>();
+        foreach (var row in ((global::app.type.item.list.@this)(await held.Value())!).Items(Ctx)) rows.Add((await row.Value())?.ToString());
+        return rows;
+    }
+
+    // a list a task read from its caller and added to is the task's own copy: the caller's is as it was
+    [Test]
+    public async Task AnAddInATask_ToItsCallersList_LeavesTheCallersAsItWas()
+    {
+        await Ctx.Variable.Set("items", new List<object?> { "a" });
+        await Load("Adds", Make.Step("add x", Add("items", "x")), Make.Step("return items", Return("%items%")));
+
+        var task = await Started("Adds");
+        var waited = await task.Wait();
+
+        await Assert.That(await Texts(waited)).IsEquivalentTo(new[] { "a", "x" });
+        await Assert.That(await Texts(await Ctx.Variable.Get("items"))).IsEquivalentTo(new[] { "a" });
+    }
+
+    [Test]
+    public async Task TwoSiblingsAddingToTheirCallersList_NeverSeeEachOthersAdditions()
+    {
+        await Ctx.Variable.Set("items", new List<object?> { "a" });
+        await Load("AddsB", Make.Step("add b", Add("items", "b")), Make.Step("sleep", Sleep(300)), Make.Step("return items", Return("%items%")));
+        await Load("AddsC", Make.Step("add c", Add("items", "c")), Make.Step("sleep", Sleep(300)), Make.Step("return items", Return("%items%")));
+
+        var b = await Started("AddsB");
+        var c = await Started("AddsC");
+
+        await Assert.That(await Texts(await b.Wait())).IsEquivalentTo(new[] { "a", "b" });
+        await Assert.That(await Texts(await c.Wait())).IsEquivalentTo(new[] { "a", "c" });
+        await Assert.That(await Texts(await Ctx.Variable.Get("items"))).IsEquivalentTo(new[] { "a" });
+    }
+
+    // A deadline is its own flow's: a timeout in one task never cancels a sibling running beside it on the same actor.
+    [Test]
+    public async Task ATimeoutInOneTask_DoesNotCancelItsSibling()
+    {
+        // TimesOut's deadline stands from its start until it times out at 1000ms; the sibling's second sleep starts at
+        // ~300ms, inside that window, so it reads the token while the deadline is in play
+        await Load("TimesOut", Make.Step("sleep, timeout after 1000ms", Sleep(5000),
+            Make.Action(Ctx, "on", "timeout", ("After", System.TimeSpan.FromMilliseconds(1000)))));
+        await Load("Sibling", Make.Step("sleep", Sleep(300)), Make.Step("sleep again", Sleep(1500)),
+            Make.Step("return done", Return("done")));
+
+        var timesOut = await Started("TimesOut");
+        var sibling = await Started("Sibling");
+
+        await Assert.That((await timesOut.Wait()).Error?.Key).IsEqualTo("Timeout");
+        await Assert.That((await (await sibling.Wait()).Value())?.ToString()).IsEqualTo("done");
+    }
+
+    private async Task<global::app.data.@this> Action(string module, string action, params (string name, object? value)[] properties)
+        => await Make.Action(Ctx, module, action, properties).Start(Ctx);
+
+    [Test]
+    public async Task Cancel_StopsTheGoal_AnswersNothing_AndALaterWaitFailsCancelled_NeverReported()
+    {
+        await Load("Slow", Make.Step("sleep", Sleep(1000)), Make.Step("set after", Set("after", 1)));
+        await Started("Slow");
+
+        var cancelled = await Action("task", "cancel", ("Task", "%task%"));
+
+        await cancelled.IsSuccess();
+        await Assert.That(cancelled.Peek().IsNull).IsTrue();
+        var waited = await Action("task", "wait", ("Task", "%task%"));
+        await Assert.That(waited.Error?.Key).IsEqualTo("Cancelled");
+        await Assert.That((await Ctx.Variable.Get("after")).IsInitialized).IsFalse();
+        await Assert.That(Errors).DoesNotContain("cancelled");
+    }
+
+    [Test]
+    public async Task CancelOfAnEndedTask_AnswersItsResult()
+    {
+        await Load("Quick", Make.Step("return done", Make.Action(Ctx, "goal", "return", ("Data", "done"))));
+        var task = await Started("Quick");
+        await task.Wait();
+
+        var cancelled = await Action("task", "cancel", ("Task", "%task%"));
+
+        await Assert.That((await cancelled.Value())?.ToString()).IsEqualTo("done");
+    }
+
+    [Test]
+    public async Task WaitForATask_AnswersItsResult()
+    {
+        await Load("Quick", Make.Step("sleep", Sleep(100)), Make.Step("return done", Make.Action(Ctx, "goal", "return", ("Data", "done"))));
+        await Started("Quick");
+
+        var waited = await Action("task", "wait", ("Task", "%task%"));
+
+        await Assert.That((await waited.Value())?.ToString()).IsEqualTo("done");
+    }
+
+    [Test]
+    public async Task WaitForAFailedTask_FailsTheStep()
+    {
+        await Load("Fails", Make.Step("throw", Make.Action(Ctx, "error", "throw", ("Message", "it broke"), ("Key", "Broke"))));
+        await Started("Fails");
+
+        var waited = await Action("task", "wait", ("Task", "%task%"));
+
+        await Assert.That(waited.Error?.Key).IsEqualTo("Broke");
+    }
+
+    // a task written where a task was keeps it: %task.list% is every task written there, in order, the last %task%;
+    // wait for %task.list% answers their results in that order; the actor lists each run once
+    [Test]
+    public async Task ATaskWrittenOverATask_KeepsIt_AndWaitForTheListAnswersAllInOrder()
+    {
+        await Load("First", Make.Step("sleep", Sleep(300)), Make.Step("return first", Make.Action(Ctx, "goal", "return", ("Data", "first"))));
+        await Load("Second", Make.Step("return second", Make.Action(Ctx, "goal", "return", ("Data", "second"))));
+        var caller = await Load("Caller",
+            Make.Step("call First in parallel, write to %task%", InParallel("First"), Set("task", "%!data%")),
+            Make.Step("call Second in parallel, write to %task%", InParallel("Second"), Set("task", "%!data%")));
+        await (await caller.Start(Ctx)).IsSuccess();
+
+        var task = (global::app.task.@this)(await Ctx.Variable.Get("task")).Peek()!;
+        var written = task.list.Items(Ctx).Select(row => (global::app.task.@this)row.Peek()!).ToList();
+        await Assert.That(written.Count).IsEqualTo(2);
+        await Assert.That(written[1]).IsSameReferenceAs(task);
+        await Assert.That(written[0].Goal.Name).IsEqualTo("First");
+        await Assert.That(_app.actor.list.User.Task.list.Count()).IsLessThanOrEqualTo(2);
+
+        var waited = await Action("task", "wait", ("List", "%task.list%"));
+
+        var results = ((global::app.type.item.list.@this)(await waited.Value())!).Items(Ctx).ToList();
+        await Assert.That((await results[0].Value())?.ToString()).IsEqualTo("first");
+        await Assert.That((await results[1].Value())?.ToString()).IsEqualTo("second");
+    }
+
+    // every other value replaces as it did: nothing written before it is kept
+    [Test]
+    public async Task ATextOrADictWrittenOverItsKind_Replaces()
+    {
+        await Ctx.Variable.Set("t", "one");
+        await Ctx.Variable.Set("t", "two");
+        await Ctx.Variable.Set("d", new Dictionary<string, object?> { ["a"] = 1 });
+        await Ctx.Variable.Set("d", new Dictionary<string, object?> { ["b"] = 2 });
+
+        await Assert.That((await (await Ctx.Variable.Get("t")).Value())?.ToString()).IsEqualTo("two");
+        var d = await Ctx.Variable.Get("d");
+        var dict = (global::app.type.item.@this)(await d.Value())!;
+        await Assert.That((await dict.Get(d, "a")).IsInitialized).IsFalse();
+        await Assert.That((await dict.Get(d, "b")).IsInitialized).IsTrue();
     }
 
     [Test]

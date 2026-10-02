@@ -56,10 +56,15 @@ public partial class Call : IContext
         // selects here, in the caller's context.
         if (await Name.Value() is not { } goal) return Name;
 
-        // the actor named runs it; none named, this one — to its end, or in parallel as one of its tasks
+        // the actor named runs it; none named, this one — to its end, or in parallel as one of its tasks, in a context
+        // of its own that reads through to this one's (its writes stay in it)
         var parallel = await Parallel.ToBooleanAsync();
         return await Context.App.actor.list.Use(Actor, Context, async runner => parallel
-            ? Context.Ok(runner.Task.Start(goal, _ => Run(goal, runner.Context)))
+            ? Context.Ok(runner.Task.Start(goal, async token =>
+            {
+                using var child = Context.Child(runner, token);
+                return await Run(goal, child);
+            }))
             : await Run(goal, runner.Context));
     }
 

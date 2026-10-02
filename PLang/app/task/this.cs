@@ -1,68 +1,47 @@
 namespace app.task;
 
 /// <summary>
-/// A goal call running on its own — what <c>call X in parallel</c> answers. Born only by its actor's list
-/// (<see cref="list.@this.Start"/>), which holds it while it runs and lets it go when it ends; the <c>%task%</c> a
-/// step wrote it to keeps it after. Its result is reached through <see cref="Wait"/>, one door. A failure nobody asked
-/// for by the time it ends goes to its actor's error channel; a later <see cref="Wait"/> still answers it.
+/// A goal call running on its own — what <c>call X in parallel</c> answers: its run, and the tasks it replaced. Written
+/// where a task was, it keeps that one (<see cref="Replace"/>), so <see cref="list"/> is every task written to the
+/// variable, in the order written, the last itself. Its result is reached through <see cref="Wait"/>, one door; a
+/// failure nobody asked for by the time it ends goes to its actor's error channel, and a later Wait still answers it.
 /// </summary>
 [global::app.Attributes.PlangType("task")]
-public sealed class @this : global::app.type.item.@this
+public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    private readonly global::app.actor.@this _actor;
-    private readonly System.Threading.CancellationTokenSource _cancel;
-    // the run, made cold so its list holds the task before it starts; the run itself is _cold's inner task
-    private readonly System.Threading.Tasks.Task<System.Threading.Tasks.Task<global::app.data.@this>> _cold;
-    private readonly System.Threading.Tasks.Task<global::app.data.@this> _run;
-    // set once, by whichever comes first: a Wait (the result is asked for) or the end (nobody asked: a failure is reported)
-    private readonly System.Threading.Tasks.TaskCompletionSource _asked = new(System.Threading.Tasks.TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly run.@this _run;
+    private readonly @this? _replaced;
+
+    internal @this(run.@this run, @this? replaced = null)
+    {
+        _run = run;
+        _replaced = replaced;
+    }
 
     /// <summary>The goal it runs.</summary>
-    public global::app.goal.@this Goal { get; }
+    public global::app.goal.@this Goal => _run.Goal;
 
     /// <summary>Which task it is among its actor's — <c>%!app.actor.current.task[id]%</c>.</summary>
-    [Out] public global::app.type.item.text.@this Id { get; }
+    [Out] public global::app.type.item.text.@this Id => new(_run.Id);
 
     /// <summary>Whether its run has ended (it has left its actor's list by then).</summary>
-    [Out] public global::app.type.item.@bool.@this Ended => new(_run.IsCompleted);
+    [Out] public global::app.type.item.@bool.@this Ended => new(_run.Ended);
 
-    internal @this(global::app.goal.@this goal, string id, global::app.actor.@this actor,
-        System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<global::app.data.@this>> run,
-        System.Action<@this> ended)
-    {
-        Goal = goal;
-        Id = new global::app.type.item.text.@this(id);
-        _actor = actor;
-        _cancel = System.Threading.CancellationTokenSource.CreateLinkedTokenSource(actor.CancellationToken);
-        _cold = new System.Threading.Tasks.Task<System.Threading.Tasks.Task<global::app.data.@this>>(() => Run(run, ended));
-        _run = _cold.Unwrap();
-    }
+    /// <summary>Every task written where this one is, in the order written — the last this one.</summary>
+    public global::app.type.item.list.@this list => new(Written.Cast<global::app.type.item.@this>());
 
-    /// <summary>Starts the run — once its list holds it.</summary>
-    internal void Begin() => _cold.Start(System.Threading.Tasks.TaskScheduler.Default);
+    private System.Collections.Generic.IEnumerable<@this> Written
+        => (_replaced?.Written ?? []).Append(this);
 
-    /// <summary>The run's result, once it ends: the goal's answer, or what it failed with.</summary>
-    public async System.Threading.Tasks.Task<global::app.data.@this> Wait()
-    {
-        _asked.TrySetResult();
-        return await _run;
-    }
+    /// <summary>Its run's result, once it ends: the goal's answer, what it failed with, or Cancelled.</summary>
+    public System.Threading.Tasks.Task<global::app.data.@this> Wait() => _run.Wait();
 
-    // Runs the goal call; whatever it throws is its failure. At the end it leaves its list; a failure nobody has asked
-    // for goes to the error channel of the actor it failed on.
-    private async System.Threading.Tasks.Task<global::app.data.@this> Run(
-        System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<global::app.data.@this>> run,
-        System.Action<@this> ended)
-    {
-        global::app.data.@this ran;
-        try { ran = await run(_cancel.Token); }
-        catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
-        {
-            ran = _actor.Context.Error(global::app.error.Error.FromException(ex));
-        }
-        ended(this);
-        _cancel.Dispose();
-        if (!ran.Success && _asked.TrySetResult()) await (ran.Context ?? _actor.Context).Actor.Channel.Report(ran);
-        return ran;
-    }
+    /// <summary>Stops its run: ended already, its result; else nothing (null), and the run ends Cancelled.</summary>
+    public System.Threading.Tasks.Task<global::app.data.@this> Cancel() => _run.Cancel();
+
+    /// <summary>Written where another run's task was: this run, keeping that task — <see cref="list"/> holds both. Over
+    /// anything else (its own run's task included) it is itself.</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Replace(
+        System.Func<System.Threading.Tasks.ValueTask<global::app.type.item.@this?>> previous)
+        => await previous() is @this before && !ReferenceEquals(before._run, _run) ? new @this(_run, before) : this;
 }

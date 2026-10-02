@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "A call in parallel answers a task, and the next step runs before the called goal ends: Slow sleeps, then reads\n%order% — its reads fall through to the caller's memory, live — so it reads what the step after the call wrote.\nWhat the task writes stays in it: the caller's %order% is its own.",
+  "comment": "cancel %task%, write to %result%: the result when the task had already ended, nothing when the cancel stopped it.",
   "step": [
     {
       "index": 0,
-      "text": "goal.call(Name=\"Slow\", Parallel=true); variable.set(Name=%task%, Value=%!data%)",
+      "text": "goal.call(Name=\"Quick\", Parallel=true); variable.set(Name=%quick%, Value=%!data%)",
       "line": {
-        "number": 5
+        "number": 3
       },
       "code": [
         {
@@ -18,7 +18,7 @@
               "type": {
                 "name": "goal"
               },
-              "value": "Slow"
+              "value": "Quick"
             },
             {
               "name": "Parallel",
@@ -38,13 +38,13 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%task%",
+              "value": "%quick%",
               "variable": [
                 {
-                  "text": "%task%",
+                  "text": "%quick%",
                   "code": [
                     {
-                      "variable": "task"
+                      "variable": "quick"
                     }
                   ]
                 }
@@ -83,110 +83,9 @@
     },
     {
       "index": 1,
-      "text": "variable.set(Name=%order%, Value=\"caller\")",
+      "text": "task.wait(Task=%quick%)",
       "line": {
-        "number": 6
-      },
-      "code": [
-        {
-          "module": "variable",
-          "name": "set",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "%order%",
-              "variable": [
-                {
-                  "text": "%order%",
-                  "code": [
-                    {
-                      "variable": "order"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "caller"
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 2,
-      "text": "assert.equals(Expected=\"task\", Actual=%task!type.name%, Message=\"a call in parallel answers a task\")",
-      "line": {
-        "number": 7
-      },
-      "code": [
-        {
-          "module": "assert",
-          "name": "equals",
-          "property": [
-            {
-              "name": "Expected",
-              "type": {
-                "name": "text"
-              },
-              "value": "task"
-            },
-            {
-              "name": "Actual",
-              "type": {
-                "name": "item",
-                "template": "plang"
-              },
-              "value": "%task!type.name%",
-              "variable": [
-                {
-                  "text": "%task!type.name%",
-                  "code": [
-                    {
-                      "variable": "task"
-                    },
-                    {
-                      "property": "!type"
-                    },
-                    {
-                      "property": "name"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Message",
-              "type": {
-                "name": "text"
-              },
-              "value": "a call in parallel answers a task"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 3,
-      "text": "task.wait(Task=%task%); variable.set(Name=%result%, Value=%!data%)",
-      "line": {
-        "number": 8
+        "number": 4
       },
       "code": [
         {
@@ -199,13 +98,46 @@
                 "name": "task",
                 "template": "plang"
               },
-              "value": "%task%",
+              "value": "%quick%",
               "variable": [
                 {
-                  "text": "%task%",
+                  "text": "%quick%",
                   "code": [
                     {
-                      "variable": "task"
+                      "variable": "quick"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "task.cancel(Task=%quick%); variable.set(Name=%ended%, Value=%!data%)",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "task",
+          "name": "cancel",
+          "property": [
+            {
+              "name": "Task",
+              "type": {
+                "name": "task",
+                "template": "plang"
+              },
+              "value": "%quick%",
+              "variable": [
+                {
+                  "text": "%quick%",
+                  "code": [
+                    {
+                      "variable": "quick"
                     }
                   ]
                 }
@@ -222,13 +154,13 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%result%",
+              "value": "%ended%",
               "variable": [
                 {
-                  "text": "%result%",
+                  "text": "%ended%",
                   "code": [
                     {
-                      "variable": "result"
+                      "variable": "ended"
                     }
                   ]
                 }
@@ -266,10 +198,10 @@
       ]
     },
     {
-      "index": 4,
-      "text": "assert.equals(Expected=\"caller,task\", Actual=%result%, Message=\"the next step ran before the called goal read %order%\")",
+      "index": 3,
+      "text": "assert.equals(Expected=\"quick done\", Actual=%ended%, Message=\"an ended task's cancel answers its result\")",
       "line": {
-        "number": 9
+        "number": 6
       },
       "code": [
         {
@@ -281,7 +213,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "caller,task"
+              "value": "quick done"
             },
             {
               "name": "Actual",
@@ -289,13 +221,13 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%result%",
+              "value": "%ended%",
               "variable": [
                 {
-                  "text": "%result%",
+                  "text": "%ended%",
                   "code": [
                     {
-                      "variable": "result"
+                      "variable": "ended"
                     }
                   ]
                 }
@@ -304,20 +236,88 @@
             {
               "name": "Message",
               "type": {
-                "name": "text",
-                "template": "plang"
+                "name": "text"
               },
-              "value": "the next step ran before the called goal read %order%",
+              "value": "an ended task's cancel answers its result"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "goal.call(Name=\"Slow\", Parallel=true); variable.set(Name=%slow%, Value=%!data%)",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Slow"
+            },
+            {
+              "name": "Parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%slow%",
               "variable": [
                 {
-                  "text": "%order%",
+                  "text": "%slow%",
                   "code": [
                     {
-                      "variable": "order"
+                      "variable": "slow"
                     }
                   ]
                 }
               ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
             }
           ]
         }
@@ -325,35 +325,111 @@
     },
     {
       "index": 5,
-      "text": "assert.equals(Expected=\"caller\", Actual=%order%, Message=\"what the task wrote stayed in it\")",
+      "text": "task.cancel(Task=%slow%); variable.set(Name=%stopped%, Value=%!data%)",
       "line": {
-        "number": 10
+        "number": 8
       },
       "code": [
         {
-          "module": "assert",
-          "name": "equals",
+          "module": "task",
+          "name": "cancel",
           "property": [
             {
-              "name": "Expected",
+              "name": "Task",
               "type": {
-                "name": "text"
+                "name": "task",
+                "template": "plang"
               },
-              "value": "caller"
+              "value": "%slow%",
+              "variable": [
+                {
+                  "text": "%slow%",
+                  "code": [
+                    {
+                      "variable": "slow"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%stopped%",
+              "variable": [
+                {
+                  "text": "%stopped%",
+                  "code": [
+                    {
+                      "variable": "stopped"
+                    }
+                  ]
+                }
+              ]
             },
             {
-              "name": "Actual",
+              "name": "Value",
               "type": {
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%order%",
+              "value": "%!data%",
               "variable": [
                 {
-                  "text": "%order%",
+                  "text": "%!data%",
                   "code": [
                     {
-                      "variable": "order"
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "assert.isNull(Value=%stopped%, Message=\"a cancel that stopped the task answers nothing\")",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%stopped%",
+              "variable": [
+                {
+                  "text": "%stopped%",
+                  "code": [
+                    {
+                      "variable": "stopped"
                     }
                   ]
                 }
@@ -364,7 +440,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "what the task wrote stayed in it"
+              "value": "a cancel that stopped the task answers nothing"
             }
           ]
         }
@@ -373,94 +449,13 @@
   ],
   "child": [
     {
-      "name": "Slow",
+      "name": "Quick",
       "step": [
         {
           "index": 0,
-          "text": "timer.sleep(Ms=1000)",
+          "text": "goal.return(Data=\"quick done\")",
           "line": {
-            "number": 13
-          },
-          "code": [
-            {
-              "module": "timer",
-              "name": "sleep",
-              "property": [
-                {
-                  "name": "Ms",
-                  "type": {
-                    "name": "number"
-                  },
-                  "value": 1000
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "index": 1,
-          "text": "variable.set(Name=%order%, Value=\"%order%,task\")",
-          "line": {
-            "number": 14
-          },
-          "code": [
-            {
-              "module": "variable",
-              "name": "set",
-              "property": [
-                {
-                  "name": "Name",
-                  "type": {
-                    "name": "variable"
-                  },
-                  "value": "%order%",
-                  "variable": [
-                    {
-                      "text": "%order%",
-                      "code": [
-                        {
-                          "variable": "order"
-                        }
-                      ]
-                    }
-                  ]
-                },
-                {
-                  "name": "Value",
-                  "type": {
-                    "name": "text",
-                    "template": "plang"
-                  },
-                  "value": "%order%,task",
-                  "variable": [
-                    {
-                      "text": "%order%",
-                      "code": [
-                        {
-                          "variable": "order"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "default": [
-                {
-                  "name": "default",
-                  "type": {
-                    "name": "bool"
-                  },
-                  "value": false
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "index": 2,
-          "text": "goal.return(Data=%order%)",
-          "line": {
-            "number": 15
+            "number": 12
           },
           "code": [
             {
@@ -470,20 +465,9 @@
                 {
                   "name": "Data",
                   "type": {
-                    "name": "item",
-                    "template": "plang"
+                    "name": "text"
                   },
-                  "value": "%order%",
-                  "variable": [
-                    {
-                      "text": "%order%",
-                      "code": [
-                        {
-                          "variable": "order"
-                        }
-                      ]
-                    }
-                  ]
+                  "value": "quick done"
                 }
               ],
               "default": [
@@ -501,13 +485,45 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/plan/task/module/goal/call/ParallelAnswersATask.test.goal",
-      "prPath": "/plan/task/module/goal/call/.build/parallelanswersatask.test.pr",
-      "hash": "c52d9cdbac03339b87e9738a79ea571aa37bd0c62b5f4fed5df6b144495962d1"
+      "path": "/plan/task/module/task/cancel/CancelAnswer.test.goal",
+      "prPath": "/plan/task/module/task/cancel/.build/cancelanswer.test.pr",
+      "hash": "016745ac4c943aec16e4bd1621dd1e9c64649e38af7f4710b225196f27a8bce8"
+    },
+    {
+      "name": "Slow",
+      "step": [
+        {
+          "index": 0,
+          "text": "timer.sleep(Ms=2000)",
+          "line": {
+            "number": 15
+          },
+          "code": [
+            {
+              "module": "timer",
+              "name": "sleep",
+              "property": [
+                {
+                  "name": "Ms",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 2000
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/module/task/cancel/CancelAnswer.test.goal",
+      "prPath": "/plan/task/module/task/cancel/.build/cancelanswer.test.pr",
+      "hash": "5d60409732f3e49c900646d6fd87045532d047fdc65818a726c238384e3ccc1d"
     }
   ],
   "visibility": "Public",
-  "path": "/plan/task/module/goal/call/ParallelAnswersATask.test.goal",
-  "prPath": "/plan/task/module/goal/call/.build/parallelanswersatask.test.pr",
-  "hash": "bd3a8733179ed3eac61d05457272a0321dd8201d5f7340a25b570f69307cc6d2"
+  "path": "/plan/task/module/task/cancel/CancelAnswer.test.goal",
+  "prPath": "/plan/task/module/task/cancel/.build/cancelanswer.test.pr",
+  "hash": "c406b57613370bc73ba684e2b8717a32af32bb250eace85168e377dbc0ee37d2"
 }

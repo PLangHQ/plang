@@ -65,6 +65,13 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
             if (!settled.Success) return settled;
             value = settled;
         }
+        // what the value becomes where the variable's value was (a task keeps the task written before it)
+        if (value is global::app.data.@this written)
+            value = await written.Replace(async () => (await Start(context)).Peek());
+
+        // the write lands inside what the root holds, so the root must be this context's own (a task's copy of its
+        // caller's)
+        if (!Root.Name.StartsWith('!')) await context.Variable.Own(Root.Name);
 
         var parent = hops is [_, Property { IsBinding: true }]
             ? await Root.Start(null, context)

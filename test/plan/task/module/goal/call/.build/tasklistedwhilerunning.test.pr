@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "A running task is listed under the actor that runs it: %!app.actor.current.task% finds it by its id while Slow\nsleeps. (That it leaves the list when it ends, and %task% still holds it, is read through `wait for` in stage 2, and\nin C# TaskTests.)",
+  "comment": "A running task is listed under the actor that runs it: %!app.actor.current.task% finds it by its id while Slow\nsleeps; once it ends its id finds nothing there, and %task% still holds it.",
   "step": [
     {
       "index": 0,
       "text": "goal.call(Name=\"Slow\", Parallel=true); variable.set(Name=%task%, Value=%!data%)",
       "line": {
-        "number": 5
+        "number": 4
       },
       "code": [
         {
@@ -85,7 +85,7 @@
       "index": 1,
       "text": "variable.set(Name=%listed%, Value=%!app.actor.current.task[%task.id%]%)",
       "line": {
-        "number": 6
+        "number": 5
       },
       "code": [
         {
@@ -170,7 +170,7 @@
       "index": 2,
       "text": "assert.equals(Expected=%task.id%, Actual=%listed.id%, Message=\"the running task is listed under its actor\")",
       "line": {
-        "number": 7
+        "number": 6
       },
       "code": [
         {
@@ -229,6 +229,271 @@
           ]
         }
       ]
+    },
+    {
+      "index": 3,
+      "text": "task.wait(Task=%task%)",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "task",
+          "name": "wait",
+          "property": [
+            {
+              "name": "Task",
+              "type": {
+                "name": "task",
+                "template": "plang"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "variable.set(Name=%gone%, Value=%!app.actor.current.task[%task.id%]%); on.error(Key=\"VariableNotFound\", Recovery=[goal.call(Name=\"Gone\")])",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%gone%",
+              "variable": [
+                {
+                  "text": "%gone%",
+                  "code": [
+                    {
+                      "variable": "gone"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!app.actor.current.task[%task.id%]%",
+              "variable": [
+                {
+                  "text": "%!app.actor.current.task[%task.id%]%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "actor"
+                    },
+                    {
+                      "property": "current"
+                    },
+                    {
+                      "property": "task"
+                    },
+                    {
+                      "index": {
+                        "variable": [
+                          {
+                            "text": "%task.id%",
+                            "code": [
+                              {
+                                "variable": "task"
+                              },
+                              {
+                                "property": "id"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "VariableNotFound"
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "Gone"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "parallel",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert.isTrue(Value=%wasGone%, Message=\"an ended task is not listed\")",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%wasGone%",
+              "variable": [
+                {
+                  "text": "%wasGone%",
+                  "code": [
+                    {
+                      "variable": "wasGone"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "an ended task is not listed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "assert.isTrue(Value=%task.ended%, Message=\"%task% still holds the ended task\")",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%task.ended%",
+              "variable": [
+                {
+                  "text": "%task.ended%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    },
+                    {
+                      "property": "ended"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "%task% still holds the ended task",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "child": [
@@ -239,7 +504,7 @@
           "index": 0,
           "text": "timer.sleep(Ms=1000)",
           "line": {
-            "number": 10
+            "number": 13
           },
           "code": [
             {
@@ -263,10 +528,68 @@
       "path": "/plan/task/module/goal/call/TaskListedWhileRunning.test.goal",
       "prPath": "/plan/task/module/goal/call/.build/tasklistedwhilerunning.test.pr",
       "hash": "8a735a6da549016f658eb7499f905acd38a71ebb7cec45764e77320e52761123"
+    },
+    {
+      "name": "Gone",
+      "step": [
+        {
+          "index": 0,
+          "text": "variable.set(Name=%wasGone%, Value=true)",
+          "line": {
+            "number": 16
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%wasGone%",
+                  "variable": [
+                    {
+                      "text": "%wasGone%",
+                      "code": [
+                        {
+                          "variable": "wasGone"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": true
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/module/goal/call/TaskListedWhileRunning.test.goal",
+      "prPath": "/plan/task/module/goal/call/.build/tasklistedwhilerunning.test.pr",
+      "hash": "077ebc5c4b9e2811f304cab80a697c1f35a7293165f81eed829e1ddcb6019e41"
     }
   ],
   "visibility": "Public",
   "path": "/plan/task/module/goal/call/TaskListedWhileRunning.test.goal",
   "prPath": "/plan/task/module/goal/call/.build/tasklistedwhilerunning.test.pr",
-  "hash": "acfeeeedec3a80a3a2837d428e0b2361665847d6a7de9e801ff206ed83bea299"
+  "hash": "f38bb6b3e12f0f48bd759c818a1893fe6c4d0a70f041fb1638a1d8efd7e67b1a"
 }

@@ -124,6 +124,23 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// The program nodes (action.list / step.list) are born here too.</summary>
     protected internal @this(List<object?> backing) => _items = backing;
 
+    private @this(List<object?> backing, bool wrapped, global::app.type.kind.@this? kind) : this(backing)
+    {
+        _hasWrapped = wrapped;
+        _kind = kind;
+    }
+
+    /// <summary>A list no other holder's change reaches: its rows copied, in order (a nested container or a joined
+    /// list copied, every other value shared), its kind kept. A typed list (a <c>list&lt;T&gt;</c>, a program's
+    /// steps) is itself: a copy as a plain list would lose what it is.</summary>
+    public override global::app.type.item.@this Copy()
+    {
+        if (GetType() != typeof(@this)) return this;
+        List<object?> rows;
+        lock (_gate) rows = _items.Select(slot => slot is Chunk chunk ? new Chunk((@this)chunk.List.Copy()) : Copied(slot)).ToList();
+        return new @this(rows, _hasWrapped, _kind) { Template = Template };
+    }
+
     /// <summary>Adopt another list's rows into a fresh instance of THIS (sub)type — the value→slot
     /// materialization when a typed node slot (<c>list&lt;action&gt;</c>) is set from a value the
     /// generic list reader produced as a base <c>list</c>. The rows are already the right elements

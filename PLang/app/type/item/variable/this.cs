@@ -133,6 +133,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public async System.Threading.Tasks.Task<global::app.data.@this> Change<TAs>(actor.context.@this context,
         System.Func<TAs, System.Threading.Tasks.Task<global::app.data.@this>> then) where TAs : global::app.type.item.@this
     {
+        // changed in place, so what the root holds must be this context's own (a task's copy of its caller's)
+        if (!Code.Root.Name.StartsWith('!')) await context.Variable.Own(Code.Root.Name);
         var held = await Held(context);
         return await held.Use<TAs>(async value =>
         {

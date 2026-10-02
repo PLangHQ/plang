@@ -157,7 +157,7 @@ public class QueryToolTests
     public async Task Query_MixedBatch_APlainToolEndsBeforeTheNextIsCalled_AParallelOneRunsOn_ResultsInCallOrder()
     {
         await Ctx.Variable.Set("kept", new Dictionary<string, object?> { ["order"] = "" });
-        Marks("A", 1500); Marks("B", 100); Marks("C", 0);
+        Reads("A", 1500); Marks("B", 100); Marks("C", 0);
         int callIndex = 0;
         _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(++callIndex == 1
             ? LlmTestHelper.MakeToolCallResponse(("call_1", "A", "{}"), ("call_2", "B", "{}"), ("call_3", "C", "{}"))
@@ -169,11 +169,39 @@ public class QueryToolTests
         await action.Attach(null, Ctx);
         await (await action.Start()).IsSuccess();
 
-        await Assert.That((await (await Kept("order")).Value())?.ToString()).IsEqualTo(",B,C,A");
+        // B ended before C was called; A, a task, ran on through both and read what they wrote (its reads fall
+        // through to the caller's memory, live); A wrote nothing
+        await Assert.That((await (await Kept("order")).Value())?.ToString()).IsEqualTo(",B,C");
         var second = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
         var (a, b, c) = (second.IndexOf("\"tool_call_id\":\"call_1\""), second.IndexOf("\"tool_call_id\":\"call_2\""), second.IndexOf("\"tool_call_id\":\"call_3\""));
         await Assert.That(a > 0 && a < b && b < c).IsTrue();
-        await Assert.That(second[..a]).Contains("\\u0022A\\u0022");
+        await Assert.That(second[..a]).Contains("\\u0022,B,C\\u0022");
+    }
+
+    // A tool goal named <paramref name="name"/>: sleeps <paramref name="ms"/>, then returns %kept.order% as it reads then.
+    private void Reads(string name, int ms)
+        => _app.goal.list.Add(Make.Goal(Ctx, name,
+            Make.Step("sleep", Make.Action(Ctx, "timer", "sleep", ("Ms", ms))),
+            Make.Step("return", Make.Action(Ctx, "goal", "return", ("Data", "%kept.order%")))));
+
+    // A Parallel tool runs as a task in a context of its own, and still reads the argument the model supplied
+    [Test]
+    public async Task Query_ParallelTool_ReadsItsModelSuppliedArgument()
+    {
+        _app.goal.list.Add(Make.Goal(Ctx, "Echo", Make.Step("return", Make.Action(Ctx, "goal", "return", ("Data", "city is %city%")))));
+        int callIndex = 0;
+        _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(++callIndex == 1
+            ? LlmTestHelper.MakeToolCallResponse(("call_1", "Echo", "{\"city\":\"Reykjavik\"}"))
+            : LlmTestHelper.MakeCompletionResponse("echoed")));
+
+        var action = new query(Ctx) { Message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = "echo" } }.ToListData<LlmMessage>(Ctx),
+            Tool = new List<global::app.goal.step.action.@this>
+                { Make.Tool(Ctx, "Echo", parameter: new List<Data> { new Data("city", null, Ctx.App.type.list["text"], context: Ctx) }, parallel: true) }.ToListData(Ctx) };
+        await action.Attach(null, Ctx);
+        await (await action.Start()).IsSuccess();
+
+        var second = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
+        await Assert.That(second).Contains("city is Reykjavik");
     }
 
     // A tool goal named <paramref name="name"/>: sleeps <paramref name="ms"/>, appends its name to %kept.order%, returns its name.

@@ -1,12 +1,15 @@
-/ A call in parallel answers a task, and the next step runs before the called goal ends: Slow sleeps, then writes
-/ %order%; the step after the call writes it first, so right after, %order% is the caller's alone. (That the task
-/ then ends with "caller,task" is read through `wait for` in stage 2, and in C# TaskTests.)
+/ A call in parallel answers a task, and the next step runs before the called goal ends: Slow sleeps, then reads
+/ %order% — its reads fall through to the caller's memory, live — so it reads what the step after the call wrote.
+/ What the task writes stays in it: the caller's %order% is its own.
 Start
 - goal.call(Name="Slow", Parallel=true); variable.set(Name=%task%, Value=%!data%)
 - variable.set(Name=%order%, Value="caller")
 - assert.equals(Expected="task", Actual=%task!type.name%, Message="a call in parallel answers a task")
-- assert.equals(Expected="caller", Actual=%order%, Message="the next step ran before the called goal ended")
+- task.wait(Task=%task%); variable.set(Name=%result%, Value=%!data%)
+- assert.equals(Expected="caller,task", Actual=%result%, Message="the next step ran before the called goal read %order%")
+- assert.equals(Expected="caller", Actual=%order%, Message="what the task wrote stayed in it")
 
 Slow
 - timer.sleep(Ms=1000)
 - variable.set(Name=%order%, Value="%order%,task")
+- goal.return(Data=%order%)

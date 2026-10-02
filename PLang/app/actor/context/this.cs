@@ -59,12 +59,19 @@ public sealed class @this : IDisposable
     public DateTime CreatedAt { get; }
 
     /// <summary>
-    /// Cancellation token for this execution.
+    /// Cancellation token for this execution. A context runs one flow at a time — a task runs in a child context
+    /// of its own — so a deadline pushed here is this run's alone.
     /// </summary>
     public CancellationToken CancellationToken =>
         _cancellationStack.Count > 0 ? _cancellationStack.Peek().Token : (_cts?.Token ?? CancellationToken.None);
     private CancellationTokenSource? _cts;
     private readonly Stack<CancellationTokenSource> _cancellationStack = new();
+
+    /// <summary>The context a task this context starts runs in, on <paramref name="runner"/>: its own memory, reading
+    /// through to this one's, live (its writes stay in it); its own cancellation, by <paramref name="token"/>; its
+    /// settings chained to this one's. The app is the same.</summary>
+    public @this Child(ActorType runner, CancellationToken token)
+        => new(App, runner, parent: this, parentToken: token, reads: Variable);
 
     /// <summary>
     /// Pushes a timeout CTS so all sub-calls use it. Used by the timeout.after modifier.
@@ -118,13 +125,13 @@ public sealed class @this : IDisposable
     public global::app.type.item.path.file.filesystem.@this FileSystem { get; }
 
     public @this(app.@this app, ActorType owner, Variables? variables = null, @this? parent = null, CancellationToken? parentToken = null,
-        global::app.type.item.path.file.filesystem.@this? fileSystem = null)
+        global::app.type.item.path.file.filesystem.@this? fileSystem = null, Variables? reads = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         App = app;
         Actor = owner;
         FileSystem = fileSystem ?? parent?.FileSystem ?? app.FileSystem;
-        Variable = variables ?? new Variables(this);
+        Variable = variables ?? (reads != null ? new Variables(this, reads) : new Variables(this));
         Parent = parent;
         CreatedAt = DateTime.UtcNow;
         var linkTo = parentToken ?? parent?.CancellationToken ?? app.ShutdownToken;

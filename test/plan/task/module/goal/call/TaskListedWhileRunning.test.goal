@@ -1,10 +1,16 @@
 / A running task is listed under the actor that runs it: %!app.actor.current.task% finds it by its id while Slow
-/ sleeps. (That it leaves the list when it ends, and %task% still holds it, is read through `wait for` in stage 2, and
-/ in C# TaskTests.)
+/ sleeps; once it ends its id finds nothing there, and %task% still holds it.
 Start
 - goal.call(Name="Slow", Parallel=true); variable.set(Name=%task%, Value=%!data%)
 - variable.set(Name=%listed%, Value=%!app.actor.current.task[%task.id%]%)
 - assert.equals(Expected=%task.id%, Actual=%listed.id%, Message="the running task is listed under its actor")
+- task.wait(Task=%task%)
+- variable.set(Name=%gone%, Value=%!app.actor.current.task[%task.id%]%); on.error(Key="VariableNotFound", Recovery=[goal.call(Name="Gone")])
+- assert.isTrue(Value=%wasGone%, Message="an ended task is not listed")
+- assert.isTrue(Value=%task.ended%, Message="%task% still holds the ended task")
 
 Slow
 - timer.sleep(Ms=1000)
+
+Gone
+- variable.set(Name=%wasGone%, Value=true)

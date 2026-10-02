@@ -101,6 +101,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// via the default ctor.</summary>
     internal @this(Dictionary<string, object?> backing) => _value = backing;
 
+    private @this(Dictionary<string, object?> backing, bool wrapped) : this(backing) => _hasWrapped = wrapped;
+
+    /// <summary>A dict no other holder's change reaches: its entries copied (a nested container copied, every other
+    /// value shared), in their order, with its keys' casing.</summary>
+    public override global::app.type.item.@this Copy()
+    {
+        var entries = new Dictionary<string, object?>(_value.Comparer);
+        foreach (var (key, slot) in _value) entries[key] = Copied(slot);
+        return new @this(entries, _hasWrapped) { Template = Template };
+    }
+
     // Type-on-read: hand back the entry under `key` as a FRESH Data born with the asker's
     // context, wrapping the raw slot into its natural type on each read — never cached back, so
     // the backing stays pristine (an aliased source keeps the same instance for the CLR exit

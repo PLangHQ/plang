@@ -1,0 +1,284 @@
+{
+  "name": "Start",
+  "comment": "wait for %task% answers the goal's result, once the task has ended.",
+  "step": [
+    {
+      "index": 0,
+      "text": "goal.call(Name=\"Slow\", Parallel=true); variable.set(Name=%task%, Value=%!data%)",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Slow"
+            },
+            {
+              "name": "Parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "task.wait(Task=%task%); variable.set(Name=%result%, Value=%!data%)",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "task",
+          "name": "wait",
+          "property": [
+            {
+              "name": "Task",
+              "type": {
+                "name": "task",
+                "template": "plang"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert.equals(Expected=\"slow done\", Actual=%result%, Message=\"wait for a task answers its result\")",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "slow done"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "wait for a task answers its result"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Slow",
+      "step": [
+        {
+          "index": 0,
+          "text": "timer.sleep(Ms=200)",
+          "line": {
+            "number": 8
+          },
+          "code": [
+            {
+              "module": "timer",
+              "name": "sleep",
+              "property": [
+                {
+                  "name": "Ms",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 200
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "goal.return(Data=\"slow done\")",
+          "line": {
+            "number": 9
+          },
+          "code": [
+            {
+              "module": "goal",
+              "name": "return",
+              "property": [
+                {
+                  "name": "Data",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "slow done"
+                }
+              ],
+              "default": [
+                {
+                  "name": "depth",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 1
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/module/task/wait/WaitAnswersResult.test.goal",
+      "prPath": "/plan/task/module/task/wait/.build/waitanswersresult.test.pr",
+      "hash": "f75f60133ec512c16ce8893695ac42f635511470cd8bc169a91e24238473df8f"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/task/module/task/wait/WaitAnswersResult.test.goal",
+  "prPath": "/plan/task/module/task/wait/.build/waitanswersresult.test.pr",
+  "hash": "7b667cd79fec6de0186140aba25d7640ac98c461f679fb90f787185371c45145"
+}

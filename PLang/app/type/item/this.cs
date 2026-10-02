@@ -276,6 +276,40 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// json object, a domain value's members). A single value is not a sequence.</summary>
     public virtual bool IsSequence => false;
 
+    /// <summary>This value as one no other holder's change can reach — a container (a dict, a list) copies what it
+    /// holds, its nested containers copied too and every other value shared; any other value is itself. A task's
+    /// first change to a container it read from its caller changes this copy, never the caller's.</summary>
+    public virtual @this Copy() => this;
+
+    // One slot of a container being copied: a nested container copied (raw or held), a Data a new Data (a write deeper
+    // in rebinds the Data it lands on), every other value shared.
+    private protected object? Copied(object? slot)
+    {
+        switch (slot)
+        {
+            case global::app.data.@this held:
+                var value = held.Peek();
+                var copy = value?.Copy();
+                return copy == null || ReferenceEquals(copy, value) ? held.Copy(held.Name) : new global::app.data.@this(held.Name, copy, context: held.Context);
+            case @this item:
+                return item.Copy();
+            case IDictionary<string, object?> raw:
+                var dictionary = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase);
+                foreach (var (key, nested) in raw) dictionary[key] = Copied(nested);
+                return dictionary;
+            case IList<object?> raw:
+                return raw.Select(Copied).ToList();
+            default:
+                return slot;
+        }
+    }
+
+    /// <summary>What this value becomes, written to a variable where <paramref name="previous"/> was — itself: a write
+    /// replaces. A value that keeps what it replaces (a task keeps the tasks written before it) answers otherwise.
+    /// The previous value is read only by a value that asks for it.</summary>
+    public virtual System.Threading.Tasks.ValueTask<@this> Replace(System.Func<System.Threading.Tasks.ValueTask<@this?>> previous)
+        => new(this);
+
     /// <summary>This value as named rows — each a Data under its name: a list its rows (a goal call's written
     /// parameters), a dict its entries (parameters given as one value at run). A single value has none.</summary>
     public virtual System.Collections.Generic.IEnumerable<global::app.data.@this> Rows(global::app.actor.context.@this context) => [];

@@ -1,0 +1,354 @@
+{
+  "name": "Start",
+  "comment": "wait for a cancelled task fails as Cancelled.",
+  "step": [
+    {
+      "index": 0,
+      "text": "goal.call(Name=\"Slow\", Parallel=true); variable.set(Name=%task%, Value=%!data%)",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Slow"
+            },
+            {
+              "name": "Parallel",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "task.cancel(Task=%task%)",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "task",
+          "name": "cancel",
+          "property": [
+            {
+              "name": "Task",
+              "type": {
+                "name": "task",
+                "template": "plang"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "task.wait(Task=%task%); on.error(Recovery=[goal.call(Name=\"Caught\")])",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "task",
+          "name": "wait",
+          "property": [
+            {
+              "name": "Task",
+              "type": {
+                "name": "task",
+                "template": "plang"
+              },
+              "value": "%task%",
+              "variable": [
+                {
+                  "text": "%task%",
+                  "code": [
+                    {
+                      "variable": "task"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "Caught"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "parallel",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert.equals(Expected=\"Cancelled\", Actual=%caught%, Message=\"a wait on a cancelled task fails as Cancelled\")",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "Cancelled"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%caught%",
+              "variable": [
+                {
+                  "text": "%caught%",
+                  "code": [
+                    {
+                      "variable": "caught"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "a wait on a cancelled task fails as Cancelled"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Slow",
+      "step": [
+        {
+          "index": 0,
+          "text": "timer.sleep(Ms=2000)",
+          "line": {
+            "number": 9
+          },
+          "code": [
+            {
+              "module": "timer",
+              "name": "sleep",
+              "property": [
+                {
+                  "name": "Ms",
+                  "type": {
+                    "name": "number"
+                  },
+                  "value": 2000
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/module/task/cancel/WaitOnCancelledFails.test.goal",
+      "prPath": "/plan/task/module/task/cancel/.build/waitoncancelledfails.test.pr",
+      "hash": "5d60409732f3e49c900646d6fd87045532d047fdc65818a726c238384e3ccc1d"
+    },
+    {
+      "name": "Caught",
+      "step": [
+        {
+          "index": 0,
+          "text": "variable.set(Name=%caught%, Value=%!error.Key%)",
+          "line": {
+            "number": 12
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%caught%",
+                  "variable": [
+                    {
+                      "text": "%caught%",
+                      "code": [
+                        {
+                          "variable": "caught"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!error.Key%",
+                  "variable": [
+                    {
+                      "text": "%!error.Key%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Key"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/module/task/cancel/WaitOnCancelledFails.test.goal",
+      "prPath": "/plan/task/module/task/cancel/.build/waitoncancelledfails.test.pr",
+      "hash": "1c82b97e2056f80bcbcad9e9db5ab5b387ba5b6e2872e4d16535ad2b53cd4937"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/task/module/task/cancel/WaitOnCancelledFails.test.goal",
+  "prPath": "/plan/task/module/task/cancel/.build/waitoncancelledfails.test.pr",
+  "hash": "c4f7a867ec597077d2ffb8dedfa32e8c2a49398a4b1734733711bb7db4b52707"
+}
