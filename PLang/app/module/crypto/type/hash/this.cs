@@ -60,6 +60,13 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return System.Threading.Tasks.ValueTask.CompletedTask;
     }
 
+    /// <summary>The hash of <paramref name="bytes"/> by <paramref name="algorithm"/> — digested by that kind of hash
+    /// (<c>hash/kind/sha256</c>, <c>hash/kind/keccak256</c>); null when no kind of hash goes by that name.</summary>
+    internal static @this? Of(byte[] bytes, string algorithm, global::app.actor.context.@this context)
+        => context.App.type.list["hash"].kind[algorithm.ToLowerInvariant()] is kind.@this digests
+            ? new(digests.Digest(bytes), algorithm)
+            : null;
+
     /// <summary>
     /// Parse a base64 digest into a <c>hash</c> of the given algorithm. The
     /// byte↔base64 conversion lives here (OBP — it's hash behavior), so callers

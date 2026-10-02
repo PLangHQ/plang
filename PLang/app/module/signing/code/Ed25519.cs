@@ -26,10 +26,10 @@ public class Ed25519 : ISigning
         if (!identityResult.Success) return identityResult;
         var identity = (Identity)(await identityResult.Value())!;
 
-        // Hash the inner data — the digest binds the value into the signed bytes.
-        var hashResult = await new global::app.goal.step.action.@this(new Hash(action.Context) { Data = action.Data, Algorithm = new data.@this<global::app.type.item.text.@this>("", "keccak256", context: action.Context), StoreView = action.StoreView }, action.Context).Start(action.Context);
-        if (!hashResult.Success) return hashResult;
-        if (await hashResult.Value() is not global::app.module.crypto.type.hash.@this hash)
+        // The digest of the inner data as it crosses the wire, in the view it is written in — what binds the value
+        // into the signed bytes.
+        var view = action.StoreView != null && (await action.StoreView.Value())?.Value == true ? global::app.View.Store : global::app.View.Out;
+        if (await action.Data!.Digest(view, "keccak256", action.Context) is not { } hash)
             return action.Context.Error(new ActionError("Hashing produced no digest", "DataHashMismatch", 500));
 
         var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(default);
@@ -100,12 +100,8 @@ public class Ed25519 : ISigning
         // Re-hash in the view the data was signed in: one read from plang's own store is a property-bag
         // carrying every [Store] field; hashing it in Out view (a subset) would diverge from the sign-time
         // Store hash.
-        var rehash = await new global::app.goal.step.action.@this(
-            new Hash(action.Context) { Data = signature.Value, Algorithm = new data.@this<global::app.type.item.text.@this>("", storedHash.Algorithm, context: action.Context),
-                       StoreView = new data.@this<global::app.type.item.@bool.@this>("",
-                           signature.Origin.Value == global::app.type.item.signature.Origin.Stored, context: action.Context) }, action.Context).Start(action.Context);
-        if (!rehash.Success) return global::app.data.@this<global::app.type.item.@bool.@this>.From(rehash);
-        if (await rehash.Value() is not global::app.module.crypto.type.hash.@this rehashValue || !rehashValue.DigestEquals(storedHash))
+        var view = signature.Origin.Value == global::app.type.item.signature.Origin.Stored ? global::app.View.Store : global::app.View.Out;
+        if (await signature.Value.Digest(view, storedHash.Algorithm, action.Context) is not { } rehashValue || !rehashValue.DigestEquals(storedHash))
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
 
         // 5. Signature verification — over the signature's canonical signing bytes.

@@ -15,73 +15,37 @@ public class Default : ICrypto
     public async Task<data.@this<global::app.module.crypto.type.hash.@this>> Hash(Hash action)
     {
         var data = action.Data;
-        byte[] bytes;
-        // Peek, never the value door: hashing is a courier read — opening the
-        // door would parse + narrow the value mid-sign, making the signed
-        // shape diverge from the wire/verify shape.
-        var value = data.Peek();
-        // A value left out (or null) has nothing to hash — the digest would be of the
-        // empty wire shape, which silently verifies against any other empty.
-        // Surface the missing input instead: presence, not truthiness — 0, false and ""
-        // are values with digests. A failed result is not missing: it writes its error.
+        // A value left out (or null) has nothing to hash. Presence, not truthiness — 0, false and "" are values with
+        // digests.
         if (data.Error == null && !data.HasValue)
             return action.Context.Error<global::app.module.crypto.type.hash.@this>(new ActionError(
                 "Hash requires a value to hash", "ValueRequired", 400));
-        if (value is global::app.type.item.binary.@this bin)
-        {
-            bytes = bin.Value;
-        }
+        // The value's own bytes, read through its door (a %variable% hashes what it holds): a text its UTF-8, binary
+        // its bytes, anything else its json text — so a digest matches any other tool's. A signature's digest is the
+        // Data's wire bytes instead (data.Digest), never this.
+        var value = await data.Value();
+        if (!data.Success)
+            return action.Context.Error<global::app.module.crypto.type.hash.@this>(data.Error!);
+        byte[] bytes;
+        if (value is global::app.type.item.binary.@this bin) bytes = bin.Value;
+        else if (value is global::app.type.item.text.@this text) bytes = Encoding.UTF8.GetBytes(text.ToString());
         else
         {
-            // Canonicalize through the same wire options the merged application/plang
-            // serializer uses, so hashed-bytes ≡ wire-bytes. data.Output emits no
-            // signature field, so the hash is over the canonical body directly.
-            // The outer signature transitively binds inner Datas' signatures.
-            //
-            // If something other than the canonical plang.@this is registered for
-            // "application/plang" (custom transport, test double, future format),
-            // fail loud — hash and wire would diverge silently and signature
-            // verification would behave inconsistently across the same payload.
-            // Hash in the view the data is serialized in. A stored value's wire shape carries
-            // every [Store] field; its reconstruction is a property-bag that re-emits them all,
-            // so hashing in Out view (a subset) would diverge from the typed value's Out hash.
-            // Sign/verify pass the destination view so the digest is over the wire bytes.
-            var view = (action.StoreView != null && (await action.StoreView.Value())?.Value == true)
-                ? global::app.View.Store : global::app.View.Out;
-            // The value writes its OWN canonical bytes via data.Output — deterministic (fixed
-            // key order, entries insertion-order), independent of any serializer options, so hash
-            // bytes ≡ wire bytes by construction; sign and verify both run it and agree. View.Out
-            // omits the binding name (hash is name-independent), and data.Output never emits a
-            // signature, so there's nothing to suppress in the layer model.
-            // TODO: serialize-to-MemoryStream-then-hash is the wrong shape — data.Output
-            // should produce its hash intrinsically (write into a hashing writer), not via an
-            // intermediate buffer. Correct behaviour, wrong means.
-            using var hashStream = new MemoryStream();
-            await using (var utf8 = new System.Text.Json.Utf8JsonWriter(hashStream))
-            {
-                var writer = new global::app.type.item.kind.json.Writer(
-                    utf8, view, emitsSchema: true);
-                await data.Output(writer, view, action.Context, layer: true);
-            }
-            bytes = hashStream.ToArray();
+            // a dict or list is its json text in its own key order (insertion): the same entries added in another
+            // order give another digest
+            using var json = new MemoryStream();
+            await using (var utf8 = new System.Text.Json.Utf8JsonWriter(json))
+                await value.Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, emitsSchema: false),
+                    global::app.View.Out, action.Context);
+            bytes = json.ToArray();
         }
+
         string algorithm = (await action.Algorithm.Value())!.ToString()!.ToLowerInvariant();
-        byte[]? hashBytes = algorithm switch
-        {
-            "keccak256" => new Sha3Keccack().CalculateHash(bytes),
-            "sha256" => SHA256.HashData(bytes),
-            _ => null
-        };
-
-        if (hashBytes == null)
+        // The value IS a hash (a digest that knows its algorithm), stamped {name: hash, kind: <algorithm>}, so the
+        // builder annotates the write-to as `%x% (hash)` and verify reads the algorithm off the value.
+        if (global::app.module.crypto.type.hash.@this.Of(bytes, algorithm, action.Context) is not { } hash)
             return action.Context.Error<global::app.module.crypto.type.hash.@this>(new ActionError($"Algorithm '{action.Algorithm.Peek()}' is not supported", "UnsupportedAlgorithm", 400));
-
-        // The value IS a hash (a digest that knows its algorithm), not bare
-        // bytes — so the builder annotates the write-to variable as `%x% (hash)`
-        // and the live serializer renders the digest. The algorithm is the
-        // value's KIND; stamp {name: hash, kind: <algorithm>} so verify reads
-        // the algorithm off the value instead of a loose, mismatch-prone param.
-        return action.Context.Ok<global::app.module.crypto.type.hash.@this>(new global::app.module.crypto.type.hash.@this(hashBytes, algorithm),
+        return action.Context.Ok<global::app.module.crypto.type.hash.@this>(hash,
             action.Context.App.type.list[new global::app.type.@this("hash", algorithm), action.Context]);
     }
 

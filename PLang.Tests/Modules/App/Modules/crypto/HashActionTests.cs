@@ -38,6 +38,41 @@ public class HashActionTests
 
     // --- Hash action ---
 
+    // A text hashes its own UTF-8, so the digest is the one every other tool gives (the published test vectors).
+    private async Task<hash> Hashed(object value, string algorithm)
+    {
+        var action = new Hash(Ctx) { Data = Ctx.Ok(value), Algorithm = (global::app.type.item.text.@this)algorithm };
+        await action.Attach(null, Ctx);
+        var result = await action.Start();
+        await result.IsSuccess();
+        return (hash)(await result.Value())!;
+    }
+
+    [Test]
+    public async Task Sha256_OfAbc_IsThePublishedDigest()
+    {
+        var digest = await Hashed("abc", "sha256");
+        await Assert.That(System.Convert.ToHexString(digest.Bytes).ToLowerInvariant())
+            .IsEqualTo("ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+        await Assert.That(digest.ToBase64()).IsEqualTo("ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0=");
+    }
+
+    [Test]
+    public async Task Keccak256_OfAbc_IsThePublishedDigest()
+    {
+        var digest = await Hashed("abc", "keccak256");
+        await Assert.That(System.Convert.ToHexString(digest.Bytes).ToLowerInvariant())
+            .IsEqualTo("4e03657aea45a94fc7d47ba826c8d667c0d1e6e33a64a036ec44f58fa12d6c45");
+        await Assert.That(digest.ToBase64()).IsEqualTo("TgNleupFqU/H1HuoJsjWZ8DR5uM6ZKA27ET1j6EtbEU=");
+    }
+
+    [Test]
+    public async Task Bytes_HashAsThemselves()
+    {
+        var digest = await Hashed(new byte[] { 0x61, 0x62, 0x63 }, "sha256");
+        await Assert.That(digest.ToBase64()).IsEqualTo("ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0=");
+    }
+
     [Test]
     public async Task Hash_StringInput_ReturnsBytesWithType()
     {
