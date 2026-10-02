@@ -101,7 +101,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
             }
             writer.EndArray();
         }
-        writer.Name("waitForExecution"); writer.Bool(WaitForExecution);
         writer.EndObject();
     }
 }

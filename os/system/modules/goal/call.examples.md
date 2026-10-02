@@ -17,3 +17,6 @@ Properties: `{"Name": "HandleItem", "Parameter": [{"name": "item", "value": "%it
 
 Step text: `verify %data% with contracts ['C1'], on error call HandleContractError`
 Properties: `{"Name": "HandleContractError"}` — a goal called inside an error handler is an ordinary call.
+
+Step text: `call Turn content=%content%, don't wait`
+Properties: `{"Name": "Turn", "Parameter": [{"name": "content", "value": "%content%"}], "Wait": false}` — "don't wait", "in the background", "and go on": the goal starts on its own and the step goes on at once; there is no result to write to.

@@ -63,7 +63,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     break;
                 case "intent": step.Intent = reader.String(); break;
                 case "source": step.Source = reader.String(); break;
-                case "waitForExecution": step.WaitForExecution = reader.Bool(); break;
+                // an older .pr's: a step no longer says whether it waits (goal.call does: Wait) — passed over
+                case "waitForExecution": reader.Skip(); break;
                 case "warning":
                     reader.BeginArray();
                     while (reader.NextElement())

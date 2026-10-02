@@ -31,6 +31,11 @@ public partial class Call : IContext
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Parallel { get; init; }
 
+    /// <summary>Whether the step waits for the goal to end (<c>call X, don't wait</c> is false): not waiting, the goal
+    /// runs on its own and the step goes on at once; what it fails with is reported on its actor's error channel.</summary>
+    [Default(true)]
+    public partial data.@this<global::app.type.item.@bool.@this> Wait { get; init; }
+
     /// <summary>
     /// Build-time: the name becomes the goal's own address — one truth, a dictionary hit at run. A %variable%
     /// name is only known at run and stays authored; a goal in the caller's own file stays bare
@@ -56,7 +61,22 @@ public partial class Call : IContext
         if (await Name.Value() is not { } goal) return Name;
 
         // the actor named runs it; none named, this one
-        return await Context.App.actor.list.Use(Actor, Context, runner => Run(goal, runner.Context));
+        if (await Wait.ToBooleanAsync())
+            return await Context.App.actor.list.Use(Actor, Context, runner => Run(goal, runner.Context));
+
+        // not waited for: it runs on its own, and a failure nothing waits for goes to its actor's error channel
+        var context = Context;
+        _ = Task.Run(async () =>
+        {
+            data.@this ran;
+            try { ran = await context.App.actor.list.Use(Actor, context, runner => Run(goal, runner.Context)); }
+            catch (System.Exception ex) when (ex is not (System.OutOfMemoryException or System.StackOverflowException))
+            {
+                ran = context.Error(global::app.error.Error.FromException(ex));
+            }
+            if (!ran.Success) await (ran.Context ?? context).Actor.Channel.Report(ran);
+        });
+        return Context.Ok();
     }
 
     private async Task<data.@this> Run(global::app.goal.@this goal, global::app.actor.context.@this execContext)

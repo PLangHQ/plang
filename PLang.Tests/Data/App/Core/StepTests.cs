@@ -26,7 +26,6 @@ public class StepTests : System.IAsyncDisposable
                     Property = global::PLang.Tests.Shared.Make.Properties(new List<Data> { app.Data("url", "https://api.example.com") }),
                 }
             },
-            WaitForExecution = false
         };
 
         await Assert.That(step.Index).IsEqualTo(5);
@@ -37,15 +36,6 @@ public class StepTests : System.IAsyncDisposable
         await Assert.That(step.Code.Count).IsEqualTo(1);
         await Assert.That(step.Code[0].Module.Name).IsEqualTo("http");
         await Assert.That(step.Code[0].Name).IsEqualTo("get");
-        await Assert.That(step.WaitForExecution).IsFalse();
-    }
-
-    [Test]
-    public async Task WaitForExecution_DefaultsToTrue()
-    {
-        var step = new Step();
-
-        await Assert.That(step.WaitForExecution).IsTrue();
     }
 
     [Test]
