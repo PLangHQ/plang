@@ -1,6 +1,6 @@
-Left — the value tested, as the step writes it.
-Operator — the comparison, one of choice<operator>, written as a quoted text after one `=`: `Operator="=="`, `Operator="!="`, `Operator="contains"` — never `Operator=="=="`. A negation is its own operator, never written anywhere else. Left out when the step names only Left: then the condition is Left's own truth.
-Right — what Left is compared to. Left out for isempty / isnotempty, and when Operator is.
+Left — the value tested · say: the value right after `if` · builder: as the step writes it
+Operator — the comparison, a choice<operator> · say: `>`, `is`, `is not`, `contains`, `starts with`, `is empty`, `is in […]`, `is a <type>`, … · builder: a quoted text after one `=` (`Operator="=="`, never `Operator=="=="`); a negation is its own operator; left out when the step names only Left (then the condition is Left's own truth). The table below maps the words.
+Right — what Left is compared to · say: the value after the operator · builder: left out for isempty / isnotempty, and when Operator is
 
 | the step says | Operator | Right |
 |---|---|---|
