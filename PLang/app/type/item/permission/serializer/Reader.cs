@@ -18,7 +18,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         if (reader.Null()) return new global::app.type.item.@null.@this("permission", kind);
         reader.BeginObject();
         string actor = "", path = "";
-        var match = global::app.type.item.permission.Match.Exact;
+        var match = global::app.type.item.permission.Match.exact;
         var verbs = new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb>();
         while (reader.NextName(out var name))
         {

@@ -4,26 +4,27 @@ using Text = global::app.type.item.text.@this;
 
 namespace app.type.item.permission;
 
-/// <summary>How a grant's <see cref="@this.Path"/> matches a request path.</summary>
+/// <summary>How a grant's <see cref="@this.Path"/> matches a request path. Lowercase: a choice writes its member as
+/// the step says it.</summary>
 public enum Match
 {
-    Exact,
-    Glob,
-    Regex,
+    exact,
+    glob,
 }
 
 /// <summary>
 /// A single action a grant may cover. The grant holds a SET of these; a request
 /// names ONE. Open across domains by intent — filesystem (read/write/delete),
 /// execute (load-as-code), and the same four cover http and other schemes
-/// uniformly. Execute is opt-in: a Read grant does NOT cover it (Unix r/w/x).
+/// uniformly. Execute is opt-in: a read grant does NOT cover it (Unix r/w/x).
+/// Lowercase: the verb says itself, as the step says it.
 /// </summary>
 public enum Verb
 {
-    Read,
-    Write,
-    Delete,
-    Execute,
+    read,
+    write,
+    delete,
+    execute,
 }
 
 /// <summary>
@@ -54,15 +55,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     public @this(string Actor, string Path, IReadOnlySet<Verb> Verbs, Match Match)
     {
-        // a grant is born sound: a regex path that isn't a regex fails here, so matching never meets one
-        if (Match == Match.Regex)
-        {
-            try { _ = new Regex(Path); }
-            catch (ArgumentException ex)
-            {
-                throw new global::app.error.AppException($"the permission pattern '{Path}' is not a valid regex: {ex.Message}", ex, "InvalidPermissionPattern", 400);
-            }
-        }
         this.Actor = Actor;
         this.Path = Path;
         this.Verbs = Verbs;
@@ -71,10 +63,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Every verb — the "fully granted" set an "a"/"y" answer mints.</summary>
     public static IReadOnlySet<Verb> AllVerbs { get; } =
-        new HashSet<Verb> { Verb.Read, Verb.Write, Verb.Delete, Verb.Execute };
+        new HashSet<Verb> { Verb.read, Verb.write, Verb.delete, Verb.execute };
 
     /// <summary>A request for a single verb against one resource.</summary>
-    public static @this Request(string actor, string path, Verb verb, Match match = Match.Exact)
+    public static @this Request(string actor, string path, Verb verb, Match match = Match.exact)
         => new(actor, path, new HashSet<Verb> { verb }, match);
 
     // Value equality — two grants for the same actor/path/verb-set/match are
@@ -96,9 +88,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     private bool PathMatches(string requestPath) => Match switch
     {
-        Match.Exact => string.Equals(Path, requestPath, StringComparison.Ordinal),
-        Match.Glob  => GlobMatches(Path, requestPath),
-        Match.Regex => RegexMatches(Path, requestPath),
+        Match.exact => string.Equals(Path, requestPath, StringComparison.Ordinal),
+        Match.glob  => GlobMatches(Path, requestPath),
         _ => false,
     };
 
@@ -141,9 +132,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         // every character but the wildcards is escaped, so the glob's regex is always sound
         return Regex.IsMatch(candidate, rx.ToString());
     }
-
-    // The grant's regex was checked when the grant was made.
-    private static bool RegexMatches(string pattern, string candidate) => Regex.IsMatch(candidate, pattern);
 
     /// <summary>A grant writes its own form (<see cref="Write"/>) in every view.</summary>
     public override System.Threading.Tasks.ValueTask Output(IWriter writer,
@@ -191,7 +179,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         string actor = dict.Get<Text>("actor", context)?.ToString() ?? "";
         string path  = dict.Get<Text>("path", context)?.ToString() ?? "";
         Match match  = System.Enum.TryParse<Match>(dict.Get<Text>("match", context)?.ToString(), ignoreCase: true, out var m)
-            ? m : Match.Exact;
+            ? m : Match.exact;
 
         var verbs = new HashSet<Verb>();
         if (dict.Get("verbs", context)?.Peek() is global::app.type.item.list.@this list)

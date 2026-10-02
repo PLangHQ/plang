@@ -14,17 +14,10 @@ public class NoSwallowedValueErrorsTests
         await Assert.That(thrown!.Error.Key).IsEqualTo("InvalidPattern");
     }
 
-    [Test] public async Task ARegexGrantThatIsNotARegex_FailsWhereItIsMade()
-    {
-        var thrown = await Assert.That(() => { _ = new permission.@this("me", "a(b", permission.@this.AllVerbs, permission.Match.Regex); return Task.CompletedTask; })
-            .Throws<global::app.error.AppException>();
-        await Assert.That(thrown!.Error.Key).IsEqualTo("InvalidPermissionPattern");
-    }
-
     [Test] public async Task AGlobGrantWithRegexCharacters_MatchesThemLiterally()
     {
-        var grant = new permission.@this("me", "/a(b/*", permission.@this.AllVerbs, permission.Match.Glob);
-        await Assert.That(grant.Allows(permission.@this.Request("me", "/a(b/x", permission.Verb.Read))).IsTrue();
+        var grant = new permission.@this("me", "/a(b/*", permission.@this.AllVerbs, permission.Match.glob);
+        await Assert.That(grant.Allows(permission.@this.Request("me", "/a(b/x", permission.Verb.read))).IsTrue();
     }
 
     [Test] public async Task APropertyOfTheWrongType_ThrowsInsteadOfReadingAsAbsent()

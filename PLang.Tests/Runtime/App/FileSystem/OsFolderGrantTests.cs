@@ -19,8 +19,8 @@ public class OsFolderGrantTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-os-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
-        await (await Authorize(app, app.actor.list.User, Verb.Read)).IsSuccess();
-        await (await Authorize(app, app.actor.list.User, Verb.Execute)).IsSuccess();
+        await (await Authorize(app, app.actor.list.User, Verb.read)).IsSuccess();
+        await (await Authorize(app, app.actor.list.User, Verb.execute)).IsSuccess();
     }
 
     [Test]
@@ -29,8 +29,8 @@ public class OsFolderGrantTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-os-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
-        var write = await Authorize(app, app.actor.list.User, Verb.Write);
-        var delete = await Authorize(app, app.actor.list.User, Verb.Delete);
+        var write = await Authorize(app, app.actor.list.User, Verb.write);
+        var delete = await Authorize(app, app.actor.list.User, Verb.delete);
 
         await write.IsFailure();
         await Assert.That(write.Error!.Key).IsEqualTo("PermissionDenied");
@@ -43,8 +43,8 @@ public class OsFolderGrantTests
         await using var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-os-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
-        await (await Authorize(app, app.actor.list.System, Verb.Write)).IsSuccess();
-        await (await Authorize(app, app.actor.list.System, Verb.Delete)).IsSuccess();
+        await (await Authorize(app, app.actor.list.System, Verb.write)).IsSuccess();
+        await (await Authorize(app, app.actor.list.System, Verb.delete)).IsSuccess();
     }
 
     // An app rooted at the os folder itself doesn't make the folder its user's: the os grants still rule there.
@@ -54,7 +54,7 @@ public class OsFolderGrantTests
         await using var probe = new global::app.@this(System.IO.Path.GetTempPath()).Testing();
         await using var app = new global::app.@this(probe.OsAbsolutePath).Testing();
 
-        var write = await Authorize(app, app.actor.list.User, Verb.Write);
+        var write = await Authorize(app, app.actor.list.User, Verb.write);
 
         await write.IsFailure();
         await Assert.That(write.Error!.Key).IsEqualTo("PermissionDenied");

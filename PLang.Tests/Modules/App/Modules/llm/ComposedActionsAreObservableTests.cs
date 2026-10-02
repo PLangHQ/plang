@@ -43,7 +43,7 @@ public class ComposedActionsAreObservableTests
         var ctx = app.actor.list.User.Context;
         var seen = new List<string>();
         Watch(app, "output", "ask", seen);
-        var request = global::app.type.item.permission.@this.Request(ctx.Actor!.Name, "/elsewhere", global::app.type.item.permission.Verb.Write);
+        var request = global::app.type.item.permission.@this.Request(ctx.Actor!.Name, "/elsewhere", global::app.type.item.permission.Verb.write);
 
         _ = await ctx.Actor.Permission.Ask("Allow? (y/n/a)", request, ctx, _ => Task.FromResult(ctx.Ok()));
 

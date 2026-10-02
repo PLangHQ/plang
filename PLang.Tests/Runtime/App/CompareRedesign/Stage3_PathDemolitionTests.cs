@@ -27,7 +27,7 @@ public class Stage3_PathDemolitionTests
         var perm = new global::app.type.item.permission.@this(
             "User", new HttpPath(url).Absolute,
             global::app.type.item.permission.@this.AllVerbs,
-            global::app.type.item.permission.Match.Exact);
+            global::app.type.item.permission.Match.exact);
         await context.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", perm, context: context), persist: true);
     }
 

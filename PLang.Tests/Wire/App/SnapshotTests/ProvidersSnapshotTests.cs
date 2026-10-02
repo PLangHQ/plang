@@ -63,12 +63,12 @@ public class ProvidersSnapshotTests : System.IAsyncDisposable
         var resolved = global::app.type.item.path.@this.Resolve(grantPath, dst.actor.list.User.Context!);
         var verbs = new HashSet<global::app.type.item.permission.Verb>
         {
-            global::app.type.item.permission.Verb.Read,
-            global::app.type.item.permission.Verb.Execute,
+            global::app.type.item.permission.Verb.read,
+            global::app.type.item.permission.Verb.execute,
         };
         var permission = new global::app.type.item.permission.@this(
             Actor: dst.actor.list.User.Name, Path: resolved.Absolute, Verbs: verbs,
-            Match: global::app.type.item.permission.Match.Exact);
+            Match: global::app.type.item.permission.Match.exact);
         await dst.actor.list.User.Permission.Add(
             new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: dst.actor.list.User.Context), persist: false);
         await dst.Restore(snap, dst.actor.list.User.Context);

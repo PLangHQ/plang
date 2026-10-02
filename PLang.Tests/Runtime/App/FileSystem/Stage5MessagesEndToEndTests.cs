@@ -77,7 +77,7 @@ public class Stage5MessagesEndToEndTests
         var result = await path.Touch(app.actor.list.User.Context);
         await result.IsSuccess();
         // Grant landed and is signed (persisted).
-        var found = await app.actor.list.User.Permission.Find(path, global::app.type.item.permission.Verb.Read);
+        var found = await app.actor.list.User.Permission.Find(path, global::app.type.item.permission.Verb.read);
         await Assert.That(found).IsNotNull();
     }
 
@@ -185,7 +185,7 @@ public class Stage5MessagesEndToEndTests
         var asksBeforeRevoke = ch.AskCount;
 
         // Revoke the persisted grant.
-        var permission = new PermissionRecord(app.actor.list.User.Name, path.Absolute, global::app.type.item.permission.@this.AllVerbs, MatchMode.Exact);
+        var permission = new PermissionRecord(app.actor.list.User.Name, path.Absolute, global::app.type.item.permission.@this.AllVerbs, MatchMode.exact);
         await app.actor.list.User.Permission.Revoke(permission);
 
         await path.Touch(app.actor.list.User.Context);              // fresh prompt fires
@@ -197,9 +197,9 @@ public class Stage5MessagesEndToEndTests
         var (app, foreignFile) = Setup("a");
         // Pre-seed a narrowed grant — Read only. It does NOT cover a Write
         // request (verb-set containment: {Write} is not a subset of {Read}).
-        var narrowedVerbs = new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.Read };
+        var narrowedVerbs = new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read };
         var narrowGrant = new global::app.data.@this<PermissionRecord>("",
-            new PermissionRecord(app.actor.list.User.Name, foreignFile, narrowedVerbs, MatchMode.Exact), context: app.actor.list.User.Context);
+            new PermissionRecord(app.actor.list.User.Name, foreignFile, narrowedVerbs, MatchMode.exact), context: app.actor.list.User.Context);
         await app.actor.list.User.Permission.Add(narrowGrant, persist: true);
 
         // WriteText needs Write; the narrowed Read grant doesn't cover it.

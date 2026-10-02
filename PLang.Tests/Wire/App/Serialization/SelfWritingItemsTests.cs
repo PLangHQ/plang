@@ -30,8 +30,8 @@ public class SelfWritingItemsTests : System.IAsyncDisposable
         await Assert.That(await Json(new global::app.module.crypto.type.hash.@this(new byte[] { 1, 2, 3 }, "sha256"))).IsEqualTo("\"AQID\"");
         await Assert.That(await Json(new global::app.type.code.@this("x = 1", "python"))).IsEqualTo("\"x = 1\"");
         await Assert.That(await Json(new global::app.type.item.permission.@this("user", "/docs/*",
-                new HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.Read }, global::app.type.item.permission.Match.Glob)))
-            .IsEqualTo("{\"actor\":\"user\",\"path\":\"/docs/*\",\"match\":\"Glob\",\"verbs\":[\"Read\"]}");
+                new HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read }, global::app.type.item.permission.Match.glob)))
+            .IsEqualTo("{\"actor\":\"user\",\"path\":\"/docs/*\",\"match\":\"glob\",\"verbs\":[\"read\"]}");
         var hops = global::app.type.item.variable.@this.Resolve("%a.b%", Ctx).Code.Items().ToList();
         await Assert.That(await Json(hops[0])).IsEqualTo("{\"variable\":\"a\"}");
         await Assert.That(await Json(hops[1])).IsEqualTo("{\"property\":\"b\"}");

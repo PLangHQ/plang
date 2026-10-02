@@ -64,14 +64,14 @@ public class ProviderModuleTests
         var resolved = global::app.type.item.path.@this.Resolve("/" + dllPath, Ctx);
         var verbs = new HashSet<global::app.type.item.permission.Verb>
         {
-            global::app.type.item.permission.Verb.Read,
-            global::app.type.item.permission.Verb.Execute,
+            global::app.type.item.permission.Verb.read,
+            global::app.type.item.permission.Verb.execute,
         };
         var permission = new global::app.type.item.permission.@this(
             Actor: _app.actor.list.System.Name,
             Path: resolved.Absolute,
             Verbs: verbs,
-            Match: global::app.type.item.permission.Match.Exact);
+            Match: global::app.type.item.permission.Match.exact);
         var data = new global::app.data.@this<global::app.type.item.permission.@this>("", permission, context: Ctx);
         await _app.actor.list.System.Permission.Add(data, persist: true);
     }

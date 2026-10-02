@@ -19,42 +19,30 @@ public class PermissionAllowsTests
         new("user", path, Verbs(verb), match);
 
     private static Permission Request(string path, Verb? verb = null) =>
-        new("user", path, Verbs(verb), Match.Exact);
+        new("user", path, Verbs(verb), Match.exact);
 
     [Test] public async Task ExactMatch_EqualPath_Allows()
     {
-        var g = Grant("/apps/Email/file.txt", Match.Exact);
+        var g = Grant("/apps/Email/file.txt", Match.exact);
         await Assert.That(g.Allows(Request("/apps/Email/file.txt"))).IsTrue();
     }
 
     [Test] public async Task ExactMatch_DifferentPath_DoesNotAllow()
     {
-        var g = Grant("/apps/Email/file.txt", Match.Exact);
+        var g = Grant("/apps/Email/file.txt", Match.exact);
         await Assert.That(g.Allows(Request("/apps/Email/other.txt"))).IsFalse();
     }
 
     [Test] public async Task GlobMatch_PatternAllowsConcretePath()
     {
-        var g = Grant("/apps/*/file.txt", Match.Glob);
+        var g = Grant("/apps/*/file.txt", Match.glob);
         await Assert.That(g.Allows(Request("/apps/Email/file.txt"))).IsTrue();
     }
 
     [Test] public async Task GlobMatch_NonMatchingPattern_DoesNotAllow()
     {
-        var g = Grant("/apps/*/file.txt", Match.Glob);
+        var g = Grant("/apps/*/file.txt", Match.glob);
         await Assert.That(g.Allows(Request("/apps/Email/Sub/file.txt"))).IsFalse();
-    }
-
-    [Test] public async Task RegexMatch_PatternAllowsConcretePath()
-    {
-        var g = Grant(@"^/apps/[^/]+/file\.txt$", Match.Regex);
-        await Assert.That(g.Allows(Request("/apps/Email/file.txt"))).IsTrue();
-    }
-
-    [Test] public async Task RegexMatch_NonMatchingPattern_DoesNotAllow()
-    {
-        var g = Grant(@"^/apps/[^/]+/file\.txt$", Match.Regex);
-        await Assert.That(g.Allows(Request("/apps/Email/other.txt"))).IsFalse();
     }
 
     [Test] public async Task UnknownMatchEnumValue_AllowsReturnsFalse_FailClosed()
@@ -65,15 +53,15 @@ public class PermissionAllowsTests
 
     [Test] public async Task PathMatches_ButVerbDoesNot_DoesNotAllow()
     {
-        var grantVerb = global::app.type.item.permission.Verb.Write;
-        var g = Grant("/p", Match.Exact, grantVerb);
+        var grantVerb = global::app.type.item.permission.Verb.write;
+        var g = Grant("/p", Match.exact, grantVerb);
         await Assert.That(g.Allows(Request("/p"))).IsFalse();
     }
 
     [Test] public async Task SameRecordShape_GrantRoleAndRequestRole_BothLegible()
     {
-        var grant = new Permission("user", "/apps/*/file.txt", global::app.type.item.permission.@this.AllVerbs, Match.Glob);
-        var request = new Permission("user", "/apps/Email/file.txt", global::app.type.item.permission.@this.AllVerbs, Match.Exact);
+        var grant = new Permission("user", "/apps/*/file.txt", global::app.type.item.permission.@this.AllVerbs, Match.glob);
+        var request = new Permission("user", "/apps/Email/file.txt", global::app.type.item.permission.@this.AllVerbs, Match.exact);
         await Assert.That(grant.Allows(request)).IsTrue();
     }
 
@@ -83,7 +71,7 @@ public class PermissionAllowsTests
         // serializer's persistence path), not raw STJ — the grant owns its wire form.
         await using var app = new global::app.@this("/test").TestSigning();
         var ctx = app.actor.list.User.Context;
-        var original = new Permission("user", "/p", global::app.type.item.permission.@this.AllVerbs, Match.Glob);
+        var original = new Permission("user", "/p", global::app.type.item.permission.@this.AllVerbs, Match.glob);
         var data = new global::app.data.@this<Permission>("", original, context: ctx);
         var plang = ctx.Format("application/plang");
         var stored = plang.Store(data, ctx);

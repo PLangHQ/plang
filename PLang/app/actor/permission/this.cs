@@ -26,7 +26,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         _actor = actor;
         // Every actor's standing grant on the runtime's shared os folder: it reads and runs what is there (the
         // builder's goals, /system/error/show). Writing there is the system actor's alone (Stand).
-        Stand(Verb.Read, Verb.Execute);
+        Stand(Verb.read, Verb.execute);
     }
 
     /// <summary>
@@ -37,7 +37,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     {
         var grant = new Grant(_actor.Name,
             _actor.App.OsAbsolutePath + global::app.Utils.PathHelper.DirectorySeparatorChar + "**",
-            new HashSet<Verb>(verbs), MatchMode.Glob);
+            new HashSet<Verb>(verbs), MatchMode.glob);
         var held = new global::app.data.@this<Grant>("", grant, context: _actor.Context);
         lock (_lock)
         {
@@ -95,7 +95,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     public async Task<global::app.data.@this?> Find(path requestPath, Verb verb)
     {
         var request = Grant.Request(
-            _actor.Name, requestPath.Absolute, verb, MatchMode.Exact);
+            _actor.Name, requestPath.Absolute, verb, MatchMode.exact);
 
         // A grant read here is already trustworthy, so it is asked only whether it allows the request: a persisted
         // grant was verified at the I/O boundary on load (auto-verify-on-read peels + validates its signature
