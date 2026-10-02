@@ -20,8 +20,6 @@ namespace app.type.item.input;
 [global::app.Attributes.PlangType("input"), global::app.Attributes.Kinds]
 public abstract class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "{\"mouse\": \"down\", \"x\": 120, \"y\": 40, \"button\": \"left\", \"clicks\": 1}";
-    public static string Description => "Something a person did on a screen: the mouse moved, clicked or wheeled, a key went down or up, text was typed, or back, forward or reload was asked.";
     public static string Shape => "object";
 
     // the host's clock when it happened ("t"): echoed with the picture that answers it, so the time from a click to
