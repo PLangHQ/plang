@@ -41,12 +41,28 @@ public class @this
         await System.IO.File.AppendAllTextAsync(p.Absolute, text);
     }
 
-    /// <summary>Removes the file, or the folder — with what it holds when <paramref name="recursive"/>.</summary>
+    /// <summary>Removes the file, or the folder — with what it holds when <paramref name="recursive"/>. A link is
+    /// removed itself, never what it leads to.</summary>
     public virtual void Delete(file.@this p, bool recursive)
     {
-        if (IsFile(p)) System.IO.File.Delete(p.Absolute);
+        if (Link(p) != null || IsFile(p)) System.IO.File.Delete(p.Absolute);
         else System.IO.Directory.Delete(p.Absolute, recursive);
     }
+
+    /// <summary>What the link at <paramref name="p"/> leads to, as it is written — the link itself read, never followed;
+    /// null when <paramref name="p"/> is no link.</summary>
+    public virtual string? Link(file.@this p) => new System.IO.FileInfo(p.Absolute).LinkTarget;
+
+    /// <summary>Makes a link at <paramref name="p"/> leading to <paramref name="target"/>, as it is written, making its
+    /// folder when there is none.</summary>
+    public virtual void Link(file.@this p, string target)
+    {
+        Parent(p);
+        System.IO.File.CreateSymbolicLink(p.Absolute, target);
+    }
+
+    /// <summary>Sets who may read, write and run what is at <paramref name="p"/>.</summary>
+    public virtual void Mode(file.@this p, System.IO.UnixFileMode mode) => System.IO.File.SetUnixFileMode(p.Absolute, mode);
 
     /// <summary>Makes the folder, and the folders above it.</summary>
     public virtual void Create(file.@this p) => System.IO.Directory.CreateDirectory(p.Absolute);
