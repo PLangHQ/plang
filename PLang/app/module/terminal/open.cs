@@ -24,10 +24,10 @@ public partial class open : IContext
     /// <summary>Folder the program runs in. Default: the app root.</summary>
     public partial data.@this<global::app.type.item.path.@this>? WorkingDirectory { get; init; }
 
-    /// <summary>The folders the program is held to — <c>{read: [...], write: [...]}</c>: the kernel lets it touch
-    /// nothing else. Each folder is first this app's to read or write. Left out, the program runs free; named, it
-    /// never does (a %ref% holding none is refused).</summary>
-    public partial data.@this<global::app.module.terminal.type.sandbox.@this>? Sandbox { get; init; }
+    /// <summary>What the program may touch — <c>[{path: "/src/os", verbs: ["read", "write"]}]</c>: the kernel holds it
+    /// to these folders and verbs, and nothing else. Each is first this app's to grant. Left out, the program runs free;
+    /// named, it never does (a %ref% holding none is refused).</summary>
+    public partial data.@this<global::app.type.item.list.@this<global::app.type.item.permission.@this>>? Permission { get; init; }
 
     /// <summary>Goal called for each line the program writes to stdout, the line as <c>%!data%</c>.</summary>
     public partial data.@this<global::app.goal.step.action.@this>? OnOutput { get; init; }
