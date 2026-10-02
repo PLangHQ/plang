@@ -154,10 +154,23 @@ public sealed class Default : ITerminal
             // stdout is [u32 length][bytes] messages: each one, as it arrives, straight to the screen
             // it goes to (no goal per message), and to OnOutput as binary when there is one
             _ = Pump(os.StandardError, true, System.Threading.Channels.Channel.CreateUnbounded<(bool, string)>().Writer);
+            // a plang behind it takes calls to its goals (%container.goal["Question"]%): a call goes down its input as a
+            // line; its answer comes back as a message of its own (kind 9, {"reply": …}) to the call waiting on it
+            running.Remote.Link = async line =>
+            {
+                await running.Writing.WaitAsync();
+                try { await os.StandardInput.WriteLineAsync(line); await os.StandardInput.FlushAsync(); }
+                finally { running.Writing.Release(); }
+            };
             running.Reading = Task.Run(async () =>
             {
                 await foreach (var message in Messages(os.StandardOutput.BaseStream))
                 {
+                    if (Reply(message) is { } reply)
+                    {
+                        running.Remote.Answered(reply);
+                        continue;
+                    }
                     screen?.Show(message);
                     if (onOutput != null)
                         await global::app.module.on.code.Gate.Call(onOutput,
@@ -305,6 +318,18 @@ public sealed class Default : ITerminal
                 Pump(process.StandardError, true, lines.Writer))
             .ContinueWith(_ => lines.Writer.Complete(), TaskScheduler.Default);
         return lines.Reader;
+    }
+
+    /// <summary>A message up from a plang behind it that answers a call to one of its goals: kind 9, <c>{"reply": …}</c>.</summary>
+    private static System.Text.Json.JsonElement? Reply(byte[] message)
+    {
+        if (message.Length < 10 || message[0] != 9 || message[1] != (byte)'{') return null;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(message.AsMemory(1));
+            return doc.RootElement.TryGetProperty("reply", out var reply) ? reply.Clone() : null;
+        }
+        catch (System.Text.Json.JsonException) { return null; }
     }
 
     /// <summary>Length-prefixed binary messages: [u32 length, little-endian][that many bytes].</summary>

@@ -9,7 +9,8 @@ namespace app.parent;
 /// picked by name, <c>%!app.parent.goal["Claude"]%</c>, and called like any goal
 /// (<c>call goal Claude in %!app.parent%, message=%text%</c>): the call and its arguments go up to the parent, the
 /// parent runs its goal, and what comes back is the call's result. What links the two is set by what started them
-/// (<see cref="Link"/>); with none, a call says there is no parent to call.
+/// (<see cref="Link"/>); with none, a call says there is no parent to call. The same link the other way: a plang this
+/// app started (PlangOS, <c>%container.goal["Question"]%</c>) — its calls go down its input, its answers come up.
 /// </summary>
 public sealed class @this : global::app.type.item.@this
 {
@@ -31,7 +32,7 @@ public sealed class @this : global::app.type.item.@this
     {
         if (Link is not { } link)
             return context.Error(new global::app.error.Error(
-                $"There is no parent app to call {goal} in: nothing that started this plang links to it", "NoParent", 404));
+                $"There is no app to call {goal} in: nothing links this plang to it", "NoParent", 404));
         var parameters = new JsonObject();
         if (context.Variable.Calls.Current is { } frame)
             foreach (var name in frame.Arguments)

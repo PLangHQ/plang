@@ -28,9 +28,16 @@ public partial class listen : IContext
         {
             lines++;
             // the host answering a call to one of its goals ({"reply": …}) goes to the call waiting on it
-            if (line.StartsWith("{\"reply\"", StringComparison.Ordinal) && Reply(line) is { } reply)
+            if (line.StartsWith("{\"reply\"", StringComparison.Ordinal) && Member(line, "reply") is { } reply)
             {
                 Context.App.parent.Answered(reply);
+                continue;
+            }
+            // the host calling one of this shell's goals ({"call": {id, goal, parameters}} — %container.goal["Question"]%
+            // there): it runs here, one at a time with the other callbacks, and its answer goes up beside the frames
+            if (line.StartsWith("{\"call\"", StringComparison.Ordinal) && Member(line, "call") is { } call)
+            {
+                _ = Called(call, display);
                 continue;
             }
             display.Input(line);
@@ -38,12 +45,61 @@ public partial class listen : IContext
         return Context.Ok<global::app.type.item.number.@this>(lines);
     }
 
-    private static System.Text.Json.JsonElement? Reply(string line)
+    /// <summary>Runs the shell's goal the host called, its parameters bound by name, and answers it:
+    /// <c>{"reply": {id, result}}</c>, or <c>{"reply": {id, error}}</c>. Only the shell's own goals — a bare name,
+    /// as seen from the goal that listens (Screen.goal and its folder) — never a path elsewhere.</summary>
+    private async Task Called(System.Text.Json.JsonElement call, code.wayland.Display display)
+    {
+        var id = call.TryGetProperty("id", out var i) ? i.GetString() ?? "" : "";
+        var name = call.TryGetProperty("goal", out var g) ? g.GetString() ?? "" : "";
+        var context = Context;
+        async Task Answer(System.Text.Json.Nodes.JsonObject reply)
+        {
+            reply["id"] = id;
+            display.Up(new System.Text.Json.Nodes.JsonObject { ["reply"] = reply }.ToJsonString());
+            await Task.CompletedTask;
+        }
+        if (name.Length == 0 || name.Contains('/') || name.Contains('\\'))
+        {
+            await Answer(new() { ["error"] = $"PlangOS runs only its shell's own goals, by name: not '{name}'" });
+            return;
+        }
+        await global::app.module.on.code.Gate.Run(async () =>
+        {
+            var goal = await context.App.goal.list.Find(name, context.CallStack.Goal);
+            if (goal == null)
+            {
+                await Answer(new() { ["error"] = $"PlangOS's shell has no goal {name}" });
+                return;
+            }
+            var bound = new List<global::app.data.@this>();
+            if (call.TryGetProperty("parameters", out var parameters) && parameters.ValueKind == System.Text.Json.JsonValueKind.Object)
+                foreach (var p in parameters.EnumerateObject())
+                    bound.Add(new global::app.data.@this(p.Name, new global::app.type.item.serializer.json(context).Parse(p.Value.Clone()), context: context));
+            global::app.data.@this ran;
+            await using (context.Variable.Calls.Push(bound)) ran = await goal.Start(context);
+            if (!ran.Success)
+            {
+                await Answer(new() { ["error"] = ran.Error?.Message ?? "failed" });
+                return;
+            }
+            using var written = new MemoryStream();
+            var encoded = await context.App.type.list.Mime("application/json").Encode(written, ran, context);
+            if (!encoded.Success) { await Answer(new() { ["error"] = encoded.Error?.Message ?? "its answer couldn't be written" }); return; }
+            var text = Encoding.UTF8.GetString(written.ToArray());
+            System.Text.Json.Nodes.JsonNode? result;
+            try { result = System.Text.Json.Nodes.JsonNode.Parse(text); }
+            catch (System.Text.Json.JsonException) { result = System.Text.Json.Nodes.JsonValue.Create(text); }
+            await Answer(new() { ["result"] = result });
+        }, context);
+    }
+
+    private static System.Text.Json.JsonElement? Member(string line, string name)
     {
         try
         {
             using var doc = System.Text.Json.JsonDocument.Parse(line);
-            return doc.RootElement.TryGetProperty("reply", out var reply) ? reply.Clone() : null;
+            return doc.RootElement.TryGetProperty(name, out var member) ? member.Clone() : null;
         }
         catch (System.Text.Json.JsonException) { return null; }
     }
