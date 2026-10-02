@@ -36,6 +36,10 @@ structural reads (`pick/list/this.cs` `Destination()`, `First()`, `As`, `Assigne
 `Placed()`) keep reading the **real** `_step.Text` — they map structure for the builder, not for the
 LLM, and the real variables are what the `.pr` must carry.
 
+> **Member name (architect, confirmed):** the masked text is **`s.Mask.Text`** (a `Mask` member on
+> the step exposing `.Text` + the reverse map), not the `s.Masked` / `question.Variable` names this
+> draft sketched below. The templates read `s.Mask.Text`.
+
 ## Core (coder) — the member and the reverse map
 `step` (`PLang/app/goal/step/this.cs`) exposes, driven by the same `type/item/variable/parser` the
 pick uses:

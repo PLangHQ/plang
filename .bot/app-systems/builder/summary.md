@@ -104,10 +104,17 @@ judge, already `[Skip]`); its only shared helper `RepoRoot()` was byte-identical
 
 ## Status 2026-10-02 (end) — idle, waiting on the coder's one pick pass
 All architect-directed work done and accepted (latest 0b799a5d1). Open items are the coder's / core:
-- **Coder's pick pass** (Option-v2 core + `listed.Option` + issue-32 masking core, after task 2b).
-  When its hash lands: I add the `ask:` note lines (loop.foreach Item/Key, llm Conversation), switch
-  the four LLM-facing templates to `s.Masked`, the `=> formal:` masking, then measure (issue 2 → 5/5,
-  the control set, issue 33's `as path`).
+- **Coder's pick pass** (Option-v2 core + `listed.Option` + issue-32 masking core; coder plan v22 =
+  `1ea0f67bf`). When its hash lands, my part:
+  - switch the four LLM-facing templates (decider1, decider2, decider.state, properties) from `s.Text`
+    to **`s.Mask.Text`** (architect's confirmed member name — not `s.Masked`/`question.Variable` as my
+    shape drafts guessed; see `v3/issue32-masking-shape.md` note);
+  - add the `ask:` note lines on **loop.foreach's Item/Key** and **llm.query's Conversation**;
+  - measurements, **in this order:** (1) the control set (a step whose only module signal is a
+    variable name — masking must not regress it), (2) issue 2 with a key → Item+Key 5/5, (3) issue
+    32(b), (4) the named "continue the conversation from %answer%", (5) the guards (plain foreach keeps
+    Item/no stray Key; plain read stays Template-free; a bare continue → none).
+  (2b's `AShortcut` stale test string was fixed by the coder in `156ed9e92` — accepted, off my plate.)
 - **Coder's stage 2b — shortcut .pr rebuild — DONE (on 1dc8a4606).** Rebuilt the binary (2b is C#),
   then rebuilt `os/system/shortcut/goal.goal` and `step.goal` each alone, cache off, cwd=os/. Clean
   diffs: `%!app.callstack.scope.caller.{goal,step}%` → `%!app.call…%` (step text, value, variable text,
