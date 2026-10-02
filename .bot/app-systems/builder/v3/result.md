@@ -20,8 +20,16 @@ static diagnoses below:**
 - **Issue 32(b): REPRODUCES 5/5** — `call goal Page module=%!app.module.file%` →
   `goal.call(Name="%!app.module.file%")`, `Page` lost; the dotted variable takes the Name slot.
   **goal.call's note is already correct** (`call goal Page …` → Name="Page", Parameter={module:…});
-  the *writer* misreads the `%!a.b.c%` variable as the name. This is evidence for the architect's
-  decider/writer-opaque-variable direction, not a note gap. (Repro: `/shared/educator/work/modules-probe`.)
+  the *writer* misreads the `%!a.b.c%` variable as the name. (Repro: `/shared/educator/work/modules-probe`.)
+  - **Cheap in-lane lever TRIED and FAILED (architect's suggestion):** added a generic goal.call
+    example (`call goal BuildPage source=%a.b.c%` → Name="BuildPage"), measured 5/5 — **still
+    `Name=%!app.module.file%`**. Root confirmed by the writer's own prompt: it receives a clean
+    `=> formal: goal.call(Name)` slot (decider 0.96) and fills `Name` with the variable anyway. An
+    **example reaches the decider, not the writer** (`properties.template` renders notes + type
+    examples only; the action's Examples are in `decider.state.template`). So no teaching lever in my
+    lane moves it — the note (writer-side) is already right, the example (decider-side) can't help.
+    Example reverted. → **opaque-variable direction** (mask the step's variables in the *writer's*
+    step text too, so `call goal Page module=%v1%` can't tempt the writer). Core, architect's.
 
 The static code-path diagnoses below remain accurate about *mechanism*; the measured counts above
 are the current-head truth. Original blocker note kept for the record.

@@ -25,21 +25,15 @@ For an option that is **not a choice**, the offers are **the step's own variable
 - **Conversation 26(1)** — `continue the conversation from %answer%` drops `Conversation`. Ingi ruled a
   **bare "continue" is null** (no default) → maps to the decider answering `"none"` (Call skips it).
 
-## Members the question needs
-`pick/question/this.cs` `@this`:
-- **Add** `public IReadOnlyList<string> Variable { get; init; } = [];` — the step's own variables as
-  `%name%` strings, in the order the parser reads them (`type/item/variable/parser`), **distinct**.
-  (Populated by `Questions()`, which has `_step`; the question itself never sees the step, matching
-  its "never its words" contract — the strings are data, not the step text.)
-- **Change** `Values` so a non-choice option offers the step's variables:
-  ```
-  public IReadOnlyList<string> Values =>
-      Property?.Type.Values is { } own ? [.. own, None]        // v1: a choice-typed option
-    : Variable.Count > 0            ? [.. Variable, None]       // v2: a non-choice option
-    :                                 [];                        // nothing to offer → not asked
-  ```
-  Everything downstream (`decider2.template` `q.Values`, the `"type":"choice"` render) is unchanged —
-  v2 reuses the exact Option rendering; only the option list differs.
+## How the offer is produced — ACCEPTED SHAPE (architect, 2026-10-02)
+**No choice-or-not branch in the question.** A branch like `Property.Type.Values is {} own ? … :
+Variable.Count > 0 ? …` is a type-switch ("is this a choice?") — misplaced behavior. The **property's
+type answers what it offers for a step**, through **one member on the type**, called once by
+`Questions()`: a closed set (a `choice` type) offers its values; any other type offers the step's own
+variables. The coder names and places that member (core). Consequence: **`question.Variable` is NOT
+needed** — the question keeps its "never its words" contract; the offers come from the type given the
+step. `Values` stays a thin read of that member + `None`; `decider2.template`'s `when "Option"` render
+is **unchanged** (still a `"type":"choice"` over `q.Values`). v2 reuses the exact Option rendering.
 
 ## Where v2 is asked (`list/this.cs` `Questions()`)
 Today the Option loop (ll.503-513) adds a question when a property's note line has `ask:`. Two deltas:
@@ -51,21 +45,14 @@ Today the Option loop (ll.503-513) adds a question when a property's note line h
    only trigger. loop.foreach is a common action and is certain in the normal case, so its properties
    are already reached by the Option loop; no new reachability needed.
 
-## What Prefill writes
-`Call()` already appends `_option[{m}.{a}.{opt}] = value` as `Property=value`, `None` skipped. For
-`Key`/`Item` the value is the chosen variable (`Key=%field%`, `Item=%value%`) — works as-is.
-
-**One open question for the architect — the Conversation wrapper.** Conversation's correct formal is
-`Conversation={continue: %answer%}`, not `Conversation=%answer%`. The plain `Property=value` that
-`Call` writes won't produce the `{continue: …}` wrapper. Options:
-- (a) the `ask:` note / the property carries a small format so the pick is wrapped
-  (`{continue: <pick>}`), or
-- (b) the decider offers the already-wrapped forms as the choices (uglier — the offers would be
-  `{continue: %answer%}`, "none"), or
-- (c) Conversation stays a teaching case and v2 covers only Item/Key for now.
-
-I lean (a): keep the offer the bare variables (clean for the decider), and let the property's note
-shape the written form. But this is a core decision (the pick writes the formal) — your call.
+## What Prefill writes — ACCEPTED (architect)
+`Call()` already appends `_option[{m}.{a}.{opt}] = value` as `Property=value`, `None` skipped. Prefill
+writes the **plain pick for every option** — `Key=%field%`, `Item=%value%`, and
+**`Conversation=%answer%`**. **No wrapper.** The conversation type is born from a response:
+`Conversation=%answer%` makes `{continue: %answer%}` through `conversation.Create`, i.e. **the value's
+own door does the shaping**. Today `conversation.Create` declines anything but a dict
+(`llm/type/conversation/this.cs:35-40`) — the coder makes `Create` accept the plain pick. (Core,
+coder's.) Ingi: a bare "continue" is null → the decider answers `None` → `Call` leaves it out.
 
 ## Caveat (same as v1)
 Prefill fills a chosen option **only when its action ends up certain** (`Mark.Certain`; see issue 25
