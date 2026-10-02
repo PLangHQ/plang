@@ -49,6 +49,7 @@ Entry form: **who** · **what** · **cost** (evidence) · **if I had** (the wish
 
 - **architect · most plang tests don't run.** `plang --test`: 380 found, 57 run, 323 have no `.pr`. **If I had** a gate step that builds every test goal (or fails on a missing `.pr`), "0 fail" would mean the suite passed.
 - **educator · examples aren't built.** No gate or test builds or runs the `*.examples.md` steps (`dev.sh:284–292`), so an example can teach a step that fails. **If I had** each example built and run by the gate.
+- **architect · the http test server times out under load.** With the machine's load average at 15–22 (several bots building at once), 7 http path contract tests failed at ~23 s with NetworkError and no server fault (gate 113); alone they pass. **Cost:** a gate's red that means "busy machine", read as a regression until rerun. **If I had** the http tests' server and client hold up under load (or the gate run when the machine is quiet, or record its load), a red would mean a regression.
 - **architect · 18 known C# failures in every gate** hide a flake among them. **If I had** them fixed or quarantined.
 - **architect · gating a side branch disturbs my tree.** **If I had** the gate run in its own git worktree.
 - **architect · stale-binary and path traps in CLAUDE.md** (`./dev.sh test <Class>` skips PlangConsole; `Tests/` is `test/`): proposals v6 and v7, waiting for the docs pass.
