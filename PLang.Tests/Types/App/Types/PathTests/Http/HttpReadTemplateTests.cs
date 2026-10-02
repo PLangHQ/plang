@@ -10,7 +10,7 @@ public class HttpReadTemplateTests
         var ctx = app.actor.list.User.Context;
         var url = global::app.type.item.path.@this.Resolve("https://example.com/t.txt", ctx);
 
-        var read = await url.Read(ctx, true);
+        var read = await url.Read(ctx, new global::app.type.item.template.kind.plang.@this());
 
         await read.IsSuccess();
         await Assert.That(read.Peek()!.Template).IsEqualTo("plang");
@@ -28,7 +28,7 @@ public class HttpReadTemplateTests
         await ctx.Actor!.Permission.Add(new global::app.data.@this<global::app.type.item.permission.@this>("", grant, context: ctx), persist: false);
         await ctx.Variable.Set("name", "World");
 
-        var read = await global::app.type.item.path.@this.Resolve(address, ctx).Read(ctx, true);
+        var read = await global::app.type.item.path.@this.Resolve(address, ctx).Read(ctx, new global::app.type.item.template.kind.plang.@this());
 
         await read.IsSuccess();
         await Assert.That((await read.Value())?.ToString()).IsEqualTo("Hello World!");

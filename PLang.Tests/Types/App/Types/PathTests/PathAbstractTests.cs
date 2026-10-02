@@ -20,7 +20,7 @@ public class PathAbstractTests
     private static readonly System.Type Ctx = typeof(global::app.actor.context.@this);
     private static readonly (string Name, System.Type[] Params)[] AbstractVerbs =
     {
-        (nameof(PLangPath.Read), new[] { Ctx, typeof(global::app.type.item.@bool.@this) }),
+        (nameof(PLangPath.Read), new[] { Ctx, typeof(global::app.type.item.template.kind.@this) }),
         (nameof(PLangPath.Expect), new[] { Ctx }),
         (nameof(PLangPath.WriteText), new[] { typeof(string), Ctx }),
         (nameof(PLangPath.WriteBytes), new[] { typeof(byte[]), Ctx }),

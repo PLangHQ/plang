@@ -39,10 +39,14 @@ public partial class @this
     internal async System.Threading.Tasks.ValueTask<global::app.module.crypto.type.hash.@this?> Digest(View view, string algorithm,
         global::app.actor.context.@this context)
     {
+        // the kind of hash the name names, through the choice a written name is read by; none goes by an unknown name
+        global::app.module.crypto.type.hash.kind.@this kind;
+        try { kind = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse(algorithm).Value; }
+        catch (System.FormatException) { return null; }
         using var bytes = new System.IO.MemoryStream();
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(bytes))
             await Output(new global::app.type.item.kind.json.Writer(utf8, view, emitsSchema: true), view, context, layer: true);
-        return global::app.module.crypto.type.hash.@this.Of(bytes.ToArray(), algorithm, context);
+        return global::app.module.crypto.type.hash.@this.Of(bytes.ToArray(), kind);
     }
 
     /// <summary>

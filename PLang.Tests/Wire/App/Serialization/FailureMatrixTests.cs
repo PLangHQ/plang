@@ -77,7 +77,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
         await Assert.That(result.Error!.Key).IsEqualTo("DecompressError");
     }
 
-    [Test] public async Task CryptoHash_WithUnsupportedAlgorithm_ReturnsDataWithUnsupportedAlgorithmError()
+    [Test] public async Task CryptoHash_WithUnsupportedAlgorithm_ReturnsTheChoicesRefusal()
     {
         var crypto = new global::app.module.crypto.code.Default();
         var action = new global::app.module.crypto.Hash(app.actor.list.User.Context) { Data = app.Ok("x"),

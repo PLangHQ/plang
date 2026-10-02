@@ -173,11 +173,10 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     /// <summary>A remote location lands as a <c>url</c> reference, born through its type — no fetch: consent
     /// and I/O come at first touch, through the reference's own value. A template read marks it, as a file's.</summary>
-    public override async Task<data.@this> Read(actor.context.@this context, global::app.type.item.@bool.@this? template = null)
+    public override async Task<data.@this> Read(actor.context.@this context, global::app.type.item.template.kind.@this? template = null)
     {
         // born with its template: the url type makes the reference from this location, as it declares
-        var marked = Marked(template);
-        return await context.App.type.list[new global::app.type.@this("url", (string?)null, template: marked), context]
+        return await context.App.type.list[new global::app.type.@this("url", (string?)null, template: template?.Name), context]
             .Create(this, context, "url");
     }
 

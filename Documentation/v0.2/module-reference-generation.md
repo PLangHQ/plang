@@ -256,7 +256,7 @@ Read a file's content; optionally resolve %var% patterns in the text before retu
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
 | Path | the path, inline | path | yes | — | the file to read |
-| Variables | load vars, fill in the variables, with variables | bool | no | false | fill in the %variables% written inside the file's text before returning |
+| Template | load vars, fill in the variables, with variables | choice<template> | no | — | the kind of template the file's text is: plang fills its %variables% from memory |
 
 **Returns:** the file's content. A JSON file is navigable; it is parsed when first navigated.
 

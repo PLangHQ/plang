@@ -44,7 +44,7 @@ public sealed partial class @this
 
     /// <summary>A file lands as a <c>file</c> reference, a folder as a <c>directory</c>; nothing there is
     /// NotFound (404) now, at the read, not at first touch. The stat tells which.</summary>
-    public override async Task<data.@this> Read(actor.context.@this context, global::app.type.item.@bool.@this? template = null)
+    public override async Task<data.@this> Read(actor.context.@this context, global::app.type.item.template.kind.@this? template = null)
     {
         // A failure, or an ask the gate suspends on (it exits the goal), is the read's answer as it is.
         var stat = await Stat(context);
@@ -56,8 +56,7 @@ public sealed partial class @this
         if (info.IsFile == false)
             return await context.App.type.list["directory"].Create(this, context, "directory");
         // born with its template: the file type makes the reference from this path, as it declares
-        var marked = Marked(template);
-        return await context.App.type.list[new global::app.type.@this("file", (string?)null, template: marked), context]
+        return await context.App.type.list[new global::app.type.@this("file", (string?)null, template: template?.Name), context]
             .Create(this, context, FileName);
     }
 
