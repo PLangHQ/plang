@@ -35,9 +35,18 @@ public sealed class Default : ITerminal
         using var cts = timeout > 0 ? new CancellationTokenSource(TimeSpan.FromSeconds(timeout)) : new CancellationTokenSource();
 
         if ((await action.Administrator.Value())!.Value)
-            return sandbox != null
-                ? data.@this<Text>.From(context.Error(new ActionError("A program started as administrator can't be held to permissions.", "PermissionNotEnforced", 400)))
-                : await Elevated(info, program, context, cts.Token);
+        {
+            if (sandbox != null)
+                return data.@this<Text>.From(context.Error(new ActionError("A program started as administrator can't be held to permissions.", "PermissionNotEnforced", 400)));
+            // Windows starts it through UAC, which passes none of these: a step that gives one is told, not ignored
+            var given = new[] { ("Input", action.Input != null), ("OnOutput", action.OnOutput != null),
+                ("OnError", action.OnError != null), ("Environment", action.Environment != null) }.Where(g => g.Item2).Select(g => g.Item1).ToList();
+            if (given.Count > 0)
+                return data.@this<Text>.From(context.Error(new ActionError(
+                    $"A program started as administrator gets no {string.Join(", ", given)}: Windows starts it through UAC, which passes none of them, and only its exit code comes back.",
+                    "AdministratorNotSupported", 400)));
+            return await Elevated(info, program, context, cts.Token);
+        }
         if ((await action.Interactive.Value())!.Value) return await Attached(info, program, sandbox, context, cts.Token);
         return await Captured(action, info, program, sandbox, setting, context, cts.Token);
     }
@@ -290,7 +299,7 @@ public sealed class Default : ITerminal
         if (given == null && named != null)
             return (null, context.Error(new ActionError(
                 $"The step gives the program permissions, but {named} holds none — leave Permission out to run it free.", "PermissionInvalid", 400)));
-        var (ready, failure) = await Prepare(context, setting, app, parameter, environment, workingDirectory);
+        var (ready, failure) = await Prepare(context, setting, app, parameter, environment, workingDirectory, held: given != null);
         if (ready == null) return (null, failure);
         if (given == null) return ((ready.Value.info, ready.Value.program, null), null);
         var (held, refused) = await Sandbox.Of(given.Rows(context), ready.Value.program, context);
@@ -316,7 +325,7 @@ public sealed class Default : ITerminal
     private static async Task<((ProcessStartInfo info, FilePath program)? ready, data.@this? failure)> Prepare(
         actor.context.@this context, setting.@this setting, data.@this<Text> app,
         data.@this<global::app.type.item.list.@this>? parameter, data.@this<global::app.type.item.dict.@this>? environment,
-        data.@this<global::app.type.item.path.@this>? workingDirectory)
+        data.@this<global::app.type.item.path.@this>? workingDirectory, bool held = false)
     {
         var name = (await app.Value())!.Clr<string>()!;
         var program = FilePath.Program(name, context);
@@ -336,6 +345,13 @@ public sealed class Default : ITerminal
         var parameters = parameter == null || !await parameter.ToBooleanAsync() ? null : (await parameter.Value())!.Clr<List<object?>>();
         foreach (var p in parameters ?? []) info.ArgumentList.Add(p?.ToString() ?? "");
 
+        // a program held to permissions starts with none of plang's own environment (its keys among it): only the
+        // sandbox's base, and what the settings and the step give it
+        if (held)
+        {
+            info.Environment.Clear();
+            foreach (var (key, value) in Sandbox.Environment) info.Environment[key] = value;
+        }
         var env = setting.Environment.Clr<Dictionary<string, object?>>() ?? new();
         if (environment != null && await environment.ToBooleanAsync())
             foreach (var (key, value) in (await environment.Value())!.Clr<Dictionary<string, object?>>() ?? new())
