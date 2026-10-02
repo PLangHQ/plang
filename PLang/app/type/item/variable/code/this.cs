@@ -39,9 +39,11 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
         global::app.data.@this? from = null)
     {
         var current = from;
+        var at = 0;
         foreach (var hop in Items())
         {
-            current = await hop.Start(current, context);
+            // the step right after the root steps on the variable's own binding
+            current = await hop.Start(current, context, own: at++ == 1 && from == null);
             if (!current.IsInitialized || !current.Success) return current;
         }
         return current!;
@@ -85,7 +87,7 @@ public sealed class @this : global::app.type.item.list.@this<Hop>
                     $"%{string.Concat(hops.Take(i + 1).Select(h => h.Text))}% holds nothing, so %{string.Concat(hops.Select(h => h.Text))}% has nowhere to be written",
                     "VariableNotFound", 404));
         }
-        return await hops[^1].Set(parent, value, context);
+        return await hops[^1].Set(parent, value, context, own: hops.Count == 2);
     }
 
     /// <summary>What the variable holds — or, when it holds nothing, the value <paramref name="value"/> gives birth

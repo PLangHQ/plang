@@ -21,6 +21,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>A structure — written through the reflection kind, its [Out]/[Debug] members.</summary>
     public override bool IsLeaf => false;
 
+    // what a program adds to the app (%!app.home%) — kept for the app's life, and in its snapshot
+    private readonly global::app.type.item.kept.list.@this _kept = new();
+    internal override global::app.type.item.kept.list.@this Kept => _kept;
+
     /// <summary>The one root: a copy of the app is the app.</summary>
     protected internal override global::app.type.item.@this Clone() => this;
 

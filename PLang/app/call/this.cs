@@ -16,6 +16,10 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     /// <summary>A structure — navigated by its members.</summary>
     public override bool IsLeaf => false;
 
+    // what a program adds to the call (%!call.retries%) — kept as long as the call lives
+    private readonly global::app.type.item.kept.list.@this _kept = new();
+    internal override global::app.type.item.kept.list.@this Kept => _kept;
+
     /// <summary>
     /// The frame writes one flat form in every view — a stack-trace entry: its id and depth, where it is (the
     /// goal's address, the step's text, the action as <c>module.name</c>), when, whether its error was handled,

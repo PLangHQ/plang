@@ -176,9 +176,19 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public virtual async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
-        if (value is global::app.data.@this binding) value = await binding.Value();
         var prop = GetType().GetProperty(key, System.Reflection.BindingFlags.Public
             | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+        if ((prop == null || !prop.CanWrite) && Kept is { } kept && !isIndex)
+        {
+            // a thing that lives on keeps a member a program adds — never in place of one of its own
+            if (prop != null || GetType().GetMethod(key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
+                    | System.Reflection.BindingFlags.IgnoreCase) != null)
+                throw new global::app.error.AppException(new global::app.error.Error(
+                    $"{key} is {Type.Name}'s own — a program adds members beside it, never over it", "OwnMember", 400));
+            kept.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
+            return this;
+        }
+        if (value is global::app.data.@this binding) value = await binding.Value();
         if (prop == null || !prop.CanWrite)
             throw new System.NotSupportedException($"%…% ({Type.Name}) cannot take a child '{key}'");
         if (value is @this iv && !prop.PropertyType.IsInstanceOfType(value))
@@ -237,8 +247,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         global::app.data.@this parent, string key)
     {
         var member = await new global::app.type.clr.@this(this, parent.Context).Get(parent, key);
-        return member.IsInitialized ? member : await Setting(parent, key) ?? member;
+        return member.IsInitialized ? member : await Setting(parent, key) ?? Kept?[key] ?? member;
     }
+
+    /// <summary>The members this thing keeps beyond its own (<c>%!app.home%</c>), read after its own — a thing that
+    /// lives on (the app, a call, an actor, a module, a goal, a step) keeps a list; a plain value keeps none.</summary>
+    internal virtual global::app.type.item.kept.list.@this? Kept => null;
 
     /// <summary>This owner's settings when <paramref name="key"/> is <c>setting</c> (<c>%!app.goal.list.setting%</c>);
     /// null for any other key, or an owner with none.</summary>

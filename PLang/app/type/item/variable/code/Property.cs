@@ -24,11 +24,22 @@ public sealed class Property : Hop
     /// what holds it.</summary>
     internal override bool IsOwn => !IsBinding;
 
-    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
         global::app.data.@this? previous, global::app.actor.context.@this context)
+        => Start(previous, context, own: false);
+
+    internal override async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
+        global::app.data.@this? previous, global::app.actor.context.@this context, bool own)
     {
         if (previous is null) return context.NotFound(Name);
-        if (!IsBinding) return await previous.Peek().Get(previous, Name);
+        if (!IsBinding)
+        {
+            var read = await previous.Peek().Get(previous, Name);
+            // a member a program added to a variable's own value is kept in its binding — read after the value's own
+            if (own && (!read.Success || !read.IsInitialized) && previous.Properties.ContainsKey(Name))
+                return new global::app.data.@this(Name, await previous.Properties.Value(Name), parent: previous);
+            return read;
+        }
 
         var key = Name[1..];
         if (previous.Properties.ContainsKey(key))
@@ -49,11 +60,17 @@ public sealed class Property : Hop
 
     /// <summary>A member takes the value as the parent's child; a <c>!</c> name lands in the
     /// binding's Properties.</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
         global::app.data.@this? parent, object? value, global::app.actor.context.@this context)
+        => Set(parent, value, context, own: false);
+
+    /// <summary>A member written on a variable's own binding (<paramref name="own"/>) that its value can't take is kept
+    /// in the binding (<c>set %name.lang% = "is"</c>).</summary>
+    internal override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
+        global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool own)
     {
         if (parent is null) return context.NotFound(Name);
-        if (!IsBinding) return await parent.Set(Name, isIndex: false, value);
+        if (!IsBinding) return await parent.Set(Name, isIndex: false, value, keeps: own);
         if (!parent.IsInitialized)
             return context.Error(new global::app.error.Error($"Variable '{parent.Name}' is not set", "VariableNotFound", 400));
 
