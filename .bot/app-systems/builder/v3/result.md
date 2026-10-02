@@ -1,6 +1,34 @@
 # builder v3 — result (2026-10-02)
 
-## ⛔ Session blocker: no decider key → no real builds
+## ✅ UPDATE — decider key provisioned mid-session; measured (fresh, cache off)
+
+Ingi pointed me at the key (`/shared/hopkaup/secrets/typesafe.txt`; passed as `TYPESAFE_API_KEY`,
+the env source `TypeSafe.Config` already reads). Builds run now. **Measured results revise the
+static diagnoses below:**
+
+- **Issue 25 (C4): 10/10 PRESENT on head — symptom does NOT reproduce.** c4-1 5/5, c4-2 5/5,
+  `Template=plang`. The Compile user message shows why:
+  `[3] … => decider: file.read 0.98, variable.set 0.92 => formal: file.read(Path, Template=plang); …`
+  On head `file.read` scores **0.98** (≥ Near 0.90) → **Certain** → Prefill fills `Template=plang`
+  into `=> formal:` and the writer copies it. The educator's 4/6 was on `aa9cadcd5`, where file.read
+  evidently scored under 0.90 on these folders. **The static mechanism diagnosis holds, but C4 is
+  resolved on head.** My `listed.Option` shape is now a *latent robustness* fix (protects any
+  load-vars read that scores under Near), not a C4 necessity — architect's call whether to still land it.
+- **Issue 2 (loop with key): REPRODUCES — Item+Key present 3/5, both dropped 2/5** (fresh, cache off,
+  `/shared/educator/work/guide-examples/runs/loop-dict-1`). Real flaky drop, both-or-neither.
+  → drives the Option-v2 shape (`v3/option-v2-shape.md`).
+- **Issue 32(b): REPRODUCES 5/5** — `call goal Page module=%!app.module.file%` →
+  `goal.call(Name="%!app.module.file%")`, `Page` lost; the dotted variable takes the Name slot.
+  **goal.call's note is already correct** (`call goal Page …` → Name="Page", Parameter={module:…});
+  the *writer* misreads the `%!a.b.c%` variable as the name. This is evidence for the architect's
+  decider/writer-opaque-variable direction, not a note gap. (Repro: `/shared/educator/work/modules-probe`.)
+
+The static code-path diagnoses below remain accurate about *mechanism*; the measured counts above
+are the current-head truth. Original blocker note kept for the record.
+
+---
+
+## (original) Session blocker: no decider key → no real builds
 
 Every `plang build` in this environment 403s at the decider:
 

@@ -12,15 +12,13 @@ The builder owns `os/system/**` (goals, `.llm` prompts, templates, teaching unde
 diagnoses each against the PLang-written builder and either fixes the builder's own source or shapes
 a core fix for the architect/coder.
 
-## ⛔ Session blocker — no decider key (read this first)
-This environment has **no TypeSafe decider key** (`TYPESAFE_API_KEY`/`decider.apiKey` unset — not in
-env, not in `os/.db` or `test/.db`). The decider (`PLang/app/module/llm/code/TypeSafe.cs`,
-`api.typesafe.ai`) is the only `IDecider`, with no offline/mock path for `plang build`. So **every
-`plang build` 403s at `llm.decider`** and no mapping can be *measured* this session. Previous
-builder/educator sessions had the key provisioned.
-
-To measure: provision `TYPESAFE_API_KEY` in env, or `set %!decider.apiKey% = "…"` in the build
-folder's settings. Until then, items 1–4 of the queue are diagnose-and-shape only.
+## Decider key (resolved mid-session)
+Early on, builds 403'd at `llm.decider` — no TypeSafe key in env/settings. Ingi then pointed me at
+`/shared/hopkaup/secrets/typesafe.txt`; passing it as `TYPESAFE_API_KEY` (the env source
+`TypeSafe.Config` already reads) unblocks builds. **It is NOT yet stored in a settings table** — I
+pass it per-build via env. Ingi's intent is that it live in the settings table so the decider gets
+it there; that storage step is still owed (needs a plang `set %!decider.apiKey%` into the build
+folder's/os settings, or an env export in the bot runner).
 
 ## What was done (v3)
 Full detail: `v3/result.md`. Shapes relayed in `to-architect.md` (v3 section). All diagnoses are
@@ -29,23 +27,25 @@ confirm a fix still need the key.
 
 - **Issue 5 (stray `.goal2`) — DONE.** `git rm os/system/Build_dpricated.goal2` (v0.1 builder
   sketch, non-`.goal` ext, only `.bot` referenced it).
-- **Issue 25 reopened (C4 4/6) — diagnosis CONFIRMED, shape ready.** Root: in
-  `PLang/app/goal/step/pick/list/this.cs`, a chosen option (`Template=plang`) is placed into the
-  formal only by `Call()` (ll.356-364), called only from `Prefill()` over `Mark.Certain` entries
-  (l.299). `file.read` under Near (0.90) → `Possible` → `Call` never runs → `Template` never reaches
-  the writer. Confirms the architect's "Prefill fills a chosen option only for a certain action."
-  **Shape:** carry the option onto the `=> decider:` listed line — coder adds `listed.Option` +
-  populates `Listing()` (reuse `Call`'s option-gather, factored to one reader); builder renders it in
-  `properties.template` l.40 (prepared, lands with the C#). `prompt_c.py` twin + `PickListTests` move
-  in lockstep.
-- **Issue 32 (a/b) — root found (static).** `decider1.template` l.13 renders `s.Text` raw, so the
-  decider reads a module name *inside* a variable path (`%!app.module.condition%`) as a step word. No
-  masked step text exists. Shape (direction): core `step` masked-text property + templates use it;
-  measure against a control first. (b) also check goal.call's post-`2829786ff` path-name note.
-- **Issue 2 with key — static.** `pick/list/this.cs` `Code()` reads `as %x%` but there is **no
-  `with key %k%`** handling in `pick/`. Robust fix = Option-question **v2** (decision 496, Ingi's
-  gate; same lever as Conversation 26(1)). Shape with architect before building.
-- **Issue 30 pass 2 — BLOCKED** (needs real builds → 403).
+- **Issue 25 (C4) — MEASURED 10/10 PRESENT on head; symptom resolved.** c4-1/c4-2 fresh, cache off,
+  `Template=plang` 5/5 each. The Compile user message shows `file.read 0.98` (Certain) → Prefill
+  fills `file.read(Path, Template=plang)` into `=> formal:`, the writer copies it. The educator's 4/6
+  was on `aa9cadcd5` (file.read under 0.90 there). My static mechanism diagnosis holds (chosen option
+  reaches the formal only via `Call()`←`Prefill()` over `Mark.Certain`), so the `listed.Option` shape
+  is a **latent robustness** fix for an uncertain load-vars read — architect's call whether to still
+  land it. Shape in `v3/result.md`/`to-architect.md`: coder adds `listed.Option` (pick is core),
+  builder renders it on `=> decider:` (`properties.template` l.40, prepared).
+- **Issue 2 with key — MEASURED, REPRODUCES: Item+Key present 3/5, both dropped 2/5** (fresh, cache
+  off). Drives **Option-question v2** — drafted in `v3/option-v2-shape.md` (the architect asked for
+  it; they review before the coder builds core). v2: a non-choice option (`Item`/`Key`/`Conversation`)
+  offers the step's own variables + "none"; Prefill writes the pick. Needs `ask:` note lines on
+  loop.foreach's Item/Key + llm's Conversation (builder's); the Conversation `{continue: …}` wrapper
+  is an open question for the architect.
+- **Issue 32(b) — MEASURED, REPRODUCES 5/5.** `call goal Page module=%!app.module.file%` →
+  `goal.call(Name="%!app.module.file%")`, `Page` lost. goal.call's note is **already correct**; the
+  *writer* misreads the dotted `%!a.b.c%` variable as the name. Evidence for the architect's
+  decider/writer-opaque-variable direction (they own it); hold per their instruction.
+- **Issue 30 pass 2** — now unblocked (key available); not yet run this session.
 - **Item 6** (goal.call `Parallel`/task teaching) — gated on the coder's stages 1–2 of
   `test/plan/task/`, not started.
 
@@ -57,9 +57,12 @@ value so the writer copies it. Issue 25's remaining gap: the surfaced value reac
 when the action is *certain*; a listed-but-uncertain action needs it too (the v3 shape).
 
 ## Next session (in order)
-1. **Get the decider key** — otherwise 1–4 stay diagnose-only.
-2. Issue 25: once the coder lands `listed.Option`, apply the `properties.template` render and measure
-   C4 `c4-1`/`c4-2` (target `Template=plang` 6/6; guard a plain read stays Template-free).
-3. Issue 32/2: shape with architect (core masked-text / Option v2), then build+measure.
-4. Issue 30 pass 2: the per-goal rebuild table.
-5. Item 6 after the coder's task stages.
+1. **Decider key:** pass `TYPESAFE_API_KEY="$(cat /shared/hopkaup/secrets/typesafe.txt)"` to every
+   `plang build`; still owed — store it in a settings table so the runner doesn't need the env each time.
+2. Option v2 (`v3/option-v2-shape.md`): once the architect reviews and the coder builds the core,
+   add the `ask:` note lines (loop.foreach Item/Key; llm Conversation) and measure issue 2 at 5/5.
+3. Issue 25 `listed.Option` (if architect still wants it): apply the `properties.template` render
+   after the coder lands the field; re-measure a *low-score* load-vars read (C4 itself is 10/10 now).
+4. Issue 32: wait for the architect's masked-step-text direction; (b) is writer-misreads-variable.
+5. Issue 30 pass 2: the per-goal rebuild table (now unblocked).
+6. Item 6 after the coder's `test/plan/task/` stages 1–2 (coder v19 plan just landed).

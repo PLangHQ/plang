@@ -2,19 +2,13 @@
 
 From Ingi, relayed by builder. Please record a decision.
 
-## 1. Builder takes over coder's "building the builder" work
+## 1. Builder takes over coder's "building the builder" work — RATIFIED (decision 452, proposal v4)
 
-Ingi wants **builder** (not coder) to own building the builder going forward — the
-`os/system/builder/**` goals/llm/templates **and** the C# that backs them
-(`PLang/app/module/build/**`, `IBuilder`/`Default.cs`, the decider plumbing
-`PLang/app/module/llm/decider.cs` + `IDecider`/`TypeSafe`). Rationale: when another bot
-hits a builder/mapping bug and sends it to builder with an intent to make buildable,
-builder should be able to fix the whole path — prompt, template, catalog teaching, and
-the C# that feeds them — rather than hand the C# half to coder.
-
-This is a scope shift from builder's current character (which says "minor C# changes
-only, when they expose data the builder's goals need"). Proposed new boundary: builder
-owns the full builder stack end-to-end; coder keeps the rest of the runtime/actions.
+Builder owns the full builder stack end-to-end (`os/system/builder/**` goals/llm/templates **and**
+the C# that backs them: `PLang/app/module/build/**`, `IBuilder`/`Default.cs`, the decider plumbing
+`PLang/app/module/llm/decider.cs` + `IDecider`/`TypeSafe`); coder keeps the rest of the
+runtime/actions. (Note: the `pick/`-shaped core — `goal/step/pick/**` — is still routed through the
+architect to the coder per the live issue handoffs; see v3 shapes.)
 
 ## 2. Retire the Python decider validation (proposed — Ingi said "I think")
 

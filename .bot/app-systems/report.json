@@ -956,13 +956,27 @@
           "type": "decision",
           "category": "doc",
           "confidence": "high",
-          "context": "Flagged the no-decider-key blocker and wrote the three diagnoses+shapes for the architect. Issues 25/32/2 core (pick/decider/step); issue 30 pass 2 blocked on the key."
+          "context": "Wrote the diagnoses+shapes for the architect. Issues 25/32/2 core (pick/decider/step). Trimmed to-architect.md section 1 (ratified decision 452) per architect peer msg."
+        },
+        {
+          "paths": ["/shared/educator/work/lv-samples2/c4-1", "/shared/educator/work/lv-samples2/c4-2", "/shared/educator/work/guide-examples/runs/loop-dict-1", "/shared/educator/work/modules-probe"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Decider key provisioned mid-session (Ingi: /shared/hopkaup/secrets/typesafe.txt via TYPESAFE_API_KEY). Measured fresh/cache-off: Issue 25 C4 10/10 PRESENT (file.read 0.98 Certain -> Prefill fills Template; symptom resolved on head, was 4/6 on aa9cadcd5). Issue 2 loop-with-key REPRODUCES Item+Key 3/5 present, 2/5 both dropped. Issue 32b REPRODUCES 5/5 (call goal Page module=%!app.module.file% -> Name=%!app.module.file%, Page lost; note already correct, writer misreads dotted variable). Educator build artifacts cleaned after."
+        },
+        {
+          "paths": [".bot/app-systems/builder/v3/option-v2-shape.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Drafted Option-question v2 shape (architect's request): a non-choice option (Item/Key/Conversation) offers the step's own variables + none; add question.Variable member, extend Values; ask: note lines + Conversation {continue:} wrapper open question. For architect review before coder builds core."
         }
       ],
       "after": {
-        "status": "Item 5 done (stray deleted). Issues 25/32/2 diagnosed statically and shaped for architect/coder; issue 30 pass 2 blocked. No code mapping measured.",
-        "health": "green (clean rebuild ok); builds non-runnable here (decider 403 - no TypeSafe key)",
-        "notes": "HARD BLOCKER: no TypeSafe decider key in this env, so no plang build can run. All diagnoses are static source reads (reliable for code-path questions). Shapes in v3/result.md + to-architect.md. Next session needs the key to measure."
+        "status": "Item 5 done. Key unblocked mid-session: C4 measured 10/10 (resolved on head), issue 2 reproduces 3/5, issue 32b reproduces 5/5. Option-v2 drafted for architect. Issue 25 listed.Option shape now latent-robustness (architect's call).",
+        "health": "green (clean rebuild; builds run with the key)",
+        "notes": "Static diagnoses confirmed by measurement. C4 symptom gone on head (file.read scores 0.98 Certain now). Shapes: v3/result.md, v3/option-v2-shape.md, to-architect.md. Key still owed in a settings table (passed via env this session)."
       }
     }
   ]
