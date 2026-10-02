@@ -78,3 +78,13 @@ The **actor** is the isolation unit: `Variables`, `Events`, `Channels`, and the 
 **Reach the stack through the context.** Every push/read site has a `context` in scope, so use `context.CallStack` (a read-through to `context.Actor.CallStack`). **Never** reach a callstack via `App.CurrentActor` — that global "current" pointer diverges from the actor whose flow actually pushed the frames (a snapshot taken while `CurrentActor` ≠ the pushing actor captures the wrong, empty stack). `error.list.Push(error, context)` takes the context for exactly this reason. There is no `app.goal.current` — "the executing goal" is a per-actor/per-flow fact read via `%!goal%` (`context.Goal`), not an app-level collection property.
 
 ---
+
+## A Flag Is False By Default
+
+A boolean option is false by default, and true only when something says so. Name it for what the words say when they make it true (`Parallel`, `Default`, `Descending`), never for the opposite with `[Default(true)]`.
+
+**Why:** the builder writes an action's property only when it thinks the step names it. A flag that is false by default is safe: left out, it means exactly what the step said by saying nothing. A flag that is true by default invites the writer to set it false on a step that never mentions it. `- call goal Ble` says nothing about waiting, but a writer that sees `Wait` (default true) may write `Wait=false`. The same holds for any C# or plang code: a missing field, an unread row and `default(bool)` are all false, so false must be the safe answer.
+
+**How to apply:** an action option that is a bool gets `[Default(false)]` (or no default), and its name is the positive thing a step says to turn it on. A negated name (`DontWait`, `NoCache`) glues a negation onto the word; name the behaviour instead. A setting can also be read where nothing is written, so the same rule holds for setting options.
+
+**Still to fix:** five action options are `[Default(true)]` today: `goal.call` `Wait` (`module/goal/call.cs:36–37`), `list.split` `Empty` (`module/list/split.cs`), `test.discover` `Recursive` (`module/test/discover.cs`), `llm.query` `Cache` (`module/llm/query.cs`), `file.copy` `Subfolder` (`module/file/copy.cs`). Each rename is visible in plang, so each comes to Ingi with its new name.
