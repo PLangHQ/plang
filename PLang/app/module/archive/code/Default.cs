@@ -17,8 +17,11 @@ public class Default : IArchive
     public async Task<data.@this> Pack(pack action)
     {
         var context = action.Context;
-        var value = await action.Value.Value();
-        if (!action.Value.Success) return action.Value;
+        // what is packed is the Data the step names — %user% itself, not the step's reference to it — so it unpacks
+        // as itself, and the signature it is written in is over its own bytes
+        var packing = await action.Value.Peek().Get(context) ?? action.Value;
+        var value = await packing.Value();
+        if (!packing.Success) return packing;
         var to = action.To == null || !action.To.IsInitialized ? null : await action.To.Value();
         if (action.To != null && action.To.IsInitialized && !action.To.Success) return action.To;
         var setting = context.Setting.Of<global::app.module.archive.setting.@this>();
@@ -33,7 +36,7 @@ public class Default : IArchive
         if (to == null)
         {
             using var packed = new MemoryStream();
-            var (result, held) = await format.Pack(action.Value, value!, packed, level, context);
+            var (result, held) = await format.Pack(packing, value!, packed, level, context);
             return result.Success ? context.Ok(new Archive(packed.ToArray(), format, held!)) : result;
         }
 
@@ -42,7 +45,7 @@ public class Default : IArchive
         var writing = Write(to, pipe, context);
         (data.@this result, global::app.module.archive.type.archive.held.@this? held) made;
         await using (var into = pipe.Writer.AsStream())
-            made = await format.Pack(action.Value, value!, into, level, context);
+            made = await format.Pack(packing, value!, into, level, context);
         var written = await writing;
         if (made.result.Success && written.Success) return context.Ok<global::app.type.item.path.@this>(to);
         await to.Delete(context);

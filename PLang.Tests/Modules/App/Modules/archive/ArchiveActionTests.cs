@@ -82,6 +82,33 @@ public class ArchiveActionTests : IDisposable
         await Assert.That((await restored.Value())?.ToString()).IsEqualTo("The quick brown fox jumps over the lazy dog");
     }
 
+    // Packing writes the Data whole in plang's own format, signed as it leaves (sign-if-missing); unpacking reads it
+    // back and verifies that signature — with real crypto, the hash read back is the hash signed.
+    [Test]
+    public async Task ASignedValue_RoundTrips_WithRealSigning()
+    {
+        var root = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "plang_archive_signed_" + Guid.NewGuid().ToString("N"))).FullName;
+        try
+        {
+            await using var app = new global::app.@this(root);
+            app.test.list.Open();
+            app.TestIdentity();
+            var ctx = app.actor.list.User.Context;
+            await ctx.Variable.Set("original", new global::app.data.@this("original", "The quick brown fox jumps over the lazy dog.",
+                app.type.list.Stamp("text/plain", ctx), context: ctx));
+
+            // as a step runs them: the value read from %original%, the archive kept in %archived% and read from there
+            var packed = await ctx.Action("archive.pack(Value=%original%)").Start(ctx);
+            await packed.IsSuccess();
+            await ctx.Variable.Set("archived", packed);
+            var restored = await ctx.Action("archive.unpack(Value=%archived%)").Start(ctx);
+
+            await restored.IsSuccess();
+            await Assert.That((await restored.Value())?.ToString()).IsEqualTo("The quick brown fox jumps over the lazy dog.");
+        }
+        finally { Directory.Delete(root, true); }
+    }
+
     [Test]
     public async Task NoFormatNamed_IsGzip()
     {
