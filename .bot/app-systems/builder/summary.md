@@ -190,7 +190,12 @@ Idle pending:
   no `Key=%item%` 5/5; guards hold (`as %i%` → Item,no Key; `with key %field%` → Item+Key), 5/5 each.
 - **37 — cast FIXED** (coder 6c136ec1a): no more `InvalidCastException: lower app.module into list`.
   32(b) edu now 9/10 `Name="Page"`.
-- **39 (the ~1/10 non-recovery) — diagnosed, CORRECTED:** NOT a FixSteps set failure. The set
+- **39 — FIXED** (coder's refusal reword `ceb9899cb`, gate 105): jq-verified **10/10** RIGHT on the
+  educator's goal (`Name="Page"`×3 + `Parameter={module: %!app.module.file%}`×3), 0 NO-PR — the reword
+  ("write each argument as the step names it, `{<the name before =>: …}`") closed the bare-value slip
+  (was 7/10 right / 3/10 NO-PR). History below kept for the record (incl. my retracted grep-artifact
+  reads).
+- **39 (original diagnosis trail) — CORRECTED:** NOT a FixSteps set failure. The set
   succeeds and the retry `llm.query` runs; the retry's re-answer is `goal.call(Name="Page",
   Parameter=%!app.module.file%)` — the writer writes the Parameter as a **bare nameless value** (drops
   the arg name `module`), both initially and on retry, and does NOT copy the placeholder `name`. So
