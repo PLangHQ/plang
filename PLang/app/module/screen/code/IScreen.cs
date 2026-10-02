@@ -2,12 +2,10 @@ using app.module.code;
 
 namespace app.module.screen.code;
 
-/// <summary>Screen provider: a Win32 window that shows frames (Windows, <see cref="Default"/>), or
-/// PlangOS's display that makes them (Linux, <see cref="Wayland"/>).</summary>
+/// <summary>Screen provider: opens the screen this system has — a window on the host (Windows, <see cref="Default"/>),
+/// or PlangOS's display (Linux, <see cref="Wayland"/>). What a screen does once open is its own
+/// (<see cref="type.screen.@this"/>).</summary>
 public interface IScreen : ICode
 {
-    Task<data.@this<Screen>> Open(open action);
-    Task<data.@this> Draw(draw action);
-    Task<data.@this> Send(send action);
-    Task<data.@this> Close(close action);
+    Task<data.@this<type.screen.@this>> Open(open action);
 }
