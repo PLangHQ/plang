@@ -1,6 +1,16 @@
 # coder — app-systems
 
-**Version:** v18 (all pushed; reviews by the architect, plang-21, gate by gate)
+**Version:** v22 (all pushed; reviews by the architect, plang-21, gate by gate)
+
+## v22 — the pick pass (814ca5209)
+- `step.Mask` (`PLang/app/goal/step/mask/this.cs`): the step's variables as placeholders `%v1%…`, with a stem the
+  step doesn't use. The `=> formal:` prefill is written through `Hide`, and `formal.Reader.Read` restores at its one door.
+- `type.Offers(step) => kind.Offers(step)` (a choice set offers its values); `question.Values` = offers + none.
+- `listed.Option` via one reader `Chosen()`, shared with `Call()`.
+- `conversation.Create` takes any value. `llm.query` refuses one that isn't an llm answer, naming the variable.
+- Pins: `PLang.Tests/Wire/App/Decider/MaskTests.cs`, plus 2 in `QueryConversationTests`; `pick_golden.json` re-pinned.
+- Next: the builder (plang-75) switches its templates to `s.Mask.Text`. Queued: the event slot wire contract,
+  task stage 3 (`parallel`), the `/system/` new-file rule, the hash kind, default-true options → choices.
 
 ## What this is
 app-systems makes every `app.X` the type X, so the plang path, the C# path and the file path agree. The
