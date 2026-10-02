@@ -54,7 +54,7 @@ namespace PLang
 
 			// Each flag's dict is this run's values for its owner's setting class, on the system actor (the
 			// user falls back to it): --debug → %!debug%, --test → %!app.test.setting%, --app →
-			// %!app.setting%, --callstack → %!app.callstack.setting% (both actors' call stacks read it),
+			// %!app.setting%, --callstack → %!app.call.setting% (both actors' call stacks read it),
 			// --build → %!build.setting%. A key that isn't one of the class's options is refused.
 			global::app.data.@this? Flag<TSetting>(string name) where TSetting : global::app.type.item.setting.@this, new()
 			{
@@ -87,11 +87,11 @@ namespace PLang
 			// A debug run shows each step's time: this run's call stacks time their frames. An explicit
 			// --callstack={"timing":false} below still has the last word.
 			if (app.Debug != null)
-				app.actor.list.System.Setting.Set(new global::app.callstack.setting.@this().Path, new Dictionary<string, object?> { ["timing"] = true });
+				app.actor.list.System.Setting.Set(new global::app.call.setting.@this().Path, new Dictionary<string, object?> { ["timing"] = true });
 
 			// Each actor owns its own call tree; both read the one setting (the user's falls back to the
 			// system's). (Service actors are spawned later — carrying the flag to them is a separate concern.)
-			if (Flag<global::app.callstack.setting.@this>("!callstack") is { } callstackError) return (null, callstackError);
+			if (Flag<global::app.call.setting.@this>("!callstack") is { } callstackError) return (null, callstackError);
 
 			// Build mode (--build is canonical; --builder is gone). The flag may be a bare
 			// `true` (`plang build` normalizes the subcommand to `--build`) or carry a JSON

@@ -8,7 +8,7 @@ public partial class @this
     /// Returns a fresh <see cref="@this"/> projecting this Variables store back to the
     /// state at <paramref name="error"/>'s throw time. Asks <c>App.CallStack.EventsSince(t)</c>
     /// for variable mutation events that happened after the throw, then reverse-applies each
-    /// (sets the variable back to its <see cref="app.callstack.Diff.Before"/> value).
+    /// (sets the variable back to its <see cref="app.call.Diff.Before"/> value).
     ///
     /// Variables owns the projection method; CallStack owns the time-ordered data. Pure —
     /// same (error, current state) → same result. No caching at this stage.
@@ -16,7 +16,7 @@ public partial class @this
     public @this SnapshotAt(global::app.error.Error error)
     {
         var clone = ShallowCloneStore();
-        var stack = _context?.CallStack;
+        var stack = _context?.call;
         if (stack == null) return clone;
 
         // Latest first — undo each mutation by writing its Before value.

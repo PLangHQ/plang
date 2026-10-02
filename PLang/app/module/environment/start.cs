@@ -15,7 +15,7 @@ public partial class start : IContext
     /// <summary>The actor to start on, by name. If null, starts on the current context.</summary>
     public partial data.@this<global::app.type.item.choice.@this<actor.Name>>? Actor { get; init; }
 
-    public Task<data.@this> Start() => Context.App.actor.list.Use(Actor, Context, runner => Run(runner.Context));
+    public Task<data.@this> Start() => Context.App.actor.list.Use(Actor, Context, runs => Run(runs));
 
     private async Task<data.@this> Run(global::app.actor.context.@this runContext)
     {

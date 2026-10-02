@@ -166,8 +166,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private async System.Threading.Tasks.Task<global::app.@event.binding.@this[]> Time(global::app.actor.context.@this context)
     {
         var system = context.App.actor.list.System;
-        var callstack = new global::app.callstack.setting.@this().Path;
-        await system.Setting.Set(callstack + ".timing", system.Context.Ok(true));
+        var call = new global::app.call.setting.@this().Path;
+        await system.Setting.Set(call + ".timing", system.Context.Ok(true));
 
         var entry = Goal.Path?.ToString();
         bool Own(global::app.goal.step.@this step) => string.Equals(step.Goal.Path?.ToString(), entry, System.StringComparison.Ordinal);
@@ -175,7 +175,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         [
             context.App.type.list["step"].Own().Bind("start", global::app.@event.When.after, (item, _, ctx) =>
             {
-                if (item is global::app.goal.step.@this step && Own(step) && ctx.CallStack.Current?.Duration is { } elapsed)
+                if (item is global::app.goal.step.@this step && Own(step) && ctx.call.Current?.Duration is { } elapsed)
                     Timings.Add(new global::app.test.timing.@this { Step = step, Elapsed = elapsed });
                 return System.Threading.Tasks.Task.FromResult(ctx.Ok());
             }, context.Actor, global::app.@event.binding.Scope.actor),

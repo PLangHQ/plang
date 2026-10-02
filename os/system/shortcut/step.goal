@@ -1,3 +1,3 @@
 / %!step% — the step its asker is in
 Step
-- return %!app.callstack.scope.caller.step%
+- return %!app.call.scope.caller.step%

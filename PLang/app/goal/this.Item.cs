@@ -86,11 +86,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static async System.Threading.Tasks.ValueTask<global::app.data.@this<@this>?> Select(global::app.type.item.@this key,
         global::app.actor.context.@this asker)
         => key is global::app.type.item.text.@this name
-            ? await asker.App.goal.list.Find(name.Clr<string>() ?? "", asker.CallStack.Goal)
+            ? await asker.App.goal.list.Find(name.Clr<string>() ?? "", asker.call.Goal)
             : null;
 
     /// <summary>The goal running for the asker — what <c>%!goal%</c> answers.</summary>
-    public static @this? Current(global::app.actor.context.@this context) => context.CallStack.Goal;
+    public static @this? Current(global::app.actor.context.@this context) => context.call.Goal;
 
     /// <summary>The app's goals: the list that reads them from their <c>.pr</c>.</summary>
     public static global::app.goal.list.@this List(global::app.@this app) => new(app);

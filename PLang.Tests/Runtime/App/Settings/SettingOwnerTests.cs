@@ -16,23 +16,23 @@ public class SettingOwnerTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        await Assert.That(app.actor.list.User.CallStack.Timing.Value).IsFalse();
+        await Assert.That(app.actor.list.User.Context.call.Timing.Value).IsFalse();
 
-        var set = await new global::app.type.item.variable.parser.@this("%!app.actor[\"user\"].callstack.setting.timing%").Variable.Single()
+        var set = await new global::app.type.item.variable.parser.@this("%!app.actor[\"user\"].context.call.setting.timing%").Variable.Single()
             .Set(new global::app.data.@this("timing", true, context: ctx), ctx);
         await set.IsSuccess();
 
-        await Assert.That(app.actor.list.User.CallStack.Timing.Value).IsTrue();
-        await Assert.That(app.actor.list.System.CallStack.Timing.Value).IsFalse();
+        await Assert.That(app.actor.list.User.Context.call.Timing.Value).IsTrue();
+        await Assert.That(app.actor.list.System.Context.call.Timing.Value).IsFalse();
     }
 
     // The system's value (a CLI flag) reaches both actors' stacks — the user falls back to it.
     [Test] public async Task CallStack_TakesTheSystemsValue()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await app.actor.list.System.Setting.Set("app.callstack.setting", new Dictionary<string, object?> { ["history"] = true }).IsSuccess();
-        await Assert.That(app.actor.list.System.CallStack.History.Value).IsTrue();
-        await Assert.That(app.actor.list.User.CallStack.History.Value).IsTrue();
+        await app.actor.list.System.Setting.Set("app.call.setting", new Dictionary<string, object?> { ["history"] = true }).IsSuccess();
+        await Assert.That(app.actor.list.System.Context.call.History.Value).IsTrue();
+        await Assert.That(app.actor.list.User.Context.call.History.Value).IsTrue();
     }
 
     // A call stack reads through its actor's context's settings: a value written there (a goal's own set) reaches
@@ -40,9 +40,9 @@ public class SettingOwnerTests
     [Test] public async Task CallStack_TakesItsContextsValue_AndNoOthers()
     {
         await using var app = new global::app.@this("/test").Testing();
-        await app.actor.list.User.Context.Setting.Set("app.callstack.setting", new Dictionary<string, object?> { ["timing"] = true }).IsSuccess();
-        await Assert.That(app.actor.list.User.CallStack.Timing.Value).IsTrue();
-        await Assert.That(app.actor.list.System.CallStack.Timing.Value).IsFalse();
+        await app.actor.list.User.Context.Setting.Set("app.call.setting", new Dictionary<string, object?> { ["timing"] = true }).IsSuccess();
+        await Assert.That(app.actor.list.User.Context.call.Timing.Value).IsTrue();
+        await Assert.That(app.actor.list.System.Context.call.Timing.Value).IsFalse();
     }
 
     // Debug, once born, takes a later value under its path.

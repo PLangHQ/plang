@@ -20,7 +20,7 @@ public partial class Tag : IContext
     public Task<global::app.data.@this> Start()
     {
         // The goal's frame — see class summary; outside a goal, the frame this runs in.
-        var target = Context.CallStack?.Scope ?? Context.CallStack?.Current;
+        var target = Context.call?.Scope ?? Context.call?.Current;
         if (target == null) return Task.FromResult(Context.Ok());
         return Tags.Use(tags =>
         {

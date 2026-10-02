@@ -7,7 +7,6 @@ using Setup = app.goal.setup.@this;
 using TraceContext = app.actor.context.trace.@this;
 using app.error;
 using ActorType = app.actor.@this;
-using CallStackType = app.callstack.@this;
 namespace app.actor.context;
 
 /// <summary>
@@ -42,11 +41,10 @@ public sealed class @this : IDisposable
     public Variables Variable { get; }
 
     /// <summary>
-    /// This context's call tree. Read-through to the owning <c>Actor.CallStack</c> — each
-    /// actor owns its own tree (a cross-actor call is a separate tree, actor-model style),
-    /// fork-safe within the actor's flows via AsyncLocal. PLang <c>%!callStack%</c> resolves here.
+    /// This context's calls — <c>%!call%</c>: the chain of frames running in it, each holding its own variables. Each
+    /// context has its own (a task's child context too); a cross-actor call is a separate chain.
     /// </summary>
-    public CallStackType CallStack => Actor.CallStack;
+    public global::app.call.list.@this call { get; }
 
     /// <summary>
     /// Whether this is an async execution.
@@ -67,11 +65,11 @@ public sealed class @this : IDisposable
     private CancellationTokenSource? _cts;
     private readonly Stack<CancellationTokenSource> _cancellationStack = new();
 
-    /// <summary>The context a task this context starts runs in, on <paramref name="runner"/>: its own memory, reading
-    /// through to this one's, live (its writes stay in it); its own cancellation, by <paramref name="token"/>; its
-    /// settings chained to this one's. The app is the same.</summary>
+    /// <summary>The context a task this context starts runs in, on <paramref name="runner"/>: its own calls, whose first
+    /// frame keeps every write the task makes and reads through to this context's frames and memory, live; its own
+    /// cancellation, by <paramref name="token"/>; its settings chained to this one's. The app is the same.</summary>
     public @this Child(ActorType runner, CancellationToken token)
-        => new(App, runner, parent: this, parentToken: token, reads: Variable);
+        => new(App, runner, parent: this, parentToken: token);
 
     /// <summary>
     /// Pushes a timeout CTS so all sub-calls use it. Used by the timeout.after modifier.
@@ -125,13 +123,13 @@ public sealed class @this : IDisposable
     public global::app.type.item.path.file.filesystem.@this FileSystem { get; }
 
     public @this(app.@this app, ActorType owner, Variables? variables = null, @this? parent = null, CancellationToken? parentToken = null,
-        global::app.type.item.path.file.filesystem.@this? fileSystem = null, Variables? reads = null)
+        global::app.type.item.path.file.filesystem.@this? fileSystem = null)
     {
         Id = Guid.NewGuid().ToString("N")[..12];
         App = app;
         Actor = owner;
         FileSystem = fileSystem ?? parent?.FileSystem ?? app.FileSystem;
-        Variable = variables ?? (reads != null ? new Variables(this, reads) : new Variables(this));
+        Variable = variables ?? new Variables(this);
         Parent = parent;
         CreatedAt = DateTime.UtcNow;
         var linkTo = parentToken ?? parent?.CancellationToken ?? app.ShutdownToken;
@@ -139,6 +137,7 @@ public sealed class @this : IDisposable
 
         // Stamp context on Variables (propagates to all existing Data)
         Variable.Context = this;
+        call = new(() => Setting);
 
         // Register context variables on the Variables
         RegisterContextVariables();

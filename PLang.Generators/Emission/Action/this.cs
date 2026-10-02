@@ -193,7 +193,7 @@ public static class @this
                 {
                     var app = context.App!;
                     var __step = action?.Step;
-                    var __callFrames = context.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::app.callstack.call.@this>)System.Array.Empty<global::app.callstack.call.@this>();
+                    var __callFrames = context.call?.Current?.Chain ?? (System.Collections.Generic.IReadOnlyList<global::app.call.@this>)System.Array.Empty<global::app.call.@this>();
 
             """);
 
@@ -333,7 +333,7 @@ public static class @this
                     var app = context.App!;
                     __action = action;
                     var __step = action?.Step;
-                    var __callFrames = context.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::app.callstack.call.@this>)System.Array.Empty<global::app.callstack.call.@this>();
+                    var __callFrames = context.call?.Current?.Chain ?? (System.Collections.Generic.IReadOnlyList<global::app.call.@this>)System.Array.Empty<global::app.call.@this>();
 
             """);
 
@@ -374,7 +374,7 @@ public static class @this
                     var action = __action;
                     var app = context.App!;
                     var __step = action?.Step;
-                    var __callFrames = context.CallStack?.Current?.SnapshotChain() ?? (System.Collections.Generic.IReadOnlyList<global::app.callstack.call.@this>)System.Array.Empty<global::app.callstack.call.@this>();
+                    var __callFrames = context.call?.Current?.Chain ?? (System.Collections.Generic.IReadOnlyList<global::app.call.@this>)System.Array.Empty<global::app.call.@this>();
 
             """);
         if (info.ImplementsIChannel)

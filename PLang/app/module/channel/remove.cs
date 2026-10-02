@@ -14,5 +14,5 @@ public partial class Remove : IContext
     public partial data.@this<global::app.type.item.choice.@this<global::app.actor.Name>>? Actor { get; init; }
 
     public Task<data.@this> Start() => Name.Use(name =>
-        Context.App.actor.list.Use(Actor, Context, actor => actor.Channel.Remove(name.ToString(), Context)));
+        Context.App.actor.list.Use(Actor, Context, runs => runs.Actor.Channel.Remove(name.ToString(), Context)));
 }

@@ -18,7 +18,7 @@ public sealed partial class @this
     public async Task<data.@this> Resume(actor.context.@this context)
     {
         await context.App.Restore(this, context);
-        var chain = context.CallStack.RestoredChain;
+        var chain = context.call.RestoredChain;
         if (chain == null || chain.Count == 0)
             return context.Error(new global::app.error.ServiceError(
                 "Resume has no frames after Restore", "NoPosition", 400));
@@ -26,7 +26,7 @@ public sealed partial class @this
     }
 
     private static async Task<data.@this> ResumeChain(
-        IReadOnlyList<callstack.call.Position> chain, int idx, actor.context.@this context)
+        IReadOnlyList<global::app.call.Position> chain, int idx, actor.context.@this context)
     {
         var frame = chain[idx];
 
@@ -37,7 +37,7 @@ public sealed partial class @this
         // Parent: its action is a "call SubGoal" mid-flight. Push so children
         // see it as caller, recurse into the sub-goal, then continue from
         // ActionIndex+1 (the action after the call).
-        await using var callFrame = context.CallStack.Push(frame.Action, context.Variable);
+        await using var callFrame = context.call.Push(frame.Action, context.Variable);
 
         var subResult = await ResumeChain(chain, idx + 1, context);
         if (subResult.ShouldExit()) return subResult;

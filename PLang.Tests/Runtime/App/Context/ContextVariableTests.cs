@@ -35,14 +35,14 @@ public class ContextVariableTests
     }
 
 
-    // %!callStack% is the app's member answering as its asker — not a registration in memory.
+    // %!call% is the asker context's calls — not a registration in memory.
     [Test]
-    public async Task ContextVar_CallStack_ReturnsCallStack()
+    public async Task ContextVar_Call_ReturnsTheContextsCalls()
     {
         var context = _app.actor.list.User.Context;
-        var read = await new global::app.type.item.variable.parser.@this("%!callStack%").Variable.Single().Start(context);
+        var read = await new global::app.type.item.variable.parser.@this("%!call%").Variable.Single().Start(context);
 
-        await Assert.That(read.Peek()).IsSameReferenceAs(context.CallStack);
+        await Assert.That(read.Peek()).IsSameReferenceAs(context.call);
     }
 
     // the goal, step, error, test and channels in play are shortcuts, not memory: SystemShortcutTests

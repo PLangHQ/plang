@@ -1,17 +1,17 @@
 using System.Diagnostics;
-namespace app.callstack.call;
+namespace app.call;
 
 /// <summary>
-/// One execution scope on the call tree. Pushed by App.Run before dispatching an action,
-/// disposed via <c>await using</c> on scope exit which restores the AsyncLocal Current and
-/// optionally removes self from <c>Caller.Children</c> when history is off.
+/// One frame of a context's calls — a goal's, a step's or an action's — holding its own variables: the names it was
+/// born with (a goal call's parameters) and what is written to them while it runs. Pushed by its
+/// <see cref="global::app.call.list.@this"/>, disposed via <c>await using</c>, which restores the current frame and,
+/// with history off, removes it from its caller's <see cref="Children"/>. A frame that only binds names (a loop's
+/// item, a handler's error) is <see cref="binding.@this"/>; one that keeps every write is <see cref="isolated.@this"/>.
 ///
-/// Tree shape: navigate up via <see cref="Caller"/>, down via <see cref="Children"/>.
-///
-/// Render-agnostic: same data folds into a stack (Caller walk), flamegraph (Children walk),
-/// or timeline (sort by StartedAt). A plang value: it writes itself as <see cref="Output"/> says.
+/// Tree shape: navigate up via <see cref="Caller"/>, down via <see cref="Children"/>. Reads walk the frames outward,
+/// each frame's own variables first. A plang value: it writes itself as <see cref="Output"/> says.
 /// </summary>
-public sealed partial class @this : global::app.type.item.@this, IAsyncDisposable
+public partial class @this : global::app.type.item.@this, IAsyncDisposable
 {
     /// <summary>A structure — navigated by its members.</summary>
     public override bool IsLeaf => false;
@@ -62,7 +62,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     }
 
     private readonly Stopwatch? _stopwatch;
-    private readonly app.callstack.@this _stack;
+    private readonly global::app.call.list.@this _stack;
     private readonly @this? _previousCurrent;
     private readonly Variables? _diffSource;
     // A diff keeps a deep copy of the value before (the diff.deep setting when pushed), else a summary.
@@ -84,11 +84,11 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
     /// <summary>The goal in play at this frame — the goal a goal's frame runs, or the one its step or action is in.
     /// Null for an action composed in C#, which holds no step.</summary>
-    public global::app.goal.@this? Goal { get; }
+    public virtual global::app.goal.@this? Goal { get; }
 
     /// <summary>The step in play at this frame — the step a step's frame runs, or the action's. Null in a goal's
     /// own frame and for an action composed in C#.</summary>
-    public global::app.goal.step.@this? Step { get; }
+    public virtual global::app.goal.step.@this? Step { get; }
 
     /// <summary>The action this frame runs. Null in a goal's or a step's frame.</summary>
     public global::app.goal.step.action.@this? Action { get; }
@@ -120,7 +120,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>The error in play AT THIS FRAME — its newest observation, unless recovery has
     /// already succeeded here. <see cref="Handled"/> is what stops it: "recovered, stop being
     /// <c>%!error%</c>". Null when this frame never failed, or failed and was recovered.
-    /// <see cref="app.callstack.@this.Error"/> walks <see cref="Caller"/> asking each frame this.</summary>
+    /// <see cref="global::app.call.list.@this.Error"/> walks <see cref="Caller"/> asking each frame this.</summary>
     public global::app.error.Error? Error => _handled ? null : Errors.Newest;
 
     /// <summary>
@@ -158,31 +158,59 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     // Parallel branches tag one caller's frame; the frame serializes the merge into its dict.
     private readonly object _tagging = new();
 
+    // This frame's own variables: every name it binds (born with or written into it), and which of them it was born
+    // with — what its runner supplied (a goal call's parameters, a tool's arguments).
+    private readonly Dictionary<string, global::app.data.@this> _variables = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _born = new(StringComparer.OrdinalIgnoreCase);
+    // The held action this frame was pushed to run (a tool invocation) — the one call its supplied names are FOR.
+    private readonly global::app.goal.step.action.@this? _for;
+
+    /// <summary>Whether this frame counts toward the chain's depth (<see cref="Depth"/>, the depth limit) — a goal's,
+    /// a step's or an action's does; a frame that only binds names does not.</summary>
+    internal virtual bool Deepens => true;
+
+    /// <summary>Whether this frame is timed and keeps its variable changes when the setting asks — a goal's, a step's
+    /// or an action's is; a frame that only binds names is not.</summary>
+    internal virtual bool Measured => true;
+
+    /// <summary>Whether this is a goal's own frame — its run's scope (<c>%!call.scope%</c>): a goal, no step.</summary>
+    internal virtual bool IsGoal => Goal != null && Step == null;
+
     /// <summary>
-    /// Constructed by <see cref="app.callstack.@this.Push"/>. Holds back-references to the
+    /// Constructed by <see cref="global::app.call.list.@this.Push"/>. Holds back-references to the
     /// owning stack and previous AsyncLocal current so DisposeAsync can restore them and
-    /// remove self from Children when history is off.
+    /// remove self from Children when history is off. <paramref name="names"/> are the variables it is born with.
     /// </summary>
     internal @this(
         global::app.goal.@this? goal,
         global::app.goal.step.@this? step,
         global::app.goal.step.action.@this? action,
         @this? caller,
-        app.callstack.@this stack,
+        global::app.call.list.@this stack,
         @this? previousCurrent,
-        Variables? diffSource)
+        Variables? diffSource,
+        IEnumerable<global::app.data.@this>? names = null,
+        global::app.goal.step.action.@this? held = null)
     {
         _id = Guid.NewGuid().ToString("N")[..8];
         Goal = goal;
         Step = step;
         Action = action;
         Caller = caller;
-        _depth = (caller?._depth ?? 0) + 1;
+        _depth = (caller?._depth ?? 0) + (Deepens ? 1 : 0);
         _stack = stack;
         _previousCurrent = previousCurrent;
         _diffSource = diffSource;
+        _for = held;
         Children = new child.list.@this(stack);
+        foreach (var name in names ?? [])
+        {
+            if (name == null || string.IsNullOrEmpty(name.Name)) continue;
+            _variables[name.Name] = name;   // last wins on duplicate names
+            _born.Add(name.Name);
+        }
 
+        if (!Measured) return;
         // what the stack captures, read once for this push
         var setting = stack.Setting;
         if (setting.Timing.Value)
@@ -198,6 +226,42 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             stack.Open(this);
         }
     }
+
+    /// <summary>The frame a write to <paramref name="name"/> lands in: this one when it was born with the name, else
+    /// the nearest caller that was; null when none was — the write goes to its context's memory.</summary>
+    internal virtual @this? Keeper(string name) => _born.Contains(name) ? this : Caller?.Keeper(name);
+
+    /// <summary>True when this frame was pushed FOR <paramref name="call"/> and born with <paramref name="name"/> — its
+    /// runner supplied it (a tool's argument), so the supplied value wins over the call's own row.</summary>
+    public bool Supplies(global::app.goal.step.action.@this call, string name)
+        => ReferenceEquals(_for, call) && _born.Contains(name);
+
+    /// <summary>What <paramref name="name"/> holds, read from this frame outward — an inner frame's shadows an outer's.
+    /// Case-insensitive.</summary>
+    public bool TryGet(string name, out global::app.data.@this value)
+    {
+        for (var frame = this; frame != null; frame = frame.Caller)
+            if (frame._variables.TryGetValue(name, out var held)) { value = held; return true; }
+        value = null!;
+        return false;
+    }
+
+    /// <summary>The names this frame and its callers hold, the inner frame's first.</summary>
+    internal IEnumerable<string> Names
+    {
+        get
+        {
+            for (var frame = this; frame != null; frame = frame.Caller)
+                foreach (var name in frame._variables.Keys) yield return name;
+        }
+    }
+
+    /// <summary>Writes <paramref name="value"/> into this frame under <paramref name="name"/> (the frame
+    /// <see cref="Keeper"/> chose).</summary>
+    public void Set(string name, global::app.data.@this value) => _variables[name] = value;
+
+    /// <summary>True if this frame itself (not its callers) holds <paramref name="name"/>.</summary>
+    public bool Holds(string name) => _variables.ContainsKey(name);
 
     /// <summary>
     /// A change of <paramref name="store"/>: when it is the store this frame captures, the diff lands here —
@@ -243,29 +307,19 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     }
 
     /// <summary>
-    /// Returns <c>[this, Caller, Caller.Caller, ..., Root]</c>. Stable refs only — no copy.
-    /// Used by App.Run to attach a chain to ServiceError on exception. Index <c>[0]</c> is
-    /// always the failing Call (behavior tweak vs the old shape, which excluded self).
+    /// This frame and its callers, outward: <c>[this, Caller, …, the root]</c> — the frames as they are, not copies,
+    /// taken as they stand when asked (an error keeps the chain it failed in). <c>[0]</c> is this frame;
+    /// <c>- foreach %!call.current.chain%, call …</c> walks it from plang.
     /// </summary>
-    public IReadOnlyList<@this> SnapshotChain()
+    public IReadOnlyList<@this> Chain
     {
-        var chain = new List<@this>();
-        var current = this;
-        while (current != null)
+        get
         {
-            chain.Add(current);
-            current = current.Caller;
+            var chain = new List<@this>();
+            for (var frame = this; frame != null; frame = frame.Caller) chain.Add(frame);
+            return chain;
         }
-        return chain;
     }
-
-    /// <summary>
-    /// PLang-friendly view of the Caller chain — same data as <see cref="SnapshotChain"/>
-    /// but exposed as a property so PLang dot-path resolution can reach it without method
-    /// invocation, and so <c>- foreach %!callStack.Current.Chain%, call ...</c> iterates
-    /// from PLang. Computed each access (cheap — Caller chain depth is typically small).
-    /// </summary>
-    public IReadOnlyList<@this> Chain => SnapshotChain();
 
     /// <summary>
     /// Length of the synchronous Caller chain rooted at this Call. <c>Root.Depth == 1</c>
@@ -283,7 +337,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// a layer that passes the same error through records nothing new.</para></summary>
     public void Record(global::app.error.Error error, actor.context.@this context)
     {
-        if (error.CallFrames.Count == 0) error.CallFrames = SnapshotChain();
+        if (error.CallFrames.Count == 0) error.CallFrames = Chain;
         error.Step ??= Step;
         error.Context ??= context;
         if (error.Variables == null && error.Keeps(context)) error.Variables = context.Variable.Snapshot();

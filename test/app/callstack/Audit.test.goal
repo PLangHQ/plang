@@ -3,5 +3,5 @@ TestAuditAccumulatesHandledAndUnhandledErrors
 - set %items% = ["a", "b", "c", "d"]
 - foreach %items%, call ThrowItem item=%item%, on error set %finalCaught% = true
 - assert %finalCaught% is true
-- set %auditCount% = %!callStack.Audit.Count%
+- set %auditCount% = %!call.Audit.Count%
 - assert %auditCount% equals 7

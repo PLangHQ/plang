@@ -1,9 +1,9 @@
-namespace app.callstack.call.diff;
+namespace app.call.diff;
 
 /// <summary>
 /// Variable mutations observed during this Call's lifetime. Populated synchronously by
 /// the OnSet handler subscribed to <see cref="Variables.@this"/> when
-/// <see cref="app.callstack.@this.Diff"/> is on at Push time. Otherwise the property is null.
+/// <see cref="global::app.call.list.@this.Diff"/> is on at Push time. Otherwise the property is null.
 ///
 /// Owns its lock; sibling Task.WhenAll branches sharing the same Variables instance can
 /// fire OnSet concurrently and Add lands safely. Implements <see cref="IReadOnlyList{T}"/>

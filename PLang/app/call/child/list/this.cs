@@ -1,15 +1,15 @@
-using CallEntity = app.callstack.call.@this;
+using CallEntity = app.call.@this;
 
-namespace app.callstack.call.child.list;
+namespace app.call.child.list;
 
 /// <summary>
 /// Live siblings under a Call. Owns its lock + FIFO eviction policy — callers
-/// (<see cref="app.callstack.@this.Push"/>, <see cref="CallEntity.DisposeAsync"/>)
+/// (<see cref="global::app.call.list.@this.Push"/>, <see cref="CallEntity.DisposeAsync"/>)
 /// add/remove without touching synchronization. Implements
 /// <see cref="IReadOnlyList{T}"/> for natural iteration; iteration takes a snapshot
 /// to avoid throwing on concurrent Add/Remove.
 ///
-/// FIFO eviction triggers only when <see cref="app.callstack.@this.History"/> is on; when
+/// FIFO eviction triggers only when <see cref="global::app.call.list.@this.History"/> is on; when
 /// off, popped Calls are removed at dispose so the list stays bounded by live depth
 /// and the Add path never evicts. Eviction reads the live Flags via the back-reference
 /// — Debug.Apply can flip History mid-run, and Add reflects the current state.
@@ -18,9 +18,9 @@ public sealed class @this : IReadOnlyList<CallEntity>
 {
     private readonly List<CallEntity> _entries = new();
     private readonly object _lock = new();
-    private readonly app.callstack.@this _stack;
+    private readonly global::app.call.list.@this _stack;
 
-    internal @this(app.callstack.@this stack) { _stack = stack; }
+    internal @this(global::app.call.list.@this stack) { _stack = stack; }
 
     /// <summary>
     /// Append a child under the lock. Evicts the oldest entry when History is on and

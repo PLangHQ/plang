@@ -15,11 +15,11 @@ public partial class @this
         if (fromActionIdx < 0 || fromActionIdx >= Code.Count) return result;
 
         // The step runs again — its frame is the step in play for its remaining actions
-        global::app.callstack.call.@this frame;
-        try { frame = context.CallStack.Push(this); }
+        global::app.call.@this frame;
+        try { frame = context.call.Push(this); }
         catch (global::app.error.CallStackOverflowException ex)
         {
-            return context.Error(context.CallStack.Overflow(ex, Goal, this));
+            return context.Error(context.call.Overflow(ex, Goal, this));
         }
         await using var _frame = frame;
 

@@ -1,4 +1,4 @@
-/ debug.tag attaches Tags to the running goal's frame (%!callStack.Scope%), which lives for the goal's run — the tag step's own frames pop when the step ends. A bare label is a tag set to true.
+/ debug.tag attaches Tags to the running goal's frame (%!call.Scope%), which lives for the goal's run — the tag step's own frames pop when the step ends. A bare label is a tag set to true.
 TestTagBareLabelWritesTrue
 - debug.tag "manual-checkpoint"
-- assert %!callStack.Scope.Tags."manual-checkpoint"% equals "true"
+- assert %!call.Scope.Tags."manual-checkpoint"% equals "true"

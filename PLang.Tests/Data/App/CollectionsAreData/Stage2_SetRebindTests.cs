@@ -19,7 +19,7 @@ public class Stage2_SetRebindTests
         // (e.g. one held by a list) must compare reference-unequal to the new binding (M).
         await using var app = NewApp();
         var vars = app.actor.list.User.Context.Variable;
-        await using var frame = vars.Calls.Push(null);
+        await using var frame = vars.Context.call.Push((IEnumerable<Data>?)null);
 
         vars.Set("x", "a");
         var dataA = await vars.Get("x");

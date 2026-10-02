@@ -69,7 +69,7 @@ public class GoalAccessorTests
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         var goal = Goal(app, "Running");
-        await using var running = context.CallStack.Push(goal);
+        await using var running = context.call.Push(goal);
 
         var current = app.goal.current(context);
 

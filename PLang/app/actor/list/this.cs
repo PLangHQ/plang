@@ -29,14 +29,15 @@ public sealed class @this : global::app.type.item.list.@this<actor.@this>, IAsyn
     /// <summary>The actor <paramref name="name"/> names — the closed set's own members.</summary>
     public actor.@this this[Name name] => name == Name.system ? System : User;
 
-    /// <summary>The actor a step names (<paramref name="named"/>), handed to <paramref name="then"/> — the asker's
-    /// own when none is named. A name that didn't resolve is its own answer.</summary>
+    /// <summary>Where the work a step asks for runs, handed to <paramref name="then"/>: the context of the actor the
+    /// step names (<paramref name="named"/>) — none named, the asker's own context (inside a task, the task's). Its
+    /// actor is that context's. A name that didn't resolve is its own answer.</summary>
     public async Task<data.@this> Use(data.@this<global::app.type.item.choice.@this<Name>>? named,
-        global::app.actor.context.@this asker, Func<actor.@this, Task<data.@this>> then)
+        global::app.actor.context.@this asker, Func<global::app.actor.context.@this, Task<data.@this>> then)
     {
-        if (named == null || await named.Given() is null) return await then(asker.Actor);
+        if (named == null || await named.Given() is null) return await then(asker);
         // the typed carrier's own door: the name as written (text) is made the choice it names
-        return await named.Use(name => then(this[name]));
+        return await named.Use(name => then(this[name].Context));
     }
 
     public async ValueTask DisposeAsync()

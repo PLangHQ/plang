@@ -25,7 +25,7 @@ public class CurrentNodeTests
         var ctx = app.actor.list.User.Context;
         var goal = new global::app.goal.@this { Name = "Checkout",
             Path = global::app.type.item.path.@this.Resolve("/Checkout.goal", ctx) };
-        await using var frame = ctx.CallStack.Push(goal);
+        await using var frame = ctx.call.Push(goal);
 
         await Assert.That((await (await Read("%!app.goal.Name%", ctx)).Value())?.ToString()).IsEqualTo("goal");
         await Assert.That((await (await Read("%!app.goal.current.Name%", ctx)).Value())?.ToString()).IsEqualTo("Checkout");
@@ -46,11 +46,11 @@ public class CurrentNodeTests
     {
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
-        ctx.CallStack.Audit.Add(new global::app.error.Error("the disk is full", "DiskFull", 507));
-        ctx.CallStack.Audit.Add(new global::app.error.Error("quota reached", "Quota", 507));
+        ctx.call.Audit.Add(new global::app.error.Error("the disk is full", "DiskFull", 507));
+        ctx.call.Audit.Add(new global::app.error.Error("quota reached", "Quota", 507));
 
         var list = await Read("%!app.error.list%", ctx);
-        await Assert.That(list.Peek()).IsSameReferenceAs(ctx.CallStack.Audit);
+        await Assert.That(list.Peek()).IsSameReferenceAs(ctx.call.Audit);
         var picked = await Read("%!app.error[\"Quota\"].Message%", ctx);
         await Assert.That((await picked.Value())?.ToString()).IsEqualTo("quota reached");
     }

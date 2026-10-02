@@ -152,17 +152,23 @@ public class QueryToolTests
     }
 
     // In a mixed batch each call is as its own Parallel says: the Parallel A runs on while the plain B runs to its end
-    // before C is called; the marks are what the goals wrote, and the results go back in call order.
+    // before C is called; the answers go back in call order. A tool's goal keeps its writes to itself, so each tells what
+    // it saw in its answer. Two gates (tasks whose goal ends after 20s on its own; a cancel is their opening):
+    // - A waits on g1, which only C opens: run on, it answers "opened by C"; run to its end first, it would wait out
+    //   g1's own end and answer "ended on its own".
+    // - C waits on g2, which only B opens: it answers "B had ended" only when B ended before C was called.
+    // Load slows this, never flips it.
     [Test]
     public async Task Query_MixedBatch_APlainToolEndsBeforeTheNextIsCalled_AParallelOneRunsOn_ResultsInCallOrder()
     {
-        // A is held on a gate only C opens (C cancels it): A reads %kept.order% only after B and C have run. Load slows
-        // this, never flips it; the gate's own goal ends after 20s, so a loop that ran A first ends, reading "".
-        await Ctx.Variable.Set("kept", new Dictionary<string, object?> { ["order"] = "" });
         _app.goal.list.Add(Make.Goal(Ctx, "Gate", Make.Step("sleep", Make.Action(Ctx, "timer", "sleep", ("Ms", 20_000)))));
-        var gate = (global::app.task.@this)(await Make.Action(Ctx, "goal", "call", ("Name", "Gate"), ("Parallel", true)).Start(Ctx)).Peek()!;
-        await Ctx.Variable.Set("gate", gate);
-        HeldOnTheGate("A"); Marks("B", 100); Marks("C", 0, opensTheGate: true);
+        foreach (var gate in new[] { "g1", "g2" })
+            await Ctx.Variable.Set(gate, (await Make.Action(Ctx, "goal", "call", ("Name", "Gate"), ("Parallel", true)).Start(Ctx)).Peek());
+        Waits("A", "g1", until: "opened by C", otherwise: "ended on its own");
+        _app.goal.list.Add(Make.Goal(Ctx, "B",
+            Make.Step("open g2", Make.Action(Ctx, "task", "cancel", ("Task", "%g2%"))),
+            Make.Step("return", Make.Action(Ctx, "goal", "return", ("Data", "B")))));
+        Waits("C", "g2", until: "B had ended", otherwise: "B had not ended", opens: "g1");
         int callIndex = 0;
         _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(++callIndex == 1
             ? LlmTestHelper.MakeToolCallResponse(("call_1", "A", "{}"), ("call_2", "B", "{}"), ("call_3", "C", "{}"))
@@ -174,22 +180,31 @@ public class QueryToolTests
         await action.Attach(null, Ctx);
         await (await action.Start()).IsSuccess();
 
-        // B ended before C was called; A, a task, ran on through both and read what they wrote (its reads fall
-        // through to the caller's memory, live); A wrote nothing
-        await Assert.That((await (await Kept("order")).Value())?.ToString()).IsEqualTo(",B,C");
         var second = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
         var (a, b, c) = (second.IndexOf("\"tool_call_id\":\"call_1\""), second.IndexOf("\"tool_call_id\":\"call_2\""), second.IndexOf("\"tool_call_id\":\"call_3\""));
         await Assert.That(a > 0 && a < b && b < c).IsTrue();
-        await Assert.That(second[..a]).Contains("\\u0022,B,C\\u0022");
+        await Assert.That(second[..a]).Contains("opened by C");
+        await Assert.That(second[b..c]).Contains("B had ended");
     }
 
-    // A tool goal named <paramref name="name"/>: waits for %gate% (its cancel is the opening), then returns
-    // %kept.order% as it reads then.
-    private void HeldOnTheGate(string name)
-        => _app.goal.list.Add(Make.Goal(Ctx, name,
-            Make.Step("wait for the gate", Make.Action(Ctx, "task", "wait", ("Task", "%gate%")),
-                Make.Action(Ctx, "on", "error", ("Key", "Cancelled"), ("Ignore", true))),
-            Make.Step("return", Make.Action(Ctx, "goal", "return", ("Data", "%kept.order%")))));
+    // A tool goal named <paramref name="name"/>: waits on the gate <paramref name="gate"/>; opened (cancelled) it
+    // answers <paramref name="until"/>, ended on its own <paramref name="otherwise"/> — after opening
+    // <paramref name="opens"/>, when given.
+    private void Waits(string name, string gate, string until, string otherwise, string? opens = null)
+    {
+        var opened = name + "Opened";
+        _app.goal.list.Add(Make.Goal(Ctx, opened, Make.Step("set how", Make.Action(Ctx, "variable", "set",
+            Make.Param(Ctx, "Name", "how", "variable"), ("Value", until)))));
+        var steps = new List<Make.StepDef>
+        {
+            Make.Step("set how", Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "how", "variable"), ("Value", otherwise))),
+            Make.Step($"wait for {gate}", Make.Action(Ctx, "task", "wait", ("Task", $"%{gate}%")),
+                Make.Action(Ctx, "on", "error", ("Key", "Cancelled"), Make.Recovery(Ctx, Make.Call(Ctx, opened)))),
+        };
+        if (opens != null) steps.Add(Make.Step($"open {opens}", Make.Action(Ctx, "task", "cancel", ("Task", $"%{opens}%"))));
+        steps.Add(Make.Step("return how", Make.Action(Ctx, "goal", "return", ("Data", "%how%"))));
+        _app.goal.list.Add(Make.Goal(Ctx, name, steps.ToArray()));
+    }
 
     // A Parallel tool runs as a task in a context of its own, and still reads the argument the model supplied
     [Test]
@@ -209,17 +224,6 @@ public class QueryToolTests
 
         var second = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
         await Assert.That(second).Contains("city is Reykjavik");
-    }
-
-    // A tool goal named <paramref name="name"/>: sleeps <paramref name="ms"/>, appends its name to %kept.order%, returns its name.
-    private void Marks(string name, int ms, bool opensTheGate = false)
-    {
-        var steps = new List<Make.StepDef>();
-        if (ms > 0) steps.Add(Make.Step("sleep", Make.Action(Ctx, "timer", "sleep", ("Ms", ms))));
-        steps.Add(Make.Step("mark", Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "%kept.order%", "variable"), ("Value", "%kept.order%," + name))));
-        if (opensTheGate) steps.Add(Make.Step("open the gate", Make.Action(Ctx, "task", "cancel", ("Task", "%gate%"))));
-        steps.Add(Make.Step("return", Make.Action(Ctx, "goal", "return", ("Data", name))));
-        _app.goal.list.Add(Make.Goal(Ctx, name, steps.ToArray()));
     }
 
     [Test]
@@ -580,57 +584,57 @@ public class QueryToolTests
         await Assert.That(secondReq).DoesNotContain("is not an argument");
     }
 
-    // A tool whose goal keeps each argument it is called with in the caller's %kept% dict: %kept.<name>% = %<name>%.
-    private async Task<global::app.data.@this> CallKeep(string arguments, params string[] names)
+    // A tool whose goal answers the arguments it was called with, as it reads them: "<a>|<b>|…" for the names given (a
+    // dotted name navigates). A tool's goal keeps its writes to itself, so what it read comes back in its answer.
+    private async Task<global::app.data.@this> CallEcho(string arguments, params string[] names)
     {
-        await Ctx.Variable.Set("kept", new Dictionary<string, object?>());
-        var steps = names.Select(n => Make.Step($"set %kept.{n}%",
-            Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "%kept." + n.Replace('.', '_') + "%", "variable"), ("Value", $"%{n}%")))).ToArray();
-        _app.goal.list.Add(Make.Goal(Ctx, "Keep", steps));
+        _app.goal.list.Add(Make.Goal(Ctx, "Echo",
+            Make.Step("return what it read", Make.Action(Ctx, "goal", "return", ("Data", string.Join("|", names.Select(n => $"%{n}%")))))));
         int callIndex = 0;
         _handler.Handler = _ => Task.FromResult(LlmTestHelper.JsonResponse(++callIndex == 1
-            ? LlmTestHelper.MakeToolCallResponse(("call_1", "Keep", arguments))
-            : LlmTestHelper.MakeCompletionResponse("kept")));
+            ? LlmTestHelper.MakeToolCallResponse(("call_1", "Echo", arguments))
+            : LlmTestHelper.MakeCompletionResponse("echoed")));
 
         var declared = names.Select(n => n.Split('.')[0]).Distinct()
             .Select(n => new Data(n, null, Ctx.App.type.list["item"], context: Ctx)).ToList();
-        var action = new query(Ctx) { Message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = "keep" } }.ToListData<LlmMessage>(Ctx),
-            Tool = new List<global::app.goal.step.action.@this> { Make.Tool(Ctx, "Keep", parameter: declared) }.ToListData(Ctx) };
+        var action = new query(Ctx) { Message = new List<LlmMessage> { new LlmMessage { Role = "user", Content = "echo" } }.ToListData<LlmMessage>(Ctx),
+            Tool = new List<global::app.goal.step.action.@this> { Make.Tool(Ctx, "Echo", parameter: declared) }.ToListData(Ctx) };
         await action.Attach(null, Ctx);
         return await action.Start();
     }
 
-    // The arguments are json, opened by the json kind: each is born the plang value it is — an integer a long, a
-    // fraction a double, a string text, an object a value navigated by its keys.
-    [Test]
-    public async Task Query_ToolArgs_AreBornAsTheirPlangValues()
-    {
-        await (await CallKeep("{\"n\": 5, \"x\": 1.5, \"s\": \"a\", \"nested\": {\"key\": \"val\"}}", "n", "x", "s", "nested.key")).IsSuccess();
+    // What went back to the model after the tool call.
+    private async Task<string> Answered() => await _handler.AllRequests[1].Content!.ReadAsStringAsync();
 
-        var n = (await Kept("n")).Peek() as global::app.type.item.number.@this;
-        var x = (await Kept("x")).Peek() as global::app.type.item.number.@this;
-        await Assert.That(n?.BoxedValue).IsEqualTo((object)5L);
-        await Assert.That(x?.BoxedValue).IsEqualTo((object)1.5);
-        await Assert.That((await Kept("s")).Peek()).IsTypeOf<global::app.type.item.text.@this>();
-        await Assert.That((await (await Kept("s")).Value())?.ToString()).IsEqualTo("a");
-        await Assert.That((await (await Kept("nested_key")).Value())?.ToString()).IsEqualTo("val");
+    // The tool's goal reads each argument as what it is — a nested object navigated by its keys.
+    [Test]
+    public async Task Query_ToolArgs_ReachTheToolsGoal_ANestedOneNavigated()
+    {
+        await (await CallEcho("{\"n\": 5, \"x\": 1.5, \"s\": \"a\", \"nested\": {\"key\": \"val\"}}", "n", "x", "s", "nested.key")).IsSuccess();
+
+        await Assert.That(await Answered()).Contains("5|1.5|a|val");
     }
 
-    // What the tool's goal kept under <paramref name="name"/> in %kept%.
-    private async Task<global::app.data.@this> Kept(string name)
+    // The arguments are opened by the json kind — the door Tool.Arguments takes: each member born the plang value it
+    // is — an integer a long, a fraction a double, a string text, an object a value of named members.
+    [Test]
+    public async Task ToolArgs_TheJsonKindsMembers_AreALong_ADouble_Text_AndAValueOfNamedMembers()
     {
-        var kept = await Ctx.Variable.Get("kept");
-        return await ((global::app.type.item.@this)(await kept.Value())!).Get(kept, name);
+        var opened = Ctx.App.type.list["item"].kind["json"]!.Open("{\"n\": 5, \"x\": 1.5, \"s\": \"a\", \"nested\": {\"key\": \"val\"}}", Ctx)!;
+        var members = opened.Peek().EnumerateItems(Ctx).ToDictionary(pair => pair.value.Name, pair => pair.value.Peek());
+
+        await Assert.That((members["n"] as global::app.type.item.number.@this)?.BoxedValue).IsEqualTo((object)5L);
+        await Assert.That((members["x"] as global::app.type.item.number.@this)?.BoxedValue).IsEqualTo((object)1.5);
+        await Assert.That(members["s"]).IsTypeOf<global::app.type.item.text.@this>();
+        await Assert.That(members["nested"] is { IsLeaf: false, IsSequence: false }).IsTrue();
     }
 
     [Test]
     public async Task Query_ToolArgs_NotAnObject_IsAnErrorToTheModel()
     {
-        await (await CallKeep("[1, 2]", "n")).IsSuccess();
+        await (await CallEcho("[1, 2]", "n")).IsSuccess();
 
-        var secondReq = await _handler.AllRequests[1].Content!.ReadAsStringAsync();
-        await Assert.That(secondReq).Contains("not an object of named arguments");
-        await Assert.That((await Kept("n")).IsInitialized).IsFalse();
+        await Assert.That(await Answered()).Contains("not an object of named arguments");
     }
 
     // A name the tool doesn't declare is never bound — the argument frame is read before the caller's own

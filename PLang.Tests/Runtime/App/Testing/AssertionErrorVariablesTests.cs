@@ -82,7 +82,7 @@ public class AssertionErrorVariablesTests
     {
         var context = _app.actor.list.User.Context;
         context.Variable.Set("secret", "s3cr3t");
-        await using var frame = context.CallStack.Push(global::PLang.Tests.App.CallStackTests.CallStackTestHelpers.MakeAction(context, "Goal"));
+        await using var frame = context.call.Push(global::PLang.Tests.App.CallStackTests.CallStackTestHelpers.MakeAction(context, "Goal"));
 
         var plain = new global::app.error.Error("boom", "Boom", 500);
         frame.Record(plain, context);

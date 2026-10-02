@@ -2,6 +2,6 @@
 TestErrorCallFramesContainsDeepNestedChain
 - call ChainOuter, on error set %caught% = true
 - assert %caught% is true
-- assert %!callStack.Audit% is not null
-- set %auditCount% = %!callStack.Audit.Count%
+- assert %!call.Audit% is not null
+- set %auditCount% = %!call.Audit.Count%
 - assert %auditCount% is greater than 0

@@ -60,7 +60,7 @@ public class DotDotTraversalRegressionTests
             Name = "Probe",
             Path = Path.Resolve(System.IO.Path.Combine(root, "subdir", "probe.goal"), context)
         };
-        await using var inGoal = context.CallStack.Push(goal);
+        await using var inGoal = context.call.Push(goal);
 
         // The attack shape: a relative rawPath with enough .. to climb past
         // root. file.Resolve does Path.Combine(runtimeDir, raw) — pre-fix the
@@ -92,7 +92,7 @@ public class DotDotTraversalRegressionTests
             // Channel that denies any AuthGate prompt.
             app.actor.list.User.Channel.Register(new CannedChannel("n"));
 
-                await using var inGoal = context.CallStack.Push(new Goal
+                await using var inGoal = context.call.Push(new Goal
             {
                 Name = "Probe",
                 Path = Path.Resolve(System.IO.Path.Combine(root, "subdir", "probe.goal"), context)

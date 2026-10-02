@@ -178,7 +178,7 @@ public class OnEventTests
         await Make.Call(Ctx, "Target").Start(Ctx);
 
         await Assert.That(await Value("seen")).IsSameReferenceAs(target);
-        await Assert.That(Ctx.CallStack.Event).IsNull();
+        await Assert.That(Ctx.call.Event).IsNull();
     }
 
     [Test]

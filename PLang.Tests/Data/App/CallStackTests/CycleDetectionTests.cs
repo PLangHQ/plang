@@ -11,7 +11,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     [Test]
     public async Task Push_ExceedsMaxDepth_ThrowsCallStackOverflowException()
     {
-        var stack = new CallStack(TestCallStack.Settings()) { MaxDepth = 3 };
+        var stack = new Calls(TestCalls.Settings()) { MaxDepth = 3 };
         await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
         await using var c = stack.Push(MakeAction(app.actor.list.User.Context, "C"));
@@ -25,7 +25,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     [Test]
     public async Task CallStackOverflowException_IncludesMaxDepth()
     {
-        var stack = new CallStack(TestCallStack.Settings()) { MaxDepth = 2 };
+        var stack = new Calls(TestCalls.Settings()) { MaxDepth = 2 };
         await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
 
@@ -42,8 +42,8 @@ public class CycleDetectionTests : System.IAsyncDisposable
     {
         // Recursion is allowed — a goal that calls itself forever (directly or A → B → A) is
         // stopped by the depth limit alone: each call is born one deeper than its caller.
-        var stack = new CallStack(TestCallStack.Settings()) { MaxDepth = 5 };
-        var calls = new List<global::app.callstack.call.@this>();
+        var stack = new Calls(TestCalls.Settings()) { MaxDepth = 5 };
+        var calls = new List<global::app.call.@this>();
         CallStackOverflowException? caught = null;
         try
         {
@@ -67,8 +67,8 @@ public class CycleDetectionTests : System.IAsyncDisposable
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         // A → B → A: a goal may call itself through others; only the depth limit stops it
-        await using var a = context.CallStack.Push(MakeAction(context, "A"));
-        await using var b = context.CallStack.Push(MakeAction(context, "B"));
+        await using var a = context.call.Push(MakeAction(context, "A"));
+        await using var b = context.call.Push(MakeAction(context, "B"));
         var goalA = Make.Goal(context, "A", "/A.goal", Make.Step("write out \"x\"", Make.Action(context, "output", "write", ("Data", "x"))));
 
         var entered = await goalA.Start(context);
@@ -82,7 +82,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
         await using var app = new global::app.@this("/test").Testing();
         var context = app.actor.list.User.Context;
         // Start calls Compile: the file's sub-goals share its .pr — a goal is its .pr and its name
-        await using var start = context.CallStack.Push(MakeAction(context, "Start"));
+        await using var start = context.call.Push(MakeAction(context, "Start"));
         var compile = Make.Goal(context, "Compile", "/Start.goal", Make.Step("write out \"x\"", Make.Action(context, "output", "write", ("Data", "x"))));
 
         var entered = await compile.Start(context);
@@ -95,7 +95,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     {
         // Build → EmitBuildEvent → the builder channel's call, which was written in Build: running it
         // does not enter Build (only a goal's entry does), so it is no cycle.
-        var stack = new CallStack(TestCallStack.Settings());
+        var stack = new Calls(TestCalls.Settings());
         await using var build = stack.Push(MakeAction(app.actor.list.User.Context, "Build"));
         await using var emit = stack.Push(MakeAction(app.actor.list.User.Context, "EmitBuildEvent"));
 
@@ -107,7 +107,7 @@ public class CycleDetectionTests : System.IAsyncDisposable
     [Test]
     public async Task Push_RepeatedSiblingNotInChain_DoesNotThrow()
     {
-        var stack = new CallStack(TestCallStack.Settings());
+        var stack = new Calls(TestCalls.Settings());
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
         await b.DisposeAsync();

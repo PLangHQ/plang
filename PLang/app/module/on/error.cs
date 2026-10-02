@@ -42,7 +42,7 @@ public partial class OnError : IContext, IClause, IAction
         // The failing frame is LIVE and it is the current one: the error outcome fires inside the frame the
         // action pushed for its whole run, so the frame that recorded the error is the one we stand in. Marking
         // it Handled is what takes the error out of play for %!error%.
-        var erroredCall = context.CallStack.Current;
+        var erroredCall = context.call.Current;
 
         var order = (Order == null ? null : await Order.Value()) ?? ErrorOrder.RetryFirst;
         var recovery = Recovery == null ? null : await Recovery.Value();
@@ -118,7 +118,7 @@ public partial class OnError : IContext, IClause, IAction
     /// </summary>
     private async Task<global::app.data.@this> Recover(global::app.goal.step.action.list.@this recovery, actor.context.@this context)
     {
-        using (context.CallStack.DiffScope(context.Variable))
+        using (context.call.DiffScope(context.Variable))
         {
             return await recovery.Start(context);
         }

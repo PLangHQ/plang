@@ -14,7 +14,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// Cache, Events, Settings, Types, Config, FileSystem, …) reconstruct on build.
     /// </summary>
     public snapshot.@this Snapshot(actor.context.@this context)
-        => Capture(context, Snapshotted(context.Variable, context.CallStack));
+        => Capture(context, Snapshotted(context.Variable, context.call));
 
     /// <summary>
     /// Throw-time snapshot for an error callback. By the time an error reaches its handler the live
@@ -23,7 +23,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// the error carried). Everything else is unchanged across handling, so it captures live.
     /// </summary>
     public snapshot.@this Snapshot(global::app.error.Error error, actor.context.@this context)
-        => Capture(context, Snapshotted(context.Variable.SnapshotAt(error), context.CallStack.At(error.CallFrames)));
+        => Capture(context, Snapshotted(context.Variable.SnapshotAt(error), context.call.At(error.CallFrames)));
 
     private snapshot.@this Capture(actor.context.@this context, IEnumerable<global::app.snapshot.ISnapshot> owners)
     {
@@ -39,7 +39,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// </summary>
     public async System.Threading.Tasks.Task Restore(snapshot.@this s, actor.context.@this context)
     {
-        foreach (var owner in Snapshotted(context.Variable, context.CallStack))
+        foreach (var owner in Snapshotted(context.Variable, context.call))
             if (s.HasSection(owner.Section))
                 await owner.Restore(s.Section(owner.Section), context);
     }

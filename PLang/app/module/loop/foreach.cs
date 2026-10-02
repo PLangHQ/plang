@@ -63,7 +63,7 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
             // "was a key named?" is IsInitialized, not a C# null check.
             if (keyVariable != null) bound.Add(key.Copy(keyVariable.Name));
 
-            await using (Context.Variable.Calls.Push(bound))
+            await using (Context.call.Push(bound))
                 foreach (var action in bodyActions)
                 {
                     var result = await action.Start(Context);

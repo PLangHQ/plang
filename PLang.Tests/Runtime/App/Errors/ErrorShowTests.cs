@@ -54,7 +54,7 @@ public class ErrorShowTests : System.IAsyncDisposable
         await loaded.IsSuccess();
         var show = (await loaded.Value() as Goal)!;
         global::app.data.@this shown;
-        await using (context.Variable.Calls.Push(new[] { new global::app.data.@this("error", error, context: context) }))
+        await using (context.call.Push(new[] { new global::app.data.@this("error", error, context: context) }))
             shown = await show.Start(context);
         await shown.IsSuccess();
         return System.Text.Encoding.UTF8.GetString(_errorOut.ToArray());
@@ -144,10 +144,10 @@ public class ErrorShowTests : System.IAsyncDisposable
         var action = goal.Step[0].Code[0];
         var context = _app.actor.list.User.Context;
         global::app.error.Error error;
-        await using (context.CallStack.Push(action, context.Variable))
-        await using (context.CallStack.Push(action, context.Variable))
-        await using (context.CallStack.Push(action, context.Variable))
-        await using (var failing = context.CallStack.Push(action, context.Variable))
+        await using (context.call.Push(action, context.Variable))
+        await using (context.call.Push(action, context.Variable))
+        await using (context.call.Push(action, context.Variable))
+        await using (var failing = context.call.Push(action, context.Variable))
         {
             error = new global::app.error.Error("too deep", goal.Step[0], "Deep", 500);
             failing.Record(error, context);

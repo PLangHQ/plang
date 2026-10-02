@@ -8,18 +8,18 @@ public class TagActionTests
     private static Tag Tagging(global::app.@this app, Dictionary<string, object?> tags)
         => new(app.actor.list.User.Context) { Tags = tags.ToDictData(app.actor.list.User.Context) };
 
-    private static int Count(global::app.callstack.call.@this call, global::app.@this app)
+    private static int Count(global::app.call.@this call, global::app.@this app)
         => call.Tags.Entries(app.actor.list.User.Context).Count();
 
-    private static global::app.data.@this? Read(global::app.callstack.call.@this call, string key, global::app.@this app)
+    private static global::app.data.@this? Read(global::app.call.@this call, string key, global::app.@this app)
         => call.Tags.Get(key, app.actor.list.User.Context);
 
     // The frames a running tag action sits in: its goal's, its step's, its own.
-    private static (global::app.callstack.call.@this goal, global::app.callstack.call.@this step, global::app.callstack.call.@this action)
+    private static (global::app.call.@this goal, global::app.call.@this step, global::app.call.@this action)
         Frames(global::app.@this app)
     {
         var action = MakeAction(app.actor.list.User.Context, "Goal", module: "debug", actionName: "tag");
-        var stack = app.actor.list.User.CallStack;
+        var stack = app.actor.list.User.Context.call;
         var goal = stack.Push(action.Step!.Goal!);
         var step = stack.Push(action.Step!);
         return (goal, step, stack.Push(action));
@@ -72,7 +72,7 @@ public class TagActionTests
     public async Task Tag_OutsideAGoal_TagsTheCurrentFrame()
     {
         await using var app = new global::app.@this("/app").Testing();
-        await using var call = app.actor.list.User.CallStack.Push(MakeAction(app.actor.list.User.Context, "Goal"));
+        await using var call = app.actor.list.User.Context.call.Push(MakeAction(app.actor.list.User.Context, "Goal"));
         await Tagging(app, new() { ["x"] = true }).Start();
 
         await Assert.That(Count(call, app)).IsEqualTo(1);
@@ -95,7 +95,7 @@ public class TagActionTests
         }
     }
 
-    // A goal's next step reads what its tag step wrote, through %!callStack.Scope%.
+    // A goal's next step reads what its tag step wrote, through %!call.Scope%.
     [Test]
     public async Task Tag_NextStepReadsItThroughScope()
     {
@@ -103,9 +103,9 @@ public class TagActionTests
         var goal = await RealGoalLoad.ViaChannel(app, Make.Goal(app.actor.list.User.Context, "Tagging",
             Make.Step("tag owner=checkout",
                 Make.Action(app.actor.list.User.Context, "debug", "tag", Make.Param(app.actor.list.User.Context, "Tags", new Dictionary<string, object?> { ["owner"] = "checkout" }, "dict"))),
-            Make.Step("set %read% = %!callStack.Scope.Tags.owner%",
+            Make.Step("set %read% = %!call.Scope.Tags.owner%",
                 Make.Action(app.actor.list.User.Context, "variable", "set", Make.Param(app.actor.list.User.Context, "Name", "read", "variable"),
-                    Make.Param(app.actor.list.User.Context, "Value", "%!callStack.Scope.Tags.owner%", "variable")))));
+                    Make.Param(app.actor.list.User.Context, "Value", "%!call.Scope.Tags.owner%", "variable")))));
         app.goal.list.Add(goal);
 
         var context = app.actor.list.User.Context;

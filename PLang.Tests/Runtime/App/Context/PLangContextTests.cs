@@ -64,15 +64,14 @@ public class PLangContextTests
     }
 
     [Test]
-    public async Task CallStack_ReadsThrough_ActorCallStack()
+    public async Task Calls_AreTheContextsOwn_AChildsItsOwnToo()
     {
-        // Each actor owns its call tree. The Context exposes a getter that proxies through
-        // to its owning Actor's CallStack so PLang %!callStack% still resolves; there's no
-        // per-context allocation.
+        // Each context owns its calls (%!call%), born with it — a context made for another run (a task's) has its own.
         await using var engine = new global::app.@this("/app").Testing();
         using var context = new global::app.actor.context.@this(engine, engine.actor.list.User);
 
-        await Assert.That(context.CallStack).IsEqualTo(engine.actor.list.User.CallStack);
+        await Assert.That(context.call).IsNotNull();
+        await Assert.That(context.call).IsNotSameReferenceAs(engine.actor.list.User.Context.call);
     }
 
     [Test]

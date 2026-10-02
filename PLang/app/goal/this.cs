@@ -366,7 +366,11 @@ public sealed partial class @this
     /// after it (<see cref="Level"/>). A before that fails or cancels is the result: the steps don't start, every
     /// after still runs on it. Context travels as parameter — goals may be cached/shared.
     /// </summary>
-    public async Task<data.@this> Start(actor.context.@this context)
+    public Task<data.@this> Start(actor.context.@this context) => Start(context, null);
+
+    /// <summary>Starts this goal with its frame born with <paramref name="parameters"/> — a goal call's: they are this
+    /// run's variables, for as long as it runs.</summary>
+    public async Task<data.@this> Start(actor.context.@this context, IEnumerable<data.@this>? parameters)
     {
         if (context.CancellationToken.IsCancellationRequested)
             return context.Error(new global::app.error.Error("Operation was cancelled", "Cancelled", 499));
@@ -375,11 +379,11 @@ public sealed partial class @this
         // goal in play is this one throughout. The frame outlives any single step, so things like `debug.tag`
         // can attach metadata to a scope later steps still read (up via Current.Caller). A goal may call
         // itself: the only limit is the depth guard, which trips at this Push.
-        global::app.callstack.call.@this frame;
-        try { frame = context.CallStack.Push(this); }
+        global::app.call.@this frame;
+        try { frame = context.call.Push(this, parameters); }
         catch (global::app.error.CallStackOverflowException ex)
         {
-            return context.Error(context.CallStack.Overflow(ex, this, null));
+            return context.Error(context.call.Overflow(ex, this, null));
         }
         await using var _frame = frame;
 

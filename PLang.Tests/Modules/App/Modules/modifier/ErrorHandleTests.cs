@@ -104,7 +104,7 @@ public class ErrorHandleTests
         var result = await action.Start(Ctx);
 
         await result.IsSuccess();
-        await Assert.That(Ctx.CallStack.Audit.Any(e => e.Message == "boom")).IsTrue();
+        await Assert.That(Ctx.call.Audit.Any(e => e.Message == "boom")).IsTrue();
         var written = Read(capture);
         await Assert.That(written).Contains("Oops");
         await Assert.That(written).Contains("boom");
@@ -120,7 +120,7 @@ public class ErrorHandleTests
         var result = await action.Start(Ctx);
 
         await result.IsSuccess();
-        await Assert.That(Ctx.CallStack.Audit.Any(e => e.Message == "boom")).IsTrue();
+        await Assert.That(Ctx.call.Audit.Any(e => e.Message == "boom")).IsTrue();
         await Assert.That(Read(capture)).IsEmpty();
     }
 

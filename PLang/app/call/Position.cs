@@ -1,7 +1,7 @@
 using ActionEntity = app.goal.step.action.@this;
 using GoalEntity = app.goal.@this;
 
-namespace app.callstack.call;
+namespace app.call;
 
 /// <summary>
 /// Snapshot surrogate for one Call frame. Carries the resolved live <see cref="ActionEntity"/>

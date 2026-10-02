@@ -1,5 +1,5 @@
-/ debug.tag attaches Tags to the running goal's frame (%!callStack.Scope%), which lives for the goal's run — the tag step's own frames pop when the step ends — so a later step reads them there.
+/ debug.tag attaches Tags to the running goal's frame (%!call.Scope%), which lives for the goal's run — the tag step's own frames pop when the step ends — so a later step reads them there.
 TestTagWritesPairsOntoCurrentCall
 - debug.tag critical=true, owner=checkout
-- assert %!callStack.Scope.Tags.critical% equals "true"
-- assert %!callStack.Scope.Tags.owner% equals "checkout"
+- assert %!call.Scope.Tags.critical% equals "true"
+- assert %!call.Scope.Tags.owner% equals "checkout"

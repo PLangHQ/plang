@@ -57,23 +57,25 @@ public partial class Call : IContext
         if (await Name.Value() is not { } goal) return Name;
 
         // the actor named runs it; none named, this one — to its end, or in parallel as one of its tasks, in a context
-        // of its own that reads through to this one's (its writes stay in it)
+        // of its own whose first frame keeps every write the task makes and reads through to the frame this call is
+        // in, then this context's memory
         var parallel = await Parallel.ToBooleanAsync();
-        return await Context.App.actor.list.Use(Actor, Context, async runner => parallel
-            ? Context.Ok(runner.Task.Start(goal, async token =>
+        var from = Context.call.Current;
+        return await Context.App.actor.list.Use(Actor, Context, async runs => parallel
+            ? Context.Ok(runs.Actor.Task.Start(goal, async token =>
             {
-                using var child = Context.Child(runner, token);
-                return await Run(goal, child);
+                using var child = Context.Child(runs.Actor, token);
+                await using (child.call.Isolate(null, caller: from))
+                    return await Run(goal, child);
             }))
-            : await Run(goal, runner.Context));
+            : await Run(goal, runs));
     }
 
     private async Task<data.@this> Run(global::app.goal.@this goal, global::app.actor.context.@this execContext)
     {
-        // The parameters bind in the call's own frame, in the memory the callee runs in: they are the
-        // callee's for as long as it runs and gone when it returns; any other write the callee makes
-        // reaches that memory as it would without the call. Each parameter is settled in the caller and binds
-        // under its name.
+        // The parameters are the variables the goal's frame is born with: they are the callee's for as long as it
+        // runs and gone when it returns; any other write the callee makes reaches its memory as it would without
+        // the call. Each parameter is settled in the caller and binds under its name.
         // A row that carries no value is a declaration ("this goal takes a city"), not a value given —
         // it binds nothing. A valued row is "this value unless the invocation supplied one": a runner
         // that forks (a tool invocation) runs this call inside a frame born with the parameters it
@@ -98,7 +100,6 @@ public partial class Call : IContext
                 bound.Add(settled.IsInitialized ? settled.Copy(parameter.Name) : Context.NotFound(parameter.Name));
             }
 
-        await using (execContext.Variable.Calls.Push(bound))
-            return await goal.Start(execContext);
+        return await goal.Start(execContext, bound);
     }
 }

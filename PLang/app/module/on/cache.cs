@@ -39,7 +39,7 @@ public partial class OnCache : IContext, IClause
         var keyText = Key == null ? null : await Key.Value();
         string key = keyText?.IsTruthy() == true ? keyText.ToString() : DefaultKey(context);
         var cached = await context.App!.Cache.GetAsync(key);
-        context.CallStack.Current?.SetItem(new Lookup(key, cached != null));
+        context.call.Current?.SetItem(new Lookup(key, cached != null));
         if (cached == null) return result;
         var hit = cached.Copy();
         hit.Handled = true;
@@ -50,7 +50,7 @@ public partial class OnCache : IContext, IClause
     /// nothing.</summary>
     public async Task<global::app.data.@this> End(global::app.data.@this result, actor.context.@this context)
     {
-        var frame = context.CallStack.Current;
+        var frame = context.call.Current;
         if (frame?.GetItem<Lookup>() is not { Hit: false } lookup || !result.Success) return result;
         frame.SetItem(lookup with { Hit = true });   // stored — this attempt's lookup is spent
         // A lazy reference result (file/url/image) caches with its CONTENT in memory — a hit must not re-read
@@ -65,7 +65,7 @@ public partial class OnCache : IContext, IClause
 
     private static string DefaultKey(actor.context.@this context)
     {
-        var step = context.CallStack.Step;
+        var step = context.call.Step;
         var goalPath = step?.Goal?.Path?.ToString() ?? "unknown";
         return $"step:{goalPath}:{step?.Index}";
     }

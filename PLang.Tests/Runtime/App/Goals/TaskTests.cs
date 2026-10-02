@@ -194,6 +194,36 @@ public class TaskTests
         await Assert.That(await Texts(await Ctx.Variable.Get("items"))).IsEquivalentTo(new[] { "a" });
     }
 
+    // a plain call inside a task runs in the task's context: what the called goal writes stays in the task, and the
+    // task's next step reads it
+    [Test]
+    public async Task APlainCallInsideATask_RunsInTheTask_ItsWritesStayThere()
+    {
+        await Load("Writes", Make.Step("set w", Set("w", "x")));
+        await Load("Calls", Make.Step("call Writes", Make.Call(Ctx, "Writes")), Make.Step("return w", Return("%w%")));
+
+        var waited = await (await Started("Calls")).Wait();
+
+        await Assert.That((await waited.Value())?.ToString()).IsEqualTo("x");
+        await Assert.That((await Ctx.Variable.Get("w")).IsInitialized).IsFalse();
+    }
+
+    // a task setting a name its caller's frame keeps (the caller's parameter) writes its own: the caller's is unchanged
+    [Test]
+    public async Task ATaskSettingANameItsCallersFrameKeeps_LeavesTheCallersValue()
+    {
+        await Load("SetsCity", Make.Step("set city", Set("city", "task's")), Make.Step("return city", Return("%city%")));
+        await Load("Caller", Make.Step("call SetsCity in parallel, write to %task%", InParallel("SetsCity"), Set("task", "%!data%")),
+            Make.Step("wait for it", Make.Action(Ctx, "task", "wait", ("Task", "%task%"))),
+            Make.Step("return city", Return("%city%")));
+        var outer = await Load("Outer", Make.Step("call Caller city=caller's, write to %got%",
+            Make.Call(Ctx, "Caller", ("city", "caller's")), Set("got", "%!data%")));
+
+        await (await outer.Start(Ctx)).IsSuccess();
+
+        await Assert.That((await (await Ctx.Variable.Get("got")).Value())?.ToString()).IsEqualTo("caller's");
+    }
+
     // a typed list copies as itself: the task's copy is a list<text>, the caller's untouched
     [Test]
     public async Task AnAddInATask_ToItsCallersTypedList_CopiesItAsATypedList()

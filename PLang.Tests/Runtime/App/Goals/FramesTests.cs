@@ -2,7 +2,7 @@ namespace PLang.Tests.App.Goals;
 
 /// <summary>
 /// A goal, a step and an action each run in their own call-stack frame, and the goal and step in play are
-/// the current frame's (<c>CallStack.Goal</c>, <c>CallStack.Step</c>) — nothing else holds them. A frame
+/// the current frame's (<c>call.Goal</c>, <c>call.Step</c>) — nothing else holds them. A frame
 /// answers the time it has run while it is still running, so an after-binding reads its step's time.
 /// </summary>
 public class FramesTests
@@ -48,7 +48,7 @@ public class FramesTests
         _app.type.list["step"].Own().Bind("start", global::app.@event.When.after, (item, _, c) =>
         {
             if (item is global::app.goal.step.@this step && ReferenceEquals(step.Goal, caller))
-                seen.Add((step, c.CallStack.Step, c.CallStack.Goal));
+                seen.Add((step, c.call.Step, c.call.Goal));
             return Task.FromResult(c.Ok());
         }, _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
@@ -62,21 +62,21 @@ public class FramesTests
             await Assert.That(goal).IsSameReferenceAs(caller);
         }
         // and once the goal ends, nothing it ran is still in play
-        await Assert.That(ctx.CallStack.Step).IsNull();
-        await Assert.That(ctx.CallStack.Goal).IsNull();
+        await Assert.That(ctx.call.Step).IsNull();
+        await Assert.That(ctx.call.Goal).IsNull();
     }
 
     [Test]
     public async Task AStepsAfterBinding_ReadsItsTimeOffItsFrame()
     {
-        await _app.actor.list.System.Setting.Set(new global::app.callstack.setting.@this().Path + ".timing", _app.actor.list.System.Context.Ok(true));
+        await _app.actor.list.System.Setting.Set(new global::app.call.setting.@this().Path + ".timing", _app.actor.list.System.Context.Ok(true));
         var (caller, _) = await CallerAndCallee();
 
         var took = new List<TimeSpan?>();
         _app.type.list["step"].Own().Bind("start", global::app.@event.When.after, (item, _, c) =>
         {
             if (item is global::app.goal.step.@this step && ReferenceEquals(step.Goal, caller))
-                took.Add(c.CallStack.Current?.Duration);
+                took.Add(c.call.Current?.Duration);
             return Task.FromResult(c.Ok());
         }, _app.actor.list.User, global::app.@event.binding.Scope.actor);
 
@@ -91,7 +91,7 @@ public class FramesTests
     public async Task ADebugStackLine_NamesTheGoalStepAndAction()
     {
         var (caller, _) = await CallerAndCallee();
-        var stack = _app.actor.list.User.CallStack;
+        var stack = _app.actor.list.User.Context.call;
         var step = caller.Step[0];
 
         await using var goalFrame = stack.Push(caller);

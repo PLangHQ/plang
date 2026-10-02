@@ -1,6 +1,6 @@
 using app.error;
 
-namespace app.callstack;
+namespace app.call.list;
 
 public sealed partial class @this : global::app.snapshot.ISnapshot
 {
@@ -123,7 +123,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     {
         var bottom = _current.Value;
         var ordered = new List<call.@this>();
-        // SnapshotChain returns [self, Caller, Caller.Caller, ...]; reverse so outer first.
+        // Chain is [self, Caller, Caller.Caller, ...]; reverse so outer first.
         if (bottom != null)
             for (var node = bottom; node != null; node = node.Caller)
                 ordered.Insert(0, node);

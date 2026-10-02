@@ -1,6 +1,6 @@
-namespace app.callstack.call;
+namespace app.call;
 
-public sealed partial class @this
+public partial class @this
 {
     /// <summary>
     /// Captures this Call's positional triple plus identity for snapshot. Wire shape:

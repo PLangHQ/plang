@@ -1,4 +1,4 @@
-namespace app.callstack;
+namespace app.call;
 
 /// <summary>
 /// One captured variable mutation observed during a Call's execution. <c>Before</c> is the

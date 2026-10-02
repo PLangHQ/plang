@@ -50,11 +50,11 @@ public class ActionRunAsyncTests
 
     [Test] public async Task CauseParameter_AbsentFromAllCallSites()
     {
-        // one Push per runnable — goal, step, action — none takes a cause
-        var pushes = typeof(global::app.callstack.@this).GetMethods(
+        // one Push per frame kind — goal, step, action, a frame that binds names — none takes a cause
+        var pushes = typeof(global::app.call.list.@this).GetMethods(
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
             .Where(m => m.Name == "Push").ToList();
-        await Assert.That(pushes.Count).IsEqualTo(3);
+        await Assert.That(pushes.Count).IsEqualTo(4);
         await Assert.That(pushes.SelectMany(m => m.GetParameters()).Any(p => p.Name == "cause")).IsFalse();
     }
 }

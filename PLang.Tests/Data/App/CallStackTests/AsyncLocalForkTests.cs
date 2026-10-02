@@ -10,7 +10,7 @@ public class AsyncLocalForkTests : System.IAsyncDisposable
     [Test]
     public async Task ParallelBranches_DoNotPollute_EachOthersCurrent()
     {
-        var stack = new CallStack(TestCallStack.Settings());
+        var stack = new Calls(TestCalls.Settings());
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
 
         var branchACurrent = (object?)null;
@@ -40,7 +40,7 @@ public class AsyncLocalForkTests : System.IAsyncDisposable
     [Test]
     public async Task ParallelBranches_ShareSameCaller()
     {
-        var stack = new CallStack(TestCallStack.Settings());
+        var stack = new Calls(TestCalls.Settings());
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
 
         var aCaller = (object?)null;
@@ -58,7 +58,7 @@ public class AsyncLocalForkTests : System.IAsyncDisposable
     [Test]
     public async Task ParallelBranches_BothAppearInOuterChildren_HistoryOn()
     {
-        var stack = new CallStack(TestCallStack.Settings(new Dictionary<string, object?> { ["history"] = true }));
+        var stack = new Calls(TestCalls.Settings(new Dictionary<string, object?> { ["history"] = true }));
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
 
         async Task BranchA() { await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A")); await Task.Yield(); }
@@ -72,7 +72,7 @@ public class AsyncLocalForkTests : System.IAsyncDisposable
     [Test]
     public async Task AsyncLocal_RestoresOnDispose_InNestedAwait()
     {
-        var stack = new CallStack(TestCallStack.Settings());
+        var stack = new Calls(TestCalls.Settings());
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
 
         async Task NestedScope()
@@ -88,7 +88,7 @@ public class AsyncLocalForkTests : System.IAsyncDisposable
     [Test]
     public async Task AsyncLocal_FlowsIntoTaskRun()
     {
-        var stack = new CallStack(TestCallStack.Settings());
+        var stack = new Calls(TestCalls.Settings());
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
 
         var seen = await Task.Run(() => stack.Current);
@@ -98,7 +98,7 @@ public class AsyncLocalForkTests : System.IAsyncDisposable
     [Test]
     public async Task FreshAsyncContext_HasNullCurrent()
     {
-        var stack = new CallStack(TestCallStack.Settings());
+        var stack = new Calls(TestCalls.Settings());
         await Task.Yield();
         await Assert.That(stack.Current).IsNull();
     }

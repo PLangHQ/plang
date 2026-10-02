@@ -2,11 +2,12 @@ using app.error;
 using @bool = global::app.type.item.@bool.@this;
 using number = global::app.type.item.number.@this;
 
-namespace app.callstack;
+namespace app.call.list;
 
 /// <summary>
-/// Per-app call tree. Owned by <c>App.CallStack</c> — moved here from
-/// <c>Actor.Context.CallStack</c> because it's an observability concern, not an actor one.
+/// A context's calls — <c>%!call%</c>: the chain of frames running now (<see cref="Current"/> the innermost), each a
+/// goal, a step, an action, or a frame that binds names (a loop's item, a handler's error), each holding its own
+/// variables. A task's context has its own chain, its root frame's caller its caller's current frame.
 ///
 /// Structural data (Action, Caller, Errors) is always populated — the cost of the
 /// thin push/pop is ~50ns per action and means errors get a useful trace without any flag.
@@ -43,15 +44,16 @@ public sealed partial class @this : global::app.type.item.@this
     private readonly AsyncLocal<call.@this?> _current = new();
     private call.@this? _root;
 
-    // The settings this stack reads what it captures through — its actor's context's.
-    private readonly global::app.actor.setting.@this _settings;
+    // The settings these calls read what they capture through — their context's, reached when a frame is pushed, never
+    // at birth (a context's calls are born while the context is, before its settings can be read).
+    private readonly Func<global::app.actor.setting.@this> _settings;
 
-    /// <summary>A call stack reading what it captures through <paramref name="settings"/>.</summary>
-    public @this(global::app.actor.setting.@this settings) => _settings = settings;
+    /// <summary>A context's calls, reading what they capture through its <paramref name="settings"/>.</summary>
+    public @this(Func<global::app.actor.setting.@this> settings) => _settings = settings;
 
-    /// <summary>What this stack captures (<c>%!app.callstack.setting%</c>), as its settings have it now — a read is
+    /// <summary>What this stack captures (<c>%!app.call.setting%</c>), as its settings have it now — a read is
     /// a lookup in their cache, built again only after a write. A push reads it once.</summary>
-    public setting.@this Setting => _settings.Of<setting.@this>();
+    public setting.@this Setting => _settings().Of<setting.@this>();
 
     // An open diff scope (DiffScope) turns Diff on for as long as it's open, whatever the setting says.
     private int _diffScopes;
@@ -99,7 +101,7 @@ public sealed partial class @this : global::app.type.item.@this
         get
         {
             for (var frame = _current.Value; frame != null; frame = frame.Caller)
-                if (frame.Goal != null && frame.Step == null) return frame;
+                if (frame.IsGoal) return frame;
             return null;
         }
     }
@@ -154,7 +156,21 @@ public sealed partial class @this : global::app.type.item.@this
     /// automatic Pop.
     /// </summary>
     /// <param name="goal">The goal starting — its frame's goal is itself.</param>
-    public call.@this Push(global::app.goal.@this goal) => Push(goal, null, null, null);
+    /// <param name="names">The variables its frame is born with — a goal call's parameters.</param>
+    public call.@this Push(global::app.goal.@this goal, IEnumerable<global::app.data.@this>? names = null)
+        => Push(goal, null, null, null, names);
+
+    /// <summary>Pushes a frame that only binds <paramref name="names"/> (a loop's item, a handler's error) — for
+    /// <paramref name="held"/> when its runner supplies them to that one call (a tool call's state).</summary>
+    public call.@this Push(IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? held = null)
+        => Enter(new call.binding.@this(_current.Value, this, names, held));
+
+    /// <summary>Pushes a frame with memory of its own, born with <paramref name="names"/>: every write under it stays
+    /// in it (a tool's goal, a shortcut's). A task's run starts its chain with one whose <paramref name="caller"/> is
+    /// the frame its caller was in — reads fall through to the caller's frames and memory.</summary>
+    public call.@this Isolate(IEnumerable<global::app.data.@this>? names, global::app.goal.step.action.@this? held = null,
+        call.@this? caller = null)
+        => Enter(new call.isolated.@this(caller ?? _current.Value, this, names, held));
 
     /// <summary>Pushes the frame of a step starting: its goal and itself.</summary>
     public call.@this Push(global::app.goal.step.@this step) => Push(step.Goal, step, null, null);
@@ -165,7 +181,7 @@ public sealed partial class @this : global::app.type.item.@this
         => Push(action.Step?.Goal, action.Step, action, variables);
 
     private call.@this Push(global::app.goal.@this? goal, global::app.goal.step.@this? step,
-        global::app.goal.step.action.@this? action, Variables? variables)
+        global::app.goal.step.action.@this? action, Variables? variables, IEnumerable<global::app.data.@this>? names = null)
     {
         var caller = _current.Value;
 
@@ -173,17 +189,18 @@ public sealed partial class @this : global::app.type.item.@this
         if (caller != null && caller.Depth >= MaxDepth)
             throw new CallStackOverflowException(MaxDepth);
 
-        var call = new call.@this(goal, step, action, caller, this, caller, variables ?? Variables);
+        return Enter(new call.@this(goal, step, action, caller, this, caller, variables ?? Variables, names));
+    }
 
-        // Children owns its own lock + FIFO eviction policy.
-        caller?.Children.Add(call);
-
-        // Track the live run's root: reassign whenever the new Push has no caller, so
-        // %!callStack.Root% reflects the current run rather than a stale prior root that
-        // may have already been popped (and disposed).
-        if (caller == null) _root = call;
-        _current.Value = call;
-        return call;
+    // The frame becomes current: it joins its caller's children (Children owns its own lock + FIFO eviction), and a
+    // frame that starts an empty chain is the run's root — reassigned each time, so %!call.Root% is the live run's,
+    // never a stale one already popped.
+    private call.@this Enter(call.@this frame)
+    {
+        frame.Caller?.Children.Add(frame);
+        if (_current.Value == null) _root = frame;
+        _current.Value = frame;
+        return frame;
     }
 
     /// <summary>
@@ -197,7 +214,7 @@ public sealed partial class @this : global::app.type.item.@this
         {
             Step = step,
             Goal = goal,
-            CallFrames = Current?.SnapshotChain() ?? Array.Empty<call.@this>(),
+            CallFrames = Current?.Chain ?? Array.Empty<call.@this>(),
             Exception = ex,
         };
         Audit.Add(error);

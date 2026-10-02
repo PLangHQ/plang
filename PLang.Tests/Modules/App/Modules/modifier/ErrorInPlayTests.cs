@@ -74,7 +74,7 @@ public class ErrorInPlayTests
     [Test]
     public async Task ErrorInPlay_NothingFailed_IsNull()
     {
-        await Assert.That(Ctx.CallStack.Error).IsNull();
+        await Assert.That(Ctx.call.Error).IsNull();
     }
 
     /// <summary>A live frame holding an unrecovered error IS the answer.</summary>
@@ -84,10 +84,10 @@ public class ErrorInPlayTests
         var action = global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set", global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "%x%", "variable"), ("value", "v"));
         var error = new global::app.error.Error("frame failed");
 
-        await using var call = Ctx.CallStack.Push(action, Ctx.Variable);
+        await using var call = Ctx.call.Push(action, Ctx.Variable);
         call.Errors.Add(error);
 
-        await Assert.That(Ctx.CallStack.Error).IsEqualTo(error);
+        await Assert.That(Ctx.call.Error).IsEqualTo(error);
     }
 
     /// <summary>An inner frame's error shadows its caller's, and un-shadows when the inner
@@ -100,17 +100,17 @@ public class ErrorInPlayTests
         var outerError = new global::app.error.Error("outer failed");
         var innerError = new global::app.error.Error("inner failed");
 
-        await using var outer = Ctx.CallStack.Push(outerAction, Ctx.Variable);
+        await using var outer = Ctx.call.Push(outerAction, Ctx.Variable);
         outer.Errors.Add(outerError);
-        await Assert.That(Ctx.CallStack.Error).IsEqualTo(outerError);
+        await Assert.That(Ctx.call.Error).IsEqualTo(outerError);
 
-        await using (var inner = Ctx.CallStack.Push(innerAction, Ctx.Variable))
+        await using (var inner = Ctx.call.Push(innerAction, Ctx.Variable))
         {
             inner.Errors.Add(innerError);
-            await Assert.That(Ctx.CallStack.Error).IsEqualTo(innerError);   // shadowed
+            await Assert.That(Ctx.call.Error).IsEqualTo(innerError);   // shadowed
         }
 
-        await Assert.That(Ctx.CallStack.Error).IsEqualTo(outerError);       // un-shadowed
+        await Assert.That(Ctx.call.Error).IsEqualTo(outerError);       // un-shadowed
     }
 
     /// <summary>Recovery turns the error off — Handled is what stops a frame answering, and
@@ -120,12 +120,12 @@ public class ErrorInPlayTests
     {
         var action = global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set", global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "%x%", "variable"), ("value", "v"));
 
-        await using var call = Ctx.CallStack.Push(action, Ctx.Variable);
+        await using var call = Ctx.call.Push(action, Ctx.Variable);
         call.Errors.Add(new global::app.error.Error("recovered later"));
 
         call.Handled = true;
 
-        await Assert.That(Ctx.CallStack.Error).IsNull();
+        await Assert.That(Ctx.call.Error).IsNull();
         await Assert.That(call.Errors.Count).IsEqualTo(1);   // still in the audit view
     }
 
@@ -139,13 +139,13 @@ public class ErrorInPlayTests
     {
         var action = global::PLang.Tests.Shared.Make.Action(Ctx, "error", "throw", ("message", "already finished"));
 
-        await using (var call = Ctx.CallStack.Push(action, Ctx.Variable))
+        await using (var call = Ctx.call.Push(action, Ctx.Variable))
         {
             call.Errors.Add(new global::app.error.Error("already finished"));
-            await Assert.That(Ctx.CallStack.Error).IsNotNull();
+            await Assert.That(Ctx.call.Error).IsNotNull();
         }
 
-        await Assert.That(Ctx.CallStack.Error).IsNull();
+        await Assert.That(Ctx.call.Error).IsNull();
     }
 
     /// <summary>

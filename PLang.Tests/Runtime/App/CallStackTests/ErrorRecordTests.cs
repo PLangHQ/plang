@@ -17,7 +17,7 @@ public class ErrorRecordTests : System.IAsyncDisposable
         await context.Variable.Set("secret", "hunter2");
         var action = context.Action("variable.set(Name=%x%, Value=1)");
         var error = new global::app.error.ServiceError("boom", "Boom", 500);
-        await using var call = context.CallStack.Push(action, context.Variable);
+        await using var call = context.call.Push(action, context.Variable);
         call.Record(error, context);
         return error;
     }

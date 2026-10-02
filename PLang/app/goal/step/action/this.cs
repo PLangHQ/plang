@@ -108,7 +108,7 @@ public partial class @this
         Module = catalog.Module;
         Name = catalog.Name;
         Seed = seed;
-        Step = context.CallStack.Step;
+        Step = context.call.Step;
     }
 
     /// <summary>
@@ -186,13 +186,13 @@ public partial class @this
         // error already is: CallStack.Error / %!error% read it off the live chain, and marking it
         // Handled on that frame is what takes it out of play. When the Push wrapped dispatch only,
         // the frame died between the failure and the recovery that had to see it.
-        global::app.callstack.call.@this call;
-        try { call = context.CallStack.Push(this, context.Variable); }
+        global::app.call.@this call;
+        try { call = context.call.Push(this, context.Variable); }
         catch (global::app.error.CallStackOverflowException ex)
         {
             // The depth limit — trips at Push, before the frame is on the
             // stack, so the contract (returns Data, never throws) is held here.
-            return context.Error(context.CallStack.Overflow(ex, Step?.Goal, Step));
+            return context.Error(context.call.Overflow(ex, Step?.Goal, Step));
         }
         await using var _call = call;
 
@@ -230,7 +230,7 @@ public partial class @this
         else if (answer is { Success: false })
             data = answer;
         else
-            data = await DispatchAsync(context, context.CallStack.Current!);
+            data = await DispatchAsync(context, context.call.Current!);
         // The result leaves the attempt as it is here, inside the frame: a reference is bound to what it names,
         // read where it is written (`return %!goal%` is this goal, `%Now%` the moment of the return, a call
         // argument the callee's), not where the caller opens it after the frame is gone. Nothing is read through
@@ -294,7 +294,7 @@ public partial class @this
     /// that bubbles it differently. Step.Start's catch DOES exclude OCE — that asymmetry is intentional.</para>
     /// </summary>
     private async Task<global::app.data.@this> DispatchAsync(
-        actor.context.@this context, global::app.callstack.call.@this call)
+        actor.context.@this context, global::app.call.@this call)
     {
         // Uniform dispatch: always resolve the shell + run Resolve (the seam). A C#-composed
         // Seed (app.Run) rides on the entity and is read by the generated Resolve as the

@@ -159,8 +159,12 @@ public sealed class @this : global::app.type.item.list.@this<Step>
         using var check = new actor.context.@this(context.App, context.Actor, parent: context,
             fileSystem: context.App.Build?.Files ?? throw new System.InvalidOperationException("A goal's steps are read in a build: the app has no Build."));
         // The steps are checked inside their goal's frame, as they will run: what a step names relative to its
-        // goal (a file 'note.txt') is found where the goal is, not where the builder's own goal is.
-        await using var frame = CountRaw > 0 && this[0].Goal is { } goal ? context.CallStack.Push(goal) : null;
+        // goal (a file 'note.txt') is found where the goal is, not where the builder's own goal is. Each context
+        // has its own calls, so the frame is pushed in each the checks run in.
+        var goal = CountRaw > 0 ? this[0].Goal : null;
+        await using var frame = goal != null ? context.call.Push(goal) : null;
+        await using var checking = goal != null ? check.call.Push(goal) : null;
+        await using var scoping = goal != null ? scratch.call.Push(goal) : null;
         for (int i = 0; i < CountRaw; i++)
         {
             var step = this[i];

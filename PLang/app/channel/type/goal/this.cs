@@ -146,7 +146,7 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
         _executing.Value = true;
         try
         {
-            await using (context.Variable.Calls.Push(bound)) return await Goal.Start(context);
+            await using (context.call.Push(bound)) return await Goal.Start(context);
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
