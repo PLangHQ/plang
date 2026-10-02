@@ -46,10 +46,10 @@ public class Stage0_PlangTypeRemovalTests
     public async Task AType_GoesByItsDeclaredWord_ElseItsNamespace()
     {
         var context = _app.actor.list.User.Context;
-        await Assert.That(_app.type.list["app.event"].Name).IsEqualTo("app.event");
+        await Assert.That(_app.type.list["app.event"].Name).IsEqualTo("event");
         await Assert.That(_app.type.list["text"].Namespace).IsEqualTo("app.type.item.text");
         await Assert.That(_app.type.list["app.type.item.text"].Name).IsEqualTo("text");
-        await Assert.That(_app.type.list.Contains("event")).IsFalse();
+        await Assert.That(_app.type.list.Contains("event")).IsTrue();
         await Assert.That(new global::app.type.@this(typeof(global::app.@event.on.@this)).Name).IsEqualTo("app.event.on");
     }
 
