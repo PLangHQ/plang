@@ -25,6 +25,10 @@ public partial class start : IContext
     /// <summary>Folder the program runs in. Default: the app root.</summary>
     public partial data.@this<global::app.type.item.path.@this>? WorkingDirectory { get; init; }
 
+    /// <summary>The folders the program is held to — <c>{read: [...], write: [...]}</c>: the kernel lets it touch
+    /// nothing else. Each folder is first this app's to read or write. No jail, no hold. Not with Administrator.</summary>
+    public partial data.@this<global::app.module.terminal.type.jail.@this>? Jail { get; init; }
+
     /// <summary>Text written to the program's stdin, which is then closed.</summary>
     public partial data.@this<global::app.type.item.text.@this>? Input { get; init; }
 
