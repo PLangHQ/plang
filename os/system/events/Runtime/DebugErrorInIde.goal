@@ -1,3 +1,0 @@
-DebugErrorInIde
-- call goal SendDebugInfo
-- throw %!error%

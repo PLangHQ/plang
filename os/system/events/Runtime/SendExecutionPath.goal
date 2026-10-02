@@ -1,7 +1,0 @@
-SendExecutionPath
-- if not %!CallingGoal.IsOS% then
-    - set default value %plang.debugPort% = 60877
-    - [plang] get variables in %!CallingStep%, write to %variables%
-    - post http://localhost:%plang.debugPort%/ 
-        timeout: 30 min
-        data: { "type":"execution", "action":"%action%", "goal":"%!CallingGoal%", "step": %!CallingStep%, "variables":"%variables%", "memoryStack":%!memorystack% }

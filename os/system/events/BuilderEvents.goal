@@ -1,2 +1,0 @@
-BuildEvents
-- on step error, key:"InvalidInstructionFile", include os, call /events/Runtime/HandleBadInstructionFile
