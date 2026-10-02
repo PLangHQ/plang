@@ -478,4 +478,28 @@ unchanged. (A `list<text>` would render the same way — text is a leaf item typ
 leaf/non-record lists plain. If a literal `list<text>` slot is wanted measured, it rides with the
 terminal module's `list<permission>` (a record list) — blocked here.
 
+## Coder fixes 36 + 37 (220b07145, ae2bc8549, 6c136ec1a) — re-measure: both fixed
+
+Fresh, cache off; direct `.pr` inspection (extractor `Key`-count corrected — it false-matches a non-foreach "Key").
+
+**32(b) edu — 10 builds:** **9/10 SAVED, `Name="Page"` ×3 (3/3)**; **1/10 NO PR**. The issue-37 cast
+(`InvalidCastException: lower app.module into list`) is **gone** — no cast failures. The one NO PR is
+the new build refusal the coder added — `goal.call: Parameter takes named rows: {name:
+%!app.module.file%}` (the writer wrote the arg as an unnamed row instead of `{module: …}`) — and
+FixSteps **recovered it on 2 of the 10** (logged "rejected — retrying") but **failed to recover on 1**.
+So 32(b) is now 9/10 clean; the residual is a **FixSteps-recovery gap** on the Parameter-rows refusal
+(~1/10), not a mis-map (when it builds, Name is Page). Worth the coder's eye on the recovery, not
+urgent.
+
+**Issue 36 — 5 builds:** `foreach %x%, call Y y=%item%` → `loop.foreach(Collection=%x%)`, **no
+`Key=%item%`** 5/5 (direct: no `"name":"Key"` in the foreach; the `%item%` is the `goal.call y=` arg).
+The 36 fix holds — the Option no longer offers `%item%` (foreach's default), so Key picks nothing.
+
+**Guards — 5 each:**
+- `foreach %items% as %i%` → Item=%i%, **no Key** 5/5.
+- `foreach %person% as %value% with key %field%` → Item=%value% + Key=%field% 5/5.
+
+So 36 is fixed with both guards holding, and 37's cast is gone (32b 9/10, one FixSteps-recovery edge on
+the goal.call Parameter-rows refusal).
+
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).
