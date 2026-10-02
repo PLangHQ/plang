@@ -58,8 +58,31 @@ internal sealed class Page(string target, int port, Func<string, bool> own)
         return answer.TryGetProperty("result", out var r) && r.TryGetProperty("data", out var data) ? data.GetString() ?? "" : "";
     }
 
-    /// <summary>The page loads again, from its files (nothing cached): a change to them shows.</summary>
-    internal Task Reload() => Ask("Page.reload", new JsonObject { ["ignoreCache"] = true });
+    /// <summary>The page loads again, from its files (nothing cached): a change to them shows. Done when the new
+    /// page has loaded (its scripts ran, its goals are there) — not when the reload started: the next step talks
+    /// to the page (calls its goal, takes its picture). A page that hasn't loaded in ten seconds is said.</summary>
+    internal async Task Reload()
+    {
+        // the old document answers "complete" until it goes: wait for one that is new (a fresh mark it doesn't have)
+        await Ask("Runtime.evaluate", new JsonObject { ["expression"] = "window.__reloading = true" });
+        await Ask("Page.reload", new JsonObject { ["ignoreCache"] = true });
+        var until = DateTime.UtcNow.AddSeconds(10);
+        while (DateTime.UtcNow < until)
+        {
+            try
+            {
+                var reply = await Ask("Runtime.evaluate", new JsonObject
+                {
+                    ["expression"] = "!window.__reloading && document.readyState === 'complete'", ["returnByValue"] = true,
+                });
+                if (reply.TryGetProperty("result", out var r) && r.TryGetProperty("result", out var v)
+                    && v.TryGetProperty("value", out var loaded) && loaded.ValueKind == JsonValueKind.True) return;
+            }
+            catch (TimeoutException) { }   // between documents: nothing answers yet
+            await Task.Delay(100);
+        }
+        throw new TimeoutException("the page didn't finish loading again within 10 seconds");
+    }
 
     /// <summary>The page closes (and the window it is in).</summary>
     internal Task Shut() => Ask("Page.close", new JsonObject());

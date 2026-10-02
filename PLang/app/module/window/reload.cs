@@ -19,7 +19,11 @@ public partial class reload : IContext
         var browser = Browser == null ? null : await Browser.Value();
         if (await global::app.module.window.Window.Of(Window, browser, Context) is not { } window)
             return Context.Error(new global::app.error.ActionError($"No such window: {Window.Peek()}", "WindowNotFound", 404));
-        await window.Reload();
+        try { await window.Reload(); }
+        catch (TimeoutException ex)
+        {
+            return Context.Error(new global::app.error.ActionError($"Window {window} reloaded, but {ex.Message}", "PageNotLoaded", 504));
+        }
         return Context.Ok();
     }
 }
