@@ -144,23 +144,11 @@ public sealed class @this : IDisposable
     {
         var vars = Variable;
 
-        // All context variables are lazy — context has app, fetch at request time
+        // All context variables are lazy — context has app, fetch at request time. The goal, step, error, test and
+        // channels in play are the app's shortcuts (/system/shortcut/: %!goal%, %!step%, %!error%, %!test%,
+        // %!channel%), each reading its asker's place through the app.
         vars.Set(new data.DynamicData("!app", asker => asker.Ok(App), this));
         vars.Set(new data.DynamicData("!context", asker => asker.Ok(this), this));
-        vars.Set(new data.DynamicData("!variables", asker => asker.Ok(Variable), this));
-        vars.Set(new data.DynamicData("!channels", asker => asker.Ok(Actor.Channel), this));
-        // the goal and step in play are the current frame's place — the stack is where they already live. The call
-        // stack, the trace, the event in play and the last action's result are the app's own (%!callstack%,
-        // %!trace%, %!event%, %!data% — each action writes its result to its asker's !data).
-        vars.Set(new data.DynamicData("!goal", asker => asker.Ok(CallStack.Goal), this));
-        vars.Set(new data.DynamicData("!step", asker => asker.Ok(CallStack.Step), this));
-        // %!error% reads the CALL STACK. The error is already recorded on the frame that
-        // failed, and that frame is still live while its recovery runs (one frame per action,
-        // spanning its modifiers), so nothing stores the error a second time. CallStack.Error
-        // walks Caller outward for the first frame holding an unrecovered one — nesting
-        // shadows for free, and parallel branches don't cross (the stack is AsyncLocal).
-        vars.Set(new data.DynamicData("!error", asker => asker.Ok(CallStack.Error), this));
-        vars.Set(new data.DynamicData("!test", asker => asker.Ok(Test), this));
     }
 
     // --- Value births ---

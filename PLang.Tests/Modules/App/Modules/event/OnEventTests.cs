@@ -68,7 +68,7 @@ public class OnEventTests
 
     [Test]
     [Arguments("%!app.type.step.on.after%", "after")]
-    [Arguments("%!channels.audit.on.write%", "audit")]
+    [Arguments("%!channel.audit.on.write%", "audit")]
     public async Task APathThatReachesNothingAtBuild_IsAWarning_NamingTheHop(string path, string hop)
     {
         var builder = new System.IO.MemoryStream();
