@@ -7,10 +7,11 @@ namespace app.module.screen;
 public partial class close : IContext
 {
     /// <summary>The screen, from <c>screen.open</c>.</summary>
-    public partial data.@this<Screen> Screen { get; init; }
+    public partial data.@this<type.screen.@this> Screen { get; init; }
 
-    [Code]
-    public partial IScreen Provider { get; }
-
-    public async Task<data.@this> Start() => await Provider.Close(this);
+    public async Task<data.@this> Start()
+    {
+        (await Screen.Value())?.Close();
+        return Context.Ok();
+    }
 }

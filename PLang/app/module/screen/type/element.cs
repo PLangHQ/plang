@@ -1,4 +1,3 @@
-using System.Text.Json.Nodes;
 using app.Attributes;
 
 namespace app.module.screen;
@@ -16,13 +15,13 @@ public sealed class Element : global::app.type.item.@this, global::app.type.item
     [LlmBuilder, Out] public string Selector { get; init; } = "";
 
     /// <summary>The screen it is on.</summary>
-    internal Screen? Screen { get; init; }
+    internal type.screen.@this? Screen { get; init; }
 
     /// <summary>One step by dot: <c>on</c> — its events; reached, the screen gives this element its clicks.</summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
     {
         if (string.Equals(key, "on", StringComparison.OrdinalIgnoreCase))
-            Screen?.Display?.Input(new JsonObject { ["ui"] = "bind", ["element"] = Selector }.ToJsonString());
+            Screen?.Bind(Selector);
         return base.Get(parent, key);
     }
 
@@ -38,7 +37,7 @@ public sealed class Element : global::app.type.item.@this, global::app.type.item
 }
 
 /// <summary>A screen's elements, picked by selector: <c>%!screen.element["#window.bot"]%</c>.</summary>
-public sealed class Elements(Screen screen) : global::app.type.item.@this
+public sealed class Elements(type.screen.@this screen) : global::app.type.item.@this
 {
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, Element> held = new(StringComparer.OrdinalIgnoreCase);
 

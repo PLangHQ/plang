@@ -14,10 +14,9 @@ public partial class send : IContext
     public partial data.@this Data { get; init; }
 
     /// <summary>The screen, from <c>screen.open</c>.</summary>
-    public partial data.@this<Screen> Screen { get; init; }
+    public partial data.@this<type.screen.@this> Screen { get; init; }
 
-    [Code]
-    public partial IScreen Provider { get; }
-
-    public async Task<data.@this> Start() => await Provider.Send(this);
+    public async Task<data.@this> Start() => await Screen.Value() is { } screen
+        ? await screen.Send(Data, Context)
+        : Context.Error(new global::app.error.ActionError("The screen isn't open.", "ScreenNotOpen", 409));
 }

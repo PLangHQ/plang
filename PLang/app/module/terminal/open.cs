@@ -39,7 +39,7 @@ public partial class open : IContext
 
     /// <summary>Each binary message goes straight to this screen (from <c>screen.open</c>) — no goal per
     /// message; output to a screen is binary. OnOutput, when given too, still gets each one.</summary>
-    public partial data.@this<global::app.module.screen.Screen>? OutputTo { get; init; }
+    public partial data.@this<global::app.module.screen.type.screen.@this>? OutputTo { get; init; }
 
     /// <summary>Goal called for each line the program writes to stderr, the line as <c>%!data%</c>.</summary>
     public partial data.@this<global::app.goal.step.action.@this>? OnError { get; init; }

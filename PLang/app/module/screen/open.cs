@@ -43,5 +43,5 @@ public partial class open : IContext
     [Code]
     public partial IScreen Provider { get; }
 
-    public async Task<data.@this<Screen>> Start() => await Provider.Open(this);
+    public async Task<data.@this<type.screen.@this>> Start() => await Provider.Open(this);
 }
