@@ -45,13 +45,22 @@ confirm a fix still need the key.
   `goal.call(Name="%!app.module.file%")`, `Page` lost. goal.call's note is **already correct**; the
   *writer* misreads the dotted `%!a.b.c%` variable as the name. Evidence for the architect's
   decider/writer-opaque-variable direction (they own it); hold per their instruction.
-- **Issue 30 pass 2 — DONE.** 15 remaining os/ goals; all build clean / have current valid .pr; no
-  writer-mis-map/core/write-in-formal refusals left (the v2-era failures were in the 24 swept goals).
-  5 rebuilt this session (dropped deprecated isSetup/etc. per 819f239c6; kept). Two needed one
-  FixSteps retry (issue-17 class, recovered). **Key mechanic:** `cache:false` bypasses only the LLM
-  cache, not the source-unchanged skip (build.md ll.69-71) — a full `os/ cache:false` build finds 15,
-  rebuilds 0 (all current). Forcing a rebuild needs a fresh `.build` (off-limits for os/). Table in
-  `v3/result.md`.
+- **Issue 30 pass 2 — DONE (closed by architect).** 15 remaining os/ goals; all build clean / have
+  current valid .pr; no writer-mis-map/core/write-in-formal refusals left (v2-era failures were in the
+  24 swept goals). 5 rebuilt this session (dropped deprecated isSetup/etc. per 819f239c6; kept). Two
+  needed one FixSteps retry (issue-17 class, recovered). Table in `v3/result.md`.
+- **`cache:false` regression found (`v3/cache-false-diagnosis.md`).** On head, cache:false does NOT
+  rebuild an unchanged goal in ANY folder (reproduced on hash-take: fresh build then unchanged
+  cache:false rebuild → skipped, md5 unchanged). The CLI build setting isn't visible as
+  `%!build.setting.cache%` at Build.goal start, so `Build.goal:7` `set default … = true` clobbers it;
+  `Default.cs:116` reads true → MergePrData → `IsCached` (`goal/this.cs:288`) → skip. The LLM-cache
+  half still works (`Executor.cs:111`). build.md 69-71 are correct; it's a code regression (root in
+  the `.setting` projection, 7c98a5e44 family) — handed to the architect/coder. Fresh-folder
+  measurements are unaffected (no .pr to merge), so this session's c4/loop/modules measurements stand.
+- **Issue 32 masking shape drafted (`v3/issue32-masking-shape.md`).** Step variables → opaque `%vN%`
+  for both decider and writer (via a new `s.Masked` + reverse map on step, core); templates read
+  `s.Masked`; the formal answer's `%vN%` maps back before parse. Couples with Option-v2 (shared mask).
+  I own the template side + measurements; core to the coder after architect review.
 - **Item 6** (goal.call `Parallel`/task teaching) — gated on the coder's stages 1–2 of
   `test/plan/task/`, not started.
 

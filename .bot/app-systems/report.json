@@ -984,13 +984,27 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "Issue 30 pass 2: rebuilt the stale os/ .pr (cache off). All 15 remaining os/ goals build clean / have current valid .pr; no writer-mis-map/core/write-in-formal refusals remain. These 5 rebuilt and dropped the deprecated isSetup/isEvent/isSystem/isTest fields (819f239c6 format; hash+steps unchanged) - kept per keep-rebuilt-pr. Finding: cache:false does NOT force-rebuild unchanged goals (build.md 69-71, source-unchanged skip is separate from LLM cache); full os/ build found 15 rebuilt 0. Table in v3/result.md."
+          "context": "Issue 30 pass 2 (closed by architect): rebuilt the stale os/ .pr (cache off). All 15 remaining os/ goals build clean / current valid .pr; no refusals remain. These 5 dropped the deprecated isSetup/isEvent/isSystem/isTest fields (819f239c6; hash+steps unchanged) - kept. Table in v3/result.md."
+        },
+        {
+          "paths": [".bot/app-systems/builder/v3/cache-false-diagnosis.md", "PLang/app/module/build/code/Default.cs", "os/system/builder/Build.goal", "PLang/Executor.cs"],
+          "type": "decision",
+          "category": "code",
+          "confidence": "high",
+          "context": "Diagnosed a cache:false regression: it no longer rebuilds an unchanged goal in ANY folder (reproduced on hash-take). Root: CLI build setting not visible as %!build.setting.cache% at Build.goal start -> Build.goal:7 'set default = true' clobbers it -> Default.cs:116 reads true -> MergePrData -> goal.IsCached (goal/this.cs:288) -> BuildGoal/Start.goal skips. LLM-cache half works (Executor.cs:111). build.md 69-71 correct; code regression in the .setting projection (7c98a5e44 family). Handed to architect/coder."
+        },
+        {
+          "paths": [".bot/app-systems/builder/v3/issue32-masking-shape.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Drafted issue 32 opaque-variable masking shape (architect's request): step variables -> %vN% placeholders for decider+writer via new step.Masked + reverse map (core); templates read s.Masked; formal answer's %vN% restored before parse. Couples with Option-v2 (shared mask). I own template side + measurements; core to coder after review."
         }
       ],
       "after": {
-        "status": "Item 5 done. C4 10/10 (resolved on head). Issue 2 reproduces 3/5 -> Option-v2 drafted+accepted. Issue 32b reproduces 5/5, cheap example-lever failed -> opaque-variable core (coder). Issue 30 pass 2 DONE: all 15 os/ goals build clean/current, no refusals left.",
-        "health": "green (builds run with the key; os/ 15 goals all valid .pr)",
-        "notes": "Key finding: cache:false bypasses only the LLM cache, not the source-unchanged skip (build.md 69-71) - a kept .build skips unchanged goals. Key stays in env per architect (storage is a security Q for Ingi); do NOT write it into any app store. Shapes: v3/result.md, v3/option-v2-shape.md. Next: coder's Option-v2 core + listed.Option, then my ask:-lines + measure; item 6 after coder task stages."
+        "status": "Item 5 done. C4 10/10 (resolved). Issue 2 3/5 -> Option-v2 accepted. Issue 32b 5/5, example-lever failed -> masking shape drafted. Issue 30 pass 2 DONE (closed). cache:false regression diagnosed (file:line). Issue 32 masking shape drafted.",
+        "health": "green (builds run; os/ 15 goals valid). One known regression: cache:false doesn't rebuild unchanged goals (handed to architect/coder).",
+        "notes": "Shapes/diagnoses: v3/result.md, v3/option-v2-shape.md, v3/issue32-masking-shape.md, v3/cache-false-diagnosis.md. Decider key stays in env per architect (storage is Ingi's security call); NOT written to any store. Next: coder's Option-v2 core + listed.Option + masking core, then my template side + ask:-lines + measurements; item 6 after coder task stages."
       }
     }
   ]

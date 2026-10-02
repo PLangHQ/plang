@@ -170,15 +170,17 @@ gap in `Code()` is a secondary coder fix for the Known-hint path.
 
 The sweep left **15** hand-authored os/ goals. Rebuilt per-file and as a full `os/` build, cache off.
 
-**Key mechanic found:** `cache:false` bypasses only the **LLM cache**, not the **source-unchanged
-skip** (build.md §Cache, ll.69-71: "a step whose source is unchanged … its saved `code` stands and
-the LLM never sees it (decided before any LLM call)"). A fresh folder rebuilds because `.build` is
-empty; the os/ `.build` is kept (the "NEVER delete .build" rule), so an unchanged goal is skipped.
-So a full `os/ cache:false` build reports **"Found 15 goals"** and rebuilds **0** — all are current.
-(The v2 note that "414a1cfa3 makes cache:false rebuild an unchanged goal" conflated the two senses;
-the educator's fresh-folder measurements rebuilt because the folder had no `.pr`, not because of
-cache:false.) **Consequence:** a forced full-rebuild table of the os/ goals isn't producible without
-deleting their `.pr` (off-limits). Only goals whose `.pr` was stale this session actually rebuilt.
+**Why 0 rebuilt — a current regression (full diagnosis: `v3/cache-false-diagnosis.md`).** On head,
+`cache:false` does NOT rebuild an unchanged goal **in any folder** (reproduced on the educator's
+`hash-take`: build fresh, then rebuild unchanged with cache:false → "Found 1 goals", md5 unchanged).
+Mechanism: the CLI-applied build setting isn't visible as `%!build.setting.cache%` at Build.goal
+start (verified undefined via `--debug`), so `Build.goal:7` `set default %!build.setting.cache% = true`
+clobbers it; `Default.cs:116` then reads `true` → `MergePrData` → `goal.IsCached` (`goal/this.cs:288`)
+→ `BuildGoal/Start.goal` `if %goal.IsCached%, return`. The LLM-cache half of cache:false still works
+(`Executor.cs:111` reads the typed setting before the clobber). build.md ll.69-71 are correct
+(source-unchanged skip); the broken thing is the intended "cache:false rebuilds unchanged" (written
+for at `Default.cs:113-116`), defeated by the clobber. **Consequence:** a forced os/ rebuild needs a
+fresh `.build` (off-limits). Only goals whose `.pr` was stale this session rebuilt.
 
 | goal | result | note | class |
 |---|---|---|---|
