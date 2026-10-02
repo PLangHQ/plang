@@ -91,6 +91,22 @@ public class AppTests
         await Assert.That(keys).IsEquivalentTo(new[] { "id", "created", "updated", "version" });
     }
 
+    // app.pr is the app's identity: a build of an app that has one doesn't write it again
+    [Test]
+    public async Task SaveApp_OfAnExistingIdentity_LeavesAppPrUnchanged()
+    {
+        var buildDir = System.IO.Path.Combine(_tempDir, ".build");
+        System.IO.Directory.CreateDirectory(buildDir);
+        var appPr = System.IO.Path.Combine(buildDir, "app.pr");
+        System.IO.File.WriteAllText(appPr, "{\n  \"id\": \"kept-id\",\n  \"created\": \"2026-05-22T16:36:45.9879065+00:00\",\n  \"updated\": \"2026-05-22T16:36:45.9879065+00:00\"\n}");
+        var before = System.IO.File.ReadAllBytes(appPr);
+
+        await (await _app.Load()).IsSuccess();
+        await (await _app.Save()).IsSuccess();
+
+        await Assert.That(System.IO.File.ReadAllBytes(appPr)).IsEquivalentTo(before);
+    }
+
     [Test]
     public async Task GetApp_CorruptJson_IsAnError_TheIdentityUntouched()
     {
