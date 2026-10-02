@@ -1,0 +1,1 @@
+{received: "40 MiB", total: "100 MiB", percent: 40}

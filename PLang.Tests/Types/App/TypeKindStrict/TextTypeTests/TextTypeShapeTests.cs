@@ -53,13 +53,12 @@ public class TextTypeShapeTests
         await Assert.That(ex.Message).DoesNotContain("(a this)");
     }
 
+    // text's description is its teaching file's (os/system/type/text/type.description.md)
     [Test] public async Task Text_Description_TeachesKindFromExtension()
     {
-        var prop = typeof(TextType).GetProperty(
-            "Description", BindingFlags.Public | BindingFlags.Static);
-        await Assert.That(prop).IsNotNull();
-        var desc = (string?)prop!.GetValue(null);
-        await Assert.That(desc).IsNotNull();
-        await Assert.That(desc!.Contains("extension", System.StringComparison.OrdinalIgnoreCase)).IsTrue();
+        await using var app = new global::app.@this("/test").Testing();
+        var ctx = app.actor.list.User.Context;
+        var desc = await app.type.list["text"].Description(ctx).Text(ctx);
+        await Assert.That(desc.Contains("extension", System.StringComparison.OrdinalIgnoreCase)).IsTrue();
     }
 }

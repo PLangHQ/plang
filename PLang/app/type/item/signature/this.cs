@@ -34,7 +34,6 @@ using hash = global::app.module.crypto.type.hash.@this;
 [global::app.Attributes.PlangType("signature")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Description => "A value signed by an identity, with the signer and the algorithm.";
     public static string Shape => "object";
 
     /// <summary>The inner schema this signature attests — the <c>value</c> slot.</summary>

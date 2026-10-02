@@ -16,8 +16,6 @@ namespace app.type.item.guid;
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
-    public static string Example => "550e8400-e29b-41d4-a716-446655440000";
-    public static string Description => "A globally unique identifier.";
     public static string Shape => "string";
 
     public System.Guid Value { get; }

@@ -71,6 +71,17 @@ public sealed class @this
     /// <summary>Whether a step calls this member with arguments, rather than reading it.</summary>
     public bool IsMethod => Arguments != null;
 
+    /// <summary>The type this is a member of, when it is one (<c>text</c> for <c>replace</c>) — whose teaching folder
+    /// holds its notes.</summary>
+    public string? Owner { get; init; }
+
+    /// <summary>What the builder is taught about this member — <c>/system/type/&lt;owner&gt;/&lt;member&gt;.notes.md</c>, its
+    /// first line the member's one-liner; falsy when it has none, or when this is no type's member.</summary>
+    [LlmBuilder]
+    public global::app.type.item.file.@this? Notes(global::app.actor.context.@this context)
+        => Owner == null ? null
+            : new(global::app.type.item.path.@this.Resolve($"/system/type/{Owner}/{Name}.notes.md", context), context);
+
     /// <summary>The class's <c>[Default]</c> value, or null when the property is required / has no default.</summary>
     public object? Default { get; init; }
 

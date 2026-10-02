@@ -13,9 +13,6 @@ namespace app.type.item.path;
 public abstract partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
-    public static string Example => "/docs/readme.md";
-    public static string Description =>
-        "Where a file, a folder or a web resource is: a path in the app, an absolute path, or a URL.";
 
     /// <summary>
     /// Scheme name for this path (e.g. "file", "http", "https"). Subclasses

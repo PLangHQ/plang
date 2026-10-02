@@ -11,7 +11,6 @@ namespace app.module.archive.type.archive;
 [global::app.Attributes.PlangType("archive")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Description => "Packed bytes in a format (gzip, tar.gz, zip…), and what they hold.";
     public static string Shape => "object";
 
     /// <summary>The packed bytes, when the archive is held in memory.</summary>

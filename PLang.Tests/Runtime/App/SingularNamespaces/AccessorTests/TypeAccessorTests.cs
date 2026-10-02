@@ -72,10 +72,11 @@ public class TypeAccessorTests
     [Test] public async Task APermission_ShowsItsPathAndVerbsForm()
     {
         await using var app = new global::app.@this("/test").Testing();
+        var ctx = app.actor.list.User.Context;
         var p = app.type.list["permission"];
-        await Assert.That(p.Example).IsEqualTo("{\"path\": \"/src/os\", \"verbs\": [\"read\", \"write\"]}");
+        await Assert.That(await p.Example(ctx).Text(ctx)).IsEqualTo("{\"path\": \"/src/os\", \"verbs\": [\"read\", \"write\"]}");
         await Assert.That(p.Shape).IsEqualTo("object");
-        await Assert.That(p.Description).IsNotNull();
+        await Assert.That(await p.Description(ctx).Text(ctx)).IsNotEmpty();
     }
 
     // a list of records shows one of its element, and names it — so a list<permission> slot teaches {path, verbs}
@@ -84,8 +85,8 @@ public class TypeAccessorTests
         await using var app = new global::app.@this("/test").Testing();
         var ctx = app.actor.list.User.Context;
         var listed = app.type.list[new global::app.type.@this("list", "permission"), ctx];
-        await Assert.That(listed.Example).IsEqualTo("[{\"path\": \"/src/os\", \"verbs\": [\"read\", \"write\"]}]");
-        await Assert.That(listed.Description).StartsWith("A list of permission: What may be done where");
+        await Assert.That(await listed.Example(ctx).Text(ctx)).IsEqualTo("[{\"path\": \"/src/os\", \"verbs\": [\"read\", \"write\"]}]");
+        await Assert.That(await listed.Description(ctx).Text(ctx)).StartsWith("A list of permission: What may be done where");
     }
 
     // a record is written as an object: one with builder properties, or one that declares the object shape
@@ -105,17 +106,21 @@ public class TypeAccessorTests
         var ctx = app.actor.list.User.Context;
         var plain = app.type.list["list"];
         var texts = app.type.list[new global::app.type.@this("list", "text"), ctx];
-        await Assert.That(texts.Example).IsEqualTo(plain.Example);
-        await Assert.That(texts.Description).IsEqualTo(plain.Description);
+        await Assert.That(await texts.Example(ctx).Text(ctx)).IsEqualTo(await plain.Example(ctx).Text(ctx));
+        await Assert.That(await texts.Description(ctx).Text(ctx)).IsEqualTo(await plain.Description(ctx).Text(ctx));
     }
 
-    [Test] public async Task AppType_IndexByName_Example_FoldedFromEntry_ReadsOffTheEntity()
+    // a type's example is its teaching file's — text shows `Hello, world`, a type with no file reads empty, never throws
+    [Test] public async Task AppType_Example_IsItsTeachingFile_AndAbsentReadsEmpty()
     {
-        // Example may be null for many types — just check the surface exists.
         await using var app = new global::app.@this("/test").Testing();
-        var t = app.type.list["string"];
-        var _ = t.Example;  // doesn't throw, surface present
-        await Assert.That(true).IsTrue();
+        var ctx = app.actor.list.User.Context;
+        await Assert.That(await app.type.list["string"].Example(ctx).Text(ctx)).IsEqualTo("Hello, world");
+        await Assert.That(await app.type.list["type"].Example(ctx).Text(ctx)).IsEqualTo("");
+        await Assert.That(await app.type.list["type"].Description(ctx).Text(ctx)).IsEqualTo("");
+        // read as a template reads it: a type that says nothing answers no value, so `{% if t.Description %}` is false
+        var read = await (await new global::app.data.@this("", app.type.list["type"], context: ctx).Get("Description")).Value();
+        await Assert.That(read is null || read.IsNull).IsTrue();
     }
 
     [Test] public async Task AppType_IndexOfUnknownName_ThrowsTypedError()

@@ -8,7 +8,6 @@ namespace app.module.archive.type.archive.held;
 [global::app.Attributes.PlangType("held")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Description => "What an archive holds: a Data, a file with its name, or a folder.";
     public static string Shape => "object";
     public static bool Internal => true;
 

@@ -1,0 +1,1 @@
+A base64-encoded payload (REST binary fields, data-urls). `as base64` ENCODES the source value (lazily); a field/param typed base64 validates its payload at read. Kind carries the content family from a data-url mime (gif, png, json, ...).

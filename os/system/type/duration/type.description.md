@@ -1,0 +1,1 @@
+A length of time: a number and its unit (200ms, 30s, 5m, 1h, 1d), or ISO 8601 (PT5M).

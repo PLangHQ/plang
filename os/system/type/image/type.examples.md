@@ -1,0 +1,1 @@
+/images/photo.jpg

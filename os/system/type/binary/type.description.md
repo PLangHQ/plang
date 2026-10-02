@@ -1,0 +1,1 @@
+Bytes. Its kind is what they hold, when known (png, pdf, json, …).

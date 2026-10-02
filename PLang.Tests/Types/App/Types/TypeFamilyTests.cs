@@ -15,7 +15,7 @@ public class TypeFamilyTests : System.IAsyncDisposable
         var markdown = Ctx.App.type.list[new global::app.type.@this("text", "md"), Ctx];
 
         await Assert.That(markdown.kind.Name).IsEqualTo("md");
-        await Assert.That(markdown.Description).IsEqualTo(text.Description);
+        await Assert.That(await markdown.Description(Ctx).Text(Ctx)).IsEqualTo(await text.Description(Ctx).Text(Ctx));
         await Assert.That(markdown.Alias).IsSameReferenceAs(text.Alias);
         await Assert.That(markdown.Namespace).IsEqualTo(text.Namespace);
     }

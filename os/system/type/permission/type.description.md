@@ -1,0 +1,1 @@
+What may be done where: a path (a glob matches many) and the verbs allowed on it — read, write, delete, execute.

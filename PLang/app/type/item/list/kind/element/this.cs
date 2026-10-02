@@ -25,13 +25,14 @@ public sealed class @this : global::app.type.kind.@this
 
     /// <summary>A list of records is shown by one of its element (<c>[{"path": …, "verbs": […]}]</c>); a list of any
     /// other element shows the list's own — a scalar's example is no formal value to wrap.</summary>
-    public override string? Example => _element.IsRecord && _element.Example is { } one ? $"[{one}]" : null;
+    public override global::app.type.item.prose.@this? Example(global::app.actor.context.@this context)
+        => _element.IsRecord ? new("[", _element.Example(context), "]") : null;
 
     /// <summary>A list is offered what its element is (a list of permissions: that the step gives them).</summary>
     public override System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
         => _element.Offers(step);
 
     /// <summary>A list of records says what each element is; a list of any other element says the list's own.</summary>
-    public override string? Description
-        => _element.IsRecord && _element.Description is { } each ? $"A list of {Name}: {each}" : null;
+    public override global::app.type.item.prose.@this? Description(global::app.actor.context.@this context)
+        => _element.IsRecord ? new($"A list of {Name}: ", _element.Description(context)) : null;
 }

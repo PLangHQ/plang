@@ -51,8 +51,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return context.Ok();
     }
 
-    public static string Example => "/images/photo.jpg";
-    public static string Description => "An image: its bytes, or where they are. Its kind is its format (png, jpg, gif, …).";
     public static string Shape => "string";
 
     // Null until loaded — a path-backed image reads nothing until first content

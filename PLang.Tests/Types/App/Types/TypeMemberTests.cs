@@ -64,6 +64,32 @@ public class TypeMemberTests
         await Assert.That((await count.Value())?.ToString()).IsEqualTo("1");
     }
 
+    // A type's teaching and its members' notes are files in /system/type/<type>/, read when asked; one that isn't there
+    // is falsy, and nothing throws.
+    [Test]
+    public async Task ATypesTeaching_AndAMembersNotes_AreItsFiles()
+    {
+        var root = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_teach_" + Guid.NewGuid().ToString("N"))).FullName;
+        try
+        {
+            var folder = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(root, "system", "type", "text")).FullName;
+            await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(folder, "type.notes.md"), "text is words");
+            await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(folder, "replace.notes.md"), "old — what to find");
+            await using var app = new global::app.@this(root).Testing();
+            var ctx = app.actor.list.User.Context;
+            var text = app.type.list["text"];
+
+            await Assert.That(await Read(text.Notes(ctx), ctx)).IsEqualTo("text is words");
+            await Assert.That(await Read(Member(app, "text", "replace").Notes(ctx)!, ctx)).IsEqualTo("old — what to find");
+            await Assert.That(await text.Guide(ctx).AsBooleanAsync(ctx)).IsFalse();
+            await Assert.That(await Member(app, "text", "trim").Notes(ctx)!.AsBooleanAsync(ctx)).IsFalse();
+        }
+        finally { System.IO.Directory.Delete(root, true); }
+
+        static async Task<string?> Read(global::app.type.item.@this file, global::app.actor.context.@this ctx)
+            => (await new global::app.data.@this("", file, context: ctx).Value())?.ToString()?.Trim();
+    }
+
     // A method that asks only for its asker's context is read as it is: %p.relative%.
     [Test]
     public async Task AMethodAskingOnlyForItsAsker_IsReadAsAProperty()

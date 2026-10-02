@@ -150,7 +150,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return context.Ok();
     }
 
-    public static string Description => "Bytes. Its kind is what they hold, when known (png, pdf, json, …).";
     public static IReadOnlyList<string> Alias { get; } = ["bytes"];
     public static string Shape => "string";
 

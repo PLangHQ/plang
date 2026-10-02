@@ -63,18 +63,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return context.Ok();
     }
 
-    public static string Example => "Hello, world";
     public static IReadOnlyList<string> Alias { get; } = ["string"];
     public static string Shape => "string";
-    /// <summary>
-    /// LLM-facing teaching: text's kind comes from the file extension
-    /// (`md`, `txt`, `csv`, `html`, …). The kind is a hint by default; strict
-    /// is a no-op for text since plain vs markdown can't be probed from content.
-    /// </summary>
-    public static string Description =>
-        "Textual content. Kind is set from the file extension (md, txt, csv, html, ...). "
-        + "Kind is a hint by default; strict is a no-op for text (plain vs markdown is "
-        + "not detectable from content).";
     // No static Kinds — text's kind is open (derived from extension at build).
 
     // THE backing — a private field, not a property at any visibility.

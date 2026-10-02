@@ -63,8 +63,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         writer.BeginObject();
         writer.Name("name"); writer.String(full.Namespace ?? full.Name);
         if (full.Namespace != null && full.Namespace != full.Name) { writer.Name("word"); writer.String(full.Name); }
-        if (full.Description != null) { writer.Name("description"); writer.String(full.Description); }
-        if (full.Example != null) { writer.Name("example"); writer.String(full.Example); }
+        if (await full.Description(context).Text(context) is { Length: > 0 } description) { writer.Name("description"); writer.String(description); }
+        if (await full.Example(context).Text(context) is { Length: > 0 } example) { writer.Name("example"); writer.String(example); }
         if (full.Alias.Count > 0)
         {
             writer.Name("alias");
@@ -636,15 +636,34 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public string? ConstructorSignature { get => Family._constructorSignature; init => _constructorSignature = value; }
     private string? _constructorSignature;
 
-    /// <summary>Canonical example — the kind's own when it shows one (a list of records, one of its element), else
-    /// the static <c>Example</c> property on the type.</summary>
-    public string? Example { get => kind.Example ?? Family._example; init => _example = value; }
-    private string? _example;
+    /// <summary>Where this type's teaching lives — <c>/system/type/&lt;name&gt;/</c>, its family's (a kinded type's facts
+    /// are its family's), each read through the path's gate as the asker.</summary>
+    private item.path.@this Teaching(actor.context.@this context)
+        => item.path.@this.Resolve($"/system/type/{Family.Name}", context);
 
-    /// <summary>Semantic description — the kind's own when it says one (a list of records names its element), else
-    /// the static <c>Description</c> property on the type.</summary>
-    public string? Description { get => kind.Description ?? Family._description; init => _description = value; }
-    private string? _description;
+    // a teaching file of this type's, born unread: an absent one is falsy
+    private item.file.@this Taught(string file, actor.context.@this context) => new(Teaching(context).Combine(file), context);
+
+    /// <summary>What a value of this type is, said once — the kind's own when it says one (a list of records names
+    /// its element), else <c>type.description.md</c>; read when asked, empty when there is none.</summary>
+    [LlmBuilder] public item.prose.@this Description(actor.context.@this context)
+        => kind.Description(context) is { } its
+            ? its.Or(new item.prose.@this(Taught("type.description.md", context)))
+            : new item.prose.@this(Taught("type.description.md", context));
+
+    /// <summary>A value of this type as a step writes one (<c>5m</c>, <c>42</c>) — the kind's own when it shows one (a
+    /// list of records, one of its element), else <c>type.examples.md</c>; read when asked, empty when there is none.</summary>
+    [LlmBuilder] public item.prose.@this Example(actor.context.@this context)
+        => kind.Example(context) is { } its
+            ? its.Or(new item.prose.@this(Taught("type.examples.md", context)))
+            : new item.prose.@this(Taught("type.examples.md", context));
+
+    /// <summary>What the builder is taught about this type — <c>type.notes.md</c>; falsy when it has none.</summary>
+    [LlmBuilder] public item.file.@this Notes(actor.context.@this context) => Taught("type.notes.md", context);
+
+    /// <summary>Prose for a learner — <c>type.guide.md</c>, shown on the type's page, never read by the builder; falsy
+    /// when it has none.</summary>
+    [LlmBuilder] public item.file.@this Guide(actor.context.@this context) => Taught("type.guide.md", context);
 
     /// <summary>The other names this type answers to (<c>string</c> for text, <c>map</c> for dict),
     /// declared by its class as a static <c>Alias</c>. Never null.</summary>
@@ -710,14 +729,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
         if (types == null || clr == typeof(@this)) return;
 
-        var example = Declared<string>("Example");
-        var description = Declared<string>("Description");
         _offer = Declared<IReadOnlyList<item.@this>>("Offer");
         if (global::app.type.item.choice.set.@this.For(clr) is { } set)
         {
             Values = set.Values;
-            Description = description;
-            Example = example;
             return;
         }
 
@@ -743,7 +758,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             while (methods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
                 && m.MetadataToken < prop.GetMethod!.MetadataToken)
                 property.Add(Member(methods.Dequeue()));
-            property.Add(types.Property(prop.Name, prop.PropertyType));
+            property.Add(types.Property(prop.Name, prop.PropertyType, owner: Name));
         }
         while (methods.TryDequeue(out var m)) property.Add(Member(m));
 
@@ -759,11 +774,11 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
                 answers = data.GenericTypeArguments[0];
             var parameters = m.GetParameters();
             if (parameters is [{ ParameterType: var only }] && only == typeof(actor.context.@this))
-                return types.Property(m.Name, answers);
+                return types.Property(m.Name, answers, owner: Name);
             return types.Property(m.Name, answers, parameters
                 .Where(p => p.ParameterType != typeof(actor.context.@this) && p.ParameterType != typeof(System.Threading.CancellationToken))
                 .Select(p => types.Property(p.Name!, p.ParameterType, optional: p.IsOptional))
-                .ToList());
+                .ToList(), owner: Name);
         }
 
         // A scalar has a constructor, a declared wire shape, or is a named type with no builder
@@ -775,8 +790,6 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             Property = property.Count > 0 ? property : null;
         }
         else Property = property;
-        Description = description;
-        Example = example;
 
         T? Declared<T>(string member) where T : class
         {

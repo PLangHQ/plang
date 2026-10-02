@@ -1,0 +1,1 @@
+A label, compared without regard to case.

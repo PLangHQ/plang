@@ -1,0 +1,1 @@
+A number, whole or decimal, of any size. Its kind is the precision it is held in (int, long, decimal, double, …).

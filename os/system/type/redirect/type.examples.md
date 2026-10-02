@@ -1,0 +1,1 @@
+{follow: true, max: 10}

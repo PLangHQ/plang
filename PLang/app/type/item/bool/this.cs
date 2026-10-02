@@ -15,8 +15,6 @@ namespace app.type.item.@bool;
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
-    public static string Example => "true";
-    public static string Description => "True or false.";
     public static IReadOnlyList<string> Alias { get; } = ["boolean"];
     public static string Shape => "bool";
 

@@ -1,0 +1,1 @@
+What a request's body is: its mime type and its character encoding.

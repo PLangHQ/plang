@@ -1,0 +1,1 @@
+Where a file, a folder or a web resource is: a path in the app, an absolute path, or a URL.

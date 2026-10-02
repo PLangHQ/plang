@@ -14,8 +14,6 @@ namespace app.type.item.tag;
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
-    public static string Example => "urgent";
-    public static string Description => "A label, compared without regard to case.";
     public static string Shape => "string";
 
     /// <summary>The normalized label — trimmed at birth; equality folds case.</summary>

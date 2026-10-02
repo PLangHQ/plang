@@ -10,8 +10,6 @@ namespace app.module.http.type.redirect;
 [global::app.Attributes.PlangType("redirect")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.type.item.IDefault<@this>
 {
-    public static string Example => "{follow: true, max: 10}";
-    public static string Description => "How a request follows redirects: whether it follows them, and how many at most.";
     public static string Shape => "object";
 
     /// <summary>Whether the request follows a redirect — <c>%!http.request.setting.redirect.follow%</c>.</summary>

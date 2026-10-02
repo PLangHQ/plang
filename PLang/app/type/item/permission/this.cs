@@ -48,8 +48,6 @@ public enum Verb
 [global::app.Attributes.PlangType("permission")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "{\"path\": \"/src/os\", \"verbs\": [\"read\", \"write\"]}";
-    public static string Description => "What may be done where: a path (a glob matches many) and the verbs allowed on it — read, write, delete, execute.";
     public static string Shape => "object";
     /// <summary>What a permission is offered in a step: that the step gives one — the writer fills its
     /// <c>{path, verbs}</c> from the step's words.</summary>

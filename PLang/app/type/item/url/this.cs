@@ -11,8 +11,6 @@ namespace app.type.item.url;
 [global::app.Attributes.PlangType("url")]
 public sealed class @this : global::app.type.item.content.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "https://example.com/data.json";
-    public static string Description => "A web address; its content is fetched when it is used.";
     public static string Shape => "string";
     /// <summary>A url is made from a path.</summary>
     public static bool Takes(global::app.type.@this other) => other.Is("path");

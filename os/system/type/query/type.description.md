@@ -1,0 +1,1 @@
+What to take from a list: where (fields compared, joined by and/or), group, distinct, order.

@@ -9,8 +9,6 @@ namespace app.module.llm.type.limit;
 [global::app.Attributes.PlangType("limit")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.type.item.IDefault<@this>
 {
-    public static string Example => "{token: 16000, tool: 10, retry: 0}";
-    public static string Description => "How far a query may go: the tokens in its answer, the tool calls it makes, the retries of an answer that fails validation.";
     public static string Shape => "object";
 
     /// <summary>The most tokens in the answer — <c>%!llm.query.setting.limit.token%</c>.</summary>

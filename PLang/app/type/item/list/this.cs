@@ -26,8 +26,6 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     private sealed record Chunk(@this List);
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
-    public static string Example => "[1, 2, 3]";
-    public static string Description => "An ordered list of values, each of any type.";
     public static IReadOnlyList<string> Alias { get; } = ["array"];
 
     // Store raw, type on read. A slot holds EITHER a raw CLR value (a scalar

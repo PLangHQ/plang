@@ -8,8 +8,6 @@ namespace app.module.http.type.progress;
 [global::app.Attributes.PlangType("progress")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "{received: \"40 MiB\", total: \"100 MiB\", percent: 40}";
-    public static string Description => "How far a download or an upload has come: received (or sent), total and percent.";
     public static string Shape => "object";
 
     /// <summary>How much of a download has come — null on an upload.</summary>

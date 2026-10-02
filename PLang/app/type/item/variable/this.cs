@@ -15,8 +15,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     global::app.type.item.IMatch<@this>, global::app.type.item.ILoad<@this>,
     global::app.type.item.IList<@this, global::app.type.item.list.@this<@this>>
 {
-    public static string Example => "%user%";
-    public static string Description => "A variable, named between % signs, that holds a value.";
 
     /// <summary>A key names this variable by its name; case is not the program's to get right.</summary>
     public System.Threading.Tasks.ValueTask<@this?> Match(string key)

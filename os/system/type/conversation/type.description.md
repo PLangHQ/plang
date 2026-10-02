@@ -1,0 +1,1 @@
+How a query stands to the conversation before it: the earlier llm response it continues.

@@ -34,7 +34,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         System.Text.Encoding? encoding, System.Threading.CancellationToken ct)
         => global::app.type.item.text.@this.Encode(stream, data, context, view, encoding, ct);
 
-    public static string Example => "Console.WriteLine(\"hi\");";
     public static string Shape => "string";
 
     [global::app.Out, global::app.Store]

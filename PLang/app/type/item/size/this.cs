@@ -10,8 +10,6 @@ namespace app.type.item.size;
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.setting.ISetting<setting.@this>, System.IEquatable<@this>
 {
-    public static string Example => "100 MB";
-    public static string Description => "A count of bytes: a number and its unit, IEC (500 KiB, 95.4 MiB) or SI (512 kB, 100 MB).";
     public static string Shape => "string";
 
     /// <summary>The bytes.</summary>

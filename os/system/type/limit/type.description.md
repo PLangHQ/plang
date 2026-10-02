@@ -1,0 +1,1 @@
+How far a query may go: the tokens in its answer, the tool calls it makes, the retries of an answer that fails validation.

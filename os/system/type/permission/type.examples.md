@@ -1,0 +1,1 @@
+{"path": "/src/os", "verbs": ["read", "write"]}

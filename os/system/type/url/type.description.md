@@ -1,0 +1,1 @@
+A web address; its content is fetched when it is used.
