@@ -19,6 +19,18 @@ Collected by the architect from every bot, to go over with Ingi. Each entry: **w
 - **os · no text replace.** Windows paths were fixed with list.split + list.join. **If I had:** `replace "\" with "/" in %x%`. **new**
 - **os · an http error has no response headers** (question 7, with Ingi): a goal can't read a 401's `WWW-Authenticate`; Pull.goal hardcodes Docker Hub's and ghcr's token URLs. **new**
 - **os · silent losses were the costliest:** an unknown `.pr` property ignored (~1 h; done, 14de729af); a step's permissions dropped (issue 34; core done, the `ask:` line waits for terminal); `%item%` built into foreach's Key (issue 36; done, ae2bc8549); `//bin/sh` saved as `/bin/sh` (issue 35, open).
+- **educator · full review** (14 entries: `.bot/app-systems/educator/friction.md` on branch `educator-lesson`, 28bfdebc5). The headline wishes, as a learner:
+  - **the same step builds differently from build to build** (C4 6/6 → 4/6 → 6/6 across three commits; ~10 builds per lesson step). **If I had** `plang build --samples=5`: build N times fresh, report which steps disagree and how.
+  - **no plain view of a `.pr`** (~15 min per lesson hand-building "what plang wrote" from JSON). **If I had** `plang show Start`: each step and its actions in one line each, in formal. (The same wish as the architect's "one shared command that prints a `.pr` as a table".)
+  - **goal comments steer the build:** a probe with an explaining comment passes where the comment-free lesson fails (load vars 3/3 vs 0/3). **If I had** comments reach the writer as the author's background, never as instructions, a probe would be a fair test.
+  - **an error that blames the wrong thing:** `CreateItemDeclined: %Name% holds a module` for a correct step the builder misbuilt. **If I had** the compiled action shown beside the step ("this step became goal.call(Name=%!app.module.file%)").
+  - **`add "<text with %vars%>" to list %x%` keeps the template raw**, where every other action renders it.
+  - **every `*.examples.md` step built and run by the gate**, so an example can't teach what fails (`foreach %rows%, write out %row%` did).
+  - **LLM tracing also turns on the builder's own step debug** (885 KB for a 3-step goal). **If I had** `--debug={"llm":…}` print only the LLM exchange.
+  - **no word on whether a build happened.** **If I had** a closing line: "built 1, unchanged 2, from cache 0".
+  - **permission prompts one file at a time** (22 runs for the course page). **If I had** an answer that grants the folder, or `--allow=read://shared/educator/course` for a run.
+  - **a builder merge silently changes a working app** (the studio's TTS post became http.upload; `with sha256` dropped; found at run against a paid API). **If I had** `plang build --diff`: which steps' actions changed against the previous `.pr`.
+  - **works well:** everyday plain steps build right every time (18 lessons rest on them); errors with `at <file>:<line>` and the step; templates rendering where written; learner module pages generated from the notes; `--debug={"goal":"X"}` with BEFORE/AFTER variables.
 - **os · what works well:** "X is in the step but not in your answer" caught real drops (Status=400, "GET", the permission verbs); formal lines as the exact escape hatch that survives rebuilds; errors that say where (goal, step, line); download Path+Hash (the hash refused a wrong-host HTML page before anything used it); module reuse (Pull.goal is ~120 lines of plain plang over http, crypto and file).
 
 ## Debugging and tracing
