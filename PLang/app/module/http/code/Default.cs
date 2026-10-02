@@ -256,15 +256,7 @@ public sealed class Default : IHttp
         catch (Exception ex) when (ex is TaskCanceledException or HttpRequestException
             or IOException or UnauthorizedAccessException or FormatException)
         {
-            var (key, status) = ex switch
-            {
-                TaskCanceledException => ("Timeout", 408),
-                HttpRequestException hre => ("HttpError", (int)(hre.StatusCode ?? 0)),
-                IOException or UnauthorizedAccessException => ("IOError", 500),
-                FormatException => ("InvalidContent", 400),
-                _ => ("HttpError", 500)
-            };
-            return context.Error(new ServiceError(ex.Message, key, status));
+            return context.Error(new failure(ex));
         }
     }
 

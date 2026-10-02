@@ -237,6 +237,55 @@ public class DownloadActionTests
         await Assert.That(last.Error!.Key).IsEqualTo("ResponseTooLarge");
     }
 
+    // A body that sends some bytes, then breaks — a server closing the connection mid-body.
+    private sealed class CutStream : System.IO.Stream
+    {
+        private bool _sent;
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
+        {
+            await Task.Yield();
+            if (_sent) throw new System.IO.IOException("the connection was closed mid-body");
+            _sent = true;
+            buffer.Span[..10].Fill(1);
+            return 10;
+        }
+        public override int Read(byte[] buffer, int offset, int count) => ReadAsync(buffer.AsMemory(offset, count)).AsTask().GetAwaiter().GetResult();
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => 0; set => throw new NotSupportedException(); }
+        public override void Flush() { }
+        public override long Seek(long offset, System.IO.SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    [Test]
+    public async Task ABodyCutShort_TheLastReportCarriesTheFailure()
+    {
+        _handler.Handler = _ => Task.FromResult(new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new System.Net.Http.StreamContent(new CutStream())
+        });
+        var action = new download(Ctx)
+        {
+            Url = (global::app.type.item.text.@this)"https://example.com/layer",
+            Unsigned = (global::app.type.item.@bool.@this)true,
+            OnProgress = global::PLang.Tests.Shared.Make.Call(Ctx, "Progressed"),
+        };
+        await action.Attach(null, Ctx);
+
+        var result = await action.Start();
+        var last = await LastProgress();
+
+        await result.IsFailure();
+        await last.IsFailure();
+        await Assert.That(last.Error!.Key).IsEqualTo(result.Error!.Key);
+        await Assert.That(last.Error.Message).Contains("closed mid-body");
+        await Assert.That(((global::app.module.http.type.progress.@this)last.Peek()!).Received!.Value).IsEqualTo(10L);
+    }
+
     // %progress.received% is a size, written in the standard the asker's setting names: si says 3 kB, iec 2.9 KiB.
     [Test]
     public async Task Received_PrintsInTheSizeSettingsStandard()

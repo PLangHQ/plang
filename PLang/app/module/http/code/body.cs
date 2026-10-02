@@ -37,7 +37,14 @@ internal sealed class body : System.IO.Stream
 
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
     {
-        var count = await _source.ReadAsync(buffer, ct);
+        int count;
+        try { count = await _source.ReadAsync(buffer, ct); }
+        catch (Exception ex) when (ex is IOException or System.Net.Http.HttpRequestException or TaskCanceledException)
+        {
+            // a body cut short: the last report carries the failure the action answers with
+            await Done(new failure(ex));
+            throw;
+        }
         if (count == 0) return 0;
         _read += count;
         if (_max != null && _read > _max.Value)
