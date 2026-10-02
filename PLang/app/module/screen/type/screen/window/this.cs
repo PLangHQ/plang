@@ -2,7 +2,7 @@ using app.error;
 using app.Utils;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using Native = global::app.module.screen.code.Window;
+using Native = global::app.module.screen.type.screen.window.code.Window;
 using Text = global::app.type.item.text.@this;
 
 namespace app.module.screen.type.screen.window;

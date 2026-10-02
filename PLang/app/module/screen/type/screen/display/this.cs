@@ -5,7 +5,7 @@ using app.error;
 using FilePath = global::app.type.item.path.file.@this;
 using Verb = global::app.type.item.permission.Verb;
 using Text = global::app.type.item.text.@this;
-using Wayland = global::app.module.screen.code.wayland.Display;
+using Wayland = global::app.module.screen.type.screen.display.code.Display;
 
 namespace app.module.screen.type.screen.display;
 
@@ -64,7 +64,7 @@ public sealed class @this : screen.@this
             await foreach (var note in notes.Reader.ReadAllAsync())
                 if (context.App.Debug is { } debug) await debug.Write(note);
         });
-        var display = new Wayland(new global::app.module.screen.code.wayland.Size(width, height), "is", socket.Absolute, output,
+        var display = new Wayland(new code.Size(width, height), "is", socket.Absolute, output,
             font == null ? null : (await font.Value())?.RawBytes, note => notes.Writer.TryWrite(note));
         var screen = new @this(title, width, height, display, folder.Absolute);
         screen.Told(onWindow, context);

@@ -1,4 +1,4 @@
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 /// <summary>The pointer holds a window: moves drag it until the button comes up. The window follows
 /// the pointer once a tick, to where it is by then — moves in between (the mouse sends hundreds a

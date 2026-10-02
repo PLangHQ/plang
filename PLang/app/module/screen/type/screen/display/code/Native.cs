@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 /// <summary>
 /// What .NET has no managed door for: file descriptors passed over a Unix socket (Wayland sends

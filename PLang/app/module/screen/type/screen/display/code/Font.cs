@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 /// <summary>
 /// A TrueType font, read from its bytes: each character's outline turned into pixels (how much of
