@@ -72,7 +72,7 @@ internal sealed class Windows(Browser browser)
                 {
                     var within = browser.Own(now) && browser.Own(known.Address);
                     known.Address = now;
-                    if (!within) browser.Screen?.Display?.Url((int)id, browser.AddressOf(known.Address));
+                    if (!within) browser.Screen?.Wayland.Url((int)id, browser.AddressOf(known.Address));
                 }
                 return;
             }
@@ -81,7 +81,7 @@ internal sealed class Windows(Browser browser)
             window.Named = title;
             window.Address = page.GetProperty("url").GetString() ?? "";
             if (!shown.TryAdd(id, window)) return;
-            browser.Screen?.Display?.Url((int)id, browser.AddressOf(window.Address));
+            browser.Screen?.Wayland.Url((int)id, browser.AddressOf(window.Address));
             await window.Show(id, new Page(page.GetProperty("id").GetString()!, browser.Port, browser.Own), browser.Own(window.Address) ? browser.Message : null);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException

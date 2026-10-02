@@ -13,10 +13,7 @@ public partial class draw : IContext
     public partial data.@this Data { get; init; }
 
     /// <summary>The screen, from <c>screen.open</c>.</summary>
-    public partial data.@this<Screen> Screen { get; init; }
+    public partial data.@this<type.screen.@this> Screen { get; init; }
 
-    [Code]
-    public partial IScreen Provider { get; }
-
-    public async Task<data.@this> Start() => await Provider.Draw(this);
+    public async Task<data.@this> Start() => await Screen.Value() is { } screen ? await screen.Draw(Data, Context) : Context.Ok();
 }
