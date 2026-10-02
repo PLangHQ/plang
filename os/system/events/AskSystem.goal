@@ -1,3 +1,0 @@
-AskSystem
-- ask "%__plang_question%", actor=%__plang_actor%, write to %__plang_answer%
-- return %__plang_answer%
