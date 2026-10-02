@@ -1,5 +1,5 @@
 Left — the first value compared · say: the value before the comparison · builder: as the step writes it
-Operator — the comparison, a choice<operator> · say: `>`, `is`, `contains`, `is empty`, … · builder: a quoted text after one `=` (`Operator="=="`, never `Operator=="=="`); a negation is its own operator; left out for isempty / isnotempty. The table below maps the words.
+Operator — the comparison, a choice<operator> · say: `>`, `is`, `contains`, `is empty`, … (as in condition.if) · builder: a quoted text after one `=` (`Operator="=="`, never `Operator=="=="`); a negation is its own operator; left out for isempty / isnotempty. The table below maps the words.
 Right — the second value · say: the value after the comparison · builder: left out for isempty / isnotempty
 
 | the step says | Operator | Right |

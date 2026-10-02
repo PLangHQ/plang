@@ -1081,7 +1081,7 @@
         "instructions": "Step 0 is `set default %path% = \"/\"`. Does step 0 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s0_loop.foreach": {
@@ -1196,7 +1196,7 @@
         "instructions": "Step 1 is `set default %!build.cache% = true`. Does step 1 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s1_loop.foreach": {
@@ -1311,7 +1311,7 @@
         "instructions": "Step 2 is `set default %!build.summary% = true`. Does step 2 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s2_loop.foreach": {
@@ -1426,7 +1426,7 @@
         "instructions": "Step 3 is `set channel \"builder\" call BuilderChannel`. Does step 3 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s3_loop.foreach": {
@@ -1541,7 +1541,7 @@
         "instructions": "Step 4 is `call EmitBuildEvent kind=\"build-path\", path=%path%`. Does step 4 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s4_loop.foreach": {
@@ -1656,7 +1656,7 @@
         "instructions": "Step 5 is `build.load, write to %app%`. Does step 5 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s5_loop.foreach": {
@@ -1771,7 +1771,7 @@
         "instructions": "Step 6 is `build.goals path=%path%, write to %goals%`. Does step 6 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s6_loop.foreach": {
@@ -1886,7 +1886,7 @@
         "instructions": "Step 7 is `call EmitBuildEvent kind=\"goals-found\", goals=%goals%`. Does step 7 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s7_loop.foreach": {
@@ -2001,7 +2001,7 @@
         "instructions": "Step 8 is `foreach %goals%, call BuildGoal goal=%item%`. Does step 8 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s8_loop.foreach": {
@@ -2116,7 +2116,7 @@
         "instructions": "Step 9 is `save %traceGoals% to file '/.build/traces/%!trace.id%/manifest.json'`. Does step 9 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s9_loop.foreach": {
@@ -2231,7 +2231,7 @@
         "instructions": "Step 10 is `build.appSave`. Does step 10 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s10_loop.foreach": {
@@ -4524,7 +4524,7 @@
         "instructions": "Step 0 is `if %goal.IsCached%, return %goal.Cache%`. Does step 0 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s0_loop.foreach": {
@@ -4639,7 +4639,7 @@
         "instructions": "Step 1 is `call /system/builder/EmitBuildEvent kind=\"goalHeader\", goal=%goal%`. Does step 1 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s1_loop.foreach": {
@@ -4754,7 +4754,7 @@
         "instructions": "Step 2 is `set %buildStart% = %Now.Ticks%`. Does step 2 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s2_loop.foreach": {
@@ -4869,7 +4869,7 @@
         "instructions": "Step 3 is `set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": \"%goal.Name%\", \"subGoals\": [], \"durationMs\": 0}`. Does step 3 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s3_loop.foreach": {
@@ -4984,7 +4984,7 @@
         "instructions": "Step 4 is `call Compile, on error call HandleBuildFailure`. Does step 4 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s4_loop.foreach": {
@@ -5099,7 +5099,7 @@
         "instructions": "Step 5 is `set %parentGoal% = %goal%`. Does step 5 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s5_loop.foreach": {
@@ -5214,7 +5214,7 @@
         "instructions": "Step 6 is `foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%`. Does step 6 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s6_loop.foreach": {
@@ -5329,7 +5329,7 @@
         "instructions": "Step 7 is `set %goal% = %parentGoal%`. Does step 7 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s7_loop.foreach": {
@@ -5444,7 +5444,7 @@
         "instructions": "Step 8 is `math.subtract A=%Now.Ticks%, B=%buildStart%, write to %elapsedTicks%`. Does step 8 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s8_loop.foreach": {
@@ -5559,7 +5559,7 @@
         "instructions": "Step 9 is `math.divide A=%elapsedTicks%, B=10000, write to %elapsedMs%`. Does step 9 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s9_loop.foreach": {
@@ -5674,7 +5674,7 @@
         "instructions": "Step 10 is `set %trace.durationMs% = %elapsedMs%`. Does step 10 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s10_loop.foreach": {
@@ -5789,7 +5789,7 @@
         "instructions": "Step 11 is `save %trace% to file '/.build/traces/%!trace.id%/%goal.Name%.json'`. Does step 11 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s11_loop.foreach": {
@@ -5904,7 +5904,7 @@
         "instructions": "Step 12 is `add %goal.Name% to %traceGoals%`. Does step 12 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s12_loop.foreach": {
@@ -6019,7 +6019,7 @@
         "instructions": "Step 13 is `build.fold Goal=%goal%, on error call HandleBuildFailure`. Does step 13 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s13_loop.foreach": {
@@ -6134,7 +6134,7 @@
         "instructions": "Step 14 is `build.goalsSave Goal=%goal%`. Does step 14 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s14_loop.foreach": {
@@ -8004,7 +8004,7 @@
         "instructions": "Step 0 is `set %threshold% = 0.5`. Does step 0 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s0_loop.foreach": {
@@ -8119,7 +8119,7 @@
         "instructions": "Step 1 is `set %modules% = %!app.module.list%`. Does step 1 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s1_loop.foreach": {
@@ -8234,7 +8234,7 @@
         "instructions": "Step 2 is `set %state.goal% = %goal.Name%`. Does step 2 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s2_loop.foreach": {
@@ -8349,7 +8349,7 @@
         "instructions": "Step 3 is `foreach %goal.Step%, call AddStepToState step=%item%`. Does step 3 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s3_loop.foreach": {
@@ -8464,7 +8464,7 @@
         "instructions": "Step 4 is `foreach %modules%, call AddModuleToState module=%item%`. Does step 4 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s4_loop.foreach": {
@@ -8579,7 +8579,7 @@
         "instructions": "Step 5 is `render template \"/system/builder/llm/templates/deciderModuleQuestions.template\", write to %moduleQuestions%`. Does step 5 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s5_loop.foreach": {
@@ -8694,7 +8694,7 @@
         "instructions": "Step 6 is `llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%`. Does step 6 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s6_loop.foreach": {
@@ -8809,7 +8809,7 @@
         "instructions": "Step 7 is `render template \"/system/builder/llm/templates/deciderActionQuestions.template\", write to %actionQuestions%`. Does step 7 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s7_loop.foreach": {
@@ -8924,7 +8924,7 @@
         "instructions": "Step 8 is `llm.decider State=%state%, Question=%actionQuestions%, write to %actionAnswer%`. Does step 8 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s8_loop.foreach": {
@@ -9039,7 +9039,7 @@
         "instructions": "Step 9 is `call /system/builder/EmitBuildEvent kind=\"goal-decided\", goal=%goal%`. Does step 9 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s9_loop.foreach": {
@@ -10664,7 +10664,7 @@
         "instructions": "Step 1 is `count %order.items%, write to %itemCount%`. Does step 1 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s1_loop.foreach": {
@@ -10779,7 +10779,7 @@
         "instructions": "Step 2 is `if %itemCount% is 0, write out \"Your cart is empty\", else if %itemCount% is 1, write out \"One item\", else write out \"%itemCount% items\"`. Does step 2 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s2_loop.foreach": {
@@ -10894,7 +10894,7 @@
         "instructions": "Step 3 is `if %order.email% does not contain \"@\", throw \"Invalid email address\"`. Does step 3 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s3_loop.foreach": {
@@ -11009,7 +11009,7 @@
         "instructions": "Step 4 is `if %order.coupon% is not empty, call ApplyCoupon code=%order.coupon%, order=%order%`. Does step 4 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s4_loop.foreach": {
@@ -11124,7 +11124,7 @@
         "instructions": "Step 5 is `if %order.total% is not a number, throw \"The total must be a number\"`. Does step 5 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s5_loop.foreach": {
@@ -11239,7 +11239,7 @@
         "instructions": "Step 6 is `if %order.country% is \"IS\", set %vat% = 0.24, else set %vat% = 0.25`. Does step 6 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s6_loop.foreach": {
@@ -11354,7 +11354,7 @@
         "instructions": "Step 7 is `math.multiply A=%order.total%, B=%vat%, write to %vatAmount%`. Does step 7 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s7_loop.foreach": {
@@ -11469,7 +11469,7 @@
         "instructions": "Step 8 is `if %order.note% does not start with \"#\", add %order.note% to %notes%`. Does step 8 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s8_loop.foreach": {
@@ -11584,7 +11584,7 @@
         "instructions": "Step 9 is `write out \"Total: %order.total%, VAT: %vatAmount%\"`. Does step 9 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s9_loop.foreach": {
@@ -13199,7 +13199,7 @@
         "instructions": "Step 0 is `list files in '/logs', pattern \"*.log\", write to %files%`. Does step 0 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s0_loop.foreach": {
@@ -13314,7 +13314,7 @@
         "instructions": "Step 1 is `set %errors% = []`. Does step 1 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s1_loop.foreach": {
@@ -13429,7 +13429,7 @@
         "instructions": "Step 2 is `foreach %files%, call ScanFile file=%item%`. Does step 2 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s2_loop.foreach": {
@@ -13544,7 +13544,7 @@
         "instructions": "Step 3 is `if %errors% is empty`. Does step 3 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s3_loop.foreach": {
@@ -13659,7 +13659,7 @@
         "instructions": "Step 4 is `write out \"No errors this week\"`. Does step 4 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s4_loop.foreach": {
@@ -13774,7 +13774,7 @@
         "instructions": "Step 5 is `return`. Does step 5 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s5_loop.foreach": {
@@ -13889,7 +13889,7 @@
         "instructions": "Step 6 is `if %files% is a list`. Does step 6 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s6_loop.foreach": {
@@ -14004,7 +14004,7 @@
         "instructions": "Step 7 is `write out \"Scanned the log files\"`. Does step 7 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s7_loop.foreach": {
@@ -14119,7 +14119,7 @@
         "instructions": "Step 8 is `render template \"report.html\", errors=%errors%, write to %html%`. Does step 8 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s8_loop.foreach": {
@@ -14234,7 +14234,7 @@
         "instructions": "Step 9 is `save %html% to file '/reports/week.html'`. Does step 9 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s9_loop.foreach": {
@@ -14349,7 +14349,7 @@
         "instructions": "Step 10 is `call SendReport to=\"ops@example.com\", subject=\"Weekly report\", on error call LogFailure`. Does step 10 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s10_loop.foreach": {
@@ -14464,7 +14464,7 @@
         "instructions": "Step 11 is `write out \"Report sent\" to \"log\" channel`. Does step 11 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s11_loop.foreach": {
@@ -15281,7 +15281,7 @@
         "instructions": "Step 0 is `set %template% = \"/system/error/%error.status.code%.txt\"`. Does step 0 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s0_loop.foreach": {
@@ -15396,7 +15396,7 @@
         "instructions": "Step 1 is `render %template%, error=%error%, on error 404 call Fallback then retry once, write to %text%`. Does step 1 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s1_loop.foreach": {
@@ -15511,7 +15511,7 @@
         "instructions": "Step 2 is `write %text% to error channel`. Does step 2 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s2_loop.foreach": {
@@ -16126,7 +16126,7 @@
         "instructions": "Step 0 is `if %goal.IsCached%, return %goal.Cache%`. Does step 0 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s0_loop.foreach": {
@@ -16241,7 +16241,7 @@
         "instructions": "Step 1 is `if %items%, write out \"There are items\"`. Does step 1 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s1_loop.foreach": {
@@ -16356,7 +16356,7 @@
         "instructions": "Step 2 is `throw %!error%, fix suggestion %hint%`. Does step 2 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s2_loop.foreach": {
@@ -16817,7 +16817,7 @@
         "instructions": "Step 0 is `if %name% is \"Ingi\", write out \"hi Ingi\"`. Does step 0 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s0_loop.foreach": {
@@ -16932,7 +16932,7 @@
         "instructions": "Step 1 is `if %name% equals \"Ingi\", write out \"equal\"`. Does step 1 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s1_loop.foreach": {
@@ -17047,7 +17047,7 @@
         "instructions": "Step 2 is `if %name% is not \"Ada\", write out \"not Ada\"`. Does step 2 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s2_loop.foreach": {
@@ -17506,7 +17506,7 @@
         "instructions": "Step 0 is `foreach %module.Action%, call goal Unmatched action=%item%`. Does step 0 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s0_loop.foreach": {
@@ -17621,7 +17621,7 @@
         "instructions": "Step 1 is `foreach %list%, call ShowEntry entry=%item%`. Does step 1 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s1_loop.foreach": {
@@ -17736,7 +17736,7 @@
         "instructions": "Step 2 is `foreach %products% as %product%, call Ship product=%product%`. Does step 2 use `goal.call`?",
         "criteria": {
           "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-          "false": "the step calls no goal now; the goal behind a channel or an event, named to run later, is not called by the step"
+          "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
         }
       },
       "s2_loop.foreach": {
