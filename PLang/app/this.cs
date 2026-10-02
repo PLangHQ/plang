@@ -519,7 +519,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     {
         if (failed.Error is not { } error) return failed;
         var context = actor.list.User.Context;
-        var loaded = await goal.Load("/system/error/show.goal");
+        var loaded = await goal.Load("/system/error/Show.goal");
         if (!loaded.Success || await loaded.Value() is not Goal show)
         {
             await (Debug?.Write($"error show: /system/error/Show could not load — {loaded.Error}") ?? Task.CompletedTask);

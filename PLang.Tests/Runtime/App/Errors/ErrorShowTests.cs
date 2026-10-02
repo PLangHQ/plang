@@ -28,11 +28,29 @@ public class ErrorShowTests : System.IAsyncDisposable
         return dir!;
     }
 
+    // an app with no /system/ of its own shows a failed run through the os's /system/error/Show.goal — found by its
+    // file's own name on a case-sensitive disk
+    [Test]
+    public async Task AFailedRun_InAnAppWithoutItsOwnSystem_IsShownByTheOs()
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "errshow-" + System.Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(root);
+        await using var app = new global::app.@this(root).Testing();
+        var shownOut = new System.IO.MemoryStream();
+        app.actor.list.User.Channel.Register(new StreamChannel(
+            global::app.channel.list.@this.Error, shownOut, ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
+
+        var result = await app.Start();
+
+        await result.IsFailure();
+        await Assert.That(result.Properties.Contains("shown")).IsTrue();
+    }
+
     // Show, as the app runs it after a failed run: the error handed in by name.
     private async Task<string> Show(global::app.error.Error error)
     {
         var context = _app.actor.list.User.Context;
-        var loaded = await _app.goal.Load("/system/error/show.goal");
+        var loaded = await _app.goal.Load("/system/error/Show.goal");
         await loaded.IsSuccess();
         var show = (await loaded.Value() as Goal)!;
         global::app.data.@this shown;

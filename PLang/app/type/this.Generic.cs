@@ -74,7 +74,7 @@ public class @this<T, L> : @this
         return data.@this<T>.FromError(new global::app.error.Error($"no {Name} '{key}'", "NotFound", 404));
     }
 
-    /// <summary>The one <paramref name="location"/> holds (<c>app.goal.Load("/system/error/show.goal")</c>),
+    /// <summary>The one <paramref name="location"/> holds (<c>app.goal.Load("/system/error/Show.goal")</c>),
     /// resolved and read as the app itself; the element says how it loads.</summary>
     public System.Threading.Tasks.Task<data.@this> Load(string location)
         => T.Load(item.path.@this.Resolve(location, _app.actor.list.System.Context), _app);

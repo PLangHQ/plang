@@ -100,11 +100,11 @@ public class PrLoadTests : System.IAsyncDisposable
         await Assert.That(loaded.Error!.Message).Contains("it has no 'name'");
     }
 
-    // The runtime loads /system/test.goal for `plang --test`; /system/error/show.goal is loaded and run by
+    // The runtime loads /system/test.goal for `plang --test`; /system/error/Show.goal is loaded and run by
     // ErrorShowTests.
     [Test]
     [Arguments("/system/test.goal", 4)]
-    [Arguments("/system/error/show.goal", 3)]
+    [Arguments("/system/error/Show.goal", 3)]
     public async Task TheLiveSystemPr_StillLoads(string source, int steps)
     {
         await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
