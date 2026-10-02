@@ -1,0 +1,1 @@
+What was copied: a text, or a value copied whole.

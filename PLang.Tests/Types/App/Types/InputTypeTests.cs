@@ -143,4 +143,16 @@ public class InputTypeTests : IAsyncDisposable
         await Assert.That(back.ToString()).IsEqualTo("copied");
         await Assert.That(() => Read("clipboard", "{\"other\":1}")).Throws<FormatException>();
     }
+
+    // their teaching is their markdown (os/system/type/<type>/), not a C# static — the screen's too
+    [Test]
+    public async Task InputClipboardAndScreen_TeachFromTheirMarkdown()
+    {
+        var types = Context.App.type.list;
+        await Assert.That(await types["input"].Description(Context).Text(Context)).StartsWith("Something a person did on a screen");
+        await Assert.That(await types["input"].Example(Context).Text(Context)).Contains("\"mouse\": \"down\"");
+        await Assert.That(await types["clipboard"].Description(Context).Text(Context)).StartsWith("What was copied");
+        await Assert.That(await types["clipboard"].Example(Context).Text(Context)).IsEqualTo("{\"clipboard\": \"copied text\"}");
+        await Assert.That(await types["screen"].Description(Context).Text(Context)).Contains("its kind: window, display");
+    }
 }
