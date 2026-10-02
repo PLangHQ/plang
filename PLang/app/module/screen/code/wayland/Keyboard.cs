@@ -29,7 +29,8 @@ internal sealed class Keyboard
         bindings.Add(binding);
         binding.Keymap(Native.Memory("keymap", keymap), keymap.Length);
         binding.Repeat(30, 400);   // the client repeats a held key
-        if (Focus?.Client == binding.Client)
+        // (enter names the surface: never one the client destroyed)
+        if (Focus is { Alive: true } && Focus.Client == binding.Client)
         {
             binding.Enter(display.Serial(), Focus, held);
             binding.Modifiers(display.Serial(), modifiers);
