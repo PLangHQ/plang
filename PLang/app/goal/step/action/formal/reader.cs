@@ -328,7 +328,8 @@ public sealed class Reader
 
             var raw = value.Json != null && value.Kind == System.Text.Json.JsonValueKind.String
                 ? System.Text.Json.JsonSerializer.Deserialize<string>(value.Json) : null;
-            if (options is { Count: > 0 } && (raw == null || !options.Contains(raw)))
+            // a variable is the run's to check: what it holds is known only then, as for every typed slot
+            if (options is { Count: > 0 } && !value.IsVariable && (raw == null || !options.Contains(raw)))
                 Fail($"`{prop}` is one of {string.Join(", ", options)}; `{raw ?? value.Json}` is not", at);
             if (declared.Type.Name == "variable")
             {
