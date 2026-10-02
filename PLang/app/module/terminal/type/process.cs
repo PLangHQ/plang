@@ -20,6 +20,16 @@ public sealed class Process : global::app.type.item.@this, global::app.type.item
     [LlmBuilder, Out] public bool Running => Os is { HasExited: false };
 
     internal System.Diagnostics.Process? Os { get; set; }
+
+    /// <summary>The OS process, handed to the step that started it to run it to its end (<c>terminal.start</c>): that
+    /// step owns it from here and disposes it; this item holds it no longer.</summary>
+    internal System.Diagnostics.Process Take()
+    {
+        var os = Os ?? throw new InvalidOperationException($"{Program} has no process to take");
+        Os = null;
+        return os;
+    }
+
     /// <summary>It speaks plang's own format — a plang started with <c>--app.type.format=application/plang</c>: what it
     /// writes arrives as Data (an ask as an Ask), and what is sent to it goes as Data, signed.</summary>
     internal bool Plang { get; init; }
