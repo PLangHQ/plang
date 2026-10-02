@@ -81,9 +81,17 @@ public class @this : global::app.type.item.@this
     /// <summary>The ask — what runs before and after the item asks.</summary>
     public virtual ask ask => NoAsk;
 
-    /// <summary>One step down: the event by its name (<c>.start</c>).</summary>
+    /// <summary>The refusal of <paramref name="name"/>, which is no event: it says the events an item has, and that
+    /// before or after one is a binding's When — every item has the same events, so the name never binds.</summary>
+    public global::app.error.Error NoEvent(string name)
+        => new global::app.error.ActionError(
+            $"'{name}' names no event — an item's events are {string.Join(", ", Names)}; before or after one is When " +
+            "(Event=%!app.type.step.on.start%, When=before)", "EventNotFound", 404);
+
+    /// <summary>One step down: the event by its name (<c>.start</c>); a name that is no event is refused
+    /// (<see cref="NoEvent"/>).</summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
         => new(this[key] is { } found
             ? new global::app.data.@this(key, found, parent: parent)
-            : parent.Context.NotFound(key));
+            : parent.Context.Error(NoEvent(key)));
 }

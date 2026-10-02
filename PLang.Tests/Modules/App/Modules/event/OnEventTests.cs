@@ -124,6 +124,28 @@ public class OnEventTests
         await Assert.That(bound.Error.Message).Contains("an item's events are ask, create");
     }
 
+    // at bind, what is missing is said: a name that is no event is the events' refusal; an item that isn't there is
+    // the item unreached, never "names no event"
+    [Test]
+    public async Task AtBind_ANameThatIsNoEvent_IsRefusedNamingTheEvents()
+    {
+        var bound = await On("%!app.type.step.on.before%", "before", "Log");
+
+        await bound.IsFailure();
+        await Assert.That(bound.Error!.Key).IsEqualTo("EventNotFound");
+        await Assert.That(bound.Error.Message).Contains("'before' names no event").And.Contains("When=before");
+    }
+
+    [Test]
+    public async Task AtBind_AnItemThatIsNotThere_IsUnreached()
+    {
+        var bound = await On("%!channel.audit.on.write%", "before", "Log");
+
+        await bound.IsFailure();
+        await Assert.That(bound.Error!.Key).IsEqualTo("EventUnreached");
+        await Assert.That(bound.Error.Message).Contains("the item isn't there");
+    }
+
     [Test]
     public async Task AfterAGoal_TheCallRuns_WithItsArguments()
     {
