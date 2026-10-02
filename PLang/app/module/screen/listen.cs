@@ -66,8 +66,8 @@ public partial class listen : IContext
         }
         await global::app.module.on.code.Gate.Run(async () =>
         {
-            var goal = await context.App.goal.list.Find(name, context.CallStack.Goal);
-            if (goal == null)
+            var found = await context.App.goal.list.Find(name, context.CallStack.Goal);
+            if (!found.Success || await found.Value() is not { } goal)
             {
                 await Answer(new() { ["error"] = $"PlangOS's shell has no goal {name}" });
                 return;
