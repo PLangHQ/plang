@@ -23,7 +23,6 @@ public static class Reserved
     public const string Instruction = "!Instruction";
     public const string CallingInstruction = "!CallingInstruction";
     public const string Event = "!Event";
-    public const string IsEvent = "!IsEvent";
     public const string Variables = "!Variables";
     public const string HttpContext = "!HttpContext";
     public const string IsHttpRequest = "!IsHttpRequest";

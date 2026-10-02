@@ -363,3 +363,9 @@ until something stamps it (tests do it by hand). Each should derive from `Path` 
 type registry uses, so the two agree on what a family holds, but the registry holds its own instance of each kind
 too. The set is born context-free (`choice<T>`'s static, the reader), with no registry to ask. Equality is by name,
 so nothing breaks; one instance per kind would need the set born with the app's type list.
+
+## The goal reader skips isSetup/isEvent/isSystem/isTest by name [logged 2026-10-02]
+
+A goal now answers IsSetup/IsSystem/IsTest from its plang path (and IsEvent, never set, is gone), so the `.pr` no
+longer writes the four keys. The goal reader (`goal/serializer/Reader.cs`) skips them by name so a `.pr` built
+before still reads — as it skips `waitForExecution`. Both skips go once every tracked `.pr` is rebuilt.

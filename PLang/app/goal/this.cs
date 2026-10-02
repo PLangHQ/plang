@@ -126,17 +126,22 @@ public sealed partial class @this
     [Store, Debug]
     public string? BuilderVersion { get; set; }
 
-    [Store, Debug, Default]
-    public bool IsSetup { get; internal set; }
+    /// <summary>A setup goal — named Setup, or in the app's <c>/setup/</c>: it runs only through setup.</summary>
+    [Debug]
+    public bool IsSetup => Name.Equals("Setup", StringComparison.OrdinalIgnoreCase)
+                           || Where.StartsWith("setup/", StringComparison.OrdinalIgnoreCase);
 
-    [Store, Debug, Default]
-    public bool IsEvent { get; internal set; }
+    /// <summary>A system goal — under <c>/system/</c>: the app's own copy or the os's, wherever it was loaded from
+    /// (an os goal's plang path is <c>/system/…</c>).</summary>
+    [Debug]
+    public bool IsSystem => Where.StartsWith("system/", StringComparison.OrdinalIgnoreCase);
 
-    [Store, Debug, Default]
-    public bool IsSystem { get; internal set; }
+    /// <summary>A test goal — its file is a <c>.test.goal</c>.</summary>
+    [Debug]
+    public bool IsTest => Where.EndsWith(".test.goal", StringComparison.OrdinalIgnoreCase);
 
-    [Store, Debug, Default]
-    public bool IsTest { get; set; }
+    // Where the goal lives, in its plang form without the leading slash — what the three facts above read.
+    private string Where => (Path?.Raw ?? "").Replace('\\', '/').TrimStart('/');
 
     /// <summary>The goal's tags — a build-birth fact stamped by <c>test.tag</c>'s Build hook (skip,
     /// user tags). A <c>list&lt;tag&gt;</c> program node; each tag owns its case-insensitive equality.</summary>
@@ -586,20 +591,12 @@ public sealed partial class @this
             // Finalize the previous goal's last step before starting the new goal.
             if (currentStep != null) { stepNode?.Add(currentStep); currentStep = null; }
 
-            var normalizedPath = path?.Relative(context).Replace('\\', '/').TrimStart('/') ?? "";
-            var isSetup = goalName.Equals("Setup", StringComparison.OrdinalIgnoreCase)
-                || normalizedPath.StartsWith("setup/", StringComparison.OrdinalIgnoreCase);
-            var isSystem = normalizedPath.StartsWith("system/", StringComparison.OrdinalIgnoreCase);
-            var isTest = normalizedPath.EndsWith(".test.goal", StringComparison.OrdinalIgnoreCase);
-
+            // what the goal is — setup, system, a test — it answers itself from where it lives
             currentGoal = new @this
             {
                 Name = goalName,
                 Comment = goalComment,
                 Path = path,
-                IsSetup = isSetup,
-                IsSystem = isSystem,
-                IsTest = isTest
             };
             goals.Add(currentGoal);
             stepNode = new global::app.goal.step.list.@this();

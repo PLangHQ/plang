@@ -9,8 +9,8 @@ namespace PLang.Tests.App.SingularNamespaces.AccessorTests;
 // (NotFound when none answers), `current` is the running goal, `all` every goal of the app.
 public class GoalAccessorTests
 {
-    private static global::app.goal.@this Goal(PLangEngine app, string name, bool setup = false)
-        => new() { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", app.actor.list.User.Context), IsSetup = setup };
+    private static global::app.goal.@this Goal(PLangEngine app, string name)
+        => new() { Name = name, Path = global::app.type.item.path.@this.Resolve($"/{name}.goal", app.actor.list.User.Context) };
 
     [Test] public async Task AppGoal_GetByAddress_ReturnsTheGoal()
     {
@@ -55,7 +55,7 @@ public class GoalAccessorTests
     {
         await using var app = new global::app.@this("/test").Testing();
         app.goal.list.Add(Goal(app, "Public"));
-        app.goal.list.Add(Goal(app, "Setup", setup: true));
+        app.goal.list.Add(Goal(app, "Setup"));
 
         var appOnly = new global::app.type.item.dict.@this();
         appOnly.Set("os", false);
