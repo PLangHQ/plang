@@ -33,7 +33,7 @@ public sealed class Wayland : IScreen
         var socket = FilePath.Resolve("/.run/" + SocketName, context);
         await socket.Delete(recursive: false, context);   // a socket left by an earlier run; none there is NotFound, and fine
 
-        var allowed = await socket.Authorize(Verb.Write, context);
+        var allowed = await socket.Authorize(Verb.write, context);
         if (!allowed.Success) return data.@this<Screen>.From(allowed);
 
         var toOutput = (await action.ToOutput.Value())!.Value;
