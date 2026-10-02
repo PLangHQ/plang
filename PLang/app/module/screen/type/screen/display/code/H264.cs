@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 /// <summary>
 /// An H.264 stream of one part of the screen — a video playing — through openh264 (in the image:

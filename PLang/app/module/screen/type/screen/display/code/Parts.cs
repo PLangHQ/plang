@@ -1,4 +1,4 @@
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 /// <summary>A mouse button on the screen: which (evdev code) and how many clicks in a row.</summary>
 internal readonly record struct Click(uint Button, int Clicks);

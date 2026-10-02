@@ -1,4 +1,4 @@
-namespace app.module.screen.code.wayland;
+namespace app.module.screen.type.screen.display.code;
 
 // The core of the Wayland protocol, as Chromium uses it. Each class is one protocol interface,
 // named as the protocol names it; it owns its requests (Request) and writes its own events.
