@@ -91,9 +91,11 @@ public partial class Call : IContext
         // supplies, and a supplied name wins.
         // Each parameter binds as its own Data: `place=%city%` is the caller's %city% as it is now, and the
         // shared row never enters the callee's variables. The list loads on this run's own copy, never the row.
+        // The parameters are named rows: the written list's, or a dict's entries when they are given as one value
+        // at run (`Parameter=%asked.parameters%`) — read as what the reference names, never converted to a list.
         var bound = new List<data.@this>();
-        if (Parameter != null && await Parameter.Value() is global::app.type.item.list.@this parameters)
-            foreach (var parameter in parameters.Items(Context))
+        if (Parameter != null && await (await Parameter.Follow(Context)).Value() is { } parameters)
+            foreach (var parameter in parameters.Rows(Context))
             {
                 if (parameter.Peek() is not { IsNull: false }) continue;
                 if (execContext.Variable.Supplies(__action, parameter.Name)) continue;

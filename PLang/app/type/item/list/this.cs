@@ -47,7 +47,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     private object?[]? _rows;
 
     // The rows as they are now, for a reader to walk.
-    private object?[] Rows
+    private object?[] Now
     {
         get
         {
@@ -130,7 +130,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// (the element reader ran); only the container wrapper needs to be the declared type.
     /// Context-free (a program node adopts nothing run-scoped). The source's template comes along: a
     /// program list of `%x%` rows re-tagged into a typed slot (list&lt;LlmMessage&gt;) still renders them.</summary>
-    protected @this(@this source) : this(new List<object?>(source.Rows)) { Template = source.Template; }
+    protected @this(@this source) : this(new List<object?>(source.Now)) { Template = source.Template; }
 
     // Type-on-read: a row's slot as a FRESH Data wrapping the raw value, born with the asker's
     // context — never cached back. Leaving the slot raw keeps the backing pristine (enumeration-safe,
@@ -170,7 +170,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     // the slots themselves.
     protected internal IEnumerable<object?> Slots()
     {
-        foreach (var row in Rows)
+        foreach (var row in Now)
         {
             if (row is Chunk chunk)
                 foreach (var s in chunk.List.Slots()) yield return s;
@@ -225,7 +225,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// value.</summary>
     public IEnumerable<Data> Items(actor.context.@this context)
     {
-        foreach (var row in Rows)
+        foreach (var row in Now)
         {
             if (row is Chunk chunk)
                 foreach (var e in chunk.List.Items(context)) yield return e;
@@ -268,6 +268,9 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     /// <summary>A list holds its elements by position.</summary>
     public override bool IsSequence => true;
+
+    /// <summary>A list's named rows are its rows, each under its own name.</summary>
+    public override IEnumerable<Data> Rows(actor.context.@this context) => Items(context);
 
     /// <summary>The flattened element Data at <paramref name="index"/>, handed out with the
     /// asker's context, or C# null when out of range.</summary>

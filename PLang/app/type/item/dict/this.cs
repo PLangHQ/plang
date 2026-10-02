@@ -153,6 +153,9 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>The entries in insertion order, one pass, each handed out as the caller reaches it —
     /// a raw slot as a new Data born with <paramref name="context"/>, a stored Data by reference.</summary>
+    /// <summary>A dict's named rows are its entries, each under its key.</summary>
+    public override IEnumerable<Data> Rows(actor.context.@this context) => Entries(context);
+
     public IEnumerable<Data> Entries(actor.context.@this context)
     {
         foreach (var k in _value.Keys) yield return Slot(k, context);

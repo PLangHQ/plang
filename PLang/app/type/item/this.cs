@@ -276,6 +276,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// json object, a domain value's members). A single value is not a sequence.</summary>
     public virtual bool IsSequence => false;
 
+    /// <summary>This value as named rows — each a Data under its name: a list its rows (a goal call's written
+    /// parameters), a dict its entries (parameters given as one value at run). A single value has none.</summary>
+    public virtual System.Collections.Generic.IEnumerable<global::app.data.@this> Rows(global::app.actor.context.@this context) => [];
+
     /// <summary>
     /// Whether the holding <c>Data</c> may keep (rebind to) <see cref="Value"/>'s
     /// answer. True when the answer depends on nothing but the value itself

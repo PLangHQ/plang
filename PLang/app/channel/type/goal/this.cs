@@ -55,6 +55,9 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
     /// <summary>The argument the written value reaches the goal as: <c>%message%</c>.</summary>
     private const string MessageName = "message";
 
+    /// <summary>Beside a written failure, where it failed: <c>%where.goal%</c>, <c>%where.step%</c>.</summary>
+    private const string WhereName = "where";
+
     private readonly AsyncLocal<bool> _executing = new();
 
     /// <summary>
@@ -121,16 +124,27 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
         // The written value is the call's argument %message% — bound as goal.call binds its own
         // arguments, in a frame that ends with the run. (%!data% is the action before's
         // result; the call's own run replaces it before the goal's first step reads it.)
-        // read where it is written, in the writer's step: a template renders there, with the writer's variables
+        // read where it is written, in the writer's step: a template renders there, with the writer's variables. A
+        // failure written here (an error channel's message) had failed before: it is the message, never this write's
+        // own failure; a value that fails as it is read is.
+        var failed = data.Error;
         var written = await data.Settle();
-        if (written.IsInitialized && !written.Success) return written;
+        if (failed == null && written.IsInitialized && !written.Success) return written;
         var message = new data.@this(MessageName, written.Peek(), written.Type, context: context);
+        var bound = new List<global::app.data.@this> { message };
+        // a failure's place beside it — %where.goal%, %where.step% — the frame it failed in
+        if (failed is { } error && (error.Goal ?? error.Step?.Goal) is { } goal)
+            bound.Add(new global::app.data.@this(WhereName, global::app.type.item.@this.Create(new Dictionary<string, object?>
+            {
+                ["goal"] = goal.Name,
+                ["step"] = error.Step?.Text,
+            }, context), context: context));
 
         var prev = _executing.Value;
         _executing.Value = true;
         try
         {
-            await using (context.Variable.Calls.Push([message])) return await Goal.Start(context);
+            await using (context.Variable.Calls.Push(bound)) return await Goal.Start(context);
         }
         catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException))
         {
