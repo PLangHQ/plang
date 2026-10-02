@@ -363,4 +363,41 @@ the grep over-counted `Key`/`Page`, same lesson as the retracted 4/5):**
 Discipline note: the batch grep mis-reported `Key` (false match) and `Page` (anchor) — every row above
 was re-checked by direct `.pr` inspection before reporting. (Same failure mode as the retracted 4/5.)
 
+## Goal-name / type offers (coder d2aa1358d) — `ask:` lines + re-measure: 32(b) & 33 FIXED
+
+Added the `ask:` lines on `goal.call` Name ("which goal does the step call?" → offers the reachable
+goals) and `variable.set` Type ("which type does the step coerce the value to?" → offers the plang
+type names). Re-pinned pick_golden (word-diff: only the two new Option questions). Measured fresh,
+cache off, 5 each, direct `.pr` inspection:
+
+| scenario | result | verdict |
+|---|---|---|
+| 32(b) `call goal Page module=%!app.module.<m>%` (educator's exact goal) | Name="Page" ×3 on **4/5**; 1 NOPR (flaky build fail, retry built clean — no variable-as-name bug) | **FIXED** (was 0/5) |
+| 33 `set %p% = "a.txt" as path` | `Type="path"` **5/5** | **FIXED** (was 0/5) |
+
+So the decider now picks `Page` from the reachable-goal offers (immune to the parameter's name) and
+`path` from the type-name offers — the writer half 32(b)/33 needed. With the `%!…%` teaching (32a) and
+these offers (32b/33), the whole goal.call-name / coercion family is closed.
+
+## Issue 34 (os bot) — `list<permission>` element-form trace (measurement blocked: terminal not on app-systems)
+
+**Trace (file:line, what it prints):** a slot's type reaches the writer at
+`os/system/builder/llm/templates/properties.template:86` — the Types section prints
+`- <type> — <Description> — one of: <Values> (e.g. <Example>)`, where `<type>` is `{{ p.Type }}` and
+the fields are `p.Type.{Description,Values,Example}`. For a `list<permission>` slot it prints the
+**list type's own face** (and the kind name `permission`) and **never recurses into the `permission`
+element** — so the `{path, verbs}` Example/Shape is not shown. This matches the underlying type face
+`PLang/app/type/this.cs:76`: a kinded type writes only `writer.String(kind.Name)`, not the element's
+Example/Shape. **Confirmed the architect's hypothesis.** Fix direction (mine): the Types section shows
+a `list<T>`/kinded slot's **element** form (its Example/Shape), with a `list<text>` guard (unchanged).
+**Measurement blocked:** the terminal module (`list<permission>` is `terminal.start`'s slot) is **not
+on app-systems** — I can't build the `start //bin/sh …` step here. The trace + direction are done; the
+5-build measurement + guard run on a tree with terminal (plang-os-stable) or once terminal merges.
+
+## Issue 35 (os bot) — `//` drop rate: measurement blocked (terminal not on app-systems)
+Already diagnosed as the writer dropping `//` (the path type preserves it). The os bot confirms the
+raw `.pr` held `"/bin/sh"` in the failing runs and `//bin/sh` in 4 on b517c9e61 → intermittent,
+writer-side. The 10-build drop-rate measurement needs the terminal module, not on app-systems —
+blocked here; runs on plang-os-stable or once terminal merges.
+
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).
