@@ -1112,6 +1112,46 @@
         "health": "green",
         "notes": "Issue 41 fixed by teaching (5/5). compare.notes self-contained. Structural asymmetry (common-action yes/no enforced over a disagreeing module answer) flagged to architect/Ingi, not blocking. plang-os-stable left pristine; edits on app-systems. My C# changes: none."
       }
+    },
+    {
+      "id": "a7c3e1f9-5b2d-4e68-9c04-1d8f6a2b3e57",
+      "bot": "builder",
+      "timestamp_start": "2026-10-02T23:00:00Z",
+      "timestamp_end": "2026-10-02T23:40:00Z",
+      "intent": "Validate the archive module: build CompressRoundTrip test .pr, verify archive.pack/unpack mapping, measure plain + old-wording steps, run it",
+      "before": {
+        "assumptions": "variable.compress/decompress removed; archive.pack/unpack replace them; need the decider key; need a clean binary (new C# module)",
+        "risk": "stale binary; a runtime failure could be mistaken for a mapping failure"
+      },
+      "plan": ".bot/app-systems/builder/v3/issue41-window-callgoal.md",
+      "actions": [
+        {
+          "paths": ["test/serialization/.build/compressroundtrip.test.pr"],
+          "type": "create",
+          "category": "test",
+          "confidence": "high",
+          "context": "Built fresh cache:skip. jq-verified: step1 archive.pack Value=%original%, step2 assert.equals Actual=%archived!type.name% Expected=archive (!type.name reads), step3 archive.unpack Value=%archived%; no variable.compress. Committed as the correct build (cb4e7bffe)."
+        },
+        {
+          "paths": ["os/_archpack", "os/_archunpack", "os/_archcompress", "os/_archdecompress"],
+          "type": "review",
+          "category": "test",
+          "confidence": "high",
+          "context": "Mapping probes, 5 builds each, cache:skip, jq step0. pack->archive.pack 5/5; unpack->archive.unpack 5/5; old wording compress->archive.pack 5/5; decompress->archive.unpack 5/5. Probes removed after."
+        },
+        {
+          "paths": ["PLang/app/module/archive/type/archive/kind/compression/this.cs", "PLang/app/module/signing/code/Ed25519.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Ran the test: RED at runtime (not mapping). unpack throws DataHashMismatch - archive stores gzip of the original Data's wire form; unpack's wire.plang Decode re-verifies the embedded signature and the rehash diverges (Ed25519.cs:105, Store-vs-Out view). Core signed-Data wire round-trip bug; archive module faithful. Routed to coder via architect. No edits by me."
+        }
+      ],
+      "after": {
+        "status": "done",
+        "health": "green (mapping) / red runtime (routed)",
+        "notes": "Archive mapping fully correct incl. old compress/decompress wording. Runtime round-trip bug (DataHashMismatch) is core wire/signing, handed to coder. .pr committed as correct build; test passes once runtime fixed. My C# changes: none."
+      }
     }
   ]
 }

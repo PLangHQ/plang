@@ -243,6 +243,19 @@ Idle pending:
   the recorded decider confidence 0.55 → 0.98; mapped actions byte-identical.
   Detail: `v3/issue40-remeasure.md`.
 
+## Archive module (decision 559, coder 43add1730) — mapping VERIFIED; runtime bug routed
+`variable.compress/decompress` removed; `archive.pack`/`archive.unpack` replace them. Built
+`test/serialization/CompressRoundTrip.test.goal` fresh (cache:skip, clean binary): step1
+archive.pack Value=%original%, step2 assert.equals Actual=%archived!type.name% Expected="archive"
+(`!type.name` reads — coder's open question resolved), step3 archive.unpack Value=%archived%; no
+variable.compress. Mapping 5× each: pack 5/5, unpack 5/5; **old wording** `compress %x%`→archive.pack
+5/5, `decompress`→archive.unpack 5/5. Committed the .pr (cb4e7bffe). **Test is RED at runtime (not
+mapping):** `unpack %archived%` throws `DataHashMismatch` — the archive stores the gzip of the
+original Data's wire form; unpack's `wire.plang` Decode (archive/type/archive/kind/compression/this.cs:51)
+re-verifies the embedded signature and the rehash diverges (signing/code/Ed25519.cs:105). Core
+signed-Data wire encode↔decode round-trip bug (Store-vs-Out view), archive module is faithful —
+routed to coder via architect. Detail in the report.
+
 ## Issue 41 — `call X in %window%` → goal.call instead of window.callGoal — FIXED (teaching)
 From the os bot (PlangOS Screen.goal, plang-os-stable only — window module lives there).
 `call ShowFiles files=%files% in %browser.desktop%` built as goal.call 0/5 (saved wrong or
