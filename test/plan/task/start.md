@@ -17,14 +17,15 @@ Start
 
 - **One flag: `Parallel`, false by default.** "in parallel", "don't wait" and "in the background" all set it. `Wait` goes.
 - **A call in parallel answers a `task`**, a new core plang type. A plain call waits and answers the goal's result, as today.
-- **Tasks live under the actor that runs them** (Ingi: "hierarchy, actor is probably the right thing"): `%!app.actor.current.task%` is the collection node, `%!app.actor.current.task.list%` every task running now. A task leaves the list when it ends; the `%task%` variable keeps it.
+- **Tasks live on the actor that runs them** (Ingi: "hierarchy, actor is probably the right thing"): `%!app.actor.current.task%` is the collection node, `%!app.actor.current.task.list%` every task running now. A task started inside another task's goal lists under the same actor, not under its parent task. The app reaches every task by going through its actors. A task leaves the list when it ends; the `%task%` variable keeps it.
 - **A task that fails with nobody waiting is reported** on its actor's error channel when it ends; a later `wait for` still answers the failure. A failure never vanishes.
-- **A `task` module: `wait` and `cancel`.** `wait for %a%` answers a's result; `wait for %a%, %b%` answers a list of results in order; a failed task fails the wait step (`on error` works as anywhere). `cancel %task%, write to %result%` stops it.
+- **A `task` module: `wait` and `cancel`.** `wait for %a%` answers a's result; `wait for %a%, %b%` answers a list of results in order, and so does `wait for %tasks%` given a list of tasks; a failed task fails the wait step (`on error` works as anywhere).
+- **`cancel %task%, write to %result%`** answers the task's result when it had already ended, and nothing (null) when the cancel stopped it. A `wait for` on a cancelled task fails as Cancelled.
 - **The llm tool loop is one more caller:** it starts its `Parallel` tool calls as tasks and waits for all of them.
 
-## Open (to Ingi before stage 2)
+## Later, not in this plan
 
-- **What `cancel %task%, write to %result%` answers.** Proposed: the task's result when it had already ended; nothing (null) when the cancel stopped it. A `wait for` on a cancelled task then fails as Cancelled.
+- Ingi's idea (2026-10-02), its own discussion: `write to %task%` called more than once could collect each instance into `%task.list%`, with the variable itself the newest, perhaps for every variable.
 
 ## The shape (the coder owns the code; this is the intent)
 
@@ -37,7 +38,7 @@ Start
 ## Stages
 
 1. **The task and the call** (coder): the `task` type and its list under the actor; `goal.call` `Parallel` answers a task; `Wait` goes; an unwatched failure is reported at its end; the llm tool loop starts its `Parallel` tools as tasks and waits for all (`llm/code/OpenAi.cs:344–358`). Plang tests below, written in formal where the builder can't pick it yet.
-2. **The task module** (coder): `wait` (one, several, a failure) and `cancel`, after Ingi answers the open point.
+2. **The task module** (coder): `wait` (one, several, a list of tasks, a failure) and `cancel`.
 3. **The builder** (the builder session): `call.notes.md`'s `Parallel` line ("in parallel", "don't wait", "in the background"); `call.examples.md:22` rewritten to `Parallel: true` with `write to %task%`; the task module's `description`/`notes`/`examples`, kept apart from `timer.sleep` ("wait for %task%" vs "wait 2 seconds"); goldens; measured fresh, cache off.
 
 ## Demolition

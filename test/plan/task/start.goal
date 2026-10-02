@@ -24,13 +24,15 @@ Stage2
 - call goal /module/task/wait/WaitAnswersResult
 / wait for %a%, %b% answers a list of their results, in order
 - call goal /module/task/wait/WaitForSeveral
+/ wait for %tasks% (a list of tasks) answers their results, in order
+- call goal /module/task/wait/WaitForList
 / A failed task fails the wait step; on error handles it
 - call goal /module/task/wait/FailedTaskFailsWait
 / A failure reported while nobody waited is still the answer of a later wait
 - call goal /module/task/wait/LateWaitGetsFailure
 / cancel %task% stops it: a write its goal makes after a sleep never happens
 - call goal /module/task/cancel/CancelStops
-/ cancel %task%, write to %result% answers as Ingi rules (the open point in start.md)
+/ cancel %task%, write to %result%: the result when the task had already ended, null when the cancel stopped it
 - call goal /module/task/cancel/CancelAnswer
 / wait for a cancelled task fails as Cancelled
 - call goal /module/task/cancel/WaitOnCancelledFails
