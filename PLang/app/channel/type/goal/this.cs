@@ -125,12 +125,14 @@ public class @this : global::app.channel.type.session.@this, global::app.type.it
         // arguments, in a frame that ends with the run. (%!data% is the action before's
         // result; the call's own run replaces it before the goal's first step reads it.)
         // read where it is written, in the writer's step: a template renders there, with the writer's variables. A
-        // failure written here (an error channel's message) had failed before: it is the message, never this write's
-        // own failure; a value that fails as it is read is.
+        // failure written here (an error channel's message) had failed before: its error is the message
+        // (%message.message%, %message.key%), never this write's own failure; a value that fails as it is read is.
         var failed = data.Error;
         var written = await data.Settle();
         if (failed == null && written.IsInitialized && !written.Success) return written;
-        var message = new data.@this(MessageName, written.Peek(), written.Type, context: context);
+        var message = failed != null
+            ? new data.@this(MessageName, failed, context: context)
+            : new data.@this(MessageName, written.Peek(), written.Type, context: context);
         var bound = new List<global::app.data.@this> { message };
         // a failure's place beside it — %where.goal%, %where.step% — the frame it failed in
         if (failed is { } error && (error.Goal ?? error.Step?.Goal) is { } goal)

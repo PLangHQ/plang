@@ -93,7 +93,9 @@ public class CallWaitTests
         var fails = await Load("Fails", Make.Step("throw it", Make.Action(Ctx, "error", "throw", ("Message", "it broke"), ("Key", "Broke"))));
         await Load("Shown",
             Make.Step("set seen goal", Set("seenGoal", "%where.goal%")),
-            Make.Step("set seen step", Set("seenStep", "%where.step%")));
+            Make.Step("set seen step", Set("seenStep", "%where.step%")),
+            Make.Step("set seen message", Set("seenMessage", "%message.message%")),
+            Make.Step("set seen key", Set("seenKey", "%message.key%")));
         await _app.actor.list.User.Channel.Set(await Make.GoalChannel(global::app.channel.list.@this.Error,
             Make.Call(Ctx, "Shown"), _app.actor.list.User));
 
@@ -103,6 +105,21 @@ public class CallWaitTests
 
         await Assert.That((await (await Ctx.Variable.Get("seenGoal")).Value())?.ToString()).IsEqualTo("Fails");
         await Assert.That((await (await Ctx.Variable.Get("seenStep")).Value())?.ToString()).IsEqualTo("throw it");
+        await Assert.That((await (await Ctx.Variable.Get("seenMessage")).Value())?.ToString()).IsEqualTo("it broke");
+        await Assert.That((await (await Ctx.Variable.Get("seenKey")).Value())?.ToString()).IsEqualTo("Broke");
+    }
+
+    // a value written to a goal channel is %message% itself
+    [Test]
+    public async Task AGoalChannel_GetsAWrittenValueAsTheMessage()
+    {
+        await Load("Shown", Make.Step("set seen", Set("seen", "%message%")));
+        await _app.actor.list.User.Channel.Set(await Make.GoalChannel(global::app.channel.list.@this.Output,
+            Make.Call(Ctx, "Shown"), _app.actor.list.User));
+
+        await (await Ctx.Actor.Channel.Get(global::app.channel.list.@this.Output)!.Write(Ctx.Ok("hello"))).IsSuccess();
+
+        await Assert.That((await (await Ctx.Variable.Get("seen")).Value())?.ToString()).IsEqualTo("hello");
     }
 
     [Test]
