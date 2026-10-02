@@ -1,0 +1,1 @@
+Something a person did on a screen: the mouse moved, clicked or wheeled, a key went down or up, text was typed, or back, forward or reload was asked.

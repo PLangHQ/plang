@@ -12,8 +12,6 @@ namespace app.type.item.clipboard;
 [global::app.Attributes.PlangType("clipboard")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "{\"clipboard\": \"copied text\"}";
-    public static string Description => "What was copied: a text, or a value copied whole.";
     public static string Shape => "object";
 
     // what was copied: a text, or a value whole

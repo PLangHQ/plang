@@ -1,0 +1,1 @@
+Where pictures are shown, opened with screen.open: a window on the host that shows the frames drawn into it, or PlangOS's display that programs draw onto. Which one is its kind: window, display.
