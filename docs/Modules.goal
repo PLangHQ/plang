@@ -1,16 +1,19 @@
 Modules
-/ The learner pages in modules/, each written from the module catalog, never by hand (decision 411; the spec is
+/ The learner pages, each module's start.md in its own os folder (Ingi; a new /system/… file lands where its folder
+/ is, the app's own /system/ first, else the os's: decision 522), each written from the module catalog, never by hand (decision 411; the spec is
 / Documentation/v0.2/module-reference-generation.md): the module's description, then each action's description,
 / the steps of its examples, its properties (how a step says each, its type, whether it is required, its default,
 / what it changes) and what it returns.
-/ Only the file module's notes are tagged yet, so only its page is written. The loop over %!app.module.list% comes
-/ when the other modules' notes are tagged.
+/ Only the file, condition and loop modules' notes are tagged (with a golden page each), so only their pages are
+/ written. The loop over %!app.module.list% comes when every module's notes are tagged.
 - call goal Page module=%!app.module.file%
+- call goal Page module=%!app.module.condition%
+- call goal Page module=%!app.module.loop%
 
 Page
-/ One module's page, modules/<name>.md, then what its actions' notes and properties don't agree on.
+/ One module's page, system/modules/<name>/start.md, then what its actions' notes and properties don't agree on.
 - render template "/templates/module.template", write to %page%
-- save %page% to "/modules/%module.Name%.md"
+- save %page% to "/system/modules/%module.Name%/start.md"
 - foreach %module.Action%, call Unmatched action=%item%
 
 Unmatched
