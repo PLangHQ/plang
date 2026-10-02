@@ -84,15 +84,16 @@ Full catalog with worked examples: `Documentation/v0.2/obp-smells.md`. The patte
 
 ## Running plang Tests
 
-- All plang tests live under `Tests/` (uppercase). Never under `tests/`, `.bot/`, `.build/`, `os/`, or any other tree.
-- When running `plang --test`, change directory into `Tests/` first so discovery is bounded to the canonical location:
+- All plang tests live under `test/` (lowercase). Never under `Tests/`, `tests/`, `.bot/`, `.build/`, `os/`, or any other tree. Folders inside are singular, and a test lives at the path of what it tests (`test/module/on/cache/`, `test/app/type/`) — never in a folder named for a branch or stage.
+- A plan's validation tests live in their own folder, `test/plan/<id>/` (id = the plan's branch), each at the path of what it tests; the plan's index is `test/plan/<id>/start.goal` (each behaviour a comment, the step under it runs its test). Tests that aren't a plan's stay in the concept tree (`test/module/on/…`).
+- When running `plang --test`, change directory into `test/` first so discovery is bounded to the canonical location:
 
   ```bash
-  cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test
+  cd test && ../PlangConsole/bin/Debug/net10.0/plang --test
   ```
 
   Running `plang --test` from the project root will surface stale `.test.goal` files under `.bot/` (old bot output) as failures or stale entries — those aren't real test results.
-- C# tests run from project root via `dotnet run --project PLang.Tests` (different runner, different rules).
+- **C# tests: use `./dev.sh test <ClassName>`** (e.g. `./dev.sh test ModulePageTests`). It builds only the needed test project (and its `PLang`/`Shared` refs — it **skips PlangConsole**), then runs that test binary directly with a TUnit filter. Do **not** use `dotnet run --project PLang.Tests`: the aggregate project isn't runnable, and a per-project `dotnet run` is 90s+ every call (restore + build + run). `./dev.sh test` with no filter runs the full C# sweep; `./dev.sh build` is the incremental build alone.
 
 ### Stale-binary trap
 
@@ -103,20 +104,17 @@ or `(null)` reads of `%!<infra>%` properties — for symbols that exist in
 source on the current commit — mean a stale binary scanned via reflection,
 not a real bug.
 
-Before claiming any PLang test result, rebuild from clean:
+Before claiming any PLang test result, rebuild PlangConsole first:
 
 ```bash
-rm -rf PlangConsole/bin PlangConsole/obj PLang/bin PLang/obj \
-       PLang.Tests/bin PLang.Tests/obj \
-       PLang.Generators/bin PLang.Generators/obj
-dotnet build PlangConsole
-cd Tests && ../PlangConsole/bin/Debug/net10.0/plang --test
+./dev.sh build   # incremental build of the test projects + PlangConsole; skipped when nothing changed
+cd test && ../PlangConsole/bin/Debug/net10.0/plang --test
 ```
 
-The C# suite is immune (`dotnet run --project PLang.Tests` recompiles
-in-place). Only `plang --test` is exposed to the trap.
+The C# suite is immune (`./dev.sh test` rebuilds the changed project before running).
+Only `plang --test` is exposed to the trap.
 
-Do **not** delete `Tests/**/.build/` — those are tracked `.pr` files, not
+Do **not** delete `test/**/.build/` — those are tracked `.pr` files, not
 build artefacts. The "NEVER delete .build folders" rule above applies.
 
 ## Mutation Testing (announce first)
