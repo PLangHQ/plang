@@ -27,7 +27,7 @@ public sealed class Default : ITerminal
     {
         var context = action.Context;
         var setting = context.Setting.Of<setting.@this>();
-        var (ready, failure) = await Prepare(context, setting, action.App, action.Parameter, action.Environment, action.WorkingDirectory, action.Sandbox);
+        var (ready, failure) = await Prepare(context, setting, action.App, action.Parameter, action.Environment, action.WorkingDirectory, action.Permission);
         if (ready == null) return data.@this<Text>.From(failure!);
         var (info, program, sandbox) = ready.Value;
 
@@ -36,14 +36,14 @@ public sealed class Default : ITerminal
 
         if ((await action.Administrator.Value())!.Value)
             return sandbox != null
-                ? data.@this<Text>.From(context.Error(new ActionError("A program started as administrator can't run in a sandbox.", "SandboxUnavailable", 400)))
+                ? data.@this<Text>.From(context.Error(new ActionError("A program started as administrator can't be held to permissions.", "PermissionNotEnforced", 400)))
                 : await Elevated(info, program, context, cts.Token);
         if ((await action.Interactive.Value())!.Value) return await Attached(info, program, sandbox, context, cts.Token);
         return await Captured(action, info, program, sandbox, setting, context, cts.Token);
     }
 
     // The program owns this console until it exits: keyboard in, screen out. Nothing is captured.
-    private static async Task<data.@this<Text>> Attached(ProcessStartInfo info, FilePath program, type.sandbox.@this? sandbox, actor.context.@this context, CancellationToken ct)
+    private static async Task<data.@this<Text>> Attached(ProcessStartInfo info, FilePath program, Sandbox? sandbox, actor.context.@this context, CancellationToken ct)
     {
         info.UseShellExecute = false;
         var watch = Stopwatch.StartNew();
@@ -82,7 +82,7 @@ public sealed class Default : ITerminal
     // OnError goals run one at a time, in arrival order, on this flow — never two at once. They run
     // inside this step, so they don't take the app's callback gate (a callback holding it could be
     // the one running this step).
-    private static async Task<data.@this<Text>> Captured(start action, ProcessStartInfo info, FilePath program, type.sandbox.@this? sandbox,
+    private static async Task<data.@this<Text>> Captured(start action, ProcessStartInfo info, FilePath program, Sandbox? sandbox,
         setting.@this setting, actor.context.@this context, CancellationToken ct)
     {
         Redirect(info, setting);
@@ -143,7 +143,7 @@ public sealed class Default : ITerminal
     {
         var context = action.Context;
         var setting = context.Setting.Of<setting.@this>();
-        var (ready, failure) = await Prepare(context, setting, action.App, action.Parameter, action.Environment, action.WorkingDirectory, action.Sandbox);
+        var (ready, failure) = await Prepare(context, setting, action.App, action.Parameter, action.Environment, action.WorkingDirectory, action.Permission);
         if (ready == null) return data.@this<Process>.From(failure!);
         var (info, program, sandbox) = ready.Value;
         Redirect(info, setting);
@@ -272,33 +272,45 @@ public sealed class Default : ITerminal
 
     // ---- shared ------------------------------------------------------------------------------
 
-    /// <summary>The program found and permitted, with its arguments, environment and folder, and the sandbox it runs in
-    /// when the step names one; or why not.</summary>
-    private static async Task<((ProcessStartInfo info, FilePath program, type.sandbox.@this? sandbox)? ready, data.@this? failure)> Prepare(
+    /// <summary>The program found and permitted, with its arguments, environment and folder, and the hold on it when
+    /// the step gives it permissions; or why not.</summary>
+    private static async Task<((ProcessStartInfo info, FilePath program, Sandbox? sandbox)? ready, data.@this? failure)> Prepare(
         actor.context.@this context, setting.@this setting, data.@this<Text> app,
         data.@this<global::app.type.item.list.@this>? parameter, data.@this<global::app.type.item.dict.@this>? environment,
-        data.@this<global::app.type.item.path.@this>? workingDirectory, data.@this<type.sandbox.@this>? sandbox)
+        data.@this<global::app.type.item.path.@this>? workingDirectory,
+        data.@this<global::app.type.item.list.@this<global::app.type.item.permission.@this>>? permission)
     {
-        // what the step wrote, before it is read: a %ref% names a sandbox even when it holds none
-        var named = sandbox?.Peek() is { } written and not global::app.type.item.@null.@this ? written : null;
-        var held = sandbox == null ? null : await sandbox.Value();
-        // a sandbox named but not made (a member it doesn't have, a %ref% holding none) stops the start — a step that
-        // names a sandbox never runs its program free; to run free, the step leaves Sandbox out
-        if (sandbox != null && (!sandbox.Success || sandbox.Error != null))
-            return (null, sandbox.Error != null ? context.Error(sandbox.Error) : sandbox);
-        if (held == null && named != null)
+        // what the step wrote, before it is read: a %ref% names permissions even when it holds none
+        var named = permission?.Peek() is { } written and not global::app.type.item.@null.@this ? written : null;
+        var given = permission == null ? null : await permission.Value();
+        // permissions named but not read (one that is no permission, a %ref% holding none) stop the start — a step that
+        // gives a program permissions never runs it free; to run free, the step leaves Permission out
+        if (permission != null && (!permission.Success || permission.Error != null))
+            return (null, permission.Error != null ? context.Error(permission.Error) : permission);
+        if (given == null && named != null)
             return (null, context.Error(new ActionError(
-                $"The step names a sandbox, but {named} holds none — leave Sandbox out to run the program free.", "SandboxInvalid", 400)));
+                $"The step gives the program permissions, but {named} holds none — leave Permission out to run it free.", "PermissionInvalid", 400)));
         var (ready, failure) = await Prepare(context, setting, app, parameter, environment, workingDirectory);
-        return ready == null ? (null, failure) : ((ready.Value.info, ready.Value.program, held), null);
+        if (ready == null) return (null, failure);
+        if (given == null) return ((ready.Value.info, ready.Value.program, null), null);
+        var (held, refused) = await Sandbox.Of(given.Rows(context), ready.Value.program, context);
+        return held == null ? (null, refused) : ((ready.Value.info, ready.Value.program, held), null);
     }
 
-    /// <summary>The program started — by its sandbox, inside its folders, when it has one; or why it isn't.</summary>
-    private static async Task<data.@this<Process>> Launch(ProcessStartInfo info, FilePath program, type.sandbox.@this? sandbox, actor.context.@this context)
+    /// <summary>The program started — held to its permissions when it has some; or why it isn't.</summary>
+    private static Task<data.@this<Process>> Launch(ProcessStartInfo info, FilePath program, Sandbox? sandbox, actor.context.@this context)
     {
-        if (sandbox != null) return await sandbox.Start(info, program, context);
-        var os = System.Diagnostics.Process.Start(info)!;
-        return context.Ok<Process>(new Process { Program = program.Absolute, Id = os.Id, Os = os });
+        try
+        {
+            var os = sandbox?.Start(info) ?? System.Diagnostics.Process.Start(info)!;
+            return Task.FromResult(context.Ok<Process>(new Process { Program = program.Absolute, Id = os.Id, Os = os }));
+        }
+        // the kernel couldn't hold it: it isn't started, never started free
+        catch (Exception ex) when (sandbox != null && ex is not (OutOfMemoryException or StackOverflowException))
+        {
+            return Task.FromResult(data.@this<Process>.From(context.Error(new ActionError(
+                $"Could not hold {program.Absolute} to its permissions: {ex.Message}", "PermissionNotEnforced", 500))));
+        }
     }
 
     private static async Task<((ProcessStartInfo info, FilePath program)? ready, data.@this? failure)> Prepare(
