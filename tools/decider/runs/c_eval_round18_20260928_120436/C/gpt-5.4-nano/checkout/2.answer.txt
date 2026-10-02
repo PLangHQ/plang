@@ -1,2 +1,0 @@
-[2] condition.if(Left=%itemCount%, Operator="==", Right=0) { output.write(Data="Your cart is empty") }; condition.elseif(Left=%itemCount%, Operator="==", Right=1) { output.write(Data="One item") }; condition.else() { output.write(Data="%itemCount% items") }
-[6] condition.if(Left=%order.country%, Operator="==", Right="IS") { variable.set(Name=%vat%, Value=0.24, Type="number") }; condition.else() { variable.set(Name=%vat%, Value=0.25, Type="number") }

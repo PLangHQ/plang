@@ -1,6 +1,0 @@
-{
- "name": "BuilderChannel",
- "path": "/os/system/builder/BuilderChannel.goal",
- "step": [],
- "child": []
-}

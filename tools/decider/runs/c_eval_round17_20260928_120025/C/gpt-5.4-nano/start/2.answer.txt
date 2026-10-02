@@ -1,1 +1,0 @@
-[0] goal.call(Name="/system/builder/EmitBuildEvent", Parameter={kind: "goalHeader", goal: %goal%})

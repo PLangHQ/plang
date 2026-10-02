@@ -1,8 +1,8 @@
 {% comment %}
 Stage 2 of the decider — the questions stage 1 leaves open, per step. WHICH questions are asked is the
 step's Pick (step.Pick.Question: its id and what it is about — a module, an action, a branch, the
-popular options); this template only writes their words. Keys and wording are the eval's
-(tools/decider/harness.py stage2_questions), and a twin test holds the two equal.
+popular options); this template only writes their words. The question keys and wording are pinned
+by PickListTests (PLang.Tests/Wire/App/Decider/pick_golden.json).
 {% endcomment %}
 {
 {%- assign sep = "" -%}

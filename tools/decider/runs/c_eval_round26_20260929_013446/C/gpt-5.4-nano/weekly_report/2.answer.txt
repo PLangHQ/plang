@@ -1,5 +1,0 @@
-[3] condition.if(Left=%errors%, Operator="isempty")  
-[6] condition.if(Left=%files%, Operator="is", Right="list")  
-[4] output.write(Data="No errors this week")  
-[5] goal.return()  
-[7] output.write(Data="Scanned the log files")

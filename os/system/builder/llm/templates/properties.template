@@ -19,7 +19,7 @@ that teaches the form.
 Then every listed action ONCE (goal.call too when a listed action holds actions): its signature, the
 first line of its description, its notes (their headings one level down).
 
-The eval's shape (tools/decider/prompt_c.py user_message_c); a twin test holds the two equal.
+Its shape is pinned by PickListTests (PLang.Tests/Wire/App/Decider/pick_golden.json, the `user` field).
 Needs: goal (its steps' Pick taken), modules (%!app.module.list%).
 {% endcomment %}Goal, as written:
   {{ goal.Name }}

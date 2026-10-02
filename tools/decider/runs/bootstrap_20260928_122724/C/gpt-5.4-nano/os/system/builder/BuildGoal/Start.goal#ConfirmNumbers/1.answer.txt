@@ -1,5 +1,0 @@
-[0] variable.set(Name=%numbers%, Value=%!error.Details.numbers%)
-[1] ui.render(Template="/system/builder/llm/templates/confirm.state.template"); variable.set(Name=%confirmState%, Value=%!data%)
-[2] ui.render(Template="/system/builder/llm/templates/confirm.template"); variable.set(Name=%confirmQuestions%, Value=%!data%)
-[3] llm.decider(State=%confirmState%, Question=%confirmQuestions%); variable.set(Name=%confirmed%, Value=%!data%)
-[4] build.match(Goal=%goal%, Answer=%answer%, Confirmed=%confirmed%)

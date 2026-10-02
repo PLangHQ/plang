@@ -87,6 +87,18 @@ when the action is *certain*; a listed-but-uncertain action needs it too (the v3
   has no wire contract` — the path create event has no `[Out]/[Store]` face, a gap the rename surfaced
   (file.on.create has one). Handed to architect/coder. Detail in `v3/result.md`.
 
+## Python decider validation retired (Ingi, via architect) — DONE
+Deleted `tools/decider/` (the whole Python eval: harness.py, prompt_c.py, build_pr.py, formal.py,
+runs/labels/out fixtures — 5442 files). `PickListTests` was already a pure C# golden test (reads
+`pick_golden.json`, re-pins from C#); scrubbed the "a twin test holds the two equal" / `tools/decider/
+harness.py` provenance from the six decider templates' `{% comment %}` blocks (comment-only, no
+re-pin — goldens unchanged) and `Decide.code.md`. Deleted the dead `BootstrapTests.cs` (the Python-twin
+judge, already `[Skip]`); its only shared helper `RepoRoot()` was byte-identical to `Fixture.Root()`, so
+`BuilderPinTests`/`FormalStepTests` repointed there. Removed `[Arguments("tools/decider")]` from
+`StartMdTests` and the `source_fix_check.py` comment in `ElseWithoutIfTests`. Character-memory +
+`Documentation/` mentions → proposal (`claude-md-proposals.md`, builder v3), not edited (others' files).
+**Wire: 480 pass (unchanged), 9 fail (baseline), no decider golden regressed.** One commit.
+
 ## Status 2026-10-02 (end) — idle, waiting on the coder's one pick pass
 All architect-directed work done and accepted (latest 0b799a5d1). Open items are the coder's / core:
 - **Coder's pick pass** (Option-v2 core + `listed.Option` + issue-32 masking core, after task 2b).

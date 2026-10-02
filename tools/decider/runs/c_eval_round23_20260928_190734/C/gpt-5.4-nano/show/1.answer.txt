@@ -1,3 +1,0 @@
-[0] variable.set(Name=%template%, Value="/system/error/%error.StatusCode%.txt")
-[1] ui.render(Template=%template%); on.error(StatusCode=404, Recovery=[goal.call(Name="Fallback")], RetryCount=1, Order="GoalFirst"); variable.set(Name=%text%, Value=%!data%)
-[2] output.write(Data=%text%, channel="error")

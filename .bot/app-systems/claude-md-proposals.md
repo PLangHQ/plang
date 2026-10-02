@@ -159,3 +159,19 @@ The value slot is built via `data.Normalize(View) → IWriter`, so a new domain 
 ```
 + - **A flag is false by default.** A bool option (action or setting) is `[Default(false)]` and named for what the words say to turn it on (`Parallel`, `Descending`) — never the opposite with `[Default(true)]`, never a negated name (`DontWait`). The builder writes a property only when it thinks the step names it, so a default-false flag left out means what the step said; a default-true one invites a false the step never said. When the common case is "on" (keep empty pieces, use the cache), the option is a choice whose values name both behaviours, the common one the default (`Empty: keep | drop`, `Empty=drop`) — never a default-true bool, never a two-word flag (`DropEmpty`). Full rule: `Documentation/v0.2/conventions.md` "A Flag Is False By Default".
 ```
+
+## builder — v3 — 2026-10-02
+**Target:** characters/architect/memory/* and characters/os/memory/* (and two docs — see below)
+**Why:** Ingi ruled (relayed by the architect, 2026-10-02) to retire the Python decider validation; `tools/decider/` is deleted and `PickListTests` is now a pure C# golden-prompt test. These files still reference the deleted tool. Per the "character mentions go into a proposal, never an edit" rule, the builder bot does not edit other agents' memory/docs — flagging them for their owners to clean.
+**Proposed change:** (remove or reword each stale `tools/decider` reference)
+```
+characters/architect/memory/design_principles.md
+characters/architect/memory/feedback_trace_independently_then_compare.md
+characters/architect/memory/feedback_trace_language_boundary.md
+characters/os/memory/MEMORY.md
+characters/os/memory/feedback-no-python-tools.md
+Documentation/Runtime2/obp-cleanup.md:219   (" The eval twin (`tools/decider/prompt_c.py` …) moves with it." — the twin is retired)
+Documentation/v0.2/todos.md:2124             (historical decider-eval note referencing `tools/decider/c_eval.py`)
+```
+The Documentation/ two are docs-owned; listed here so a docs pass can scrub them. The character
+memory files belong to the architect and os bots — their owners decide whether to update.

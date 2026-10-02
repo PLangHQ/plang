@@ -1,1 +1,0 @@
-[8] ui.render(Template="report.html", Parameter={errors: %errors%}); variable.set(Name=%html%, Value=%!data%)

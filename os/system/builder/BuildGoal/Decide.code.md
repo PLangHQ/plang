@@ -64,21 +64,20 @@ C# the steps go through:
 ## Contracts
 
 - Stage 1's questions include **one yes/no per common action per asked step**. If `decider.common` renders nothing, stage 1 silently asks only the module choice, and every common action (on.error, variable.set, goal.call, …) is never asked.
-- The question keys and wording are the eval's (`tools/decider/harness.py` `stage1_questions` / `state_for`). A twin test holds the templates and the harness equal (`PLang.Tests/Wire/App/Decider/PickListTests.cs`).
+- The question keys and wording are pinned as C# goldens by `PickListTests` (`PLang.Tests/Wire/App/Decider/PickListTests.cs`, `pick_golden.json`) — re-pinned from C# through its `AcceptTheFixture`/re-pin path after any intended change.
 - `build.pick` needs `Answer` as a dict and `Popular` as a list.
 
 ## How it's tested, and what the tests don't see
 
 - `RenderTests.Render_AReadJsonFile_IteratesItsDictAndList` (`PLang.Tests/Modules/App/Modules/ui/RenderTests.cs`) pins the real path: `file.read` of a json file, `variable.set` from `%!data%`, then `ui.render` iterating the object and joining the list.
-- `PickListTests` (`PLang.Tests/Wire/App/Decider/PickListTests.cs:62-78`) renders both templates and compares them with the Python harness's questions. **It sets `%decider%` to a native dict it built from `JsonDocument` (`:66-68`, `Answer(…)`), not through `file.read`**, so on its own it can't see how the real `read … write to %decider%` value reaches Fluid; the pin above covers that.
-- The Python harness (`tools/decider/harness.py:296`) loads `decider.json` with `json.load`, so it has the same blind spot.
-- The eval measures the prompts the harness builds, which are the prompts the builder *should* render.
+- `PickListTests` (`PLang.Tests/Wire/App/Decider/PickListTests.cs:62-78`) renders both templates and compares them with the pinned C# golden (`pick_golden.json`). **It sets `%decider%` to a native dict it built from `JsonDocument` (`:66-68`, `Answer(…)`), not through `file.read`**, so on its own it can't see how the real `read … write to %decider%` value reaches Fluid; the pin above covers that.
+- The golden pins the prompts the builder *should* render; it is a pure C# fixture (the former Python eval under `tools/decider/` is retired).
 - The builder check (rebuild with the target `.pr` moved aside, then compare) is **not** masked by the LLM cache: `OpenAi.ComputeCacheKey` hashes every message's role and content plus model, temperature, schema and format, so any prompt change misses the cache. `llm.decider` has no cache. What it can't see is a bug present both before and after ("byte-identical" compares with the previous build), or a rendering change that yields the same `.pr`.
 
 ## Known issues
 
 - **Fixed 2026-09-28 (app-systems, decisions 152/153/154): `decider.common` rendered nothing in the real builder.**
   - `%decider%` is a file reference whose content is `clr(JsonElement)`; Fluid's old converter knew only `dict`/`list`/`JsonNode`, and its door accessor handed the `clr` itself, so `{% for c in decider.common %}` iterated nothing and `decider.popular` rendered as its raw json text. Stage 1 never asked the common questions.
-  - **It never worked.** A bisect with the pin failed at every commit back to `bec5f56df`, the commit that introduced `decider1.template` (decider v5). The harness and `PickListTests` always injected a parsed dict.
+  - **It never worked.** A bisect with the pin failed at every commit back to `bec5f56df`, the commit that introduced `decider1.template` (decider v5). `PickListTests` always injected a parsed dict.
   - Fixed in `Fluid.cs` by one value over any container (Data flow, step 4), replacing the `dict`/`list`/`JsonNode` switch. Nothing changed in the goal.
-- **Open:** with the common questions asked, `system/error/Show.goal` step 1 (`… on error 404 call Fallback then retry once …`) is refused: the LLM writes `RetryCount=1` for "retry once", and the invented-number check refuses a number the step's text doesn't hold. `BuildGoal/Start.goal` is refused too: for `if %goal.IsCached%, return %goal.Cache%` the LLM puts `goal.return` beside the if, and for `if %goal.Step.IsCached%, return` the decider doesn't list `goal.return`. Decider/teaching quality — the eval's.
+- **Open:** with the common questions asked, `system/error/Show.goal` step 1 (`… on error 404 call Fallback then retry once …`) is refused: the LLM writes `RetryCount=1` for "retry once", and the invented-number check refuses a number the step's text doesn't hold. `BuildGoal/Start.goal` is refused too: for `if %goal.IsCached%, return %goal.Cache%` the LLM puts `goal.return` beside the if, and for `if %goal.Step.IsCached%, return` the decider doesn't list `goal.return`. Decider/teaching quality — the builder's.

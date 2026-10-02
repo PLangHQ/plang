@@ -1,9 +1,0 @@
-
-Hello
-
-step 0: write out "hello"
-   menu:
-     output.write
-        Data (item, required)
-        channel (text, optional)
-

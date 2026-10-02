@@ -1001,6 +1001,12 @@
           "context": "Drafted issue 32 opaque-variable masking shape (architect's request): step variables -> %vN% placeholders for decider+writer via new step.Masked + reverse map (core); templates read s.Masked; formal answer's %vN% restored before parse. Couples with Option-v2 (shared mask). I own template side + measurements; core to coder after review."
         }
       ],
+      "after_note_retire_python_decider": {
+        "task": "Ingi (via architect): retire the Python decider validation; make PickListTests pure C#.",
+        "done": "Deleted tools/decider/ (5442 files). Scrubbed twin/tools-decider provenance from 6 decider templates (comment-only, no re-pin) + Decide.code.md. Deleted dead BootstrapTests.cs ([Skip] python-twin judge); repointed its only external helper RepoRoot() -> Fixture.Root() (byte-identical) in BuilderPinTests/FormalStepTests. Removed [Arguments(\"tools/decider\")] from StartMdTests; scrubbed source_fix_check.py comment in ElseWithoutIfTests. PickListTests was already a pure C# golden (pick_golden.json + C# re-pin) - left as-is.",
+        "proposal": "character-memory (architect, os) + Documentation/ mentions of tools/decider filed in claude-md-proposals.md (builder v3), not edited.",
+        "verify": "Wire 480 pass (unchanged from pre-change), 9 fail (baseline), 8 skip; no decider golden (PickList/Confirm/BuilderPin/FormalStep/LineTwin) regressed. StartMd/ElseWithoutIf compile."
+      },
       "after_note_eventtype": {
         "task": "Rebuild two test .pr still typing on.event slot as app.event (should be event since 43441c5c9).",
         "file_CreateFiresOnBirth": "DONE: rebuilt, app.event->event, test Pass, committed (test/plan/app-systems/app/type/file/.build/createfiresonbirth.test.pr). Build flaky on issue-17 class, saved on retry.",
