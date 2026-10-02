@@ -116,6 +116,31 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         }
     }
 
+    /// <summary>The goals <paramref name="step"/> can call by name, as <see cref="Find"/> reaches them from its goal: the
+    /// goal itself and its children, then each ancestor and its children, then the <c>.goal</c> files beside it (in each
+    /// place its folder names) — each name once.</summary>
+    internal override async System.Threading.Tasks.ValueTask<IReadOnlyList<string>> Offers(global::app.goal.step.@this step)
+    {
+        var names = new List<string>();
+        for (var g = step.Goal; g != null; g = g.Parent)
+        {
+            names.Add(g.Name);
+            names.AddRange(g.Child.Items().Select(c => c.Name));
+        }
+        if (step.Goal?.Folder is { } folder)
+        {
+            var context = App.actor.list.System.Context;
+            foreach (var each in folder.Place(context))
+            {
+                if (!await (await each.Exists(context)).ToBooleanAsync()) continue;
+                var listed = await each.List("*.goal", recursive: false, context);
+                if (listed.Success && await listed.Value() is { } files)
+                    names.AddRange(files.Items().Select(f => f.FileNameWithoutExtension));
+            }
+        }
+        return names.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+    }
+
     // The goal already read that a call's name writes: its name (the last read wins — sub-goals in
     // different files may share one), its .goal or .pr path in any of the forms a call writes, or a
     // slash-qualified name whose folder is part of it (BuildGoal/Start is Start in a BuildGoal folder).

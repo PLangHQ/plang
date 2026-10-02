@@ -139,11 +139,13 @@ public sealed class HttpTestServer : IDisposable
             HttpListenerContext context;
             try { context = await _listener.GetContextAsync(); }
             catch { return; }   // listener stopped
-            _ = Task.Run(() => Handle(context));
+            // each request is handled without holding a pool thread while it reads or writes: under a loaded run a
+            // blocked thread per request starves the pool the client's own continuations need
+            _ = Handle(context);
         }
     }
 
-    private void Handle(HttpListenerContext context)
+    private async Task Handle(HttpListenerContext context)
     {
         var req = context.Request;
         var resp = context.Response;
@@ -158,7 +160,7 @@ public sealed class HttpTestServer : IDisposable
         if (req.HasEntityBody)
         {
             using var ms = new System.IO.MemoryStream();
-            req.InputStream.CopyTo(ms);
+            await req.InputStream.CopyToAsync(ms);
             body = ms.ToArray();
             bodyLen = body.Length;
         }
@@ -209,7 +211,7 @@ public sealed class HttpTestServer : IDisposable
                         resp.StatusCode = 200;
                         if (_contentTypes.TryGetValue(path, out var served)) resp.ContentType = served;
                         resp.ContentLength64 = getBytes.Length;
-                        resp.OutputStream.Write(getBytes, 0, getBytes.Length);
+                        await resp.OutputStream.WriteAsync(getBytes);
                     }
                     else resp.StatusCode = 404;
                     break;

@@ -202,13 +202,16 @@ public class Stage3_PathDemolitionTests
         await using var __ = app;
         var url = server.NewResourceUrl();
         await Grant(context, url);
-        await new HttpPath(url).WriteText("remote body", context);
+        // each side says whether it went through, so a failure names the side that failed
+        await (await new HttpPath(url).WriteText("remote body", context)).IsSuccess();
 
         var result = await Read(context, new HttpPath(url));
+        await result.IsSuccess();
         await Assert.That(result.Type!.Name).IsEqualTo("url");
         // scalar use fetches through the HttpPath (the scheme owns the I/O);
         // no extension on the resource → raw bytes
         var content = await result.Value();
+        await result.IsSuccess();
         var text = content is global::app.type.item.binary.@this b ? Encoding.UTF8.GetString(b.Value) : content?.ToString();
         await Assert.That(text).Contains("remote body");
     }

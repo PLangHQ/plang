@@ -57,6 +57,10 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
         }
     }
 
+    /// <summary>The types a step can name: every plang type by its name, never one plang keeps for itself.</summary>
+    internal override System.Threading.Tasks.ValueTask<IReadOnlyList<string>> Offers(global::app.goal.step.@this step)
+        => new(Types.Where(t => !t.Internal).Select(t => t.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToList());
+
     // Every name a type answers to — its word, its namespace, its aliases, case aside (type.Names) — to the type,
     // the first that answers, as the walk found it. The guard keeps a name to one class. Made on first ask and made
     // again after the set changes (the scan, an added type, a replaced one), so it always answers as the walk would.

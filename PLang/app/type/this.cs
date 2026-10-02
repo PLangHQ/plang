@@ -256,6 +256,23 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public new System.Threading.Tasks.ValueTask<global::app.data.@this> Create(object? raw, global::app.actor.context.@this context)
         => Create(raw, context, "");
 
+    /// <summary>A type is made from what names it, among the app's types: a type passes; a text is the type it names
+    /// (<c>path</c>); a dict describes one (<c>{name: "number", kind: "int", strict: true}</c>). Anything else declines.</summary>
+    public static @this? Create(object? raw, @this? declared, global::app.data.@this data)
+    {
+        if (raw is @this self) return self;
+        var context = data.Context!;
+        if (raw is item.dict.@this dict && dict.Get<item.text.@this>("name", context)?.ToString() is { Length: > 0 } described)
+            return context.App.type.list[new @this(described, dict.Get<item.text.@this>("kind", context)?.ToString(),
+                dict.Get<item.@bool.@this>("strict", context)?.Value == true), context];
+        if (raw is item.@this { IsLeaf: true } leaf && leaf.RawText is { Length: > 0 } named)
+            return context.App.type.list[new @this(named), context];
+        data.Fail(new global::app.error.Error(
+            $"%{data.Name}% holds a {(raw as item.@this)?.Type.Name ?? raw?.GetType().Name} — a type is its name (path) or {{name, kind?, strict?}}",
+            "CreateItemDeclined", 400));
+        return null;
+    }
+
     /// <summary>The birth (<see cref="Create(object?, actor.context.@this)"/>) of a value named <paramref name="name"/>
     /// — content read off <paramref name="origin"/> (a file) is born knowing it.</summary>
     public System.Threading.Tasks.ValueTask<global::app.data.@this> Create(object? raw,
@@ -601,8 +618,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     private IReadOnlyList<string>? _values;
 
     /// <summary>What a value of this type can be in <paramref name="step"/>, as the decider is offered it — the kind
-    /// answers: a closed set its options, any other the step's own variables.</summary>
-    public IReadOnlyList<string> Offers(global::app.goal.step.@this step) => kind.Offers(step);
+    /// answers: a closed set its options, any other the step's own variables. A collected concept's type offers its
+    /// collection's members first.</summary>
+    public virtual System.Threading.Tasks.ValueTask<IReadOnlyList<string>> Offers(global::app.goal.step.@this step) => kind.Offers(step);
 
     /// <summary>Scalar wire shape (the underlying primitive form, e.g. "string" for path).</summary>
     public string? Shape { get => Family._shape; init => _shape = value; }

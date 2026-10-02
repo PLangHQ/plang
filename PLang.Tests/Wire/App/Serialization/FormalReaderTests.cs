@@ -243,6 +243,46 @@ public class FormalReaderTests : System.IAsyncDisposable
         await Assert.That(opened!.Token.ToString()).IsEqualTo("5");
     }
 
+    // variable.set's Type is a type: the .pr row is {name: Type, type: {name: type}, value: {name: path}}
+    [Test]
+    public async Task ASetsType_IsWrittenAsAType()
+    {
+        var ctx = app.actor.list.User.Context;
+        async Task<string> Row(string type)
+        {
+            var read = Read($"variable.set(Name=%p%, Value=\"a.txt\", Type={type})", out _);
+            await read.IsSuccess();
+            var goal = global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
+                global::PLang.Tests.Shared.Make.Step("set", ((global::app.goal.step.action.list.@this)read.Peek()!)[0]));
+            var pr = System.Text.Json.Nodes.JsonNode.Parse(await ctx.Pr(goal))!;
+            return pr["step"]![0]!["code"]![0]!["property"]!.AsArray().Single(p => (string?)p!["name"] == "Type")!.ToJsonString();
+        }
+
+        await Assert.That(await Row("{name: \"path\"}")).IsEqualTo("{\"name\":\"Type\",\"type\":{\"name\":\"type\"},\"value\":{\"name\":\"path\"}}");
+        await Assert.That(await Row("\"path\"")).IsEqualTo("{\"name\":\"Type\",\"type\":{\"name\":\"type\"},\"value\":\"path\"}");
+    }
+
+    // a .pr built before Type was a type holds it as a dict or a text: it still sets the value as that type
+    [Test]
+    [Arguments("{\"name\":\"dict\"}", "{\"name\":\"path\"}")]
+    [Arguments("{\"name\":\"text\"}", "\"path\"")]
+    public async Task ASetsTypeBuiltAsADictOrAText_StillSetsThatType(string rowType, string rowValue)
+    {
+        var ctx = app.actor.list.User.Context;
+        var read = Read("variable.set(Name=%p%, Value=\"a.txt\", Type=\"path\")", out _);
+        var built = global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
+            global::PLang.Tests.Shared.Make.Step("set", ((global::app.goal.step.action.list.@this)read.Peek()!)[0]));
+        var pr = (await ctx.Pr(built)).Replace(
+            "\"type\": {\n                \"name\": \"type\"\n              },\n              \"value\": \"path\"",
+            $"\"type\": {rowType},\n              \"value\": {rowValue}");
+        await Assert.That(pr).Contains(rowType);
+        var goal = await global::PLang.Tests.Shared.RealGoalLoad.Read(app, pr);
+
+        await (await goal.Step[0].Code[0].Start(ctx)).IsSuccess();
+
+        await Assert.That(await (await ctx.Variable.Get("p")).Value()).IsAssignableTo<global::app.type.item.path.@this>();
+    }
+
     // a property of the one action a formal line reads, through a real .pr load
     private async Task<global::app.data.@this> Slot(string formal, string property)
     {

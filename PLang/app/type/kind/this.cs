@@ -146,8 +146,8 @@ public class @this
 
     /// <summary>What a value of this kind can be in <paramref name="step"/>, as the decider is offered it: one of the
     /// step's own variables, as the step writes it (<c>%field%</c>), each once. A closed set offers its options.</summary>
-    public virtual System.Collections.Generic.IReadOnlyList<string> Offers(global::app.goal.step.@this step)
-        => new global::app.type.item.variable.parser.@this(step.Text).Variable.Select(v => v.Text).Distinct().ToList();
+    public virtual System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string>> Offers(global::app.goal.step.@this step)
+        => new(new global::app.type.item.variable.parser.@this(step.Text).Variable.Select(v => v.Text).Distinct().ToList());
 
     /// <summary>Whether a value of C# class <paramref name="clr"/> rides as this kind — its
     /// <see cref="ClrForm"/> takes it.</summary>

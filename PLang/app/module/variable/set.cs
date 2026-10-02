@@ -77,7 +77,7 @@ public partial class Set : IContext, IScope, IKeep
     /// registry and stamps the entire entity (kind included) onto the minted
     /// variable.
     /// </summary>
-    public partial data.@this? Type { get; init; }
+    public partial data.@this<global::app.type.@this>? Type { get; init; }
     /// <summary>Whether the value is a default — `set default %x% = …` writes only where nothing is.</summary>
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Default { get; init; }

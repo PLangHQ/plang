@@ -20,6 +20,9 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         // Token-parse the descriptor {name, kind?, strict?, template?} — the symmetric mirror of
         // type.@this.Write; no STJ, no per-type converter. Field names are written lowercase.
         if (reader.Null()) return new global::app.type.item.@null.@this("type", kind);
+        // a type written as its name (`"path"`) is the type that name names
+        if (reader.Peek() == global::app.type.format.TokenKind.String)
+            return ctx.Context.App.type.list[new global::app.type.@this(reader.String()), ctx.Context];
         reader.BeginObject();
         string? name = null, typeKind = null, template = null; bool strict = false;
         while (reader.NextName(out var field))

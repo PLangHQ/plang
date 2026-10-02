@@ -286,7 +286,7 @@ public sealed class @this
                      ? listed.Mark.Popular
                  : listed.Mark.Possible,
             Module = modules.Length > 0 && Through(p.Name) ? modules : null,
-            Option = Chosen(p.Name),
+            Option = Chosen(Catalog(p.Name, context)),
         }).ToList();
     }
 
@@ -356,19 +356,28 @@ public sealed class @this
     // a Parameter, a RetryCount), as the examples teach.
     private string Call(global::app.goal.step.action.@this action)
     {
-        var given = action.Property.Where(p => p.Required).Select(p => p.Name).Concat(Chosen($"{action.Module.Name}.{action.Name}"));
+        var chosen = Chosen(action);
+        // a required property the decider chose a value of is written with it, not as a slot still to fill
+        var given = action.Property.Where(p => p.Required && !chosen.Any(c => c.StartsWith(p.Name + "=", StringComparison.Ordinal)))
+            .Select(p => p.Name).Concat(chosen);
         return $"{action.Module.Name}.{action.Name}({string.Join(", ", given)})";
     }
 
-    // The options the decider chose a value of for the action <paramref name="name"/> (`Template=plang`) — "none"
-    // left out. What the starting line writes and what the listed action carries: one reading, so they never drift.
-    private List<string> Chosen(string name)
+    // The options the decider chose a value of for <paramref name="action"/> (`Template=plang`, `Name="Page"`) — "none"
+    // left out — each written as the formal reader reads it: an option of a closed set or a variable bare, any other
+    // value in quotes. What the starting line writes and what the listed action carries: one reading, so they never drift.
+    private List<string> Chosen(global::app.goal.step.action.@this? action)
     {
-        var asked = name + ".";
+        if (action == null) return [];
+        var asked = $"{action.Module.Name}.{action.Name}.";
         var chosen = new List<string>();
         foreach (var (key, value) in _option)
             if (key.StartsWith(asked, StringComparison.Ordinal) && value is { Length: > 0 } && value != question.@this.None)
-                chosen.Add($"{key[asked.Length..]}={value}");
+            {
+                var name = key[asked.Length..];
+                var bare = value.StartsWith('%') || action[name]?.Type.Values?.Contains(value) == true;
+                chosen.Add($"{name}={(bare ? value : System.Text.Json.JsonSerializer.Serialize(value))}");
+            }
         return chosen;
     }
 
@@ -509,19 +518,24 @@ public sealed class @this
         var actions = _items.Where(p => p.Score is { } s && s >= (number)Near).Select(p => Catalog(p.Name, context))
             .Concat(asked.SelectMany(m => _modules[m].ActionNames.Select(a => _modules[m][a])))
             .Where(a => a != null).Select(a => a!).Distinct();
+        // the variable the step writes is where its answer goes, never what an option is
+        var writes = Destination()?.Text;
         foreach (var action in actions)
         {
             await action.Note.Value(context.Ok());
             foreach (var line in action.Note.Line)
-                // what the option's type offers for this step (a closed set its options, any other the step's variables);
-                // an option with nothing to offer isn't asked
-                if (line is { Ask: not null, Name: { } named } && action[named.ToString()] is { } property
-                    && property.Type.Offers(_step) is { Count: > 0 } offers)
-                    questions.Add(new question.@this
-                    {
-                        Id = Key($"{OptionKey}{action.Module.Name}.{action.Name}.{property.Name}"), Kind = Kind.Option,
-                        Action = action, Property = property, Values = [.. offers, question.@this.None],
-                    });
+            {
+                if (line is not { Ask: not null, Name: { } named } || action[named.ToString()] is not { } property) continue;
+                // what the option's type offers for this step (a closed set its options, a collection the members the
+                // step can name, any other the step's variables); an option with nothing to offer isn't asked
+                var offers = (await property.Type.Offers(_step)).Where(o => !string.Equals(o, writes, StringComparison.Ordinal)).ToList();
+                if (offers.Count == 0) continue;
+                questions.Add(new question.@this
+                {
+                    Id = Key($"{OptionKey}{action.Module.Name}.{action.Name}.{property.Name}"), Kind = Kind.Option,
+                    Action = action, Property = property, Values = [.. offers, question.@this.None],
+                });
+            }
         }
         return questions;
     }

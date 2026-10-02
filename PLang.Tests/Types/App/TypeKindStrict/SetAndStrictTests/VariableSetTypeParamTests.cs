@@ -12,10 +12,8 @@ public class VariableSetTypeParamTests
         var t = typeof(global::app.module.variable.Set);
         var prop = t.GetProperty("Type", BindingFlags.Public | BindingFlags.Instance)!;
         await Assert.That(prop).IsNotNull();
-        // Born-native: `type` is not `: item`, so it can't ride a Data<T> — the Type slot is a
-        // bare Data and the type entity rides in .Value (handler reads Type.Value as type.@this).
-        // It is NOT a raw string slot.
-        await Assert.That(prop.PropertyType).IsEqualTo(typeof(global::app.data.@this));
+        // The Type slot is a type — the type entity, never a raw string — so what it can be is a type's to offer.
+        await Assert.That(prop.PropertyType).IsEqualTo(typeof(global::app.data.@this<global::app.type.@this>));
     }
 
     [Test] public async Task SetType_IsNullable()

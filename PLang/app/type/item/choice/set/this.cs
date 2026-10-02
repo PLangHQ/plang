@@ -34,7 +34,8 @@ public abstract class @this : global::app.type.kind.@this
     public abstract override System.Collections.Generic.IReadOnlyList<string> Values { get; }
 
     /// <summary>A choice is one of its options, whatever the step's words.</summary>
-    public override System.Collections.Generic.IReadOnlyList<string> Offers(global::app.goal.step.@this step) => Values;
+    public override System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string>> Offers(global::app.goal.step.@this step)
+        => new(Values);
 
     /// <summary>The member <paramref name="symbol"/> names; throws <see cref="System.ArgumentException"/> for a name
     /// that is none of the options.</summary>
