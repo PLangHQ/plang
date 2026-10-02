@@ -197,6 +197,12 @@ Idle pending:
   build.match refuses again → NO PR. Fix (architect/coder): the refusal should name the step's own arg
   (`{module: …}`) not the placeholder `name`; and/or teach that a plang-word arg name is still a name.
   Same plang-word pull as 32(b), on the Parameter side.
+  - **Teaching lever TRIED, FAILED (1cb12dd3f):** extended call.notes Parameter + a call.examples entry
+    (arg name kept even when a plang word). Before/after, 10 edu builds each: module arg kept **0/3 both
+    before and after**; plain-arg guard (`item`) kept 5/5. Teaching isn't the lever — the **coder's
+    refusal reword** (± offers→Parameter arg) is. Teaching kept (accurate, may compose). Also surfaced:
+    32(b)'s earlier "9/10 saved" were **silently dropping the module arg** (SAVED, 0 module-args) — worse
+    than the loud refusal. Re-measure after the reword lands.
   - **⚠️ Lesson (twice now):** the DEBUG `[BEFORE]`/watch `%x% = (undefined)` listing is UNRELIABLE
     (debug/this.cs:344,351 — it fooled me on cache:false AND here). **Never conclude a variable is
     undefined from the debug listing — check the step's DEBUG [AFTER] / the actual effect first.** My
