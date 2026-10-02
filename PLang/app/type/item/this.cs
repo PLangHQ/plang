@@ -695,6 +695,18 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public virtual bool IsNull => false;
 
+    /// <summary>This value's own bytes, poured into <paramref name="into"/> as they come — what a digest of the value
+    /// takes, so it matches any other tool's: a value's json text in its own key order (a dict's entries as they were
+    /// added); a text, binary or file answers its own. Ok, or why the bytes could not be had (a file the actor may not
+    /// read).</summary>
+    public virtual async System.Threading.Tasks.Task<global::app.data.@this> Pour(System.IO.Stream into, actor.context.@this context)
+    {
+        await using (var utf8 = new System.Text.Json.Utf8JsonWriter(into))
+            await Output(new global::app.type.item.kind.json.Writer(utf8, global::app.View.Out, emitsSchema: false),
+                global::app.View.Out, context);
+        return context.Ok();
+    }
+
     /// <summary>
     /// Write this value into the format-neutral <see cref="global::app.type.format.IWriter"/>.
     /// A value writes WHAT it is through the writer's primitives (String, Number, Bytes, …);

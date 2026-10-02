@@ -184,6 +184,33 @@ public sealed partial class @this
         return context.Ok<global::app.type.item.path.@this>(this);
     }
 
+    /// <summary>Writes the file from <paramref name="content"/> as it is read — never held whole (a download's body) —
+    /// gated as a write.</summary>
+    public override async Task<data.@this<global::app.type.item.path.@this>> Write(System.IO.Stream content, actor.context.@this context)
+    {
+        if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        await context.FileSystem.Write(this, content, context.CancellationToken);
+        return context.Ok<global::app.type.item.path.@this>(this);
+    }
+
+    /// <summary>A file's bytes are its contents — read as they stream, gated as a read, never held whole.</summary>
+    public override async Task<data.@this> Pour(System.IO.Stream into, actor.context.@this context)
+    {
+        if (await AuthGate(Verb.read, context) is { } early) return early;
+        if (!context.FileSystem.IsFile(this))
+            return context.Error(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404));
+        try
+        {
+            await using var file = await context.FileSystem.Open(this);
+            await file.CopyToAsync(into, context.CancellationToken);
+            return context.Ok();
+        }
+        catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
+        {
+            return context.Error(new global::app.error.ServiceError(ex.Message, "IOError", 500));
+        }
+    }
+
     public override async Task<data.@this<global::app.type.item.path.@this>> Append(string content, actor.context.@this context)
     {
         if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);

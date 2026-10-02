@@ -153,13 +153,51 @@ public sealed class Default : IHttp
 
         var totalBytes = response.Content.Headers.ContentLength;
         var maxDownloadSize = (await action.MaxDownloadSize.Value())!.ToInt64();
+        var onProgress = action.OnProgress == null ? null : await action.OnProgress.Value();
+        System.Func<TransferProgress, Task>? report = onProgress == null ? null
+            : progress => RunCallbackAsync(onProgress, progress, null, "progress", app, action.Context, cts.Token);
+
+        // the digest the body must have, its algorithm the value's
+        var expected = action.Hash == null || !action.Hash.IsInitialized ? null : await action.Hash.Value();
+        if (action.Hash != null && action.Hash.IsInitialized && !action.Hash.Success) return action.Hash;
+        if (expected != null && expected.Algorithm.Length == 0)
+            return action.Context.Error(new global::app.error.Error(
+                "a download's Hash names its algorithm: sha256:<hex>", "HashInvalid", 400));
+        using var digest = expected == null ? null
+            : ((global::app.module.crypto.type.hash.kind.@this)action.Context.App.type.list["hash"].kind[expected.Algorithm]!).Digest();
+
         using var responseStream = await response.Content.ReadAsStreamAsync(cts.Token);
-        using var buffer = new MemoryStream();
+        await using var body = new body(responseStream, totalBytes, maxDownloadSize, report, digest);
 
-        await StreamWithProgressAsync(
-            responseStream, buffer, totalBytes, maxDownloadSize, (action.OnProgress == null ? null : await action.OnProgress.Value()), app, action.Context, cts.Token);
+        var path = action.Path == null || !action.Path.IsInitialized ? null : await action.Path.Value();
+        if (action.Path != null && action.Path.IsInitialized && !action.Path.Success) return action.Path;
+        if (path == null)
+        {
+            using var buffer = new MemoryStream();
+            await body.CopyToAsync(buffer, cts.Token);
+            if (expected?.Mismatch(digest!.Hash) is { } refused) return action.Context.Error(refused);
+            return action.Context.Ok(buffer.ToArray());
+        }
 
-        return action.Context.Ok(buffer.ToArray());
+        // the body goes beside the path under a temporary name, and moves in only when it is whole and matches: a
+        // failed or mismatched download leaves nothing at the path
+        var part = global::app.type.item.path.@this.Resolve(path.Raw + ".part", action.Context);
+        data.@this written;
+        try { written = await part.Write(body, action.Context); }
+        catch (System.Exception)
+        {
+            // a body cut short (over its cap, too slow, cancelled) leaves no part behind; the failure is still the answer
+            await part.Delete(action.Context);
+            throw;
+        }
+        if (!written.Success) return written;
+        if (expected?.Mismatch(digest!.Hash) is { } mismatch)
+        {
+            await part.Delete(action.Context);
+            return action.Context.Error(mismatch);
+        }
+        var moved = await part.MoveTo(path, (global::app.type.item.@bool.@this)true, action.Context);
+        return moved.Success ? action.Context.Ok<global::app.type.item.path.@this>(path) : moved;
     });
 
     public Task<data.@this> UploadAsync(upload action) => ExecuteHttpAsync(action.Context, async () =>
@@ -708,69 +746,6 @@ public sealed class Default : IHttp
         }
     }
 
-    // --- Progress reporting ---
-
-    private static async Task<long> StreamWithProgressAsync(
-        Stream source,
-        Stream destination,
-        long? totalBytes,
-        long maxBytes,
-        Call? onProgress,
-        AppType app,
-        actor.context.@this context,
-        CancellationToken ct)
-    {
-        var buffer = new byte[8192];
-        long bytesTransferred = 0;
-        var lastReport = DateTimeOffset.UtcNow;
-        var throughputStart = DateTimeOffset.UtcNow;
-        long throughputBytes = 0;
-
-        int bytesRead;
-        while ((bytesRead = await source.ReadAsync(buffer, 0, buffer.Length, ct)) > 0)
-        {
-            bytesTransferred += bytesRead;
-
-            // F1: size limit on file downloads
-            if (bytesTransferred > maxBytes)
-                throw new global::app.error.AppException(
-                    $"Download exceeds maximum size of {FormatBytes(maxBytes)}", "ResponseTooLarge", 413);
-
-            await destination.WriteAsync(buffer, 0, bytesRead, ct);
-
-            // F3: slow-loris throughput check
-            throughputBytes += bytesRead;
-            var elapsed = (DateTimeOffset.UtcNow - throughputStart).TotalSeconds;
-            if (elapsed >= 30)
-            {
-                var bytesPerSec = throughputBytes / elapsed;
-                if (bytesPerSec < 1024) // < 1KB/sec for 30s
-                    throw new global::app.error.AppException(
-                        $"Transfer too slow ({bytesPerSec:F0} bytes/sec) — possible slow-loris attack", "SlowResponse", 408);
-                throughputStart = DateTimeOffset.UtcNow;
-                throughputBytes = 0;
-            }
-
-            if (onProgress != null)
-            {
-                var now = DateTimeOffset.UtcNow;
-                if ((now - lastReport).TotalMilliseconds >= 500)
-                {
-                    lastReport = now;
-                    var progress = new TransferProgress
-                    {
-                        BytesTransferred = bytesTransferred,
-                        TotalBytes = totalBytes,
-                        Percentage = totalBytes > 0 ? (double)bytesTransferred / totalBytes.Value * 100 : null
-                    };
-                    await RunCallbackAsync(onProgress, progress, null, "progress", app, context, ct);
-                }
-            }
-        }
-
-        return bytesTransferred;
-    }
-
     // --- Upload content resolution ---
 
     // HttpContent is a transport artifact, never a PLang value — it rides as a plain
@@ -903,7 +878,7 @@ public sealed class Default : IHttp
 
     // --- Static utilities ---
 
-    private static string FormatBytes(long bytes) => bytes switch
+    internal static string FormatBytes(long bytes) => bytes switch
     {
         >= 1024 * 1024 => $"{bytes / (1024 * 1024)}MB",
         >= 1024 => $"{bytes / 1024}KB",

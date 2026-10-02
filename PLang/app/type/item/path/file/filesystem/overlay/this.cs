@@ -75,6 +75,16 @@ public sealed class @this : filesystem.@this
         return Task.CompletedTask;
     }
 
+    /// <summary>A build's file is held in memory: the stream is read whole into it.</summary>
+    public override async Task Write(file.@this p, System.IO.Stream content, CancellationToken ct = default)
+    {
+        using var held = new System.IO.MemoryStream();
+        await content.CopyToAsync(held, ct);
+        await Write(p, held.ToArray());
+    }
+
+    public override async Task<System.IO.Stream> Open(file.@this p) => new System.IO.MemoryStream(await Read(p), writable: false);
+
     public override async Task Append(file.@this p, string text)
     {
         byte[] existing = IsFile(p) ? await Read(p) : [];

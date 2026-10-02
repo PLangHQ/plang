@@ -5,8 +5,9 @@ namespace app.module.crypto;
 [Action("hash", Cacheable = false)]
 public partial class Hash : IContext
 {
-    /// <summary>The value to hash — its own bytes: a text its UTF-8, binary its bytes, anything else its json text (a
-    /// dict or list in its own key order), so the digest matches any other tool's.</summary>
+    /// <summary>The value to hash — its own bytes: a text its UTF-8, binary its bytes, a path the file's contents (read as
+    /// they stream, gated as a read), anything else its json text (a dict or list in its own key order), so the digest
+    /// matches any other tool's. A text naming a file is still a text: its letters.</summary>
     [IsNotNull, Whole]
     public partial data.@this Data { get; init; }
 

@@ -102,19 +102,54 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             : global::app.data.Comparison.Incomparable);
 
     // The digest a value stands for: a digest is itself; a text is its hex when it is hex (of `length` bytes, when the
-    // length is known), else its base64; null when it is neither, or no text.
+    // length is known), else its base64 — written `<algorithm>:<digest>` (sha256:<hex>), the algorithm is the prefix's;
+    // null when it is neither, or no text.
     private static @this? Digest(object? raw, int? length)
     {
         if (raw is @this digest) return digest;
         if (raw is not global::app.type.item.text.@this text) return null;
         var characters = text.ToString();
+        var algorithm = "";
+        if (characters.IndexOf(':') is > 0 and var colon && characters[..colon].All(char.IsLetterOrDigit))
+        {
+            algorithm = characters[..colon];
+            characters = characters[(colon + 1)..];
+        }
         if (characters.Length > 0 && characters.Length % 2 == 0 && (length is null || characters.Length == length * 2)
             && characters.All(System.Uri.IsHexDigit))
-            return new @this(System.Convert.FromHexString(characters), "");
+            return new @this(System.Convert.FromHexString(characters), algorithm);
         return System.Buffers.Text.Base64.IsValid(characters) && characters.Length > 0
-            ? new @this(System.Convert.FromBase64String(characters), "")
+            ? new @this(System.Convert.FromBase64String(characters), algorithm)
             : null;
     }
+
+    /// <summary>The birth: a digest as <see cref="Create(object?)"/> reads it — and one whose written algorithm
+    /// (<c>md5:…</c>) is no kind of hash is refused, naming the kinds.</summary>
+    public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
+    {
+        if (Digest(raw, length: null) is not { } digest)
+        {
+            data.Fail(new global::app.error.Error(
+                $"%{data.Name}% is no digest — a hash is written as hex or base64, or <algorithm>:<digest> (sha256:<hex>)",
+                "CreateItemDeclined", 400));
+            return null;
+        }
+        var kinds = data.Context!.App.type.list["hash"].kind.list(data.Context).Items().Select(t => t.kind.Name).ToList();
+        if (digest.Algorithm.Length > 0 && !kinds.Contains(digest.Algorithm, StringComparer.OrdinalIgnoreCase))
+        {
+            data.Fail(new global::app.error.Error(
+                $"'{digest.Algorithm}' is no kind of hash — the kinds are {string.Join(", ", kinds)}", "HashInvalid", 400));
+            return null;
+        }
+        return digest;
+    }
+
+    /// <summary>The digest written as <c>&lt;algorithm&gt;:&lt;hex&gt;</c> — how a mismatch names it.</summary>
+    public string Written => $"{Algorithm}:{System.Convert.ToHexString(Bytes).ToLowerInvariant()}";
+
+    /// <summary>Why <paramref name="actual"/> is not this digest, naming both (HashMismatch); null when it is.</summary>
+    public global::app.error.Error? Mismatch(@this actual) => DigestEquals(actual) ? null
+        : new global::app.error.Error($"the hash is {actual.Written}, expected {Written}", "HashMismatch", 400);
 
     public static implicit operator string(@this h) => h.ToBase64();
     public override string ToString() => ToBase64();

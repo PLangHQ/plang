@@ -6,9 +6,9 @@ using app.module.signing;
 namespace app.module.http;
 
 /// <summary>
-/// Downloads bytes from a URL. Returns the raw bytes in Data — chain with file.save
-/// to persist to disk. One-concern-per-action (OBP): download fetches, save writes.
-/// Reports progress via an optional callback goal.
+/// Downloads from a URL. Download fetches; given a <see cref="Path"/> it writes the body there as it arrives, never
+/// held whole, and answers the path — else it answers the bytes. Given a <see cref="Hash"/> the body is hashed as it
+/// arrives and must match it. Reports progress via an optional callback goal.
 /// </summary>
 [Action("download", Cacheable = false)]
 [RequiresCapability("network")]
@@ -41,7 +41,15 @@ public partial class download : IContext, IAddressed
     /// <summary>How redirects are followed — whether, and how many at most. Left out, up to ten are followed.</summary>
     public partial data.@this<global::app.module.http.type.redirect.@this> Redirect { get; init; }
 
-    /// <summary>Max download size in bytes. Default 100MB.</summary>
+    /// <summary>Where the body is written as it arrives — the answer is then this path, and the body is never held
+    /// whole. The write is gated as one; a body that fails its <see cref="Hash"/> leaves nothing here.</summary>
+    public partial data.@this<global::app.type.item.path.@this>? Path { get; init; }
+
+    /// <summary>The digest the body must have — <c>sha256:&lt;hex&gt;</c>, its algorithm the value's. The body is hashed as
+    /// it arrives; a mismatch refuses the download, naming both hashes.</summary>
+    public partial data.@this<global::app.module.crypto.type.hash.@this>? Hash { get; init; }
+
+    /// <summary>Max download size in bytes, with or without a Path. Default 100MB.</summary>
     [Default(100 * 1024 * 1024)]
     public partial data.@this<global::app.type.item.number.@this> MaxDownloadSize { get; init; }
 

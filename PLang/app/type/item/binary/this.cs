@@ -220,6 +220,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Bare base64 — the serializer renders this.</summary>
     public override string ToString() => System.Convert.ToBase64String(Value);
 
+    /// <summary>Binary's bytes are itself.</summary>
+    public override async System.Threading.Tasks.Task<global::app.data.@this> Pour(System.IO.Stream into, actor.context.@this context)
+    {
+        await into.WriteAsync(Value);
+        return context.Ok();
+    }
+
     // ---- Comparison — the value's own behavior (see app.data.Comparison) ----
 
     /// <summary>Outranks text — bytes never compare lexically.</summary>
