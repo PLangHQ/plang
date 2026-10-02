@@ -46,6 +46,45 @@ public class LlmTypeTests
         await Assert.That(roleProp.GetCustomAttribute<LlmBuilderAttribute>()).IsNotNull();
     }
 
+    // a prompt written as text (`ask llm "say hi"`, Message="say hi") is the user's message
+    [Test]
+    public async Task AText_DeclaredMessages_IsTheUsersMessage()
+    {
+        await using var app = new global::app.@this("/tmp/llmmsg-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        var ctx = app.actor.list.User.Context;
+        var messages = new global::app.data.@this("Message", "say hi in one word", new global::app.type.@this("list", "message"), context: ctx)
+            .As<global::app.type.item.list.@this<LlmMessage>>();
+
+        var read = await messages.Value();
+
+        await messages.IsSuccess();
+        var only = read!.Items(ctx).Single();
+        var message = (await only.Value<LlmMessage>())!;
+        await Assert.That(message.Role).IsEqualTo("user");
+        await Assert.That(message.Content).IsEqualTo("say hi in one word");
+    }
+
+    // a list of message dicts still reads as the messages it lists
+    [Test]
+    public async Task AListOfMessageDicts_ReadsAsTheMessages()
+    {
+        await using var app = new global::app.@this("/tmp/llmmsg-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        var ctx = app.actor.list.User.Context;
+        var list = new List<object?>
+        {
+            new Dictionary<string, object?> { ["Role"] = "system", ["Content"] = "be brief" },
+            new Dictionary<string, object?> { ["Role"] = "user", ["Content"] = "hi" },
+        };
+        var messages = new global::app.data.@this("Message", list, new global::app.type.@this("list", "message"), context: ctx)
+            .As<global::app.type.item.list.@this<LlmMessage>>();
+
+        var read = await messages.Value();
+
+        var roles = new List<string>();
+        foreach (var item in read!.Items(ctx)) roles.Add((await item.Value<LlmMessage>())!.Role);
+        await Assert.That(roles).IsEquivalentTo(new[] { "system", "user" });
+    }
+
     #endregion
 
     #region ToolCall

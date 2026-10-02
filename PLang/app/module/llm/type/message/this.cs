@@ -27,4 +27,14 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     /// <summary>For role=assistant: tools the LLM wants to call.</summary>
     public List<ToolCall>? ToolCalls { get; set; }
+
+    /// <summary>A message is born from a text as the user's message with that content — a prompt written as text
+    /// (<c>ask llm "say hi"</c>) is what the user says; a dict of its members is read as the record it is.</summary>
+    public static @this? Create(object? raw) => raw switch
+    {
+        @this message => message,
+        global::app.type.item.text.@this text => new() { Role = "user", Content = text.ToString() },
+        string text => new() { Role = "user", Content = text },
+        _ => null,
+    };
 }
