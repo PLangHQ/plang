@@ -542,7 +542,35 @@ may be the pull. **Fix candidates (architect/coder):** the refusal should name t
 teaching that an arg whose name is a plang word (`module`, `file`, `goal`) is still an arg name. Core
 is the refusal wording + possibly the writer/offers extending to the Parameter arg name.
 
-## Issue 39 teaching lever (plang-word arg name) — tried, DID NOT move it (before/after)
+## ⚠️ RETRACTION — the "module arg dropped" was a grep artifact; writer+reader are CORRECT
+
+The architect caught it: Cover refuses an answer missing any `%!…%` the step contains, so a truly
+dropped `%!app.module.<m>%` couldn't save. Direct evidence settles it:
+- **Writer raw answer** (`--debug llm response`): `[0] goal.call(Name="Page", Parameter={module:
+  %!app.module.file%})` — the arg is **correctly named `module`**. No rename.
+- **Built `.pr`** (`m10/edu` l.27): `Parameter` value = `[{"name":"module","type":{"name":"item",
+  "template":"plang"},"value":"%!app.module.file%", …}]` — stored correctly as a named row. **No
+  reader key-collision.**
+
+My `"name": "module"` count returned 0 only because the inner Parameter rows are **compact JSON**
+(`"name":"module"`, no space) while my grep required the space — a **whitespace artifact**. So
+everything below framed as "module arg dropped / silently dropped / 0/3 before+after" is **RETRACTED**,
+including the teaching before/after (both read 0/3 falsely).
+
+**Corrected measurement (compact grep, 10 edu builds): 7/10 fully correct** (`Name="Page"` +
+`Parameter={module: %!app.module.file%}` on all 3 steps), **3/10 NO PR** — the residual is an
+**intermittent writer slip** to a bare nameless `Parameter=%!app.module.file%` on ≥1 step (→ the
+"Parameter takes named rows" refusal; FixSteps' retry sometimes slips the same way → NO PR). So the
+writer *usually* names the arg correctly; ~3/10 it writes a bare value. Answering the architect:
+**neither the writer renames nor the reader changes the key — `{module: …}` is written and read
+correctly**; the only defect is the intermittent bare-value slip.
+
+The teaching (call.notes/examples: an arg name is kept even when a plang word) is **accurate and kept**
+(may trim the slip rate; I can't claim a before/after since my prior numbers were the grep artifact).
+Third measurement slip of this investigation (debug-watch `(undefined)`, then compact-JSON grep) —
+lesson reinforced: inspect the actual `.pr`/raw answer before reporting a count.
+
+## (superseded by the retraction above) Issue 39 teaching lever — before/after numbers were a grep artifact
 
 The residual: the writer drops the Parameter arg name when it is a plang word (`module=%!app.module.file%`
 → either omitted silently or a bare nameless `Parameter=%!app.module.file%` → refused). Tried the
