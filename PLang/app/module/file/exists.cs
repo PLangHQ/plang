@@ -12,7 +12,7 @@ namespace app.module.file;
 /// The action does no I/O of its own: the path stays live, so re-testing it
 /// reflects the current state.
 /// </summary>
-[Action("exists")]
+[Action("exists"), global::app.Attributes.Question]
 public partial class Exists : IContext
 {
     public partial data.@this<path> Path { get; init; }

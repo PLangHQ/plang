@@ -4,7 +4,7 @@ namespace app.module.list;
 /// Checks if any item in a list matches a condition on a property.
 /// Usage: any %list% where "level" != "high", write to %hasNonHigh%
 /// </summary>
-[Action("any")]
+[Action("any"), global::app.Attributes.Question]
 public partial class Any : IContext
 {
     public partial data.@this<app.type.item.variable.@this> ListName { get; init; }
