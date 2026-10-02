@@ -19,6 +19,25 @@ public sealed class Browser : global::app.type.item.@this, global::app.type.item
     /// <summary>Its windows on the screen.</summary>
     internal global::app.module.window.Windows Windows => windows ??= new(this);
 
+    /// <summary>One step by dot: <c>window</c> — its windows by their number on the screen (<c>%browser.window[1].url%</c>,
+    /// <c>%browser.window[%click.window%]%</c>; 0 is the desktop); any other member as every item's.</summary>
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
+        => string.Equals(key, "window", StringComparison.OrdinalIgnoreCase)
+            ? System.Threading.Tasks.ValueTask.FromResult(new global::app.data.@this(key, new ByNumber(this), parent: parent))
+            : base.Get(parent, key);
+
+    /// <summary>The windows by number: an index is a window's number on the screen; none there is nothing.</summary>
+    private sealed class ByNumber(Browser browser) : global::app.type.item.@this
+    {
+        public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key, bool isIndex)
+            => Get(parent, key);
+
+        public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
+            => System.Threading.Tasks.ValueTask.FromResult(long.TryParse(key, out var number) && browser.Windows.ById(number) is { } window
+                ? new global::app.data.@this(key, window, parent: parent)
+                : global::app.data.@this.NotFound(key, parent.Context));
+    }
+
     /// <summary>The page it opened first.</summary>
     [LlmBuilder, Out] public string Url { get; set; } = "";
 
