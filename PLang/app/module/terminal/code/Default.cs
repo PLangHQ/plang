@@ -49,7 +49,7 @@ public sealed class Default : ITerminal
         var watch = Stopwatch.StartNew();
         var started = await Launch(info, program, sandbox, context);
         if (!started.Success) return data.@this<Text>.From(started);
-        using var process = (await started.Value())!.Os!;
+        using var process = (await started.Value())!.Take();
         Children.Adopt(process);
         var stopped = await WaitAsync(process, ct);
         return Result(context, "", "", stopped ? -1 : process.ExitCode, watch.Elapsed, program, stopped);
@@ -107,7 +107,7 @@ public sealed class Default : ITerminal
         var watch = Stopwatch.StartNew();
         var started = await Launch(info, program, sandbox, context);
         if (!started.Success) return data.@this<Text>.From(started);
-        using var process = (await started.Value())!.Os!;
+        using var process = (await started.Value())!.Take();
         Children.Adopt(process);
         if (input != null) await process.StandardInput.WriteAsync(input);
         process.StandardInput.Close();

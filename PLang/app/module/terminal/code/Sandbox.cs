@@ -41,22 +41,22 @@ internal sealed class Sandbox
     /// <summary>Starts the program inside its folders. Throws when the lock can't be made: it never runs unlocked.</summary>
     public System.Diagnostics.Process Start(System.Diagnostics.ProcessStartInfo info)
     {
-        System.Diagnostics.Process? started = null;
-        Exception? failed = null;
+        // what the thread started, or why it couldn't — set once, by the thread
+        var started = new TaskCompletionSource<System.Diagnostics.Process>();
         var thread = new Thread(() =>
         {
             try
             {
                 // the base where this system has it; the program file and every folder the caller named
                 Landlock.Restrict(Base.Concat(Sink), Read.Prepend(Program), Write);
-                started = System.Diagnostics.Process.Start(info);
+                started.SetResult(System.Diagnostics.Process.Start(info)
+                    ?? throw new InvalidOperationException($"Could not start {info.FileName}"));
             }
-            catch (Exception ex) { failed = ex; }
+            catch (Exception ex) { started.SetException(ex); }
         }) { IsBackground = true, Name = "sandbox" };
         thread.Start();
         thread.Join();
-        if (failed != null) throw failed;
-        return started ?? throw new InvalidOperationException($"Could not start {info.FileName}");
+        return started.Task.GetAwaiter().GetResult();
     }
 
     /// <summary>The Landlock calls (x86_64/arm64 numbers are the same: 444–446).</summary>

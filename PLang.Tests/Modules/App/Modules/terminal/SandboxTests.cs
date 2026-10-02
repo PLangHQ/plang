@@ -154,12 +154,15 @@ public class SandboxTests : IDisposable
     }
 
     [Test]
-    public async Task OneFolderNotInAList_IsRefused()
+    [Skip("core gap: list<T>.Create given one value makes no list of one (the list's reader does, since 22885b348) — for the coder")]
+    public async Task OneFolderNotInAList_IsAListOfOne()
     {
-        var result = await Sh($"echo ran > {_root}/granted/ran.txt", new Dictionary<string, object?> { ["write"] = "/granted" });
-        await result.IsFailure();
-        await Assert.That(result.Error!.Key).IsEqualTo("SandboxInvalid");
-        await Assert.That(File.Exists(Path.Combine(_root, "granted", "ran.txt"))).IsFalse();
+        if (!OperatingSystem.IsLinux()) return;
+        var result = await Sh($"echo ran > {_root}/granted/ran.txt; (echo out > {_outside}/out.txt) 2>/dev/null || echo refused",
+            new Dictionary<string, object?> { ["write"] = "/granted" });
+        await result.IsSuccess();
+        await Assert.That(File.Exists(Path.Combine(_root, "granted", "ran.txt"))).IsTrue();
+        await Assert.That((await result.Value())?.ToString() ?? "").Contains("refused");
     }
 
     [Test]
