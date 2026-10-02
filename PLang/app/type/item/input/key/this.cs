@@ -13,6 +13,8 @@ public sealed class @this : input.@this
     private readonly int _vk, _mods;
     private readonly string? _name;
 
+    /// <summary>A key by its scancode; its <paramref name="name"/> when given, else the one its virtual key has (none
+    /// while Alt is held: those combinations are the system's).</summary>
     public @this(bool down, uint scancode, bool extended = false, int vk = 0, string? name = null, int mods = 0, long? stamp = null)
         : base(stamp)
     {
@@ -20,9 +22,22 @@ public sealed class @this : input.@this
         _scancode = scancode;
         _extended = extended;
         _vk = vk;
-        _name = name;
         _mods = mods;
+        _name = name ?? Named(vk, mods);
     }
+
+    // the modifier bits on the wire: Alt 1, Ctrl 2, Shift 4, (Windows' Insert-paste) 8
+    private const int Alt = 1, Ctrl = 2;
+
+    // a key's name from its virtual key (Windows' VK codes) — the keys that aren't text, and Ctrl+letter (Ctrl+A, Ctrl+C)
+    private static string? Named(int vk, int mods) => (mods & Alt) != 0 ? null : vk switch
+    {
+        0x0D => "Enter", 0x08 => "Backspace", 0x09 => "Tab", 0x2E => "Delete", 0x1B => "Escape",
+        0x24 => "Home", 0x23 => "End", 0x21 => "PageUp", 0x22 => "PageDown",
+        0x25 => "ArrowLeft", 0x26 => "ArrowUp", 0x27 => "ArrowRight", 0x28 => "ArrowDown",
+        >= 0x41 and <= 0x5A when (mods & Ctrl) != 0 => ((char)('a' + vk - 0x41)).ToString(),
+        _ => null,
+    };
 
     private protected override string Variant => "key";
 
@@ -31,7 +46,7 @@ public sealed class @this : input.@this
     /// <summary>The keyboard's number for the key.</summary>
     [Out] public global::app.type.item.number.@this Scancode => (long)_scancode;
     /// <summary>The key's name, when the host knows it (Enter, F5, A).</summary>
-    [Out] public global::app.type.item.text.@this? Name => _name is { } n ? n : null;
+    [Out] public global::app.type.item.text.@this? Name => _name is { } n ? (global::app.type.item.text.@this)n : null;
 
     private protected override void Applied(ITarget target) => target.Key(_down, _scancode, _extended, _vk, _name, _mods);
 

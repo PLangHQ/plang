@@ -75,6 +75,31 @@ public class InputTypeTests : IAsyncDisposable
     }
 
     [Test]
+    public async Task AGoalAsks_IsInput_IsClipboard_AndATextIsNone()
+    {
+        async Task<bool> Is(global::app.type.item.@this value, string type)
+            => (await new global::app.data.Operator("is").Evaluate(new global::app.data.@this("e", value, context: Context),
+                new global::app.data.@this("", type, context: Context), Context)).ToBoolean();
+        var click = new Input.mouse.@this(Input.mouse.Action.down, 1, 2, Input.mouse.Button.left, 1);
+        var copied = new global::app.type.item.clipboard.@this((global::app.type.item.text.@this)"x");
+        global::app.type.item.text.@this line = "{\"stats\":{}}";
+        await Assert.That(await Is(click, "input")).IsTrue().Because("a click is input");
+        await Assert.That(await Is(click, "clipboard")).IsFalse().Because("a click is no clipboard");
+        await Assert.That(await Is(copied, "clipboard")).IsTrue().Because("a copy is clipboard");
+        await Assert.That(await Is(copied, "input")).IsFalse().Because("a copy is no input");
+        await Assert.That(await Is(line, "input")).IsFalse().Because("a line is no input");
+        await Assert.That(await Is(line, "text")).IsTrue().Because("a line is text");
+    }
+
+    [Test]
+    public async Task AKey_NamesItselfFromItsVirtualKey_ButNotUnderAlt()
+    {
+        await Assert.That((await Line(new Input.key.@this(true, 28, vk: 0x0D))).Contains("\"name\":\"Enter\"")).IsTrue();
+        await Assert.That((await Line(new Input.key.@this(true, 30, vk: 0x41, mods: 2))).Contains("\"name\":\"a\"")).IsTrue();
+        await Assert.That((await Line(new Input.key.@this(true, 28, vk: 0x0D, mods: 1))).Contains("\"name\":null")).IsTrue();
+    }
+
+    [Test]
     public async Task Apply_HandsEachVariantToItsOwnDoor_TheStampFirst()
     {
         var seen = new Seen();
