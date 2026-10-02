@@ -570,6 +570,22 @@ The teaching (call.notes/examples: an arg name is kept even when a plang word) i
 Third measurement slip of this investigation (debug-watch `(undefined)`, then compact-JSON grep) —
 lesson reinforced: inspect the actual `.pr`/raw answer before reporting a count.
 
+## Issue 39 — FIXED by the reworded refusal (ceb9899cb), jq-verified 10/10
+
+After the refusal reword ("write each argument as the step names it, `{<the name before =>: …}`",
+`ceb9899cb`, gate 105), re-measured the educator's goal — 10 builds, fresh, cache off, **counts via jq**
+(Name values + first Parameter row name per `call goal Page` step):
+
+| metric | result |
+|---|---|
+| RIGHT (`Name="Page"`×3 AND `Parameter.module`×3) | **10/10** |
+| NO PR | **0/10** |
+| saved-but-other | 0/10 |
+
+So the reworded refusal closed the intermittent bare-value slip: **before** (7/10 right, 3/10 NO PR on a
+bare nameless `Parameter`) → **after 10/10 right**. 32(b)/39 fully fixed — `Name="Page"` +
+`Parameter={module: %!app.module.file%}` every build. (Measured with jq per the new rule; no grep.)
+
 ## (superseded by the retraction above) Issue 39 teaching lever — before/after numbers were a grep artifact
 
 The residual: the writer drops the Parameter arg name when it is a plang word (`module=%!app.module.file%`
