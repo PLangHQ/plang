@@ -542,4 +542,25 @@ may be the pull. **Fix candidates (architect/coder):** the refusal should name t
 teaching that an arg whose name is a plang word (`module`, `file`, `goal`) is still an arg name. Core
 is the refusal wording + possibly the writer/offers extending to the Parameter arg name.
 
+## Issue 39 teaching lever (plang-word arg name) — tried, DID NOT move it (before/after)
+
+The residual: the writer drops the Parameter arg name when it is a plang word (`module=%!app.module.file%`
+→ either omitted silently or a bare nameless `Parameter=%!app.module.file%` → refused). Tried the
+teaching lever: extended `call.notes` Parameter ("the word before `=` is the argument's name and MUST
+be kept, even when a plang word `module`/`file`/`goal`; never a bare value, never dropped") + a matching
+`call.examples` entry. Fresh, cache off, 10 edu builds + a plain-arg guard, before and after:
+
+| | edu (module arg kept, want 3/3) | guard `call goal Show item=%x%` |
+|---|---|---|
+| **before** | 0/3 in all saved builds; 9 SAVED (module arg silently dropped) + 1 NO PR (nameless → refused) | item arg kept **5/5** |
+| **after (teaching)** | 0/3 in all saved builds; 8 SAVED + 2 NO PR | item arg kept **5/5** |
+
+**The teaching did not move it** — the writer still never emits `Parameter={module: …}` (it omits the
+arg or writes it nameless), despite the note now saying so plainly. So **teaching is not the lever**;
+the fix is the coder's **refusal reword** (point at the step's own arg name) ± extending the offers to
+the Parameter arg. The guard confirms this is **specific to plang-word arg names** — a plain `item`
+arg is kept 5/5. The teaching is accurate and kept (may compose with the reword), but on its own it's
+insufficient. Also newly visible: the "9/10 saved" from the earlier 32(b) run were **silently dropping
+the module arg** (SAVED with 0 module-args), not cleanly building it — worse than the loud refusal.
+
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).
