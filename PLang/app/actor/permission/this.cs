@@ -193,7 +193,7 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     {
         if (await grantData.Value<Grant>() is not { } grant) return false;
         if (!string.Equals(grant.Actor, request.Actor, StringComparison.Ordinal)) return false;
-        if (!grant.Covers(request)) return false;
+        if (!grant.Allows(request)) return false;
 
         // A persisted grant was verified at the I/O boundary on load (auto-verify-
         // on-read peels + validates its signature layer); an in-memory grant is

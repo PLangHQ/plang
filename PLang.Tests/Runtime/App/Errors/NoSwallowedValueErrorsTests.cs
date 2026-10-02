@@ -24,7 +24,7 @@ public class NoSwallowedValueErrorsTests
     [Test] public async Task AGlobGrantWithRegexCharacters_MatchesThemLiterally()
     {
         var grant = new permission.@this("me", "/a(b/*", permission.@this.AllVerbs, permission.Match.Glob);
-        await Assert.That(grant.Covers(permission.@this.Request("me", "/a(b/x", permission.Verb.Read))).IsTrue();
+        await Assert.That(grant.Allows(permission.@this.Request("me", "/a(b/x", permission.Verb.Read))).IsTrue();
     }
 
     [Test] public async Task APropertyOfTheWrongType_ThrowsInsteadOfReadingAsAbsent()

@@ -192,16 +192,6 @@ Delete in the cleanup pass unless a near-term consumer is known.
 
 ---
 
-## `Covers` → `Allows` — caller-intent verb rename in permission
-
-**Location:** `PLang/app/type/path/permission/` (`permission/this.cs`, `permission/verb/{Read,Write,Delete,Execute}.cs`).
-
-**Found-in:** OBP doc-set review with Ingi (2026-07-09), naming ruling: a method verb names the caller's intent, not the mechanism (`cache.Get`, not `cache.Resolve`); `Covers` doesn't tell the caller what they get.
-
-**Status:** open — mechanical rename, safe to do inline on any branch already touching permission.
-
-**The OBP-clean target:** `Read.Allows(other)`, `verb.Allows(requested)`, `permission.Allows(path, verb)` — the grant answers "does this allow the request?". `HasAccess` stays (sanctioned `HasX` boolean compound). `Documentation/v0.2/obp-smells.md` variant-design section already documents the target name.
-
 ## coder — module-discovery — ContainerFamily vs GetTypeName (dedup)
 **Where:** `PLang/app/type/list/this.cs` — `ContainerFamily` (the door rung's family detection)
 duplicates `GetTypeName`'s generic-family cases (list.@this<>, List<>/IList<>/…, Dictionary<>/…).

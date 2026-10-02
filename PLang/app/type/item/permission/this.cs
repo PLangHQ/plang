@@ -28,7 +28,7 @@ public enum Verb
 
 /// <summary>
 /// A signed permission grant or an in-flight request — same shape both ways.
-/// <c>Covers</c> answers "does this grant cover that request?". Asymmetry is
+/// <c>Allows</c> answers "does this grant allow that request?". Asymmetry is
 /// encoded by <see cref="Match"/> (the grant's path-pattern semantics) and by
 /// verb-set containment (grant's <see cref="Verbs"/> ⊇ request's).
 ///
@@ -89,7 +89,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         return h.ToHashCode();
     }
 
-    public bool Covers(@this request) =>
+    public bool Allows(@this request) =>
         Actor == request.Actor
         && PathMatches(request.Path)
         && request.Verbs.IsSubsetOf(Verbs);

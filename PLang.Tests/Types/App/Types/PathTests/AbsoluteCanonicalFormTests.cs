@@ -98,7 +98,7 @@ public class AbsoluteCanonicalFormTests
         var grant = new PermissionRecord("User", filePath.Absolute, global::app.type.item.permission.@this.AllVerbs, MatchMode.Exact);
         var request = new PermissionRecord("User", httpPath.Absolute, new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.Read }, MatchMode.Exact);
 
-        await Assert.That(grant.Covers(request)).IsFalse();
+        await Assert.That(grant.Allows(request)).IsFalse();
     }
 
     [Test] public async Task Permission_HttpPathGlobGrant_MatchesUrlUnderHost()
@@ -109,6 +109,6 @@ public class AbsoluteCanonicalFormTests
         var grant = new PermissionRecord("User", "https://api.example.com/*", global::app.type.item.permission.@this.AllVerbs, MatchMode.Glob);
         var req = new PermissionRecord("User", request.Absolute, new System.Collections.Generic.HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.Read }, MatchMode.Exact);
 
-        await Assert.That(grant.Covers(req)).IsTrue();
+        await Assert.That(grant.Allows(req)).IsTrue();
     }
 }
