@@ -57,24 +57,6 @@ Each entry: **location · the smell · the OBP-clean target · status · found-i
 
 ---
 
-## 3. `path.permission.verb` — nullable verbs vs the always-present variant rule
-
-**Location:** `PLang/app/type/path/permission/verb/this.cs` (`Read? Read`, `Write? Write`, `Delete? Delete`, `Execute? Execute`; `WhenWritingNull` omits unset verbs from the wire).
-
-**Found-in:** `type-kind-strict` (2026-05-31). Surfaced reconciling `obp-smells.md` variant-design rule #3 ("variants always-present, non-nullable; never nullable as granted/not-granted signaling") against the live code, which does exactly that.
-
-**Status:** open — cleanup/todo, not for `type-kind-strict`. Security-sensitive and orthogonal to the branch. The A-vs-B call (below) is made when the pass runs; Ingi leans B. Don't change inline now.
-
-**The catch (why it's not a one-line fix):** the nullable is doing real work — **verb-level revoke**. `Read(Recursive:false, Metadata:false)` still grants basic single-file read (`Covers` returns true for a minimal read request), so an always-present-with-booleans model **cannot express "no read at all"** — only `null`/absence can. Removing `?` alone breaks revocation.
-
-**The two coherent shapes:**
-- **(A) Nullable = set membership.** Present verb = granted (with options); absent = denied. Compact wire (denied verbs omitted). Complete *given the verb vocabulary*. The cost Ingi flagged: absence is implicit — you can't distinguish "denied" from "data-loss" on the wire. If this is right, **narrow `obp-smells.md` rule #3** to "single-value variants, not set-membership grants."
-- **(B) Always-present + explicit per-verb grant flag.** Every verb serialized; a `Granted`/`Allowed` bool (or equivalent) says yes/no explicitly, and revocation is `Granted = false`. Verbose wire, fully self-describing — Ingi's "serialize the verb so we know the permission." If this is right, **change the code** and keep rule #3.
-
-Ingi's lean ("code is wrong, we should serialize the verb") points at **(B)**. Confirm, and whether the cleaner flag lives per-verb or on the `verb.@this` container.
-
----
-
 ## 4. Registry family — collection-proxy verbs (ObpScan H1)
 
 **Location:** the `*.list` registries and `module`. Surfaced by `tools/ObpScan` (H1).

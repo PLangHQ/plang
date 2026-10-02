@@ -81,7 +81,7 @@ public class Stage5MessagesEndToEndTests
         await Assert.That(found).IsNotNull();
     }
 
-    [Test] public async Task Scenario3_ImmediateRereadSkipsPrompt_FindCoversNoAsk()
+    [Test] public async Task Scenario3_ImmediateRereadSkipsPrompt_FindAllowsNoAsk()
     {
         var (app, foreignFile) = Setup("a");
         var path = new Path(foreignFile);

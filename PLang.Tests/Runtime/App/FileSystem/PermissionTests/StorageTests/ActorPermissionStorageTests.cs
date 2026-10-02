@@ -122,7 +122,7 @@ public class ActorPermissionStorageTests
         await Assert.That(await next.actor.list.User.Permission.Find(new Path("/kept"), Verb.Read)).IsNotNull();
     }
 
-    [Test] public async Task VerbNarrowing_FullAllowGrant_CoversNarrowedReadRequest()
+    [Test] public async Task VerbNarrowing_FullAllowGrant_AllowsNarrowedReadRequest()
     {
         var app = NewApp();
         var grant = Grant(app, app.actor.list.User.Name, "/p"); // default verb = fully granted
@@ -132,7 +132,7 @@ public class ActorPermissionStorageTests
         await Assert.That(found).IsNotNull();
     }
 
-    [Test] public async Task VerbNarrowing_ReadOnlyGrant_DoesNotCoverDeleteRequest()
+    [Test] public async Task VerbNarrowing_ReadOnlyGrant_DoesNotAllowDeleteRequest()
     {
         var app = NewApp();
         var readOnly = global::app.type.item.permission.Verb.Read;
@@ -143,7 +143,7 @@ public class ActorPermissionStorageTests
         await Assert.That(found).IsNull();
     }
 
-    [Test] public async Task GlobMatch_PatternGrant_CoversExactPathRequest()
+    [Test] public async Task GlobMatch_PatternGrant_AllowsExactPathRequest()
     {
         var app = NewApp();
         var grant = Grant(app, app.actor.list.User.Name, "/apps/*/file.txt", match: MatchMode.Glob);
@@ -153,7 +153,7 @@ public class ActorPermissionStorageTests
         await Assert.That(found).IsNotNull();
     }
 
-    [Test] public async Task GlobMatch_NonMatchingPatternGrant_DoesNotCover()
+    [Test] public async Task GlobMatch_NonMatchingPatternGrant_DoesNotAllow()
     {
         var app = NewApp();
         var grant = Grant(app, app.actor.list.User.Name, "/apps/*/file.txt", match: MatchMode.Glob);

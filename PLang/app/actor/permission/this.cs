@@ -86,8 +86,8 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
     }
 
     /// <summary>
-    /// Returns the first signed grant covering <paramref name="path"/> + <paramref name="verb"/>,
-    /// or null if nothing covers. Walks the in-memory list first, then the
+    /// Returns the first signed grant allowing <paramref name="path"/> + <paramref name="verb"/>,
+    /// or null if none allows it. Walks the in-memory list first, then the
     /// persisted table (filtered to this actor's kind). Per-grant signature
     /// verification is cached via the Data instance's Properties bag — repeat
     /// Find calls on the same in-memory grant don't re-verify.
@@ -97,19 +97,23 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         var request = Grant.Request(
             _actor.Name, requestPath.Absolute, verb, MatchMode.Exact);
 
-        // 1) In-memory grants. Snapshot under the lock; verify outside it so
-        //    the async signing-verify call doesn't hold the lock.
+        // A grant read here is already trustworthy, so it is asked only whether it allows the request: a persisted
+        // grant was verified at the I/O boundary on load (auto-verify-on-read peels + validates its signature
+        // layer); an in-memory grant is local and trusted.
+        // SECURITY REVIEW (signature-as-layer): this relies on store reads
+        // of signed grants going through application/plang auto-verify-on-read.
+
+        // 1) In-memory grants. Snapshot under the lock; read outside it so
+        //    the async read doesn't hold the lock.
         List<global::app.data.@this> snapshot;
         lock (_lock) snapshot = new(_inMemory);
         foreach (var grantData in snapshot)
-        {
-            if (await TryCover(grantData, request)) return grantData;
-        }
+            if (await grantData.Value<Grant>() is { } grant && grant.Allows(request)) return grantData;
 
         // 2) Persisted grants — the actor's own saved ones. A store that can't open (an unwritable root)
         // holds no rows, so only the in-memory grants are searched and the caller falls through to the prompt.
         foreach (var grantData in (await Saved()).Grant.Items(_actor.Context))
-            if (await TryCover(grantData, request)) return grantData;
+            if (await grantData.Value<Grant>() is { } grant && grant.Allows(request)) return grantData;
 
         return null;
     }
@@ -187,20 +191,5 @@ public sealed class @this : global::app.type.item.setting.ISetting<setting.@this
         var saved = (global::app.actor.permission.setting.@this)setting.Copy();
         saved.Grant = new global::app.type.item.list.@this<Grant>(grants);
         return await _actor.Setting.Save(saved);
-    }
-
-    private async Task<bool> TryCover(global::app.data.@this grantData, Grant request)
-    {
-        if (await grantData.Value<Grant>() is not { } grant) return false;
-        if (!string.Equals(grant.Actor, request.Actor, StringComparison.Ordinal)) return false;
-        if (!grant.Allows(request)) return false;
-
-        // A persisted grant was verified at the I/O boundary on load (auto-verify-
-        // on-read peels + validates its signature layer); an in-memory grant is
-        // local and trusted. So the record reaching here is already trustworthy —
-        // no per-cover re-verification in memory.
-        // SECURITY REVIEW (signature-as-layer): this relies on store reads
-        // of signed grants going through application/plang auto-verify-on-read.
-        return true;
     }
 }
