@@ -186,11 +186,12 @@ Idle pending:
 - decider-key storage scope — Ingi.
 
 ### Issues logged 2026-10-02 (architect) + my re-measure triggers
-- **36** (`foreach %x%, call Y y=%item%` → Key=%item%, no Item): **coder's pick change** — the Option
-  must leave out every variable the action itself writes (the write-to + Item's `[Default("item")]`),
-  so Key is never offered `%item%`. **Re-measure 36 + the `as %i%` guard when it lands.**
-- **37** (the Properties-retry `InvalidCastException: lower app.module into list`, the 32b NOPR cause):
-  core, coder's. When it lands, the edu NOPR should stop (32b builds reliably) — re-measure.
+- **36 — FIXED** (coder 220b07145/ae2bc8549; measured 5a586e25a): `foreach %x%, call Y y=%item%` →
+  no `Key=%item%` 5/5; guards hold (`as %i%` → Item,no Key; `with key %field%` → Item+Key), 5/5 each.
+- **37 — cast FIXED** (coder 6c136ec1a): no more `InvalidCastException: lower app.module into list`.
+  32(b) edu now 9/10 `Name="Page"`. **Residual (new): a ~1/10 FixSteps-recovery gap** on the goal.call
+  `Parameter takes named rows` refusal (the writer writes an unnamed arg row; the retry recovers ~2/10,
+  fails ~1/10) — flagged to the coder, not urgent.
 - **38** (1/5 `hash the file 'x.bin'` hashes the name's letters): waits on Ingi (hashing a path's content).
 - **34 type-Example** (element-kind change): coder's. When it lands → measure a `list<T>` slot on
   app-systems whose element has an Example (+ `list<text>` guard).
