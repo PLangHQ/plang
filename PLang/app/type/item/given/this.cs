@@ -16,11 +16,8 @@ public sealed class @this : global::app.type.item.@this
 
     private @this() { }
 
-    /// <summary>Its word everywhere but a formal line, where the option's bare name stands for it.</summary>
-    public override void Write(global::app.type.format.IWriter w)
-    {
-        if (w.Format != global::app.goal.step.action.formal.Writer.Token) w.String("given");
-    }
+    /// <summary>It is a slot still to fill; the writer says how one is written.</summary>
+    public override void Write(global::app.type.format.IWriter w) => w.Given();
 
     public override string ToString() => "given";
 }

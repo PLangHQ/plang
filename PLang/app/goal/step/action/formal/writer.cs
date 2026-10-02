@@ -81,6 +81,9 @@ public sealed class Writer : IWriter
     /// <summary>A variable, bare: <c>%content%</c>.</summary>
     public void Variable(string name) => Raw($"%{name}%");
 
+    /// <summary>A slot still to fill writes nothing: its option stands as its bare name (<see cref="Option"/>).</summary>
+    public void Given() { }
+
     /// <summary>An option as a starting line writes it: <c>Template="plang"</c>, or its bare name — a slot still to
     /// fill — when its value writes nothing (<c>Permission</c>: the step gives it, the writer fills it).</summary>
     public void Option(string name, global::app.type.item.@this value)
