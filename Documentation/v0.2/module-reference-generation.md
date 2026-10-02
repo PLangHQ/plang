@@ -95,7 +95,7 @@ Returns — a list of `path` values.
 `file/read.notes.md`
 ```
 Path — the file to read · say: the path, inline
-Template — fill in %variables% inside the file's text before returning · say: `load vars` · builder: true only when the step asks for the file's %variables% to be filled in
+Variables — fill in the %variables% written inside the file's text before returning · say: load vars, fill in the variables, with variables · builder: true when the step says to load or fill the file's variables ("load vars", "fill in the variables", "with variables"); a plain read says none of these and leaves it false
 Returns — the file's content. A JSON file is navigable; it is parsed when first navigated.
 ```
 
@@ -251,11 +251,12 @@ Read a file's content; optionally resolve %var% patterns in the text before retu
 
 - read file.txt, write to %content%
 - read 'config/settings.json'
+- read 'receipt.txt', load vars, write to %receipt%
 
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
 | Path | the path, inline | path | yes | — | the file to read |
-| Template | `load vars` | bool | no | false | fill in %variables% inside the file's text before returning |
+| Variables | load vars, fill in the variables, with variables | bool | no | false | fill in the %variables% written inside the file's text before returning |
 
 **Returns:** the file's content. A JSON file is navigable; it is parsed when first navigated.
 

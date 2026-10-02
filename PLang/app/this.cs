@@ -54,7 +54,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public global::app.type.item.datetime.@this Created { get; internal set; }
 
     /// <summary>
-    /// When the app was last updated — its identity's, else this run's start.
+    /// When the app's identity last changed — read from app.pr, else this run's start (an identity created now).
     /// </summary>
     [global::app.Store]
     public global::app.type.item.datetime.@this Updated { get; internal set; }
@@ -466,6 +466,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             if (await decoded.Value<global::app.type.item.dict.@this>() is not { } identity || !decoded.Success)
                 return Unreadable(decoded.Error?.Message ?? "not a json object");
             new global::app.type.item.kind.reflection.@this().Read(identity, this, context);
+            _stored = true;
             return context.Ok();
         }
         // an identity value its type declines (text that isn't a datetime) is an app.pr that isn't the identity
@@ -479,17 +480,22 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
             $"{prPath} is not the app's identity: {why}", "AppIdentityUnreadable", 400));
     }
 
+    // The identity is in .build/app.pr: read from it at startup, or written there since.
+    private bool _stored;
+
     /// <summary>
-    /// Saves app identity to .build/app.pr.
+    /// Saves the app's identity to .build/app.pr when it isn't there yet — the first build creates it. An identity
+    /// read from app.pr is never written again because a build ran: app.pr is who the app is, not when it was built.
     /// </summary>
     public async Task<data.@this> Save()
     {
-        Updated = new(DateTimeOffset.UtcNow);
+        if (_stored) return actor.list.System.Context!.Ok(this);
         // App says where; the file writes it — .pr is a program file, so its format writes the host's [Store]
         // face. No hard-coded field list (add a [Store] prop → it persists).
         var prPath = global::app.type.item.path.@this.Resolve("/.build/app.pr", actor.list.System.Context!);
         var written = await prPath.Save(actor.list.System.Context!.Ok(new global::app.type.clr.@this<global::app.@this>(this, actor.list.System.Context!)), actor.list.System.Context!);
         if (!written.Success) return written;
+        _stored = true;
         return actor.list.System.Context!.Ok(this);
     }
 

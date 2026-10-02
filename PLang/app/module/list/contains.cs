@@ -1,6 +1,6 @@
 namespace app.module.list;
 
-[Action("contains")]
+[Action("contains"), global::app.Attributes.Question]
 public partial class Contains : IContext
 {
     public partial data.@this<app.type.item.variable.@this> ListName { get; init; }

@@ -294,17 +294,19 @@ public sealed class @this
     private string? Prefill(global::app.actor.context.@this context)
     {
         var known = Destination();
-        // a certain condition chain leads, in chain order (if, elseif, else); the other certain actions
-        // follow by score — a tie in the scores never puts a body's action before its if
         var certain = _listed.Where(l => l.Mark == listed.Mark.Certain && !(l.Name == "variable.set" && known != null))
-            .Select(l => Catalog(l.Name, context)).Where(a => a != null).Select(a => a!)
-            .OrderBy(a => a.Link ?? 3).ToList();
-        // each certain action takes its own place (a clause right after the action it is a clause of); a lone if
-        // — no elseif or else listed, nothing indented below the step — holds the step's other actions in its { }
+            .Select(l => Catalog(l.Name, context)).Where(a => a != null).Select(a => a!).ToList();
+        // a lone if — no elseif or else listed, nothing indented below the step — holds the step's other actions in
+        // its { }
         var chain = _listed.Any(l => l.Name is "condition.elseif" or "condition.else");
         var below = _step.Goal is { } goal && _step.Index < goal.Step.CountRaw
                     && ReferenceEquals(goal.Step[_step.Index], _step) && goal.Step.Body(_step.Index).CountRaw > 0;
-        var line = new line.@this(nests: certain.Count(a => a.Link == 0) == 1 && !chain && !below);
+        var nests = certain.Count(a => a.Link == 0) == 1 && !chain && !below;
+        // each certain action takes its own place: the test a lone if is asked of before it (a step whose answer goes
+        // to its own destination has no such test), the chain in its order, the rest after — a tie in the scores
+        // never puts a body's action before its if
+        certain = certain.OrderBy(a => a.Place(nests && known == null)).ToList();
+        var line = new line.@this(nests);
         foreach (var action in certain) action.Prefill(line, Call(action));
         if (known != null) line.Append($"variable.set(Name={known.Text}, Value=%!data%)");
         return line.ToString();

@@ -8,7 +8,7 @@ namespace app.module.list.type.query.where;
 /// <c>{field, op, value}</c>, or <c>{and: [...]}</c> / <c>{or: [...]}</c> over conditions — a list of conditions
 /// is all of them.
 /// </summary>
-public sealed class @this : part.@this
+public sealed class @this : query.@this
 {
     private readonly condition.@this _condition;
 
@@ -20,11 +20,11 @@ public sealed class @this : part.@this
 
     internal override int Rank => 0;
 
-    internal override async System.Threading.Tasks.Task<Data> Apply(List rows, IReadOnlyList<part.@this> rest,
+    internal override async System.Threading.Tasks.Task<Data> Apply(List rows, IReadOnlyList<query.@this> rest,
         global::app.actor.context.@this context)
         => await Next(await _condition.Keep(rows, context), rest, context);
 
-    internal override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this context)
-        => _condition.Output(writer, mode, context);
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
+        => _condition.Output(writer, mode, context!);
 }

@@ -11,11 +11,11 @@ public partial class Read : IContext
     [IsNotNull]
     public partial data.@this<path> Path { get; init; }
 
-    /// <summary>Whether the file is a template — the %variables% in its text are filled in when it is used.</summary>
+    /// <summary>Whether to fill in the %variables% written in the file's text before returning it ("load vars").</summary>
     [Default(false)]
-    public partial data.@this<global::app.type.item.@bool.@this> Template { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> Variables { get; init; }
 
-    public Task<data.@this> Start() => Path.Use(path => Template.Use(template => path.Read(Context, template)));
+    public Task<data.@this> Start() => Path.Use(path => Variables.Use(fill => path.Read(Context, fill)));
 
     /// <summary>A literal path's reference type, for the step that captures it — and a warning when it isn't
     /// there now; a path holding a variable is known only at run.</summary>

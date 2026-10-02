@@ -6,87 +6,96 @@ namespace app.module.list.type.query;
 /// <summary>
 /// PLang <c>query</c> value — what to take from a list, said as one sentence: <c>where</c> (a field compared to a
 /// value, joined by <c>and</c>/<c>or</c>), <c>group</c>, <c>distinct</c>, <c>order</c>. Written as a dict:
-/// <c>{where: {field: "age", op: "&gt;", value: 20}, group: "name", distinct: true, order: "age"}</c>.
+/// <c>{where: {field: "age", op: "&gt;", value: 20}, order: "age"}</c>.
+///
+/// <para>A where alone is a query, and so is each clause: the clauses are the query's kinds
+/// (<c>{query, kind: where}</c>), and a query made from a dict is the list of them (<c>query.list</c>), run in SQL's
+/// order or as written. Each clause applies itself — the list and its items do the work (<c>list.Where</c>,
+/// <c>list.Group</c>, <c>list.Unique</c>, <c>list.Sort</c>). A query never changes the list it runs on: it answers a
+/// new one. The clauses are the query's own: written only inside its dict, never navigated as values.</para>
 ///
 /// <para>The list module's own: it lives under the module that runs it (<c>list.query</c>), as crypto's
-/// <c>hash</c> does. Each part applies itself — the list and its items do the work (<c>list.Where</c>,
-/// <c>list.Group</c>, <c>list.Unique</c>, <c>list.Sort</c>); the query only puts the parts in order. A query never
-/// changes the list it runs on: it answers a new one.</para>
+/// <c>hash</c> does.</para>
 /// </summary>
-[global::app.Attributes.PlangType("query")]
-public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
+[global::app.Attributes.PlangType("query"), global::app.Attributes.Kinds]
+public abstract class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     public static string Example => "{where: {field: \"age\", op: \">\", value: 20}, order: \"age\"}";
     public static string Description => "What to take from a list: where (fields compared, joined by and/or), group, distinct, order.";
     public static string Shape => "object";
 
-    // the parts, in the order the query writes them
-    private readonly IReadOnlyList<part.@this> _part;
-
-    private @this(IReadOnlyList<part.@this> part) => _part = part;
-
     /// <summary>A structure, never a single-token leaf.</summary>
     public override bool IsLeaf => false;
 
-    /// <summary>A query is made from a dict: each key a part, in the order written. A key that is no part, or a
-    /// part that doesn't read, declines with why, naming the part.</summary>
+    /// <summary>The clause's name, as the query writes it — where it lives: <c>where</c>, <c>group</c>,
+    /// <c>distinct</c>, <c>order</c>.</summary>
+    public string Name => NameOf(GetType());
+
+    // a clause class's name: the last segment of its namespace (query/where/ → where)
+    private static new string NameOf(System.Type clause) => clause.Namespace![(clause.Namespace!.LastIndexOf('.') + 1)..];
+
+    /// <summary>A query reads as <c>query</c>, a clause as its kind (<c>{query, kind: where}</c>).</summary>
+    protected internal override global::app.type.@this Type => new(typeof(@this), Name);
+
+    /// <summary>How a clause is made from what the query's dict holds under its name: the clause, or null with why
+    /// on <c>data</c>.</summary>
+    internal delegate @this? Maker(Data clause, Data data, global::app.actor.context.@this context);
+
+    /// <summary>The clauses a query has, each under its name — the classes under the query with their own static
+    /// <c>Create(clause, data, context)</c>, found once.</summary>
+    internal static IReadOnlyDictionary<string, Maker> Known => _known.Value;
+
+    private static readonly System.Lazy<IReadOnlyDictionary<string, Maker>> _known = new(() =>
+        typeof(@this).Assembly.GetTypes()
+            .Where(t => !t.IsAbstract && typeof(@this).IsAssignableFrom(t))
+            .Select(t => (t, create: t.GetMethod("Create", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic,
+                [typeof(Data), typeof(Data), typeof(global::app.actor.context.@this)])))
+            .Where(c => c.create != null)
+            .ToDictionary(c => NameOf(c.t), c => (Maker)System.Delegate.CreateDelegate(typeof(Maker), c.create!),
+                StringComparer.OrdinalIgnoreCase));
+
+    /// <summary>The clauses' names, for a refusal that says what a query takes: <c>distinct, group, order, where</c>.</summary>
+    internal static string Names => string.Join(", ", Known.Keys.Order(StringComparer.Ordinal));
+
+    /// <summary>A query is made from a dict: the list of its clauses, in the order written — one clause is a list of
+    /// one. A key that is no clause, or a clause that doesn't read, declines with why, naming the clause.</summary>
     public static @this? Create(object? query, global::app.type.@this? declared, Data data)
     {
         if (query is @this already) return already;
-        if (query is not global::app.type.item.dict.@this dict)
-        {
-            data.Fail(new global::app.error.Error(
-                $"a query is a dict of its parts — {{{part.@this.Names}}} — not {(query as global::app.type.item.@this)?.Type.Name ?? query?.GetType().Name ?? "nothing"}",
-                "QueryInvalid", 400));
-            return null;
-        }
-        var context = data.Context!;
-        var parts = new List<part.@this>();
-        // each key names a part the query has, made from what the key holds; one that doesn't read says why on data
-        foreach (var entry in dict.Entries(context))
-        {
-            if (!part.@this.Known.TryGetValue(entry.Name, out var make))
-            {
-                data.Fail(new global::app.error.Error(
-                    $"'{entry.Name}' is no part of a query — its parts are {part.@this.Names}", "QueryInvalid", 400));
-                return null;
-            }
-            if (make(entry, data, context) is not { } made)
-            {
-                // the part's why, said as the part's: "where: …"
-                var why = data.Error!;
-                data.Fail(new global::app.error.Error($"{entry.Name}: {why.Message}", why.Key, why.Status) { list = [why] });
-                return null;
-            }
-            parts.Add(made);
-        }
-        if (parts.Count == 0)
-        {
-            data.Fail(new global::app.error.Error($"a query names at least one part: {part.@this.Names}", "QueryInvalid", 400));
-            return null;
-        }
-        return new @this(parts);
+        if (query is global::app.type.item.dict.@this dict) return list.@this.Create(dict, data);
+        data.Fail(new global::app.error.Error(
+            $"a query is a dict of its parts — {{{Names}}} — not {(query as global::app.type.item.@this)?.Type.Name ?? query?.GetType().Name ?? "nothing"}",
+            "QueryInvalid", 400));
+        return null;
     }
 
-    /// <summary>What this query answers for <paramref name="list"/>: its parts in SQL's order (where, group,
-    /// distinct, order), or as written, each applying itself to what the one before answered. A new list;
-    /// <paramref name="list"/> is unchanged.</summary>
-    public System.Threading.Tasks.Task<Data> Run(List list, execution order, global::app.actor.context.@this context)
+    /// <summary>What this query answers for <paramref name="list"/> — a new list; <paramref name="list"/> is
+    /// unchanged. A clause applies itself; the list of them orders them first (<see cref="list.@this"/>).</summary>
+    public virtual System.Threading.Tasks.Task<Data> Run(List list, execution order, global::app.actor.context.@this context)
+        => Apply(list, [], context);
+
+    /// <summary>A clause's place in SQL's order: where, group, distinct, order. The list of clauses orders by it.</summary>
+    internal abstract int Rank { get; }
+
+    /// <summary>What this answers for <paramref name="rows"/>, with <paramref name="rest"/> applied to it after. A new
+    /// list; <paramref name="rows"/> is unchanged.</summary>
+    internal abstract System.Threading.Tasks.Task<Data> Apply(List rows, IReadOnlyList<@this> rest,
+        global::app.actor.context.@this context);
+
+    /// <summary>The clauses after this one, applied to what it <paramref name="answered"/>; an error is the answer,
+    /// named by this clause.</summary>
+    protected async System.Threading.Tasks.Task<Data> Next(Data answered, IReadOnlyList<@this> rest,
+        global::app.actor.context.@this context)
     {
-        var parts = order == execution.sql ? _part.OrderBy(p => p.Rank).ToList() : _part;
-        return parts[0].Apply(list, parts.Skip(1).ToList(), context);
+        if (!answered.Success) return Named(answered, context);
+        if (rest.Count == 0) return answered;
+        return await answered.Use<List>(rows => rest[0].Apply(rows, rest.Skip(1).ToList(), context));
     }
 
-    /// <summary>Writes itself as its dict: each part under its name, in the order written.</summary>
-    public override async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
-        global::app.View mode, global::app.actor.context.@this? context)
+    /// <summary>A failure, said as this clause's: <c>where: No item has a field 'agee' …</c>.</summary>
+    protected Data Named(Data failed, global::app.actor.context.@this context)
     {
-        writer.BeginObject();
-        foreach (var part in _part)
-        {
-            writer.Name(part.Name);
-            await part.Output(writer, mode, context!);
-        }
-        writer.EndObject();
+        if (failed.Success || failed.Error is not { } error) return failed;
+        return context.Error(new global::app.error.Error($"{Name}: {error.Message}", error.Key, error.Status) { list = [error] });
     }
 }

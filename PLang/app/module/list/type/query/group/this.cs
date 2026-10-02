@@ -8,7 +8,7 @@ namespace app.module.list.type.query.group;
 /// after a group apply inside each group's items: an order sorts each group's items, a distinct drops repeats
 /// within a group.
 /// </summary>
-public sealed class @this : part.@this
+public sealed class @this : query.@this
 {
     private readonly global::app.type.item.text.@this _field;
 
@@ -25,14 +25,14 @@ public sealed class @this : part.@this
     internal override int Rank => 1;
 
     // each group's items, with the parts after the group applied to them; a part's failure is named by that part
-    internal override System.Threading.Tasks.Task<Data> Apply(List rows, IReadOnlyList<part.@this> rest,
+    internal override System.Threading.Tasks.Task<Data> Apply(List rows, IReadOnlyList<query.@this> rest,
         global::app.actor.context.@this context)
         => rows.Group(_field,
             items => rest.Count == 0 ? System.Threading.Tasks.Task.FromResult<Data>(context.Ok(items))
                 : rest[0].Apply(items, rest.Skip(1).ToList(), context), context);
 
-    internal override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this context)
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
     {
         writer.String(_field.ToString());
         return System.Threading.Tasks.ValueTask.CompletedTask;

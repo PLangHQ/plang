@@ -1,0 +1,9 @@
+/ `load vars` on a read builds file.read with Template=true, so the file's own %name% is filled from memory
+/ before the content is returned. A plain read with no such phrase leaves the text as written (%name% raw).
+/ note.txt holds "Hello %name%"; with %name% = "World" the filled read says "Hello World", the plain one does not.
+Start
+- set %name% = "World"
+- read 'note.txt', load vars, write to %filled%
+- read 'note.txt', write to %raw%
+- assert that %filled% contains "World"
+- assert that %raw% does not contain "World"

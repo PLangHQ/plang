@@ -32,6 +32,11 @@ public partial class @this
                ?.Capabilities.Select(c => new global::app.type.item.text.@this(c))
            ?? Enumerable.Empty<global::app.type.item.text.@this>();
 
+    /// <summary>This action is a question — its answer is the verdict an if tests (<c>file.exists</c>,
+    /// <c>list.contains</c>); its handler says so with <c>[Question]</c>.</summary>
+    [JsonIgnore]
+    public bool IsQuestion => Handler?.IsDefined(typeof(global::app.Attributes.QuestionAttribute), inherit: false) == true;
+
     /// <summary>The property this action reads and answers a new value of, changing nothing (<c>list.query</c>'s
     /// <c>List</c>) — where a step with no destination writes the answer; null when the action has none.</summary>
     [JsonIgnore]

@@ -7,7 +7,7 @@ namespace app.module.list.type.query.order;
 /// The order part: the rows sorted by its keys, the first key first. Written as a field (<c>order: "age"</c>), one
 /// key (<c>{field: "age", desc: true}</c>) or a list of keys; a key with no field orders by the elements themselves.
 /// </summary>
-public sealed class @this : part.@this
+public sealed class @this : query.@this
 {
     private readonly IReadOnlyList<key.@this> _key;
 
@@ -29,7 +29,7 @@ public sealed class @this : part.@this
 
     internal override int Rank => 3;
 
-    internal override async System.Threading.Tasks.Task<Data> Apply(List rows, IReadOnlyList<part.@this> rest,
+    internal override async System.Threading.Tasks.Task<Data> Apply(List rows, IReadOnlyList<query.@this> rest,
         global::app.actor.context.@this context)
     {
         // the last key sorts first: the sort keeps the order of equal keys, so each key before it decides over it
@@ -42,8 +42,8 @@ public sealed class @this : part.@this
         return await Next(sorted, rest, context);
     }
 
-    internal override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this context)
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
+        global::app.actor.context.@this? context)
     {
         writer.BeginArray(_key.Count);
         foreach (var by in _key) by.Output(writer);

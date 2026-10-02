@@ -162,6 +162,16 @@ public class source : @this
 
         try
         {
+            // A partial template is a text's to render, as Output hands it to one: the text fills the
+            // variables this source holds, and this type makes itself from the text it renders to (a path
+            // from its text, as from any text). What a variable held is filled once, never read as a template.
+            if (Text is { } template)
+            {
+                var made = _type.Make(await template.Value(data), asking);
+                made.history.Add(this);
+                return await made.Value(data);
+            }
+
             // Kind-first materialization (most-specific owner): a kind that owns its own decode
             // answers on first touch (json → clr) — lazy until here, never at .pr read. The kind is
             // the REAL subclass via the one selection door; a decline (null) falls to the type
@@ -215,6 +225,12 @@ public class source : @this
             return Absent;
         }
     }
+
+    /// <summary>The text a partial template is, off its text face (a byte raw declared text is its UTF-8) —
+    /// the one renderer fills it. Null for a plain source and a whole <c>%ref%</c> (a reference, resolved
+    /// through the variable's own door); a wire's slice is no text (it overrides).</summary>
+    private protected virtual global::app.type.item.text.@this? Text
+        => HasVariable && !IsVariable && Peek() is string template ? new(template, _type.Template, _variable) : null;
 
     /// <summary>The type reads its own raw form — the declaration is the whole selector. One
     /// token over the raw via <see cref="global::app.type.format.value.Reader"/>; the

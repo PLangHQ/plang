@@ -262,6 +262,12 @@ public partial class @this
     /// <summary>What the build refuses in this action as it follows <paramref name="before"/>: nothing.</summary>
     internal virtual global::app.error.Error? Refuse(@this? before) => null;
 
+    /// <summary>This catalog action's place among a step's certain actions, in its pre-filled formal: a condition at
+    /// its place in the chain (<see cref="Link"/>: if, elseif, else); a question (<see cref="IsQuestion"/>), on a step
+    /// whose lone if it can be asked of (<paramref name="tested"/>), before the if — its answer is what the if tests
+    /// (<c>file.exists(Path); condition.if(Left) { … }</c>); any other after them, in the body when the line nests.</summary>
+    internal virtual int Place(bool tested) => Link ?? (tested && IsQuestion ? -1 : 3);
+
     /// <summary>This catalog action's place in a step's pre-filled formal: a step action after the ones before
     /// it; an if opens the body the step's other actions go into, when the line nests. One whose Start declares
     /// a value (not a bare <c>item</c>) produces what a keep in the same step keeps — but not a condition, whose

@@ -9,7 +9,7 @@ namespace app.type.item.path;
 /// Everything that needs a running scope (the root, the formats, the actor's permission)
 /// takes the caller's context.
 /// </summary>
-[global::app.Attributes.PlangType("path")]
+[global::app.Attributes.PlangType("path"), global::app.Attributes.Kinds]
 public abstract partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
@@ -49,18 +49,16 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     // Everything else (absolute, relative, extension, …) is derived from it per
     // the scheme's resolution rules and cached. Private — the wire form comes
     // from Write reading it directly; no public raw accessor leaks it.
-    // The LOCATION as a text value — so a `%var%` location rides as a template
-    // and renders at the door (Value), exactly like any other text. The string
-    // accessors below lower it through Clr<string>() for their path math; by the
-    // time any accessor runs the navigation has already called Value(), which
-    // resolved the template (see Value / Cacheable below).
-    private global::app.type.item.text.@this _location;
+    // A location is the text it was given, never a template: a listed file's
+    // name, a wire value, a string taken as a path stay as written. A developer's
+    // `read %dir%/x.json` is a template SOURCE of type path, filled through text
+    // at the source's door and then made a path from what it rendered (source.cs).
+    private readonly string _location;
 
-    // Cached string-derived properties. _absolute is primed at construction by
-    // schemes that resolve eagerly (file anchors relatives to the goal folder
-    // AT RESOLVE TIME — the anchor is call-stack state, so it cannot be derived
-    // later).
-    private string? _absolute;
+    // The resolved host form, given at construction (file anchors relatives to
+    // the goal folder AT RESOLVE TIME — the anchor is call-stack state, so it
+    // cannot be derived later). Cached string-derived properties below it.
+    private readonly string _absolute;
     private string? _extension;
     private string? _fileName;
     private string? _fileNameWithoutExtension;
@@ -75,14 +73,9 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     {
         // Producers that resolved the path hand the resolved form here and
         // override the as-typed location via the Raw init; a verbatim
-        // construction is both at once. path authorizes templating — text decides
-        // whether the location actually carries a %var%. Mode is "plang" here: a
-        // path location is template-capable (mode-gating path by the reader is a
-        // later step; this preserves the prior behavior).
-        _location = new global::app.type.item.text.@this(path, "plang");
-        // A template location has no resolved host form yet — leave _absolute
-        // unprimed until Value renders it. A literal location is resolved as-is.
-        _absolute = _location.Template == null ? path : null;
+        // construction is both at once.
+        _location = path ?? string.Empty;
+        _absolute = _location;
     }
 
     /// <summary>THE PURE CORE — a <c>path</c> passes through; construction from a string needs the
@@ -114,33 +107,6 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         }
     }
 
-    /// <summary>Caching follows the location text: a template location depends on
-    /// outside %vars% so it must re-resolve each use (text answers not-cacheable);
-    /// a literal location is stable. path defers to text — it owns that judgement.</summary>
-    public override bool Cacheable => _location.Cacheable;
-
-    /// <summary>Final when the location is literal — Value() returns this. A template
-    /// location resolves through text's door, so it is not final.</summary>
-    internal override bool IsFinal => _location.Cacheable;
-
-    /// <summary>
-    /// THE door. A literal location answers itself. A template location renders
-    /// through text's door (full-match %var% → the variable's value, partial →
-    /// interpolated string) and re-resolves the rendered string into a fresh,
-    /// resolved path via the scheme registry — so the result is a normal path
-    /// whose sync accessors are safe. Never mutates this shared instance.
-    /// </summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
-    {
-        if (_location.Cacheable) return this;   // literal location — already resolved
-        var before = data.Error;
-        var rendered = await _location.Value(data);
-        // the location didn't render (a variable it names isn't set): that reason is the answer
-        if (data.Error != null && !ReferenceEquals(data.Error, before)) return Absent;
-        // a location no path takes (empty, a scheme no kind holds) declines with its reason on data
-        return (global::app.type.item.@this?)Create(rendered.Clr<string>() ?? "", null, data) ?? Absent;
-    }
-
     /// <summary>Source generator convention — auto-wraps string parameters.</summary>
     /// <summary>
     /// Source generator convention — auto-wraps string parameters. The raw path's scheme is one
@@ -165,13 +131,13 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// string the user wrote) makes the verbatim form the value's identity while
     /// the resolved form stays a cached derivation.
     /// </summary>
-    public string Raw { get => _location.Clr<string>() ?? ""; init { if (!string.IsNullOrEmpty(value)) _location = new global::app.type.item.text.@this(value, "plang"); } }
+    public string Raw { get => _location; init { if (!string.IsNullOrEmpty(value)) _location = value; } }
 
     // The resolved host form — INTERNAL: the raw string is the interop inch
     // (sqlite, Assembly.LoadFrom, HttpClient), reached through the type's own
     // gated edge, never the public navigable surface. The public projection is
     // `!absolute` (derived; leaks the install root, so it stays off the wire).
-    internal virtual string Absolute => _absolute ??= _location.Clr<string>() ?? "";
+    internal virtual string Absolute => _absolute;
 
     // INTERNAL: the raw relative string feeds IsUnder/Matches + the `!relative`
     // derived projection; consumers do containment through those, not string math.
@@ -182,7 +148,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         // App not wired yet (bootstrap, before runtime is up) — no root
         // anchor, so the portable form is the as-typed location.
         var rootAbsolutePath = context.App?.AbsolutePath;
-        if (rootAbsolutePath == null) return _location.Clr<string>() ?? "";
+        if (rootAbsolutePath == null) return _location;
 
         var rootWithSeparator = rootAbsolutePath;
         if (!rootWithSeparator.EndsWith(PathHelper.DirectorySeparatorChar) && !rootWithSeparator.EndsWith(PathHelper.AltDirectorySeparatorChar))
@@ -201,10 +167,10 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     }
 
     // INTERNAL: the raw extension feeds Kind + the `!extension` projection.
-    internal virtual string Extension => _extension ??= PathHelper.GetExtension(_location.Clr<string>() ?? "");
-    [LlmBuilder] public string FileName => _fileName ??= PathHelper.GetFileName(_location.Clr<string>() ?? "");
+    internal virtual string Extension => _extension ??= PathHelper.GetExtension(_location);
+    [LlmBuilder] public string FileName => _fileName ??= PathHelper.GetFileName(_location);
     [LlmBuilder] public string FileNameWithoutExtension
-        => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_location.Clr<string>() ?? "");
+        => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_location);
     [LlmBuilder] public string Directory => _directory ??= PathHelper.GetDirectoryName(Absolute) ?? Absolute;
     /// <summary>The MIME of this location's extension — the format with that extension says it; a format with
     /// no MIME of its own arrives as its type's (<c>.ini</c> is text/plain); opaque bytes when neither does.</summary>
@@ -284,7 +250,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     // string math that derives its absolute. So a path shows one way everywhere and the
     // install root never shows. The root-relative form (Relative) is for `!relative` and
     // comparisons, not display.
-    public override string ToString() => _location.Clr<string>() ?? "";
+    public override string ToString() => _location;
 
     /// <summary>
     /// The type owns its wire shape and reads its own private fields — the typed location.

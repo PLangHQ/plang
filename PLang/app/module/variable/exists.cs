@@ -1,6 +1,6 @@
 namespace app.module.variable;
 
-[Action("exists")]
+[Action("exists"), global::app.Attributes.Question]
 public partial class Exists : IContext
 {
     public partial data.@this<app.type.item.variable.@this> Name { get; init; }
