@@ -183,6 +183,27 @@ public class GoalCallResolutionTests
             .IsEqualTo("/sub/.build/inner.pr");
     }
 
+    // a goal's name is a plang name: `call other` is Other.goal, on a case-sensitive disk too
+    [Test]
+    public async Task ACallNamingAGoalInAnotherCase_FindsIt()
+    {
+        await WritePr("foo/.build/other.pr", "Other");
+
+        var goal = await _app.goal.list.Find("other", CallerAt("/foo/Caller.goal")).Found();
+
+        await Assert.That(goal?.Name).IsEqualTo("Other");
+    }
+
+    // the os's /system/error/Show.goal answers to /system/error/show, the app having none of its own
+    [Test]
+    public async Task AnOsGoal_NamedInAnotherCase_IsFound()
+    {
+        var goal = await _app.goal.list.Find("/system/error/show").Found();
+
+        await Assert.That(goal).IsNotNull();
+        await Assert.That(goal!.Step.Count).IsEqualTo(3);
+    }
+
     // a .goal with no .pr: the call says it isn't built, not that it isn't there
     [Test]
     public async Task AGoalNotBuilt_AnswersGoalNotBuilt()

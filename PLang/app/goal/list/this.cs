@@ -84,15 +84,38 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         }
         return await Loaded("/" + source.TrimStart('/', '\\'));
 
-        // the goal the .goal at `written` is built to, resolved as written (the app's /system/ first)
+        // the goal the .goal at `written` is built to, resolved as written (the app's /system/ first); its name is
+        // a goal's, compared as plang names are (case aside) — its folder is a path, as written
         async Task<data.@this<goal.@this>> Loaded(string written)
         {
             var at = global::app.type.item.path.@this.Resolve(written, context);
-            if (!await (await at.Exists(context)).ToBooleanAsync()) return data.@this<goal.@this>.From(context.NotFound(name));
+            if (!await (await at.Exists(context)).ToBooleanAsync())
+            {
+                if (await Spelled(at) is not { } file) return data.@this<goal.@this>.From(context.NotFound(name));
+                at = global::app.type.item.path.@this.Resolve(at.Parent.Raw.TrimEnd('/') + "/" + file, context);
+            }
             if (!await (await goal.@this.Pr(at).Exists(context)).ToBooleanAsync())
                 return context.Error<goal.@this>(new Error(
                     $"Goal {at} exists but isn't built; run plang build", "GoalNotBuilt", 404));
             return data.@this<goal.@this>.From(await goal.@this.Load(at, App));
+        }
+
+        // The .goal file in `at`'s folder whose goal name is `at`'s, spelled as the file is — the folder as written
+        // (the app's), and for a /system/ one the os's too; null when none answers to the name.
+        async Task<string?> Spelled(global::app.type.item.path.@this at)
+        {
+            var folders = new List<global::app.type.item.path.@this> { at.Parent };
+            if (at.Parent.Raw.StartsWith("/system/", StringComparison.OrdinalIgnoreCase))
+                folders.Add(global::app.type.item.path.@this.Resolve(App.OsAbsolutePath + at.Parent.Raw, context));
+            foreach (var each in folders)
+            {
+                if (!await (await each.Exists(context)).ToBooleanAsync()) continue;
+                var listed = await each.List("*.goal", recursive: false, context);
+                if (!listed.Success || await listed.Value() is not { } files) continue;
+                if (files.Items().FirstOrDefault(f => string.Equals(f.FileNameWithoutExtension, at.FileNameWithoutExtension,
+                        StringComparison.OrdinalIgnoreCase)) is { } file) return file.FileName;
+            }
+            return null;
         }
     }
 

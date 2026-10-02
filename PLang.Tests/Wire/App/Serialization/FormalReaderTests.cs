@@ -121,6 +121,18 @@ public class FormalReaderTests : System.IAsyncDisposable
         await conversation.IsSuccess();
     }
 
+    // a conversation writes what it continues as written — the reference, never what it names now (unset at build)
+    [Test]
+    public async Task AConversation_WritesItsReferenceAsWritten()
+    {
+        var formal = "llm.query(Message=[{Role: \"user\", Content: \"again\"}], Conversation={continue: %answer%})";
+
+        var written = await Written(Read(formal, out _));
+
+        await Assert.That(written).Contains("%answer%");
+        await Assert.That(written).DoesNotContain("null");
+    }
+
     // a conversation written as text is refused saying its shape — never a reader's exception
     [Test]
     public async Task AConversationWrittenAsText_IsRefused_SayingItsShape()
