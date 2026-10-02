@@ -607,4 +607,31 @@ arg is kept 5/5. The teaching is accurate and kept (may compose with the reword)
 insufficient. Also newly visible: the "9/10 saved" from the earlier 32(b) run were **silently dropping
 the module arg** (SAVED with 0 module-args), not cleanly building it — worse than the loud refusal.
 
+## Issue 40 (Properties step-4 goal.call sometimes unlisted) — CORE pick bug, not the decider
+
+Repro (app-systems head, jq): rebuilding `Properties.goal` (cache:false) — step 4
+(`call /system/builder/EmitBuildEvent kind="goal-properties", goal=%goal%`) → `goal.call isn't one of
+step 4's actions ()` **6/10**; 4/10 fine. (The identical 5 steps in a standalone goal: **10/10 fine** —
+so it's not the step shape; it's borderline in this goal's context.)
+
+**The decider answers goal.call correctly** (captured `%answer%` on a failing build, jq):
+- stage 1: `s4_@module` = **goal @ 0.87**; `s4_goal.call` common yes/no = **0.46**.
+- stage 2: `s4_@also.goal` = **0.98** (uses goal), `s4_goal` = **"call" @ 1.0** (the action is goal.call).
+
+So both stages say goal.call. **The drop is in the pick** (`PLang/app/goal/step/pick/list/this.cs`
+`Picks()`, ll.506-525): the common action `goal.call` is added first with its stage-1 score **0.46**
+(l.508-509), then l.518 `if (picks.Any(p => p.Name == name)) continue;` **skips** the module's stage-2
+pick — so goal.call **keeps 0.46** and the strong stage-2 confirmation (`_also["goal"]` = 0.98, the
+`s4_goal`="call" choice) is **discarded**. `Listing()` (l.267) shows only picks `>= Possible (0.5)`, so
+goal.call (0.46) is dropped → empty `()`. Flaky because it only triggers when the common `goal.call`
+yes/no lands `< 0.5` **and** the module share `< Near (0.9)` (0.87 here); when either is higher,
+goal.call is listed.
+
+**Proposal: CORE (coder), not teaching** — the decider is right; the pick discards the right answer.
+In `Picks()`, when a module's stage-2 chosen action equals an existing common-action pick, take the
+**stronger** signal (the `@also`/choice score), not the stale stage-1 common score — i.e. l.518 should
+merge/raise the score rather than `continue`. (The comment "a common action keeps its own stage-1
+score" is the explicit, wrong-for-this-case choice.) No builder-teaching change would help; the
+`goal.call` the decider picked is being thrown away by the pick. Reported; nothing changed.
+
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).
