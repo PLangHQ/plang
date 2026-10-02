@@ -200,11 +200,15 @@ public sealed class @this : global::app.type.kind.@this
         return default;
     }
 
-    // A json scalar → its raw CLR face; the Data ctor lifts it to the plang scalar.
+    // A json scalar → its raw CLR face; the Data ctor lifts it to the plang scalar. A number is an integer (long,
+    // or a BigInteger past it, exact) or a double — the casts to object keep the ?: from widening an integer.
     private static object? Scalar(JsonElement e) => e.ValueKind switch
     {
         JsonValueKind.String => e.GetString(),
-        JsonValueKind.Number => e.TryGetInt64(out var l) ? l : e.GetDouble(),
+        JsonValueKind.Number => e.TryGetInt64(out var l) ? l
+            : System.Numerics.BigInteger.TryParse(e.GetRawText(), System.Globalization.NumberStyles.AllowLeadingSign,
+                System.Globalization.CultureInfo.InvariantCulture, out var big) ? big
+            : (object)e.GetDouble(),
         JsonValueKind.True => true,
         JsonValueKind.False => false,
         _ => null,

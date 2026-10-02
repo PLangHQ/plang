@@ -54,9 +54,13 @@ public ref struct Reader : IReader
     public bool Bool() => _r.GetBoolean();
     public int Int() => _r.GetInt32();
     public long Long() => _r.GetInt64();
-    // Natural precision: long when it fits as an integer, else double — the cast
-    // to object keeps the integer from widening to a float (a bare ?: would unify).
-    public object Number() => _r.TryGetInt64(out var l) ? (object)l : _r.GetDouble();
+    // Natural precision: long when it fits as an integer, a BigInteger for an integer past long (exact), else
+    // double — the casts to object keep the integer from widening to a float (a bare ?: would unify).
+    public object Number() => _r.TryGetInt64(out var l) ? l
+        : System.Numerics.BigInteger.TryParse(System.Text.Encoding.UTF8.GetString(_r.ValueSpan),
+            System.Globalization.NumberStyles.AllowLeadingSign, System.Globalization.CultureInfo.InvariantCulture, out var big)
+            ? big
+            : (object)_r.GetDouble();
     public float Float() => _r.GetSingle();
     public double Double() => _r.GetDouble();
     public decimal Decimal() => _r.GetDecimal();

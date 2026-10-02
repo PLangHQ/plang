@@ -2,7 +2,7 @@ namespace app.type.item.number;
 
 /// <summary>
 /// String → number parse path. Narrowest-fit: no decimal/exponent
-/// → int → long (past long → decimal); a decimal point, an exponent, NaN or Infinity → double. A decimal is
+/// → int → long (past long → biginteger, exact at any size); a decimal point, an exponent, NaN or Infinity → double. A decimal is
 /// asked for by name (<c>as decimal</c>), never read from a decimal point — every reader agrees (json reads double).
 ///
 /// <para><c>Resolve(string, context)</c> is the source-generator-recognized
@@ -33,10 +33,10 @@ public sealed partial class @this
                     return (@this)((int)l);
                 return (@this)(l);
             }
-            // Past long — try decimal for very large integers.
-            if (decimal.TryParse(s, System.Globalization.NumberStyles.Integer,
-                System.Globalization.CultureInfo.InvariantCulture, out var bigDec))
-                return (@this)(bigDec);
+            // Past long — an integer stays an integer, exact at any size.
+            if (System.Numerics.BigInteger.TryParse(s, System.Globalization.NumberStyles.Integer,
+                System.Globalization.CultureInfo.InvariantCulture, out var big))
+                return (@this)big;
             return null;
         }
 

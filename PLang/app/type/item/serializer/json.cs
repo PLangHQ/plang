@@ -179,9 +179,12 @@ public partial class json
         {
             System.Text.Json.JsonValueKind.String => StringSlot(element.GetString() ?? "", ctx),
             // Cast to object so the ?: does NOT unify long and double to double
-            // (a bare `long : double` ternary widens the integer to a float).
+            // (a bare `long : double` ternary widens the integer to a float); an integer past long is exact.
             System.Text.Json.JsonValueKind.Number =>
-                element.TryGetInt64(out var l) ? (object)l : element.GetDouble(),
+                element.TryGetInt64(out var l) ? l
+                : System.Numerics.BigInteger.TryParse(element.GetRawText(), System.Globalization.NumberStyles.AllowLeadingSign,
+                    System.Globalization.CultureInfo.InvariantCulture, out var big) ? big
+                : (object)element.GetDouble(),
             System.Text.Json.JsonValueKind.True => true,
             System.Text.Json.JsonValueKind.False => false,
             System.Text.Json.JsonValueKind.Null => null,
@@ -216,6 +219,10 @@ public partial class json
     private static object NumberLeaf(System.Text.Json.JsonElement element)
     {
         if (element.TryGetInt64(out var l)) return (number.@this)l;
+        // an integer past long stays an integer, exact
+        if (System.Numerics.BigInteger.TryParse(element.GetRawText(), System.Globalization.NumberStyles.AllowLeadingSign,
+                System.Globalization.CultureInfo.InvariantCulture, out var big))
+            return (number.@this)big;
         // Bare decimal-point literal → double by default (decimal is opt-in
         // via `as number/decimal`), matching universal language convention.
         return (number.@this)element.GetDouble();

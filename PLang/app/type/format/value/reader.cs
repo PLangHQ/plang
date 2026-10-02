@@ -29,7 +29,7 @@ public struct Reader : IReader
         null => TokenKind.Null,
         bool => TokenKind.Bool,
         sbyte or byte or short or ushort or int or uint or long or ulong
-            or float or double or decimal => TokenKind.Number,
+            or float or double or decimal or System.Numerics.BigInteger => TokenKind.Number,
         _ => TokenKind.String,
     };
 
@@ -39,7 +39,9 @@ public struct Reader : IReader
     public int Int() => _value is int i ? i : int.Parse(Str(), Inv);
     public long Long() => _value is long l ? l : long.Parse(Str(), Inv);
     public object Number() => _value is string s
-        ? (long.TryParse(s, Inv, out var n) ? n : double.Parse(s, Inv))
+        ? (long.TryParse(s, Inv, out var n) ? n
+            : System.Numerics.BigInteger.TryParse(s, System.Globalization.NumberStyles.AllowLeadingSign, Inv, out var big) ? big
+            : double.Parse(s, Inv))
         : _value;
     public float Float() => _value is float f ? f : float.Parse(Str(), Inv);
     public double Double() => _value is double d ? d : double.Parse(Str(), Inv);

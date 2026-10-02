@@ -18,8 +18,8 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     {
         if (reader.Null()) return new global::app.type.item.@null.@this("number", kind);
         // A declared kind reads through the kind; a bare token with no declared kind (a literal a .pr row
-        // holds as `number`) reads at its natural precision — an integral token is an integer (long), any
-        // other a double; a string parses through the family.
+        // holds as `number`) reads at its natural precision — an integral token is an integer (long, or a
+        // biginteger past it), any other a double; a string parses through the family.
         if (kind is not null && num.Kinds.TryGetValue(kind, out var k))
             return k.Read(ref reader);
         if (reader.Peek() == global::app.type.format.TokenKind.String)
@@ -28,6 +28,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         return reader.Number() switch
         {
             long integral => (num)integral,
+            System.Numerics.BigInteger big => (num)big,
             var other => (num)System.Convert.ToDouble(other, System.Globalization.CultureInfo.InvariantCulture),
         };
     }

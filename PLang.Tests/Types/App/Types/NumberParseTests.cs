@@ -25,6 +25,49 @@ public class NumberParseTests
         await Assert.That((long)n).IsEqualTo(3000000000L);
     }
 
+    // an integer past long stays an integer, exact — never a decimal or a double
+    [Test]
+    [Arguments("12345678901234567890123")]
+    [Arguments("-12345678901234567890123")]
+    [Arguments("9223372036854775808")]
+    public async Task Parse_PastLong_IsBigInteger_Exact(string s)
+    {
+        var n = number.Parse(s);
+        await Assert.That(n!.Kind.Name).IsEqualTo("biginteger");
+        await Assert.That(n.Clr<System.Numerics.BigInteger>()).IsEqualTo(System.Numerics.BigInteger.Parse(s));
+    }
+
+    // a literal past long, as a .pr holds it (a bare json number), reads back exact
+    [Test] public async Task APrLiteral_PastLong_ReadsBackExact()
+    {
+        await using var app = new global::app.@this("/tmp/numparse-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        var ctx = app.actor.list.User.Context;
+        var big = System.Numerics.BigInteger.Parse("12345678901234567890123");
+        var goal = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal",
+            global::PLang.Tests.Shared.Make.Step("set n", global::PLang.Tests.Shared.Make.Action(ctx, "variable", "set",
+                global::PLang.Tests.Shared.Make.Param(ctx, "Name", "n", "variable"), ("Value", (number)big)))));
+
+        await (await goal.Start(ctx)).IsSuccess();
+
+        var n = (number)(await (await ctx.Variable.Get("n")).Value())!;
+        await Assert.That(n.Clr<System.Numerics.BigInteger>()).IsEqualTo(big);
+    }
+
+    // a json document's integer reads as an integer — past long exact, a small one still a whole number
+    [Test] public async Task AJsonInteger_PastLong_ReadsExact()
+    {
+        await using var app = new global::app.@this("/tmp/numparse-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        var ctx = app.actor.list.User.Context;
+        var decoded = await app.type.list.Mime("application/json")
+            .Decode(System.Text.Encoding.UTF8.GetBytes("{\"n\": 12345678901234567890123, \"small\": 5}"), ctx, "doc");
+
+        var n = (number)(await (await decoded.Get("n")).Value())!;
+        var small = (number)(await (await decoded.Get("small")).Value())!;
+
+        await Assert.That(n.Clr<System.Numerics.BigInteger>()).IsEqualTo(System.Numerics.BigInteger.Parse("12345678901234567890123"));
+        await Assert.That(small.Cat.ToString()).IsEqualTo("Integer");
+    }
+
     [Test] public async Task Parse_DecimalPoint_IsDouble()
     {
         var n = number.Parse("5.0");
