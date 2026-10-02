@@ -18,11 +18,15 @@ Build 2 skips the unchanged goal. (My os/ full build was the same: "Found 15 goa
 1. `Executor.cs:105` applies `--build={"cache":false}` into the typed build setting
    (`Flag<build.setting>("!build")`), and `Executor.cs:111-112` reads it to turn the **LLM** cache
    off. **That half works** — fresh LLM calls still happen.
-2. **But `%!build.setting.cache%` is `(undefined)` at Build.goal start** (verified with
-   `--debug={"goal":"Build","variables":[{"name":"!build.setting.cache"}]}`): the CLI-applied build
-   setting does not surface to the setting-variable the goal reads.
-3. `os/system/builder/Build.goal:7` — `- set default %!build.setting.cache% = true` — therefore sees
-   it unset and forces it **true**.
+2. **CORRECTION (coder, after this was first written):** `%!build.setting.cache%` does **not** read
+   undefined. My `--debug` watch was misleading — the debug variable watch reduced a watched name to
+   its root (`!build`) and read only the store (`debug/this.cs:344`, `:351`), so **every** watched
+   setting printed `(undefined)`. With the watch fixed, `%!build.setting.cache%` reads `false` with
+   `--build={"cache":false}` and `true` without, at every Build.goal step. So do not trust the
+   "(undefined)" evidence below; the precise clobber mechanism is the coder's (`set default` meeting a
+   setting). What holds: the `set default` line was a **redundant** second copy of the class default.
+3. `os/system/builder/Build.goal:7` — `- set default %!build.setting.cache% = true` — duplicated the
+   class default (`build/setting/this.cs:10` `Cache = true`); removing it is what let cache-off rebuild.
 4. `PLang/app/module/build/code/Default.cs:116`
    `if (context.Setting.Of<build.setting>().Cache.Value) await MergePrData(goal, context);` now reads
    **true** → merges the prior `.pr` → sets `goal.Cache` / each step's `PriorText`.
@@ -58,8 +62,8 @@ clobber. So it's a **code regression**, not a doc error. A one-line doc note cou
 The architect's call: the setting class already owns the default —
 `PLang/app/module/build/setting/this.cs:10` `[Out, Store] public @bool Cache { get; set; } = true;`.
 So `Build.goal:7`'s `set default %!build.setting.cache% = true` was a redundant second copy of that
-default that clobbered the CLI's `false` whenever the setting read as undefined. **Deleted that line;
-rebuilt `Build.goal`'s `.pr` (bootstrap: cwd=os/, files=["system/builder/Build.goal"], cache:false).**
+default; removing it is what let cache-off rebuild. **Deleted that line; rebuilt `Build.goal`'s `.pr`
+(bootstrap: cwd=os/, files=["system/builder/Build.goal"], cache:false).**
 
 **Validated on hash-take** (fresh build, then rebuild the unchanged goal with cache:false):
 - Before: Build 2 printed only "Found 1 goals" — skipped (no rebuild).
@@ -68,23 +72,22 @@ rebuilt `Build.goal`'s `.pr` (bootstrap: cwd=os/, files=["system/builder/Build.g
   (same input → same `.pr`); that is the desired outcome, not a skip. (The architect's "md5 changes"
   expectation assumed a non-deterministic re-answer; an unchanged goal re-answers identically.)
 
-**Core half still owed (coder):** a setting always has a value — its class default or the one written
-— so `%!build.setting.cache%` must **never** read as undefined when the CLI wrote the typed setting.
-That it does is the real bug (`set default` meets a setting; the `.setting` projection from the
-`7c98a5e44` family). Deleting the Build.goal line removes the *symptom* (the clobber); the projection
-bug remains and would bite any `%!…setting%` read + `set default` pair.
+**No separate core bug (corrected):** my first draft claimed `%!build.setting.cache%` read undefined
+and a `.setting` projection bug owed to the coder — that was based on the bogus debug watch and is
+**withdrawn**. The coder confirms the setting reads correctly (false with the flag, true without) at
+every Build.goal step. The one needed change was removing the redundant `set default` — done. The
+exact reason a redundant `set default = true` overrode the CLI's `false` (how `set default` interacts
+with an already-set setting) is the coder's domain; it is not a `%!…setting%`-reads-undefined bug.
 
-## Fix options (for the architect to route) — the core half
-- **Core (settings projection):** make the CLI-applied `build.setting.cache` surface as
-  `%!build.setting.cache%` so `set default` (Build.goal:7) correctly sees it as set and does not
-  override. This is the root — restores the intended `cache:false` everywhere. (From `7c98a5e44`'s
-  family; coder.)
-- **Builder lane (Build.goal), weaker:** have Build.goal consult the typed setting rather than
-  `set default` on the variable — but this papers over the projection bug and risks other `%!…setting%`
-  reads being equally blind. Prefer the core fix.
+## Historical (superseded) fix options
+These were written under the mistaken undefined-read reading; kept only for the record, not to act on:
+- ~~**Core (settings projection):** make the CLI-applied `build.setting.cache` surface as
+  `%!build.setting.cache%` …~~
+- ~~**Builder lane (Build.goal), weaker:** have Build.goal consult the typed setting rather than
+  `set default` on the variable.~~
 
 ## Impact on measurement
-Fresh folders (`rm -rf .build`) always rebuild because there is no `.pr` to merge, so this bug does
-**not** affect fresh-folder measurements (c4, loop-dict, modules-probe this session were all fresh —
-valid). It only affects re-building an existing tree in place (the os/ tree; any dev iterating on a
-built folder). Until fixed, to force a rebuild you must clear `.build` (off-limits for os/).
+Fresh folders (`rm -rf .build`) always rebuild because there is no `.pr` to merge, so the prior
+in-place skip did **not** affect fresh-folder measurements (c4, loop-dict, modules-probe this session
+were all fresh — valid). With the redundant `set default` gone, cache-off now rebuilds an unchanged
+tree in place too (validated on hash-take).

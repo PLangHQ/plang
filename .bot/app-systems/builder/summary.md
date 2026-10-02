@@ -57,9 +57,12 @@ confirm a fix still need the key.
   the default (`build/setting/this.cs:10` `Cache = true`), so the goal line was a redundant clobber.
   Rebuilt Build.goal's `.pr` (bootstrap, cwd=os/). **Validated:** hash-take unchanged cache:false now
   rebuilds ("Building goal: Start / Saved 8.0s", `.pr` mtime changes; md5 identical = deterministic,
-  correct). **Wire: 9 failed / 480 passed — all 9 are baseline, zero new.** Core half still owed
-  (coder): a setting must never read undefined when the CLI wrote it (the `.setting` projection,
-  7c98a5e44 family). Fresh-folder measurements unaffected (no .pr to merge) — c4/loop/modules stand.
+  correct). **Wire: 9 failed / 480 passed — all 9 are baseline, zero new.** CORRECTION (coder): the
+  earlier "`%!build.setting.cache%` reads undefined / `.setting` projection bug" claim was based on a
+  buggy debug watch (it reduced the watched var to its root and read only the store, `debug/this.cs:344,351`,
+  so every watched setting showed "(undefined)"). The setting reads correctly (false with the flag);
+  the only needed change was removing the redundant `set default` — no separate core bug owed. Fresh-
+  folder measurements unaffected — c4/loop/modules stand.
 - **Issue 32 masking shape drafted (`v3/issue32-masking-shape.md`).** Step variables → opaque `%vN%`
   for both decider and writer (via a new `s.Masked` + reverse map on step, core); templates read
   `s.Masked`; the formal answer's `%vN%` maps back before parse. Couples with Option-v2 (shared mask).

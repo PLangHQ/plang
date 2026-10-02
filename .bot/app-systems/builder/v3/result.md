@@ -173,14 +173,16 @@ The sweep left **15** hand-authored os/ goals. Rebuilt per-file and as a full `o
 **Why 0 rebuilt — a current regression (full diagnosis: `v3/cache-false-diagnosis.md`).** On head,
 `cache:false` does NOT rebuild an unchanged goal **in any folder** (reproduced on the educator's
 `hash-take`: build fresh, then rebuild unchanged with cache:false → "Found 1 goals", md5 unchanged).
-Mechanism: the CLI-applied build setting isn't visible as `%!build.setting.cache%` at Build.goal
-start (verified undefined via `--debug`), so `Build.goal:7` `set default %!build.setting.cache% = true`
-clobbers it; `Default.cs:116` then reads `true` → `MergePrData` → `goal.IsCached` (`goal/this.cs:288`)
-→ `BuildGoal/Start.goal` `if %goal.IsCached%, return`. The LLM-cache half of cache:false still works
-(`Executor.cs:111` reads the typed setting before the clobber). build.md ll.69-71 are correct
-(source-unchanged skip); the broken thing is the intended "cache:false rebuilds unchanged" (written
-for at `Default.cs:113-116`), defeated by the clobber. **Consequence:** a forced os/ rebuild needs a
-fresh `.build` (off-limits). Only goals whose `.pr` was stale this session rebuilt.
+Cause (corrected — see `v3/cache-false-diagnosis.md`): `Build.goal:7` `set default %!build.setting.cache%
+= true` was a **redundant** copy of the class default (`build/setting/this.cs:10`), and it overrode a
+CLI-provided `cache:false` so `Default.cs:116` merged the prior `.pr` → `goal.IsCached`
+(`goal/this.cs:288`) → `BuildGoal/Start.goal` `if %goal.IsCached%, return` (skip). Deleting the line
+fixed it; cache-off now rebuilds. (My first draft blamed a `%!build.setting.cache%`-reads-undefined /
+`.setting`-projection bug — that was a **buggy debug watch** (`debug/this.cs:344,351` read only the
+store for a reduced name); the coder confirms the setting reads correctly. No separate core bug.)
+The LLM-cache half always worked (`Executor.cs:111`). build.md ll.69-71 (source-unchanged skip) are
+correct. **At the time of pass 2 (before this fix landed)** a forced os/ rebuild needed a fresh
+`.build` (off-limits); only stale-`.pr` goals rebuilt. With the fix in, cache-off rebuilds in place.
 
 | goal | result | note | class |
 |---|---|---|---|
