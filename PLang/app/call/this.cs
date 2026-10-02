@@ -254,6 +254,9 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
         return false;
     }
 
+    /// <summary>The names this frame was born with — a goal call's own arguments, not its callers'.</summary>
+    internal IEnumerable<string> Arguments => _born;
+
     /// <summary>The names this frame and its callers hold, the inner frame's first.</summary>
     internal IEnumerable<string> Names
     {

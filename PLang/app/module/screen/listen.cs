@@ -66,7 +66,7 @@ public partial class listen : IContext
         }
         await global::app.module.on.code.Gate.Run(async () =>
         {
-            var found = await context.App.goal.list.Find(name, context.CallStack.Goal);
+            var found = await context.App.goal.list.Find(name, context.call.Goal);
             if (!found.Success || await found.Value() is not { } goal)
             {
                 await Answer(new() { ["error"] = $"PlangOS's shell has no goal {name}" });
@@ -74,10 +74,13 @@ public partial class listen : IContext
             }
             var bound = new List<global::app.data.@this>();
             if (call.TryGetProperty("parameters", out var parameters) && parameters.ValueKind == System.Text.Json.JsonValueKind.Object)
-                foreach (var p in parameters.EnumerateObject())
+            {
+                using var named = parameters.EnumerateObject();
+                foreach (var p in named)
                     bound.Add(new global::app.data.@this(p.Name, new global::app.type.item.serializer.json(context).Parse(p.Value.Clone()), context: context));
-            global::app.data.@this ran;
-            await using (context.Variable.Calls.Push(bound)) ran = await goal.Start(context);
+            }
+            // its parameters are its goal frame's own variables
+            var ran = await goal.Start(context, bound);
             if (!ran.Success)
             {
                 await Answer(new() { ["error"] = ran.Error?.Message ?? "failed" });
