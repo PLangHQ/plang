@@ -334,13 +334,17 @@ public partial class @this
 
     /// <summary>This action, instantiated — the live object carrying its typed parameters and
     /// Run. The action asks the module element it HOLDS for its own name; no registry re-resolves
-    /// strings. A name the module doesn't carry, or one whose entry isn't code-generated, comes
-    /// back as a keyed error.</summary>
+    /// strings. A name the module doesn't carry, a property its element doesn't have (a .pr built
+    /// before the property went — run without it, the action would do something else), or an
+    /// entry that isn't code-generated, comes back as a keyed error.</summary>
     public (module.ICodeGenerated? Code, global::app.error.Error? Error) Instance(
         actor.context.@this context)
     {
-        if (!Module.Contains(Name))
+        if (Module[Name] is not { } element)
             return (null, global::app.error.ActionError.NotFound($"Action '{Module}.{Name}'"));
+        if (Property.FirstOrDefault(p => element.Property[p.Name] == null) is { } unknown)
+            return (null, new global::app.error.ActionError(
+                $"{Module}.{Name} has no property {unknown.Name}; rebuild the goal", "UnknownProperty", 400));
 
         var code = Module.Create(Name, context);
         return code == null

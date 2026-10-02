@@ -66,6 +66,28 @@ public class PrLoadTests : System.IAsyncDisposable
         await Assert.That(loaded.Error!.Message).Contains("step key 'action' isn't in this .pr format");
     }
 
+    // A .pr built before a property went (goal.call's Wait) names a property its action no longer has: run, the
+    // step fails naming it — never runs with it dropped, doing something else.
+    [Test]
+    public async Task APropertyItsActionHasNot_FailsTheRun_NamingIt()
+    {
+        var context = _app.actor.list.User.Context;
+        var built = Make.Goal(context, "Start", "/Start.goal",
+            Make.Step("call Other", Make.Action(context, "goal", "call", ("Name", "Other"))));
+        var pr = System.Text.Json.Nodes.JsonNode.Parse(await context.Pr(built))!;
+        var property = pr["step"]![0]!["code"]![0]!["property"]!.AsArray();
+        var wait = property[0]!.DeepClone();
+        wait["name"] = "Wait";
+        property.Add(wait);
+        var loaded = await Load("start.pr", pr.ToJsonString());
+        await loaded.IsSuccess();
+
+        var ran = await ((global::app.goal.@this)(await loaded.Value())!).Start(context);
+
+        await Assert.That(ran.Success).IsFalse();
+        await Assert.That(ran.Error!.Message).Contains("goal.call has no property Wait; rebuild the goal");
+    }
+
     // A small goal saved as a .pr and loaded through the real load path runs: its variable is set and
     // its output written. Its indented step and its warning ride the .pr and come back.
     [Test]
