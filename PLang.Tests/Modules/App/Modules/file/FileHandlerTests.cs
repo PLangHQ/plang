@@ -149,7 +149,7 @@ public class FileHandlerTests : IDisposable
         _app.actor.list.User.Context.Variable.Set("name", "Ingi");
 
         var action = new Read(_app.actor.list.User.Context) { Path = MakePath("template.txt"),
-            Template = new global::app.data.@this<global::app.type.item.@bool.@this>("Template", true, context: _app.actor.list.User.Context)
+            Variables = new global::app.data.@this<global::app.type.item.@bool.@this>("Variables", true, context: _app.actor.list.User.Context)
         };
         var result = await action.Start();
 
@@ -166,7 +166,7 @@ public class FileHandlerTests : IDisposable
         _app.actor.list.User.Context.Variable.Set("name", "Ingi");
 
         var action = new Read(_app.actor.list.User.Context) { Path = MakePath("literal.txt"),
-            Template = new global::app.data.@this<global::app.type.item.@bool.@this>("Template", false, context: _app.actor.list.User.Context)
+            Variables = new global::app.data.@this<global::app.type.item.@bool.@this>("Variables", false, context: _app.actor.list.User.Context)
         };
         var result = await action.Start();
 
@@ -181,7 +181,7 @@ public class FileHandlerTests : IDisposable
         System.IO.File.WriteAllText(TempPath("marked.txt"), "Hello %name%");
 
         var action = new Read(_app.actor.list.User.Context) { Path = MakePath("marked.txt"),
-            Template = new global::app.data.@this<global::app.type.item.@bool.@this>("Template", true, context: _app.actor.list.User.Context)
+            Variables = new global::app.data.@this<global::app.type.item.@bool.@this>("Variables", true, context: _app.actor.list.User.Context)
         };
         var result = await action.Start();
 
@@ -202,7 +202,7 @@ public class FileHandlerTests : IDisposable
         _app.actor.list.User.Context.Variable.Set("name", "before");
 
         var action = new Read(_app.actor.list.User.Context) { Path = MakePath("late.txt"),
-            Template = new global::app.data.@this<global::app.type.item.@bool.@this>("Template", true, context: _app.actor.list.User.Context)
+            Variables = new global::app.data.@this<global::app.type.item.@bool.@this>("Variables", true, context: _app.actor.list.User.Context)
         };
         var result = await action.Start();
         _app.actor.list.User.Context.Variable.Set("name", "after");
