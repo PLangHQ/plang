@@ -50,6 +50,10 @@ public class @this : global::app.type.item.@this
     /// <summary>The event named <paramref name="name"/>; null when there is no event of that name.</summary>
     public virtual global::app.@event.@this? this[string name] => None.GetValueOrDefault(name);
 
+    /// <summary>The names of the events an item has (<c>ask</c>, <c>create</c>, … <c>write</c>) — every item the same
+    /// ones; before or after one is a binding's <c>When</c>, never part of its name.</summary>
+    public IEnumerable<string> Names => Made.Keys.Order(StringComparer.Ordinal);
+
     /// <summary>The start — what runs before and after the item starts.</summary>
     public virtual start start => NoStart;
 

@@ -66,8 +66,24 @@ public class OnEventTests
         await Assert.That(_app.Module("output")["write"]!.on.start.before.Count).IsEqualTo(0);
     }
 
+    // an item's event that isn't one (before/after fused into the name) can never bind: the build refuses it, naming
+    // the events and the When
     [Test]
-    [Arguments("%!app.type.step.on.after%", "after")]
+    [Arguments("%!app.type.step.on.after%")]
+    [Arguments("%!app.type.step.on.before%")]
+    public async Task APathNamingNoEvent_IsRefusedAtBuild_NamingTheEvents(string path)
+    {
+        var (handler, _) = await Make.Action(Ctx, "on", "event", ("Event", path), ("When", "before"),
+            ("Action", Make.Call(Ctx, "Log"))).Bind(Ctx);
+
+        var built = await ((global::app.module.IClass)handler!).Build();
+
+        await built.IsFailure();
+        await Assert.That(built.Error!.Key).IsEqualTo("EventNotFound");
+        await Assert.That(built.Error.Message).Contains("start").And.Contains("When=before");
+    }
+
+    [Test]
     [Arguments("%!channel.audit.on.write%", "audit")]
     public async Task APathThatReachesNothingAtBuild_IsAWarning_NamingTheHop(string path, string hop)
     {
@@ -105,6 +121,7 @@ public class OnEventTests
 
         await bound.IsFailure();
         await Assert.That(bound.Error!.Key).IsEqualTo("EventNotFound");
+        await Assert.That(bound.Error.Message).Contains("an item's events are ask, create");
     }
 
     [Test]
