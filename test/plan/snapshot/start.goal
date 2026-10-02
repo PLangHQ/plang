@@ -4,6 +4,7 @@ Start
 - call goal Stage1
 - call goal Stage2
 - call goal Stage3
+- call goal Stage4
 
 Stage1
 / One door.
@@ -33,3 +34,12 @@ Stage3
 - call goal /snapshot/app/ChildChangeStaysInChild
 / A dirty child reset matches the parent again
 - call goal /snapshot/app/ResetDropsChildChanges
+
+Stage4
+/ The callback.
+/ A stateless ask's callback carries only the variables the ask gave and its signed position; resumed, the goal continues after the ask
+- call goal /snapshot/callback/StatelessAskResumes
+/ A stateless callback with its position changed, or past its expiry, is refused
+- call goal /snapshot/callback/TamperedOrExpiredRefused
+/ A durable resume after an error carries every user variable
+- call goal /snapshot/callback/DurableCarriesAll

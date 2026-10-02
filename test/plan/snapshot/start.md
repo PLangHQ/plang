@@ -28,9 +28,9 @@ Today's snapshot serves only the first need, and its shape is wrong: the app kee
 | statics (until typed) | ✓ | ✓ |
 | store, cache, FileSystem, Debug, Build, test, channels, Services, KeepAlive | — | — |
 
-## Open (to Ingi)
-
-- **Which variables a callback carries when it leaves the app.** The 2026-05 ruling (`Documentation/Runtime2/todos.md:196–216`): a callback carries only the variables the step declares (`vars: %orderId%`), signed with the goal's hash, step and action, and encrypted, because a 1000-row list can't ride a hidden form. Today's snapshot captures every user variable. Proposed: a local durable resume (to disk, the same app) carries all the user variables; a callback handed outside the app carries only the declared ones, signed and encrypted.
+- **What a resume snapshot carries depends on who keeps it** (Ingi): one mechanism, two sizes.
+  - **Durable execution** (an error, kept by the app): every user variable, so the run resumes exactly where it stood.
+  - **Stateless** (an `ask user` over a stateless channel: the snapshot rides with the client): only the variables the ask gave, plus the signature on where to continue (the goal's hash, step, action, expiry; `Documentation/Runtime2/todos.md:196–216`). "A 1000-row list can't ride a hidden form" holds only here.
 
 ## The shape (the coder owns the code; this is the intent)
 
@@ -49,7 +49,7 @@ Today's snapshot serves only the first need, and its shape is wrong: the app kee
 1. **One door** (coder): the snapshot view and its marks; the walk down the app tree; the snapshot's own wire (`Output` + its reader, no `Serialize` through goal's kind); each of today's five owners moves to marked members; `ISnapshot` and the app's list go. The existing resume tests still pass.
 2. **The resume snapshot** (coder): the frame's own position and resume; the error's throw-time state; the diff history as its own type; the value's captured answer; the resume point on the exiting value; the mode as a value; code providers by kind name and async load. A run saved at an error, written to disk, and resumed in a fresh app re-enters the failing step.
 3. **The app snapshot and children** (coder): frozen parts shared by reference, copy on write, dirty and reset; the test runner's child apps use it; measured against stage 0.
-4. **The callback** (after Ingi's open point): the resume snapshot generating a callback, with what it carries.
+4. **The callback** (coder): the resume snapshot generating a callback; the stateless size (the ask's variables plus the signed position) and the durable size (every user variable) from one mechanism; a stateless callback resumed with a tampered position or an expired one is refused.
 
 ## Demolition
 
