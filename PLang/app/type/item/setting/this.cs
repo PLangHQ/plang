@@ -80,19 +80,21 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     /// <summary>Writes an option for this run: the value lands in the writer's settings under this class's
     /// path (<c>set %!app.goal.list.setting.os% = true</c> → <c>app.goal.list.setting.os</c>), where the next read
-    /// builds it from — and on this instance.</summary>
+    /// builds it from. The answer is a copy with the option set; this instance — the one the settings handed out,
+    /// read-only — is unchanged.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(string key, bool isIndex,
         object? value, global::app.actor.context.@this context)
     {
         if (Option(key) == null && Switch(key)?.SetMethod == null)
             throw new System.NotSupportedException($"setting '{Path}' has no option '{key}'");
-        // onto this instance through the one convert walk (a choice from its text) — a value the option can't
-        // take is refused before this run holds it
+        // onto a copy through the one convert walk (a choice from its text) — a value the option can't take is
+        // refused before this run holds it
         var raw = value is global::app.data.@this held ? await held.Value() : value;
-        var applied = Apply(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { [key] = raw }, context);
+        var set = Copy();
+        var applied = set.Apply(new Dictionary<string, object?>(System.StringComparer.OrdinalIgnoreCase) { [key] = raw }, context);
         if (!applied.Success) throw new global::app.error.AppException(applied.Error!);
         await Write(key, value, context);
-        return this;
+        return set;
     }
 
     /// <summary>This run's value for <paramref name="key"/> under this setting's path, in the writer's
@@ -206,6 +208,17 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
     /// (the base's own members are not options); null when there is none.</summary>
     internal System.Reflection.PropertyInfo? Option(string key)
         => Options.FirstOrDefault(o => string.Equals(o.Name, key, System.StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>A copy of this setting, its own to change: every option as it is, an owned setting (a composite —
+    /// debug's <c>length</c>, math's <c>equal</c>) copied too, so nothing is shared with this one. What the settings
+    /// hand out is read-only: a caller that changes a setting changes its copy.</summary>
+    internal @this Copy()
+    {
+        var copy = (@this)MemberwiseClone();
+        foreach (var option in Options)
+            if (option.GetValue(this) is @this owned) option.SetValue(copy, owned.Copy());
+        return copy;
+    }
 
     /// <summary>This class's options — the public settable properties it declares (the base's own
     /// members are not options).</summary>

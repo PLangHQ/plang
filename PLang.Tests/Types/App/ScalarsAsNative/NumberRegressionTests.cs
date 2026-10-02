@@ -26,7 +26,8 @@ public class NumberRegressionTests
         // dispatch still routes; `item` adds nothing to ordering.
         await Assert.That(((Number)(1)).CompareTo(((Number)(2)))).IsLessThan(0);
         await Assert.That(CompareTestOps.Eq(app.actor.list.User.Context, ((Number)(5)), ((Number)(5)))).IsTrue();
-        await Assert.That(CompareTestOps.OrdD(new Data("", ((Number)(1))), new Data("", ((Number)(2))))).IsLessThan(0);
+        var ctx = app.actor.list.User.Context;
+        await Assert.That(CompareTestOps.OrdD(new Data("", ((Number)(1)), context: ctx), new Data("", ((Number)(2)), context: ctx))).IsLessThan(0);
     }
 
     [Test]

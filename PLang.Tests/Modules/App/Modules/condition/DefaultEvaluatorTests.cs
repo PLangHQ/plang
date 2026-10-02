@@ -175,6 +175,39 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
         await Assert.That(IsTrue(await EvalIf(missing, "is", "file"))).IsTrue();
     }
 
+    // Numbers compare at %!math.setting.equal.digits% significant digits (15) when a binary float is in it: equality and
+    // order from one answer
+    private static global::app.type.item.number.@this Sum
+        => NumberOps.Add(global::app.type.item.number.@this.Parse("0.1")!, global::app.type.item.number.@this.Parse("0.2")!, NumberOps.Lenient);
+
+    [Test] public async Task PointOnePlusPointTwo_EqualsPointThree()
+        => await Assert.That(IsTrue(await EvalIf(Sum, "==", global::app.type.item.number.@this.Parse("0.3")))).IsTrue();
+
+    [Test] public async Task PointOnePlusPointTwo_IsNotGreaterThanPointThree()
+        => await Assert.That(IsFalse(await EvalIf(Sum, ">", global::app.type.item.number.@this.Parse("0.3")))).IsTrue();
+
+    [Test] public async Task NearlyOne_EqualsOne()
+        => await Assert.That(IsTrue(await EvalIf(global::app.type.item.number.@this.Parse("1.0000000000000002"), "==", 1))).IsTrue();
+
+    [Test] public async Task ZeroDigits_IsExact()
+    {
+        var set = await _app.actor.list.User.Setting.Set("math.setting.equal.digits", _app.actor.list.User.Context.Ok(0));
+        await set.IsSuccess();
+        await Assert.That(IsFalse(await EvalIf(Sum, "==", global::app.type.item.number.@this.Parse("0.3")))).IsTrue();
+    }
+
+    [Test] public async Task ASort_OfNumbersEqualAtTheDigits_KeepsTheirOrder()
+    {
+        var ctx = _app.actor.list.User.Context;
+        var first = global::app.type.item.number.@this.Parse("0.30000000000000004")!;
+        var second = global::app.type.item.number.@this.Parse("0.3")!;
+        var list = new global::app.type.item.list.@this(new global::app.type.item.@this[] { first, second, global::app.type.item.number.@this.Parse("0.1")! });
+        var sorted = await (await list.Sort(null, false, ctx)).Value() as global::app.type.item.list.@this;
+        var order = sorted!.Items(ctx).Select(d => d.Peek()).ToList();
+        await Assert.That(order[1]).IsSameReferenceAs(first);
+        await Assert.That(order[2]).IsSameReferenceAs(second);
+    }
+
     [Test] public async Task Is_AliasName_ResolvesToItsType()
         => await Assert.That(IsTrue(await EvalIf("hello", "is", "string"))).IsTrue();
 

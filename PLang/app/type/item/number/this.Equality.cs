@@ -26,11 +26,27 @@ public sealed partial class @this
     {
         var b = other as @this ?? Create(other);
         if (b is null) return new(global::app.data.Comparison.Incomparable);
-        var c = CompareTo(b);
+        var c = CompareTo(b, context.Setting.Of<global::app.module.math.setting.@this>().Equal.Digits.ToInt32());
         return new(c < 0 ? global::app.data.Comparison.Less
                  : c > 0 ? global::app.data.Comparison.Greater
                  : global::app.data.Comparison.Equal);
     }
+
+    // Compared at `digits` significant digits when a binary float is in it (0.1 + 0.2's 0.30000000000000004 is 0.3 at 15):
+    // each side rounds by itself, then the two compare exactly — a function of each value, so the order stays
+    // transitive and a sort stays sound (a tolerance, |a − b| < ε, is not). 0 is exact; integers and decimals are
+    // exact already.
+    private int CompareTo(@this other, int digits)
+    {
+        if (digits <= 0 || (Cat != Category.BinaryFloat && other.Cat != Category.BinaryFloat) || IsNaN(this) || IsNaN(other))
+            return CompareTo(other);
+        return At(digits).CompareTo(other.At(digits));
+    }
+
+    // this number as a double rounded to `digits` significant digits
+    private double At(int digits)
+        => double.Parse(AsDouble().ToString("G" + digits, System.Globalization.CultureInfo.InvariantCulture),
+            System.Globalization.CultureInfo.InvariantCulture);
 
     public bool Equals(@this? other)
     {

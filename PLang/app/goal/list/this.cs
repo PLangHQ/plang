@@ -179,10 +179,11 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         global::app.actor.context.@this context)
     {
         // goal.list's setting as the asker's actor sees it (its defaults, a saved row, this run's), the
-        // call's own values on top through the one convert walk
+        // call's own values on top through the one convert walk — onto this walk's own copy
         var wants = context.Setting.Of<setting.@this>();
         if (setting != null)
         {
+            wants = (global::app.goal.list.setting.@this)wants.Copy();
             var given = setting.KeyNames.ToDictionary(k => k, k => setting.Stored(k), StringComparer.OrdinalIgnoreCase);
             var applied = wants.Apply(given, context);
             // a walk streams its goals, so a setting it refuses (an option that isn't one) travels as its Error
