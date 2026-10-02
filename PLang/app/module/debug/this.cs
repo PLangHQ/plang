@@ -338,14 +338,24 @@ public sealed class @this
                     foreach (var v in value.Variable)
                         varNames.Add(v.Code.Root.Name);
 
-        // Add explicitly watched variables
+        // explicitly watched variables are read whole, as the step would read them — a path (%!build.setting.cache%)
+        // reaches what it names, which its root alone (a setting's isn't in memory) never shows
+        var watched = new List<global::app.type.item.variable.@this>();
         if (context.App?.Debug is { } debug)
             foreach (var name in debug.Watched)
-                varNames.Add(new global::app.type.item.variable.parser.@this(name).Whole?.Code.Root.Name ?? name);
+                if (new global::app.type.item.variable.parser.@this(name).Whole is { } variable && !varNames.Contains(variable.Name))
+                    watched.Add(variable);
 
-        if (varNames.Count == 0) return;
+        if (varNames.Count == 0 && watched.Count == 0) return;
 
-        sb.AppendLine($"  Variables ({varNames.Count}):");
+        sb.AppendLine($"  Variables ({varNames.Count + watched.Count}):");
+        foreach (var variable in watched)
+        {
+            var read = await variable.Start(context);
+            sb.AppendLine(read is { IsInitialized: true, Success: true }
+                ? $"    %{variable.Name}% = {await FormatValue(read.Peek(), context)} ({read.Type?.Name ?? "?"})"
+                : $"    %{variable.Name}% = (undefined)");
+        }
         foreach (var name in varNames)
         {
             var data = context.Variable.Peek(name);

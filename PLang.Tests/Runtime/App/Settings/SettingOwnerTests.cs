@@ -76,6 +76,30 @@ public class SettingOwnerTests
         await Assert.That((await (await Read("%!app.setting.create%", app.actor.list.User.Context)).Value())?.ToString()).IsEqualTo("true");
     }
 
+    // A setting always has a value — its class default, or the one written: the CLI's --build={"cache":false} reads as
+    // false in a goal, and a `set default` on it leaves the CLI's value.
+    [Test] public async Task ASettingTheCliWrote_ReadsAsWritten_AndASetDefaultLeavesIt()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        // as the CLI does it: build mode born, then the flag's values written
+        app.Build = new global::app.module.build.@this(app.actor.list.System.Context);
+        var path = new global::app.module.build.setting.@this().Path;
+        await app.actor.list.System.Setting.Set(path, new Dictionary<string, object?> { ["cache"] = false }).IsSuccess();
+
+        foreach (var ctx in new[] { app.actor.list.System.Context, app.actor.list.User.Context })
+        {
+            var read = await Read("%!build.setting.cache%", ctx);
+            await Assert.That(read.IsInitialized).IsTrue();
+            await Assert.That((await read.Value())?.ToString()).IsEqualTo("false");
+        }
+
+        var system = app.actor.list.System.Context;
+        await (await global::PLang.Tests.Shared.Make.Action(system, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(system, "Name", "%!build.setting.cache%", "variable"),
+            ("Value", true), ("Default", true)).Start(system)).IsSuccess();
+        await Assert.That((await (await Read("%!build.setting.cache%", system)).Value())?.ToString()).IsEqualTo("false");
+    }
+
     // The saved rows are read when the app loads; after it the in-memory door has them.
     [Test] public async Task Rows_AreThereAfterTheAppLoads()
     {
