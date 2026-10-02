@@ -155,7 +155,25 @@ masks to `save %v1%`, loses the `setting` signal → file.save mis-map, 0/5 (mas
 (no ask:, offers would be type-names not placeholders); (d) bare-continue guard flaky 2/5. Awaiting the
 architect's calls on these.
 
-## Status 2026-10-02 (end) — idle, waiting on the coder's one pick pass
+## Status (latest) — masking removed, %!…% teaching landed; 32a + control fixed
+Masking removed (Ingi; coder 8a4ef5fc7, templates reverted to `s.Text`). My `%!…%` teaching landed
+(47a568651) in `decider.state.template` + `Properties.llm`; re-pinned pick_golden; Wire 489/9 baseline.
+Measured (fresh, cache off, 5 each; direct `.pr` inspection):
+- **32(a) FIXED** — no condition.compare junk from `%!app.module.<m>%` (0/5).
+- **control FIXED** — `save %!llm.setting.cache%` → setting.save 1.00 (was file.save under masking);
+  residual refusal = the separate issue-17 class.
+- **32(b) unchanged** — writer still picks the variable as goal `Name`; fix = the coder's goal-name
+  offers (`goal` type `Offers(step)`, queued). Teaching = decider half; offers = writer half.
+- issue 2 (Item+Key), named continue (Conversation), 3 guards all hold.
+**Issue 34 shape** refined (generic Agree rule over all options; type answers how its offer enters the
+line — no Kind.Presence/marker, no Call fork) → coder after the offers batch; my `ask:` line + teaching
+land when the terminal module reaches app-systems.
+**Issue 35:** not path normalization (path type preserves `//`); writer dropped the slash — architect
+asked the os bot for the raw `.pr` `Program`.
+Idle pending: the coder's goal-name offers batch (→ 32b fix + re-measure), the terminal module (→ 34
+ask: line), issue-17 class (control residual), and the decider-key storage (Ingi).
+
+## (earlier) Status 2026-10-02 — idle, waiting on the coder's one pick pass
 All architect-directed work done and accepted (latest 0b799a5d1). Open items are the coder's / core:
 - **Coder's pick pass** (Option-v2 core + `listed.Option` + issue-32 masking core; coder plan v22 =
   `1ea0f67bf`). When its hash lands, my part:
