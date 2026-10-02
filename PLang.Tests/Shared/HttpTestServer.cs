@@ -139,9 +139,28 @@ public sealed class HttpTestServer : IDisposable
             HttpListenerContext context;
             try { context = await _listener.GetContextAsync(); }
             catch { return; }   // listener stopped
-            // each request is handled without holding a pool thread while it reads or writes: under a loaded run a
-            // blocked thread per request starves the pool the client's own continuations need
-            _ = Handle(context);
+            // each request is served on the pool, off this loop, and without holding a thread while it reads or
+            // writes: under a loaded run a blocked thread per request starves the pool the client's continuations need
+            _ = Task.Run(() => Serve(context));
+        }
+    }
+
+    /// <summary>What the handler threw, per request — a fault drops the connection, which the client reports only
+    /// as "an error occurred while sending the request".</summary>
+    public IReadOnlyList<string> Faults => _faults.ToArray();
+    private readonly ConcurrentQueue<string> _faults = new();
+
+    // One request, served. A fault is kept and written where the test's output shows it, and the connection is
+    // aborted at once, so the client fails now rather than waiting for a response that never comes.
+    private async Task Serve(HttpListenerContext context)
+    {
+        try { await Handle(context); }
+        catch (Exception ex)
+        {
+            var fault = $"HttpTestServer: {context.Request.HttpMethod} {context.Request.Url?.AbsolutePath} faulted: {ex}";
+            _faults.Enqueue(fault);
+            Console.Error.WriteLine(fault);
+            try { context.Response.Abort(); } catch (ObjectDisposedException) { /* already closed */ }
         }
     }
 
@@ -167,7 +186,7 @@ public sealed class HttpTestServer : IDisposable
         lock (_requestsLock)
             _requests.Add(new RequestRecord(req.HttpMethod, path, headers, bodyLen));
 
-        try
+        // the response — a fault here reaches Serve, which keeps it and aborts the connection
         {
             // Forced-status injection.
             if (_forcedStatus.TryGetValue(path, out var forced))
@@ -242,10 +261,6 @@ public sealed class HttpTestServer : IDisposable
                     break;
             }
             resp.Close();
-        }
-        catch
-        {
-            try { resp.Abort(); } catch { /* already closed */ }
         }
     }
 
