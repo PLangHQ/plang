@@ -87,4 +87,10 @@ A boolean option is false by default, and true only when something says so. Name
 
 **How to apply:** an action option that is a bool gets `[Default(false)]` (or no default), and its name is the positive thing a step says to turn it on. A negated name (`DontWait`, `NoCache`) glues a negation onto the word; name the behaviour instead. A setting can also be read where nothing is written, so the same rule holds for setting options.
 
-**Still to fix:** four action options are `[Default(true)]` today: `list.split` `Empty` (`module/list/split.cs`), `test.discover` `Recursive` (`module/test/discover.cs`), `llm.query` `Cache` (`module/llm/query.cs`), `file.copy` `Subfolder` (`module/file/copy.cs`). Each rename is visible in plang, so each comes to Ingi with its new name.
+**When the common case is "on", the option is a choice, not a bool.** Keeping empty pieces, copying subfolders and using the cache are what a step means when it says nothing, so a bool for them would be true by default. Flipping the bool to false under the same name makes the name read as the opposite of what it does, and a two-word flag (`DropEmpty`) breaks the verb+noun rule. Instead the option keeps its one noun, and its value carries the verb: `Empty: keep | drop` (`Empty=drop`), with the common case as the default (`[Default(empty.keep)]`). It reads right on its own, and the catalog shows the model every value (`choice<empty> — one of: keep, drop`). Writing the default (`Empty=keep`) on a step that says nothing is harmless, since it means the same as leaving it out. The builder's option question can ask a choice (it offers the option's own values plus "none"), and a bool has no values to offer.
+
+**Still to fix (Ingi, 2026-10-02: choices):** four action options are `[Default(true)]` bools today. Each becomes a choice, and each is visible in plang:
+- `list.split` `Empty` (`module/list/split.cs`) → `Empty: keep | drop`;
+- `file.copy` `Subfolder` (`module/file/copy.cs`) → `Subfolder: include | skip`;
+- `test.discover` `Recursive` (`module/test/discover.cs`) → `Subfolder: include | skip`, the same set as file.copy's;
+- `llm.query` `Cache` (`module/llm/query.cs`) → `Cache: use | skip`.
