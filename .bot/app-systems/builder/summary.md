@@ -170,8 +170,15 @@ line — no Kind.Presence/marker, no Call fork) → coder after the offers batch
 land when the terminal module reaches app-systems.
 **Issue 35:** not path normalization (path type preserves `//`); writer dropped the slash — architect
 asked the os bot for the raw `.pr` `Program`.
-Idle pending: the coder's goal-name offers batch (→ 32b fix + re-measure), the terminal module (→ 34
-ask: line), issue-17 class (control residual), and the decider-key storage (Ingi).
+**Gate 94 (2c148b7a8): %!…% teaching accepted (decision 542); 32(a) and control CLOSED.**
+Idle pending:
+- **Coder's goal-name offers batch** (built, gate running). When it lands: add the `ask:` lines on
+  **`goal.call` Name** (offers = reachable goal names → picks `Page`, fixes 32b) and **`variable.set`
+  Type** (offers = plang type names → picks `path`, fixes 33); re-measure **32(b)** and **33** fresh,
+  cache off, 5 each; re-pin + Wire. Then one table.
+- Terminal module reaching app-systems → the 34 `ask:` line + teaching (shape ready, decision pending).
+- issue-17 class (control's residual refusal) — core/coder.
+- decider-key storage scope — Ingi.
 
 ## (earlier) Status 2026-10-02 — idle, waiting on the coder's one pick pass
 All architect-directed work done and accepted (latest 0b799a5d1). Open items are the coder's / core:
