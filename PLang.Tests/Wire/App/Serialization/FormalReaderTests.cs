@@ -283,6 +283,22 @@ public class FormalReaderTests : System.IAsyncDisposable
         await Assert.That(await (await ctx.Variable.Get("p")).Value()).IsAssignableTo<global::app.type.item.path.@this>();
     }
 
+    // a list slot given one value the build reads (a module, by its %!…% path) walks: the value is a list of one,
+    // never a cast the build dies on
+    [Test]
+    public async Task AListSlotGivenAModule_Walks_NeverACast()
+    {
+        var ctx = app.actor.list.User.Context;
+        var read = Read("goal.call(Name=\"Page\", Parameter=%!app.module.file%)", out _);
+        await read.IsSuccess();
+        var action = ((global::app.goal.step.action.list.@this)read.Peek()!)[0];
+        var goal = global::PLang.Tests.Shared.Make.Goal(ctx, "G", "/g.goal", global::PLang.Tests.Shared.Make.Step("call", action));
+
+        var declined = await goal.Step[0].Scope(ctx);
+
+        await Assert.That(declined).IsEmpty();
+    }
+
     // a property of the one action a formal line reads, through a real .pr load
     private async Task<global::app.data.@this> Slot(string formal, string property)
     {
