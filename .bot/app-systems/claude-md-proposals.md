@@ -187,3 +187,16 @@ run a stale binary. `./dev.sh build`, `./dev.sh ptest` and an unfiltered
 `./dev.sh test` build PlangConsole (Debug) through `PLang.Tests/All.proj`;
 `./dev.sh full` builds `PlangConsole/bin/Gate/` and runs the plang tests on it.
 ```
+
+## architect — v7 — 2026-10-02
+**Target:** `CLAUDE.md` → "Running plang Tests" (lines 87–88, 119, and the clean-rebuild recipe's `cd Tests`)
+**Why:** The plang tests live in `test/` (lowercase, singular; Ingi, 2026-09-28: tests live by concept, `test/plan/<id>/` for a plan's). `Tests/` doesn't exist in the tree, and `./dev.sh ptest` already runs `cd test && ../PlangConsole/bin/Debug/net10.0/plang --test`. I sent the builder bot `Tests/` from CLAUDE.md today and had to correct it.
+**Proposed change:** replace `Tests/` with `test/` in that section:
+```
+- All plang tests live under `test/` (lowercase, singular). Never under `tests/`, `.bot/`, `.build/`, `os/`, or any other tree.
+- When running `plang --test`, change directory into `test/` first so discovery is bounded to the canonical location (`./dev.sh ptest` does this):
+
+  cd test && ../PlangConsole/bin/Debug/net10.0/plang --test
+
+Do **not** delete `test/**/.build/` — those are tracked `.pr` files, not build artefacts.
+```
