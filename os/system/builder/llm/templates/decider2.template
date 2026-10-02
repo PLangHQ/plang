@@ -7,7 +7,7 @@ by PickListTests (PLang.Tests/Wire/App/Decider/pick_golden.json).
 {
 {%- assign sep = "" -%}
 {%- for s in goal.Step -%}
-{%- assign text = s.Text -%}
+{%- assign text = s.Mask.Text -%}
 {%- for q in s.Pick.Question -%}
 {{ sep }}
   {{ q.Id | json }}: {
