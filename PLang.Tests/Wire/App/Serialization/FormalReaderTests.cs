@@ -327,6 +327,27 @@ public class FormalReaderTests : System.IAsyncDisposable
         await Assert.That(await action.Validate(ctx)).IsNull();
     }
 
+    // a choice slot given a %variable% reads: what the variable holds is the run's to check, as every typed slot's is
+    [Test]
+    public async Task AChoiceSlotGivenAVariable_Reads_TheRunChecksWhatItHolds()
+    {
+        var read = Read("crypto.hash(Data=\"x\", Algorithm=%alg%)", out _);
+        await read.IsSuccess();
+
+        var ctx = app.actor.list.User.Context;
+        var action = ((global::app.goal.step.action.list.@this)read.Peek()!)[0];
+        await ctx.Variable.Set("alg", "sha256");
+        await (await action.Start(ctx)).IsSuccess();
+        await ctx.Variable.Set("alg", "no-such-hash");
+        var refused = await action.Start(ctx);
+        await Assert.That(refused.Success).IsFalse();
+    }
+
+    // the builder's own: its query's Cache is the build's setting, by its path
+    [Test]
+    public async Task AChoiceSlotGivenASettingPath_Reads()
+        => await Read("llm.query(Message=[{Role: \"user\", Content: \"x\"}], Cache=%!build.setting.cache%)", out _).IsSuccess();
+
     // a property of the one action a formal line reads, through a real .pr load
     private async Task<global::app.data.@this> Slot(string formal, string property)
     {
