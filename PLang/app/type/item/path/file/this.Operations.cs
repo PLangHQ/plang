@@ -150,7 +150,7 @@ public sealed partial class @this
     public override async Task<data.@this<global::app.type.item.path.@this.StatInfo>> Stat(actor.context.@this context)
     {
         if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.path.@this.StatInfo>.From(early);
-        return context.Ok<global::app.type.item.path.@this.StatInfo>(context.FileSystem.Stat(this));
+        return context.Ok<global::app.type.item.path.@this.StatInfo>(context.FileSystem.Stat(this, context));
     }
 
     // --- Writes --------------------------------------------------------------

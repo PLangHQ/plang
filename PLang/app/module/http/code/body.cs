@@ -10,7 +10,7 @@ internal sealed class body : System.IO.Stream
 {
     private readonly System.IO.Stream _source;
     private readonly long? _total;
-    private readonly long _max;
+    private readonly global::app.type.item.size.@this _max;
     private readonly System.Func<TransferProgress, Task>? _report;
     private readonly System.IO.Stream? _tee;
     private long _read;
@@ -18,7 +18,7 @@ internal sealed class body : System.IO.Stream
     private DateTimeOffset _throughputStart = DateTimeOffset.UtcNow;
     private long _throughputBytes;
 
-    public body(System.IO.Stream source, long? total, long max, System.Func<TransferProgress, Task>? report, System.IO.Stream? tee)
+    public body(System.IO.Stream source, long? total, global::app.type.item.size.@this max, System.Func<TransferProgress, Task>? report, System.IO.Stream? tee)
     {
         _source = source;
         _total = total;
@@ -32,9 +32,9 @@ internal sealed class body : System.IO.Stream
         var count = await _source.ReadAsync(buffer, ct);
         if (count == 0) return 0;
         _read += count;
-        if (_read > _max)
+        if (_read > _max.Value)
             throw new global::app.error.AppException(
-                $"Download exceeds maximum size of {Default.FormatBytes(_max)}", "ResponseTooLarge", 413);
+                $"Download exceeds maximum size of {_max}", "ResponseTooLarge", 413);
         if (_tee != null) await _tee.WriteAsync(buffer[..count], ct);
 
         _throughputBytes += count;

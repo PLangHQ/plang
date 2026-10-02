@@ -151,7 +151,7 @@ public class Stage7_SurfaceGateTests
     }
 
     [Test]
-    public async Task FileSize_ReturnsNumber_NotLong()
+    public async Task FileSize_ReturnsSize_NotLong()
     {
         var root = Path.Combine(Path.GetTempPath(), "plang_st7size_" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(root);
@@ -163,10 +163,10 @@ public class Stage7_SurfaceGateTests
         {
             var fp = new global::app.type.item.path.file.@this(tmp);
             object? size = await (await fp.Size(context)).Value();
-            await Assert.That(size).IsTypeOf<global::app.type.item.number.@this>();
-            await Assert.That(size!.ToString()).IsEqualTo("5");
+            await Assert.That(size).IsTypeOf<global::app.type.item.size.@this>();
+            await Assert.That(size!.ToString()).IsEqualTo("5 B");
             object? fileSize = await (await new global::app.type.item.file.@this(fp, context).Size(context)).Value();
-            await Assert.That(fileSize).IsTypeOf<global::app.type.item.number.@this>();
+            await Assert.That(fileSize).IsTypeOf<global::app.type.item.size.@this>();
         }
         finally { Directory.Delete(root, recursive: true); }
     }

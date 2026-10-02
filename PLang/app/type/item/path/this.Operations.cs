@@ -18,18 +18,19 @@ public abstract partial class @this
 {
     /// <summary>
     /// Stat() result payload. Exists=false → all other fields null.
-    /// IsFile=true → file (Length set). IsFile=false → directory.
+    /// IsFile=true → file (Size set). IsFile=false → directory.
     /// Nested under path so callers reach it as <c>path.@this.StatInfo</c>.
     /// </summary>
     public sealed class StatInfo : global::app.type.item.@this, global::app.type.item.ICreate<StatInfo>
     {
         [Out] public bool Exists { get; }
         [Out] public bool? IsFile { get; }
-        [Out] public long? Length { get; }
+        /// <summary>How big the file is — a size, written in its asker's standard.</summary>
+        [Out] public global::app.type.item.size.@this? Size { get; }
         [Out] public DateTime? Modified { get; }
-        public StatInfo(bool Exists, bool? IsFile = null, long? Length = null, DateTime? Modified = null)
+        public StatInfo(bool Exists, bool? IsFile = null, global::app.type.item.size.@this? Size = null, DateTime? Modified = null)
         {
-            this.Exists = Exists; this.IsFile = IsFile; this.Length = Length; this.Modified = Modified;
+            this.Exists = Exists; this.IsFile = IsFile; this.Size = Size; this.Modified = Modified;
         }
     }
 

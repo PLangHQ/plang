@@ -8,7 +8,7 @@ Several subsystems have resource limits to prevent abuse:
 
 | Subsystem | Guard | Limit |
 |-----------|-------|-------|
-| **HTTP downloads** | `MaxDownloadSize` | 100MB (configurable) |
+| **HTTP downloads** | `MaxDownloadSize` | 100 MiB, a size (configurable) |
 | **HTTP in-memory reads** | `ReadLimitedStringAsync` / `ReadLimitedBytesAsync` | 100MB |
 | **HTTP SSE** | Consecutive overflow counter | Disconnect after 3 |
 | **HTTP all streams** | Throughput floor | 1KB/sec over 30s (slow-loris protection) |

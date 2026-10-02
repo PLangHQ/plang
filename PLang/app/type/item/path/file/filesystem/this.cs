@@ -88,13 +88,15 @@ public class @this
     /// nothing changes here. An overlay hides it.</summary>
     public virtual void Remove(file.@this p) { }
 
-    /// <summary>What is at the path: a file with its length, a folder, or nothing.</summary>
-    public virtual StatInfo Stat(file.@this p)
+    /// <summary>What is at the path: a file with its size (in <paramref name="context"/>'s standard), a folder, or
+    /// nothing.</summary>
+    public virtual StatInfo Stat(file.@this p, actor.context.@this context)
     {
         if (IsFile(p))
         {
             var info = new System.IO.FileInfo(p.Absolute);
-            return new StatInfo(Exists: true, IsFile: true, Length: info.Length, Modified: info.LastWriteTimeUtc);
+            return new StatInfo(Exists: true, IsFile: true, Size: new global::app.type.item.size.@this(info.Length, context),
+                Modified: info.LastWriteTimeUtc);
         }
         if (IsFolder(p))
             return new StatInfo(Exists: true, IsFile: false, Modified: new System.IO.DirectoryInfo(p.Absolute).LastWriteTimeUtc);

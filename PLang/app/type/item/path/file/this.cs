@@ -49,13 +49,13 @@ public sealed partial class @this : global::app.type.item.path.@this
 
     [Out, Store] public override string Scheme => "file";
 
-    /// <summary>Size in bytes of the file at this path, as its asker may read it — through the gate; 0 when
-    /// nothing is there.</summary>
-    [LlmBuilder] public async Task<data.@this<global::app.type.item.number.@this>> Size(actor.context.@this context)
+    /// <summary>How big the file at this path is, as its asker may read it — through the gate; a size, written in the
+    /// asker's standard; 0 when nothing is there.</summary>
+    [LlmBuilder] public async Task<data.@this<global::app.type.item.size.@this>> Size(actor.context.@this context)
     {
         var stat = await Stat(context);
-        if (!stat.Success || stat.Exits) return data.@this<global::app.type.item.number.@this>.From(stat);
-        return context.Ok<global::app.type.item.number.@this>((await stat.Value())?.Length ?? 0L);
+        if (!stat.Success || stat.Exits) return data.@this<global::app.type.item.size.@this>.From(stat);
+        return context.Ok((await stat.Value())?.Size ?? new global::app.type.item.size.@this(0, context));
     }
 
     /// <summary>

@@ -110,7 +110,7 @@ public class HttpPathTests
         await stat.IsSuccess();
         var info = (global::app.type.item.path.@this.StatInfo)(await stat.Value())!;
         await Assert.That(info.Exists).IsTrue();
-        await Assert.That(info.Length).IsEqualTo(5L);
+        await Assert.That(info.Size!.Value).IsEqualTo(5L);
         await Assert.That(info.Modified).IsNotNull();
     }
 

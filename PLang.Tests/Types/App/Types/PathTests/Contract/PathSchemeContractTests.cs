@@ -79,7 +79,7 @@ public abstract class PathSchemeContractTests<TFixture> : IDisposable
             var stat = await p.Stat(context);
             await stat.IsSuccess();
             var info = (Path.StatInfo)(await stat.Value())!;
-            await Assert.That(info.Length).IsEqualTo(7L);
+            await Assert.That(info.Size!.Value).IsEqualTo(7L);
         }
         finally { await Fixture.Cleanup(p); }
     }

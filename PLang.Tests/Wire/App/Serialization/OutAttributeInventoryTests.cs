@@ -110,12 +110,12 @@ public class OutAttributeInventoryTests
     }
 
     // 6. StatInfo ------------------------------------------------------------
-    [Test] public async Task StatInfo_Exists_IsFile_Length_Modified_HaveOut()
+    [Test] public async Task StatInfo_Exists_IsFile_Size_Modified_HaveOut()
     {
         var t = typeof(global::app.type.item.path.@this.StatInfo);
         await Assert.That(HasOut(t, "Exists")).IsTrue();
         await Assert.That(HasOut(t, "IsFile")).IsTrue();
-        await Assert.That(HasOut(t, "Length")).IsTrue();
+        await Assert.That(HasOut(t, "Size")).IsTrue();
         await Assert.That(HasOut(t, "Modified")).IsTrue();
     }
 

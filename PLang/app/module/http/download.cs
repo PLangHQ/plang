@@ -49,9 +49,9 @@ public partial class download : IContext, IAddressed
     /// it arrives; a mismatch refuses the download, naming both hashes.</summary>
     public partial data.@this<global::app.module.crypto.type.hash.@this>? Hash { get; init; }
 
-    /// <summary>Max download size in bytes, with or without a Path. Default 100MB.</summary>
-    [Default(100 * 1024 * 1024)]
-    public partial data.@this<global::app.type.item.number.@this> MaxDownloadSize { get; init; }
+    /// <summary>The most a download may be, with or without a Path — a size (<c>500 MB</c>, <c>2 GiB</c>). Default 100 MiB.</summary>
+    [Default("100 MiB")]
+    public partial data.@this<global::app.type.item.size.@this> MaxDownloadSize { get; init; }
 
     [Code]
     public partial IHttp Http { get; }
