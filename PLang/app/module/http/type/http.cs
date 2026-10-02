@@ -44,13 +44,3 @@ public enum FileExists
     /// <summary>Skip download, return path silently.</summary>
     Skip
 }
-
-/// <summary>
-/// Progress data for download/upload OnProgress callbacks.
-/// </summary>
-public record TransferProgress
-{
-    public long BytesTransferred { get; init; }
-    public long? TotalBytes { get; init; }
-    public double? Percentage { get; init; }
-}

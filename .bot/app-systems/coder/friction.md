@@ -1,0 +1,28 @@
+# coder — friction
+
+One entry each: what, what it cost (evidence), the wish.
+
+## A handler fault inside the http test server is swallowed
+- **What:** an exception thrown in `HttpTestServer`'s handler came back as a bare 500, or as a hang, with nothing in the test log saying the handler threw.
+- **Cost:** a flaky download test took several reruns to tell a real fault from a timing one. I added `HttpTestServer.Faults` and a "faulted" log line only after that.
+- **Wish:** a fault in any test fixture's handler fails the test that caused it, naming the exception.
+
+## The Gate binary and the Debug binary disagree
+- **What:** `./dev.sh full` builds the Gate config. A class run afterwards (`./dev.sh test X`) rebuilds only that suite's project in Debug. Others are left stale, so a later run loads two PLang assemblies: "Value is of type this, not this".
+- **Cost:** on 2026-10-02 the size gate showed 19 C# failures. Telling them apart from mine took a stash, a rebuild and 7 class reruns (~10 min). An explicit-test re-pin (`AcceptTheFixture`) also needs a manual rebuild first.
+- **Wish:** dev.sh marks which config the bin was built with and rebuilds when it changes. Also, the 18 known failures listed by name in one file that dev.sh diffs against: "18 known, 0 new" instead of a red wall.
+
+## A re-pin diff can print the LLM key
+- **What:** settings_golden re-pins rendered `setting.kind` rows with the env `OPENAI_API_KEY` as a default. Reviewing the fixture diff would have printed the key.
+- **Cost:** I reverted the golden, pinned sensitive-options-have-no-default, and since then I check fixture diffs by count only (`grep -c sk-`), never by reading them.
+- **Wish:** fixtures are scrubbed on write: any value that equals an env secret becomes `***`, and the test fails loudly if one is found.
+
+## The pick golden fails as one 1,800-line string
+- **What:** `StageOnesAnswer_RendersThePinnedStageTwoQuestions` asserts one joined string. TUnit says "content too large for detailed diff", and dev.sh's log truncates it.
+- **Cost:** I had to edit the test temporarily to dump the diff to a file, then script a JSON compare. That compare showed all 20 diffs were just the new `size` type option.
+- **Wish:** the golden tests write their diff to a known file (e.g. `/tmp/golden_<test>.diff`) and assert a one-line summary: "20 questions differ: options added [size]".
+
+## 323 plang tests are "stale: no .pr" in every run
+- **What:** `plang --test` reports 323 of 380 as stale because they have never been built, and ends in `TestRunFailed`.
+- **Cost:** every gate ends red, so a real stale test (a goal changed but not rebuilt) is invisible among the 323.
+- **Wish:** a never-built test is its own status ("unbuilt"), counted apart from a stale one, and doesn't fail the run. Or the tree gets built once.

@@ -319,4 +319,31 @@ public class UploadActionTests
     }
 
     #endregion
+
+    // An upload with a progress goal reports what it has sent, and once more when it is all sent.
+    [Test]
+    public async Task AnUploadsProgress_ReportsWhatItSent()
+    {
+        _handler.Handler = async request =>
+        {
+            await request.Content!.ReadAsByteArrayAsync();
+            return new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK) { Content = new System.Net.Http.StringContent("{}") };
+        };
+        var action = new upload(Ctx) { Url = (global::app.type.item.text.@this)"https://api.example.com/upload",
+            Content = new global::app.data.@this("", "Hello upload", context: Ctx),
+            As = (global::app.type.item.choice.@this<global::app.module.http.ContentAs>)ContentAs.Text,
+            Unsigned = (global::app.type.item.@bool.@this)true,
+            OnProgress = global::PLang.Tests.Shared.Make.Call(Ctx, "Progressed"),
+        };
+
+        await action.Attach(null, Ctx);
+        await (await action.Start()).IsSuccess();
+        var last = (await Ctx.Variable.Get("progress"))!;
+
+        await last.IsSuccess();
+        var progress = (global::app.module.http.type.progress.@this)last.Peek()!;
+        await Assert.That(progress.Sent!.Value).IsEqualTo(12L);
+        await Assert.That(progress.Received).IsNull();
+        await Assert.That(progress.Percent!.ToString()).IsEqualTo("100");
+    }
 }

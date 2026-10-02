@@ -42,7 +42,8 @@ public partial class upload : IContext, IAddressed
     /// <summary>Explicit content format hint. Null = auto-detect from Content type.</summary>
     public partial data.@this<global::app.type.item.choice.@this<ContentAs>>? As { get; init; }
 
-    /// <summary>Goal to call with TransferProgress updates during upload.</summary>
+    /// <summary>Goal called with <c>%progress%</c> (sent, total, percent) as the upload goes, and once more when it is
+    /// done — the last one's Data carries how it ended.</summary>
     [GoalCallback("progress")]
     public partial data.@this<global::app.goal.step.action.@this>? OnProgress { get; init; }
 

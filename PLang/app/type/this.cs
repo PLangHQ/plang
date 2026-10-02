@@ -796,7 +796,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     }
 
     /// <summary>A type answers navigation as its full type — the registry's, found with the
-    /// asker's context. A full type is its own answer.</summary>
-    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
-        => new global::app.type.clr.@this(parent.Context.App.type.list[this, parent.Context], parent.Context).Get(parent, key);
+    /// asker's context. A full type is its own answer; past its members, its settings (<c>.setting</c>).</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
+    {
+        var member = await new global::app.type.clr.@this(parent.Context.App.type.list[this, parent.Context], parent.Context).Get(parent, key);
+        return member.IsInitialized ? member : await Setting(parent, key) ?? member;
+    }
+
+    /// <summary>A type's settings are the ones its class names (<c>%!app.type.size.setting%</c>) — the registry's
+    /// type, as the asker sees it.</summary>
+    protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
+        => await parent.Context.Setting.Of(parent.Context.App.type.list[this, parent.Context]);
 }

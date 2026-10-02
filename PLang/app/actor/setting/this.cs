@@ -302,11 +302,17 @@ public sealed class @this : IDisposable
     }
 
     /// <summary>The settings <paramref name="owner"/> names with <c>ISetting&lt;T&gt;</c>, as this scope sees
-    /// them — <c>%!app.goal.list.setting%</c>, <c>%!app.setting%</c>; a type's are its class's
-    /// (<c>%!app.type.size.setting%</c>); null when it names none.</summary>
-    public async ValueTask<data.@this?> Of(object owner)
+    /// them — <c>%!app.goal.list.setting%</c>, <c>%!app.setting%</c>; null when it names none.</summary>
+    public ValueTask<data.@this?> Of(object owner) => Named(owner.GetType());
+
+    /// <summary>The settings <paramref name="type"/>'s class names — <c>%!app.type.size.setting%</c> is the size
+    /// class's; null when it names none.</summary>
+    public ValueTask<data.@this?> Of(global::app.type.@this type)
+        => type.ClrType is { } clr ? Named(clr) : ValueTask.FromResult<data.@this?>(null);
+
+    // The settings the class host names with ISetting<T>, as this scope sees them.
+    private async ValueTask<data.@this?> Named(System.Type host)
     {
-        var host = owner is global::app.type.@this { ClrType: { } clr } ? clr : owner.GetType();
         var named = host.GetInterfaces()
             .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(global::app.type.item.setting.ISetting<>));
         return named == null ? null : await Of(named.GetGenericArguments()[0]);
