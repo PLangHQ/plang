@@ -476,7 +476,7 @@ A string is one value, not a sequence of characters: `foreach %greeting%` where 
 Iterate over Collection, binding each element to Item (and its key or index to Key) and executing the remaining step actions
 
 - foreach %items%, call ProcessItem item=%item%
-- foreach %rows%, write out %row%
+- foreach %rows%, write out %item%
 - foreach %products% as %product%, call Handle
 - foreach %prices% as %price% with key %sku%, write out "%sku%: %price%"
 
