@@ -32,6 +32,10 @@ A read-only sweep of every `os/**/*.goal` (dot-folders excluded) for who referen
 
 **Root entries, held for the os bot (2):** `StartWindow.goal` (a `start window` step; no window module), `Test.goal` (hello-world). A first goal can be run by name from the CLI, so the os bot is asked whether its launcher starts either.
 
+## The os bot's answer (2026-10-02)
+
+None of the held 10 is started from outside: it searched the plangos host scripts (`start.ps1`, `plang.cmd`, `run-goal.cmd`), the deployed `/shared/plangos` and its harness. PlangOS starts only `system/plangos/Screen`. So the events cluster (8) and the root entries (2) are deleted too: 24 files in all.
+
 ## Caveat
 
 "Unreferenced" means nothing in the repo names it, not unrunnable: any file's first goal can be run by name.
