@@ -38,10 +38,9 @@ public struct Reader : IReader
     public bool Bool() => _value is bool b ? b : bool.Parse(Str());
     public int Int() => _value is int i ? i : int.Parse(Str(), Inv);
     public long Long() => _value is long l ? l : long.Parse(Str(), Inv);
+    // a number held as text reads by number's one rule; a number held is itself
     public object Number() => _value is string s
-        ? (long.TryParse(s, Inv, out var n) ? n
-            : System.Numerics.BigInteger.TryParse(s, System.Globalization.NumberStyles.AllowLeadingSign, Inv, out var big) ? big
-            : double.Parse(s, Inv))
+        ? global::app.type.item.number.@this.Parse(s) ?? throw new System.FormatException($"'{s}' is not a number")
         : _value;
     public float Float() => _value is float f ? f : float.Parse(Str(), Inv);
     public double Double() => _value is double d ? d : double.Parse(Str(), Inv);

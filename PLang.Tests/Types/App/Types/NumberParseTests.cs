@@ -3,19 +3,19 @@ using PKind = global::app.type.item.number.NumberKind;
 
 namespace PLang.Tests.App.Types;
 
-// plang-types — Stage 3
-// number.Parse / TryParse / Resolve(string, context) — narrowest-fit, context-free.
-// "5"→Int; "5.0"→Decimal; "5e0"→Double; "3000000000"→Long. Non-numeric → null/Data.Error.
-// Resolve takes context for signature uniformity, NEVER stores it.
+// number.Parse / TryParse / Resolve(string, context) — the one rule for a number written as text, context-free.
+// "5"→long (plang's integer); past long→biginteger; "5.0"/"5e0"→double. Non-numeric → null/Data.Error.
+// Every reader hands its token's raw text here, so they agree. Resolve takes context for signature uniformity,
+// NEVER stores it.
 
 public class NumberParseTests
 {
-    [Test] public async Task Parse_PlainInt_IsInt()
+    [Test] public async Task Parse_PlainInteger_IsLong()
     {
         var n = number.Parse("5");
         await Assert.That(n).IsNotNull();
-        await Assert.That(n!.Kind.Name).IsEqualTo("int");
-        await Assert.That((int)n).IsEqualTo(5);
+        await Assert.That(n!.Kind.Name).IsEqualTo("long");
+        await Assert.That((long)n).IsEqualTo(5L);
     }
 
     [Test] public async Task Parse_TooBigForInt_PromotesToLong()
@@ -65,7 +65,30 @@ public class NumberParseTests
         var small = (number)(await (await decoded.Get("small")).Value())!;
 
         await Assert.That(n.Clr<System.Numerics.BigInteger>()).IsEqualTo(System.Numerics.BigInteger.Parse("12345678901234567890123"));
-        await Assert.That(small.Cat.ToString()).IsEqualTo("Integer");
+        await Assert.That(small.Kind.Name).IsEqualTo("long");
+    }
+
+    // every reader family reads a number by the one rule: the json token reader (a .pr, the wire), the json element
+    // (a document, an llm's arguments), the value reader (a number held as text), the command line
+    [Test]
+    [Arguments("5", "long")]
+    [Arguments("12345678901234567890123", "biginteger")]
+    [Arguments("1.5", "double")]
+    public async Task EveryReader_ReadsANumber_ByTheOneRule(string written, string kind)
+    {
+        static object Token(string written)
+        {
+            var utf8 = new System.Text.Json.Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(written));
+            utf8.Read();
+            return new global::app.type.item.kind.json.Reader(utf8).Number();
+        }
+        var json = Token(written);
+        var value = new global::app.type.format.value.Reader(written);
+        var cli = global::app.Utils.CommandLineParser.Parse(new[] { "Start.goal", "n=" + written }).parameters["n"];
+
+        await Assert.That(((number)json).Kind.Name).IsEqualTo(kind);
+        await Assert.That(((number)value.Number()).Kind.Name).IsEqualTo(kind);
+        await Assert.That(number.Create(cli)!.Kind.Name).IsEqualTo(kind);
     }
 
     [Test] public async Task Parse_DecimalPoint_IsDouble()

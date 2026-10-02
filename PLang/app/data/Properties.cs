@@ -67,9 +67,9 @@ public sealed class Properties : IEnumerable<KeyValuePair<string, object?>>
             {
                 global::app.type.format.TokenKind.Null => null,
                 global::app.type.format.TokenKind.Bool => reader.Bool(),
-                // A bare decimal-point literal defaults to double (universal language
-                // convention); decimal is opt-in via `as number/decimal`.
-                global::app.type.format.TokenKind.Number => reader.Number(),
+                // a number by number's one rule (an integer long, or biginteger past it; a decimal point
+                // double), held as the raw CLR scalar the bag holds, as it holds a bool or a string
+                global::app.type.format.TokenKind.Number => ((global::app.type.item.number.@this)reader.Number()).BoxedValue,
                 global::app.type.format.TokenKind.String => reader.String(),
                 global::app.type.format.TokenKind.Object => ctx.Context.App.type.list.Reader.Reader("dict", null, ctx.Context).Read(ref reader, null, ctx),
                 _ => ctx.Context.App.type.list.Reader.Reader("list", null, ctx.Context).Read(ref reader, null, ctx),

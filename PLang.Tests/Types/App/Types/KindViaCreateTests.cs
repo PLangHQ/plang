@@ -21,7 +21,7 @@ public class KindViaCreateTests : System.IAsyncDisposable
         return built?.Type.kind is { IsEmpty: false } kind ? kind.Name : $"<no value: {carrier.Error?.Key}: {carrier.Error?.Message}>";
     }
 
-    [Test] public async Task Number_IntLiteral()     => await Assert.That(KindOf("number", (text)"42")).IsEqualTo("int");
+    [Test] public async Task Number_IntLiteral()     => await Assert.That(KindOf("number", (text)"42")).IsEqualTo("long");
     [Test] public async Task Number_DecimalLiteral()  => await Assert.That(KindOf("number", (text)"3.14")).IsEqualTo("double");
     [Test] public async Task Number_ExponentLiteral() => await Assert.That(KindOf("number", (text)"1e3")).IsEqualTo("double");
     [Test] public async Task Image_Extension()        => await Assert.That(KindOf("image", "photo.jpg")).IsEqualTo("jpg");
