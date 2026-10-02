@@ -26,5 +26,15 @@ public sealed class Process : global::app.type.item.@this, global::app.type.item
     internal SemaphoreSlim Writing { get; } = new(1, 1);
     internal Task? Reading { get; set; }
 
+    /// <summary>The app this program runs, when it is a plang that takes calls on its input (PlangOS): its goals are
+    /// called like this app's — <c>call goal Question in %container%</c>, <c>%container.goal["Question"]%</c> — the call
+    /// going down its input, the answer coming back beside its frames. The same link as <c>%!app.parent%</c>, the
+    /// other way.</summary>
+    internal global::app.parent.@this Remote { get; } = new();
+
+    /// <summary>One step by dot: <c>goal</c> — the goals of the app it runs; any other member as every item's.</summary>
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
+        => string.Equals(key, "goal", StringComparison.OrdinalIgnoreCase) ? Remote.Get(parent, key) : base.Get(parent, key);
+
     public override string ToString() => $"{Program} (pid {Id}{(Running ? "" : ", exited")})";
 }
