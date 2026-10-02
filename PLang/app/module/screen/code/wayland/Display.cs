@@ -10,8 +10,10 @@ namespace app.module.screen.code.wayland;
 /// and draw into it; it composes their windows — with the title bars it draws — into the frames the
 /// host shows, and takes the host's mouse and keyboard. The root: everything is reached from here,
 /// and everything that touches its state does so under <see cref="Gate"/>, one thing at a time.
+/// It takes input (<see cref="global::app.type.item.input.ITarget"/>) and holds the clipboard
+/// (<see cref="global::app.type.item.clipboard.IHolder"/>): each value hands itself to its own door here.
 /// </summary>
-internal sealed class Display
+internal sealed class Display : global::app.type.item.input.ITarget, global::app.type.item.clipboard.IHolder
 {
     private readonly string socketPath;
     private readonly Socket listener = new(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
@@ -200,9 +202,43 @@ internal sealed class Display
 
     // ---- input from the host: one JSON line each ------------------------------------------------
 
-    /// <summary>{"mouse":…}, {"key":…}, {"text":…}, {"clipboard":…} from the host; {"window":…} from
-    /// PLang (the taskbar). "t" is a stamp to echo. {"host":…} from PLang goes up to the host, a message
-    /// of its own (kind 9) beside the frames.</summary>
+    /// <summary>An input or a clipboard, taken as itself: it hands itself to its own door here (the mouse, a key,
+    /// typed text, back/forward/reload; what was copied), then what changed goes out.</summary>
+    internal void Take(global::app.type.item.@this value)
+    {
+        lock (Gate)
+        {
+            if (value is global::app.type.item.input.@this input) input.Apply(this);
+            else if (value is global::app.type.item.clipboard.@this copied) copied.Apply(this);
+            Frame.Send();
+            Flush();
+        }
+    }
+
+    // ---- the doors input and the clipboard hand themselves to (under Gate, from Take) ----
+
+    void global::app.type.item.input.ITarget.Stamped(long stamp) => Frame.Echo((ulong)stamp);
+
+    void global::app.type.item.input.ITarget.Mouse(global::app.type.item.input.mouse.Action action, int x, int y,
+        global::app.type.item.input.mouse.Button button, int clicks, int dx, int dy, int mods)
+        => Mouse(action, new Point(x, y), new Click(ButtonOf(button), clicks), dx, dy);
+
+    void global::app.type.item.input.ITarget.Key(bool down, uint scancode, bool extended, int vk, string? name, int mods)
+        => Key(scancode, extended, mods, down);
+
+    void global::app.type.item.input.ITarget.Text(string typed) => Panel?.Type(typed);
+
+    // back/forward/reload reach the page as the keys and buttons that asked them (Chromium acts on Alt+← itself);
+    // acting on the navigate as well would go twice
+    void global::app.type.item.input.ITarget.Navigate(global::app.type.item.input.navigate.Direction to) { }
+
+    void global::app.type.item.clipboard.IHolder.Copied(string text) => Clipboard.Copied(text);
+
+    void global::app.type.item.clipboard.IHolder.Copied(global::app.type.item.@this value) => Clipboard.Copied(value.ToString() ?? "");
+
+    /// <summary>{"stats":…}, {"video":…} from the host; {"ui":…} and {"window":…} from PLang (a bound part, the
+    /// taskbar). "t" is a stamp to echo. {"host":…} from PLang goes up to the host, a message of its own (kind 9)
+    /// beside the frames. (The mouse, keys, text and the clipboard come as values, through <see cref="Take"/>.)</summary>
     internal void Input(string line)
     {
         JsonObject? e;
@@ -214,11 +250,7 @@ internal sealed class Display
         lock (Gate)
         {
             if (e["t"] is JsonValue t && t.TryGetValue<double>(out var stamp)) Frame.Echo((ulong)stamp);
-            if (e.ContainsKey("mouse")) Mouse(S("mouse"), new Point(N("x"), N("y")), new Click(ButtonOf(S("button")), N("clicks")), N("dx"), N("dy"));
-            else if (e.ContainsKey("key")) Key((uint)N("sc"), e["ext"] is JsonValue x && x.TryGetValue<bool>(out var ext) && ext, N("mods"), S("key") == "down");
-            else if (e.ContainsKey("text")) Panel?.Type(S("text"));
-            else if (e.ContainsKey("clipboard")) Clipboard.Copied(S("clipboard"));
-            else if (e.ContainsKey("stats")) Tell(e);   // the host's numbers: the desktop's taskbar shows them
+            if (e.ContainsKey("stats")) Tell(e);   // the host's numbers: the desktop's taskbar shows them
             else if (e.ContainsKey("video")) Frame.Lossless("the host can't show H.264: " + S("why"));
             // PLang binds a window part's click (on click on #window.bot): from now on a click on it is PLang's
             else if (S("ui") == "bind") Bound.Add(Part(S("element")));
@@ -231,10 +263,12 @@ internal sealed class Display
         }
     }
 
-    private static uint ButtonOf(string name) => name switch
+    private static uint ButtonOf(global::app.type.item.input.mouse.Button button) => button switch
     {
-        "right" => 0x111, "middle" => 0x112,
-        "back" => 0x113, "forward" => 0x114,   // BTN_SIDE, BTN_EXTRA: Chromium goes back, forward
+        global::app.type.item.input.mouse.Button.right => 0x111,
+        global::app.type.item.input.mouse.Button.middle => 0x112,
+        global::app.type.item.input.mouse.Button.back => 0x113,      // BTN_SIDE, BTN_EXTRA: Chromium goes back, forward
+        global::app.type.item.input.mouse.Button.forward => 0x114,
         _ => 0x110,
     };
 
@@ -245,13 +279,13 @@ internal sealed class Display
         return Popups.Hit(at.X, at.Y) ?? Windows.Hit(at.X, at.Y);
     }
 
-    private void Mouse(string kind, Point at, Click click, int dx, int dy)
+    private void Mouse(global::app.type.item.input.mouse.Action kind, Point at, Click click, int dx, int dy)
     {
         if (Grab is { } grab)
         {
             // holding a window: moves drag it, the button coming up lets go
-            if (kind == "move") grab.Drag(at);
-            if (kind != "up") return;
+            if (kind == global::app.type.item.input.mouse.Action.move) grab.Drag(at);
+            if (kind != global::app.type.item.input.mouse.Action.up) return;
             grab.Release();
             Grab = null;
             Pointer.Move(at, Hit(at)?.Target);
@@ -265,18 +299,18 @@ internal sealed class Display
         part?.Over(at);
         switch (kind)
         {
-            case "down":
+            case global::app.type.item.input.mouse.Action.down:
                 if (!ReferenceEquals(part, Panel)) Panel?.Close();
                 if (Windows.Desktop is { } desktop && !desktop.IsAbove(at.X, at.Y)) desktop.Lower();
                 part?.Down(click);
                 if (part?.Target != null) Pointer.Button(click.Button, true);
                 break;
-            case "up":
+            case global::app.type.item.input.mouse.Action.up:
                 if (Pointer.Holding) Pointer.Button(click.Button, false);
                 part?.Up(click);
                 Pressed = null;
                 break;
-            case "wheel":
+            case global::app.type.item.input.mouse.Action.wheel:
                 Pointer.Wheel(dx, dy);
                 break;
         }
