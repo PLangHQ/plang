@@ -92,7 +92,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             if (!await (await at.Exists(context)).ToBooleanAsync())
             {
                 if (await Spelled(at) is not { } file) return data.@this<goal.@this>.From(context.NotFound(name));
-                at = global::app.type.item.path.@this.Resolve(at.Parent.Raw.TrimEnd('/') + "/" + file, context);
+                at = global::app.type.item.path.@this.Resolve(at.Parent.Combine(file).Raw, context);
             }
             if (!await (await goal.@this.Pr(at).Exists(context)).ToBooleanAsync())
                 return context.Error<goal.@this>(new Error(
@@ -100,14 +100,11 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             return data.@this<goal.@this>.From(await goal.@this.Load(at, App));
         }
 
-        // The .goal file in `at`'s folder whose goal name is `at`'s, spelled as the file is — the folder as written
-        // (the app's), and for a /system/ one the os's too; null when none answers to the name.
+        // The .goal file in `at`'s folder whose goal name is `at`'s, spelled as the file is — in each place the folder
+        // names (a /system/ one the app's own, then the os's); null when none answers to the name.
         async Task<string?> Spelled(global::app.type.item.path.@this at)
         {
-            var folders = new List<global::app.type.item.path.@this> { at.Parent };
-            if (at.Parent.Raw.StartsWith("/system/", StringComparison.OrdinalIgnoreCase))
-                folders.Add(global::app.type.item.path.@this.Resolve(App.OsAbsolutePath + at.Parent.Raw, context));
-            foreach (var each in folders)
+            foreach (var each in at.Parent.Place(context))
             {
                 if (!await (await each.Exists(context)).ToBooleanAsync()) continue;
                 var listed = await each.List("*.goal", recursive: false, context);

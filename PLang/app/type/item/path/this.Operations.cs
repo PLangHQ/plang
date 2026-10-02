@@ -64,6 +64,10 @@ public abstract partial class @this
     /// scheme; none, it is the content as written.</summary>
     public abstract Task<data.@this> Read(actor.context.@this context, global::app.type.item.template.kind.@this? template = null);
 
+    /// <summary>The places this path names, the first the one it means: a path is the one place it is; a file path
+    /// under <c>/system/</c> is the app's own and then the os's.</summary>
+    public virtual IReadOnlyList<@this> Place(actor.context.@this context) => [this];
+
     /// <summary>Read's build face: the type <see cref="Read"/> lands, with no content read — the build knows
     /// what a later step captures.</summary>
     public abstract Task<data.@this> Expect(actor.context.@this context);
