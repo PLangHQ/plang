@@ -136,14 +136,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public CancellationToken ShutdownToken => _shutdownCts.Token;
 
     /// <summary>
-    /// App-scoped key/value store. Module-owned mutable state that must persist for
-    /// the lifetime of the App goes here. Implements ISnapshot — round-trips with
-    /// the rest of the App tree on Snapshot/Restore.
-    /// TODO: replace with goal-backed dynamic property (see todos.md).
-    /// </summary>
-    public AppStatics Statics { get; } = new();
-
-    /// <summary>
     /// The app's module — <c>%!app.module%</c>: an empty module whose <c>list</c> is every module the app loads,
     /// registering their actions; <c>Get(name)</c> is one module as a result.
     /// </summary>

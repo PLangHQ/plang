@@ -3,24 +3,6 @@ namespace PLang.Tests.App.SnapshotTests;
 public class StaticsAndModesSnapshotTests
 {
     [Test]
-    public async Task Statics_RoundTrip_PreservesNameValuePairs()
-    {
-        // App._statics survives Capture/Restore (provisional — flagged in todos.md).
-        var src = new global::app.@this("/src").Testing();
-        var srcBag = src.Statics.GetBag("greetings");
-        srcBag["hello"] = "world";
-        srcBag["lang"] = "en";
-
-        var snap = src.Snapshot(src.actor.list.User.Context);
-        var dst = new global::app.@this("/dst").Testing();
-        await dst.Restore(snap, dst.actor.list.User.Context);
-
-        var dstBag = dst.Statics.GetBag("greetings");
-        await Assert.That(dstBag["hello"]).IsEqualTo("world");
-        await Assert.That(dstBag["lang"]).IsEqualTo("en");
-    }
-
-    [Test]
     public async Task Build_RoundTrip_PreservesIsEnabled()
     {
         // App.Build is a @this with IsEnabled; Capture/Restore round-trips that bool.

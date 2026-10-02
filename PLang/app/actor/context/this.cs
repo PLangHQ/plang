@@ -265,22 +265,6 @@ public sealed class @this : IDisposable
     }
 
     /// <summary>
-    /// Gets module static at the specified scope level.
-    /// step = step-local (caller manages cleanup), goal = goal-scoped (default),
-    /// context = context lifetime, app = app lifetime.
-    /// </summary>
-    public ConcurrentDictionary<string, object?> GetModuleStatic(string moduleNamespace, string scope)
-    {
-        var key = $"__static_{moduleNamespace}__";
-        return scope.ToLowerInvariant() switch
-        {
-            "app" => App.Statics.GetBag(key),
-            _ => (ConcurrentDictionary<string, object?>)_data.GetOrAdd(key,
-                _ => new ConcurrentDictionary<string, object?>(StringComparer.OrdinalIgnoreCase))
-        };
-    }
-
-    /// <summary>
     /// Creates a child context for nested execution.
     /// Test fixture — production creates contexts only via the ctor in Actor.this.cs.
     /// One Context propagates through the entire goal-call tree of an Actor; child

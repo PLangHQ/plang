@@ -96,9 +96,6 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _channels = new global::app.channel.list.@this(app, this);
         _tasks = new global::app.task.list.@this(this);
 
-        // Register %!app% — navigates the App object graph (e.g., %!app.goal.list%)
-        Context.Variable.Set("!app", new data.DynamicData("!app", asker => asker.Ok(app), Context));
-
         // %MyIdentity% — the app's own identity; %Identity% — who this actor acts for: its identity's public key
         // (a caller's, in a service), else, in a local run, the app's own. Both computed on each read, so a
         // setDefault or rename is reflected.
