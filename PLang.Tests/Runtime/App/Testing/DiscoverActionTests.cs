@@ -121,8 +121,8 @@ public class DiscoverActionTests
         var action = new global::app.module.test.discover(_app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
                 global::app.type.item.path.@this.Resolve(path, _app.actor.list.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
-            Subfolder = new global::app.data.@this<global::app.type.item.choice.@this<global::app.module.file.type.subfolder>>("Subfolder",
-                new global::app.type.item.choice.@this<global::app.module.file.type.subfolder>(recursive ? global::app.module.file.type.subfolder.include : global::app.module.file.type.subfolder.skip))
+            Subfolder = new global::app.data.@this<global::app.type.item.choice.@this<global::app.type.item.path.subfolder>>("Subfolder",
+                new global::app.type.item.choice.@this<global::app.type.item.path.subfolder>(recursive ? global::app.type.item.path.subfolder.include : global::app.type.item.path.subfolder.skip))
         };
         var result = await action.Start();
         return result.GetValue<List<global::app.test.@this>>() ?? new List<global::app.test.@this>();

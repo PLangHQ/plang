@@ -94,8 +94,8 @@ public class EdgeCaseTests
         var action = new global::app.module.test.discover(_app.actor.list.User.Context) { Path = global::app.data.@this<global::app.type.item.path.@this>.Ok(
                 global::app.type.item.path.@this.Resolve("../../../etc", _app.actor.list.User.Context)),
             Pattern = new global::app.data.@this<global::app.type.item.text.@this>("Pattern", "*.test.goal"),
-            Subfolder = new global::app.data.@this<global::app.type.item.choice.@this<global::app.module.file.type.subfolder>>("Subfolder",
-                new global::app.type.item.choice.@this<global::app.module.file.type.subfolder>(global::app.module.file.type.subfolder.include))
+            Subfolder = new global::app.data.@this<global::app.type.item.choice.@this<global::app.type.item.path.subfolder>>("Subfolder",
+                new global::app.type.item.choice.@this<global::app.type.item.path.subfolder>(global::app.type.item.path.subfolder.include))
         };
 
         // Post-Stage-5: discover routes through path.List → AuthGate. An

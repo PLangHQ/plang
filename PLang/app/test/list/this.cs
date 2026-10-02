@@ -92,11 +92,11 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     /// </summary>
     public Task<data.@this> Discover(global::app.type.item.path.@this root,
         data.@this<global::app.type.item.text.@this> pattern,
-        data.@this<global::app.type.item.choice.@this<global::app.module.file.type.subfolder>> subfolder,
+        data.@this<global::app.type.item.choice.@this<global::app.type.item.path.subfolder>> subfolder,
         actor.context.@this context)
         => pattern.Use(match => subfolder.Use(async under =>
         {
-            var listed = await root.List(match.ToString(), under.Value == global::app.module.file.type.subfolder.include, context);
+            var listed = await root.List(match.ToString(), under.Value == global::app.type.item.path.subfolder.include, context);
             if (!listed.Success) return listed;
             var found = new List<data.@this>();
             if (await listed.Value() is global::app.type.item.list.@this files)

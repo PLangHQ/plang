@@ -17,8 +17,8 @@ public partial class discover : IContext
     public partial data.@this<global::app.type.item.text.@this> Pattern { get; init; }
 
     /// <summary>Whether the tests in subfolders are found too — included, unless the step skips them.</summary>
-    [Default(global::app.module.file.type.subfolder.include)]
-    public partial data.@this<global::app.type.item.choice.@this<global::app.module.file.type.subfolder>> Subfolder { get; init; }
+    [Default(global::app.type.item.path.subfolder.include)]
+    public partial data.@this<global::app.type.item.choice.@this<global::app.type.item.path.subfolder>> Subfolder { get; init; }
 
     public async Task<data.@this<global::app.type.item.list.@this<global::app.test.@this>>> Start()
         => data.@this<global::app.type.item.list.@this<global::app.test.@this>>.From(
