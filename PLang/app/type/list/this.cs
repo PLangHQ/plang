@@ -237,7 +237,7 @@ public sealed partial class @this
         // A collected type (type<goal>, type<type>) is a type.
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.@this<,>)) return ("type", null);
         if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(app.type.item.choice.@this<>))
-            return ("choice", new global::app.type.item.choice.set.@this(type.GetGenericArguments()[0]).Name);
+            return ("choice", global::app.type.item.choice.set.@this.For(type.GetGenericArguments()[0])?.Name ?? type.GetGenericArguments()[0].Name);
         if (typeof(app.type.item.@this).IsAssignableFrom(type) && Array.Find(types, t => t.ClrType == type) is { } own)
             return (own.Name, null);
         // a kind of a family: the family, with the kind whose values are this class (a setting class)

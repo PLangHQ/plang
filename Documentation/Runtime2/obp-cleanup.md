@@ -356,3 +356,10 @@ parser from the path (`normalizedPath.StartsWith("system/")`, `.EndsWith(".test.
 `.pr`. They are facts about `Path` and drift from it: a goal made in C# with a `/system/` path is not a system goal
 until something stamps it (tests do it by hand). Each should derive from `Path` (`IsSystem => Path` is under
 `/system/`) and leave the `.pr` (the reader skipping the old keys by name).
+
+## A kind family's choice holds its own instance of each kind [logged 2026-10-02]
+
+*stored twice.* `choice/set/family` builds each kind of its family once (`type.kind.Every`) — the same discovery the
+type registry uses, so the two agree on what a family holds, but the registry holds its own instance of each kind
+too. The set is born context-free (`choice<T>`'s static, the reader), with no registry to ask. Equality is by name,
+so nothing breaks; one instance per kind would need the set born with the app's type list.

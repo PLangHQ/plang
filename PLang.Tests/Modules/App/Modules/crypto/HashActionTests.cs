@@ -36,12 +36,16 @@ public class HashActionTests
 
     private global::app.actor.context.@this Ctx => _app.actor.list.System.Context;
 
+    // crypto.hash's Algorithm as a step gives it: the kind's name, made the choice
+    private global::app.data.@this<global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>> Kind(string name)
+        => new global::app.data.@this("Algorithm", name, context: Ctx).As<global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>>();
+
     // --- Hash action ---
 
     // A text hashes its own UTF-8, so the digest is the one every other tool gives (the published test vectors).
     private async Task<hash> Hashed(object value, string algorithm)
     {
-        var action = new Hash(Ctx) { Data = Ctx.Ok(value), Algorithm = (global::app.type.item.text.@this)algorithm };
+        var action = new Hash(Ctx) { Data = Ctx.Ok(value), Algorithm = Kind(algorithm) };
         await action.Attach(null, Ctx);
         var result = await action.Start();
         await result.IsSuccess();
@@ -76,7 +80,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_StringInput_ReturnsBytesWithType()
     {
-        var action = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
+        var action = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = Kind("keccak256") };
         await action.Attach(null, Ctx);
         var result = await action.Start();
 
@@ -91,9 +95,9 @@ public class HashActionTests
     [Test]
     public async Task Hash_ObjectInput_ProducesDeterministicHash()
     {
-        var refHash = await new global::app.module.crypto.code.Default().Hash(new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" });
+        var refHash = await new global::app.module.crypto.code.Default().Hash(new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = Kind("keccak256") });
 
-        var action = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
+        var action = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = Kind("keccak256") };
         await action.Attach(null, Ctx);
         var result = await action.Start();
 
@@ -104,7 +108,7 @@ public class HashActionTests
     [Test]
     public async Task Hash_ByteArrayInput_HashesRawBytes()
     {
-        var action = new Hash(Ctx) { Data = Ctx.Ok(new byte[] { 1, 2, 3 }), Algorithm = (global::app.type.item.text.@this)"keccak256" };
+        var action = new Hash(Ctx) { Data = Ctx.Ok(new byte[] { 1, 2, 3 }), Algorithm = Kind("keccak256") };
         await action.Attach(null, Ctx);
         var result = await action.Start();
 
@@ -117,8 +121,8 @@ public class HashActionTests
     [Test]
     public async Task Hash_ExplicitAlgorithm_OverridesDefault()
     {
-        var keccakAction = new Hash(Ctx) { Data = Ctx.Ok("test"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
-        var sha256Action = new Hash(Ctx) { Data = Ctx.Ok("test"), Algorithm = (global::app.type.item.text.@this)"sha256" };
+        var keccakAction = new Hash(Ctx) { Data = Ctx.Ok("test"), Algorithm = Kind("keccak256") };
+        var sha256Action = new Hash(Ctx) { Data = Ctx.Ok("test"), Algorithm = Kind("sha256") };
         await keccakAction.Attach(null, Ctx);
         await sha256Action.Attach(null, Ctx);
 
@@ -153,13 +157,28 @@ public class HashActionTests
     [Test]
     public async Task Hash_UnsupportedAlgorithm_ReturnsError()
     {
-        var action = new Hash(Ctx) { Data = Ctx.Ok("test"), Algorithm = (global::app.type.item.text.@this)"md5" };
+        var action = new Hash(Ctx) { Data = Ctx.Ok("test"), Algorithm = Kind("md5") };
         await action.Attach(null, Ctx);
         var result = await action.Start();
 
         await result.IsFailure();
         await Assert.That(result.Error).IsNotNull();
-        await Assert.That(result.Error!.Key).IsEqualTo("UnsupportedAlgorithm");
+        await Assert.That(result.Error!.Key).IsEqualTo("ChoiceInvalid");
+        await Assert.That(result.Error.Message).Contains("keccak256").And.Contains("sha256");
+    }
+
+    // the Algorithm a step leaves out is its default, keccak256 the kind; one written is that kind
+    [Test]
+    public async Task Algorithm_IsAKindOfHash_KeccakByDefault()
+    {
+        var left = new Hash(Ctx) { Data = Ctx.Ok("test") };
+        var written = Kind("sha256");
+
+        var byDefault = (await left.Algorithm.Value())!.Value;
+        var chosen = (await written.Value())!.Value;
+
+        await Assert.That(byDefault).IsTypeOf<global::app.module.crypto.type.hash.kind.keccak256.@this>();
+        await Assert.That(chosen).IsTypeOf<global::app.module.crypto.type.hash.kind.sha256.@this>();
     }
 
     [Test]
@@ -168,7 +187,7 @@ public class HashActionTests
         _app.Code.Register<ICrypto>(new FailingCryptoProvider());
         _app.Code.SetDefault<ICrypto>("failing");
 
-        var action = new Hash(Ctx) { Data = Ctx.Ok("test"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
+        var action = new Hash(Ctx) { Data = Ctx.Ok("test"), Algorithm = Kind("keccak256") };
         await action.Attach(null, Ctx);
         var result = await action.Start();
 
@@ -182,7 +201,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_RoundTrip_ReturnsTrue()
     {
-        var hashAction = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
+        var hashAction = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = Kind("keccak256") };
         await hashAction.Attach(null, Ctx);
         var hashResult = await hashAction.Start();
         var base64 = ((hash)(await hashResult.Value())!).ToBase64();
@@ -198,7 +217,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_WrongHash_ReturnsFalse()
     {
-        var hashAction = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
+        var hashAction = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = Kind("keccak256") };
         await hashAction.Attach(null, Ctx);
         var hashResult = await hashAction.Start();
         var hashBytes = ((hash)(await hashResult.Value())!).Bytes.ToArray();

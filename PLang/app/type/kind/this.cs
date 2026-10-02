@@ -47,6 +47,15 @@ public class @this
         Name = name ?? throw new System.ArgumentNullException(nameof(name));
     }
 
+    /// <summary>Every kind <paramref name="assembly"/> builds from nothing — each kind class (not abstract, a
+    /// parameterless ctor), one instance each. How the type registry finds the kinds it holds, and how a choice over a
+    /// kind family finds that family's: one discovery, so the two agree on what a family holds.</summary>
+    internal static System.Collections.Generic.IEnumerable<@this> Every(System.Reflection.Assembly assembly)
+        => assembly.GetTypes()
+            .Where(t => typeof(@this).IsAssignableFrom(t) && t is { IsAbstract: false } && t != typeof(@this)
+                        && t.GetConstructor(System.Type.EmptyTypes) != null)
+            .Select(t => (@this)System.Activator.CreateInstance(t)!);
+
     /// <summary>A format of <paramref name="owner"/> — a kind its class declares with <c>[Format]</c>: the
     /// MIMEs and extensions it answers to, whether its content compresses, and how its type writes and reads it.</summary>
     public @this(global::app.Attributes.FormatAttribute format, string owner, Encoder? encode = null, Decoder? decode = null)

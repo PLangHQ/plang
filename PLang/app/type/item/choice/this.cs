@@ -1,5 +1,3 @@
-using System.Reflection;
-
 namespace app.type.item.choice;
 
 /// <summary>
@@ -36,9 +34,8 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
     // The closed set this choice draws from — its name (the kind) and its options. Per closed
     // type (a static on a generic is per-T): the reader and Parse have no context to ask the
     // registry, and the set is T's own fact. A named-set class resolves a name via ctor(string).
-    private static readonly set.@this _set = new(typeof(T));
-    private static readonly ConstructorInfo? _nameCtor = typeof(T).IsEnum ? null
-        : typeof(T).GetConstructor(new[] { typeof(string) });
+    private static readonly set.@this _set = set.@this.For(typeof(T))
+        ?? throw new System.InvalidOperationException($"choice<{typeof(T).Name}>: {typeof(T).FullName} is not a closed set.");
 
     public T Value { get; }
 
@@ -79,18 +76,10 @@ public sealed class @this<T> : global::app.type.item.@this, global::app.type.ite
 
     public static @this<T> Parse(string symbol)
     {
-        try
+        // the set answers the member its symbol names — an enum's, a family's kind, a named set's
+        try { return new((T)_set.Member(symbol)); }
+        catch (System.ArgumentException ex)
         {
-            object member = typeof(T).IsEnum
-                ? System.Enum.Parse(typeof(T), symbol, ignoreCase: true)
-                : _nameCtor?.Invoke(new object?[] { symbol })
-                  ?? throw new System.InvalidOperationException(
-                      $"choice<{typeof(T).Name}>: not a named-set type — needs an enum or a ctor(string).");
-            return new((T)member);
-        }
-        catch (System.Exception ex) when (ex is System.ArgumentException or System.Reflection.TargetInvocationException)
-        {
-            // ctor.Invoke wraps the named-set ctor's ArgumentException in TargetInvocationException — unwrap to one story.
             throw new System.FormatException(
                 $"'{symbol}' is not a {_set.Name} option. Valid: {string.Join(", ", _set.Values)}", ex);
         }

@@ -74,7 +74,7 @@ public class HashTypeTests
         // stamp. The algorithm rides on the hash value (sha256), so verify must
         // succeed with NO explicit Algorithm (which defaults to keccak256).
         var digest = await crypto.Hash(new global::app.module.crypto.Hash(ctx) { Data = ctx.Ok("hello"),
-            Algorithm = new global::app.data.@this<global::app.type.item.text.@this>("Algorithm", "sha256"),
+            Algorithm = new global::app.data.@this("Algorithm", "sha256", context: ctx).As<global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>>(),
         });
         await digest.IsSuccess();
         await Assert.That((await digest.Value()) is hash).IsTrue();

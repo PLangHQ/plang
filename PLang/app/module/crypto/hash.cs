@@ -10,8 +10,9 @@ public partial class Hash : IContext
     [IsNotNull, Whole]
     public partial data.@this Data { get; init; }
 
+    /// <summary>The kind of hash — one of the hash kinds (sha256, keccak256).</summary>
     [Default("keccak256")]
-    public partial data.@this<global::app.type.item.text.@this> Algorithm { get; init; }
+    public partial data.@this<global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>> Algorithm { get; init; }
 
     [Code]
     public partial ICrypto Crypto { get; }

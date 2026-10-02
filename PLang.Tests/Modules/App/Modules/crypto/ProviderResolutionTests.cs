@@ -41,7 +41,7 @@ public class ProviderResolutionTests
         _app.Code.Register<ICrypto>(mock);
         _app.Code.SetDefault<ICrypto>("mock");
 
-        var action = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
+        var action = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = new global::app.data.@this("Algorithm", "keccak256", context: Ctx).As<global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>>() };
         await action.Attach(null, Ctx);
         var result = await action.Start();
 
@@ -55,7 +55,7 @@ public class ProviderResolutionTests
     public async Task Hash_NoProviderConfigured_FallsToBuiltInDefault()
     {
         // Fresh engine, no crypto settings — should use global::app.module.crypto.code.Default
-        var action = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
+        var action = new Hash(Ctx) { Data = Ctx.Ok("hello"), Algorithm = new global::app.data.@this("Algorithm", "keccak256", context: Ctx).As<global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>>() };
         await action.Attach(null, Ctx);
         var result = await action.Start();
 
