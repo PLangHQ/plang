@@ -66,6 +66,36 @@ public sealed class Browser : global::app.type.item.@this, global::app.type.item
     internal Func<global::app.error.Error, Task>? Report { get; set; }
     /// <summary>Hands what a page of the app's own says (<c>plang(text)</c>) to OnMessage.</summary>
     internal Func<string, Task>? Message { get; set; }
+
+    // Chromium's last words on its error output — what it said before it stopped, if it stops
+    private readonly Queue<string> _said = new();
+
+    /// <summary>A line Chromium wrote on its error output: the last 40 are kept.</summary>
+    internal void Heard(string line)
+    {
+        lock (_said)
+        {
+            _said.Enqueue(line);
+            while (_said.Count > 40) _said.Dequeue();
+        }
+    }
+
+    /// <summary>True once plang stops it (browser.stop): its exit is then no failure.</summary>
+    internal bool Stopping { get; set; }
+
+    /// <summary>Its Chromium exited: unless plang stopped it, that is a failure nothing else would see — the screen
+    /// goes black, every window with it. Said on the error output (the host's console) and the app's error channel,
+    /// with what Chromium said last.</summary>
+    internal async Task Exited()
+    {
+        if (Stopping || Os == null) return;
+        string said;
+        lock (_said) said = string.Join("\n", _said);
+        var message = $"Chromium stopped by itself (exit code {Os.ExitCode}): the screen's windows are gone until PlangOS starts again."
+            + (said.Length > 0 ? "\nWhat it said last:\n" + said : "");
+        Console.Error.WriteLine(message);
+        if (Report != null) await Report(new global::app.error.ServiceError(message, "BrowserStopped", 500));
+    }
     /// <summary>Where plang's own pages are (<c>file://</c> under these folders): the app's folder, and the
     /// runtime's os folder (the system's pages — only the system writes there). They may talk with plang;
     /// no other page.</summary>
