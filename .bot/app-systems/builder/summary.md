@@ -105,15 +105,17 @@ All architect-directed work done and accepted (latest 0b799a5d1). Open items are
   When its hash lands: I add the `ask:` note lines (loop.foreach Item/Key, llm Conversation), switch
   the four LLM-facing templates to `s.Masked`, the `=> formal:` masking, then measure (issue 2 → 5/5,
   the control set, issue 33's `as path`).
-- **Coder's stage 2b — shortcut .pr rebuild (queued by architect, gated on the 2b hash).** 2b changes
-  `os/system/shortcut/goal.goal` and `step.goal` to read `%!app.call.scope.caller.goal%` / `…step%`
-  (the call stack becomes the `call` concept). Their `.pr` still hold `%!app.callstack…%`, so `%!goal%`,
-  `%!step%`, `%!where%` fail at run until rebuilt. **When the 2b hash arrives:** pull it; rebuild
-  `os/system/shortcut/goal.goal` and `os/system/shortcut/step.goal` **each alone, cache off, cwd=os/**
-  (bootstrap stamps — pre-check paths); audit each diff; run their readers (the ~6 C# shortcut tests
-  the coder names + any plang test); push. **The architect gates at my commit together with the coder's**
-  — so commit, don't expect a separate gate. (Mind the stale-binary trap: `dotnet build PlangConsole`
-  after pulling 2b's C# before rebuilding.)
+- **Coder's stage 2b — shortcut .pr rebuild — DONE (on 1dc8a4606).** Rebuilt the binary (2b is C#),
+  then rebuilt `os/system/shortcut/goal.goal` and `step.goal` each alone, cache off, cwd=os/. Clean
+  diffs: `%!app.callstack.scope.caller.{goal,step}%` → `%!app.call…%` (step text, value, variable text,
+  the `property: "callstack"` → `"call"`), hash updated, nothing else moved (each after one
+  self-recovering issue-17 retry). **Tests: SystemShortcutTests 5/5, ReturnTests 22/22, ShortcutTests
+  5/6** — the four named tests pass (ReturnGoal, ReturnStep, TheCallersData, TheGoalAndStep).
+  **AShortcut_ReadsAsItsGoalsAnswer_ForItsAsker still fails — NOT my .pr:** the test itself hardcodes
+  the old path at `ShortcutTests.cs:52` (`Shortcut("where", "%!app.callstack.scope.caller.goal%")`),
+  which no longer resolves after 2b → `%!where%` holds nothing. That's the coder's test string to
+  update (callstack→call); flagged to coder + architect, not edited (their test, parallel commit).
+  Committed the two .pr for the architect to gate with the coder's 2b.
 - **Issue 33 (new, logged by architect):** `set %p% = "a.txt" as path` drops `Type=path` ~3/5 — the
   drop class of 25 & 28 (a droppable coercion trigger word). Likely lever: the **Option question with
   type names as its offers**. Waits for the coder's pick pass. (Surfaced via the AsPathIsABirth .pr,

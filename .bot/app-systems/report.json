@@ -1007,6 +1007,12 @@
         "proposal": "character-memory (architect, os) + Documentation/ mentions of tools/decider filed in claude-md-proposals.md (builder v3), not edited.",
         "verify": "Wire 480 pass (unchanged from pre-change), 9 fail (baseline), 8 skip; no decider golden (PickList/Confirm/BuilderPin/FormalStep/LineTwin) regressed. StartMd/ElseWithoutIf compile."
       },
+      "after_note_shortcut_2b": {
+        "task": "After coder 2b (1dc8a4606: callstack -> the call concept): rebuild os/system/shortcut/goal.goal + step.goal whose .pr still hold %!app.callstack...%.",
+        "done": "Rebuilt binary (2b is C#), then rebuilt both .pr each alone cache off cwd=os/. Clean diffs: %!app.callstack.scope.caller.{goal,step}% -> %!app.call...% (text, value, variable text, property callstack->call), hash updated, nothing else; each after one self-recovering issue-17 retry.",
+        "tests": "SystemShortcutTests 5/5, ReturnTests 22/22, ShortcutTests 5/6. The 4 named tests pass (ReturnGoal, ReturnStep, TheCallersData, TheGoalAndStep). AShortcut_ReadsAsItsGoalsAnswer_ForItsAsker still fails, NOT the .pr: the test hardcodes the old path (ShortcutTests.cs:52, Shortcut(\"where\", \"%!app.callstack.scope.caller.goal%\")) -> %!where% empty after 2b. The coder's test string to update; flagged, not edited (their test).",
+        "commit": "two .pr committed for the architect to gate with the coder's 2b."
+      },
       "after_note_eventtype": {
         "task": "Rebuild two test .pr still typing on.event slot as app.event (should be event since 43441c5c9).",
         "file_CreateFiresOnBirth": "DONE: rebuilt, app.event->event, test Pass, committed (test/plan/app-systems/app/type/file/.build/createfiresonbirth.test.pr). Build flaky on issue-17 class, saved on retry.",
