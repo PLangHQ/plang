@@ -64,10 +64,10 @@ public class OsFolderGrantTests
             var asSystem = global::app.type.item.path.@this.Resolve($"/system/{folder}/new.md", app.actor.list.System.Context);
             await Assert.That(user.Absolute.StartsWith(system)).IsTrue();
 
-            var write = await user.Authorize(Verb.Write, app.actor.list.User.Context);
+            var write = await user.Authorize(Verb.write, app.actor.list.User.Context);
             await write.IsFailure();
             await Assert.That(write.Error!.Key).IsEqualTo("PermissionDenied");
-            await (await asSystem.Authorize(Verb.Write, app.actor.list.System.Context)).IsSuccess();
+            await (await asSystem.Authorize(Verb.write, app.actor.list.System.Context)).IsSuccess();
         }
         finally { System.IO.Directory.Delete(system, true); }
     }
