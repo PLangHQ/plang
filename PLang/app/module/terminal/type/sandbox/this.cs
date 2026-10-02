@@ -22,6 +22,10 @@ namespace app.module.terminal.type.sandbox;
 /// <para>No /tmp: a program that writes temporary files fails unless its sandbox names a folder for them (and the
 /// program is told of it, e.g. <c>TMPDIR</c> in its Environment).</para>
 ///
+/// <para>In C# its members are <c>Reading</c> and <c>Writing</c>, answered in plang as <c>.read</c> and <c>.write</c> (Get,
+/// Output): an item's own <c>Read</c> and <c>Write</c> are its serializer's doors, so the plang names can't be the C#
+/// names here.</para>
+///
 /// <para>What it does not hold yet: the program runs as plang's own user, so it can signal plang (Landlock's scoping
 /// of signals comes with Linux 6.12; WSL has 6.6), and it reaches the network freely (an os proxy is to come, as
 /// <c>network</c>). Folders hidden inside a granted one (<c>hide</c>) are to come too.</para>
@@ -33,8 +37,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static string Description => "The folders a started program is held to by the kernel: what it may read, what it may write — nothing else.";
     public static string Shape => "object";
 
-    // The folders the program may read, and may write (and read) — %sandbox.read%, %sandbox.write% (Get). Named apart
-    // in C#: an item's own Read and Write are its serializer's doors.
+    // The folders the program may read, and may write (and read) — %sandbox.read%, %sandbox.write% (Get; why the
+    // names differ: the type's notes).
     internal data.@this<Folders>? Reading { get; }
     internal data.@this<Folders>? Writing { get; }
 
@@ -137,7 +141,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         if (member == null) return (granted, null);
         if (await member.Value() is not { } folders)
             return (granted, member.Error != null ? context.Error(member.Error)
-                : context.Error(new global::app.error.Error($"a sandbox's {member.Name} is a list of folders", "SandboxInvalid", 400)));
+                : context.Error(new global::app.error.Error($"a sandbox's {member.Name} could not be read as a list of folders", "SandboxInvalid", 400)));
         foreach (var row in folders.Rows(context))
         {
             if (await row.Value<PathItem>() is not { } path)
