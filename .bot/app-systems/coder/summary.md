@@ -2,6 +2,27 @@
 
 **Version:** v22 (all pushed; reviews by the architect, plang-21, gate by gate)
 
+## After v22, later on 2026-10-02 — each gated (the 18 known) and accepted by the architect
+- 7a26894cd `size` (561): `type/item/size`, kinds iec/si; a text keeps its suffix's standard, a count is written in
+  `%!app.type.size.setting.standard%` (a type's setting class reads at `app.type.X`). `MaxDownloadSize` is a size;
+  StatInfo's `Length` → `Size`, born in Stat; `%file.Size%` reads it.
+- cb60c22d0 + b5634bd69 `progress` (563): `http/type/progress` {received|sent, total, percent}; `http/code/body`
+  reports every 500 ms and once more via `Done(error)` — the last report's Data carries how it ended (HashMismatch,
+  ResponseTooLarge, a cut body's network failure via `http/code/failure`). Upload sends through `http/code/content`.
+  A type answers its own `.setting` (`Setting.Of(type)`, no `is`).
+- 0c1272d0f + 43add1730 + 6c4725af1 the archive module (559, 574): `archive.pack`/`archive.unpack`; formats are
+  the archive type's kinds (`module/archive/type/archive/kind/{gzip,deflate,brotli,tar,tar/gz,zip,oci/layer}`);
+  `code/Default` finds the format (named, suffix, first bytes). Unpack guards on the bundle base (path `Follow`,
+  `Link`, `Mode`); a name that is the folder itself never lands. `item.Pack` decides what a value packs as;
+  the archive holds `{value, held:{type,name}}`. Compression left `Data`; `variable.compress` deleted. Pack packs the
+  binding a step names (`item.Get(ctx)`).
+- 1adf16188 (572): path `relative` (a path) / `extension` (text) are dot members; `!` reads the Data's facts and a
+  reference's (`item.Fact`, answered by `content`); `Data.Path` internal.
+- e69c0ae86 (567 part 1): the type catalog lists every `[LlmBuilder]` member; methods carry `Arguments`.
+- e04350246: a whole-`%ref%` template source writes the bound value (plang's format round-trips a signed one).
+- Next: 567 part 2 (markdown loader for `os/system/type/<type>/…`, statics removed per type as markdown lands),
+  then 564 (App.Statics removal + dynamic members) — shape first. Friction: `.bot/app-systems/coder/friction.md`.
+
 ## After v22 (2026-10-02), each gated (the 18) and accepted by the architect
 - 14de729af: an unknown `.pr` property fails the run at `action.Instance()` ("goal.call has no property Wait;
   rebuild the goal"); a list made from one value holds it (`list<T>.Create`, `list.Create`).
