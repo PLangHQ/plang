@@ -626,6 +626,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public string? Shape { get => Family._shape; init => _shape = value; }
     private string? _shape;
 
+    /// <summary>A value of this type is written as an object: a record (its builder properties, no shape of its own),
+    /// or a type that declares the object shape (limit, permission).</summary>
+    public bool IsRecord => Shape is null ? Property != null : Shape == "object";
+
     /// <summary>Constructor signature for scalar types (<c>"name: shape"</c>).</summary>
     public string? ConstructorSignature { get => Family._constructorSignature; init => _constructorSignature = value; }
     private string? _constructorSignature;

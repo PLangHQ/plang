@@ -88,6 +88,16 @@ public class TypeAccessorTests
         await Assert.That(listed.Description).StartsWith("A list of permission: What may be done where");
     }
 
+    // a record is written as an object: one with builder properties, or one that declares the object shape
+    [Test] public async Task ARecord_IsWrittenAsAnObject_AScalarIsNot()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        await Assert.That(app.type.list["permission"].IsRecord).IsTrue();
+        await Assert.That(app.type.list["goal"].IsRecord).IsTrue();
+        await Assert.That(app.type.list["text"].IsRecord).IsFalse();
+        await Assert.That(app.type.list["path"].IsRecord).IsFalse();
+    }
+
     // a list of any other element, and a list with none, says the list's own
     [Test] public async Task AListOfTextsOrOfAnything_ShowsTheListsOwn()
     {
