@@ -202,14 +202,6 @@ Delete in the cleanup pass unless a near-term consumer is known.
 
 **The OBP-clean target:** `Read.Allows(other)`, `verb.Allows(requested)`, `permission.Allows(path, verb)` — the grant answers "does this allow the request?". `HasAccess` stays (sanctioned `HasX` boolean compound). `Documentation/v0.2/obp-smells.md` variant-design section already documents the target name.
 
-## coder — module-discovery — NormalizeParameterTypes(Actions, modules, context)
-**Where:** `PLang/app/module/action/build/code/Default.cs:893` (called :472).
-**Smell:** verb+noun free function taking `Actions` + the module registry — parameter-type
-normalization is behavior that should live on the action/Actions type, not a static pass in
-the build code threading the registry through. Likely collapses once `action.Properties` (4c)
-carries the type entities and each action normalizes its own params.
-**Disposition (Ingi):** follow-up after all module-discovery stages land — not fixed inline.
-
 ## coder — module-discovery — ContainerFamily vs GetTypeName (dedup)
 **Where:** `PLang/app/type/list/this.cs` — `ContainerFamily` (the door rung's family detection)
 duplicates `GetTypeName`'s generic-family cases (list.@this<>, List<>/IList<>/…, Dictionary<>/…).
@@ -244,23 +236,6 @@ raw `int` too — collapsing `CountRaw` likely means that field becomes `number`
 `Count`). Focused refactor; do NOT fold into unrelated work.
 
 Not a blocker — the settings reshape (c13532536) already avoids `CountRaw` in new code.
-
-## `module.list.GetActions(string)` — verb+noun proxy [logged 2026-09-23, goal-graph-singular]
-
-`module/list/this.cs:130` `IEnumerable<string> GetActions(string module)` returns the action names of
-a module by name — what `app.module["x"].Action` already is. Verb+noun + middleman: the registry
-proxies what the element owns. Callers: `test/report.cs:171`, `type/list/this.cs:653`,
-`module/list/this.cs:228`. Fix: callers select the element and walk its `Action` node.
-
-## `EventBinding` is fed opened carriers [logged 2026-09-23, Ingi's question]
-
-`event.on.Run` opens every typed slot to hand `EventBinding`'s constructor plain values —
-`await Trigger.Value()`, the patterns via `.Clr<string>()`, `Priority.ToInt32()`, `IsRegex.Value`.
-Opened box: the leaf cracks carriers for another type's constructor. The binding needs a concrete
-trigger to MATCH (`GetMatchingBindings` compares `b.Type == trigger` on every event), so the owner
-resolving means the binding reading its own carriers ONCE at registration — born from the `event.on`
-action's typed slots, or taking the `Data` carriers. 72 test sites construct `EventBinding` with the
-plain enum; its own item.
 
 ## pick writes formal text beside the formal writer [logged 2026-09-28, architect's note on 8h]
 
@@ -349,14 +324,6 @@ sub-goal builds — recurses until the stack overflows: the process segfaults wi
 no longer clones the builder's store, but the trap stays for the next caller. Clone should stop at items that hold
 a graph by reference (a goal, a step, an action are shared, not copied), or not deep-copy structural items at all.
 
-## goal.IsSystem / IsSetup / IsTest are stored copies of the goal's Path [logged 2026-10-02]
-
-*flat copy.* `goal/this.cs` holds `IsSystem`, `IsSetup` and `IsTest` as stored flags, stamped once by the goal
-parser from the path (`normalizedPath.StartsWith("system/")`, `.EndsWith(".test.goal")`, …) and read back from the
-`.pr`. They are facts about `Path` and drift from it: a goal made in C# with a `/system/` path is not a system goal
-until something stamps it (tests do it by hand). Each should derive from `Path` (`IsSystem => Path` is under
-`/system/`) and leave the `.pr` (the reader skipping the old keys by name).
-
 ## A kind family's choice holds its own instance of each kind [logged 2026-10-02]
 
 *stored twice.* `choice/set/family` builds each kind of its family once (`type.kind.Every`) — the same discovery the
@@ -369,10 +336,3 @@ so nothing breaks; one instance per kind would need the set born with the app's 
 A goal now answers IsSetup/IsSystem/IsTest from its plang path (and IsEvent, never set, is gone), so the `.pr` no
 longer writes the four keys. The goal reader (`goal/serializer/Reader.cs`) skips them by name so a `.pr` built
 before still reads — as it skips `waitForExecution`. Both skips go once every tracked `.pr` is rebuilt.
-
-## on.event's NoEvent builds the on node's refusal [logged 2026-10-02]
-
-*stray helper.* `module/on/event.cs` `NoEvent` is a private static that builds "names no event" from `on.Names`. The
-`on` node knows its events (its indexer answers null for a miss), so it should answer its own "no event by that
-name". When it moves, tell apart at bind a path whose item doesn't exist (the item is what's missing) from one
-whose last name is no event — today both say "names no event".
