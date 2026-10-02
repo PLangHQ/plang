@@ -219,18 +219,20 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
 
     void global::app.type.item.input.ITarget.Stamped(long stamp) => Frame.Echo((ulong)stamp);
 
-    void global::app.type.item.input.ITarget.Mouse(global::app.type.item.input.mouse.Action action, int x, int y,
-        global::app.type.item.input.mouse.Button button, int clicks, int dx, int dy, int mods)
-        => Mouse(action, new Point(x, y), new Click(ButtonOf(button), clicks), dx, dy);
+    // (the display is the native edge: what the compositor needs is lowered here, from the value's own faces)
+    void global::app.type.item.input.ITarget.Mouse(global::app.type.item.input.mouse.@this mouse)
+        => Mouse(mouse.Action.Value, new Point(mouse.X.Clr<int>(), mouse.Y.Clr<int>()),
+            new Click(ButtonOf(mouse.Button.Value), mouse.Clicks.Clr<int>()), mouse.Dx.Clr<int>(), mouse.Dy.Clr<int>());
 
-    void global::app.type.item.input.ITarget.Key(bool down, uint scancode, bool extended, int vk, string? name, int mods)
-        => Key(scancode, extended, mods, down);
+    void global::app.type.item.input.ITarget.Key(global::app.type.item.input.key.@this key)
+        => Key(key.Scancode.Clr<uint>(), key.Extended.Value,
+            key.Modifiers.Items().Aggregate(0, (bits, held) => bits | (int)held.Value), key.Down.Value);
 
-    void global::app.type.item.input.ITarget.Text(string typed) => Panel?.Type(typed);
+    void global::app.type.item.input.ITarget.Text(global::app.type.item.input.text.@this text) => Panel?.Type(text.Typed.ToString());
 
     // back/forward/reload reach the page as the keys and buttons that asked them (Chromium acts on Alt+← itself);
     // acting on the navigate as well would go twice
-    void global::app.type.item.input.ITarget.Navigate(global::app.type.item.input.navigate.Direction to) { }
+    void global::app.type.item.input.ITarget.Navigate(global::app.type.item.input.navigate.@this navigate) { }
 
     void global::app.type.item.clipboard.IHolder.Copied(string text) => Clipboard.Copied(text);
 
@@ -279,13 +281,13 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
         return Popups.Hit(at.X, at.Y) ?? Windows.Hit(at.X, at.Y);
     }
 
-    private void Mouse(global::app.type.item.input.mouse.Action kind, Point at, Click click, int dx, int dy)
+    private void Mouse(global::app.type.item.input.mouse.Gesture kind, Point at, Click click, int dx, int dy)
     {
         if (Grab is { } grab)
         {
             // holding a window: moves drag it, the button coming up lets go
-            if (kind == global::app.type.item.input.mouse.Action.move) grab.Drag(at);
-            if (kind != global::app.type.item.input.mouse.Action.up) return;
+            if (kind == global::app.type.item.input.mouse.Gesture.move) grab.Drag(at);
+            if (kind != global::app.type.item.input.mouse.Gesture.up) return;
             grab.Release();
             Grab = null;
             Pointer.Move(at, Hit(at)?.Target);
@@ -299,18 +301,18 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
         part?.Over(at);
         switch (kind)
         {
-            case global::app.type.item.input.mouse.Action.down:
+            case global::app.type.item.input.mouse.Gesture.down:
                 if (!ReferenceEquals(part, Panel)) Panel?.Close();
                 if (Windows.Desktop is { } desktop && !desktop.IsAbove(at.X, at.Y)) desktop.Lower();
                 part?.Down(click);
                 if (part?.Target != null) Pointer.Button(click.Button, true);
                 break;
-            case global::app.type.item.input.mouse.Action.up:
+            case global::app.type.item.input.mouse.Gesture.up:
                 if (Pointer.Holding) Pointer.Button(click.Button, false);
                 part?.Up(click);
                 Pressed = null;
                 break;
-            case global::app.type.item.input.mouse.Action.wheel:
+            case global::app.type.item.input.mouse.Gesture.wheel:
                 Pointer.Wheel(dx, dy);
                 break;
         }

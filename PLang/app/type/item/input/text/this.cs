@@ -12,7 +12,7 @@ public sealed class @this : input.@this
     /// <summary>What was typed.</summary>
     [Out] public global::app.type.item.text.@this Typed => _typed;
 
-    private protected override void Applied(ITarget target) => target.Text(_typed);
+    private protected override void Applied(ITarget target) => target.Text(this);
 
     public override void Write(global::app.type.format.IWriter writer)
     {

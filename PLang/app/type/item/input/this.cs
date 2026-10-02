@@ -7,8 +7,10 @@ namespace app.type.item.input;
 /// (<see cref="mouse.@this"/>), a key went down or up (<see cref="key.@this"/>), text was typed
 /// (<see cref="text.@this"/>), back, forward or reload was asked (<see cref="navigate.@this"/>). Each variant is a
 /// value of its own data, reporting its type as <c>input</c> with the variant as the kind — so a goal asks
-/// <c>if %event% is input</c>, or <c>is mouse</c>. What takes input (a display, a window) is handed each by its own
-/// <see cref="Apply"/>, never by asking a message's keys.
+/// <c>if %event% is input</c>, and reads which input it is as its kind, <c>%event!type.kind%</c> (<c>mouse</c>, <c>key</c>,
+/// <c>text</c>, <c>navigate</c>; <c>is mouse</c> doesn't answer: <c>is</c> compares type names, and mouse is input's
+/// kind). What takes input (a display, a window) is handed each variant whole by its own <see cref="Apply"/>, never by
+/// asking a message's keys.
 ///
 /// <para>On the wire it writes itself as the screen's input line has always been — <c>{"mouse": "down", "x": 4, …}</c>,
 /// <c>{"key": "down", "sc": 30, …}</c>, <c>{"text": "a"}</c>, <c>{"nav": "back"}</c> — and <c>serializer/Reader.cs</c>
@@ -50,6 +52,11 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
 
     private protected abstract void Applied(ITarget target);
 
+    /// <summary>The modifier keys in <paramref name="held"/> (the wire's bits), by name.</summary>
+    private protected static global::app.type.item.list.@this<global::app.type.item.choice.@this<Modifier>> Named(int held)
+        => new(Enum.GetValues<Modifier>().Where(m => (held & (int)m) != 0)
+            .Select(m => (global::app.type.item.@this)new global::app.type.item.choice.@this<Modifier>(m)));
+
     /// <summary>Its members, then the stamp, inside the object the variant opens.</summary>
     private protected void WriteStamp(global::app.type.format.IWriter writer)
     {
@@ -70,24 +77,26 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     }
 }
 
-/// <summary>What takes input — a display, a window: one door per variant, each handed the variant's own values.</summary>
+/// <summary>A modifier key held — the wire's bits, as DevTools counts them.</summary>
+[Flags, global::app.Attributes.PlangType("modifier")]
+public enum Modifier { alt = 1, ctrl = 2, meta = 4, shift = 8 }
+
+/// <summary>What takes input — a display, a window: one door per variant, each handed the variant whole, to read what it
+/// needs of it.</summary>
 public interface ITarget
 {
     /// <summary>The host's clock for the input that follows, to echo with the picture that answers it.</summary>
     void Stamped(long stamp);
 
-    /// <summary>The mouse: <paramref name="action"/> (move, down, up, wheel) at (<paramref name="x"/>, <paramref name="y"/>),
-    /// <paramref name="button"/> (left, right, middle, back, forward, none) <paramref name="clicks"/> times, the wheel's
-    /// <paramref name="dx"/>/<paramref name="dy"/>, the modifier keys held.</summary>
-    void Mouse(mouse.Action action, int x, int y, mouse.Button button, int clicks, int dx, int dy, int mods);
+    /// <summary>The mouse moved, clicked or wheeled.</summary>
+    void Mouse(mouse.@this mouse);
 
-    /// <summary>A key down or up: its scancode, whether it is an extended key, its virtual key and name when known,
-    /// the modifier keys held.</summary>
-    void Key(bool down, uint scancode, bool extended, int vk, string? name, int mods);
+    /// <summary>A key went down or up.</summary>
+    void Key(key.@this key);
 
-    /// <summary>Text typed — a character or what an input method composed.</summary>
-    void Text(string typed);
+    /// <summary>Text was typed.</summary>
+    void Text(text.@this text);
 
-    /// <summary>Back, forward or reload, asked by a key or a mouse button.</summary>
-    void Navigate(navigate.Direction to);
+    /// <summary>Back, forward or reload was asked.</summary>
+    void Navigate(navigate.@this navigate);
 }
