@@ -57,11 +57,6 @@ public sealed class @this
         _rows = new(Read);
     }
 
-    /// <summary>A value under a setting's path was written — this run's, or a saved row. What holds a
-    /// setting it reads on every step (Debug, a call stack) builds it again. Raised on each actor's own
-    /// settings up the chain.</summary>
-    internal event Action<string>? Written;
-
     /// <summary>Reads the saved rows of every actor up the chain, once — the app does it when it starts.
     /// After it a setting is built in memory. Rows that could not be read are the error (a setting then
     /// builds without them); a save refuses to write over them.</summary>
@@ -113,7 +108,7 @@ public sealed class @this
     {
         if (value is null) _values.TryRemove(key, out _);
         else _values[key] = value;
-        Tell(key);
+        Move();
         return new(value ?? _context.Ok());
     }
 
@@ -130,7 +125,7 @@ public sealed class @this
         var fits = sample.Apply(values, _context);
         if (!fits.Success) return fits;
         Flatten(path, values);
-        Tell(path);
+        Move();
         return _context.Ok();
     }
 
@@ -161,7 +156,7 @@ public sealed class @this
         var stored = await _context.App.store.Set(Table, row.Name, row);
         if (!stored.Success) return stored;
         owner._held![path] = row;
-        Tell(path);
+        Move();
         return row;
     }
 
@@ -175,16 +170,8 @@ public sealed class @this
         var removed = await _context.App.store.Remove(Table, $"{owner._actor!.Name.ToLowerInvariant()}!{path}");
         if (!removed.Success) return removed;
         owner._held!.TryRemove(path, out _);
-        Tell(path);
-        return removed;
-    }
-
-    // Every actor's own settings up the chain hears a write — the one place what holds a setting learns it.
-    private void Tell(string key)
-    {
         Move();
-        for (@this? s = this; s != null; s = s._parent)
-            s.Written?.Invoke(key);
+        return removed;
     }
 
     // The actor's own settings this scope chains up to — the one whose rows a save writes.
@@ -286,7 +273,14 @@ public sealed class @this
 
     /// <summary>The setting class <typeparamref name="T"/>, as this scope sees it — the class says its own
     /// path (<c>context.Setting.Of&lt;test.setting&gt;()</c>).</summary>
-    public T Of<T>() where T : global::app.type.item.setting.@this, new() => (T)this[new T().Path];
+    public T Of<T>() where T : global::app.type.item.setting.@this, new() => (T)this[Path<T>.Of];
+
+    // A setting class's path, read once: a pure fact of T (derived from its namespace), memoized per class as
+    // choice<T> holds its set — so a read on every push is a lookup, never a throwaway instance.
+    private static class Path<T> where T : global::app.type.item.setting.@this, new()
+    {
+        public static readonly string Of = new T().Path;
+    }
 
     /// <summary>The settings <paramref name="owner"/> names with <c>ISetting&lt;T&gt;</c>, as this scope sees
     /// them — <c>%!app.goal.list.setting%</c>, <c>%!app.setting%</c>; null when it names none.</summary>

@@ -10,7 +10,7 @@ public class SnapshotChainTests : System.IAsyncDisposable
     [Test]
     public async Task SnapshotChain_FirstElementIsSelf()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var outer = stack.Push(MakeAction(app.actor.list.User.Context, "Outer"));
         await using var inner = stack.Push(MakeAction(app.actor.list.User.Context, "Inner"));
         var chain = inner.SnapshotChain();
@@ -20,7 +20,7 @@ public class SnapshotChainTests : System.IAsyncDisposable
     [Test]
     public async Task SnapshotChain_OrderIsLeafToRoot()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         await using var b = stack.Push(MakeAction(app.actor.list.User.Context, "B"));
         await using var c = stack.Push(MakeAction(app.actor.list.User.Context, "C"));
@@ -34,7 +34,7 @@ public class SnapshotChainTests : System.IAsyncDisposable
     [Test]
     public async Task SnapshotChain_SingleFrame_ReturnsLengthOne()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var only = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         var chain = only.SnapshotChain();
         await Assert.That(chain.Count).IsEqualTo(1);
@@ -44,7 +44,7 @@ public class SnapshotChainTests : System.IAsyncDisposable
     [Test]
     public async Task SnapshotChain_ReturnsStableRefs_NoCopy()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var a = stack.Push(MakeAction(app.actor.list.User.Context, "A"));
         var chain = a.SnapshotChain();
         await Assert.That(ReferenceEquals(chain[0], a)).IsTrue();
@@ -53,7 +53,7 @@ public class SnapshotChainTests : System.IAsyncDisposable
     [Test]
     public async Task SnapshotChain_DoesNotWalkCause()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         await using var goalCall = stack.Push(MakeAction(app.actor.list.User.Context, "Goal"));
         var errored = stack.Push(MakeAction(app.actor.list.User.Context, "Errored"));
         await errored.DisposeAsync();

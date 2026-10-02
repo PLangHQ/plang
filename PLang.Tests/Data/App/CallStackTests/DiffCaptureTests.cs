@@ -7,18 +7,20 @@ public class DiffCaptureTests : System.IAsyncDisposable
     private readonly global::app.@this _app = new global::app.@this("/tmp/DiffCaptureTests-" + System.Guid.NewGuid().ToString("N")[..6]).Testing();
     public async System.Threading.Tasks.ValueTask DisposeAsync() => await _app.DisposeAsync();
 
-    // The User actor's call stack with this setting — the stack a store of the User's context records its changes on.
-    private CallStack Stack(global::app.callstack.setting.@this setting)
+    // The User actor's call stack with these diff options written through its context's settings — the stack a store
+    // of the User's context records its changes on.
+    private CallStack Stack(bool deep = false)
     {
-        var stack = _app.actor.list.User.CallStack;
-        stack.Setting = setting;
-        return stack;
+        var set = _app.actor.list.User.Context.Setting.Set(new global::app.callstack.setting.@this().Path,
+            new Dictionary<string, object?> { ["diff"] = new Dictionary<string, object?> { ["enabled"] = true, ["deep"] = deep } });
+        if (!set.Success) throw new System.InvalidOperationException(set.Error!.Message);
+        return _app.actor.list.User.CallStack;
     }
 
     [Test]
     public async Task Diff_FlagOff_DiffsListIsNull()
     {
-        var stack = new CallStack();
+        var stack = new CallStack(TestCallStack.Settings());
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
         await Assert.That(call.Diffs).IsNull();
@@ -27,7 +29,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     [Test]
     public async Task Diff_FlagOn_VariableSetAppendsDiffEntry()
     {
-        var stack = Stack(new() { Diff = new() { Enabled = true } });
+        var stack = Stack();
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         vars.Set("name", "old");
 
@@ -41,7 +43,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     [Test]
     public async Task Diff_RecordCarriesNameBeforeAt()
     {
-        var stack = Stack(new() { Diff = new() { Enabled = true } });
+        var stack = Stack();
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         vars.Set("name", "ingi");
 
@@ -58,7 +60,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     [Test]
     public async Task Diff_ScalarOnlyByDefault_NonScalarRendersAsSummary()
     {
-        var stack = Stack(new() { Diff = new() { Enabled = true } });
+        var stack = Stack();
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         var list = new List<int> { 1, 2, 3 };
         vars.Set("items", list);
@@ -75,7 +77,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     [Test]
     public async Task Diff_DeepDiffOn_ClonesNonScalarBefore()
     {
-        var stack = Stack(new() { Diff = new() { Enabled = true, Deep = true } });
+        var stack = Stack(deep: true);
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         var list = new List<int> { 1, 2, 3 };
         vars.Set("items", list);
@@ -94,7 +96,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     [Test]
     public async Task Diff_DisposeUnsubscribesFromVariablesOnSet()
     {
-        var stack = Stack(new() { Diff = new() { Enabled = true } });
+        var stack = Stack();
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         vars.Set("x", 1);
 
@@ -110,7 +112,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     [Test]
     public async Task Diff_ASetInACallOverlay_IsRecordedToo()
     {
-        var stack = Stack(new() { Diff = new() { Enabled = true } });
+        var stack = Stack();
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
 
         await using var call = stack.Push(MakeAction(_app.actor.list.User.Context, "A"), vars);
@@ -124,7 +126,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     [Test]
     public async Task Diff_EveryOpenFrameOnTheStore_GetsTheChange_AndAnEndedOneNoMore()
     {
-        var stack = Stack(new() { Diff = new() { Enabled = true } });
+        var stack = Stack();
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         await vars.Set("x", 1);
 
@@ -141,7 +143,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     [Test]
     public async Task Diff_AFrameOnAnotherStore_GetsNothing()
     {
-        var stack = Stack(new() { Diff = new() { Enabled = true } });
+        var stack = Stack();
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         var other = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
 
@@ -154,7 +156,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
     [Test]
     public async Task Diff_TheFrameHistory_RollsASnapshotBack()
     {
-        var stack = Stack(new() { Diff = new() { Enabled = true } });
+        var stack = Stack();
         var vars = _app.actor.list.User.Context.Variable;
         await vars.Set("x", 1);
         await vars.Set("y", "kept");
@@ -177,7 +179,7 @@ public class DiffCaptureTests : System.IAsyncDisposable
         // never a clone — so even a large list captures in constant space. Asserting
         // the summary directly is both faster and stronger than a GC-delta heuristic:
         // the summary IS the property that prevents the OOM.
-        var stack = Stack(new() { Diff = new() { Enabled = true } });
+        var stack = Stack();
         var vars = new global::app.type.item.variable.list.@this(_app.actor.list.User.Context);
         // Seed with a large list — this is the 'before' the next Set captures.
         var big = new List<int>(Enumerable.Range(0, 100_000));

@@ -183,16 +183,18 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         _diffSource = diffSource;
         Children = new child.list.@this(stack);
 
-        if (stack.Timing.Value)
+        // what the stack captures, read once for this push
+        var setting = stack.Setting;
+        if (setting.Timing.Value)
         {
             _startedAt = DateTimeOffset.UtcNow;
             _stopwatch = Stopwatch.StartNew();
         }
 
-        if (stack.Diff.Value && diffSource != null)
+        if (stack.IsDiffing(setting) && diffSource != null)
         {
             Diffs = new diff.@this();
-            _deep = stack.Setting.Diff.Deep.Value;
+            _deep = setting.Diff.Deep.Value;
             stack.Open(this);
         }
     }

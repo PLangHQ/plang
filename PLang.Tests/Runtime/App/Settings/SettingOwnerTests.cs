@@ -35,6 +35,16 @@ public class SettingOwnerTests
         await Assert.That(app.actor.list.User.CallStack.History.Value).IsTrue();
     }
 
+    // A call stack reads through its actor's context's settings: a value written there (a goal's own set) reaches
+    // that actor's stack, never another's.
+    [Test] public async Task CallStack_TakesItsContextsValue_AndNoOthers()
+    {
+        await using var app = new global::app.@this("/test").Testing();
+        await app.actor.list.User.Context.Setting.Set("app.callstack.setting", new Dictionary<string, object?> { ["timing"] = true }).IsSuccess();
+        await Assert.That(app.actor.list.User.CallStack.Timing.Value).IsTrue();
+        await Assert.That(app.actor.list.System.CallStack.Timing.Value).IsFalse();
+    }
+
     // Debug, once born, takes a later value under its path.
     [Test] public async Task Debug_TakesALaterValue()
     {

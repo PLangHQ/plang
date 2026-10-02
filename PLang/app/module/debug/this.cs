@@ -13,19 +13,15 @@ public sealed class @this
 {
     private readonly actor.context.@this _context;
 
-    /// <summary>What debug shows (<c>%!debug%</c>) — held, since every step reads it; the app builds it again
-    /// when a value under its path is written. Activation reads the watched variables, the grep and the LLM
+    /// <summary>What debug shows (<c>%!debug%</c>), as its context's settings have it now — a read is a lookup in
+    /// their cache, built again only after a write. Activation reads the watched variables, the grep and the LLM
     /// flags once.</summary>
-    public setting.@this Setting { get; internal set; }
+    public setting.@this Setting => _context.Setting.Of<setting.@this>();
 
     [System.Text.Json.Serialization.JsonIgnore]
     private Regex? _grepRegex;
 
-    public @this(actor.context.@this context)
-    {
-        _context = context;
-        Setting = context.Setting.Of<setting.@this>();
-    }
+    public @this(actor.context.@this context) => _context = context;
 
     /// <summary>
     /// C# diagnostic entrypoint. Writes <paramref name="message"/> to the "debug" channel.
