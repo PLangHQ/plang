@@ -175,3 +175,15 @@ Documentation/v0.2/todos.md:2124             (historical decider-eval note refer
 ```
 The Documentation/ two are docs-owned; listed here so a docs pass can scrub them. The character
 memory files belong to the architect and os bots — their owners decide whether to update.
+
+## architect — v6 — 2026-10-02
+**Target:** `CLAUDE.md` → "Running plang Tests" → "Stale-binary trap"
+**Why:** The coder hit a stale `plang --test` after `./dev.sh test`, and found `bin/Gate` current. Checked against `dev.sh`: `./dev.sh test <Class>` builds only the suite's own project (`build_project`, `dev.sh:211–218`), not PlangConsole. `./dev.sh test` with no class, `./dev.sh build` and `./dev.sh ptest` build `PLang.Tests/All.proj`, which includes `PlangConsole/PLangConsole.csproj` (Debug). `./dev.sh full` builds the Gate configuration (`PlangConsole/bin/Gate/`). The trap section names only the clean-rebuild recipe, so a filtered `dev.sh test` followed by `plang --test` on `bin/Debug` reads as current when it isn't.
+**Proposed change:** append to the "Stale-binary trap" section:
+```
+`./dev.sh test <Class>` builds only that suite's test project — not
+PlangConsole — so a `plang --test` on `PlangConsole/bin/Debug` after it can
+run a stale binary. `./dev.sh build`, `./dev.sh ptest` and an unfiltered
+`./dev.sh test` build PlangConsole (Debug) through `PLang.Tests/All.proj`;
+`./dev.sh full` builds `PlangConsole/bin/Gate/` and runs the plang tests on it.
+```
