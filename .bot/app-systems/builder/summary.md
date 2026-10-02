@@ -69,8 +69,9 @@ anchors on the decider's `=> formal:` starting line. Two recurring lessons:
 ## The os/ build tail — HANDED TO A FRESH SESSION
 `plang build` from os/ no longer dies early (llm regression, formal reader, SetupApp all fixed), but each
 reopened hand-authored system goal surfaces its own step the builder can't cleanly rebuild. Architect's
-two-pass plan (do against the **post-reorg** structure — 819f239c6 moved goals into path-based subfolders
-like `system/events/` and dropped IsSetup/IsSystem/IsTest/IsEvent from the .pr):
+two-pass plan (note: 819f239c6 moved **no** goals — it changed only C#/tests, the four goal flags now
+derive from the goal's path, and the `.pr` dropped IsSetup/IsSystem/IsTest/IsEvent; AskSystem was already
+under `os/system/events/`):
 1. **Sweep** every `os/**/*.goal` for who references it (C#/.goal/template/.llm/doc/`call`-by-name); send
    architect the unreferenced list → delete in one commit.
 2. **Rebuild each remaining reopened goal** individually (`--build={"files":[…],"cache":false}`), don't stop
