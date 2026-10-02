@@ -355,6 +355,32 @@ Comparisons: ask whether something holds — equal, greater, contains, starts wi
 
 For a `%total%` of 18 this prints `medium`. What follows each branch is that branch's body. To ask a yes/no question and keep the answer rather than branch on it, use [compare](#compare).
 
+## Combining conditions with and / or
+
+Join two conditions with `and` (both must hold) or `or` (either):
+
+```plang
+- if %a% > 1 and %b% < 10, write out "both hold"
+- if %a% > 10 or %b% < 10, write out "one holds"
+```
+
+## Testing whether a file exists
+
+A path is true when it exists, so a condition can test one directly — `if '<file>' exists`, or a bare `if %path%`. It stats a local file, or sends an HTTP HEAD for a URL, behind the same consent prompt as any path access; a denied prompt reads as false.
+
+```plang
+- if 'here.txt' exists, write out "here.txt is there"
+```
+
+A common shape is to check first, then branch — load a file when it is there, fall back to defaults when it is not:
+
+```plang
+- check if 'config.json' exists, write to %found%
+- if %found%, call LoadConfig, else call UseDefaults
+```
+
+`check if … exists` writes the path to `%found%`; because a path is true when it exists, `if %found%` is the existence test.
+
 ## compare
 Compare two values with an operator and write the boolean result to a variable
 
@@ -417,10 +443,34 @@ Iterate over a collection, executing the remaining step actions once per item
 `foreach` repeats the rest of the step for each element of a collection. What you do with each element is a separate action after it — usually a `call` to a goal:
 
 ```plang
-- foreach %items% as %thing%, call Show thing=%thing%
+- foreach %products% as %product%, call ShowProduct product=%product%
 ```
 
-`foreach %items% as %thing%` binds each element to `%thing%`; `call Show thing=%thing%` is the per-item work, passing the element on. Without `as`, each element is `%item%`; add `with key %sku%` to bind the key or index too.
+`foreach %products% as %product%` binds each element to `%product%`; `call ShowProduct product=%product%` is the per-item work, passing the element on. Without `as`, each element is `%item%`.
+
+## Dicts: binding the key too
+
+Over a dict, each value binds to the item; add `with key` to bind its key:
+
+```plang
+- foreach %person% as %value% with key %field%, call ShowEntry field=%field% value=%value%
+```
+
+## Counting and running totals
+
+A goal called from the loop updates the caller's variables, so a running total works:
+
+```plang
+- set %count% = 0
+- foreach %items%, call CountItem
+- write out "Total: %count%"
+```
+
+With `CountItem` doing `set %count% = %count% + 1`, a three-item list prints `Total: 3`.
+
+## Strings are atomic
+
+A string is one value, not a sequence of characters: `foreach %greeting%` where `%greeting%` is `"hello"` runs once, with the whole string — not once per letter.
 
 ## foreach
 Iterate over Collection, binding each element to Item (and its key or index to Key) and executing the remaining step actions
