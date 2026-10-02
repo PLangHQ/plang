@@ -9,6 +9,9 @@ Properties: `{"Name": "ProcessOrder", "Parameter": [{"name": "id", "value": "%or
 Step text: `call /system/builder/EmitBuildEvent kind="done"`
 Properties: `{"Name": "/system/builder/EmitBuildEvent", "Parameter": [{"name": "kind", "value": "done"}]}` — a path-qualified name is still just the name.
 
+Step text: `call goal Render source=%!a.b.c%`
+Properties: `{"Name": "Render", "Parameter": [{"name": "source", "value": "%!a.b.c%"}]}` — the name is the token right after `call goal`; `source=%!a.b.c%` is an argument even though its value is a dotted variable — the variable never becomes the Name.
+
 Step text: `if %total% > 5, call MarkBig`
 Properties: `{"Name": "MarkBig"}` — the condition is its own action; this one is only the call.
 

@@ -297,4 +297,22 @@ re-pinned (masked step text + the new Option questions); Wire 487 pass / 9 fail 
 - **Bare-continue guard flaky:** 2/5 the decider picks `%answer%` (in scope from the prior step)
   instead of `none`, adding Conversation where Ingi ruled a bare continue is null.
 
+## 32(b) note-lever (architect-requested, while idle) — PARTIAL (0/6 → 4/5)
+
+32(b) had turned consistent (6/6 `goal.call(Name=%!app.module.file%)`, `Page` dropped) — worsened by
+my `2829786ff` note ("the path is the whole name"). The note reaches the **writer** (unlike examples),
+so I refined `call.notes.md`: the Name is the **one token right after `call`/`call goal`** (bare word
+or slash path), and a **`name=value` after it is always a Parameter, never the name — even when the
+value is a dotted variable** (`call goal Render source=%!a.b.c%` → `Name="Render"`, not `%!a.b.c%`).
+Added one example in that shape. Re-pinned `pick_golden.json` (word-diff: only the goal.call teaching
+text moved).
+
+**Measured (fresh, cache off, 5 builds; `/shared/educator/work/b32`): the three module-var Page calls
+(file/condition/loop) → `Name="Page"` 4/5, the variable-as-Name bug 1/5** (was 6/6). Guards held every
+build: `call goal /builder/Build` → `Name="/system/builder/Build"`, `call goal Unmatched action=%item%`
+→ `Name="Unmatched"`. So the note lifts 32(b) from consistently-broken to mostly-right, but **not
+deterministic** — 1/5 still picks the variable. Keep the note (net-positive, no regression); the
+coder's **goal-name offers** (the `goal` type's `Offers(step)`, queued) remain the fix that makes it
+5/5. Lands alongside that core.
+
 ## Item 6 — gated on the coder's stages 1–2 of `test/plan/task/` (not started).
