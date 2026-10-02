@@ -90,7 +90,7 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
 
     /// <summary>The members <paramref name="step"/> can name, as the decider is offered them — a collection that knows
     /// which of its members are reachable from a step answers them; any other offers none.</summary>
-    internal virtual System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string>> Offers(global::app.goal.step.@this step)
+    internal virtual System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
         => new([]);
 
     /// <summary>Walks the items, one at a time — the ones held. A list that loads its items (goal's) reads

@@ -2,7 +2,8 @@ namespace PLang.Tests.App.SingularNamespaces.BuilderSchemaTests;
 
 /// <summary>
 /// An option whose notes line asks (<c>· ask:</c>) is asked of the decider beside the step's actions — a choice over
-/// its own values and "none" — and a chosen value enters the starting line (<c>file.read(Path, Template=plang)</c>)
+/// its own values and "none" — and a chosen value enters the starting line as it writes itself
+/// (<c>file.read(Path, Template="plang")</c>)
 /// when its action is certain.
 /// </summary>
 public class OptionQuestionTests : System.IAsyncDisposable
@@ -60,7 +61,7 @@ public class OptionQuestionTests : System.IAsyncDisposable
 
     [Test]
     public async Task AChosenValue_EntersTheStartingLine()
-        => await Assert.That((await Pick(0.99, "plang")).Formal).Contains("file.read(Path, Template=plang)");
+        => await Assert.That((await Pick(0.99, "plang")).Formal).Contains("file.read(Path, Template=\"plang\")");
 
     [Test]
     public async Task None_LeavesTheOptionOut()

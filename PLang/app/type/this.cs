@@ -620,7 +620,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>What a value of this type can be in <paramref name="step"/>, as the decider is offered it — the kind
     /// answers: a closed set its options, any other the step's own variables. A collected concept's type offers its
     /// collection's members first.</summary>
-    public virtual System.Threading.Tasks.ValueTask<IReadOnlyList<string>> Offers(global::app.goal.step.@this step) => kind.Offers(step);
+    public virtual System.Threading.Tasks.ValueTask<IReadOnlyList<item.@this>> Offers(global::app.goal.step.@this step) => kind.Offers(step);
 
     /// <summary>Scalar wire shape (the underlying primitive form, e.g. "string" for path).</summary>
     public string? Shape { get => Family._shape; init => _shape = value; }

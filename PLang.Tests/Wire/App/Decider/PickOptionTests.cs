@@ -21,7 +21,15 @@ public class PickOptionTests : System.IAsyncDisposable
 
     private static Dictionary<string, object?> Yes(double score) => new() { ["type"] = "noul", ["noul"] = score };
 
-    // what a type offers for a step: a closed set its options; any other the step's own variables, each once
+    // each offer as it writes itself into a formal line
+    private static List<string> Formal(IReadOnlyList<global::app.type.item.@this> offers) => offers.Select(o =>
+    {
+        var writer = new global::app.goal.step.action.formal.Writer();
+        o.Write(writer);
+        return writer.ToString();
+    }).ToList();
+
+    // what a type offers for a step: a closed set its options (each a choice); any other the step's own variables, each once
     [Test]
     public async Task AChoiceOffersItsOptions_AnyOtherTypeTheStepsVariables()
     {
@@ -29,8 +37,10 @@ public class PickOptionTests : System.IAsyncDisposable
         var template = _app.Module("file")["read"]!["Template"]!.Type;
         var item = _app.Module("loop")["foreach"]!["Item"]!.Type;
 
-        await Assert.That(await template.Offers(step)).Contains("plang");
-        await Assert.That(await item.Offers(step)).IsEquivalentTo(new[] { "%person%", "%value%", "%field%" });
+        var options = await template.Offers(step);
+        await Assert.That(options.All(o => o is global::app.type.item.choice.IChoice)).IsTrue();
+        await Assert.That(Formal(options)).Contains("\"plang\"");
+        await Assert.That(Formal(await item.Offers(step))).IsEquivalentTo(new[] { "%person%", "%value%", "%field%" });
     }
 
     // a goal is offered by the goals the step can call by name — its own goal and the goals in its file — then the
@@ -43,25 +53,27 @@ public class PickOptionTests : System.IAsyncDisposable
 
         var offers = await _app.Module("goal")["call"]!["Name"]!.Type.Offers(goal.Step[0]);
 
-        await Assert.That(offers).IsEquivalentTo(new[] { "Modules", "Page", "%m%" });
+        await Assert.That(Formal(offers)).IsEquivalentTo(new[] { "\"Modules\"", "\"Page\"", "%m%" });
     }
 
     // a type is offered by the plang type names, never one plang keeps for itself
     [Test]
     public async Task ATypeOffersThePlangTypeNames()
     {
-        var offers = await _app.Module("variable")["set"]!["Type"]!.Type.Offers(Step("set %p% = \"a.txt\" as path"));
+        var offers = Formal(await _app.Module("variable")["set"]!["Type"]!.Type.Offers(Step("set %p% = \"a.txt\" as path")));
 
-        await Assert.That(offers).Contains("path");
-        await Assert.That(offers).Contains("text");
-        await Assert.That(offers).DoesNotContain("wire");
+        await Assert.That(offers).Contains("\"path\"");
+        await Assert.That(offers).Contains("\"text\"");
+        await Assert.That(offers).DoesNotContain("\"wire\"");
     }
 
     // a goal and a type the decider picked ride the starting line in quotes, the goal's slot filled — and it reads
     [Test]
     public async Task APickedGoalAndType_RideTheStartingLine_AndRead()
     {
-        var call = Step("call goal Page module=%m%");
+        var goal = Make.Goal(Ctx, "Modules", "/docs/Modules.goal", Make.Step("call goal Page module=%m%", 0));
+        goal.Child.Add(Make.Goal(Ctx, "Page", "/docs/Modules.goal"));
+        var call = goal.Step[0];
         await call.Pick.Take(Answer(
             ("s0_goal.call", Yes(0.99)),
             ("s0_@option.goal.call.Name", Choice("Page"))), [], Ctx);
@@ -75,6 +87,18 @@ public class PickOptionTests : System.IAsyncDisposable
         var read = new global::app.goal.step.action.formal.Reader(set, _app.module.list)
             .Read(set.Pick.Formal!.Replace("Name, Value", "Name=%p%, Value=\"a.txt\""), Ctx);
         await read.IsSuccess();
+    }
+
+    // a pick no offer shows (a goal the step can't reach) chooses nothing: the slot stays to fill
+    [Test]
+    public async Task APickNoOfferShows_ChoosesNothing()
+    {
+        var call = Step("call goal Page module=%m%");
+        await call.Pick.Take(Answer(
+            ("s0_goal.call", Yes(0.99)),
+            ("s0_@option.goal.call.Name", Choice("Page"))), [], Ctx);
+
+        await Assert.That(call.Pick.Formal!).Contains("goal.call(Name)");
     }
 
     // the step's write-to is where its answer goes, never an option's value
@@ -117,6 +141,6 @@ public class PickOptionTests : System.IAsyncDisposable
 
         var read = step.Pick.Listed.Single(l => l.Name == "file.read");
         await Assert.That(read.Mark).IsEqualTo(global::app.goal.step.pick.listed.Mark.Possible);
-        await Assert.That(read.Option).Contains("Template=plang");
+        await Assert.That(read.Option).Contains("Template=\"plang\"");
     }
 }

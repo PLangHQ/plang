@@ -77,7 +77,7 @@ public class @this<T, L> : @this
     /// <summary>What a value of this concept can be in <paramref name="step"/>: the members its collection offers from
     /// there (a goal the step can call by name), then what any value can be — the step's own variables. The build asks
     /// as the app itself.</summary>
-    public override async System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string>> Offers(global::app.goal.step.@this step)
+    public override async System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<item.@this>> Offers(global::app.goal.step.@this step)
         => [.. await Of(_app.actor.list.System.Context).Offers(step), .. await base.Offers(step)];
 
     /// <summary>The one <paramref name="location"/> holds (<c>app.goal.Load("/system/error/Show.goal")</c>),

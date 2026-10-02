@@ -38,7 +38,8 @@ public sealed class @this
     private readonly Dictionary<string, number?> _also = new();                          // stage 2: module → does the step use it
     private readonly Dictionary<string, number?> _branch = new();                        // stage 2: branch → yes/no
     private Dictionary<string, number?>? _popular;                                       // stage 2: popular action → share; null when not asked
-    private readonly Dictionary<string, string?> _option = new();                        // stage 2: module.action.Option → the value chosen
+    // stage 2: module.action.Option → the offer chosen for it, with the option it is for
+    private readonly Dictionary<string, (global::app.type.property.@this Property, global::app.type.item.@this Value)> _option = new();
 
     private List<pick.@this> _items = new();
     private List<question.@this> _question = new();
@@ -188,7 +189,7 @@ public sealed class @this
             if (id == "@module") await Share(a, context, _module);
             else if (id == "@popular") await Share(a, context, _popular = new());
             else if (id.StartsWith("@also.", StringComparison.Ordinal)) _also[id["@also.".Length..]] = noul;
-            else if (id.StartsWith(OptionKey, StringComparison.Ordinal)) _option[id[OptionKey.Length..]] = await Choice(a, context);
+            else if (id.StartsWith(OptionKey, StringComparison.Ordinal)) await Choose(id[OptionKey.Length..], await Choice(a, context), context);
             else if (Branch(context).Any(b => $"{b.Module.Name}.{b.Name}" == id)) _branch[id] = noul;
             else if (id.Contains('.')) _named[id] = noul;
             else _choice[id] = (await Choice(a, context), a.Get<number>("confidence", context));
@@ -286,7 +287,7 @@ public sealed class @this
                      ? listed.Mark.Popular
                  : listed.Mark.Possible,
             Module = modules.Length > 0 && Through(p.Name) ? modules : null,
-            Option = Chosen(Catalog(p.Name, context)),
+            Option = Chosen(Catalog(p.Name, context)).Select(c => c.Written).ToList(),
         }).ToList();
     }
 
@@ -358,27 +359,47 @@ public sealed class @this
     {
         var chosen = Chosen(action);
         // a required property the decider chose a value of is written with it, not as a slot still to fill
-        var given = action.Property.Where(p => p.Required && !chosen.Any(c => c.StartsWith(p.Name + "=", StringComparison.Ordinal)))
-            .Select(p => p.Name).Concat(chosen);
+        var given = action.Property.Where(p => p.Required && chosen.All(c => c.Property != p))
+            .Select(p => p.Name).Concat(chosen.Select(c => c.Written));
         return $"{action.Module.Name}.{action.Name}({string.Join(", ", given)})";
     }
 
-    // The options the decider chose a value of for <paramref name="action"/> (`Template=plang`, `Name="Page"`) — "none"
-    // left out — each written as the formal reader reads it: an option of a closed set or a variable bare, any other
-    // value in quotes. What the starting line writes and what the listed action carries: one reading, so they never drift.
-    private List<string> Chosen(global::app.goal.step.action.@this? action)
+    // The options the decider chose a value of for <paramref name="action"/>, each with its value written as formal
+    // writes it (`Template="plang"`, `Item=%value%`, `Name="Page"`). What the starting line writes and what the listed
+    // action carries: one reading, so they never drift.
+    private List<(global::app.type.property.@this Property, string Written)> Chosen(global::app.goal.step.action.@this? action)
     {
         if (action == null) return [];
         var asked = $"{action.Module.Name}.{action.Name}.";
-        var chosen = new List<string>();
-        foreach (var (key, value) in _option)
-            if (key.StartsWith(asked, StringComparison.Ordinal) && value is { Length: > 0 } && value != question.@this.None)
+        var chosen = new List<(global::app.type.property.@this, string)>();
+        foreach (var (key, (property, value)) in _option)
+            if (key.StartsWith(asked, StringComparison.Ordinal))
             {
-                var name = key[asked.Length..];
-                var bare = value.StartsWith('%') || action[name]?.Type.Values?.Contains(value) == true;
-                chosen.Add($"{name}={(bare ? value : System.Text.Json.JsonSerializer.Serialize(value))}");
+                var writer = new global::app.goal.step.action.formal.Writer();
+                value.Write(writer);
+                chosen.Add((property, $"{property.Name}={writer}"));
             }
         return chosen;
+    }
+
+    // The option `key` (module.action.Option) takes the offer the decider chose — the one shown as `choice`; "none", or
+    // a text no offer shows, leaves the option out.
+    private async Task Choose(string key, string? choice, global::app.actor.context.@this context)
+    {
+        _option.Remove(key);
+        var at = key.LastIndexOf('.');
+        if (choice is null or question.@this.None || at < 0 || Catalog(key[..at], context)?[key[(at + 1)..]] is not { } property) return;
+        foreach (var offer in await property.Type.Offers(_step))
+            if (Shown(offer, context) == choice) { _option[key] = (property, offer); return; }
+    }
+
+    // An offer as the decider is shown it: its text, as a text channel writes it (`%field%`, `plang`, `Page`).
+    private string Shown(global::app.type.item.@this offer, global::app.actor.context.@this context)
+    {
+        using var stream = new System.IO.MemoryStream();
+        offer.Write(new global::app.type.item.text.Writer(stream, System.Text.Encoding.UTF8,
+            context.Setting.Of<global::app.setting.@this>().Culture));
+        return System.Text.Encoding.UTF8.GetString(stream.ToArray());
     }
 
     private global::app.goal.step.action.@this? Catalog(string name, global::app.actor.context.@this context)
@@ -528,7 +549,8 @@ public sealed class @this
                 if (line is not { Ask: not null, Name: { } named } || action[named.ToString()] is not { } property) continue;
                 // what the option's type offers for this step (a closed set its options, a collection the members the
                 // step can name, any other the step's variables); an option with nothing to offer isn't asked
-                var offers = (await property.Type.Offers(_step)).Where(o => !string.Equals(o, writes, StringComparison.Ordinal)).ToList();
+                var offers = (await property.Type.Offers(_step)).Select(o => Shown(o, context))
+                    .Where(o => !string.Equals(o, writes, StringComparison.Ordinal)).ToList();
                 if (offers.Count == 0) continue;
                 questions.Add(new question.@this
                 {

@@ -61,12 +61,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         var context = App.actor.list.System.Context;
         if (string.IsNullOrEmpty(name)) return data.@this<goal.@this>.From(context.NotFound(name));
 
-        for (var g = caller; g != null; g = g.Parent)
-        {
-            if (string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) return context.Ok(g);
-            var child = g.Child.Items().FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase));
-            if (child != null) return context.Ok(child);
-        }
+        if (Chain(caller).FirstOrDefault(g => string.Equals(g.Name, name, StringComparison.OrdinalIgnoreCase)) is { } near)
+            return context.Ok(near);
 
         if (Held(name) is { } held) return context.Ok(held);
 
@@ -77,8 +73,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             var walks = source.Contains('/') || source.Contains('\\');
             for (var at = folder; at.Raw is not ("/" or "\\" or "." or ""); at = at.Parent)
             {
-                var near = await Loaded(at.Combine(source).Raw);
-                if (near.IsInitialized) return near;
+                var beside = await Loaded(at.Combine(source).Raw);
+                if (beside.IsInitialized) return beside;
                 if (!walks) break;
             }
         }
@@ -100,45 +96,52 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             return data.@this<goal.@this>.From(await goal.@this.Load(at, App));
         }
 
-        // The .goal file in `at`'s folder whose goal name is `at`'s, spelled as the file is — in each place the folder
-        // names (a /system/ one the app's own, then the os's); null when none answers to the name.
+        // The .goal file in `at`'s folder whose goal name is `at`'s, spelled as the file is; null when none answers to
+        // the name.
         async Task<string?> Spelled(global::app.type.item.path.@this at)
         {
-            foreach (var each in at.Parent.Place(context))
-            {
-                if (!await (await each.Exists(context)).ToBooleanAsync()) continue;
-                var listed = await each.List("*.goal", recursive: false, context);
-                if (!listed.Success || await listed.Value() is not { } files) continue;
-                if (files.Items().FirstOrDefault(f => string.Equals(f.FileNameWithoutExtension, at.FileNameWithoutExtension,
-                        StringComparison.OrdinalIgnoreCase)) is { } file) return file.FileName;
-            }
+            await foreach (var file in Beside(at.Parent, context))
+                if (string.Equals(file.FileNameWithoutExtension, at.FileNameWithoutExtension, StringComparison.OrdinalIgnoreCase))
+                    return file.FileName;
             return null;
         }
     }
 
-    /// <summary>The goals <paramref name="step"/> can call by name, as <see cref="Find"/> reaches them from its goal: the
-    /// goal itself and its children, then each ancestor and its children, then the <c>.goal</c> files beside it (in each
-    /// place its folder names) — each name once.</summary>
-    internal override async System.Threading.Tasks.ValueTask<IReadOnlyList<string>> Offers(global::app.goal.step.@this step)
+    // The goals a caller reaches by name before anything is read: the caller itself and its children, then each
+    // ancestor and its children — in that order, so a child goal in the same file cannot be shadowed.
+    private IEnumerable<goal.@this> Chain(goal.@this? caller)
     {
-        var names = new List<string>();
-        for (var g = step.Goal; g != null; g = g.Parent)
+        for (var g = caller; g != null; g = g.Parent)
         {
-            names.Add(g.Name);
-            names.AddRange(g.Child.Items().Select(c => c.Name));
+            yield return g;
+            foreach (var child in g.Child.Items()) yield return child;
         }
+    }
+
+    // The .goal files in `folder` — in each place it names (a /system/ one the app's own, then the os's).
+    private async IAsyncEnumerable<global::app.type.item.path.@this> Beside(global::app.type.item.path.@this folder,
+        global::app.actor.context.@this context)
+    {
+        foreach (var each in folder.Place(context))
+        {
+            if (!await (await each.Exists(context)).ToBooleanAsync()) continue;
+            var listed = await each.List("*.goal", recursive: false, context);
+            if (!listed.Success || await listed.Value() is not { } files) continue;
+            foreach (var file in files.Items()) yield return file;
+        }
+    }
+
+    /// <summary>The goals <paramref name="step"/> can call by its bare name, as <see cref="Find"/> reaches them from its
+    /// goal (the same walk): the goal itself and its children, then each ancestor and its children, then the
+    /// <c>.goal</c> files beside it — each name once, as a text. Find's other reaches are not offered: a goal already
+    /// read anywhere is no goal of this step's, and an ancestor folder is reached only by a slash-qualified name.</summary>
+    internal override async System.Threading.Tasks.ValueTask<IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
+    {
+        var names = Chain(step.Goal).Select(g => g.Name).ToList();
         if (step.Goal?.Folder is { } folder)
-        {
-            var context = App.actor.list.System.Context;
-            foreach (var each in folder.Place(context))
-            {
-                if (!await (await each.Exists(context)).ToBooleanAsync()) continue;
-                var listed = await each.List("*.goal", recursive: false, context);
-                if (listed.Success && await listed.Value() is { } files)
-                    names.AddRange(files.Items().Select(f => f.FileNameWithoutExtension));
-            }
-        }
-        return names.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            await foreach (var file in Beside(folder, App.actor.list.System.Context)) names.Add(file.FileNameWithoutExtension);
+        return names.Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(name => (global::app.type.item.@this)new global::app.type.item.text.@this(name)).ToList();
     }
 
     // The goal already read that a call's name writes: its name (the last read wins — sub-goals in
