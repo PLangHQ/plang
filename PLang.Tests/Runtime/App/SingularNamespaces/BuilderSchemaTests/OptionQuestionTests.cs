@@ -82,6 +82,31 @@ public class OptionQuestionTests : System.IAsyncDisposable
         await Assert.That(goal.Step[0].Pick.Question.Select(q => q.Id)).Contains("s0_@option.file.read.Template");
     }
 
+    // an option the decider says the step gives, chosen and left out of the code, refuses it — as a certain action left
+    // out does; written, it agrees
+    [Test]
+    [Arguments("text.md", "Template", "plang", "file.read(Path=\"n.txt\")", true)]
+    [Arguments("text.md", "Template", "plang", "file.read(Path=\"n.txt\", Template=plang)", false)]
+    [Arguments("hash", "Algorithm", "sha256", "crypto.hash(Data=\"x\")", true)]
+    [Arguments("hash", "Algorithm", "keccak256", "crypto.hash(Data=\"x\")", false)]
+    public async Task AChosenOptionLeftOut_IsRefused(string _, string option, string chosen, string code, bool refused)
+    {
+        var action = option == "Template" ? "file.read" : "crypto.hash";
+        var goal = Make.Goal(_app.actor.list.User.Context, "G", Make.Step("do it"));
+        var step = goal.Step[0];
+        await step.Pick.Take(Make.Dict(new Dictionary<string, object?>
+        {
+            [$"s0_{action}"] = new Dictionary<string, object?> { ["type"] = "noul", ["noul"] = 0.99 },
+            [$"s0_@option.{action}.{option}"] = new Dictionary<string, object?> { ["choice"] = chosen, ["confidence"] = 0.9 },
+        }, Ctx), [], Ctx);
+        var read = new global::app.goal.step.action.formal.Reader(step, _app.module.list).Read(code, Ctx);
+        await read.IsSuccess();
+
+        var (refusals, _) = step.Pick.Agree((global::app.goal.step.action.list.@this)read.Peek()!);
+
+        await Assert.That(refusals.Any(r => r.Contains($"leaves out {option}"))).IsEqualTo(refused);
+    }
+
     // an action the decider isn't certain of starts no line: its option's answer is unused
     [Test]
     public async Task AnAnswer_ForAnActionNotCertain_IsUnused()

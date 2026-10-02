@@ -117,6 +117,26 @@ public class PickOptionTests : System.IAsyncDisposable
         await Assert.That(step.Pick.Formal!).DoesNotContain("Key=");
     }
 
+    // issue 34: a permission — and a list of them — is offered that the step gives one; chosen, it enters the line as
+    // the option's bare name, a slot the writer fills
+    [Test]
+    public async Task APermissionIsOfferedThatTheStepGivesOne_EnteringAsItsBareName()
+    {
+        var ctx = Ctx;
+        var step = Step("start it, it may read X and write /granted");
+        var one = await _app.type.list["permission"].Offers(step);
+        var many = await _app.type.list[new global::app.type.@this("list", "permission"), ctx].Offers(step);
+
+        await Assert.That(one.Single()).IsSameReferenceAs(global::app.type.item.given.@this.Instance);
+        await Assert.That(many.Single()).IsSameReferenceAs(global::app.type.item.given.@this.Instance);
+        var line = new global::app.goal.step.action.formal.Writer();
+        line.Option("Permission", one.Single());
+        await Assert.That(line.ToString()).IsEqualTo("Permission");
+        var valued = new global::app.goal.step.action.formal.Writer();
+        valued.Option("Template", (await _app.Module("file")["read"]!["Template"]!.Type.Offers(step)).First());
+        await Assert.That(valued.ToString()).StartsWith("Template=\"");
+    }
+
     // the step's write-to is where its answer goes, never an option's value
     [Test]
     public async Task AnOptionsOffers_LeaveOutTheStepsWriteTo()

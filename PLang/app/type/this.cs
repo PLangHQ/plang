@@ -617,10 +617,12 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public IReadOnlyList<string>? Values { get => kind.Values ?? Family._values; init => _values = value; }
     private IReadOnlyList<string>? _values;
 
-    /// <summary>What a value of this type can be in <paramref name="step"/>, as the decider is offered it — the kind
-    /// answers: a closed set its options, any other the step's own variables. A collected concept's type offers its
-    /// collection's members first.</summary>
-    public virtual System.Threading.Tasks.ValueTask<IReadOnlyList<item.@this>> Offers(global::app.goal.step.@this step) => kind.Offers(step);
+    /// <summary>What a value of this type can be in <paramref name="step"/>, as the decider is offered it — what its
+    /// class declares it is offered (a permission: that the step gives one), else the kind's answer: a closed set its
+    /// options, any other the step's own variables. A collected concept's type offers its collection's members first.</summary>
+    public virtual System.Threading.Tasks.ValueTask<IReadOnlyList<item.@this>> Offers(global::app.goal.step.@this step)
+        => Family._offer is { } declared ? new(declared) : kind.Offers(step);
+    private IReadOnlyList<item.@this>? _offer;
 
     /// <summary>Scalar wire shape (the underlying primitive form, e.g. "string" for path).</summary>
     public string? Shape { get => Family._shape; init => _shape = value; }
@@ -710,6 +712,7 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
 
         var example = Declared<string>("Example");
         var description = Declared<string>("Description");
+        _offer = Declared<IReadOnlyList<item.@this>>("Offer");
         if (global::app.type.item.choice.set.@this.For(clr) is { } set)
         {
             Values = set.Values;

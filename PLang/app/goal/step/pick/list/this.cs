@@ -219,6 +219,19 @@ public sealed class @this
         var anywhere = every.Select(a => $"{a.Module.Name}.{a.Name}").Concat(used).ToHashSet();
         var refused = _listed.Where(l => l.Mark == listed.Mark.Certain && !anywhere.Contains(l.Name))
             .Select(l => $"step {i} leaves out {l.Name}, which the decider is certain of ({l.Shown})").ToList();
+        // an option the decider says the step gives is in the code: chosen and left out refuses it, as a certain action
+        // left out does — unless the value chosen is the option's default, which the code holds by leaving it out
+        foreach (var (key, (property, value)) in _option)
+        {
+            var name = key[..key.LastIndexOf('.')];
+            var built = every.Where(a => $"{a.Module.Name}.{a.Name}" == name).ToList();
+            if (built.Count > 0 && built.All(a => a[property.Name] == null) && !property.IsDefault(value))
+            {
+                var option = new global::app.goal.step.action.formal.Writer();
+                option.Option(property.Name, value);
+                refused.Add($"step {i}'s {name} leaves out {property.Name}, which the decider says the step gives: write {option}");
+            }
+        }
         refused.AddRange(Unlisted(used));
         refused.AddRange(Held(code.Items()).Distinct().Where(a => a != "goal.call" && _listed.All(l => l.Name != a))
             .Select(a => $"step {i} holds {a}, which is not listed; only goal.call may be held without being listed"));
@@ -364,9 +377,9 @@ public sealed class @this
         return $"{action.Module.Name}.{action.Name}({string.Join(", ", given)})";
     }
 
-    // The options the decider chose a value of for <paramref name="action"/>, each with its value written as formal
-    // writes it (`Template="plang"`, `Item=%value%`, `Name="Page"`). What the starting line writes and what the listed
-    // action carries: one reading, so they never drift.
+    // The options the decider chose a value of for <paramref name="action"/>, each as formal writes an option
+    // (`Template="plang"`, `Item=%value%`, `Name="Page"`, a bare `Permission` the writer fills). What the starting line
+    // writes and what the listed action carries: one reading, so they never drift.
     private List<(global::app.type.property.@this Property, string Written)> Chosen(global::app.goal.step.action.@this? action)
     {
         if (action == null) return [];
@@ -376,8 +389,8 @@ public sealed class @this
             if (key.StartsWith(asked, StringComparison.Ordinal))
             {
                 var writer = new global::app.goal.step.action.formal.Writer();
-                value.Write(writer);
-                chosen.Add((property, $"{property.Name}={writer}"));
+                writer.Option(property.Name, value);
+                chosen.Add((property, writer.ToString()));
             }
         return chosen;
     }
