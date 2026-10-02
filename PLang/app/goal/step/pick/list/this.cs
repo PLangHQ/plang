@@ -312,8 +312,7 @@ public sealed class @this
         var line = new line.@this(nests);
         foreach (var action in certain) action.Prefill(line, Call(action));
         if (known != null) line.Append($"variable.set(Name={known.Text}, Value=%!data%)");
-        // written as the writer reads the step: its variables placeholders
-        return line.ToString() is { } written ? _step.Mask.Hide(written) : null;
+        return line.ToString();
     }
 
     // The known code, written in formal and read the way an answer is read. A line that doesn't read
