@@ -1236,10 +1236,24 @@
           "category": "doc",
           "confidence": "high",
           "context": "Taught the untaught setting module (architect pick #1). Both actions take one Setting=%!…setting% node. Disambiguated from variable.set (set %!x.setting.field% changes one value this run) and file.save (save to a path). Measured: SV1 5/5, SV2 3/3, RM1 5/5, SV3 guard 5/5 (set %!…setting.cache% stays variable.set). Caught + removed a contrast example that the examples parser was advertising as a setting e.g.; re-pinned pick_golden (net +4 setting e.g. lines, nothing else)."
+        },
+        {
+          "paths": ["os/system/modules/signing/sign.notes.md", "os/system/modules/signing/sign.examples.md", "os/system/modules/signing/verify.notes.md", "os/system/modules/signing/verify.examples.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Taught signing (sign, verify). Disambiguated from crypto (hash/verify-against-digest). Measured: SG1 5/5, SG2 5/5 (Contracts), SG3 3/3 (Expires), VF1 5/5, VF2 5/5 (Contracts); guards CR1 'verify %content% against %hash%' → crypto.verify 5/5 and CR2 'hash %content%' → crypto.hash 5/5 (neither leaked to signing)."
+        },
+        {
+          "paths": ["os/system/modules/identity/export.notes.md", "os/system/modules/identity/export.examples.md", "os/system/modules/identity/get.notes.md", "os/system/modules/identity/get.examples.md", "os/system/modules/identity/list.notes.md", "os/system/modules/identity/list.examples.md", "os/system/modules/identity/create.notes.md", "os/system/modules/identity/create.examples.md", "os/system/modules/identity/rename.notes.md", "os/system/modules/identity/rename.examples.md", "os/system/modules/identity/setDefault.notes.md", "os/system/modules/identity/setDefault.examples.md", "os/system/modules/identity/archive.notes.md", "os/system/modules/identity/archive.examples.md", "os/system/modules/identity/unarchive.notes.md", "os/system/modules/identity/unarchive.examples.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Taught identity (8 actions). Export hands out a private key — notes restrict it to steps that say 'export', and a guard: 'get my identity' never builds export. Measured all 10 scenarios clean: IDGETME (guard) → identity.get, no Name, NOT export 5/5; IDEXP → export 5/5; get/list/create(+Default)/setDefault/archive/rename/unarchive all 3-5/5. Re-pinned pick_golden with signing in one pass (net +signing & +identity e.g. lines only; all four decider fixtures green; no page golden for these modules)."
         }
       ],
       "after": {
-        "status": "channel.set + ui.render + setting teaching + UR2 kernel line landed. UR2 5/5 (was 3/5), goal.call module= 5/5, no-arg guard 5/5 (no over-generation). Signing then identity still to do. TR1 parked; db/environment on hold (architect). Core routed: SL2/59, snapshot/58.",
+        "status": "channel.set + ui.render + setting + UR2 kernel line + signing + identity all landed and measured clean. identity.export guard holds (get my identity never exports). TR1 parked; db/environment on hold (architect). Core routed: SL2/59, snapshot/58. Untaught modules remaining: ai, assert, callback, db, environment, error, install, module, plang (architect holds db/environment; signing+identity done).",
         "health": "green",
         "notes": "Properties.llm (writer system prompt) is NOT pinned by the four decider fixtures or ModulePageTests — generalizing line 40 (named-arg keeps its name even matching its var) moved none of them. Each os/system/modules/**/*.md commit still runs all four decider fixtures; re-pin what moved. Examples parser takes each 'Step text:' as an e.g. for THAT action — never put another module's contrast step in an examples file (notes only)."
       }
