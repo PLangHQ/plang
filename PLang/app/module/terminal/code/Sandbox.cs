@@ -113,18 +113,18 @@ internal sealed class Sandbox
         return abi < 3 ? $"This kernel can't hold a program to its permissions (Landlock {(abi < 0 ? "is off" : $"version {abi}, needs 3")})." : null;
     }
 
-    /// <summary>Starts the program held to its permissions. Throws when the lock can't be made: it never runs unlocked.</summary>
-    public System.Diagnostics.Process Start(System.Diagnostics.ProcessStartInfo info)
+    /// <summary>Starts the program held to its permissions — <paramref name="start"/> runs on a thread locked to them, so
+    /// what it starts (by .NET, or spawned) is born locked. Throws when the lock can't be made: it never runs unlocked.</summary>
+    public child.@this Start(Func<child.@this> start)
     {
         // what the thread started, or why it couldn't — set once, by the thread
-        var started = new TaskCompletionSource<System.Diagnostics.Process>();
+        var started = new TaskCompletionSource<child.@this>();
         var thread = new Thread(() =>
         {
             try
             {
                 Landlock.Restrict(Base, Sink, Program, Rules);
-                started.SetResult(System.Diagnostics.Process.Start(info)
-                    ?? throw new InvalidOperationException($"Could not start {info.FileName}"));
+                started.SetResult(start());
             }
             catch (Exception ex) { started.SetException(ex); }
         }) { IsBackground = true, Name = "permission" };
