@@ -1,5 +1,3 @@
-using app.module.terminal.code;
-
 namespace app.module.terminal;
 
 /// <summary>Waits until a running program (from <c>terminal.open</c>) exits; returns its exit code. Its
@@ -8,10 +6,9 @@ namespace app.module.terminal;
 public partial class wait : IContext
 {
     /// <summary>The running program, from <c>terminal.open</c>.</summary>
-    public partial data.@this<Process> Process { get; init; }
+    public partial data.@this<type.process.@this> Process { get; init; }
 
-    [Code]
-    public partial ITerminal Terminal { get; }
-
-    public async Task<data.@this<global::app.type.item.number.@this>> Start() => await Terminal.Wait(this);
+    public async Task<data.@this<global::app.type.item.number.@this>> Start()
+        => await Process.Value() is { } running ? await running.Wait(Context)
+            : data.@this<global::app.type.item.number.@this>.From(Context.Error(new global::app.error.ActionError("No running program to wait for.", "ProgramNotRunning", 409)));
 }
