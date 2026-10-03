@@ -239,7 +239,7 @@ public sealed class @this : browser.@this
                 var line = new StringBuilder(p.GetProperty("data").GetString()!.Length + 64)
                     .Append("{\"frame\":\"").Append(p.GetProperty("data").GetString())
                     .Append("\",\"format\":\"").Append(_format)
-                    .Append("\",\"w\":").Append(PixelWidth).Append(",\"h\":").Append(PixelHeight).Append('}')
+                    .Append("\",\"w\":").Append(Width.ToInt32()).Append(",\"h\":").Append(Height.ToInt32()).Append('}')
                     .ToString();
                 frames.TryWrite(line);
             }

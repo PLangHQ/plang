@@ -49,10 +49,6 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <summary>True until the browser exits.</summary>
     [LlmBuilder, Out] public global::app.type.item.@bool.@this Running => !Os.HasExited;
 
-    internal string Address => _url;
-    private protected int PixelWidth => _width;
-    private protected int PixelHeight => _height;
-
     /// <summary>Its Chromium.</summary>
     internal System.Diagnostics.Process Os { get; }
 
@@ -82,7 +78,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     internal Func<global::app.error.Error, Task>? Report { get; private protected init; }
 
     /// <summary>Its Chromium exited: unless plang stopped it, that is a failure nothing else would see. Said on the
-    /// error output (the host's console) and the app's error channel, with what Chromium said last.</summary>
+    /// app's error channel, with what Chromium said last.</summary>
     private protected async Task Exited()
     {
         if (_stopping) return;
@@ -90,7 +86,6 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         lock (_said) said = string.Join("\n", _said);
         var message = $"Chromium stopped by itself (exit code {Os.ExitCode}){Lost}."
             + (said.Length > 0 ? "\nWhat it said last:\n" + said : "");
-        Console.Error.WriteLine(message);
         if (Report != null) await Report(new global::app.error.ServiceError(message, "BrowserStopped", 500));
     }
 

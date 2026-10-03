@@ -55,10 +55,6 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         set => Noting = value.Value;
     }
 
-    /// <summary>Its pixel size, for what draws onto it.</summary>
-    internal int PixelWidth => _width;
-    internal int PixelHeight => _height;
-
     private protected abstract bool IsClosed { get; }
     private protected virtual int Drawn => 0;
     private protected virtual bool Noting { get => false; set { } }
@@ -66,12 +62,6 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     private global::app.module.screen.type.element.list.@this? _element;
     /// <summary>Its elements, picked by selector (<c>%!screen.element["#window.bot"]%</c>) — to bind on their events.</summary>
     public global::app.module.screen.type.element.list.@this element => _element ??= new(this);
-
-    /// <summary>One step by dot: <c>element</c> — its elements; any other member as every item's.</summary>
-    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
-        => string.Equals(key, "element", StringComparison.OrdinalIgnoreCase)
-            ? System.Threading.Tasks.ValueTask.FromResult(new global::app.data.@this(key, element, parent: parent))
-            : base.Get(parent, key);
 
     /// <summary>Draws <paramref name="frame"/> (a frame line, or an image): <c>screen.draw</c>.</summary>
     internal abstract Task<global::app.data.@this> Draw(global::app.data.@this frame, global::app.actor.context.@this context);
