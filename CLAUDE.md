@@ -82,7 +82,7 @@ Full catalog with worked examples: `Documentation/v0.2/obp-smells.md`. The patte
 - Use `PlangConsole/bin/Debug/net10.0/plang.exe` for net10.0 builds
 - Don't use Select-String in bash — it doesn't work
 - **How a build answer is judged** (what Cover, Agree, the decider's stage 2 and the step-fixer refuse): `Documentation/v0.2/build-checks.md`.
-- **Teaching-edit rule:** a commit touching `os/system/modules/**/*.md` re-runs the decider fixtures (`PickListTests`, `ConfirmTemplateTests`, `LineTwinTests`, `PickOptionTests`) and `ModulePageTests`, re-pinning each it moves. Read the diff before committing a moved pin — a re-pin made under load can capture a worse answer. (`build-checks.md`.)
+- **Teaching-edit rule:** a commit touching `os/system/modules/**/*.md` **or `os/system/type/**/*.md`** re-runs the decider fixtures (`PickListTests`, `ConfirmTemplateTests`, `LineTwinTests`, `PickOptionTests`) and the page goldens (`ModulePageTests` / `TypePageTests`), re-pinning each it moves (a type's description is in the decider's prompt C, so it moves the decider pin too). Run the Explicit `AcceptTheFixture` against the test binary to re-pin, and read the diff before committing a moved pin — a re-pin made under load can capture a worse answer. (`build-checks.md`.)
 
 ## Running plang Tests
 

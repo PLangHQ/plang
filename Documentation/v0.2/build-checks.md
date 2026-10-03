@@ -91,11 +91,16 @@ warnings are attached and its defaults frozen, and it is written to the `.pr`.
 
 ## The teaching-edit rule
 
-The decider and the learner pages are both pinned to the catalog, so **editing a module's teaching
-changes what they pin.** A commit that touches `os/system/modules/**/*.md` re-runs every decider
-fixture — `PickListTests`, `ConfirmTemplateTests`, `LineTwinTests`, `PickOptionTests` — and
-`ModulePageTests`, and re-pins each one it moved through that fixture's own `AcceptTheFixture` /
-`AcceptTheGolden`, diffing word by word.
+The decider and the learner pages are both pinned to the catalog, so **editing teaching changes
+what they pin — for types as well as modules.** The decider's prompt C lists every type with its
+description, so a type's `type.description.md` moves the decider pin exactly as an action's notes
+do. A commit that touches `os/system/modules/**/*.md` **or `os/system/type/**/*.md`** re-runs every
+decider fixture — `PickListTests`, `ConfirmTemplateTests`, `LineTwinTests`, `PickOptionTests` — and
+the page goldens — `ModulePageTests` for a module, `TypePageTests` for a type — and re-pins each one
+it moved through that fixture's own `AcceptTheFixture` / `AcceptTheGolden`, diffing word by word.
+(The pinned fixtures are not rebuilt by `dev.sh test`'s class filter; run the Explicit
+`AcceptTheFixture` directly against the test binary, e.g.
+`PLang.Tests/Wire/bin/Debug/net10.0/PLang.Tests.Wire --treenode-filter "/*/*/PickListTests/AcceptTheFixture"`.)
 
 Treat a re-pin as a review, not a rubber stamp: a re-pin made while the model is under load can
 capture a worse answer than the one it replaces. Read the diff before committing a moved pin — a
