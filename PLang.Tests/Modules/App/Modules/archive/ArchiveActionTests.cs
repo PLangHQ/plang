@@ -123,13 +123,13 @@ public class ArchiveActionTests : IDisposable
     public async Task AValuesProperties_SurviveTheRoundTrip()
     {
         var value = Text("note", "Hello");
-        value.Properties["metadata"] = "some value";
+        value.Property.Set("metadata", "some value");
 
         var restored = await Unpack((await (await Pack(value)).Value())!);
 
         await restored.IsSuccess();
         await Assert.That((await restored.Value())?.ToString()).IsEqualTo("Hello");
-        await Assert.That((await restored.Properties.Value("metadata"))?.ToString()).IsEqualTo("some value");
+        await Assert.That((await restored.Property.Value("metadata"))?.ToString()).IsEqualTo("some value");
     }
 
     [Test]

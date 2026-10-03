@@ -126,11 +126,11 @@ public sealed class OpenAi : ILlm
             // a conversation continues an llm answer — the response carries its messages; a value that carries none
             // continues nothing
             var previous = await continued.Follow(context);
-            if (await previous.Properties.Value("Messages") is not global::app.type.item.@this history)
+            if (await previous.Property.Value("Messages") is not global::app.type.item.@this history)
                 return context.Error(new global::app.error.Error(
                     $"a conversation continues an llm answer; %{previous.Name}% isn't one", "ConversationInvalid", 400));
             messages.InsertRange(0, history.Clr<List<LlmMessage>>() ?? new List<LlmMessage>());
-            schema ??= (await previous.Properties.Value("Schema"))?.ToString();
+            schema ??= (await previous.Property.Value("Schema"))?.ToString();
         }
 
         // Snapshot originals BEFORE format mutation
@@ -919,7 +919,7 @@ public sealed class OpenAi : ILlm
 
     private static void SetProp(data.@this data, string name, object? value)
     {
-        data.Properties[name] = value;
+        data.Property.Set(name, value);
     }
 
     // A tool as the loop needs it: the held goal.call (run as itself) and its bound handler, whose own

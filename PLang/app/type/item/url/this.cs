@@ -37,7 +37,7 @@ public sealed class @this : global::app.type.item.content.@this, global::app.typ
     protected override async System.Threading.Tasks.ValueTask<global::app.type.kind.@this> Format(
         global::app.data.@this read, global::app.actor.context.@this context)
     {
-        var contentType = await read.Properties.Get<string>("contentType");
+        var contentType = await read.Property.Get<string>("contentType");
         var mime = !string.IsNullOrEmpty(contentType) ? contentType
             : Path.Extension.IsTruthy() ? Path.MimeType(context)
             : "text/plain";

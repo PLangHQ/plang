@@ -25,8 +25,8 @@ public sealed class @this : global::app.@event.binding.@this
     {
         // a property holds a value, never a Data — the result's value; a failed result is %!error%
         var running = new global::app.data.@this("!event", _event, context: context);
-        running.Properties.Set("item", item);
-        running.Properties.Set("result", result.Peek());
+        running.Property.Set("item", item);
+        running.Property.Set("result", result.Peek());
 
         var frame = context.call.Current;
         if (frame == null) return await _call.Start(context);

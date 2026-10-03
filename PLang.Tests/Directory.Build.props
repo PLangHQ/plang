@@ -64,7 +64,6 @@
     <Using Include="app.channel.ChannelDirection" Alias="ChannelDirection" />
     <Using Include="PLang.Tests.Shared.ClrLower" Static="true" />
     <Using Include="app.data.@this" Alias="Data" />
-    <Using Include="app.data.Properties" Alias="Properties" />
     <Using Include="app.data.DynamicData" Alias="DynamicData" />
     <Using Include="app.type.item.variable.list.@this" Alias="Variables" />
     <Using Include="app.type.item.path" Alias="FileSystem" />

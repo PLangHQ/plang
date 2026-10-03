@@ -503,7 +503,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
         data.@this shown;
         await using (context.call.Push(new[] { new data.@this("error", error, context: context) }))
             shown = await show.Start(context);
-        if (shown.Success) failed.Properties.Set("shown", true);
+        if (shown.Success) failed.Property.Set("shown", true);
         else await (Debug?.Write($"error show: /system/error/Show failed — {shown.Error}") ?? Task.CompletedTask);
         return failed;
     }

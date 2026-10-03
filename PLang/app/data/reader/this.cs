@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using Data = global::app.data.@this;
-using Properties = global::app.data.Properties;
 
 namespace app.data.reader;
 
@@ -39,7 +38,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         var born = ctx.Context;
         string name = "";
         global::app.type.@this? typeRef = null;
-        Properties? properties = null;
+        global::app.type.property.list.@this? properties = null;
         // The value slot — a lazy source (content or wire) or an eagerly-read item (goal.call);
         // a source IS an item, so one local carries every arm. Its bytes are held until the row
         // closes: the "variable" list written after it is what the value is born with.
@@ -86,7 +85,8 @@ public sealed class @this : global::app.data.schema.ISchemaReader
                     variables = new global::app.type.item.variable.serializer.Entry().Read(ref reader, ctx);
                     break;
                 case "properties":
-                    properties = Properties.Read(ref reader, ctx);
+                    properties = new();
+                    properties.Read(ref reader, ctx);
                     break;
                 default:
                     reader.Skip();
@@ -115,7 +115,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
             var d = value is global::app.error.Error received
                 ? new Data(name, context: born) { Error = received }
                 : new Data(name, value, context: born);
-            if (properties != null) d.Properties = properties;
+            if (properties != null) d.Property = properties;
             return d;
         }
         // No value slot — a typed absence under its declared type (the absence the type's own
@@ -123,7 +123,7 @@ public sealed class @this : global::app.data.schema.ISchemaReader
         var typedNull = typeRef is { IsNull: false }
             ? new Data(name, new global::app.type.item.@null.@this(typeRef), context: born)
             : new Data(name, (object?)null, context: born);
-        if (properties != null) typedNull.Properties = properties;
+        if (properties != null) typedNull.Property = properties;
         return typedNull;
     }
 }

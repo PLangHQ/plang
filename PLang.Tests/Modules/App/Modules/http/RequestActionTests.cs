@@ -522,10 +522,10 @@ public class RequestActionTests
         var result = await new global::app.goal.step.action.@this(action, Ctx).Start(Ctx);
 
         await result.IsSuccess();
-        await Assert.That(((global::app.type.item.status.@this)(await result.Properties.Value("Status"))!).Code.ToInt32()).IsEqualTo(200);
-        await Assert.That(((global::app.type.item.status.@this)(await result.Properties.Value("Status"))!).Ok.Value).IsTrue();
-        await Assert.That(((await result.Properties.Value("Method")))?.ToString()).IsEqualTo("GET");
-        await Assert.That((await result.Properties.Value("Url"))!.ToString()).IsEqualTo("https://api.example.com/test");
+        await Assert.That(((global::app.type.item.status.@this)(await result.Property.Value("Status"))!).Code.ToInt32()).IsEqualTo(200);
+        await Assert.That(((global::app.type.item.status.@this)(await result.Property.Value("Status"))!).Ok.Value).IsTrue();
+        await Assert.That(((await result.Property.Value("Method")))?.ToString()).IsEqualTo("GET");
+        await Assert.That((await result.Property.Value("Url"))!.ToString()).IsEqualTo("https://api.example.com/test");
     }
 
     #endregion

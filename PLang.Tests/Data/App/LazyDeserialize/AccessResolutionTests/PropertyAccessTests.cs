@@ -6,7 +6,7 @@ using type = global::app.type.@this;
 
 namespace PLang.Tests.App.LazyDeserialize.AccessResolutionTests;
 
-// Property access (`%x!prop%`) reads from Data.Properties; the value is
+// Property access (`%x!prop%`) reads from Data.Property; the value is
 // never touched. Status checks on an http response, for example, must
 // not materialise the body.
 public class PropertyAccessTests : System.IAsyncDisposable
@@ -19,7 +19,7 @@ public class PropertyAccessTests : System.IAsyncDisposable
     {
         var ctx = _app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("{\"big\":\"body\"}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg");
-        d.Properties["status"] = 200;
+        d.Property.Set("status", 200);
         var status = await d.Get("!status");
         await Assert.That((await status.Value())?.ToString()).IsEqualTo("200");
     }
@@ -28,7 +28,7 @@ public class PropertyAccessTests : System.IAsyncDisposable
     {
         var ctx = _app.actor.list.User.Context;
         var d = global::PLang.Tests.Shared.Make.FromRaw("{\"big\":\"body\"}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg");
-        d.Properties["status"] = 200;
+        d.Property.Set("status", 200);
         _ = (await (await d.Get("!status")).Value());       // read the property
         await Assert.That(d.MaterializeCount()).IsEqualTo(0); // body untouched
     }

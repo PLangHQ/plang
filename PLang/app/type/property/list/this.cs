@@ -125,6 +125,87 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
     public Property? this[string name]
         => Rows.FirstOrDefault(p => string.Equals(p.Name, name, System.StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>Holds <paramref name="value"/> as the property <paramref name="name"/>, in place of one by that name — a
+    /// plang value as it is, a wire primitive (text, a number, a bool, a date, a guid, bytes, a dict or list) as the plang value it
+    /// is; null takes the property away. A Data is never one: its value is.</summary>
+    public void Set(string name, object? value)
+    {
+        if (value is null) { Remove(name); return; }
+        if (value is global::app.data.@this)
+            throw new System.ArgumentException("A property holds a value, never a Data: give it the Data's value.", nameof(value));
+        var held = Lifted(value);
+        Set(new Property { Name = name, Type = held.Type, Value = held });
+    }
+
+    // a wire primitive as the plang value it is — each one's own door, needing no context
+    private global::app.type.item.@this Lifted(object value) => value switch
+    {
+        global::app.type.item.@this item => item,
+        string text => (global::app.type.item.text.@this)text,
+        bool on => (global::app.type.item.@bool.@this)on,
+        int n => (global::app.type.item.number.@this)n,
+        long n => (global::app.type.item.number.@this)n,
+        double n => (global::app.type.item.number.@this)n,
+        float n => (global::app.type.item.number.@this)n,
+        decimal n => (global::app.type.item.number.@this)n,
+        System.DateTime at => new global::app.type.item.datetime.@this(at),
+        System.DateTimeOffset at => new global::app.type.item.datetime.@this(at),
+        System.Guid id => (global::app.type.item.guid.@this)id,
+        byte[] bytes => (global::app.type.item.binary.@this)bytes,
+        System.Collections.IEnumerable => global::app.type.item.@this.Create(value, null),
+        _ => throw new System.ArgumentException($"A property holds a plang value or a wire primitive, not a {value.GetType()}.", nameof(value)),
+    };
+
+    /// <summary>The value of the property <paramref name="name"/>; null when there is none.</summary>
+    public System.Threading.Tasks.ValueTask<global::app.type.item.@this?> Value(string name) => new(this[name]?.Value);
+
+    /// <summary>The value of the property <paramref name="name"/> as <typeparamref name="T"/> — a plang value as it is, a
+    /// C# one lowered from it; <c>default</c> when there is none.</summary>
+    public async System.Threading.Tasks.ValueTask<T?> Get<T>(string name)
+    {
+        if (await Value(name) is not { } value) return default;
+        if (value is T typed) return typed;
+        return (T?)value.Clr(typeof(T));
+    }
+
+    /// <summary>Takes the property <paramref name="name"/> away; whether there was one.</summary>
+    public bool Remove(string name) => Rows.RemoveAll(p => string.Equals(p.Name, name, System.StringComparison.OrdinalIgnoreCase)) > 0;
+
+    /// <summary>Whether a property is named <paramref name="name"/>.</summary>
+    public bool Contains(string name) => this[name] != null;
+
+    /// <summary>Takes every property away.</summary>
+    public void Clear() => Rows.Clear();
+
+    /// <summary>Reads properties off <paramref name="reader"/> — a value's own properties object, by name. Each value
+    /// is read now: a scalar as the plang value it is, an object or a list through the dict's or the list's own
+    /// reader (its entries describe themselves).</summary>
+    internal void Read(ref global::app.type.item.kind.json.Reader reader, global::app.type.reader.ReadContext ctx)
+    {
+        if (reader.Null()) return;
+        reader.BeginObject();
+        while (reader.NextName(out var name))
+            Set(name, reader.Peek() switch
+            {
+                global::app.type.format.TokenKind.Null => null,
+                global::app.type.format.TokenKind.Bool => reader.Bool(),
+                global::app.type.format.TokenKind.Number => (global::app.type.item.number.@this)reader.Number(),
+                global::app.type.format.TokenKind.String => reader.String(),
+                global::app.type.format.TokenKind.Object => ctx.Context.App.type.list.Reader.Reader("dict", null, ctx.Context).Read(ref reader, null, ctx),
+                _ => ctx.Context.App.type.list.Reader.Reader("list", null, ctx.Context).Read(ref reader, null, ctx),
+            });
+        reader.EndObject();
+    }
+
+    /// <summary>A list of its own holding the same properties — each one shared (a property is never changed, only
+    /// replaced).</summary>
+    public @this Clone()
+    {
+        var clone = new @this();
+        clone._rows.AddRange(Rows);
+        return clone;
+    }
+
     public Property this[int index] => Rows[index];
     public int Count => Rows.Count;
     public System.Collections.Generic.IEnumerator<Property> GetEnumerator() => Rows.GetEnumerator();

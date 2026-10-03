@@ -65,7 +65,7 @@ public class LlmIntegrationTests
 
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString() ?? "").Contains("42");
-        await Assert.That((await result.Properties.Value("TotalTokens"))).IsNotNull();
+        await Assert.That((await result.Property.Value("TotalTokens"))).IsNotNull();
     }
 
     // --- Test 2: JSON schema response ---
@@ -93,7 +93,7 @@ public class LlmIntegrationTests
         var __low = Lower<object>(await result.Value());
         var json = __low is JsonElement je ? je : JsonSerializer.SerializeToElement<object?>(__low is global::app.type.item.dict.@this _nd ? _nd.Clr<object>() : (await result.Value()));
         await Assert.That(json.TryGetProperty("sentiment", out _)).IsTrue();
-        await Assert.That((await result.Properties.Value("Format"))?.ToString()).IsEqualTo("json");
+        await Assert.That((await result.Property.Value("Format"))?.ToString()).IsEqualTo("json");
     }
 
     // --- Test 3: Code format extraction ---
@@ -187,7 +187,7 @@ public class LlmIntegrationTests
         // The LLM should have attempted the tool, got an error (goal doesn't exist),
         // and then responded with something about not being able to get the weather
         await Assert.That((await result.Value())?.ToString() ?? "").IsNotEmpty();
-        var toolCallCount = (await result.Properties.Value("ToolCallCount"));
+        var toolCallCount = (await result.Property.Value("ToolCallCount"));
         await Assert.That(toolCallCount).IsNotNull();
     }
 
@@ -277,12 +277,12 @@ public class LlmIntegrationTests
 
     private static async System.Threading.Tasks.Task<string?> BuildSnapshotFromResult(Data result)
     {
-        var rawResponse = (await result.Properties.Value("RawResponse"))?.ToString();
+        var rawResponse = (await result.Property.Value("RawResponse"))?.ToString();
         if (rawResponse == null) return null;
 
-        var model = (await result.Properties.Value("Model"))?.ToString() ?? "gpt-5.4-nano";
-        var promptTokens = (await result.Properties.Value("PromptTokens")) is int pt ? pt : 0;
-        var completionTokens = (await result.Properties.Value("CompletionTokens")) is int ct ? ct : 0;
+        var model = (await result.Property.Value("Model"))?.ToString() ?? "gpt-5.4-nano";
+        var promptTokens = await result.Property.Get<int>("PromptTokens");
+        var completionTokens = await result.Property.Get<int>("CompletionTokens");
 
         return JsonSerializer.Serialize(new
         {

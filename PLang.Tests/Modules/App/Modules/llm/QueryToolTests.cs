@@ -363,8 +363,8 @@ public class QueryToolTests
         await Assert.That(_handler.CallCount).IsEqualTo(4);
         await result.IsSuccess();
         // Loop exited via limit.tool — result carries Truncated property
-        await Assert.That((await result.Properties.Value("Truncated"))).IsEqualTo(true);
-        await Assert.That((await result.Properties.Value("ToolCallCount"))).IsNotNull();
+        await Assert.That((await result.Property.Get<bool>("Truncated"))).IsEqualTo(true);
+        await Assert.That((await result.Property.Value("ToolCallCount"))).IsNotNull();
     }
 
     #endregion

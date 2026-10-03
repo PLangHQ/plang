@@ -100,9 +100,9 @@ public class OutAttributeInventoryTests
         await Assert.That(HasOut(t, "Error")).IsTrue();
         await Assert.That(HasOut(t, "Type")).IsTrue();
     }
-    [Test] public async Task Data_Properties_HasOut_FormerlyJsonIgnore()
+    [Test] public async Task Data_Property_HasOut()
     {
-        await Assert.That(HasOut(typeof(global::app.data.@this), "Properties")).IsTrue();
+        await Assert.That(HasOut(typeof(global::app.data.@this), "Property")).IsTrue();
     }
     [Test] public async Task Data_Context_NotOut_RuntimeGraph()
     {

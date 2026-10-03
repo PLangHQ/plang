@@ -144,7 +144,7 @@ public class QueryConversationTests
         Answers("answer");
         await Ask("cached question", cache: true);
         var hit = await Ask("cached question", cache: true);
-        await Assert.That(await hit.Properties.Get<bool>("Cached")).IsTrue();
+        await Assert.That(await hit.Property.Get<bool>("Cached")).IsTrue();
 
         await Ask("go on", continues: hit);
         var continued = await _handler.LastRequest!.Content!.ReadAsStringAsync();
@@ -161,7 +161,7 @@ public class QueryConversationTests
         await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"remember 7\"}], Cache=skip)").Start(Ctx);
         await (await Ctx.Action("variable.set(Name=%answer%, Value=%!data%)").Start(Ctx)).IsSuccess();
         var answer = await Ctx.Variable.Get("answer");
-        await Assert.That(answer.Properties.Contains("Messages")).IsTrue();
+        await Assert.That(answer.Property.Contains("Messages")).IsTrue();
 
         var next = await Ctx.Action("llm.query(Message=[{\"Role\":\"user\", \"Content\":\"what was it\"}], Cache=skip, Conversation={continue: %answer%})").Start(Ctx);
         await next.IsSuccess();

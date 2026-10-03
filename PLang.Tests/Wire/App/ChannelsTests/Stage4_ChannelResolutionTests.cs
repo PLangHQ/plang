@@ -90,7 +90,7 @@ public class Stage4_ChannelResolutionTests
         app.actor.list.User.Channel.Register(probe);
 
         var data = app.Ok("payload");
-        data.Properties.Set("custom-prop", "x");
+        data.Property.Set("custom-prop", "x");
 
         var write = new global::app.module.output.Write(app.actor.list.User.Context) { Data = data,
             Channel = probe

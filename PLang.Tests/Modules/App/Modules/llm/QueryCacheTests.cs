@@ -61,7 +61,7 @@ public class QueryCacheTests
 
         await result2.IsSuccess();
         await Assert.That(_handler.CallCount).IsEqualTo(1); // No additional HTTP call
-        await Assert.That((await result2.Properties.Value("Cached"))).IsEqualTo(true);
+        await Assert.That((await result2.Property.Get<bool>("Cached"))).IsEqualTo(true);
     }
 
     // Data from outside is never a template: an answer holding %name% comes back from the cache as the
@@ -81,7 +81,7 @@ public class QueryCacheTests
         await again.Attach(null, Ctx);
         var cached = await again.Start();
 
-        await Assert.That((await cached.Properties.Value("Cached"))).IsEqualTo(true);
+        await Assert.That((await cached.Property.Get<bool>("Cached"))).IsEqualTo(true);
         await Assert.That(cached.Type?.Template).IsNull();
         await Assert.That((await cached.Value())?.ToString()).IsEqualTo(answer);
         await Assert.That((await fresh.Value())?.ToString()).IsEqualTo(answer);
@@ -215,11 +215,11 @@ public class QueryCacheTests
         await result2.IsSuccess();
         await Assert.That((await result2.Value())?.ToString()).IsEqualTo("preserved");
         // Verify metadata was restored from cache
-        await Assert.That((await result2.Properties.Value("Cached"))).IsEqualTo(true);
-        await Assert.That((await result2.Properties.Value("RawResponse"))?.ToString()).IsEqualTo("preserved");
-        await Assert.That((await result2.Properties.Value("Model"))?.ToString()).IsEqualTo("gpt-5.4-nano");
-        await Assert.That((await result2.Properties.Value("PromptTokens"))).IsNotNull();
-        await Assert.That((await result2.Properties.Value("CompletionTokens"))).IsNotNull();
+        await Assert.That((await result2.Property.Get<bool>("Cached"))).IsEqualTo(true);
+        await Assert.That((await result2.Property.Value("RawResponse"))?.ToString()).IsEqualTo("preserved");
+        await Assert.That((await result2.Property.Value("Model"))?.ToString()).IsEqualTo("gpt-5.4-nano");
+        await Assert.That((await result2.Property.Value("PromptTokens"))).IsNotNull();
+        await Assert.That((await result2.Property.Value("CompletionTokens"))).IsNotNull();
         // No additional HTTP call was made
         await Assert.That(_handler.CallCount).IsEqualTo(1);
     }

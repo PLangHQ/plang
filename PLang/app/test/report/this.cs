@@ -79,13 +79,13 @@ public sealed class @this
         if (!written.Success) return context.Error(written.Error!);
 
         var result = context.Ok<global::app.type.item.list.@this<global::app.test.@this>>(run);
-        result.Properties.Set("format", chosen.ToString());
-        result.Properties.Set("reportPath", target.Absolute);
-        result.Properties.Set("content", content);
-        result.Properties.Set("summaryTotal", tests.Count);
-        result.Properties.Set("summaryPass", summary[Status.Pass]);
-        result.Properties.Set("summaryFail", summary[Status.Fail]);
-        result.Properties.Set("variableSnapshotCount", tests.Count(t => t.Error?.Variables is { CountRaw: > 0 }));
+        result.Property.Set("format", chosen.ToString());
+        result.Property.Set("reportPath", target.Absolute);
+        result.Property.Set("content", content);
+        result.Property.Set("summaryTotal", tests.Count);
+        result.Property.Set("summaryPass", summary[Status.Pass]);
+        result.Property.Set("summaryFail", summary[Status.Fail]);
+        result.Property.Set("variableSnapshotCount", tests.Count(t => t.Error?.Variables is { CountRaw: > 0 }));
 
         if (!nested && Verdict() is { } failed) return context.Error(failed);
         return result;

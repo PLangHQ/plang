@@ -140,18 +140,15 @@ public partial class @this
                 new global::app.type.item.variable.serializer.Entry().Write(writer, _item.Variable);
             }
 
-            // properties — nested object, omitted when empty.
-            if (Properties.Count > 0)
+            // its properties — a nested object by name, omitted when it has none
+            if (Property.Count > 0)
             {
                 writer.Name("properties");
                 writer.BeginObject();
-                foreach (var kvp in Properties)
+                foreach (var property in Property)
                 {
-                    writer.Name(kvp.Key);
-                    if (kvp.Value is global::app.data.@this pd)
-                        await pd.Output(writer, mode, context);
-                    else
-                        await global::app.type.item.@this.Create(kvp.Value, context).Output(writer, mode, context);
+                    writer.Name(property.Name);
+                    await (property.Value ?? global::app.type.item.@null.@this.Instance).Output(writer, mode, context);
                 }
                 writer.EndObject();
             }

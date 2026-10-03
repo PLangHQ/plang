@@ -18,7 +18,7 @@ var result = executor.Start(args, cts.Token).GetAwaiter().GetResult();
 // Process-boundary last resort (the permitted Console.* exception): a failed run the app could not
 // show (the error show itself failed, or the app never started) must surface here, or it exits
 // silently and nothing reports why. A shown failure is not printed twice.
-if (!result.Success && result.Error != null && !result.Properties.Contains("shown"))
+if (!result.Success && result.Error != null && !result.Property.Contains("shown"))
 {
 	Console.Error.WriteLine(result.Error.ToString());
 }

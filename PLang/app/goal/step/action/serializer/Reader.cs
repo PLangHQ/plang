@@ -114,7 +114,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
         var name = "";
         global::app.type.@this? type = null;
         global::app.type.item.@this? value = null;
-        global::app.data.Properties? properties = null;
+        global::app.type.property.list.@this? properties = null;
         // The value's bytes are held until the row closes: the "variable" list after it is what the
         // value is born with.
         byte[]? held = null;
@@ -135,7 +135,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
                     held = row.Slice();
                     break;
                 case "variable": variables = new global::app.type.item.variable.serializer.Entry().Read(ref row, ctx); break;
-                case "properties": properties = global::app.data.Properties.Read(ref row, ctx); break;
+                case "properties": properties = new(); properties.Read(ref row, ctx); break;
                 default: throw new global::app.error.PrFormatOutdatedException($"property key '{key}' isn't in this .pr format", ctx.Origin);
             }
         }
@@ -162,7 +162,7 @@ public sealed class Reader : global::app.type.reader.ITypeReader
             Name = name,
             Type = type ?? ctx.Context.App.type.list["item"],
             Value = value,
-            Properties = properties ?? new(),
+            Property = properties ?? new(),
         };
     }
 

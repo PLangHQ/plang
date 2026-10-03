@@ -379,7 +379,7 @@ public sealed partial class @this : global::app.type.item.path.@this
             // by it (Content-Type rules over the URL extension); empty when the server
             // sent none.
             var bytesData = context.Ok((object)new global::app.type.item.binary.@this(await resp.Content.ReadAsByteArrayAsync()));
-            bytesData.Properties.Set("contentType", resp.Content.Headers.ContentType?.MediaType ?? "");
+            bytesData.Property.Set("contentType", resp.Content.Headers.ContentType?.MediaType ?? "");
             return bytesData;
         }
         catch (System.Exception ex) when (IsNetworkError(ex))

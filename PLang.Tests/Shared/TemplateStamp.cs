@@ -31,7 +31,7 @@ public static class TemplateStamp
                     var declared = context.App.type.list[new global::app.type.@this(p.Type.Name, p.Type.kind.Name, p.Type.Strict, new global::app.type.item.template.kind.plang.@this()), context];
                     properties.Set(new global::app.type.property.@this
                     {
-                        Name = p.Name, Type = declared, Properties = p.Properties,
+                        Name = p.Name, Type = declared, Property = p.Property,
                         Value = PLang.Tests.Shared.Make.Built(context, p.Name, raw, declared).Peek(),
                     });
                 }
@@ -44,7 +44,7 @@ public static class TemplateStamp
             if (stamped != null && !ReferenceEquals(stamped, item))
                 properties.Set(new global::app.type.property.@this
                 {
-                    Name = p.Name, Properties = p.Properties, Value = stamped,
+                    Name = p.Name, Property = p.Property, Value = stamped,
                     Type = context.App.type.list[new global::app.type.@this(p.Type.Name, p.Type.kind.Name, p.Type.Strict, new global::app.type.item.template.kind.plang.@this()), context],
                 });
         }

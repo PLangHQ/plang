@@ -14,8 +14,8 @@ public class Cut4_PropertiesWireTests
         var app = NewApp();
         var plang = app.actor.list.User.Context.Format("application/plang");
         var d = new global::app.data.@this("response", "Hello!", context: app.actor.list.User.Context);
-        d.Properties["cost"] = 100;
-        d.Properties["model"] = "claude-opus-4-7";
+        d.Property.Set("cost", 100);
+        d.Property.Set("model", "claude-opus-4-7");
         var wire = (await plang.Serialize(d, app.actor.list.User.Context).Value())!.Clr<string>()!;
         var back = plang.Deserialize(wire, app.actor.list.User.Context);
         return (wire, back, app);
@@ -74,8 +74,8 @@ public class Cut4_PropertiesWireTests
         var (_, back, app) = await WriteAndRead();
         await using (app)
         {
-            await Assert.That((await back.Properties.Value("cost"))).IsEqualTo(100L);
-            await Assert.That(((await back.Properties.Value("model")))?.ToString()).IsEqualTo("claude-opus-4-7");
+            await Assert.That((await back.Property.Get<long>("cost"))).IsEqualTo(100L);
+            await Assert.That(((await back.Property.Value("model")))?.ToString()).IsEqualTo("claude-opus-4-7");
         }
     }
 
@@ -87,7 +87,7 @@ public class Cut4_PropertiesWireTests
         var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
         var d = new global::app.data.@this("response", "Hello!", context: ctx);
-        d.Properties["cost"] = 100;
+        d.Property.Set("cost", 100);
         var wire = (await plang.Serialize(d, ctx).Value())!.Clr<string>()!;
         var tampered = wire.Replace("\"cost\":100", "\"cost\":999");
         await Assert.That(tampered).IsNotEqualTo(wire);
@@ -107,7 +107,7 @@ public class Cut4_PropertiesWireTests
         var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
         var d = new global::app.data.@this("response", "Hello!", context: ctx);
-        d.Properties["cost"] = 100;
+        d.Property.Set("cost", 100);
         var wire = (await plang.Serialize(d, ctx).Value())!.Clr<string>()!;
 
         var tampered = plang.Deserialize(wire.Replace("\"cost\":100", "\"cost\":999"), ctx);

@@ -404,7 +404,7 @@ public class RunActionTests
     }
 
     // Covers the production coverage subscriber's branchLabel / branchChain paths in
-    // start.cs (the block that reads result.Properties and calls Coverage.RecordBranch*).
+    // start.cs (the block that reads result.Property and calls Coverage.RecordBranch*).
     // Other tests assert those Coverage methods directly, but only a fixture whose test
     // runs THROUGH test.start exercises the real wiring — a typo in the Properties keys
     // here would otherwise ship silently.
@@ -435,12 +435,12 @@ public class RunActionTests
         var site = "/Cond.test.goal:0";
 
         // BranchLabels populated via the production subscriber reading
-        // (await result.Properties.Value("branchLabel")) and calling RecordBranchLabel.
+        // (await result.Property.Value("branchLabel")) and calling RecordBranchLabel.
         await Assert.That(_app.test.list.Report.Coverage.BranchLabels.ContainsKey(site)).IsTrue();
         await Assert.That(_app.test.list.Report.Coverage.BranchLabels[site].Contains("true")).IsTrue();
 
         // BranchChains populated via the production subscriber reading
-        // (await result.Properties.Value("branchChain")) and calling RecordBranchChain.
+        // (await result.Property.Value("branchChain")) and calling RecordBranchChain.
         await Assert.That(_app.test.list.Report.Coverage.BranchChains.ContainsKey(site)).IsTrue();
         var chain = _app.test.list.Report.Coverage.BranchChains[site];
         await Assert.That(chain.Count).IsEqualTo(2);

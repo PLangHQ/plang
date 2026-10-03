@@ -47,10 +47,10 @@ public class AsTIdentityTests
     public async Task AsT_SameType_PreservesProperties()
     {
         var source = new global::app.data.@this<global::app.type.item.number.@this>("count", 42, context: _app.actor.list.User.Context);
-        source.Properties.Set("meta", "abc");
+        source.Property.Set("meta", "abc");
         var result = source.As<global::app.type.item.number.@this>(await source.Value<global::app.type.item.number.@this>());
-        await Assert.That(ReferenceEquals(source.Properties, result.Properties)).IsTrue();
-        await Assert.That(((await result.Properties.Value("meta")))?.ToString()).IsEqualTo("abc");
+        await Assert.That(ReferenceEquals(source.Property, result.Property)).IsTrue();
+        await Assert.That(((await result.Property.Value("meta")))?.ToString()).IsEqualTo("abc");
     }
 
     // Rule 2 — variance fast path. Data<number>.Value<item>() (to the base item type) produces
@@ -69,7 +69,7 @@ public class AsTIdentityTests
     }
 
     // Variance fast path aliases Properties from source onto the wrapped Data.
-    // ref-equal: Adding to source.Properties is visible via wrapped.Properties
+    // ref-equal: Adding to source.Property is visible via wrapped.Property
     // because they ARE the same Properties bag.
     [Test]
     public async Task AsT_Variance_PropertiesAliased()
@@ -77,9 +77,9 @@ public class AsTIdentityTests
         var inner = new global::app.type.item.list.@this<global::app.type.item.number.@this>(new[] { _app.Data("", 1), _app.Data("", 2) });
         var source = new global::app.data.@this<global::app.type.item.list.@this<global::app.type.item.number.@this>>("nums", inner, context: _app.actor.list.User.Context);
         var wrapped = source.As<global::app.type.item.list.@this>(await source.Value<global::app.type.item.list.@this>());
-        await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
-        source.Properties.Set("annot", "via-source");
-        await Assert.That(((await wrapped.Properties.Value("annot")))?.ToString()).IsEqualTo("via-source");
+        await Assert.That(ReferenceEquals(source.Property, wrapped.Property)).IsTrue();
+        source.Property.Set("annot", "via-source");
+        await Assert.That(((await wrapped.Property.Value("annot")))?.ToString()).IsEqualTo("via-source");
     }
 
 
@@ -92,12 +92,12 @@ public class AsTIdentityTests
     public async Task AsT_CrossType_ConversionWraps_PropertiesAliased()
     {
         var source = new global::app.data.@this<global::app.type.item.number.@this>("count", 42, context: _app.actor.list.User.Context);
-        source.Properties.Set("note", "hello");
+        source.Property.Set("note", "hello");
         var wrapped = source.As<global::app.type.item.text.@this>(await source.Value<global::app.type.item.text.@this>());
         await Assert.That(ReferenceEquals(source, wrapped)).IsFalse();
         await Assert.That((await wrapped.Value())?.ToString()).IsEqualTo("42");
-        await Assert.That(ReferenceEquals(source.Properties, wrapped.Properties)).IsTrue();
-        await Assert.That(((await wrapped.Properties.Value("note")))?.ToString()).IsEqualTo("hello");
+        await Assert.That(ReferenceEquals(source.Property, wrapped.Property)).IsTrue();
+        await Assert.That(((await wrapped.Property.Value("note")))?.ToString()).IsEqualTo("hello");
     }
 
     // Conversion failure path. The typed ask on a value that can't convert to T

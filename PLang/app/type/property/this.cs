@@ -141,12 +141,12 @@ public sealed class @this : global::app.type.item.note.IAbout
     /// eagerly read action/goal.call. Never loaded here; the run's Data does that.</summary>
     public global::app.type.item.@this? Value { get; init; }
 
-    /// <summary>The value's properties bag, as the .pr carries it.</summary>
-    public global::app.data.Properties Properties { get; init; } = new();
+    /// <summary>The value's own properties, as the .pr carries them.</summary>
+    public global::app.type.property.list.@this Property { get; init; } = new();
 
     /// <summary>This property holding <paramref name="value"/> instead — everything else it is, kept.</summary>
     public @this Holding(global::app.type.item.@this value) => new()
-        { Name = Name, Type = Type, Nullable = Nullable, Default = Default, Value = value, Properties = Properties };
+        { Name = Name, Type = Type, Nullable = Nullable, Default = Default, Value = value, Property = Property };
 
     /// <summary>Writes the property's row — <c>{name, type, value, properties?}</c>, the value as held
     /// (a wire relays its raw verbatim).</summary>
@@ -177,14 +177,14 @@ public sealed class @this : global::app.type.item.note.IAbout
             writer.Name("variable");
             new global::app.type.item.variable.serializer.Entry().Write(writer, held.Variable);
         }
-        if (Properties.Count > 0)
+        if (Property.Count > 0)
         {
             writer.Name("properties");
             writer.BeginObject();
-            foreach (var kvp in Properties)
+            foreach (var property in Property)
             {
-                writer.Name(kvp.Key);
-                await global::app.type.item.@this.Create(kvp.Value, context).Output(writer, mode, context);
+                writer.Name(property.Name);
+                await (property.Value ?? global::app.type.item.@null.@this.Instance).Output(writer, mode, context);
             }
             writer.EndObject();
         }
@@ -201,7 +201,7 @@ public sealed class @this : global::app.type.item.note.IAbout
         await (Value ?? global::app.type.item.@null.@this.Instance).Output(writer, mode, context);
     }
 
-    /// <summary>The run's own Data over this property — born with the run's context, the bag its own copy.</summary>
+    /// <summary>The run's own Data over this property — born with the run's context, its properties its own copy.</summary>
     public global::app.data.@this Data(global::app.actor.context.@this context)
-        => new(Name, Value ?? global::app.type.item.@null.@this.Instance, context: context) { Properties = Properties.Clone() };
+        => new(Name, Value ?? global::app.type.item.@null.@this.Instance, context: context) { Property = Property.Clone() };
 }

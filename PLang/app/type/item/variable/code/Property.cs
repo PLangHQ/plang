@@ -3,7 +3,7 @@ namespace app.type.item.variable.code;
 /// <summary>
 /// A member: <c>.address</c>, <c>."key.with.dots"</c> — the value navigates itself by name. A name
 /// starting with <c>!</c> (<c>!cost</c>, <c>!type</c>, <c>!path</c>) reads the binding instead of
-/// the value's content: its Properties, then Data's own members, then the value's members, then the
+/// the value's content: its Property, then Data's own members, then the value's members, then the
 /// value's members that need the asker's context — whether <c>cost</c> is a Property is only known
 /// at run, so that order is this step's own lookup.
 /// </summary>
@@ -36,14 +36,14 @@ public sealed class Property : Hop
         {
             var read = await previous.Peek().Get(previous, Name);
             // a member a program added to a variable's own value is kept in its binding — read after the value's own
-            if (own && (!read.Success || !read.IsInitialized) && previous.Properties.ContainsKey(Name))
-                return new global::app.data.@this(Name, await previous.Properties.Value(Name), parent: previous);
+            if (own && (!read.Success || !read.IsInitialized) && previous.Property.Contains(Name))
+                return new global::app.data.@this(Name, await previous.Property.Value(Name), parent: previous);
             return read;
         }
 
         var key = Name[1..];
-        if (previous.Properties.ContainsKey(key))
-            return new global::app.data.@this(key, await previous.Properties.Value(key), parent: previous);
+        if (previous.Property.Contains(key))
+            return new global::app.data.@this(key, await previous.Property.Value(key), parent: previous);
 
         // Data's own members (Name, Type, Error, Success, …), then a subclass's.
         var member = typeof(global::app.data.@this).GetProperty(key, Public)
@@ -59,7 +59,7 @@ public sealed class Property : Hop
     }
 
     /// <summary>A member takes the value as the parent's child; a <c>!</c> name lands in the
-    /// binding's Properties.</summary>
+    /// binding's Property.</summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
         global::app.data.@this? parent, object? value, global::app.actor.context.@this context)
         => Set(parent, value, context, own: false);
@@ -76,7 +76,7 @@ public sealed class Property : Hop
 
         try
         {
-            parent.Properties[Name[1..]] = value is global::app.data.@this held ? await held.Value() : value;
+            parent.Property.Set(Name[1..], value is global::app.data.@this held ? await held.Value() : value);
         }
         catch (System.ArgumentException ex)
         {

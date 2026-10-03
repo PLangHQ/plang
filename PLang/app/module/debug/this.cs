@@ -359,12 +359,12 @@ public sealed class @this
 
             sb.AppendLine($"    %{variable.Name}% = {await FormatValue(data.Peek(), context)} ({data.Type?.Name ?? "?"})");
 
-            if (data.Properties.Count > 0)
+            if (data.Property.Count > 0)
             {
-                sb.AppendLine($"      Properties ({data.Properties.Count}):");
-                foreach (var prop in data.Properties)
+                sb.AppendLine($"      Property ({data.Property.Count}):");
+                foreach (var prop in data.Property)
                 {
-                    sb.AppendLine($"        {prop.Key} = {await FormatValue(prop.Value, context)}");
+                    sb.AppendLine($"        {prop.Name} = {await FormatValue(prop.Value, context)}");
                 }
             }
         }

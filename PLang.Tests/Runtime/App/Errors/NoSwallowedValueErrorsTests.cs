@@ -22,7 +22,8 @@ public class NoSwallowedValueErrorsTests
 
     [Test] public async Task APropertyOfTheWrongType_ThrowsInsteadOfReadingAsAbsent()
     {
-        var properties = new global::app.data.Properties { ["n"] = "not a number" };
+        var properties = new global::app.type.property.list.@this();
+        properties.Set("n", "not a number");
         await Assert.That(async () => await properties.Get<int>("n")).Throws<FormatException>();
         await Assert.That(await properties.Get<int>("missing")).IsEqualTo(0);
     }

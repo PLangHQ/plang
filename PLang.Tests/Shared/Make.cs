@@ -75,7 +75,7 @@ public static class Make
     /// <summary>The program property a test's Data describes — its name, type, value as held and bag.
     /// The program holds properties, never Data; a test authors the value as a Data and hands it over.</summary>
     public static global::app.type.property.@this Property(global::app.data.@this data)
-        => new() { Name = data.Name, Type = data.Type, Value = data.Peek(), Properties = data.Properties };
+        => new() { Name = data.Name, Type = data.Type, Value = data.Peek(), Property = data.Property };
 
     /// <summary>A program property list from the Data a test authored — see <see cref="Property"/>.</summary>
     public static global::app.type.property.list.@this Properties(IEnumerable<global::app.data.@this> data)

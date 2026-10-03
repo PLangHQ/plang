@@ -33,12 +33,11 @@ public class PropertiesWireShapeTests
             : root.Clone();
     }
 
-    [Test] public async Task Properties_Surface_IsStringKeyedBag_NotDictionary_NotIListData()
+    [Test] public async Task Property_IsAListOfPropertyRows_NotADictionary_NotDatas()
     {
-        var t = typeof(global::app.data.Properties);
-        // A string-keyed metadata bag (enumerable as KeyValuePair<string, object?>) — but NOT a
-        // mutable IDictionary (no sync getter; values read async via Value/Get) and NOT a list of Data.
-        await Assert.That(typeof(IEnumerable<KeyValuePair<string, object?>>).IsAssignableFrom(t)).IsTrue();
+        var t = typeof(global::app.type.property.list.@this);
+        // rows of name, type and plang value — read async through Value/Get, never a mutable dictionary or Datas
+        await Assert.That(typeof(IReadOnlyList<global::app.type.property.@this>).IsAssignableFrom(t)).IsTrue();
         await Assert.That(typeof(IDictionary<string, object?>).IsAssignableFrom(t)).IsFalse();
         await Assert.That(typeof(System.Collections.Generic.IList<global::app.data.@this>).IsAssignableFrom(t)).IsFalse();
     }
@@ -48,7 +47,7 @@ public class PropertiesWireShapeTests
         var (plang, d, dispose) = SeedData();
         try
         {
-            d.Properties["k"] = propValue;
+            d.Property.Set("k", propValue);
             var wire = (await plang.Serialize(d, d.Context).Value())!.Clr<string>()!;
             var back = plang.Deserialize(wire, d.Context);
             return back;
@@ -59,32 +58,31 @@ public class PropertiesWireShapeTests
     [Test] public async Task Properties_RoundTrip_StringPrimitive()
     {
         var back = await RoundTrip("hello");
-        await Assert.That(((await back.Properties.Value("k")))?.ToString()).IsEqualTo("hello");
+        await Assert.That(((await back.Property.Value("k")))?.ToString()).IsEqualTo("hello");
     }
 
     [Test] public async Task Properties_RoundTrip_IntPrimitive()
     {
         var back = await RoundTrip(42);
-        await Assert.That(Convert.ToInt64((await back.Properties.Value("k")))).IsEqualTo(42L);
+        await Assert.That(await back.Property.Get<long>("k")).IsEqualTo(42L);
     }
 
     [Test] public async Task Properties_RoundTrip_LongPrimitive()
     {
         var back = await RoundTrip(123456789012L);
-        await Assert.That((await back.Properties.Value("k"))).IsEqualTo(123456789012L);
+        await Assert.That((await back.Property.Get<long>("k"))).IsEqualTo(123456789012L);
     }
 
     [Test] public async Task Properties_RoundTrip_DoublePrimitive()
     {
         var back = await RoundTrip(3.14);
-        // JSON 3.14 deserialises to decimal in our reader path; coerce for equality.
-        await Assert.That(Convert.ToDouble((await back.Properties.Value("k")))).IsEqualTo(3.14);
+        await Assert.That(await back.Property.Get<double>("k")).IsEqualTo(3.14);
     }
 
     [Test] public async Task Properties_RoundTrip_BoolPrimitive()
     {
         var back = await RoundTrip(true);
-        await Assert.That((await back.Properties.Value("k"))).IsEqualTo(true);
+        await Assert.That((await back.Property.Get<bool>("k"))).IsEqualTo(true);
     }
 
     [Test] public async Task Properties_RoundTrip_DateTimePrimitive()
@@ -92,7 +90,7 @@ public class PropertiesWireShapeTests
         var dt = new DateTime(2026, 5, 27, 12, 0, 0, DateTimeKind.Utc);
         var back = await RoundTrip(dt);
         // DateTime serialises to ISO 8601 string; read-back is a string. Coerce.
-        await Assert.That(DateTime.Parse((await back.Properties.Value("k"))!.ToString()!).ToUniversalTime()).IsEqualTo(dt);
+        await Assert.That(DateTime.Parse((await back.Property.Value("k"))!.ToString()!).ToUniversalTime()).IsEqualTo(dt);
     }
 
     [Test] public async Task Properties_RoundTrip_ByteArrayPrimitive()
@@ -100,7 +98,7 @@ public class PropertiesWireShapeTests
         var bytes = new byte[] { 1, 2, 3, 4 };
         var back = await RoundTrip(bytes);
         // byte[] serialises to base64 string on the wire; read-back is the string.
-        await Assert.That((await back.Properties.Value("k"))).IsEqualTo(Convert.ToBase64String(bytes));
+        await Assert.That(await back.Property.Get<string>("k")).IsEqualTo(Convert.ToBase64String(bytes));
     }
 
     [Test] public async Task Properties_RoundTrip_NestedDictOfPrimitives()
@@ -108,7 +106,7 @@ public class PropertiesWireShapeTests
         var dict = new Dictionary<string, object?> { ["cost"] = 100L, ["model"] = "claude" };
         var back = await RoundTrip(dict);
         // the dict comes back as the dict it was written as, its entries keeping their types
-        var roundDict = (await back.Properties.Value("k")) as global::app.type.item.dict.@this;
+        var roundDict = (await back.Property.Value("k")) as global::app.type.item.dict.@this;
         await Assert.That(roundDict).IsNotNull();
         var cost = await roundDict!.Get("cost", back.Context!)!.Value();
         await Assert.That(cost is global::app.type.item.number.@this).IsTrue();
@@ -121,7 +119,7 @@ public class PropertiesWireShapeTests
         var list = new List<object?> { 1L, 2L, "three" };
         var back = await RoundTrip(list);
         // the list comes back as the list it was written as, its elements keeping their types
-        var roundList = (await back.Properties.Value("k")) as global::app.type.item.list.@this;
+        var roundList = (await back.Property.Value("k")) as global::app.type.item.list.@this;
         await Assert.That(roundList).IsNotNull();
         await Assert.That(roundList!.Count.ToString()).IsEqualTo("3");
         await Assert.That((await roundList.At(2L, back.Context!).Value())?.ToString()).IsEqualTo("three");
@@ -133,7 +131,7 @@ public class PropertiesWireShapeTests
         var (plang, d, dispose) = SeedData();
         try
         {
-            d.Properties["cost"] = 100L;
+            d.Property.Set("cost", 100L);
             var wire = (await plang.Serialize(d, d.Context).Value())!.Clr<string>()!;
             var rec = Inner(wire);
             await Assert.That(rec.TryGetProperty("properties", out var props)).IsTrue();
@@ -148,7 +146,7 @@ public class PropertiesWireShapeTests
         var (plang, d, dispose) = SeedData();
         try
         {
-            d.Properties["cost"] = 100L;
+            d.Property.Set("cost", 100L);
             var wire = (await plang.Serialize(d, d.Context).Value())!.Clr<string>()!;
             using var doc = JsonDocument.Parse(wire);
             await Assert.That(doc.RootElement.TryGetProperty("cost", out _)).IsFalse();
@@ -173,10 +171,10 @@ public class PropertiesWireShapeTests
         var (plang, d, dispose) = SeedData();
         try
         {
-            d.Properties["value"] = "stays-in-properties-scope";
+            d.Property.Set("value", "stays-in-properties-scope");
             var wire = (await plang.Serialize(d, d.Context).Value())!.Clr<string>()!;
             var back = plang.Deserialize(wire, d.Context);
-            await Assert.That(((await back.Properties.Value("value")))?.ToString()).IsEqualTo("stays-in-properties-scope");
+            await Assert.That(((await back.Property.Value("value")))?.ToString()).IsEqualTo("stays-in-properties-scope");
         }
         finally { dispose(); }
     }
@@ -186,10 +184,10 @@ public class PropertiesWireShapeTests
         var (plang, d, dispose) = SeedData();
         try
         {
-            d.Properties["signature"] = "not-the-outer-sig";
+            d.Property.Set("signature", "not-the-outer-sig");
             var wire = (await plang.Serialize(d, d.Context).Value())!.Clr<string>()!;
             var back = plang.Deserialize(wire, d.Context);
-            await Assert.That(((await back.Properties.Value("signature")))?.ToString()).IsEqualTo("not-the-outer-sig");
+            await Assert.That(((await back.Property.Value("signature")))?.ToString()).IsEqualTo("not-the-outer-sig");
         }
         finally { dispose(); }
     }
@@ -199,19 +197,18 @@ public class PropertiesWireShapeTests
         var (plang, d, dispose) = SeedData();
         try
         {
-            d.Properties["name"] = "metadata-name";
+            d.Property.Set("name", "metadata-name");
             var wire = (await plang.Serialize(d, d.Context).Value())!.Clr<string>()!;
             var back = plang.Deserialize(wire, d.Context);
-            await Assert.That(((await back.Properties.Value("name")))?.ToString()).IsEqualTo("metadata-name");
+            await Assert.That(((await back.Property.Value("name")))?.ToString()).IsEqualTo("metadata-name");
         }
         finally { dispose(); }
     }
 
-    [Test] public async Task Properties_IntValue_ReadBackAsLong_JsonPromotion()
+    [Test] public async Task Properties_IntValue_ReadBackAsANumber()
     {
         var back = await RoundTrip(42);
-        // JSON has no distinct int type — TryGetInt64 wins, so we get long on read.
-        await Assert.That((await back.Properties.Value("k"))).IsTypeOf<long>();
+        await Assert.That(await back.Property.Value("k")).IsTypeOf<global::app.type.item.number.@this>();
     }
 
     // Properties ride inside the signed value: real signing refuses a tampered Properties value on read.
@@ -222,7 +219,7 @@ public class PropertiesWireShapeTests
         var ctx = app.actor.list.User.Context;
         var plang = ctx.Format("application/plang");
         var d = new global::app.data.@this("thing", "v", context: ctx);
-        d.Properties["cost"] = 100L;
+        d.Property.Set("cost", 100L);
         var wire = (await plang.Serialize(d, ctx).Value())!.Clr<string>()!;
         var tampered = wire.Replace("\"cost\":100", "\"cost\":999");
         await Assert.That(tampered).IsNotEqualTo(wire);
@@ -240,8 +237,8 @@ public class PropertiesWireShapeTests
         var (plang, d, dispose) = SeedData();
         try
         {
-            d.Properties["cost"] = 100L;
-            d.Properties["model"] = "claude";
+            d.Property.Set("cost", 100L);
+            d.Property.Set("model", "claude");
             var wire = (await plang.Serialize(d, d.Context).Value())!.Clr<string>()!;
             var rec = Inner(wire);
             var props = rec.GetProperty("properties");
@@ -260,22 +257,14 @@ public class PropertiesWireShapeTests
         var (plang, d, dispose) = SeedData();
         try
         {
-            d.Properties["k"] = "v";
+            d.Property.Set("k", "v");
             var wire = (await plang.Serialize(d, d.Context).Value())!.Clr<string>()!;
             // Inject a top-level field at the start of the object.
             var injected = wire.Replace("{\"name\":", "{\"traceId\":\"abc\",\"name\":");
             var back = plang.Deserialize(injected, d.Context);
             // Properties dictionary doesn't capture the unknown field.
-            await Assert.That(back.Properties.ContainsKey("traceId")).IsFalse();
+            await Assert.That(back.Property.Contains("traceId")).IsFalse();
         }
         finally { dispose(); }
-    }
-
-    [Test] public async Task Properties_OldIListByIntIndexer_NoLongerExists()
-    {
-        var t = typeof(global::app.data.Properties);
-        // The old IList surface had this[int]; new IDictionary surface only has this[string].
-        var intIndexer = t.GetProperty("Item", new[] { typeof(int) });
-        await Assert.That(intIndexer).IsNull();
     }
 }

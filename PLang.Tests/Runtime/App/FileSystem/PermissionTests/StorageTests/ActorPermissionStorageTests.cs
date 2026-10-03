@@ -250,6 +250,6 @@ public class ActorPermissionStorageTests
 
         var f1 = await app.actor.list.User.Permission.Find(new Path("/p"), global::app.type.item.permission.Verb.read);
         await Assert.That(f1).IsNotNull();
-        await Assert.That(f1!.Properties.Contains("permission.verified")).IsTrue();
+        await Assert.That(f1!.Property.Contains("permission.verified")).IsTrue();
     }
 }

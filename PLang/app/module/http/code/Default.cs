@@ -453,7 +453,7 @@ public sealed class Default : IHttp
         BuildProperties(result, request, response);
         // Duration as seconds (double) — Properties hold wire-supported primitives,
         // so a raw TimeSpan can't ride; total-seconds is queryable (%resp!Duration%).
-        result.Properties["Duration"] = duration.TotalSeconds;
+        result.Property.Set("Duration", duration.TotalSeconds);
         return result;
     }
 
@@ -516,38 +516,38 @@ public sealed class Default : IHttp
 
     private static void BuildProperties(data.@this data, HttpRequestMessage request, HttpResponseMessage response)
     {
-        var props = data.Properties;
+        var props = data.Property;
 
-        props["Url"] = request.RequestUri?.ToString();
-        props["Method"] = request.Method.Method;
+        props.Set("Url", request.RequestUri?.ToString());
+        props.Set("Method", request.Method.Method);
 
         var reqHeaders = new Dictionary<string, object?>();
         foreach (var h in request.Headers)
             reqHeaders[h.Key] = string.Join(", ", h.Value);
-        props["RequestHeaders"] = reqHeaders;
+        props.Set("RequestHeaders", reqHeaders);
 
         if (request.Content != null)
         {
-            props["ContentType"] = request.Content.Headers.ContentType?.ToString();
-            props["ContentLength"] = request.Content.Headers.ContentLength;
+            props.Set("ContentType", request.Content.Headers.ContentType?.ToString());
+            props.Set("ContentLength", request.Content.Headers.ContentLength);
         }
 
         // %response!status% — its code, the server's own reason (%response!status.text%), whether it is a success
         // (%response!status.ok%); it compares with a number by its code (%response!status% == 200).
-        props["Status"] = new global::app.type.item.status.@this((int)response.StatusCode, response.ReasonPhrase ?? "");
+        props.Set("Status", new global::app.type.item.status.@this((int)response.StatusCode, response.ReasonPhrase ?? ""));
 
         var respHeaders = new Dictionary<string, object?>();
         foreach (var h in response.Headers)
             respHeaders[h.Key] = string.Join(", ", h.Value);
-        props["Headers"] = respHeaders;
+        props.Set("Headers", respHeaders);
 
         var contentHeaders = new Dictionary<string, object?>();
         foreach (var h in response.Content.Headers)
             contentHeaders[h.Key] = string.Join(", ", h.Value);
-        props["ContentHeaders"] = contentHeaders;
+        props.Set("ContentHeaders", contentHeaders);
 
         if (response.Content.Headers.ContentType?.CharSet != null)
-            props["Charset"] = response.Content.Headers.ContentType.CharSet;
+            props.Set("Charset", response.Content.Headers.ContentType.CharSet);
     }
 
     // --- Streaming ---

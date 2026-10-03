@@ -66,7 +66,7 @@ public sealed class TypeSafe : IDecider
               ?? new global::app.type.item.dict.@this();
 
         var answer = context.Ok(shaped).As<global::app.type.item.dict.@this>();
-        if (await result.Get("usage") is { } usage) answer.Properties.Set("usage", await usage.Value());
+        if (await result.Get("usage") is { } usage) answer.Property.Set("usage", await usage.Value());
         return answer;
     }
 

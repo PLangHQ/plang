@@ -82,7 +82,7 @@ public class VariableResolveTest : System.IAsyncDisposable
 
         var response = await context.Variable.Get("response");
         // the property holds the plang value written: the number 100
-        var cost = await response.Properties.Value("cost");
+        var cost = await response.Property.Value("cost");
         await Assert.That(cost is global::app.type.item.number.@this).IsTrue();
         await Assert.That(cost?.ToString()).IsEqualTo("100");
     }

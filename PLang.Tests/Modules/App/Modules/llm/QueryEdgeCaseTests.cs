@@ -95,7 +95,7 @@ public class QueryEdgeCaseTests
         await Assert.That(_handler.CallCount).IsEqualTo(3);
         await Assert.That(callIndex).IsEqualTo(3);
         // Loop exited via limit.tool — result carries metadata
-        await Assert.That((await result.Properties.Value("Truncated"))).IsEqualTo(true);
+        await Assert.That((await result.Property.Get<bool>("Truncated"))).IsEqualTo(true);
     }
 
     [Test]

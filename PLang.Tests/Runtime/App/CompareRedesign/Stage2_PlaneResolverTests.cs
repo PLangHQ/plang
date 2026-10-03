@@ -35,7 +35,7 @@ public class Stage2_PlaneResolverTests : System.IAsyncDisposable
         await Assert.That(length.Peek()!.ToString()).IsEqualTo("5");
         await Assert.That((await t.Get("!length")).IsInitialized).IsFalse();
         // envelope properties resolve on the same plane
-        t.Properties["cost"] = 42;
+        t.Property.Set("cost", 42);
         var cost = await t.Get("!cost");
         await Assert.That(cost.Peek()?.ToString()).IsEqualTo("42");
     }
@@ -115,7 +115,7 @@ public class Stage2_PlaneResolverTests : System.IAsyncDisposable
         // %dict.size% (content key=10) and %dict!size% (property bag=28) — sigil picks the plane
         await using var app = NewApp();
         var d = new Data("dict", new Dictionary<string, object?> { ["size"] = 10 }, context: app.actor.list.User.Context);
-        d.Properties["size"] = 28;
+        d.Property.Set("size", 28);
         var content = await d.Get("size");     // `.` — the data plane (content key)
         var property = await d.Get("!size");   // `!` — the property plane (Properties bag)
         await Assert.That((await content.Value())?.ToString()).IsEqualTo("10");

@@ -158,7 +158,7 @@ public partial class @this
         try
         {
             var rendered = await asked.Value();
-            if (asked.Success) return new @this(Name, rendered, context: _context) { Properties = Properties.Clone() };
+            if (asked.Success) return new @this(Name, rendered, context: _context) { Property = Property.Clone() };
             why = asked.Error!;
         }
         // a partial template throws for a name it can't read; here that is this value's answer, on the Data
@@ -199,22 +199,16 @@ public partial class @this
     [JsonIgnore]
     public DateTime Updated { get; private set; }
 
-    // Field initializer (not constructor assignment) so identity-preserving wraps (As<T>)
-    // can override via `new Data<T>(...) { Properties = source.Properties }` and have the
-    // initializer win — assignments in the object initializer fire AFTER field initializers
-    // AND after the constructor body.
-    //
-    // [Out, Store] on this and the other envelope properties (Value, Type, Error,
-    // Success, Signature) is documentation, not active filtering. Wire writes the
-    // canonical {name, type, value, properties, signature} envelope by hand and
-    // never consults Tagged for the Data type itself — Normalize's nested-Data
-    // branch (this.Normalize.cs) short-circuits before NormalizeObject runs on
-    // a Data. The tags advertise the intended wire shape; the actual wire
-    // emission lives in Wire.Write.
+    /// <summary>The value's properties — facts a value carries beside what it is (an http answer's Status and Headers,
+    /// a member a program kept on a variable), read with <c>!</c> (<c>%answer!Status%</c>). The same list a type
+    /// declares its properties in and a thing that lives on keeps added ones in.</summary>
+    // Field initializer (not constructor assignment) so identity-preserving wraps (As<T>) can override via
+    // `new Data<T>(...) { Property = source.Property }` and have the initializer win. [Out, Store] here is
+    // documentation: the wire writes Data's shape by hand (this.Output.cs).
     [JsonIgnore]
     [LlmIgnore]
     [Out, Store]
-    public virtual Properties Properties { get; set; } = new();
+    public virtual global::app.type.property.list.@this Property { get; set; } = new();
 
 
     [JsonConstructor]
@@ -543,7 +537,7 @@ public partial class @this
     /// <summary>
     /// Forms the typed slot binding from this resolved Data and an already-built
     /// answer instance — a <c>Data&lt;T&gt;</c> view under THIS binding's identity
-    /// (Name, Context; Properties aliased by reference). The
+    /// (Name, Context; Property aliased by reference). The
     /// answer is the instance the typed ask produced; a null answer carries this
     /// binding's failure across (the typed ask's decline landed it here via
     /// <c>Fail</c>), so the formed slot's <c>Success</c> mirrors the source.
@@ -554,7 +548,7 @@ public partial class @this
         {
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties,
+            Property = Property,
         };
         clone._item = answer ?? global::app.type.item.@this.Absent;
         // A declined ask lands its reason on this binding (asking.Fail) and
@@ -569,7 +563,7 @@ public partial class @this
 
     /// <summary>
     /// The typed FACE of this binding — a <see cref="@this{T}"/> over the SAME value, with
-    /// NO resolution and NO clone of the value. Shares <c>_item</c>, Context and Properties by
+    /// NO resolution and NO clone of the value. Shares <c>_item</c>, Context and Property by
     /// reference: this binding and the view are two handles on one variable.
     /// It is <see cref="Value{T}"/> MINUS the resolve — the dispatch hands a typed view onto
     /// the action's property; the handler's own <c>.Value()</c> opens the door later. An
@@ -585,7 +579,7 @@ public partial class @this
         {
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties,
+            Property = Property,
             IsInitialized = IsInitialized,
         };
         view._item = _item;
@@ -670,7 +664,7 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties.Clone(),
+            Property = Property.Clone(),
             Signature = signature ?? Signature,
         };
     }
@@ -687,7 +681,7 @@ public partial class @this
             Handled = Handled,
             Returned = Returned,
             ReturnDepth = ReturnDepth,
-            Properties = Properties.Clone()
+            Property = Property.Clone()
         };
     }
 
@@ -814,8 +808,8 @@ public class @this<T> : @this
     /// idiomatic call site is <c>if (!source.Success) return Data&lt;T&gt;.From(source);</c>.
     ///
     /// What is forwarded: Type, Error, Handled, Returned, ReturnDepth,
-    /// Signature, Snapshot, and Properties (shared reference — forwarded
-    /// metadata, not deep-cloned; mutating the new Data's Properties mutates
+    /// Signature, Snapshot, and Property (shared reference — forwarded
+    /// metadata, not deep-cloned; mutating the new Data's Property mutates
     /// the source's).
     ///
     /// Value handling is lossy by design: <c>source.Value is T t ? t : default</c>.
@@ -849,7 +843,7 @@ public class @this<T> : @this
         copy.Handled = source.Handled;
         copy.Returned = source.Returned;
         copy.ReturnDepth = source.ReturnDepth;
-        copy.Properties = source.Properties;
+        copy.Property = source.Property;
         copy.Snapshot = source.Snapshot;
         return copy;
     }
@@ -898,10 +892,10 @@ public class DynamicData : @this
         _found = found;
     }
 
-    public override Properties Properties
+    public override global::app.type.property.list.@this Property
     {
-        get => _found(Context)?.Properties ?? base.Properties;
-        set => base.Properties = value;
+        get => _found(Context)?.Property ?? base.Property;
+        set => base.Property = value;
     }
 
     /// <summary>In memory now = the current computation, lifted with this Data's context.</summary>
@@ -918,7 +912,7 @@ public class DynamicData : @this
         global::app.type.item.signature.@this? signature = null)
     {
         var ctx = context ?? Context;
-        return new @this(name, _cell.Compute(ctx), context: ctx) { Properties = Properties.Clone() };
+        return new @this(name, _cell.Compute(ctx), context: ctx) { Property = Property.Clone() };
     }
 }
 

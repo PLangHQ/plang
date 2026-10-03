@@ -43,7 +43,7 @@ public class ErrorShowTests : System.IAsyncDisposable
         var result = await app.Start();
 
         await result.IsFailure();
-        await Assert.That(result.Properties.Contains("shown")).IsTrue();
+        await Assert.That(result.Property.Contains("shown")).IsTrue();
     }
 
     // Show, as the app runs it after a failed run: the error handed in by name.

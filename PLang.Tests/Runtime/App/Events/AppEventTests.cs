@@ -18,8 +18,8 @@ public class AppEventTests
         var fired = app.goal.on.start;
         // as the binding scopes it: the event, what it fired for, the result so far — on the frame it fired in
         var running = new global::app.data.@this("!event", fired, context: ctx);
-        running.Properties.Set("item", goal);
-        running.Properties.Set("result", new global::app.type.item.text.@this("so far"));
+        running.Property.Set("item", goal);
+        running.Property.Set("result", new global::app.type.item.text.@this("so far"));
         await using var frame = ctx.call.Push(goal);
         frame.Event = running;
 

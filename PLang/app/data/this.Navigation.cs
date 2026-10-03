@@ -55,7 +55,7 @@ public partial class @this
             // value inside another has nowhere to keep one
             if (keeps && !isIndex)
             {
-                Properties[key] = value is @this given ? await given.Value() : value;
+                Property.Set(key, value is @this given ? await given.Value() : value);
                 return this;
             }
             return _context?.Error(new global::app.error.Error(

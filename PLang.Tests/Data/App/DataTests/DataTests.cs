@@ -84,8 +84,8 @@ public class DataTests : System.IAsyncDisposable
     {
         var ov = new Data("test");
 
-        await Assert.That(ov.Properties).IsNotNull();
-        await Assert.That(ov.Properties.Count).IsEqualTo(0);
+        await Assert.That(ov.Property).IsNotNull();
+        await Assert.That(ov.Property.Count).IsEqualTo(0);
     }
 
     [Test]
@@ -608,7 +608,7 @@ public class DataTests : System.IAsyncDisposable
         // data-normalize Stage 1: [Out] is the wire whitelist. Properties already
         // ships via Wire's custom Write — the tag aligns the attribute
         // with reality so Stage 2's filter sees it correctly.
-        var prop = typeof(Data).GetProperty(nameof(Data.Properties));
+        var prop = typeof(Data).GetProperty(nameof(Data.Property));
 
         await Assert.That(prop).IsNotNull();
         await Assert.That(prop!.GetCustomAttribute<OutAttribute>()).IsNotNull();

@@ -101,14 +101,14 @@ public sealed class Writer : IWriter
     /// </summary>
     public void EndRecord(app.data.@this record)
     {
-        if (record.Properties.Count > 0)
+        if (record.Property.Count > 0)
         {
             _writer.WritePropertyName("properties");
             _writer.WriteStartObject();
-            foreach (var kvp in record.Properties)
+            foreach (var property in record.Property)
             {
-                _writer.WritePropertyName(kvp.Key);
-                Value(kvp.Value);
+                _writer.WritePropertyName(property.Name);
+                Value(property.Value);
             }
             _writer.WriteEndObject();
         }

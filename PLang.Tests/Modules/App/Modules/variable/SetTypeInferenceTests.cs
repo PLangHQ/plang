@@ -246,10 +246,10 @@ public class SetTypeInferenceTests
         await (await alias.Start(context)).IsSuccess();
 
         var y = await context.Variable.Get("y");
-        y.Properties["NewProp"] = 1L;
+        y.Property.Set("NewProp", 1L);
 
         var x = await context.Variable.Get("x");
-        await Assert.That(x.Properties.ContainsKey("NewProp")).IsFalse();
-        await Assert.That(y.Properties.ContainsKey("NewProp")).IsTrue();
+        await Assert.That(x.Property.Contains("NewProp")).IsFalse();
+        await Assert.That(y.Property.Contains("NewProp")).IsTrue();
     }
 }

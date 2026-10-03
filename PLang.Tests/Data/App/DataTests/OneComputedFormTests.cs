@@ -12,12 +12,12 @@ public class OneComputedFormTests
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
         var found = ctx.Ok("hello");
-        found.Properties.Set("origin", "test");
+        found.Property.Set("origin", "test");
 
         var dynamic = new global::app.data.DynamicData("x", _ => found, ctx);
 
         await Assert.That((await dynamic.Value())?.ToString()).IsEqualTo("hello");
-        await Assert.That(await dynamic.Properties.Get<string>("origin")).IsEqualTo("test");
+        await Assert.That(await dynamic.Property.Get<string>("origin")).IsEqualTo("test");
     }
 
     // Nothing found is the null value and an empty bag.
@@ -29,7 +29,7 @@ public class OneComputedFormTests
         var dynamic = new global::app.data.DynamicData("x", _ => null, ctx);
 
         await Assert.That(dynamic.Peek().IsNull).IsTrue();
-        await Assert.That(dynamic.Properties.Count).IsEqualTo(0);
+        await Assert.That(dynamic.Property.Count).IsEqualTo(0);
     }
 
     // %Now% is found fresh at each read, built with the asker's context.

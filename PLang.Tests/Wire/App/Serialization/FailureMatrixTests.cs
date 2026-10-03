@@ -15,13 +15,13 @@ public class FailureMatrixTests : System.IAsyncDisposable
     {
         var d = new global::app.data.@this("x", "y", context: app.actor.list.User.Context);
         var inner = new global::app.data.@this("inner", "v", context: app.actor.list.User.Context);
-        await Assert.That(() => d.Properties["k"] = inner).Throws<ArgumentException>();
+        await Assert.That(() => d.Property.Set("k", inner)).Throws<ArgumentException>();
     }
 
     [Test] public async Task PropertiesSet_ArbitraryObjectValue_ThrowsArgumentException()
     {
         var d = new global::app.data.@this("x", "y", context: app.actor.list.User.Context);
-        await Assert.That(() => d.Properties["k"] = new System.Threading.CancellationTokenSource()).Throws<ArgumentException>();
+        await Assert.That(() => d.Property.Set("k", new System.Threading.CancellationTokenSource())).Throws<ArgumentException>();
     }
 
     [Skip("Serializing within an actor now signs the inner payload, so compressed/hashed bytes are a signature LAYER. The archived wire shape and compress/hash-over-signature round-trip need the archive-as-layer design (deferred). NOTE: Decompress currently loses the inner value through this path - see todos.md.")]
@@ -54,7 +54,7 @@ public class FailureMatrixTests : System.IAsyncDisposable
         // the resulting Data is observable as empty.
         var back = plang.Stored("{\"unknown\":42}", ctx);   // Deserialize returns the reconstruction itself
         await back.IsSuccess();
-        await Assert.That(back!.Properties.ContainsKey("unknown")).IsFalse();
+        await Assert.That(back!.Property.Contains("unknown")).IsFalse();
     }
 
     [Test] public async Task CryptoHash_WithUnsupportedAlgorithm_ReturnsTheChoicesRefusal()
