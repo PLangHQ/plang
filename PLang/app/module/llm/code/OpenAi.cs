@@ -64,7 +64,9 @@ public sealed class OpenAi : ILlm
         // --- Config: the llm module's settings — a saved key wins, else its environment's ---
         var llm = context.Setting.Of<global::app.module.llm.setting.@this>();
         var endpoint = llm.Endpoint.ToString();
-        var apiKey = llm.Key.ToString();
+        var held = await llm.Asked(context);
+        if (!held.Success) return held;
+        var apiKey = (await held.Value())!.ToString();
         var model = ((action.Model == null ? null : await action.Model.Value())?.ToString()) is { Length: >0 } __m ? __m : llm.Model.ToString();
 
         // --- Validate ---

@@ -15,6 +15,28 @@ public sealed class @this : global::app.type.item.setting.module.@this
     [Out, Store, Sensitive] public global::app.type.item.text.@this Key { get; set; }
         = System.Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? "";
 
+    /// <summary>The key, as it stands after asking: one held (saved, or the environment's) answers at once; none held,
+    /// the user is asked once, secretly, through the actor's ask, and the answer is saved on the asking actor's row —
+    /// never asked again. With no one to ask, <c>MissingLlmKey</c>, naming both ways to give one.</summary>
+    public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.text.@this>> Asked(global::app.actor.context.@this context)
+    {
+        if (Key.ToString().Length > 0) return context.Ok(Key);
+        var asked = await new global::app.goal.step.action.@this(new global::app.module.output.ask(context)
+        {
+            Question = (global::app.type.item.text.@this)"This program uses an LLM and needs a key. Paste it:",
+            Secret = (global::app.type.item.@bool.@this)true,
+        }, context).Start(context);
+        // no one answered — no input, or an input with nothing in it — or nothing was given
+        if (!asked.Success || await asked.Value() is not global::app.type.item.secret.@this { Characters.Length: > 0 } secret)
+            return context.Error<global::app.type.item.text.@this>(new global::app.error.Error(
+                "This program uses an LLM and has no key, and no one gave one: set %!llm.setting.key% or the OPENAI_API_KEY environment variable."
+                + (asked.Error is { } why ? $" ({why.Message})" : ""),
+                "MissingLlmKey", 401));
+        Key = secret.Characters;
+        var saved = await context.Setting.Save(this);
+        return saved.Success ? context.Ok(Key) : context.Error<global::app.type.item.text.@this>(saved.Error!);
+    }
+
     /// <summary>Where a query is sent — when none is saved, the <c>OPENAI_API_ENDPOINT</c> environment variable's,
     /// else OpenAI's.</summary>
     [Out, Store] public global::app.type.item.text.@this Endpoint { get; set; }
