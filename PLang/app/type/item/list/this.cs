@@ -591,7 +591,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// without ignores both.
     /// </summary>
     [LlmBuilder]
-    public virtual System.Threading.Tasks.ValueTask<@this> all(global::app.actor.context.@this context,
+    public virtual System.Threading.Tasks.ValueTask<@this> All(global::app.actor.context.@this context,
         global::app.type.item.dict.@this? setting = null)
         => System.Threading.Tasks.ValueTask.FromResult(this);
 

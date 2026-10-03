@@ -95,6 +95,12 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static bool operator ==(System.TimeSpan a, @this? b) => b == a;
     public static bool operator !=(System.TimeSpan a, @this? b) => !(b == a);
 
+    /// <summary>A span holds a number a step wrote when it is the whole span in one of its units — 1s holds 1000 (as
+    /// milliseconds) and 1 (as seconds), never 7.</summary>
+    internal override async System.Threading.Tasks.ValueTask<bool> Holds(global::app.type.item.number.@this number, global::app.actor.context.@this context)
+        => await base.Holds(number, context)
+           || new[] { Milliseconds, Seconds, Minutes, Hours, Days }.Any(unit => unit.CompareTo(number) == 0);
+
     // ---- The span in each unit, whole: %elapsed.seconds% is 90 for 1m30s. How a span looks (1h30m) is its
     //      writer's, so there are no component members ----
     [LlmBuilder] public global::app.type.item.number.@this Days => Value.TotalDays;

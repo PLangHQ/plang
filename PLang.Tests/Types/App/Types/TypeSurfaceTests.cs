@@ -56,6 +56,10 @@ public class TypeSurfaceTests : System.IAsyncDisposable
         await Assert.That((await Read("rows.length")).IsInitialized).IsFalse();
     }
 
+    // a member answering through a task, either kind, is listed as what the task completes with
+    [Test] public async Task AListsAll_IsListedAsAList()
+        => await Assert.That(_app.type.list["list"].Property!["all"]!.Type.Name).IsEqualTo("list");
+
     [Test] public async Task ADict_ARealKeyWinsOverItsOwnCount()
     {
         await Ctx.Variable.Set("d", new Dictionary<string, object?> { ["a"] = 1, ["b"] = 2 });

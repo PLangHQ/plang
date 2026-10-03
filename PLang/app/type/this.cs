@@ -774,7 +774,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // runtime's to give, never a step's argument.
         property.@this Member(System.Reflection.MethodInfo m)
         {
-            var answers = m.ReturnType is { IsGenericType: true } task && task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>)
+            var answers = m.ReturnType is { IsGenericType: true } task
+                          && (task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>)
+                              || task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.ValueTask<>))
                 ? task.GenericTypeArguments[0] : m.ReturnType;
             // a member answering through a Data (so a failure rides it) answers what the Data holds
             if (answers is { IsGenericType: true } data && data.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))

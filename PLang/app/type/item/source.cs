@@ -137,6 +137,16 @@ public class source : @this
         return await read.Value() is { } born && !ReferenceEquals(born, this) && read.Success && await born.Holds(quoted, context);
     }
 
+    /// <summary>A literal holds a number a step wrote as the value it reads into holds it (a duration of 1s holds 1000,
+    /// as milliseconds); one holding variables is never read here — its written form answers.</summary>
+    internal override async System.Threading.Tasks.ValueTask<bool> Holds(global::app.type.item.number.@this number, global::app.actor.context.@this context)
+    {
+        if (await base.Holds(number, context)) return true;
+        if (HasVariable) return false;
+        var read = new global::app.data.@this("", this, context: context);
+        return await read.Value() is { } born && !ReferenceEquals(born, this) && read.Success && await born.Holds(number, context);
+    }
+
     public override async System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
     {
         // The value loads with the context of the Data that asks — never the source's own: a

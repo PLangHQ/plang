@@ -71,9 +71,11 @@ public sealed partial class @this
                 problems.Add($"step {Index}: {p} is in the step but not in your answer");
         // a number the step writes as digits is one of its markers: an answer without it dropped what the step
         // says (`if %n% is 0` answered with no Right). Present when the digits stand in the answer on their own,
-        // not inside a larger number — a duration's PT5S holds the step's 5.
+        // not inside a larger number — a duration's PT5S holds the step's 5 — or held by one of the answer's values as it
+        // answers for itself (`sleep 1000 ms` answered 1s: the duration is 1000 milliseconds).
         foreach (var n in Number.Matches(Quoted.Replace(Text, "")).Select(m => m.Value).Distinct())
-            if (!System.Text.RegularExpressions.Regex.IsMatch(written, $@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(n)}(?![\d.]|\.\d)"))
+            if (!System.Text.RegularExpressions.Regex.IsMatch(written, $@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(n)}(?![\d.]|\.\d)")
+                && !await Counted((global::app.type.item.number.@this)double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)))
                 problems.Add($"step {Index}: {n} is in the step but not in your answer");
         // and a text the answer writes that the step's words don't hold is invented (channel="X" on a
         // step that names no X) — a choice's option, a number and a dict's keys are not texts
@@ -86,6 +88,13 @@ public sealed partial class @this
         {
             foreach (var value in values)
                 if (await value.Holds(quoted, context)) return true;
+            return false;
+        }
+
+        async System.Threading.Tasks.Task<bool> Counted(global::app.type.item.number.@this number)
+        {
+            foreach (var value in values)
+                if (await value.Holds(number, context)) return true;
             return false;
         }
     }

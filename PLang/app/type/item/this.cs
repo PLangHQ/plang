@@ -417,6 +417,17 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         return writer.ToString().Contains(quoted);
     }
 
+    /// <summary>Does this value, as an answer writes it, hold the number a step wrote as digits? By its own written form,
+    /// by default: the digits standing on their own, never inside a larger number (5 is not in 15). A value that spells
+    /// a number another way (a duration of 1s holds 1000, as milliseconds) answers by that too.</summary>
+    internal virtual async System.Threading.Tasks.ValueTask<bool> Holds(global::app.type.item.number.@this number, global::app.actor.context.@this context)
+    {
+        var writer = new global::app.goal.step.action.formal.Writer();
+        await Output(writer, global::app.View.Store, context);
+        return System.Text.RegularExpressions.Regex.IsMatch(writer.ToString(),
+            $@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(number.ToString())}(?![\d.]|\.\d)");
+    }
+
     /// <summary>Is this value of the kind <paramref name="name"/> (by its name, an alias, a MIME or an extension) — its
     /// own kind, or one a value in its history had. A value whose kinds are sizes answers every one it fits.</summary>
     protected internal virtual bool IsKind(string name) => Type.kind.Names(name) || history.HasKind(name);

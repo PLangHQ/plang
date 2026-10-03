@@ -59,7 +59,7 @@ public class GoalAccessorTests
 
         var appOnly = new global::app.type.item.dict.@this();
         appOnly.Set("os", false);
-        var all = (global::app.type.item.list.@this<global::app.goal.@this>)await app.goal.list.all(app.actor.list.System.Context!, appOnly);
+        var all = (global::app.type.item.list.@this<global::app.goal.@this>)await app.goal.list.All(app.actor.list.System.Context!, appOnly);
 
         await Assert.That(all.Items().Select(g => g.Name).ToList()).IsEquivalentTo(new[] { "Public" });
     }

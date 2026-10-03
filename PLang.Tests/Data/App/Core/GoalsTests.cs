@@ -263,7 +263,7 @@ public class GoalsTests : System.IAsyncDisposable
 
             var appOnly = new global::app.type.item.dict.@this();
             appOnly.Set("os", false);
-            var every = await engine.goal.list.all(context, appOnly);
+            var every = await engine.goal.list.All(context, appOnly);
             await Assert.That(((global::app.type.item.list.@this<Goal>)every).Items().Select(g => g.Name).ToList())
                 .IsEquivalentTo(new[] { "Start" });
 
@@ -271,12 +271,12 @@ public class GoalsTests : System.IAsyncDisposable
             both.Set("os", false);
             both.Set("visibility", new global::app.type.item.list.@this(new global::app.type.item.@this[]
                 { new global::app.type.item.text.@this("public"), new global::app.type.item.text.@this("private") }));
-            var all = await engine.goal.list.all(context, both);
+            var all = await engine.goal.list.All(context, both);
             await Assert.That(((global::app.type.item.list.@this<Goal>)all).Items().Select(g => g.Name).ToList())
                 .IsEquivalentTo(new[] { "Start", "Show" });
 
             // the default lists the system's too (none beside a test binary) and the app's
-            var byDefault = (global::app.type.item.list.@this<Goal>)await engine.goal.list.all(context);
+            var byDefault = (global::app.type.item.list.@this<Goal>)await engine.goal.list.All(context);
             await Assert.That(byDefault.Items().Any(g => g.Name == "Start")).IsTrue();
         }
         finally { System.IO.Directory.Delete(dir, true); }

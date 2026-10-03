@@ -110,12 +110,12 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
     }
 
     /// <summary>Walks the items as <paramref name="context"/>'s actor asks for them; <paramref name="setting"/>
-    /// as <see cref="all"/>. A list with no setting class walks the same for every asker.</summary>
+    /// as <see cref="All"/>. A list with no setting class walks the same for every asker.</summary>
     internal virtual System.Collections.Generic.IAsyncEnumerable<T> Walk(global::app.type.item.dict.@this? setting,
         global::app.actor.context.@this context) => Walk();
 
     /// <summary>Every item, as a list: the asker's walk gathered.</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.type.item.list.@this> all(global::app.actor.context.@this context,
+    public override async System.Threading.Tasks.ValueTask<global::app.type.item.list.@this> All(global::app.actor.context.@this context,
         global::app.type.item.dict.@this? setting = null)
     {
         var every = new @this<T>();

@@ -169,6 +169,28 @@ public class MatchTests
         await Assert.That(result.Error!.Message).DoesNotContain("%Name% is in the step");
     }
 
+    // A duration answers itself in its own words (1000 ms is 1s): the step's number is held by the span it is in one
+    // of its units, so `sleep 1000 ms` builds as `sleep 2 seconds` does; a number it isn't in any unit is still missing.
+    [Test]
+    [Arguments("sleep 1000 ms", "1000ms", null)]
+    [Arguments("sleep 2 seconds", "2s", null)]
+    [Arguments("sleep 7 seconds", "1s", "7 is in the step but not in your answer")]
+    public async Task ADurationHoldsTheNumberItIsInAUnit(string step, string duration, string? refused)
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step(step));
+        await Picked(goal, app.actor.list.System.Context, (0, "timer.sleep"));
+
+        var result = await Match(goal, $"""[0] timer.sleep(Duration="{duration}")""", app.actor.list.System.Context);
+
+        if (refused == null) await result.IsSuccess();
+        else
+        {
+            await result.IsFailure();
+            await Assert.That(result.Error!.Message).Contains(refused);
+        }
+    }
+
     // A number the step writes is one of its markers: an answer that drops it (no Operator, no Right) is refused,
     // never taken silently.
     [Test]

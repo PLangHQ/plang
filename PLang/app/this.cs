@@ -153,7 +153,7 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
 
     /// <summary>
     /// The type named <c>goal</c> — <c>%!app.goal%</c>: its <c>list</c> is the goals read so far (and the
-    /// reading: every goal through <c>all()</c>, the goal a call names through <c>Find</c>),
+    /// reading: every goal through <c>All()</c>, the goal a call names through <c>Find</c>),
     /// <c>Get(address)</c> is one goal as a result, <c>current</c> the running one.
     /// </summary>
     public global::app.type.current.@this<Goal, global::app.goal.list.@this> goal { get; }
