@@ -231,6 +231,9 @@ public class ModulePageTests
     [Test]
     public Task TheLoopPage_IsTheSpecsGolden() => ComparePageToGolden("loop");
 
+    [Test]
+    public Task TheScreenPage_IsTheSpecsGolden() => ComparePageToGolden("screen");
+
     // Re-pins a module's golden from its rendered page, when the module's teaching changed on purpose: run it
     // explicitly, then read the spec's diff — only the teaching's lines may move. A golden holding annotation lines is
     // re-pinned by hand, so none is lost.

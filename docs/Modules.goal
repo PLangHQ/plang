@@ -4,11 +4,12 @@ Modules
 / Documentation/v0.2/module-reference-generation.md): the module's description, then each action's description,
 / the steps of its examples, its properties (how a step says each, its type, whether it is required, its default,
 / what it changes) and what it returns.
-/ Only the file, condition and loop modules' notes are tagged (with a golden page each), so only their pages are
-/ written. The loop over %!app.module.list% comes when every module's notes are tagged.
+/ Only the file, condition, loop and screen modules' notes are tagged (with a golden page each), so only their pages
+/ are written. The loop over %!app.module.list% comes when every module's notes are tagged.
 - call goal Page module=%!app.module.file%
 - call goal Page module=%!app.module.condition%
 - call goal Page module=%!app.module.loop%
+- call goal Page module=%!app.module.screen%
 
 Page
 / One module's page, system/modules/<name>/start.md, then what its actions' notes and properties don't agree on.
