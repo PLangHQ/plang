@@ -55,6 +55,7 @@ Entry form: **who** · **what** · **cost** (evidence) · **if I had** (the wish
 - **architect · gating a side branch disturbs my tree.** **If I had** the gate run in its own git worktree.
 - **architect · stale-binary and path traps in CLAUDE.md** (`./dev.sh test <Class>` skips PlangConsole; `Tests/` is `test/`): proposals v6 and v7, waiting for the docs pass.
 - **builder · the binary's `os/` is the source's `os/`** (the same inode): a measurement edit beside the binary changed tracked source on the wrong branch. **If I had** the build copy be a real copy, or read-only, a scratch edit couldn't change source.
+- **os · a stale plain `os/system` folder in a test bin hides the teaching.** `PLang.Tests/Runtime/bin` held an empty, plain (not linked) `os/system` from Oct 1; LinkOsDirectory skips when `os` exists, so the type teaching read empty and 3 TypeAccessor tests failed for no code reason (~10 min). **If I had** the link target replace a plain `os` folder that isn't a link, a stale folder couldn't hide the source.
 - **architect · no automatic secret check.** Today a key-like string count over logs, goldens and `.pr` files is done by hand. **If I had** it in the gate, a leak would stop it.
 
 ## Coordination between bots
