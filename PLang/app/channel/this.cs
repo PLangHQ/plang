@@ -215,7 +215,12 @@ public abstract class @this : global::app.type.item.@this, IAsyncDisposable, IDi
     {
         var context = Context ?? throw new InvalidOperationException(
             $"channel '{Name}' belongs to no list — it has no context to read in");
-        return context.App.type.list.Mime(Mime.ToString()).Decode(raw, context, Name, ct: ct);
+        var format = context.App.type.list.Mime(Mime.ToString());
+        // text comes in the channel's encoding (a program's output in UTF-16, wsl.exe's): a value's text is UTF-8
+        var encoding = ResolveEncoding();
+        if (format.IsText && encoding.CodePage != global::System.Text.Encoding.UTF8.CodePage)
+            raw = global::System.Text.Encoding.UTF8.GetBytes(encoding.GetString(raw));
+        return format.Decode(raw, context, Name, ct: ct);
     }
 
     /// <summary>

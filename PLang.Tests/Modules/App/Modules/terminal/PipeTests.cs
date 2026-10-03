@@ -51,6 +51,40 @@ public class PipeTests : IDisposable
         await Assert.That(ended.Error!.Key).IsEqualTo("ChannelEnded");
     }
 
+    // a program on Windows ends its lines with CR LF: a line is what comes before the newline, the CR is part of its end
+    [Test]
+    public async Task AChannelOfLines_TakesCrLfAsTheEnd_Too()
+    {
+        var bytes = System.Text.Encoding.UTF8.GetBytes("one\r\ntwo\n");
+        var channel = new global::app.channel.type.stream.@this("out", new MemoryStream(bytes), ownsStream: true)
+            { Framed = true, End = "\n", Actor = Context.Actor! };
+        await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("one");
+        await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("two");
+    }
+
+    // a program's last line may have no newline (printf out): on a channel of its lines, what is left when the stream
+    // ends is its last line; nothing left is no line
+    [Test]
+    public async Task AChannelOfLines_ThatKeepsTheLast_TakesTheUnendedPartAtTheEnd()
+    {
+        var channel = new global::app.channel.type.stream.@this("out", new MemoryStream("one\ntwo"u8.ToArray()), ownsStream: true)
+            { Framed = true, End = "\n", KeepsLast = true, Actor = Context.Actor! };
+        await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("one");
+        await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("two");
+        await Assert.That((await channel.Read()).Error?.Key).IsEqualTo("ChannelEnded");
+    }
+
+    // a program's output in the encoding it writes (wsl.exe: UTF-16) reads as its text
+    [Test]
+    public async Task AChannel_ReadsTextInItsEncoding()
+    {
+        var bytes = System.Text.Encoding.Unicode.GetBytes("hé þú\nnæst\n");
+        var channel = new global::app.channel.type.stream.@this("out", new MemoryStream(bytes), ownsStream: true)
+            { Framed = true, End = "\n", Encoding = "utf-16", Actor = Context.Actor! };
+        await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("hé þú");
+        await Assert.That((await (await channel.Read()).Value())?.ToString()).IsEqualTo("næst");
+    }
+
     [Test]
     public async Task ASpawnedProgram_HasItsStdio_AndItsExitCode()
     {

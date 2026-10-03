@@ -38,6 +38,7 @@ public sealed class Default : ITerminal
             {
                 Program = file.Absolute, Id = os.Id, Os = os, pipe = channel,
                 Plang = program.SpeaksPlang(context),
+                OutputEncoding = program.Setting.Encoding.Clr<string>() ?? "utf-8", StartedBy = context.Actor,
             }));
         }
         catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223)

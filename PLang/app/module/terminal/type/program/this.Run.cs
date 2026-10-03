@@ -94,11 +94,17 @@ public sealed partial class @this
         var watch = Stopwatch.StartNew();
         var started = await asked.Terminal.Start(this, context);
         if (!started.Success) return global::app.data.@this<Text>.From(started);
-        using var os = (await started.Value())!.Take();
-        if (input != null) await os.Input.WriteAsync(input);
-        os.Input.Close();
+        var running = (await started.Value())!;
+        var lines = running.Lines();
+        var stdin = running.input;
+        using var os = running.Take();
+        // written while its output is read: more than a pipe holds, written first, would have both wait on each other
+        var writing = Task.Run(async () =>
+        {
+            try { if (input != null) await stdin.Write(context.Ok((Text)input)); }
+            finally { stdin.Close(); }
+        });
 
-        var lines = process.@this.Lines(os);
         var output = new StringBuilder();
         var error = new StringBuilder();
         var stopped = false;
@@ -119,6 +125,9 @@ public sealed partial class @this
             stopped = true;
             os.Kill();
         }
+        // what it didn't read of its input is no error of the run (it may end before reading it all)
+        try { await writing; }
+        catch (Exception ex) when (ex is IOException or ObjectDisposedException) { }
         return Result(context, output.ToString().TrimEnd('\r', '\n'), error.ToString().TrimEnd('\r', '\n'),
             stopped ? -1 : os.ExitCode, watch.Elapsed, stopped);
     }
@@ -143,7 +152,7 @@ public sealed partial class @this
         var running = (await started.Value())!;
         // binary messages when asked — or when the output goes to a screen, which takes nothing else
         var screen = step.OutputTo == null ? null : await step.OutputTo.Value();
-        if ((await step.Binary.Value())!.Value || screen != null) running.ReadMessages(onOutput, screen, context);
+        if ((await step.Binary.Value())!.Value || screen != null) running.ReadMessages(onOutput, onError, screen, context);
         else running.Read(onOutput, onError, context);
         return context.Ok<process.@this>(running);
     }
