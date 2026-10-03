@@ -1,0 +1,18 @@
+<Project>
+  <!-- <OutDir>/os is a link to this repo's os tree, so an app's OsAbsolutePath (AppContext.BaseDirectory + "os")
+       reaches the live os/system tree — the system goals, the type and module teaching — in a run and in a test.
+       An os that is already a link is left as it is. An os that exists but is no link (a copy an older build left)
+       is stale: it is removed and the link takes its place. Only <OutDir>/os itself is ever removed. -->
+  <Target Name="LinkOsDirectory" AfterTargets="Build">
+    <PropertyGroup>
+      <OsSourceDir>$(MSBuildThisFileDirectory)os</OsSourceDir>
+      <OsLinkPath>$([System.IO.Path]::Combine('$(OutDir)', 'os'))</OsLinkPath>
+      <OsAttributes Condition="Exists('$(OsLinkPath)')">$([System.IO.File]::GetAttributes('$(OsLinkPath)'))</OsAttributes>
+    </PropertyGroup>
+    <RemoveDir Condition="'$(OsAttributes)' != '' And !$(OsAttributes.Contains('ReparsePoint'))" Directories="$(OsLinkPath)" />
+    <Exec Condition="!Exists('$(OsLinkPath)') And '$(OS)' != 'Windows_NT'"
+          Command="ln -s &quot;$(OsSourceDir)&quot; &quot;$(OsLinkPath)&quot;" />
+    <Exec Condition="!Exists('$(OsLinkPath)') And '$(OS)' == 'Windows_NT'"
+          Command="cmd /c mklink /D &quot;$(OsLinkPath)&quot; &quot;$(OsSourceDir)&quot;" />
+  </Target>
+</Project>
