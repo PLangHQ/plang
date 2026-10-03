@@ -89,6 +89,18 @@ public partial class @this
         return false;
     }
 
+    // The running app's anchors: the only variables a goal that ships with plang may hold in what it names itself and
+    // still be trusted (579) — each a fact no caller can set (pinned). Every other variable, any other %!…% included
+    // (settings are the asker's view, %!data% what the caller's steps left, a goal sets its own %!x%), is the caller's.
+    private static readonly HashSet<string> Anchors = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "%!app.AbsolutePath%",
+        "%!app.OsAbsolutePath%",
+    };
+
+    /// <summary>A variable a step may hold and still name what it starts itself: one of the running app's anchors.</summary>
+    internal static bool IsAnchor(global::app.type.item.variable.@this variable) => Anchors.Contains(variable.Text);
+
     /// <summary>The step asking runs in a goal under the runtime's os folder — what ships with plang. Its own goal (the
     /// call frame running the step), never one further up.</summary>
     private static bool AskedByOs(actor.context.@this context)
