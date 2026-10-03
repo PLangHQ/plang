@@ -90,6 +90,27 @@ public class ProgramTests : IDisposable
     }
 
     [Test]
+    public async Task Start_KeepsItsLastLine_WrittenWithNoNewline()
+    {
+        if (!OperatingSystem.IsLinux()) return;
+        var ran = await Run(Make.Step("run it", Sh("start", "echo first; printf last")));
+        await Assert.That((await ran.Value())?.ToString()).IsEqualTo("first\nlast");
+    }
+
+    // more than a pipe holds (64 KB): written while its output is read, or both would wait on each other forever
+    [Test]
+    public async Task Start_TakesAnInputLargerThanAPipe_WhileItsOutputIsRead()
+    {
+        if (!OperatingSystem.IsLinux()) return;
+        var big = string.Concat(Enumerable.Repeat("0123456789abcdef\n", 20_000)).TrimEnd('\n');
+        var ran = await Run(
+            Make.Step("set timeout", Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "%!terminal.setting.timeoutinsec%", "variable"), ("Value", 30))),
+            Make.Step("run it", Sh("start", "cat", ("Input", big)))).WaitAsync(TimeSpan.FromSeconds(60));
+        await Assert.That((await ran.Properties.Get<object>("TimedOut"))?.ToString()).IsEqualTo("False");
+        await Assert.That((await ran.Value())?.ToString()?.Length).IsEqualTo(big.Length);
+    }
+
+    [Test]
     public async Task Start_GivesEachLine_ToOnOutputAndOnError_InOrder()
     {
         if (!OperatingSystem.IsLinux()) return;
@@ -154,5 +175,21 @@ public class ProgramTests : IDisposable
             foreach (var row in list.Items(Context))
                 rows.Add(System.Text.Encoding.ASCII.GetString(((await row.Value()) as global::app.type.item.binary.@this)?.RawBytes ?? []));
         await Assert.That(rows).IsEquivalentTo(new[] { "abc", "de" });
+    }
+
+    // binary is its stdout; its stderr stays text, each line to OnError. (It writes once told to: a callback that runs
+    // while the opening step is still keeping its result shares %!data% with it — the on gate's race, reported.)
+    [Test]
+    public async Task Open_Binary_GivesItsStderrLines_ToOnError()
+    {
+        if (!OperatingSystem.IsLinux()) return;
+        await Collects("Err");
+        var ran = await Run(
+            Make.Step("open it", Sh("open", "read go; printf '\\001\\000\\000\\000x'; echo oops >&2; echo again >&2",
+                ("Binary", true), ("OnError", Make.Call(Context, "Err"))), Kept("program")),
+            Make.Step("tell it", Process("send", ("Data", "go"))),
+            Make.Step("wait", Process("wait")));
+        await ran.IsSuccess();
+        await Assert.That(string.Join("|", await Lines())).IsEqualTo("oops|again");
     }
 }

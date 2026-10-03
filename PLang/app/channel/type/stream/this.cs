@@ -50,6 +50,10 @@ public sealed class @this : global::app.channel.type.session.@this
     /// reader sets that when it takes the channel.</summary>
     [global::app.Debug] public string End { get; set; } = System.Environment.NewLine;
 
+    /// <summary>What is left unended when the stream ends is a message too — a program's last line, written with no
+    /// newline (<c>printf out</c>). Unset, it was never a message and is dropped (a pipe's half-written message).</summary>
+    [global::app.Debug] public bool KeepsLast { get; init; }
+
     /// <summary>It writes and reads in the format in play for the writer (<c>%!app.type.format%</c>), not a format of
     /// its own — the console: text for a person at a terminal, plang's own for a program that runs this plang.</summary>
     [global::app.Debug] public bool InPlay { get; init; }
@@ -203,10 +207,12 @@ public sealed class @this : global::app.channel.type.session.@this
     private int _held;
 
     /// <summary>The next message, without its end; null when the stream ends first (a part read before the end is
-    /// dropped: it was never a message).</summary>
+    /// dropped: it was never a message). Lines ended by a newline take CR LF as their end too (a Windows program's).</summary>
     private async Task<byte[]?> Message(CancellationToken ct)
     {
-        var end = ResolveEncoding().GetBytes(End);
+        var encoding = ResolveEncoding();
+        var end = encoding.GetBytes(End);
+        var cr = End == "\n" ? encoding.GetBytes("\r") : null;
         var searched = 0;
         while (true)
         {
@@ -214,7 +220,8 @@ public sealed class @this : global::app.channel.type.session.@this
             if (at >= 0)
             {
                 var found = searched + at;
-                var message = _ahead.AsSpan(0, found).ToArray();
+                var length = cr != null && _ahead.AsSpan(0, found).EndsWith(cr) ? found - cr.Length : found;
+                var message = _ahead.AsSpan(0, length).ToArray();
                 var rest = found + end.Length;
                 _ahead.AsSpan(rest, _held - rest).CopyTo(_ahead);
                 _held -= rest;
@@ -224,7 +231,13 @@ public sealed class @this : global::app.channel.type.session.@this
             searched = Math.Max(0, _held - end.Length + 1);
             if (_held == _ahead.Length) System.Array.Resize(ref _ahead, _ahead.Length * 2);
             var read = await Stream.ReadAsync(_ahead.AsMemory(_held), ct);
-            if (read == 0) return null;
+            if (read == 0)
+            {
+                if (!KeepsLast || _held == 0) return null;
+                var last = _ahead.AsSpan(0, _held).ToArray();
+                _held = 0;
+                return last;
+            }
             _held += read;
         }
     }
