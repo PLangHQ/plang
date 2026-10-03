@@ -98,6 +98,29 @@ public class PipeTests : IDisposable
         await Assert.That(gone).IsTrue().Because("the program's own children end with it: it leads their group");
     }
 
+    // What ends Chromium when plang dies, however it dies (kill -9 too): the kernel closes plang's ends of the pipe, the
+    // program reads EOF on fd 3 and quits. Only if no one else holds plang's ends — not a program .NET starts after it,
+    // nor one plang spawns after it (each end is close-on-exec).
+    [Test]
+    public async Task PlangsEndsClosing_EndTheProgram_WhileItsOtherProgramsRun()
+    {
+        if (!OperatingSystem.IsLinux()) return;
+        using var child = Spawned.Start(Sh("cat <&3 >/dev/null; exit 7"), pipe: true);
+        using var managed = new global::app.module.terminal.code.child.managed.@this(System.Diagnostics.Process.Start(Sh("sleep 30"))!);
+        using var spawned = Spawned.Start(Sh("sleep 30"), pipe: false);
+        try
+        {
+            await child.Pipe!.DisposeAsync();
+            await child.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
+            await Assert.That(child.ExitCode).IsEqualTo(7).Because("EOF on fd 3 ended it: no other program holds plang's ends");
+        }
+        finally
+        {
+            managed.Kill();
+            spawned.Kill();
+        }
+    }
+
     /// <summary>terminal.open with Pipe: the program, its pipe a channel of its own.</summary>
     private async Task<global::app.module.terminal.Process> Open(string script, params (string, object?)[] more)
     {
