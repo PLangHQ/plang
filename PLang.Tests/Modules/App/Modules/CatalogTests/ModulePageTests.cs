@@ -182,4 +182,7 @@ public class ModulePageTests
 
     [Test]
     public Task TheLoopPage_IsTheSpecsGolden() => ComparePageToGolden("loop");
+
+    [Test]
+    public Task TheScreenPage_IsTheSpecsGolden() => ComparePageToGolden("screen");
 }
