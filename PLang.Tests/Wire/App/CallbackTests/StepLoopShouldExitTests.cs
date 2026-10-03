@@ -40,8 +40,11 @@ public class StepLoopShouldExitTests : System.IAsyncDisposable
     {
         var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-se-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        var d = new global::app.data.@this<Ask>("", new Ask(), context: app.actor.list.User.Context);
+        // the goal's own ask, waiting for its answer, stops it; an ask that arrived from another plang flows through
+        var d = new global::app.data.@this<Ask>("", new Ask { Waiting = true }, context: app.actor.list.User.Context);
         await Assert.That(d.ShouldExit()).IsTrue();
+        var arrived = new global::app.data.@this<Ask>("", new Ask(), context: app.actor.list.User.Context);
+        await Assert.That(arrived.ShouldExit()).IsFalse();
     }
 
     [Test] public async Task ShouldExit_False_OkSuccessNonExitType()
@@ -58,7 +61,7 @@ public class StepLoopShouldExitTests : System.IAsyncDisposable
         // Here we just pin the predicate contract used by the loop.
         var app = new global::app.@this(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
             "plang-se-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
-        var exitData = new global::app.data.@this<Ask>("", new Ask(), context: app.actor.list.User.Context);
+        var exitData = new global::app.data.@this<Ask>("", new Ask { Waiting = true }, context: app.actor.list.User.Context);
         await Assert.That(exitData.ShouldExit()).IsTrue();
     }
 }
