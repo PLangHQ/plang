@@ -481,35 +481,35 @@ public sealed class OpenAi : ILlm
             }
 
             // --- Populate response properties ---
-            SetProp(result, "RawResponse", rawResponse);
-            SetProp(result, "Model", model);
-            SetProp(result, "Messages", conversed);
-            SetProp(result, "Temperature", (await action.Temperature.Value()));
-            SetProp(result, "Limit", limit);
-            SetProp(result, "Cached", false);
-            SetProp(result, "PromptTokens", totalPromptTokens);
-            SetProp(result, "CompletionTokens", totalCompletionTokens);
-            SetProp(result, "TotalTokens", totalPromptTokens + totalCompletionTokens);
-            SetProp(result, "CachedTokens", totalCachedTokens);
-            SetProp(result, "Cost", totalCost);
-            SetProp(result, "ToolCallCount", toolCallCount);
-            SetProp(result, "ValidationRetries", validationRetries);
-            SetProp(result, "Format", effectiveFormat);
-            SetProp(result, "Schema", schema);
+            result.Property.Set("RawResponse", rawResponse);
+            result.Property.Set("Model", model);
+            result.Property.Set("Messages", conversed);
+            result.Property.Set("Temperature", (await action.Temperature.Value()));
+            result.Property.Set("Limit", limit);
+            result.Property.Set("Cached", false);
+            result.Property.Set("PromptTokens", totalPromptTokens);
+            result.Property.Set("CompletionTokens", totalCompletionTokens);
+            result.Property.Set("TotalTokens", totalPromptTokens + totalCompletionTokens);
+            result.Property.Set("CachedTokens", totalCachedTokens);
+            result.Property.Set("Cost", totalCost);
+            result.Property.Set("ToolCallCount", toolCallCount);
+            result.Property.Set("ValidationRetries", validationRetries);
+            result.Property.Set("Format", effectiveFormat);
+            result.Property.Set("Schema", schema);
 
             return result;
         }
 
         // Loop exited via break (limit.tool or streaming)
         var exitResult = context.Ok(lastContent);
-        SetProp(exitResult, "Model", model);
-        SetProp(exitResult, "ToolCallCount", toolCallCount);
-        SetProp(exitResult, "PromptTokens", totalPromptTokens);
-        SetProp(exitResult, "CompletionTokens", totalCompletionTokens);
-        SetProp(exitResult, "TotalTokens", totalPromptTokens + totalCompletionTokens);
-        SetProp(exitResult, "CachedTokens", totalCachedTokens);
-        SetProp(exitResult, "Cost", totalCost);
-        SetProp(exitResult, "Truncated", true);
+        exitResult.Property.Set("Model", model);
+        exitResult.Property.Set("ToolCallCount", toolCallCount);
+        exitResult.Property.Set("PromptTokens", totalPromptTokens);
+        exitResult.Property.Set("CompletionTokens", totalCompletionTokens);
+        exitResult.Property.Set("TotalTokens", totalPromptTokens + totalCompletionTokens);
+        exitResult.Property.Set("CachedTokens", totalCachedTokens);
+        exitResult.Property.Set("Cost", totalCost);
+        exitResult.Property.Set("Truncated", true);
         return exitResult;
     }
 
@@ -911,15 +911,10 @@ public sealed class OpenAi : ILlm
         var result = !string.IsNullOrEmpty(rawResp)
             ? await Answer(rawResp, AsText(props.GetValueOrDefault("Format")), cached.Context)
             : cached.Context.Ok(resultValue);
-        SetProp(result, "Cached", true);
+        result.Property.Set("Cached", true);
         foreach (var kvp in props)
-            SetProp(result, kvp.Key, kvp.Value);
+            result.Property.Set(kvp.Key, kvp.Value);
         return result;
-    }
-
-    private static void SetProp(data.@this data, string name, object? value)
-    {
-        data.Property.Set(name, value);
     }
 
     // A tool as the loop needs it: the held goal.call (run as itself) and its bound handler, whose own
