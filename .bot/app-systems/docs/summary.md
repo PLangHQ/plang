@@ -35,19 +35,18 @@ a type has or how to write them — that knowledge lived only in C#.
   **`timer.md`** (sleep → Duration, not Ms int).
 - **Screen module page** delivered + merged on `plang-os-stable` (3a2ad7050).
 
-## Type pages — 7 of 10 done
-Done + byte-exact (`TypePageTests` 7/7 green): **text, size, dict, number, datetime, duration,
-path** (app-systems fac0b64c1). The generate-from-source machinery (spec golden + `TypePageTests`
-rendering `type.template` over the catalog) is proven across member-rich, memberless, and
-reference-adjacent types. Audit protocol worked: as first reader I flagged that most type
-surfaces were unmarked / CLR-returning; the architect routed a coder surface pass (change 61)
-that marked + de-glued + plang-typed the members, then I wrote each.
+## Type pages — 11 done
+Done + byte-exact (`TypePageTests` 11/11 green, app-systems 13760f327): **text, size, dict,
+number, datetime, duration, path, separator, parallel, secret, list**. The generate-from-source
+machinery (spec golden + `TypePageTests` rendering `type.template` over the catalog) is proven
+across member-rich, memberless, config, and collection types. Audit protocol worked end-to-end:
+as first reader I flagged unmarked / CLR-returning / glued surfaces; the architect routed coder
+surface passes (changes 61, the ValueTask unwrap) that marked + de-glued + plang-typed the
+members, then I wrote and pinned each.
 
-**Remaining 3, all parked on the coder:**
-- **list** — `all` renders `clr` (catalog unwraps `Task<T>` not `ValueTask<T>`); coder fixing, then write.
-- **file, url** — 0 marked members; reference types needing their `!`-fact surface (`%config!path%`,
-  `%url!host%`). Wait for marking + architect ping.
-- Plus a `data` entry for the universal `!type` facts.
+**Remaining type pages:**
+- **file, url** — REFERENCE types, held on coder **issue 65** (the `!`-fact surface so the catalog
+  lists `%config!path%`, `%url!host%`). Plus a `data` entry for the universal `!type` facts.
 
 ## Held for other bots
 - os-bot type pages (input/clipboard/permission, after their rebase); browser module page (on request).
