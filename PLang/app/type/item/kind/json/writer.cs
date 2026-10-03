@@ -38,6 +38,8 @@ public sealed class Writer : IWriter
     public void Float(float value) => _writer.WriteNumberValue(value);
     public void Double(double value) => _writer.WriteNumberValue(value);
     public void String(string value) => _writer.WriteStringValue(value);
+    // a secret is kept whole in plang's own store, and shown masked in every other view
+    public void Secret(string characters) => String(_view == app.View.Store ? characters : "****");
     // Verbatim — raw json (object/number) rides inline, unquoted.
     public void Raw(string value) => _writer.WriteRawValue(value);
     // Verbatim from UTF-8 bytes — validated as json the same way (invalid bytes or json throw).

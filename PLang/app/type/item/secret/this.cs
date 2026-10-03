@@ -23,15 +23,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     public override bool IsTruthy() => Characters.Length > 0;
 
-    public override void Write(global::app.type.format.IWriter w) => w.String(Masked);
-
-    /// <summary>Whole in plang's own store, masked everywhere else.</summary>
-    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer, global::app.View mode,
-        global::app.actor.context.@this? context)
-    {
-        writer.String(mode == global::app.View.Store ? Characters : Masked);
-        return System.Threading.Tasks.ValueTask.CompletedTask;
-    }
+    /// <summary>A secret says what it is; the writer says how it shows — whole in plang's own store, masked elsewhere.</summary>
+    public override void Write(global::app.type.format.IWriter w) => w.Secret(Characters);
 
     public override string ToString() => Masked;
 
