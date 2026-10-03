@@ -21,13 +21,7 @@ public partial class post : IContext
 
     public async Task<data.@this> Start()
     {
-        var browser = Browser == null ? null : await Browser.Value();
-        if (await type.window.@this.Of(Window, browser, Context) is not { } window)
-            return Context.Error(new global::app.error.ActionError($"No such window: {Window.Peek()}", "WindowNotFound", 404));
-        // the Data writes itself as text
-        using var text = new MemoryStream();
-        await global::app.type.item.text.@this.Encode(text, Data, Context, null, null, CancellationToken.None);
-        await window.Post(System.Text.Encoding.UTF8.GetString(text.ToArray()));
-        return Context.Ok();
+        var window = await type.window.@this.Of(Window, Browser, Context);
+        return await window.Value() is { } shown ? await shown.Post(Data, Context) : window;
     }
 }

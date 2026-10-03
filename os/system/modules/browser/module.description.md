@@ -1,1 +1,1 @@
-Browser: run Chromium — on a screen (PlangOS) its pages are windows (the window module: open, navigate, post, callGoal, close; the desktop is %browser.desktop%); without one a headless page sends its picture frame by frame and takes mouse, keyboard and navigation
+Browser: run Chromium — on a screen (PlangOS) its pages are windows (the window module: open, navigate, post, call, screenshot, reload, close; the desktop is %browser.desktop%); without one a headless page sends its picture frame by frame and takes mouse, keyboard and navigation

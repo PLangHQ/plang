@@ -16,14 +16,7 @@ public partial class reload : IContext
 
     public async Task<data.@this> Start()
     {
-        var browser = Browser == null ? null : await Browser.Value();
-        if (await type.window.@this.Of(Window, browser, Context) is not { } window)
-            return Context.Error(new global::app.error.ActionError($"No such window: {Window.Peek()}", "WindowNotFound", 404));
-        try { await window.Reload(); }
-        catch (TimeoutException ex)
-        {
-            return Context.Error(new global::app.error.ActionError($"Window {window} reloaded, but {ex.Message}", "PageNotLoaded", 504));
-        }
-        return Context.Ok();
+        var window = await type.window.@this.Of(Window, Browser, Context);
+        return await window.Value() is { } shown ? await shown.Reload(Context) : window;
     }
 }

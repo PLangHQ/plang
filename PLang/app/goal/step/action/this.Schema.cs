@@ -50,7 +50,7 @@ public partial class @this : global::app.type.item.note.IAbout
     public global::app.type.property.@this? Input => Property.FirstOrDefault(p => p.IsInput);
 
     /// <summary>The goal this action calls, as written: the value of its property that holds a goal —
-    /// typed goal (goal.call's Name), or marked <c>[Goal]</c> (window.callGoal's Name, a page's goal:
+    /// typed goal (goal.call's Name), or marked <c>[Goal]</c> (window.call's Name, a page's goal:
     /// text until app-systems says how a goal elsewhere is typed); null for every other action.</summary>
     [JsonIgnore]
     internal string? Goal
