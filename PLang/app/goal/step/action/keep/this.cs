@@ -12,8 +12,12 @@ public class @this : global::app.goal.step.action.@this
     /// <summary>A keep IS a distinct plang type (the role is the type): its wire shape is action's.</summary>
     protected internal override global::app.type.@this Type => new(typeof(@this));
 
-    /// <summary>A keep keeps what the actions before it produce.</summary>
-    internal override bool Keeps => true;
+    /// <summary>A keep holds its step's answer when it keeps what the actions before it produce (<c>Value=%!data%</c>,
+    /// a <c>write to</c>); one with a value of its own (<c>set %seen% = %item%</c>) does not.</summary>
+    internal override bool IsAnswer => Property["Value"]?.Value?.ToString() == Answer;
+
+    // the Value a keep of its step's answer is written with, by Prefill and by the line
+    private const string Answer = "%!data%";
 
     /// <summary>A program action of this keep's kind, in <paramref name="step"/>.</summary>
     internal override global::app.goal.step.action.@this Program(global::app.goal.step.@this? step)
@@ -22,7 +26,7 @@ public class @this : global::app.goal.step.action.@this
     /// <summary>A keep takes its place once the line knows whether a value is produced: after the producers,
     /// keeping their value, or where it stands.</summary>
     internal override void Prefill(global::app.goal.step.pick.line.@this line, string call)
-        => line.Keep(call, KeptValue.Replace(call, "Value=%!data%", 1));
+        => line.Keep(call, KeptValue.Replace(call, "Value=" + Answer, 1));
 
     // the starting line's Value slot — the name alone, before a comma or the closing parenthesis
     private static readonly System.Text.RegularExpressions.Regex KeptValue = new(@"\bValue(?=[,)])");

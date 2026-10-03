@@ -427,6 +427,36 @@ public class TaskTests
         await Assert.That(result.Get("complete", Ctx)!.Peek()!.ToString()).IsEqualTo("true");
     }
 
+    // write to after a foreach keeps the loop's answer: one after another, {count, complete} — never the last call's
+    [Test]
+    public async Task AForeachsWriteTo_KeepsTheLoopsAnswer_NotTheLastCalls()
+    {
+        await Load("Each", Make.Step("return the item", Make.Action(Ctx, "goal", "return", ("Data", "%item%"))));
+        await Ctx.Variable.Set("items", new List<object?> { "a", "b", "c" });
+        var loop = await Load("Loop",
+            Make.Step("foreach %items%, call Each, write to %r%",
+                Make.Action(Ctx, "loop", "foreach", ("collection", "%items%"), Make.Param(Ctx, "item", "%item%", "variable")),
+                Make.Call(Ctx, "Each"), Set("r", "%!data%")));
+
+        await (await loop.Start(Ctx)).IsSuccess();
+
+        var result = (global::app.type.item.dict.@this)(await (await Ctx.Variable.Get("r")).Value())!;
+        await Assert.That(result.Get("count", Ctx)!.Peek()!.ToString()).IsEqualTo("3");
+        await Assert.That(result.Get("complete", Ctx)!.Peek()!.ToString()).IsEqualTo("true");
+    }
+
+    // in parallel the same write keeps the loop's task
+    [Test]
+    public async Task AForeachInParallelsWriteTo_KeepsTheLoopsTask()
+    {
+        await Load("Each", Make.Step("return the item", Make.Action(Ctx, "goal", "return", ("Data", "%item%"))));
+
+        var task = await Looped(true);
+
+        await Assert.That(task).IsTypeOf<global::app.task.@this>();
+        await (await task.Wait()).IsSuccess();
+    }
+
     // cpu caps how many run at once: at one, three 300 ms items take at least 900 ms
     [Test]
     public async Task AForeachInParallel_RunsAtMostCpuAtOnce()

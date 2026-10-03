@@ -36,44 +36,49 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
 
     public async Task<data.@this> Start()
     {
-        // A value-less collection (the null citizen or an absent slot) iterates
-        // zero times; an empty list/dict falls through and enumerates to zero
-        // naturally. The null citizen Peeks itself (IsNull), absent Peeks null.
+        // Item is %item% unless the step names one ([Default])
+        if (await Item!.Value() is not { } itemVariable) return Item;
+        var keyVariable = Key is { IsInitialized: true } ? await Key.Value() : null;
+
+        // The actions after this foreach in the step's chain: the keeps at its end that hold the step's answer
+        // (`write to %r%`) keep the loop's, and the actions between the loop and them are what each item runs (a
+        // `set %seen% = %item%` among them). The Handled flag below stops the outer chain from re-running them.
+        var bodyActions = Step?.Code.After(__action!) ?? [];
+        var keeps = bodyActions.Reverse().TakeWhile(action => action.IsAnswer).Reverse().ToList();
+        var body = bodyActions.Take(bodyActions.Count - keeps.Count).ToList();
+
+        // in parallel the loop answers a task at once; one after another, {count, complete} once the items have run
+        var answered = Parallel != null && await Parallel.ToBooleanAsync() && await Parallel.Value() is { } side && Step?.Goal is { } goal
+            ? Context.Ok(Started(goal, side, itemVariable, keyVariable, body))
+            : await Run(itemVariable, keyVariable, body);
+        if (answered.Returned || !answered.Success) return answered;
+
+        // what its keeps keep is the loop's answer, as %!data% is an action's once it has answered
+        if (keeps.Count > 0) await Context.Variable.Set("!data", answered);
+        foreach (var keep in keeps)
+        {
+            answered = await keep.Follow(answered, Context);
+            if (!answered.Success) return answered;
+        }
+        answered.Handled = bodyActions.Count > 0;
+        return answered;
+    }
+
+    /// <summary>The items one after another, each run of the body a call whose frame binds %item% (and %key%): the
+    /// loop's own names end with it — an outer loop's %item% is its own again after a nested one — while the body's
+    /// other writes (a running total) reach the caller. Answers <c>{count, complete}</c>, or the first return or
+    /// failure of the body.</summary>
+    private async Task<data.@this> Run(global::app.type.item.variable.@this itemVariable,
+        global::app.type.item.variable.@this? keyVariable, System.Collections.Generic.IReadOnlyList<global::app.goal.step.action.@this> body)
+    {
+        // A value-less collection (the null citizen or an absent slot) iterates zero times; an empty list/dict
+        // enumerates to zero naturally. The null citizen Peeks itself (IsNull), absent Peeks null.
         var collectionValue = await Collection.Value();
         if (collectionValue == null || collectionValue.IsNull || collectionValue.Peek() == null)
             return await Result(count: 0, complete: true);
 
-        // Item is %item% unless the step names one ([Default])
-        if (await Item!.Value() is not { } itemVariable) return Item;
-        var keyVariable = Key is { IsInitialized: true } ? await Key.Value() : null;
         int count = 0;
-
-        // The loop body — the actions after this foreach in the step's chain. The Handled flag below stops
-        // the outer chain from re-running them.
-        var bodyActions = Step?.Code.After(__action!) ?? [];
-
-        // in parallel the loop answers a task at once: the step's keeps at its end (`write to %task%`) keep that task,
-        // and the actions between the loop and them are what each item runs
-        if (Parallel != null && await Parallel.ToBooleanAsync() && await Parallel.Value() is { } side && Step?.Goal is { } goal)
-        {
-            var keeps = bodyActions.Reverse().TakeWhile(action => action.Keeps).Reverse().ToList();
-            var body = bodyActions.Take(bodyActions.Count - keeps.Count).ToList();
-            data.@this answered = Context.Ok(Started(goal, side, itemVariable, keyVariable, body));
-            // what its keeps keep is the loop's answer, as %!data% is an action's once it has answered
-            if (keeps.Count > 0) await Context.Variable.Set("!data", answered);
-            foreach (var keep in keeps)
-            {
-                answered = await keep.Follow(answered, Context);
-                if (!answered.Success) return answered;
-            }
-            answered.Handled = bodyActions.Count > 0;
-            return answered;
-        }
-
-        // Data owns enumeration: dicts yield (dictKey, value), lists yield (index, element). Each run of the
-        // body is a call whose frame binds %item% (and %key%): the loop's own names end with it — an outer
-        // loop's %item% is its own again after a nested one — while the body's other writes (a running
-        // total) reach the caller.
+        // Data owns enumeration: dicts yield (dictKey, value), lists yield (index, element)
         foreach (var (key, item) in await Collection.EnumerateItems())
         {
             if (Context.CancellationToken.IsCancellationRequested)
@@ -89,19 +94,14 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
             if (keyVariable != null) bound.Add(key.Copy(keyVariable.Name));
 
             await using (Context.call.Push(bound))
-                foreach (var action in bodyActions)
+                foreach (var action in body)
                 {
                     var result = await action.Start(Context);
-                    if (result.Returned) return result;
-                    if (!result.Success) return result;
+                    if (result.Returned || !result.Success) return result;
                 }
             count++;
         }
-
-        var loopResult = await Result(count, complete: true);
-        if (bodyActions.Count > 0)
-            loopResult.Handled = true;
-        return loopResult;
+        return await Result(count, complete: true);
     }
 
     /// <summary>The loop as a task of its actor's: each item a task of its own, run in a context of its own whose first

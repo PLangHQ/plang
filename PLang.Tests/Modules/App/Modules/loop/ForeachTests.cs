@@ -200,4 +200,26 @@ public class ForeachTests
         var idx = await (await seen.Get("index")).Value();
         await Assert.That(idx?.ToString()).IsEqualTo("1");
     }
+
+    // a set with its own value runs for each item; the write to at the step's end keeps the loop's answer
+    [Test]
+    public async Task Foreach_ASetOfItsOwnValue_RunsPerItem_AndTheWriteToKeepsTheLoopsAnswer()
+    {
+        var context = _app.actor.list.User.Context;
+        await context.Variable.Set("items", new List<object?> { "a", "b", "c" });
+
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "PerItemRunner",
+            Make.Step("foreach %items%, set %seen% = %item%, write to %r%",
+                Make.Action(context, "loop", "foreach",
+                    Make.Template(context, "collection", "%items%"), Make.Param(context, "item", "%item%", "variable")),
+                Make.Action(context, "variable", "set", Make.Param(context, "Name", "seen", "variable"), Make.Param(context, "Value", "%item%", "variable")),
+                Make.Action(context, "variable", "set", Make.Param(context, "Name", "r", "variable"), ("Value", "%!data%")))));
+
+        await (await goal.Step[0].Start(context)).IsSuccess();
+
+        await Assert.That(await context.Variable.GetValue("seen")).IsEqualTo("c");
+        var result = (global::app.type.item.dict.@this)(await (await context.Variable.Get("r")).Value())!;
+        await Assert.That(result.Get("count", context)!.Peek()!.ToString()).IsEqualTo("3");
+        await Assert.That(result.Get("complete", context)!.Peek()!.ToString()).IsEqualTo("true");
+    }
 }
