@@ -43,8 +43,14 @@ public sealed record @this(
     private string Fallback => IsPlainData
         ? $"global::app.data.@this.Uninitialized(\"{ParamName}\")"
         : DefaultValue != null
-            ? $"new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: __ctx).As<{InnerType}>()"
+            ? Defaulted("__ctx")
             : $"global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\")";
+
+    /// <summary>The [Default] as the slot's Data, born through the slot's type (its <c>Make</c>, as the build freezes
+    /// it) — so a default the build froze and one the run falls back on are the same value: a name slot's
+    /// <c>item</c> is the variable it names, never a text holding the word.</summary>
+    private string Defaulted(string context)
+        => $"new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, {context}?.App.type.list[typeof({InnerType})], context: {context}).As<{InnerType}>()";
 
     /// <summary>The [Default] literal, unwrapped of the inner-type cast so the Data borns it
     /// with context instead of a context-less <c>({T})(literal)</c> operator. For choice&lt;X&gt;
@@ -167,14 +173,14 @@ public sealed record @this(
         if (IsNullable)
             sb.AppendLine($"            else {Local} = global::app.data.@this<{InnerType}>.Uninitialized(\"{ParamName}\");");
         else if (DefaultValue != null)
-            sb.AppendLine($"            else {Local} = new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>();");
+            sb.AppendLine($"            else {Local} = {Defaulted("context")};");
         else
             sb.AppendLine($"            else {Local} = __d;");
         sb.AppendLine("        }");
         sb.AppendLine($"        if (!{Local}.Success) return (null, __PrefixActionContext({Local}.Error!, action));");
         // [Default] also fires when the step value resolves to null (`mime: %unsetVar%`).
         if (DefaultValue != null)
-            sb.AppendLine($"        else if ({Local}.Peek() is global::app.type.item.@null.@this) {Local} = new global::app.data.@this(\"{ParamName}\", {DefaultRaw}, context: context).As<{InnerType}>();");
+            sb.AppendLine($"        else if ({Local}.Peek() is global::app.type.item.@null.@this) {Local} = {Defaulted("context")};");
     }
 
     /// <summary>

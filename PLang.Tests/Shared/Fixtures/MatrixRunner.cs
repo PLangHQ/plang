@@ -115,6 +115,9 @@ public static class MatrixRunner
     {
         var (module, actionName) = ModuleAndAction<TAction>();
         if (app.Module(module)[actionName] != null) return;
+        // the handler's assembly is enlisted as a program's library is when it loads — its closed sets among its types
+        var enlisted = app.type.list.Add(typeof(TAction).Assembly, app.actor.list.User.Context);
+        if (!enlisted.Success) throw new System.InvalidOperationException(enlisted.Error!.Message);
         app.module.Register(module, actionName, typeof(TAction));
     }
 

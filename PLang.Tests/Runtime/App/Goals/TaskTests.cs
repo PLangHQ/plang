@@ -445,6 +445,40 @@ public class TaskTests
         await Assert.That(result.Get("complete", Ctx)!.Peek()!.ToString()).IsEqualTo("true");
     }
 
+    // the builder writes no Item row for the default %item%: a loop read from such a .pr binds %item%, one after
+    // another and in parallel
+    [Test]
+    public async Task AForeachWithNoItemRow_BindsItem_OneAfterAnother()
+    {
+        await Load("Each", Make.Step("keep the item", Set("seen", "%item%")));
+        await Ctx.Variable.Set("items", new List<object?> { "a", "b", "c" });
+        var loop = await Load("Loop",
+            Make.Step("foreach %items%, call Each",
+                Make.Action(Ctx, "loop", "foreach", ("collection", "%items%")), Make.Call(Ctx, "Each")));
+
+        await (await loop.Start(Ctx)).IsSuccess();
+
+        await Assert.That((await (await Ctx.Variable.Get("seen")).Value())?.ToString()).IsEqualTo("c");
+    }
+
+    [Test]
+    public async Task AForeachWithNoItemRow_BindsItem_InParallel()
+    {
+        await Load("Each", Make.Step("return the item", Make.Action(Ctx, "goal", "return", ("Data", "%item%"))));
+        await Ctx.Variable.Set("items", new List<object?> { "a", "b", "c" });
+        var loop = await Load("Loop",
+            Make.Step("foreach %items% in parallel, call Each, write to %task%",
+                Make.Action(Ctx, "loop", "foreach", ("collection", "%items%"), ("Parallel", true)),
+                Make.Call(Ctx, "Each"), Set("task", "%!data%")));
+
+        await (await loop.Start(Ctx)).IsSuccess();
+        var waited = await ((global::app.task.@this)(await Ctx.Variable.Get("task")).Peek()!).Wait();
+
+        await waited.IsSuccess();
+        var result = (global::app.type.item.dict.@this)(await waited.Value())!;
+        await Assert.That(result.Get("count", Ctx)!.Peek()!.ToString()).IsEqualTo("3");
+    }
+
     // in parallel the same write keeps the loop's task
     [Test]
     public async Task AForeachInParallelsWriteTo_KeepsTheLoopsTask()
