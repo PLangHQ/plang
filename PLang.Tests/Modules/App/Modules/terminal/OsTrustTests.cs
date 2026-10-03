@@ -174,6 +174,47 @@ public class OsTrustTests : IDisposable
         await Assert.That((await ran.Value())?.ToString()?.Trim()).IsEqualTo("marked");
     }
 
+    // the actor's output channel, captured: what an echoing start writes there
+    private MemoryStream CaptureOutput()
+    {
+        var captured = new MemoryStream();
+        Context.Actor!.Channel.Register(new global::app.channel.type.stream.@this(global::app.channel.list.@this.Output, captured,
+            global::app.channel.ChannelDirection.Output, ownsStream: false) { Mime = "text/plain" });
+        return captured;
+    }
+
+    private global::app.goal.step.action.@this SetEcho()
+        => Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "%!terminal.setting.echo%", "variable"), ("Value", true));
+
+    private global::app.goal.step.action.@this Say(string word)
+        => Make.Action(Context, "terminal", "start", ("App", "//bin/sh"), ("Parameter", new List<object?> { "-c", "echo " + word }));
+
+    [Test]
+    public async Task ATrustedStart_RunsByTheTerminalsDefaults_NotTheActorsSettings()
+    {
+        // the user's Echo would write a trusted program's output onto the actor's output (in PlangOS, the host's frame pipe)
+        var captured = CaptureOutput();
+        await OsGoal("Says.goal", Make.Step("say it", Say("trusted-word")));
+        var user = await Goal("/SetsEcho.goal",
+            Make.Step("set echo", SetEcho()),
+            Make.Step("call the os goal", Make.Action(Context, "goal", "call", ("Name", "/system/trust/Says"))));
+        var ran = await _app.Start(user, Context);
+        await ran.IsSuccess();
+        await Assert.That(System.Text.Encoding.UTF8.GetString(captured.ToArray())).DoesNotContain("trusted-word")
+            .Because("a trusted start reads the terminal's defaults, none of the actor's settings");
+    }
+
+    [Test]
+    public async Task AUsersOwnStart_StillEchoes()
+    {
+        var captured = CaptureOutput();
+        Context.Actor!.Channel.Register(new CannedAnswerChannel("a"));
+        var user = await Goal("/OwnEcho.goal", Make.Step("set echo", SetEcho()), Make.Step("say it", Say("own-word")));
+        var ran = await _app.Start(user, Context);
+        await ran.IsSuccess();
+        await Assert.That(System.Text.Encoding.UTF8.GetString(captured.ToArray())).Contains("own-word");
+    }
+
     [Test]
     public async Task AUserGoal_CalledBackFromAnOsGoal_Asks()
     {
