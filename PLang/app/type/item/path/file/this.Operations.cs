@@ -126,41 +126,21 @@ public sealed partial class @this
     /// List directory entries matching <paramref name="pattern"/>. Returns a
     /// list of FilePaths (Data&lt;list&lt;path&gt;&gt;).
     /// </summary>
-    public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> List(global::app.type.item.text.@this pattern, global::app.type.item.@bool.@this recursive, actor.context.@this context)
+    public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> List(global::app.type.item.text.@this pattern, global::app.type.item.@bool.@this recursive, actor.context.@this context, Entry entry = Entry.file)
     {
         if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
         if (!context.FileSystem.IsFolder(this))
             return context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
         try
         {
-            // Each file is this folder combined with its place under it — typed text included.
-            var files = context.FileSystem.List(this, pattern.ToString(), recursive.Value).Where(context.FileSystem.IsFile)
+            // Each entry is this folder combined with its place under it — typed text included.
+            var files = context.FileSystem.List(this, pattern.ToString(), recursive.Value)
+                .Where(entry == Entry.folder ? context.FileSystem.IsFolder : context.FileSystem.IsFile)
                 .Select(f => new data.@this("", Combine(f.Absolute[Absolute.Length..].TrimStart(PathHelper.DirectorySeparatorChar, PathHelper.AltDirectorySeparatorChar)),
                     context: context))
                 .ToList();
             return context.Ok<global::app.type.item.list.@this<global::app.type.item.path.@this>>(
                 new global::app.type.item.list.@this<global::app.type.item.path.@this>(files));
-        }
-        catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
-        {
-            return context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
-        }
-    }
-
-    /// <summary>The folders directly inside this one, each this folder combined with its name.</summary>
-    public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> Folders(actor.context.@this context)
-    {
-        if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
-        if (!context.FileSystem.IsFolder(this))
-            return context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
-        try
-        {
-            var folders = context.FileSystem.List(this, "*", false).Where(context.FileSystem.IsFolder)
-                .Select(f => new data.@this("", Combine(f.Absolute[Absolute.Length..].TrimStart(PathHelper.DirectorySeparatorChar, PathHelper.AltDirectorySeparatorChar)),
-                    context: context))
-                .ToList();
-            return context.Ok<global::app.type.item.list.@this<global::app.type.item.path.@this>>(
-                new global::app.type.item.list.@this<global::app.type.item.path.@this>(folders));
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
         {

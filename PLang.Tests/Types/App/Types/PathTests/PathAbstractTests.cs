@@ -30,7 +30,7 @@ public class PathAbstractTests
         (nameof(PLangPath.Mkdir), new[] { Ctx }),
         (nameof(PLangPath.AsBooleanAsync), new[] { Ctx }),
         (nameof(PLangPath.Delete), new[] { typeof(global::app.type.item.@bool.@this), Ctx }),
-        (nameof(PLangPath.List), new[] { typeof(global::app.type.item.text.@this), typeof(global::app.type.item.@bool.@this), Ctx }),
+        (nameof(PLangPath.List), new[] { typeof(global::app.type.item.text.@this), typeof(global::app.type.item.@bool.@this), Ctx, typeof(global::app.type.item.path.Entry) }),
         (nameof(PLangPath.Save), new[] { typeof(global::app.data.@this), Ctx }),
     };
 

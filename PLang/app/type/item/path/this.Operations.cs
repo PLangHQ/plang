@@ -127,8 +127,9 @@ public abstract partial class @this
     /// (non-FS schemes ignore it). Nothing there is NotFound (404).</summary>
     public abstract Task<data.@this<@this>> Delete(global::app.type.item.@bool.@this recursive, actor.context.@this context);
 
-    /// <summary>List entries with a glob pattern. Non-FS schemes ignore both options.</summary>
-    public abstract Task<data.@this<global::app.type.item.list.@this<@this>>> List(global::app.type.item.text.@this pattern, global::app.type.item.@bool.@this recursive, actor.context.@this context);
+    /// <summary>List entries with a glob pattern — the files, or the folders (<paramref name="entry"/>). Non-FS schemes
+    /// ignore the options.</summary>
+    public abstract Task<data.@this<global::app.type.item.list.@this<@this>>> List(global::app.type.item.text.@this pattern, global::app.type.item.@bool.@this recursive, actor.context.@this context, Entry entry = Entry.file);
 
     /// <summary>Write <paramref name="value"/> to this path; returns the Path wrapped in Data.</summary>
     public abstract Task<data.@this<@this>> Save(data.@this? value, actor.context.@this context);
@@ -138,11 +139,6 @@ public abstract partial class @this
 
     /// <summary>Convenience — all entries, shallow.</summary>
     public Task<data.@this<global::app.type.item.list.@this<@this>>> List(actor.context.@this context) => List(pattern: "*", recursive: false, context);
-
-    /// <summary>The folders directly inside this one. A scheme with no folders (a url) has none.</summary>
-    public virtual Task<data.@this<global::app.type.item.list.@this<@this>>> Folders(actor.context.@this context)
-        => Task.FromResult(context.Ok<global::app.type.item.list.@this<@this>>(
-            new global::app.type.item.list.@this<@this>(System.Array.Empty<global::app.data.@this>())));
 
     // --- Cross-scheme defaults — virtual; subclasses override for fast paths ---
 

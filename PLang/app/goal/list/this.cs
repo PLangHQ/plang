@@ -159,7 +159,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         foreach (var each in folder.Place(context))
         {
             if (!await (await each.Exists(context)).ToBooleanAsync()) continue;
-            var listed = await each.Folders(context);
+            var listed = await each.List("*", false, context, global::app.type.item.path.Entry.folder);
             if (!listed.Success || await listed.Value() is not { } folders) continue;
             foreach (var sub in folders.Items())
                 if (!sub.FileName.StartsWith('.')) yield return sub;

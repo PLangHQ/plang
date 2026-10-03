@@ -229,7 +229,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// Fail, but routes through <see cref="@this.AuthGate"/> first so the verb
     /// surface is consistent with every other HttpPath verb.
     /// </summary>
-    public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> List(global::app.type.item.text.@this pattern, global::app.type.item.@bool.@this recursive, actor.context.@this context)
+    public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> List(global::app.type.item.text.@this pattern, global::app.type.item.@bool.@this recursive, actor.context.@this context, Entry entry = Entry.file)
     {
         if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
         return context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new Error(
