@@ -1253,7 +1253,7 @@
         }
       ],
       "after": {
-        "status": "channel.set + ui.render + setting + UR2 kernel + signing + identity + assert examples all landed. assert: added examples for all 10 actions + notes for greaterThan/lessThan/isNull/isNotNull (the 'is not null' vs 'is not empty' vs 'is not X' trio disambiguated). Next: measure assert on 10 real stale test goals, then error.throw (%!error% -> Data not Message). Core routed: SL2/59; snapshot/58 fixed by coder (f1526a48d) — need binary rebuild + resume %snap% save-check. db/environment on hold.",
+        "status": "All assigned teaching landed: channel.set, ui.render, setting, UR2 kernel line, signing, identity, assert (examples+notes), error.throw. assert measured on 10 real stale test goals: 10/10 build clean, 20/20 assert steps map to the right action (incl. 'is not null'->isNotNull vs 'is not \"X\"'->notEquals). error.throw %!error% -> Data alone 5/5 (was 3/5; fixed by making Message literal-only + examples). snapshot 58 confirmed: resume %snap% saves on the rebuilt binary (f1526a48d). Next queued: issue 41 regression on plang-os-stable (window.call rename). db/environment on hold; TR1/SL2 core.",
         "health": "green",
         "notes": "Properties.llm (writer system prompt) is NOT pinned by the four decider fixtures or ModulePageTests — generalizing line 40 (named-arg keeps its name even matching its var) moved none of them. Each os/system/modules/**/*.md commit still runs all four decider fixtures; re-pin what moved. Examples parser takes each 'Step text:' as an e.g. for THAT action — never put another module's contrast step in an examples file (notes only)."
       }
