@@ -137,7 +137,7 @@ public class FormatKindTests
     {
         await using var app = NewApp();
         var ini = global::app.type.item.path.@this.Resolve("/settings.ini", app.actor.list.User.Context)!;
-        await Assert.That(ini.MimeType(app.actor.list.User.Context)).IsEqualTo("text/plain");
+        await Assert.That(ini.Mime(app.actor.list.User.Context).ToString()).IsEqualTo("text/plain");
         await Assert.That(ini.Kind(app.actor.list.User.Context).Name).IsEqualTo("text");
     }
 }

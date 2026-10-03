@@ -59,7 +59,7 @@ public sealed class @this : global::app.type.item.list.@this<global::app.shortcu
         if (!await (await at.Exists(context)).ToBooleanAsync()) return [];
         var listed = await at.List("*.goal", recursive: false, context);
         if (!listed.Success || await listed.Value() is not { } files) return [];
-        return files.Items().Select(f => f.FileNameWithoutExtension).ToList();
+        return files.Items().Select(f => f.Stem.ToString()).ToList();
     }
 
     // The goal the address names, found as a call finds it; one that doesn't load is left out, said on debug.

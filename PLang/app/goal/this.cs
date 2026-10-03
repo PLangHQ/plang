@@ -88,7 +88,7 @@ public sealed partial class @this
     /// exception — a rule about where a goal's build lands, read before there is a goal: by <see cref="PrPath"/>,
     /// <see cref="Load"/> and setup's discovery, nothing else.</summary>
     public static global::app.type.item.path.@this Pr(global::app.type.item.path.@this source)
-        => source.Parent.Combine(".build").Combine(source.FileNameWithoutExtension.ToLowerInvariant() + ".pr");
+        => source.Parent.Combine(".build").Combine(source.Stem.ToString().ToLowerInvariant() + ".pr");
 
     [Store, Debug]
     public string? Hash

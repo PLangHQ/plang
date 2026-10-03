@@ -135,7 +135,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Number of entries.</summary>
     /// <summary>Entry count as the PLang <c>number</c> (the public surface
     /// answers in PLang values).</summary>
-    public global::app.type.item.number.@this Count => _value.Count;
+    [LlmBuilder] public global::app.type.item.number.@this Count => _value.Count;
 
     /// <summary>The interior raw count — loop bounds and emptiness checks.</summary>
     internal int CountRaw => _value.Count;
@@ -287,19 +287,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     }
 
     /// <summary>
-    /// A dict owns its child read — case-insensitive key lookup. A real key wins;
-    /// <c>count</c> is an intrinsic that only answers when no such key exists
+    /// A dict owns its child read — case-insensitive key lookup. A real key wins; its own surface
+    /// (<c>count</c>, the members it marks) answers only when no such key exists
     /// (a literal <c>{count: "x"}</c> reads "x", not the length). Absent → NotFound,
     /// so the caller falls through. An entry is handed out with the asker's context.
     /// </summary>
-    public override System.Threading.Tasks.ValueTask<Data> Get(Data parent, string key)
-    {
-        var entry = Get(key, parent.Context);
-        if (entry != null) return new(entry);
-        if (string.Equals(key, "count", System.StringComparison.OrdinalIgnoreCase))
-            return new(new Data(key, Count, parent: parent));
-        return new(Data.NotFound(key));
-    }
+    public override async System.Threading.Tasks.ValueTask<Data> Get(Data parent, string key)
+        => Get(key, parent.Context) ?? await Member(parent, key) ?? Data.NotFound(key);
 
     // The one mutation seam — last-wins on a duplicate key (json object
     // semantics), order preserved at the position of the first occurrence (the

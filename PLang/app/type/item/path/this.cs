@@ -57,9 +57,8 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     // cannot be derived later). Cached string-derived properties below it.
     private readonly string _absolute;
     private string? _extension;
-    private string? _fileName;
-    private string? _fileNameWithoutExtension;
-    private string? _directory;
+    private string? _name;
+    private string? _stem;
 
     /// <summary>
     /// Creates a Path from its location. The scheme factories resolve it with the creating
@@ -143,13 +142,16 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
 
     /// <summary>The location's extension, without its dot (<c>json</c>) — <c>%p.extension%</c>; empty for a folder.</summary>
     [LlmBuilder] public virtual global::app.type.item.text.@this Extension => _extension ??= PathHelper.GetExtension(_location);
-    [LlmBuilder] public string FileName => _fileName ??= PathHelper.GetFileName(_location);
-    [LlmBuilder] public string FileNameWithoutExtension
-        => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_location);
-    [LlmBuilder] public string Directory => _directory ??= PathHelper.GetDirectoryName(Absolute) ?? Absolute;
+
+    /// <summary>The location's last name, its extension with it (<c>report.json</c>) — <c>%p.name%</c>.</summary>
+    [LlmBuilder] public global::app.type.item.text.@this Name => _name ??= PathHelper.GetFileName(_location);
+
+    /// <summary>The location's last name without its extension (<c>report</c>) — <c>%p.stem%</c>.</summary>
+    [LlmBuilder] public global::app.type.item.text.@this Stem => _stem ??= PathHelper.GetFileNameWithoutExtension(_location);
+
     /// <summary>The MIME of this location's extension — the format with that extension says it; a format with
     /// no MIME of its own arrives as its type's (<c>.ini</c> is text/plain); opaque bytes when neither does.</summary>
-    [LlmBuilder] public string MimeType(actor.context.@this context)
+    [LlmBuilder] public global::app.type.item.text.@this Mime(actor.context.@this context)
     {
         var type = Kind(context);
         if (type.IsNull) return "application/octet-stream";
@@ -157,9 +159,6 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
                ?? context.App.type.list[type.Name].kind.Mime.FirstOrDefault()
                ?? "application/octet-stream";
     }
-
-    [LlmBuilder] public bool IsFile => Extension.IsTruthy();
-    [LlmBuilder] public bool IsDirectory => !Extension.IsTruthy();
 
     // --- Typed surface (the navigable plane answers in PLang values; the
     //     interior string-math lives HERE, on the owner) ---
@@ -196,7 +195,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
             return mine.EndsWith(rel, StringComparison.OrdinalIgnoreCase)
                 || mine.StartsWith(rel, StringComparison.OrdinalIgnoreCase);
         }
-        return FileName.Equals(other.FileName, StringComparison.OrdinalIgnoreCase);
+        return Name.ToString().Equals(other.Name.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

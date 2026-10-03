@@ -22,6 +22,6 @@ public static class PathTouch
     {
         var bytes = await path.Bytes(context);
         if (!bytes.Success) return bytes;
-        return await context.App.type.list.Mime(path.MimeType(context)).Decode((await bytes.Value())!.Value, context, path.Raw);
+        return await context.App.type.list.Mime(path.Mime(context).ToString()).Decode((await bytes.Value())!.Value, context, path.Raw);
     }
 }

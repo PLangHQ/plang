@@ -43,7 +43,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         _kind = kind ?? (context.App.type.list["archive"].kind as global::app.type.kind.empty.@this)?.Kinds.OfType<kind.@this>()
             .Where(k => k.Suffix is { } suffix && at.Raw.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
             .MaxBy(k => k.Suffix!.Length);
-        var name = at.FileName;
+        var name = at.Name.ToString();
         Held = new held.@this("file", _kind?.Suffix is { } end && name.EndsWith(end, StringComparison.OrdinalIgnoreCase) ? name[..^end.Length] : name);
     }
 

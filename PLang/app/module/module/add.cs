@@ -11,6 +11,6 @@ public partial class Add : IContext
     {
         var ns = Namespace == null ? null : (await Namespace.Value())?.ToString();
         var count = Context.App.module.Discover(assembly, ns);
-        return Data(new type.module { name = path.FileNameWithoutExtension, actions = count });
+        return Data(new type.module { name = path.Stem.ToString(), actions = count });
     }));
 }

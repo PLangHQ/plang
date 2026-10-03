@@ -865,7 +865,7 @@ public sealed class Default : IHttp
                         ?? new ServiceError($"Could not read form file: {value[1..]}", "FileReadError", 500));
                 var fileContent = new ByteArrayContent((await read.Value())!.Clr<byte[]>()!);
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                form.Add(fileContent, kvp.Key, fp.FileName);
+                form.Add(fileContent, kvp.Key, fp.Name.ToString());
             }
             else
             {

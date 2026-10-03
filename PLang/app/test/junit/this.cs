@@ -47,12 +47,12 @@ public sealed class @this : global::app.type.kind.@this
             var suite = group.ToList();
             var failures = suite.Count(t => t.Status == Status.Fail);
             var errors = suite.Count(t => t.Status == Status.Stale);
-            var timeSec = suite.Sum(t => t.Duration.TotalSeconds);
+            var timeSec = suite.Sum(t => t.Duration.Value.TotalSeconds);
             sb.AppendLine($"  <testsuite name=\"{SecurityElement.Escape(group.Key)}\" tests=\"{suite.Count}\" failures=\"{failures}\" errors=\"{errors}\" time=\"{timeSec:F3}\">");
             foreach (var test in suite)
             {
                 var name = SecurityElement.Escape(test.Goal.Path?.ToString() ?? "") ?? "";
-                sb.Append($"    <testcase name=\"{name}\" time=\"{test.Duration.TotalSeconds:F3}\"");
+                sb.Append($"    <testcase name=\"{name}\" time=\"{test.Duration.Value.TotalSeconds:F3}\"");
                 if (test.Status == Status.Pass) sb.AppendLine(" />");
                 else
                 {

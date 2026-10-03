@@ -61,15 +61,15 @@ public class TypedPropertyCatalogTests
     [Test]
     public async Task Catalog_PathEntry_ListsContextMethodAsField_InDeclarationOrder()
     {
-        // MimeType needs the asker's context, so it is a one-context method — the catalog
+        // Mime needs the asker's context, so it is a one-context method — the catalog
         // still lists it as the same field, where it is declared among the properties.
         var path = FindEntry("path");
         await Assert.That(path).IsNotNull();
         var names = path!.Property!.Select(p => p.Name + ":" + p.Type.ToString()).ToList();
-        var at = names.IndexOf("fileName:text");
+        var at = names.IndexOf("name:text");
         await Assert.That(at).IsGreaterThanOrEqualTo(0).Because(string.Join(", ", names));
-        await Assert.That(string.Join(", ", names.Skip(at).Take(6))).IsEqualTo(
-            "fileName:text, fileNameWithoutExtension:text, directory:text, mimeType:text, isFile:bool, isDirectory:bool");
+        await Assert.That(string.Join(", ", names.Skip(at).Take(4))).IsEqualTo(
+            "name:text, stem:text, mime:text, parent:path");
     }
 
     [Test]

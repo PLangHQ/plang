@@ -95,15 +95,13 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public static bool operator ==(System.TimeSpan a, @this? b) => b == a;
     public static bool operator !=(System.TimeSpan a, @this? b) => !(b == a);
 
-    // ---- Parts (behavioral targets of the is-TimeSpan sweep) ----
-    public int Days => Value.Days;
-    public int Hours => Value.Hours;
-    public int Minutes => Value.Minutes;
-    public int Seconds => Value.Seconds;
-    public double TotalHours => Value.TotalHours;
-    public double TotalMinutes => Value.TotalMinutes;
-    public double TotalSeconds => Value.TotalSeconds;
-    public double TotalMilliseconds => Value.TotalMilliseconds;
+    // ---- The span in each unit, whole: %elapsed.seconds% is 90 for 1m30s. How a span looks (1h30m) is its
+    //      writer's, so there are no component members ----
+    [LlmBuilder] public global::app.type.item.number.@this Days => Value.TotalDays;
+    [LlmBuilder] public global::app.type.item.number.@this Hours => Value.TotalHours;
+    [LlmBuilder] public global::app.type.item.number.@this Minutes => Value.TotalMinutes;
+    [LlmBuilder] public global::app.type.item.number.@this Seconds => Value.TotalSeconds;
+    [LlmBuilder] public global::app.type.item.number.@this Milliseconds => Value.TotalMilliseconds;
 
     /// <summary>Its text in its kind (<see cref="Text"/>).</summary>
     public override string ToString() => Text;

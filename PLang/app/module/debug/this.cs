@@ -222,7 +222,7 @@ public sealed class @this
         var sb = new StringBuilder();
 
         // the after-binding runs inside the step's frame: its Duration is the step's time so far
-        var took = context.call.Current?.Duration is { } elapsed ? $" ({elapsed.TotalMilliseconds:0.###} ms)" : "";
+        var took = context.call.Current?.Duration is { } elapsed ? $" ({elapsed.Value.TotalMilliseconds:0.###} ms)" : "";
         sb.AppendLine($"=== DEBUG [AFTER]: Step [{step.Index}] of {goalName}{took} ===");
 
         await AppendStepVariables(sb, context);

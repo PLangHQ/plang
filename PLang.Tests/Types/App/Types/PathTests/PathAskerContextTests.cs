@@ -22,7 +22,7 @@ public class PathAskerContextTests
         var d = new global::app.data.@this("p", p, context: ctx);
 
         await Assert.That(await Nav(d, "relative")).IsEqualTo("/data/config.json");
-        await Assert.That(await Nav(d, "mimetype")).IsEqualTo("application/json");
+        await Assert.That(await Nav(d, "mime")).IsEqualTo("application/json");
     }
 
     // A step's read: %name.member% through plang's own variable door, as the asker.

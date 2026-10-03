@@ -101,8 +101,8 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         async Task<string?> Spelled(global::app.type.item.path.@this at)
         {
             await foreach (var file in Beside(at.Parent, context))
-                if (string.Equals(file.FileNameWithoutExtension, at.FileNameWithoutExtension, StringComparison.OrdinalIgnoreCase))
-                    return file.FileName;
+                if (string.Equals(file.Stem.ToString(), at.Stem.ToString(), StringComparison.OrdinalIgnoreCase))
+                    return file.Name.ToString();
             return null;
         }
     }
@@ -144,9 +144,9 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         var names = Chain(step.Goal).Select(g => g.Name).ToList();
         if (step.Goal?.Folder is { } folder)
         {
-            await foreach (var file in Beside(folder, context)) names.Add(file.FileNameWithoutExtension);
+            await foreach (var file in Beside(folder, context)) names.Add(file.Stem.ToString());
             await foreach (var sub in Under(folder, context))
-                await foreach (var file in Beside(sub, context)) names.Add($"{sub.FileName}/{file.FileNameWithoutExtension}");
+                await foreach (var file in Beside(sub, context)) names.Add($"{sub.Name}/{file.Stem}");
         }
         return names.Distinct(StringComparer.OrdinalIgnoreCase)
             .Select(name => (global::app.type.item.@this)new global::app.type.item.text.@this(name)).ToList();
@@ -162,7 +162,7 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
             var listed = await each.List("*", false, context, global::app.type.item.path.Entry.folder);
             if (!listed.Success || await listed.Value() is not { } folders) continue;
             foreach (var sub in folders.Items())
-                if (!sub.FileName.StartsWith('.')) yield return sub;
+                if (!sub.Name.ToString().StartsWith('.')) yield return sub;
         }
     }
 

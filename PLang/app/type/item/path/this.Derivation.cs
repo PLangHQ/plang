@@ -17,7 +17,7 @@ public abstract partial class @this
     /// registered for the field) would recurse to STJ's max-depth limit.
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public abstract @this Parent { get; }
+    [LlmBuilder] public abstract @this Parent { get; }
 
     /// <summary>
     /// Same parent directory, different filename. <c>/Cache/Start.goal</c> +

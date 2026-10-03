@@ -199,7 +199,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public @this(global::app.type.item.path.@this path, global::app.actor.context.@this context)
     {
         Path = path ?? throw new System.ArgumentNullException(nameof(path));
-        _mime = path.MimeType(context);
+        _mime = path.Mime(context).ToString();
         _kind = path.Kind(context) is { IsNull: false, kind: { IsEmpty: false } k } ? k : null;
         history.Add(path);   // born from a path → `is path` from its history
     }

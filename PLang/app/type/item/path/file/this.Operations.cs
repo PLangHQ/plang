@@ -57,7 +57,7 @@ public sealed partial class @this
             return await context.App.type.list["directory"].Create(this, context, "directory");
         // born with its template: the file type makes the reference from this path, as it declares
         return await context.App.type.list[new global::app.type.@this("file", (string?)null, template: template), context]
-            .Create(this, context, FileName);
+            .Create(this, context, Name.ToString());
     }
 
     /// <summary>The <c>file</c> reference's type; a location with no known format expects nothing.</summary>
@@ -83,7 +83,7 @@ public sealed partial class @this
 
     // Where a file sent here lands: under this location when it is a folder, else here.
     private @this Into(@this source, filesystem.@this files)
-        => files.IsFolder(this) ? new @this(PathHelper.Combine(Absolute, source.FileName)) : this;
+        => files.IsFolder(this) ? new @this(PathHelper.Combine(Absolute, source.Name.ToString())) : this;
 
     // A location whose extension names a format — its kind carries extensions ({binary, xyz} for an unknown one carries none).
     private bool Known(actor.context.@this context) => Kind(context).kind.Extension.Count > 0;
@@ -220,7 +220,7 @@ public sealed partial class @this
         if (context.FileSystem.IsFolder(this))
             return (context.Error(new global::app.error.ServiceError(
                 $"{Raw} is a folder, and a folder has no bytes of its own: name a bundle — tar.gz, zip", "PackNeedsBundle", 400)), "file", null);
-        return (await Pour(into, context), "file", FileName);
+        return (await Pour(into, context), "file", Name.ToString());
     }
 
     /// <summary>The file, to read as it streams — gated as a read; or why it can't be (not allowed, not there). The
@@ -430,7 +430,7 @@ public sealed partial class @this
             files.Create(to);
             foreach (var entry in files.List(from, "*", recursive: false).ToList())
             {
-                var into = new @this(PathHelper.Combine(to.Absolute, entry.FileName));
+                var into = new @this(PathHelper.Combine(to.Absolute, entry.Name.ToString()));
                 if (files.IsFile(entry)) await files.Copy(entry, into, overwrite);
                 else if (subfolder) await Copy(entry, into);
             }
@@ -454,7 +454,7 @@ public sealed partial class @this
             else await files.Copy(this, target, overwrite);
 
             // The destination as given — or, when it named a folder, the file under it.
-            var destTyped = ReferenceEquals(target, destination) ? destination.Raw : destination.Combine(FileName).Raw;
+            var destTyped = ReferenceEquals(target, destination) ? destination.Raw : destination.Combine(Name.ToString()).Raw;
             return context.Ok<global::app.type.item.path.@this>(new @this(target.Absolute) { Raw = destTyped });
         }
         catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)

@@ -46,7 +46,7 @@ public sealed partial class @this
     public override global::app.type.item.path.@this InFolder(string folder)
     {
         ArgumentException.ThrowIfNullOrEmpty(folder);
-        return Parent.Combine(folder).Combine(FileName);
+        return Parent.Combine(folder).Combine(Name.ToString());
     }
 
     // The typed text's parent — "data/file.txt" → "data", "/data/file.txt" → "/data". A bare

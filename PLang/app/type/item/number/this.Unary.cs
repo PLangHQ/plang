@@ -13,14 +13,14 @@ namespace app.type.item.number;
 public sealed partial class @this
 {
     // The number's own operations — the op on the carrier, another operand riding whole.
-    public @this Abs() => Wrap(() => DoAbs(this));
-    public @this Floor() => Wrap(() => DoFloor(this));
-    public @this Ceiling() => Wrap(() => DoCeiling(this));
-    public @this Sqrt() => Wrap(() => DoSqrt(this));
-    public @this Round(@this decimals) => Wrap(() => DoRound(this, decimals));
+    [LlmBuilder] public @this Abs() => Wrap(() => DoAbs(this));
+    [LlmBuilder] public @this Floor() => Wrap(() => DoFloor(this));
+    [LlmBuilder] public @this Ceiling() => Wrap(() => DoCeiling(this));
+    [LlmBuilder] public @this Sqrt() => Wrap(() => DoSqrt(this));
+    [LlmBuilder] public @this Round(@this decimals) => Wrap(() => DoRound(this, decimals));
     // No overflow/precision axis for min/max (the winner keeps its exact kind), so no settings needed.
-    public @this Min(@this b) => Wrap(() => this.CompareTo(b) <= 0 ? this : b);
-    public @this Max(@this b) => Wrap(() => this.CompareTo(b) >= 0 ? this : b);
+    [LlmBuilder] public @this Min(@this b) => Wrap(() => this.CompareTo(b) <= 0 ? this : b);
+    [LlmBuilder] public @this Max(@this b) => Wrap(() => this.CompareTo(b) >= 0 ? this : b);
 
     // A binary-float unary result rebuilds at the operand's OWN kind: the implicit lift wraps the
     // computed double, the operand's kind rebuilds it at its size (half narrows, float narrows). No

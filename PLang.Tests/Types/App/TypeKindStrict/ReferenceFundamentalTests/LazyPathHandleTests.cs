@@ -53,7 +53,7 @@ public class LazyPathHandleTests
         await Assert.That(stored!.Peek() is image).IsTrue();
         var img = (image)stored.Peek()!;
         await Assert.That(img.Path).IsNotNull();
-        await Assert.That(img.Path!.FileName).IsEqualTo("ghost.jpg");
+        await Assert.That(img.Path!.Name.ToString()).IsEqualTo("ghost.jpg");
         // Nothing loaded — Bytes is empty until the value door is opened.
         await Assert.That(img.RawBytes).IsNull();
     }

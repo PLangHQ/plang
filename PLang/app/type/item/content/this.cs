@@ -77,7 +77,7 @@ public abstract class @this : global::app.type.item.@this
     /// default the path's.</summary>
     protected virtual System.Threading.Tasks.ValueTask<global::app.type.kind.@this> Format(
         global::app.data.@this read, global::app.actor.context.@this context)
-        => new(context.App.type.list.Mime(Path.MimeType(context)));
+        => new(context.App.type.list.Mime(Path.Mime(context).ToString()));
 
     /// <summary>
     /// The value door — the sample decoded by its format, handed this reference's template, answering with the

@@ -43,7 +43,7 @@ public abstract class @this : kind.@this
         try
         {
             await Write(into, Walk(folder, (await listed.Value())!.Items(), context), level, context.CancellationToken);
-            return (context.Ok(), new held.@this("folder", folder.FileName));
+            return (context.Ok(), new held.@this("folder", folder.Name.ToString()));
         }
         catch (global::app.error.AppException refused)
         {

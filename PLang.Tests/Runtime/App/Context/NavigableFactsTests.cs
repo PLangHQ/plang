@@ -17,7 +17,11 @@ public class NavigableFactsTests
         "app.this.trace",
         "app.this.data",
         "app.this.event",
-        "app.type.item.path.this.MimeType",
+        "app.type.item.path.this.Mime",
+        // a list's element by position: read, nothing changed (random draws from the shared generator, no state of the list's)
+        "app.type.item.list.this.First",
+        "app.type.item.list.this.Last",
+        "app.type.item.list.this.Random",
         // the same location written from the asker's root
         "app.type.item.path.this.Relative",
         "app.type.item.path.file.this.Relative",

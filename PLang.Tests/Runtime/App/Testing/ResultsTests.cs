@@ -95,6 +95,6 @@ public class ResultsTests
         test.Complete(global::app.test.Status.Pass);
 
         await Assert.That(test.Status).IsEqualTo(global::app.test.Status.Pass);
-        await Assert.That(test.Duration.TotalMilliseconds).IsGreaterThanOrEqualTo(1);
+        await Assert.That(test.Duration.Value.TotalMilliseconds).IsGreaterThanOrEqualTo(1);
     }
 }

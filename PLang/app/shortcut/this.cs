@@ -17,7 +17,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Its name — its goal's file (<c>goal.goal</c> → <c>goal</c>), read as <c>%!goal%</c>.</summary>
     [global::app.Out]
-    public string Name => Goal.Path?.FileNameWithoutExtension ?? Goal.Name;
+    public string Name => Goal.Path?.Stem.ToString() ?? Goal.Name;
 
     /// <summary>The goal a read starts.</summary>
     public global::app.goal.@this Goal { get; }

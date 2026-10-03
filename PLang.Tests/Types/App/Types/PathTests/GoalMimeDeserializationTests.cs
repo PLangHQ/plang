@@ -93,7 +93,7 @@ public class GoalMimeDeserializationTests
         // Stage 2's mop-up after PLang scripts that read .goal contents as
         // text needed to keep working.
         var (app, _) = MakeApp();
-        var mime = global::app.type.item.path.@this.Resolve("/x.goal", app.actor.list.User.Context)!.MimeType(app.actor.list.User.Context);
+        var mime = global::app.type.item.path.@this.Resolve("/x.goal", app.actor.list.User.Context)!.Mime(app.actor.list.User.Context).ToString();
         await Assert.That(mime).IsEqualTo("text/plain");
     }
 }

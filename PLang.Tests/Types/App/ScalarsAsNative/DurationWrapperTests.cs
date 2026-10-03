@@ -31,14 +31,15 @@ public class DurationWrapperTests
     }
 
     [Test]
-    public async Task Duration_Parts_DaysHoursMinutesSecondsTotals()
+    // each unit is the whole span in it, a number: 1m30s is 1.5 minutes, 90 seconds, 90000 milliseconds
+    public async Task Duration_EachUnit_IsTheWholeSpan()
     {
-        var d = new Duration(new System.TimeSpan(1, 2, 30, 15)); // 1d 2h 30m 15s
-        await Assert.That(d.Days).IsEqualTo(1);
-        await Assert.That(d.Hours).IsEqualTo(2);
-        await Assert.That(d.Minutes).IsEqualTo(30);
-        await Assert.That(d.Seconds).IsEqualTo(15);
-        await Assert.That(d.TotalHours).IsGreaterThan(26.0);
+        var d = new Duration(System.TimeSpan.FromSeconds(90));
+        await Assert.That(d.Seconds.ToString()).IsEqualTo("90");
+        await Assert.That(d.Minutes.ToString()).IsEqualTo("1.5");
+        await Assert.That(d.Milliseconds.ToString()).IsEqualTo("90000");
+        await Assert.That(d.Hours.AsDouble()).IsEqualTo(0.025);
+        await Assert.That(new Duration(System.TimeSpan.FromHours(36)).Days.ToString()).IsEqualTo("1.5");
     }
 
     [Test]

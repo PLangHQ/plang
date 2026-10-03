@@ -58,10 +58,10 @@ public class OutAttributeInventoryTests
     {
         await Assert.That(HasOut(typeof(global::app.type.item.path.@this), "Raw")).IsFalse();
     }
-    [Test] public async Task Path_DerivedProps_NotOut_Extension_FileName_Directory_MimeType_IsFile_IsDirectory()
+    [Test] public async Task Path_DerivedProps_NotOut_Extension_Name_Stem_Parent()
     {
         var t = typeof(global::app.type.item.path.@this);
-        foreach (var p in new[] { "Extension", "FileName", "FileNameWithoutExtension", "Directory", "MimeType", "IsFile", "IsDirectory" })
+        foreach (var p in new[] { "Extension", "Name", "Stem", "Parent" })
             await Assert.That(HasOut(t, p)).IsFalse().Because($"Path.{p} is derived; receiver recomputes");
     }
     [Test] public async Task Path_Content_Source_NotOut()

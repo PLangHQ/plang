@@ -665,7 +665,7 @@ public sealed class OpenAi : ILlm
             // OpenAI takes an attached image as a data URI — composed here, at its boundary.
             if (content.Success && content.Peek() is global::app.type.item.binary.@this { Value.Length: > 0 } bytes)
             {
-                var mime = imgPath.MimeType(context);
+                var mime = imgPath.Mime(context).ToString();
                 return new Dictionary<string, object>
                 {
                     ["type"] = "image_url",

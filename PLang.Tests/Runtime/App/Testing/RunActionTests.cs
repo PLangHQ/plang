@@ -563,7 +563,7 @@ public class RunActionTests
         // (the goal.call step at index 1 bundles the sub-goal time so it's
         // typically the largest, but we don't pin the magnitude).
         foreach (var t in (run.Timings).Items(_app.actor.list.User.Context))
-            await Assert.That(((global::app.test.timing.@this)t.Peek()).Elapsed.TotalMilliseconds >= 0.0).IsTrue();
+            await Assert.That(((global::app.test.timing.@this)t.Peek()).Elapsed.Value.TotalMilliseconds >= 0.0).IsTrue();
     }
 
     // Covers RunSingleAsync's outer catch — a handler that throws an unexpected

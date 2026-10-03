@@ -254,6 +254,43 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// lives on (the app, a call, an actor, a module, a goal, a step) keeps a list; a plain value keeps none.</summary>
     internal virtual global::app.type.item.kept.list.@this? Kept => null;
 
+    /// <summary>The member of this value's own plang surface named <paramref name="key"/> — one its class marks
+    /// <c>[LlmBuilder]</c>, the catalog's set (a list's <c>count</c>, <c>first</c>): a property's value, or what a method
+    /// that asks only for its asker answers. Null when the class marks none by that name; a value whose data reads
+    /// through by key (a list's rows, a dict's entries) asks this, never every public member it has.</summary>
+    private protected async System.Threading.Tasks.ValueTask<global::app.data.@this?> Member(global::app.data.@this parent, string key)
+    {
+        var member = _marked.GetOrAdd((GetType(), key), Marked);
+        object? answer = member switch
+        {
+            System.Reflection.PropertyInfo property => property.GetValue(this),
+            System.Reflection.MethodInfo method => method.Invoke(this,
+                method.GetParameters().Select(p => p.ParameterType == typeof(global::app.actor.context.@this) ? parent.Context : p.DefaultValue).ToArray()),
+            _ => null,
+        };
+        if (member == null) return null;
+        // a member that answers asynchronously answers what its task completes with
+        if (answer?.GetType().GetMethod("AsTask") is { } task) answer = task.Invoke(answer, null);
+        if (answer is System.Threading.Tasks.Task pending)
+        {
+            await pending;
+            answer = pending.GetType().GetProperty("Result")?.GetValue(pending);
+        }
+        return answer as global::app.data.@this ?? (answer == null ? parent.Context.NotFound(key) : new global::app.data.@this(key, answer, parent: parent));
+    }
+
+    // Which member of a class is its marked surface by a name — a fact of the class, found once.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(System.Type, string), System.Reflection.MemberInfo?> _marked = new();
+
+    private static System.Reflection.MemberInfo? Marked((System.Type Class, string Name) at)
+        => at.Class.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+               .FirstOrDefault(p => string.Equals(p.Name, at.Name, System.StringComparison.OrdinalIgnoreCase)
+                   && System.Attribute.IsDefined(p, typeof(global::app.LlmBuilderAttribute)))
+           ?? (System.Reflection.MemberInfo?)at.Class.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+               .FirstOrDefault(m => string.Equals(m.Name, at.Name, System.StringComparison.OrdinalIgnoreCase)
+                   && System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute))
+                   && m.GetParameters().All(p => p.ParameterType == typeof(global::app.actor.context.@this) || p.IsOptional));
+
     /// <summary>This owner's settings when <paramref name="key"/> is <c>setting</c> (<c>%!app.goal.list.setting%</c>);
     /// null for any other key, or an owner with none.</summary>
     private protected async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent, string key)

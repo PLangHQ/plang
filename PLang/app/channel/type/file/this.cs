@@ -19,7 +19,7 @@ public sealed class @this : global::app.channel.@this
         Path = path ?? throw new ArgumentNullException(nameof(path));
         Name = path.ToString();
         Direction = ChannelDirection.Output;
-        Mime = path.MimeType(context);
+        Mime = path.Mime(context).ToString();
     }
 
     public override async Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)

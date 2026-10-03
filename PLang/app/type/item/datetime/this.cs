@@ -56,23 +56,24 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     /// <summary>Accepts a CLR <see cref="System.DateTime"/> — stored as an offset.</summary>
     public @this(System.DateTime value) { Value = new System.DateTimeOffset(value); }
 
-    // ---- Parts (behavioral targets of the is-DateTimeOffset sweep) ----
-    public int Year => Value.Year;
-    public int Month => Value.Month;
-    public int Day => Value.Day;
-    public int Hour => Value.Hour;
-    public int Minute => Value.Minute;
-    public int Second => Value.Second;
-    public int Millisecond => Value.Millisecond;
-    public long Ticks => Value.Ticks;
-    public int DayOfYear => Value.DayOfYear;
-    public System.DayOfWeek DayOfWeek => Value.DayOfWeek;
+    // ---- Parts: each a plang value (%now.year%, %now.weekday%) ----
+    [LlmBuilder] public global::app.type.item.number.@this Year => Value.Year;
+    [LlmBuilder] public global::app.type.item.number.@this Month => Value.Month;
+    [LlmBuilder] public global::app.type.item.number.@this Day => Value.Day;
+    [LlmBuilder] public global::app.type.item.number.@this Hour => Value.Hour;
+    [LlmBuilder] public global::app.type.item.number.@this Minute => Value.Minute;
+    [LlmBuilder] public global::app.type.item.number.@this Second => Value.Second;
+    [LlmBuilder] public global::app.type.item.number.@this Millisecond => Value.Millisecond;
+    [LlmBuilder] public global::app.type.item.number.@this Ticks => Value.Ticks;
+
+    /// <summary>The day of the week by its name (<c>Monday</c>).</summary>
+    [LlmBuilder] public global::app.type.item.text.@this Weekday => Value.DayOfWeek.ToString();
 
     // Compound parts carry their own plang type: the calendar day is a `date`, the
     // wall-clock time a `time`, the zone offset a `duration`.
-    public global::app.type.item.date.@this Date => new(System.DateOnly.FromDateTime(Value.Date));
-    public global::app.type.item.time.@this TimeOfDay => new(System.TimeOnly.FromTimeSpan(Value.TimeOfDay));
-    public global::app.type.item.duration.@this Offset => new(Value.Offset);
+    [LlmBuilder] public global::app.type.item.date.@this Date => new(System.DateOnly.FromDateTime(Value.Date));
+    [LlmBuilder] public global::app.type.item.time.@this Time => new(System.TimeOnly.FromTimeSpan(Value.TimeOfDay));
+    [LlmBuilder] public global::app.type.item.duration.@this Offset => new(Value.Offset);
 
     /// <summary>Bare ISO round-trip form — the serializer renders this.</summary>
     public override string ToString() =>

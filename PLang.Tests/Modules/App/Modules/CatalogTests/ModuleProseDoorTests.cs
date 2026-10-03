@@ -54,13 +54,13 @@ public class ModuleProseDoorTests
     {
         var handle = _app.Module(FixtureModule)!.Description;
         await Assert.That(handle).IsTypeOf<FileItem>();
-        await Assert.That(handle.Path.FileName).IsEqualTo("module.description.md");
+        await Assert.That(handle.Path.Name.ToString()).IsEqualTo("module.description.md");
     }
 
     [Test]
     public async Task ActionExamples_IsAFileHandle_InItsModulesFolder()
     {
-        await Assert.That(Examples().Path.FileName).IsEqualTo(FixtureAction1 + ".examples.md");
+        await Assert.That(Examples().Path.Name.ToString()).IsEqualTo(FixtureAction1 + ".examples.md");
     }
 
     [Test]

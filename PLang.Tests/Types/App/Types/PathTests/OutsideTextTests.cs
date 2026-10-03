@@ -38,7 +38,7 @@ public class OutsideTextTests
         await listed.IsSuccess();
         var file = (await listed.Value())!.Items(ctx).Single();
 
-        await Assert.That((await Opened(file)).FileName).IsEqualTo(AppVariable + ".txt");
+        await Assert.That((await Opened(file)).Name.ToString()).IsEqualTo(AppVariable + ".txt");
     }
 
     // A value off the wire (a peer's Data, the app's store) typed a path: as it arrived, marked or not.

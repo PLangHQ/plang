@@ -172,7 +172,7 @@ public class Stage4_BuildMethodImplsTests
     public async Task AUrlWithAQuery_ItsMimeTypeIsItsPathsExtensions()
     {
         var url = global::app.type.item.path.@this.Resolve("https://api/x.json?v=2", _app.actor.list.User.Context);
-        await Assert.That(url.MimeType(_app.actor.list.User.Context)).IsEqualTo("application/json");
+        await Assert.That(url.Mime(_app.actor.list.User.Context).ToString()).IsEqualTo("application/json");
     }
 
     [Test]

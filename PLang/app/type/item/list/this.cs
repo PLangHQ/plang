@@ -233,7 +233,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// <summary>Number of elements as the PLang <c>number</c> (a chunk contributes its list's
     /// count; any other row contributes 1). Walked on demand: a chunk aliases a list that may be
     /// mutated elsewhere, so a stored counter would stale.</summary>
-    public global::app.type.item.number.@this Count => CountRaw;
+    [LlmBuilder] public global::app.type.item.number.@this Count => CountRaw;
 
     /// <summary>The interior raw count — index math and loop bounds.</summary>
     internal int CountRaw
@@ -314,10 +314,14 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     }
 
     /// <summary>First flattened element, or null when empty.</summary>
-    public Data? First(actor.context.@this context) => At(0, context);
+    [LlmBuilder] public Data? First(actor.context.@this context) => At(0, context);
 
     /// <summary>Last flattened element, or null when empty.</summary>
-    public Data? Last(actor.context.@this context) => At(CountRaw - 1, context);
+    [LlmBuilder] public Data? Last(actor.context.@this context) => At(CountRaw - 1, context);
+
+    /// <summary>One element picked at random, or null when empty.</summary>
+    [LlmBuilder] public Data? Random(actor.context.@this context)
+        => CountRaw is var count and > 0 ? At(System.Random.Shared.Next(count), context) : null;
 
     // Resolve an element index to the owning row + the offset within it. `inner` is the
     // chunk's list when the row is a chunk (offset indexes into it); null for a one-element
@@ -592,37 +596,22 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         => System.Threading.Tasks.ValueTask.FromResult(this);
 
     /// <summary>
-    /// A list owns its child read — intrinsics (count/length, first, last, random,
-    /// numeric index) win; any other key delegates to the first element
-    /// (<c>%addresses.street%</c> → <c>%addresses[0].street%</c>). An element is handed out
-    /// with the asker's (<paramref name="parent"/>'s) context. Out-of-range / empty → NotFound.
+    /// A list owns its child read — a numeric key is a position; its own surface (count, first, last, random, all:
+    /// the members it marks, never every public member it has) comes next, then its settings; any other key reads
+    /// through to the first element (<c>%addresses.street%</c> → <c>%addresses[0].street%</c>). An element is handed
+    /// out with the asker's (<paramref name="parent"/>'s) context. Out-of-range / empty → NotFound.
     /// </summary>
     public override async System.Threading.Tasks.ValueTask<Data> Get(Data parent, string key)
     {
-        if (string.Equals(key, "count", System.StringComparison.OrdinalIgnoreCase)
-            || string.Equals(key, "length", System.StringComparison.OrdinalIgnoreCase))
-            return new Data(key, Count, parent: parent);
-
-        // every item, before the empty check: a list that loads its items answers even when it holds none yet
-        if (string.Equals(key, "all", System.StringComparison.OrdinalIgnoreCase))
-            return new Data(key, await all(parent.Context), parent: parent);
-
-        // an owner's settings (%!app.goal.list.setting%), before the empty check: they aren't its items
-        if (await Setting(parent, key) is { } setting) return setting;
-
-        if (CountRaw == 0) return Data.NotFound(key);
-
         var context = parent.Context;
-        if (string.Equals(key, "first", System.StringComparison.OrdinalIgnoreCase))
-            return First(context)!;
-        if (string.Equals(key, "last", System.StringComparison.OrdinalIgnoreCase))
-            return Last(context)!;
-        if (string.Equals(key, "random", System.StringComparison.OrdinalIgnoreCase))
-            return At(System.Random.Shared.Next(CountRaw), context)!;
-
         if (int.TryParse(key, out var index))
             return At(index, context) ?? Data.NotFound(key);
 
+        // its own surface and its settings (%!app.goal.list.setting%) answer even when it holds no items
+        if (await Member(parent, key) is { } member) return member;
+        if (await Setting(parent, key) is { } setting) return setting;
+
+        if (CountRaw == 0) return Data.NotFound(key);
         // Implicit first: %list.street% → %list[0].street%.
         return await First(context)!.Get(key);
     }

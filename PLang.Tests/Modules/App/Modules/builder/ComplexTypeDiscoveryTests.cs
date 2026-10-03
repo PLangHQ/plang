@@ -60,7 +60,8 @@ public class ComplexTypeDiscoveryTests
         // (a text's length).
         await Assert.That(_app.type.list["text"].Shape).IsEqualTo("string");
         await Assert.That(_app.type.list["text"].Property!.Any(p => p.Name == "length")).IsTrue();
-        await Assert.That(_app.type.list["number"].Property).IsNull();
+        await Assert.That(_app.type.list["number"].Shape).IsNotNull();
+        await Assert.That(_app.type.list["number"].Property!.Any(p => p.Name == "round")).IsTrue();
         await Assert.That(_app.type.list["bool"].Property).IsNull();
     }
 
