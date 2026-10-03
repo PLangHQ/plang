@@ -101,14 +101,51 @@ internal sealed class Picture(Rect rect, byte[] pixels, bool opaque)
             from.CopyTo(to);
             return;
         }
-        for (var i = 0; i < n; i += 4)
+        // by runs: a stretch of opaque pixels (most of a page) copied at once, a clear one skipped, only the pixels
+        // between them (shadows, rounded corners, anti-aliased edges) blended one by one
+        var source = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, uint>(from);
+        var target = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, uint>(to);
+        for (var i = 0; i < source.Length;)
         {
-            var a = from[i + 3];
-            if (a == 255) { from.Slice(i, 4).CopyTo(to.Slice(i, 4)); continue; }
-            if (a == 0) continue;
-            var keep = 255 - a;
+            var run = Run(source[i..], Solid);
+            if (run > 0)
+            {
+                source.Slice(i, run).CopyTo(target.Slice(i, run));
+                i += run;
+                continue;
+            }
+            run = Run(source[i..], 0);
+            if (run > 0)
+            {
+                i += run;
+                continue;
+            }
+            var at = i * 4;
+            var keep = 255 - from[at + 3];
             for (var c = 0; c < 4; c++)
-                to[i + c] = (byte)Math.Min(255, from[i + c] + to[i + c] * keep / 255);
+                to[at + c] = (byte)Math.Min(255, from[at + c] + to[at + c] * keep / 255);
+            i++;
         }
+    }
+
+    // a pixel's alpha, as a little-endian uint of BGRA: its top byte
+    private const uint Solid = 0xFF000000u;
+
+    /// <summary>How many pixels from the start have the alpha <paramref name="alpha"/> (<see cref="Solid"/> or 0) —
+    /// compared a vector at a time.</summary>
+    private static int Run(ReadOnlySpan<uint> pixels, uint alpha)
+    {
+        var i = 0;
+        if (System.Numerics.Vector.IsHardwareAccelerated && pixels.Length >= System.Numerics.Vector<uint>.Count)
+        {
+            var mask = new System.Numerics.Vector<uint>(Solid);
+            var want = new System.Numerics.Vector<uint>(alpha);
+            var vectors = System.Runtime.InteropServices.MemoryMarshal.Cast<uint, System.Numerics.Vector<uint>>(pixels);
+            var v = 0;
+            while (v < vectors.Length && System.Numerics.Vector.EqualsAll(vectors[v] & mask, want)) v++;
+            i = v * System.Numerics.Vector<uint>.Count;
+        }
+        while (i < pixels.Length && (pixels[i] & Solid) == alpha) i++;
+        return i;
     }
 }
