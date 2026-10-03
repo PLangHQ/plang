@@ -106,6 +106,10 @@ internal sealed class @this : child.@this
                 }
                 if (!string.IsNullOrEmpty(info.WorkingDirectory))
                     Check(Native.posix_spawn_file_actions_addchdir_np(actions, info.WorkingDirectory), "folder");
+                // and nothing else of plang's: an fd a native library opened without close-on-exec stays out of the
+                // program too (glibc 2.34 and later; an older one has only close-on-exec to rely on)
+                try { Check(Native.posix_spawn_file_actions_addclosefrom_np(actions, 5), "close from 5"); }
+                catch (EntryPointNotFoundException) { }
 
                 Check(Native.posix_spawnattr_init(attributes), "attributes");
                 Native.sigemptyset(signals);
@@ -241,6 +245,7 @@ internal sealed class @this : child.@this
         [DllImport("libc")] internal static extern int posix_spawn_file_actions_destroy(IntPtr actions);
         [DllImport("libc")] internal static extern int posix_spawn_file_actions_adddup2(IntPtr actions, int fd, int target);
         [DllImport("libc")] internal static extern int posix_spawn_file_actions_addchdir_np(IntPtr actions, string path);
+        [DllImport("libc")] internal static extern int posix_spawn_file_actions_addclosefrom_np(IntPtr actions, int from);
         [DllImport("libc")] internal static extern int posix_spawnattr_init(IntPtr attributes);
         [DllImport("libc")] internal static extern int posix_spawnattr_destroy(IntPtr attributes);
         [DllImport("libc")] internal static extern int posix_spawnattr_setflags(IntPtr attributes, short flags);

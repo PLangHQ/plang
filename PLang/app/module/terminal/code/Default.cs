@@ -347,9 +347,11 @@ public sealed class Default : ITerminal
         data.@this<global::app.type.item.path.@this>? workingDirectory, bool held = false)
     {
         // the step names what it starts itself when the program, its arguments, environment and folder are all written
-        // in it — no %ref%, nothing its caller handed it: only then may a goal that ships with plang start it unasked
-        // (decision 579; a %ref% anywhere there is the caller's, and is asked as the caller)
-        static bool Written(data.@this? given) => given?.Peek() is not { HasVariable: true };
+        // in it — no variable but the running app's anchors (%!app.AbsolutePath%), nothing its caller handed it: only
+        // then may a goal that ships with plang start it unasked (decision 579; any other variable there is the
+        // caller's, and is asked as the caller)
+        static bool Written(data.@this? given)
+            => given?.Peek() is not { } held || held.Variable.All(global::app.type.item.path.@this.IsAnchor);
         var named = Written(app) && Written(parameter) && Written(environment) && Written(workingDirectory);
 
         var name = (await app.Value())!.Clr<string>()!;

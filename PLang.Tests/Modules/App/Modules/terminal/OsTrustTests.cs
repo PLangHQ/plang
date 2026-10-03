@@ -85,6 +85,47 @@ public class OsTrustTests : IDisposable
         await Assert.That(ran.Error!.Key).IsEqualTo("PermissionDenied");
     }
 
+    // an os goal echoing what it names: the app's root anchor, or a plain variable
+    private global::app.goal.step.action.@this Echo(string argument)
+        => Make.Action(Context, "terminal", "start", ("App", "//bin/echo"), ("Parameter", new List<object?> { argument }));
+
+    [Test]
+    public async Task AnOsGoal_NamingTheAppsRootAnchor_StartsUnasked_WithTheRealRoot()
+    {
+        var os = await OsGoal("Anchor.goal", Make.Step("echo the root", Echo("%!app.AbsolutePath%")));
+        var ran = await _app.Start(os, Context);
+        await ran.IsSuccess();
+        await Assert.That((await ran.Value())?.ToString()?.TrimEnd('/')).IsEqualTo(_root.TrimEnd('/'));
+    }
+
+    [Test]
+    public async Task TheRootAnchor_CantBeSetByAUserGoal()
+    {
+        // a user goal tries to point the anchor elsewhere, then calls the os goal that names it
+        var os = await OsGoal("Anchored.goal", Make.Step("echo the root", Echo("%!app.AbsolutePath%")));
+        var user = await Goal("/Shadow.goal",
+            Make.Step("point the root elsewhere", Make.Action(Context, "variable", "set",
+                Make.Param(Context, "Name", "!app.AbsolutePath", "variable"), ("Value", "/"))),
+            Make.Step("call the os goal", Make.Action(Context, "goal", "call", ("Name", Os("Anchored")))));
+        var ran = await _app.Start(user, Context);
+        await Assert.That(ran.Success).IsFalse().Because("the app's own member can't be set over");
+        await Assert.That(ran.Error!.Key).IsEqualTo("OwnMember");
+        // and after the try, the os goal still starts with the real root, unasked
+        var after = await _app.Start(os, Context);
+        await after.IsSuccess();
+        await Assert.That((await after.Value())?.ToString()?.TrimEnd('/')).IsEqualTo(_root.TrimEnd('/'));
+    }
+
+    [Test]
+    public async Task AnOsGoal_NamingAPlainVariable_Asks()
+    {
+        await Context.Variable.Set("dir", new global::app.data.@this("dir", _root, context: Context));
+        var os = await OsGoal("Plain.goal", Make.Step("echo a variable", Echo("%dir%")));
+        var ran = await _app.Start(os, Context);
+        await Assert.That(ran.Success).IsFalse().Because("a plain variable is the caller's");
+        await Assert.That(ran.Error!.Key).IsEqualTo("PermissionDenied");
+    }
+
     [Test]
     public async Task AUserGoal_CalledBackFromAnOsGoal_Asks()
     {
