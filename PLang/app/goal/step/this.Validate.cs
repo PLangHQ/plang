@@ -47,13 +47,14 @@ public sealed partial class @this
         // system variable (%!data%, %!error%) excepted
         foreach (var v in answered)
             if (!v.StartsWith("%!") && !said.Contains(v, comparer)) problems.Add($"step {Index}: {v} isn't in the step — use only the step's variables");
-        // a quoted literal is held by one of the answer's values, never by the line's own syntax (`Left=%oldHash%`
-        // holds no "= %oldHash%"). An answer that doubles a literal's backslashes (\\n for the step's \n) holds a
-        // backslash, not what the step says — told so, so the retry writes it as the step does
-        var values = await Values(Code.Items(), context);
+        // a quoted literal is held by one of the answer's values — each asked, as it answers for itself (a separator
+        // named comma holds ","), never the line's own syntax (`Left=%oldHash%` holds no "= %oldHash%"). An answer that
+        // doubles a literal's backslashes (\\n for the step's \n) holds a backslash, not what the step says — told so,
+        // so the retry writes it as the step does
+        var values = Values(Code.Items());
         foreach (var l in Literal.Matches(Text).Select(m => m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value).Distinct())
-            if (l.Length > 0 && !values.Any(value => value.Contains(l)))
-                problems.Add(l.Contains('\\') && values.Any(value => value.Contains(l.Replace("\\", "\\\\")))
+            if (l.Length > 0 && !await Held(l))
+                problems.Add(l.Contains('\\') && await Held(l.Replace("\\", "\\\\"))
                     ? $"step {Index}: \"{l}\" is in the step, and your answer doubles its backslashes — write each escape as the step does"
                     : $"step {Index}: \"{l}\" is in the step but not in your answer");
         // a number the step writes as digits is one of its markers: an answer without it dropped what the step
@@ -68,6 +69,13 @@ public sealed partial class @this
             if (t.Length > 0 && !Text.Contains(t, System.StringComparison.OrdinalIgnoreCase))
                 problems.Add($"step {Index}: your answer writes \"{t}\", which the step doesn't — leave out what the step doesn't give");
         return problems;
+
+        async System.Threading.Tasks.Task<bool> Held(string quoted)
+        {
+            foreach (var value in values)
+                if (await value.Holds(quoted, context)) return true;
+            return false;
+        }
     }
 
     /// <summary>The numbers the code writes that the step's words don't write as digits, each with the action and
@@ -99,23 +107,18 @@ public sealed partial class @this
         }
     }
 
-    // Every property value the code writes, each as formal writes it alone (its own Store writer — a template is not
-    // rendered, an action held as a value is walked as an action): the actions, the actions they hold, their bodies.
-    private async System.Threading.Tasks.Task<List<string>> Values(
-        IEnumerable<global::app.goal.step.action.@this> actions, global::app.actor.context.@this context)
+    // Every property value the code writes (an action held as a value is walked as an action): the actions, the actions
+    // they hold, their bodies.
+    private List<global::app.type.item.@this> Values(IEnumerable<global::app.goal.step.action.@this> actions)
     {
-        var values = new List<string>();
+        var values = new List<global::app.type.item.@this>();
         foreach (var a in actions)
         {
-            values.AddRange(await Values(a.Held, context));
+            values.AddRange(Values(a.Held));
             foreach (var p in a.Property)
-            {
-                if (p.Value is null or global::app.goal.step.action.@this or global::app.goal.step.action.list.@this) continue;
-                var writer = new global::app.goal.step.action.formal.Writer();
-                await p.Value.Output(writer, global::app.View.Store, context);
-                values.Add(writer.ToString());
-            }
-            foreach (var child in a.Child.Items()) values.AddRange(await Values(child.Code.Items(), context));
+                if (p.Value is not (null or global::app.goal.step.action.@this or global::app.goal.step.action.list.@this))
+                    values.Add(p.Value);
+            foreach (var child in a.Child.Items()) values.AddRange(Values(child.Code.Items()));
         }
         return values;
     }

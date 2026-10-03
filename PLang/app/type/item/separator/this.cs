@@ -28,6 +28,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     public override string ToString() => Characters;
 
+    /// <summary>A separator holds the text a step quoted by its characters too: `by ","` written as <c>comma</c> keeps it.</summary>
+    internal override async System.Threading.Tasks.ValueTask<bool> Holds(string quoted, global::app.actor.context.@this context)
+        => Characters == quoted || await base.Holds(quoted, context);
+
     /// <summary>A separator passes through; a text is the separator it names, whatever case and by an alias (lines),
     /// else its characters as written — from a literal and from a variable's value alike.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)

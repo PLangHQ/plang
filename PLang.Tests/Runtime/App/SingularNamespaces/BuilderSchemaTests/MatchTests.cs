@@ -211,6 +211,21 @@ public class MatchTests
         await Assert.That(taken.Error?.Message ?? "").DoesNotContain("is in the step but not in your answer");
     }
 
+    // A value answers whether it holds what the step quoted: `split %csv% by ","` answered with the named separator
+    // comma keeps the "," — a separator holds its characters
+    [Test]
+    public async Task AQuotedLiteral_HeldByANamedValue_IsTaken()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var context = app.actor.list.System.Context;
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("""split %csv% by ",", write to %parts%"""));
+        await Picked(goal, context, (0, "list.split"));
+
+        var result = await Match(goal, """[0] list.split(Value=%csv%, Separator="comma"); variable.set(Name=%parts%, Value=%!data%)""", context);
+
+        await Assert.That(result.Error?.Message ?? "").DoesNotContain("is in the step but not in your answer");
+    }
+
     [Test]
     public async Task ANumberTheStepWrites_HeldByTheAnswer_IsTaken()
     {

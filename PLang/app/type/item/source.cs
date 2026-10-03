@@ -127,6 +127,16 @@ public class source : @this
     /// none it may fill) parses once and is kept. Mirrors text/dict/list.</summary>
     public override bool Cacheable => !HasVariable;
 
+    /// <summary>A literal holds what a step quoted as the value it reads into answers it (a named separator holds its
+    /// characters); one holding variables is never read here — its written form answers.</summary>
+    internal override async System.Threading.Tasks.ValueTask<bool> Holds(string quoted, global::app.actor.context.@this context)
+    {
+        if (await base.Holds(quoted, context)) return true;
+        if (HasVariable) return false;
+        var read = new global::app.data.@this("", this, context: context);
+        return await read.Value() is { } born && !ReferenceEquals(born, this) && read.Success && await born.Holds(quoted, context);
+    }
+
     public override async System.Threading.Tasks.ValueTask<@this> Value(global::app.data.@this data)
     {
         // The value loads with the context of the Data that asks — never the source's own: a

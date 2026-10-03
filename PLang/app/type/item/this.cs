@@ -372,6 +372,16 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public bool Is(string name, global::app.type.list.@this types)
         => types.Contains(name) ? Is(types[name]) : IsKind(name);
 
+    /// <summary>Does this value, as an answer writes it, hold the text a step quoted (<paramref name="quoted"/>)? By its
+    /// own written form, by default — the build's check that an answer kept what the step said. A value that stands for
+    /// what it doesn't write (a separator named <c>comma</c> stands for <c>,</c>) answers by that too.</summary>
+    internal virtual async System.Threading.Tasks.ValueTask<bool> Holds(string quoted, global::app.actor.context.@this context)
+    {
+        var writer = new global::app.goal.step.action.formal.Writer();
+        await Output(writer, global::app.View.Store, context);
+        return writer.ToString().Contains(quoted);
+    }
+
     /// <summary>Is this value of the kind <paramref name="name"/> (by its name, an alias, a MIME or an extension) — its
     /// own kind, or one a value in its history had. A value whose kinds are sizes answers every one it fits.</summary>
     protected internal virtual bool IsKind(string name) => Type.kind.Names(name) || history.HasKind(name);
