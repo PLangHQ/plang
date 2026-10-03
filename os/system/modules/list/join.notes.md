@@ -1,0 +1,2 @@
+ListName — the list to join · say: the list, inline · builder: as the step writes it
+Separator — what the items are joined with, a `separator` · say: `with ", "`, `joined by newline`, `with " / "` · ask: what does the step join with — a named separator (line, comma, tab, space, semicolon) or one of the step's variables? · builder: the separator the step names — a literal the step quotes stays as written (`with ", "` → `Separator=", "`), a named one by its name (`joined by newline` → `"line"`); left out when the step names none (then the default comma).
