@@ -12,6 +12,9 @@ public class @this : global::app.goal.step.action.@this
     /// <summary>A keep IS a distinct plang type (the role is the type): its wire shape is action's.</summary>
     protected internal override global::app.type.@this Type => new(typeof(@this));
 
+    /// <summary>A keep keeps what the actions before it produce.</summary>
+    internal override bool Keeps => true;
+
     /// <summary>A program action of this keep's kind, in <paramref name="step"/>.</summary>
     internal override global::app.goal.step.action.@this Program(global::app.goal.step.@this? step)
         => new @this { Module = Module, Name = Name, Step = step, Synthetic = false };

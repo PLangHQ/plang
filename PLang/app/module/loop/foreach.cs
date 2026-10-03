@@ -28,6 +28,12 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
     /// <summary>The variable each key (dict key or list index) is bound to — unbound when not named.</summary>
     public partial data.@this<app.type.item.variable.@this>? Key { get; init; }
 
+    /// <summary>Runs its items side by side (<c>foreach %goals% in parallel(cpu: 2), call goal X, write to %task%</c>):
+    /// each item as a task, at most <c>cpu</c> at once. The loop answers a task at once and the step goes on; waited
+    /// for, the task answers <c>{count, complete}</c> once every item has run, or the first item's failure. Left out,
+    /// the items run one after another.</summary>
+    public partial data.@this<app.type.item.parallel.@this>? Parallel { get; init; }
+
     public async Task<data.@this> Start()
     {
         // A value-less collection (the null citizen or an absent slot) iterates
@@ -45,6 +51,24 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
         // The loop body — the actions after this foreach in the step's chain. The Handled flag below stops
         // the outer chain from re-running them.
         var bodyActions = Step?.Code.After(__action!) ?? [];
+
+        // in parallel the loop answers a task at once: the step's keeps at its end (`write to %task%`) keep that task,
+        // and the actions between the loop and them are what each item runs
+        if (Parallel != null && await Parallel.ToBooleanAsync() && await Parallel.Value() is { } side && Step?.Goal is { } goal)
+        {
+            var keeps = bodyActions.Reverse().TakeWhile(action => action.Keeps).Reverse().ToList();
+            var body = bodyActions.Take(bodyActions.Count - keeps.Count).ToList();
+            data.@this answered = Context.Ok(Started(goal, side, itemVariable, keyVariable, body));
+            // what its keeps keep is the loop's answer, as %!data% is an action's once it has answered
+            if (keeps.Count > 0) await Context.Variable.Set("!data", answered);
+            foreach (var keep in keeps)
+            {
+                answered = await keep.Follow(answered, Context);
+                if (!answered.Success) return answered;
+            }
+            answered.Handled = bodyActions.Count > 0;
+            return answered;
+        }
 
         // Data owns enumeration: dicts yield (dictKey, value), lists yield (index, element). Each run of the
         // body is a call whose frame binds %item% (and %key%): the loop's own names end with it — an outer
@@ -78,6 +102,52 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
         if (bodyActions.Count > 0)
             loopResult.Handled = true;
         return loopResult;
+    }
+
+    /// <summary>The loop as a task of its actor's: each item a task of its own, run in a context of its own whose first
+    /// frame binds the item (and its key) and reads through to the frame the loop is in, at most
+    /// <paramref name="side"/>'s cpu at once; it ends when every item has, answering <c>{count, complete}</c>, or the
+    /// first item's failure.</summary>
+    private global::app.task.@this Started(global::app.goal.@this goal, global::app.type.item.parallel.@this side,
+        global::app.type.item.variable.@this itemVariable, global::app.type.item.variable.@this? keyVariable,
+        System.Collections.Generic.IReadOnlyList<global::app.goal.step.action.@this> body)
+    {
+        var from = Context.call.Current;
+        var actor = Context.Actor;
+        return actor.Task.Start(goal, async token =>
+        {
+            // the places items wait for; never disposed here, as an item already started may still be waiting
+            var places = new System.Threading.SemaphoreSlim(side.At);
+            var items = new List<global::app.task.@this>();
+            foreach (var (key, item) in await Collection.EnumerateItems())
+            {
+                // the element as it is here, in the loop's step, as a set reads a value (a template renders here)
+                var settled = await item.Settle();
+                if (settled.IsInitialized && !settled.Success) return settled;
+                var bound = new List<data.@this>
+                    { settled.IsInitialized ? settled.Copy(itemVariable.Name) : Context.NotFound(itemVariable.Name) };
+                if (keyVariable != null) bound.Add(key.Copy(keyVariable.Name));
+                items.Add(actor.Task.Start(goal, async own =>
+                {
+                    await places.WaitAsync(own);
+                    try
+                    {
+                        using var child = Context.Child(actor, own);
+                        await using (child.call.Isolate(bound, caller: from))
+                            foreach (var action in body)
+                            {
+                                var result = await action.Start(child);
+                                if (result.Returned || !result.Success) return result;
+                            }
+                        return child.Ok();
+                    }
+                    finally { places.Release(); }
+                }));
+            }
+            var ended = await System.Threading.Tasks.Task.WhenAll(items.Select(item => item.Wait(token)));
+            if (ended.FirstOrDefault(result => !result.Success) is { } failed) return failed;
+            return await Result(ended.Length, complete: !token.IsCancellationRequested);
+        });
     }
 
     /// <summary>
