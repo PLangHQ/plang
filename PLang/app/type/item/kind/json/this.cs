@@ -191,13 +191,41 @@ public sealed class @this : global::app.type.kind.@this
             + (shape.Path != null || shape.LineNumber != null ? $" [at {shape.Path ?? "?"}, line {shape.LineNumber?.ToString() ?? "?"}]" : ""),
             "MaterializeFailed", 400) { Exception = shape }, shape);
 
-    // A json value writes its own raw json inline — NEVER reflecting the JsonElement's BCL props.
+    // A json value writes what it is — its objects, lists and scalars — through the writer's own primitives, and the
+    // writer says how it looks: a text template prints it as it prints an equal plang list, a json writer as json. The
+    // source's own spacing never passes the writer. NEVER reflecting the JsonElement's BCL props.
     public override global::System.Threading.Tasks.ValueTask Output(
         object obj, global::app.type.format.IWriter writer, global::app.View mode,
         global::app.actor.context.@this? ctx)
     {
-        writer.Raw(((JsonElement)obj).GetRawText());
+        Write((JsonElement)obj, writer);
         return default;
+    }
+
+    private static void Write(JsonElement element, global::app.type.format.IWriter writer)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                writer.BeginObject();
+                foreach (var member in element.EnumerateObject())
+                {
+                    writer.Name(member.Name);
+                    Write(member.Value, writer);
+                }
+                writer.EndObject();
+                break;
+            case JsonValueKind.Array:
+                writer.BeginArray(element.GetArrayLength());
+                foreach (var row in element.EnumerateArray()) Write(row, writer);
+                writer.EndArray();
+                break;
+            case JsonValueKind.String: writer.String(element.GetString()!); break;
+            case JsonValueKind.Number: global::app.type.item.number.@this.Parse(element.GetRawText())!.Write(writer); break;
+            case JsonValueKind.True: writer.Bool(true); break;
+            case JsonValueKind.False: writer.Bool(false); break;
+            default: writer.Null(); break;
+        }
     }
 
     // A json scalar → its raw CLR face (a number: its raw text read by number's one rule); the Data ctor lifts it
