@@ -40,8 +40,6 @@ public sealed class @this
     private Dictionary<string, number?>? _popular;                                       // stage 2: popular action → share; null when not asked
     // stage 2: module.action.Option → the offer chosen for it, with the option it is for
     private readonly Dictionary<string, (global::app.type.property.@this Property, global::app.type.item.@this Value)> _option = new();
-    // The options of a closed set (a choice's options, a bool's true and false) the decider says the step doesn't give
-    private readonly Dictionary<string, global::app.type.property.@this> _none = new();
 
     private List<pick.@this> _items = new();
     private List<question.@this> _question = new();
@@ -234,13 +232,6 @@ public sealed class @this
                 refused.Add($"step {i}'s {name} leaves out {property.Name}, which the decider says the step gives: write {option}");
             }
         }
-        // and the complement: an option of a closed set the decider says the step doesn't give, written, is invented
-        foreach (var (key, property) in _none)
-        {
-            var name = key[..key.LastIndexOf('.')];
-            if (every.Any(a => $"{a.Module.Name}.{a.Name}" == name && a[property.Name] != null))
-                refused.Add($"step {i}'s {name} writes {property.Name}, which the step doesn't give: leave {property.Name} out");
-        }
         refused.AddRange(Unlisted(used));
         refused.AddRange(Held(code.Items()).Distinct().Where(a => a != "goal.call" && _listed.All(l => l.Name != a))
             .Select(a => $"step {i} holds {a}, which is not listed; only goal.call may be held without being listed"));
@@ -409,19 +400,10 @@ public sealed class @this
     private async Task Choose(string key, string? choice, global::app.actor.context.@this context)
     {
         _option.Remove(key);
-        _none.Remove(key);
         var at = key.LastIndexOf('.');
-        if (choice is null || at < 0 || Catalog(key[..at], context) is not { } action
+        if (choice is null or question.@this.None || at < 0 || Catalog(key[..at], context) is not { } action
             || action[key[(at + 1)..]] is not { } property) return;
-        var offers = await Offered(action, property, context);
-        // none, out of a closed set (no offer is a variable): the step gives no such option. Out of the step's
-        // variables, none is the decider's guess and the writer may know better.
-        if (choice == question.@this.None)
-        {
-            if (offers.Count > 0 && offers.All(offer => offer is not global::app.type.item.variable.@this)) _none[key] = property;
-            return;
-        }
-        foreach (var offer in offers)
+        foreach (var offer in await Offered(action, property, context))
             if (Shown(offer, context) == choice) { _option[key] = (property, offer); return; }
     }
 
