@@ -23,7 +23,7 @@
             {
               "name": "Parallel",
               "type": {
-                "name": "bool"
+                "name": "parallel"
               },
               "value": true
             }
@@ -377,7 +377,7 @@
       "step": [
         {
           "index": 0,
-          "text": "timer.sleep(Ms=1000)",
+          "text": "timer.sleep(Duration=\"1s\")",
           "line": {
             "number": 13
           },
@@ -387,11 +387,11 @@
               "name": "sleep",
               "property": [
                 {
-                  "name": "Ms",
+                  "name": "Duration",
                   "type": {
-                    "name": "number"
+                    "name": "duration"
                   },
-                  "value": 1000
+                  "value": "1s"
                 }
               ]
             }
@@ -503,7 +503,7 @@
       "visibility": "Private",
       "path": "/plan/task/module/goal/call/ParallelAnswersATask.test.goal",
       "prPath": "/plan/task/module/goal/call/.build/parallelanswersatask.test.pr",
-      "hash": "c52d9cdbac03339b87e9738a79ea571aa37bd0c62b5f4fed5df6b144495962d1"
+      "hash": "316b3f100710c2d7bd4f0738cf9cc2b9e80cdc33fd86bd1b14903a51c51c36d6"
     }
   ],
   "visibility": "Public",

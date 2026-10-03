@@ -23,7 +23,7 @@
             {
               "name": "Parallel",
               "type": {
-                "name": "bool"
+                "name": "parallel"
               },
               "value": true
             }
@@ -102,7 +102,7 @@
             {
               "name": "Parallel",
               "type": {
-                "name": "bool"
+                "name": "parallel"
               },
               "value": true
             }
@@ -357,7 +357,7 @@
       "step": [
         {
           "index": 0,
-          "text": "timer.sleep(Ms=200)",
+          "text": "timer.sleep(Duration=\"200ms\")",
           "line": {
             "number": 11
           },
@@ -367,11 +367,11 @@
               "name": "sleep",
               "property": [
                 {
-                  "name": "Ms",
+                  "name": "Duration",
                   "type": {
-                    "name": "number"
+                    "name": "duration"
                   },
-                  "value": 200
+                  "value": "200ms"
                 }
               ]
             }
@@ -413,7 +413,7 @@
       "visibility": "Private",
       "path": "/plan/task/module/task/wait/WaitForList.test.goal",
       "prPath": "/plan/task/module/task/wait/.build/waitforlist.test.pr",
-      "hash": "e19b685531d1fb179c85b8b53e1d0484e7af7052493acc12b8f7a5e35ac2a523"
+      "hash": "5c313d472ba11a545390f33736535080bd562c83f9ce2b72afa1e3c3847bb112"
     },
     {
       "name": "Second",

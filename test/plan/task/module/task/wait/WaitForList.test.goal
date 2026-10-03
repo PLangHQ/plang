@@ -8,7 +8,7 @@ Start
 - assert.equals(Expected="second", Actual=%results[1]%, Message="the task written last")
 
 First
-- timer.sleep(Ms=200)
+- timer.sleep(Duration="200ms")
 - goal.return(Data="first")
 
 Second

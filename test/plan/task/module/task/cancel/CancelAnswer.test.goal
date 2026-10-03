@@ -12,4 +12,4 @@ Quick
 - goal.return(Data="quick done")
 
 Slow
-- timer.sleep(Ms=2000)
+- timer.sleep(Duration="2s")

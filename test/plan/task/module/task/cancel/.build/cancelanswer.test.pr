@@ -23,7 +23,7 @@
             {
               "name": "Parallel",
               "type": {
-                "name": "bool"
+                "name": "parallel"
               },
               "value": true
             }
@@ -265,7 +265,7 @@
             {
               "name": "Parallel",
               "type": {
-                "name": "bool"
+                "name": "parallel"
               },
               "value": true
             }
@@ -494,7 +494,7 @@
       "step": [
         {
           "index": 0,
-          "text": "timer.sleep(Ms=2000)",
+          "text": "timer.sleep(Duration=\"2s\")",
           "line": {
             "number": 15
           },
@@ -504,11 +504,11 @@
               "name": "sleep",
               "property": [
                 {
-                  "name": "Ms",
+                  "name": "Duration",
                   "type": {
-                    "name": "number"
+                    "name": "duration"
                   },
-                  "value": 2000
+                  "value": "2s"
                 }
               ]
             }
@@ -519,7 +519,7 @@
       "visibility": "Private",
       "path": "/plan/task/module/task/cancel/CancelAnswer.test.goal",
       "prPath": "/plan/task/module/task/cancel/.build/cancelanswer.test.pr",
-      "hash": "5d60409732f3e49c900646d6fd87045532d047fdc65818a726c238384e3ccc1d"
+      "hash": "643b2f631ec1c551ec1f9d901db980cbb2913bf8590291493d83c1ca7e135aef"
     }
   ],
   "visibility": "Public",

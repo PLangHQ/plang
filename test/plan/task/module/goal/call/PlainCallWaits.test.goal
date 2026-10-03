@@ -6,6 +6,6 @@ Start
 - assert.equals(Expected="slow", Actual=%wrote%, Message="the goal ended before the next step")
 
 Slow
-- timer.sleep(Ms=100)
+- timer.sleep(Duration="100ms")
 - variable.set(Name=%wrote%, Value="slow")
 - goal.return(Data="slow done")

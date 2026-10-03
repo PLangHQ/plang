@@ -10,6 +10,6 @@ Start
 - assert.equals(Expected="caller", Actual=%order%, Message="what the task wrote stayed in it")
 
 Slow
-- timer.sleep(Ms=1000)
+- timer.sleep(Duration="1s")
 - variable.set(Name=%order%, Value="%order%,task")
 - goal.return(Data=%order%)

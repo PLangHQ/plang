@@ -10,7 +10,7 @@ Start
 - assert.isTrue(Value=%task.ended%, Message="%task% still holds the ended task")
 
 Slow
-- timer.sleep(Ms=1000)
+- timer.sleep(Duration="1s")
 
 Gone
 - variable.set(Name=%wasGone%, Value=true)

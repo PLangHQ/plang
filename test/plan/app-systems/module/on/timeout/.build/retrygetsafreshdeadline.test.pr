@@ -36,11 +36,18 @@
                 "name": "number"
               },
               "value": 0
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
             }
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -48,8 +55,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
@@ -65,18 +71,9 @@
             {
               "name": "Name",
               "type": {
-                "name": "text"
+                "name": "goal"
               },
               "value": "SlowTwice"
-            }
-          ],
-          "default": [
-            {
-              "name": "parallel",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
             }
           ]
         },
@@ -89,7 +86,7 @@
               "type": {
                 "name": "duration"
               },
-              "value": "PT0.1S"
+              "value": "100ms"
             }
           ]
         },
@@ -97,6 +94,14 @@
           "module": "on",
           "name": "error",
           "property": [
+            {
+              "name": "Order",
+              "type": {
+                "name": "choice",
+                "kind": "errororder"
+              },
+              "value": "GoalFirst"
+            },
             {
               "name": "RetryCount",
               "type": {
@@ -107,7 +112,7 @@
           ],
           "default": [
             {
-              "name": "ignoreerror",
+              "name": "ignore",
               "type": {
                 "name": "bool"
               },
@@ -115,8 +120,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
@@ -163,8 +167,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [
@@ -269,7 +272,7 @@
               ],
               "default": [
                 {
-                  "name": "asdefault",
+                  "name": "default",
                   "type": {
                     "name": "bool"
                   },
@@ -278,7 +281,12 @@
               ]
             }
           ],
-          "waitForExecution": true
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 0 uses math.add, which the decider was not sure of (0.97)"
+            }
+          ]
         },
         {
           "index": 1,
@@ -340,46 +348,31 @@
                         {
                           "name": "Name",
                           "type": {
-                            "name": "text"
+                            "name": "goal"
                           },
                           "value": "Slow"
                         }
-                      ],
-                      "default": [
-                        {
-                          "name": "parallel",
-                          "type": {
-                            "name": "bool"
-                          },
-                          "value": false
-                        }
                       ]
                     }
-                  ],
-                  "waitForExecution": true
+                  ]
                 }
               ]
             }
-          ],
-          "waitForExecution": true
+          ]
         }
       ],
       "child": [],
       "visibility": "Private",
       "path": "/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline.test.goal",
       "prPath": "/plan/app-systems/module/on/timeout/.build/retrygetsafreshdeadline.test.pr",
-      "hash": "5a6a80593e6c5cd86f837f4b110f1c967f054d7cce1bceff97f343065911ba26",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": true
+      "hash": "5a6a80593e6c5cd86f837f4b110f1c967f054d7cce1bceff97f343065911ba26"
     },
     {
       "name": "Slow",
       "step": [
         {
           "index": 0,
-          "text": "sleep 1000 ms",
+          "text": "sleep 1 second",
           "line": {
             "number": 13
           },
@@ -389,35 +382,26 @@
               "name": "sleep",
               "property": [
                 {
-                  "name": "Ms",
+                  "name": "Duration",
                   "type": {
-                    "name": "number"
+                    "name": "duration"
                   },
-                  "value": 1000
+                  "value": "1s"
                 }
               ]
             }
-          ],
-          "waitForExecution": true
+          ]
         }
       ],
       "child": [],
       "visibility": "Private",
       "path": "/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline.test.goal",
       "prPath": "/plan/app-systems/module/on/timeout/.build/retrygetsafreshdeadline.test.pr",
-      "hash": "f03cd007ad1c801b36279db0316ba9e50f429cc2b2c681e1d3b11ccc4a2002a3",
-      "isSetup": false,
-      "isEvent": false,
-      "isSystem": false,
-      "isTest": true
+      "hash": "080624e77774675c3ce2e39d1c4f1661df93b42be25012869d04293504dc6910"
     }
   ],
   "visibility": "Public",
   "path": "/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline.test.goal",
   "prPath": "/plan/app-systems/module/on/timeout/.build/retrygetsafreshdeadline.test.pr",
-  "hash": "e529c2af2c8fdf97a0c016d156c6805d2320e8b1e21063c7051eddf82cd79642",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "hash": "e529c2af2c8fdf97a0c016d156c6805d2320e8b1e21063c7051eddf82cd79642"
 }

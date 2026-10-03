@@ -10,4 +10,4 @@ SlowTwice
 - if %attempts% is less than 3, call Slow
 
 Slow
-- sleep 1000 ms
+- sleep 1 second

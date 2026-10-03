@@ -20,15 +20,6 @@
               },
               "value": "Slow"
             }
-          ],
-          "default": [
-            {
-              "name": "parallel",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
           ]
         },
         {
@@ -184,7 +175,7 @@
       "step": [
         {
           "index": 0,
-          "text": "timer.sleep(Ms=100)",
+          "text": "timer.sleep(Duration=\"100ms\")",
           "line": {
             "number": 9
           },
@@ -194,11 +185,11 @@
               "name": "sleep",
               "property": [
                 {
-                  "name": "Ms",
+                  "name": "Duration",
                   "type": {
-                    "name": "number"
+                    "name": "duration"
                   },
-                  "value": 100
+                  "value": "100ms"
                 }
               ]
             }
@@ -288,7 +279,7 @@
       "visibility": "Private",
       "path": "/plan/task/module/goal/call/PlainCallWaits.test.goal",
       "prPath": "/plan/task/module/goal/call/.build/plaincallwaits.test.pr",
-      "hash": "e267290b126650aef5dc4932ef7da3bd7dcc962dcc65174c2aecb1ba207368aa"
+      "hash": "6cc5ec8ed6aa13afe4c175091e54d371eadbba1f50e4510f8433a412d545ba33"
     }
   ],
   "visibility": "Public",

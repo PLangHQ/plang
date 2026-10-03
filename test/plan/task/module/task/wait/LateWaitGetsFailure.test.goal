@@ -1,7 +1,7 @@
 / A failure reported while nobody waited (the task ended before the wait) is still the answer of a later wait.
 Start
 - goal.call(Name="Fails", Parallel=true); variable.set(Name=%task%, Value=%!data%)
-- timer.sleep(Ms=500)
+- timer.sleep(Duration="500ms")
 - task.wait(Task=%task%); on.error(Key="BrokeEarly", Recovery=[goal.call(Name="Caught")])
 - assert.equals(Expected="BrokeEarly", Actual=%caught%, Message="a late wait answers the failure")
 

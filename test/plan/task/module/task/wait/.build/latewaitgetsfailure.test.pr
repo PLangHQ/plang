@@ -23,7 +23,7 @@
             {
               "name": "Parallel",
               "type": {
-                "name": "bool"
+                "name": "parallel"
               },
               "value": true
             }
@@ -83,7 +83,7 @@
     },
     {
       "index": 1,
-      "text": "timer.sleep(Ms=500)",
+      "text": "timer.sleep(Duration=\"500ms\")",
       "line": {
         "number": 4
       },
@@ -93,11 +93,11 @@
           "name": "sleep",
           "property": [
             {
-              "name": "Ms",
+              "name": "Duration",
               "type": {
-                "name": "number"
+                "name": "duration"
               },
-              "value": 500
+              "value": "500ms"
             }
           ]
         }
@@ -162,15 +162,6 @@
                         "name": "goal"
                       },
                       "value": "Caught"
-                    }
-                  ],
-                  "default": [
-                    {
-                      "name": "parallel",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": false
                     }
                   ]
                 }
@@ -362,5 +353,5 @@
   "visibility": "Public",
   "path": "/plan/task/module/task/wait/LateWaitGetsFailure.test.goal",
   "prPath": "/plan/task/module/task/wait/.build/latewaitgetsfailure.test.pr",
-  "hash": "ff663b4d285fd5b0d9d97413c4322cf064ec4e28b0c82a5c8180780a18c0e813"
+  "hash": "7736ad8b69caba4656d69dfc886c7ac4bc9d657519855d36908fd631a5fac902"
 }

@@ -51,7 +51,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -59,8 +59,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
@@ -74,16 +73,15 @@
           "name": "sleep",
           "property": [
             {
-              "name": "Ms",
+              "name": "Duration",
               "type": {
-                "name": "number"
+                "name": "duration"
               },
-              "value": 20
+              "value": "20ms"
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
@@ -141,8 +139,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 3,
@@ -193,7 +190,7 @@
           ],
           "default": [
             {
-              "name": "asdefault",
+              "name": "default",
               "type": {
                 "name": "bool"
               },
@@ -201,8 +198,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 4,
@@ -216,16 +212,15 @@
           "name": "sleep",
           "property": [
             {
-              "name": "Ms",
+              "name": "Duration",
               "type": {
-                "name": "number"
+                "name": "duration"
               },
-              "value": 20
+              "value": "20ms"
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 5,
@@ -283,17 +278,12 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     }
   ],
   "child": [],
   "visibility": "Public",
   "path": "/plan/app-systems/app/variable/NowIsReadFresh.test.goal",
   "prPath": "/plan/app-systems/app/variable/.build/nowisreadfresh.test.pr",
-  "hash": "930866d0aae82649feaf4e80de7aaeff91a43b9f27bfd42ca257d81d522da487",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "hash": "930866d0aae82649feaf4e80de7aaeff91a43b9f27bfd42ca257d81d522da487"
 }

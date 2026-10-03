@@ -6,7 +6,7 @@ Start
 - assert.equals(Expected="Cancelled", Actual=%caught%, Message="a wait on a cancelled task fails as Cancelled")
 
 Slow
-- timer.sleep(Ms=2000)
+- timer.sleep(Duration="2s")
 
 Caught
 - variable.set(Name=%caught%, Value=%!error.Key%)

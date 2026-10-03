@@ -23,7 +23,7 @@
             {
               "name": "Parallel",
               "type": {
-                "name": "bool"
+                "name": "parallel"
               },
               "value": true
             }
@@ -375,15 +375,6 @@
                       },
                       "value": "Gone"
                     }
-                  ],
-                  "default": [
-                    {
-                      "name": "parallel",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": false
-                    }
                   ]
                 }
               ]
@@ -502,7 +493,7 @@
       "step": [
         {
           "index": 0,
-          "text": "timer.sleep(Ms=1000)",
+          "text": "timer.sleep(Duration=\"1s\")",
           "line": {
             "number": 13
           },
@@ -512,11 +503,11 @@
               "name": "sleep",
               "property": [
                 {
-                  "name": "Ms",
+                  "name": "Duration",
                   "type": {
-                    "name": "number"
+                    "name": "duration"
                   },
-                  "value": 1000
+                  "value": "1s"
                 }
               ]
             }
@@ -527,7 +518,7 @@
       "visibility": "Private",
       "path": "/plan/task/module/goal/call/TaskListedWhileRunning.test.goal",
       "prPath": "/plan/task/module/goal/call/.build/tasklistedwhilerunning.test.pr",
-      "hash": "8a735a6da549016f658eb7499f905acd38a71ebb7cec45764e77320e52761123"
+      "hash": "daf7cdbd6bfcb64ca8dea8d942e22cffed4bebb4121795d141c36a0a3c2f2f3c"
     },
     {
       "name": "Gone",

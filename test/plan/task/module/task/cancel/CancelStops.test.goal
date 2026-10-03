@@ -7,7 +7,7 @@ Start
 - assert.equals(Expected="Cancelled", Actual=%caught%, Message="the cancelled task never went on")
 
 Slow
-- timer.sleep(Ms=2000)
+- timer.sleep(Duration="2s")
 - goal.return(Data="went on")
 
 Caught

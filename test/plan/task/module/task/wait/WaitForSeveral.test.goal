@@ -7,7 +7,7 @@ Start
 - assert.equals(Expected="early", Actual=%results[1]%, Message="the second named is second")
 
 Late
-- timer.sleep(Ms=300)
+- timer.sleep(Duration="300ms")
 - goal.return(Data="late")
 
 Early

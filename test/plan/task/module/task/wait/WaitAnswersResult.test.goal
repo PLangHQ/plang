@@ -5,5 +5,5 @@ Start
 - assert.equals(Expected="slow done", Actual=%result%, Message="wait for a task answers its result")
 
 Slow
-- timer.sleep(Ms=200)
+- timer.sleep(Duration="200ms")
 - goal.return(Data="slow done")
