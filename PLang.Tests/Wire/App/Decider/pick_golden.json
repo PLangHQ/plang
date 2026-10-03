@@ -9616,7 +9616,7 @@
       },
       "s6_@option.llm.query.Conversation": {
         "type": "choice",
-        "instructions": "Step 6 is `llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%`. which of the step's variables holds the earlier response the step continues?",
+        "instructions": "Step 6 is `llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%`. does the step say to continue an EARLIER llm answer? if it does, which variable holds that earlier llm response; if it does not, the answer is none — a variable the step merely passes as data to work on (a list to sort, a text to translate) is NOT a conversation to continue",
         "criteria": {
           "%state%": null,
           "%moduleQuestions%": null,
@@ -9633,7 +9633,7 @@
       },
       "s8_@option.llm.query.Conversation": {
         "type": "choice",
-        "instructions": "Step 8 is `llm.decider State=%state%, Question=%actionQuestions%, write to %actionAnswer%`. which of the step's variables holds the earlier response the step continues?",
+        "instructions": "Step 8 is `llm.decider State=%state%, Question=%actionQuestions%, write to %actionAnswer%`. does the step say to continue an EARLIER llm answer? if it does, which variable holds that earlier llm response; if it does not, the answer is none — a variable the step merely passes as data to work on (a list to sort, a text to translate) is NOT a conversation to continue",
         "criteria": {
           "%state%": null,
           "%actionQuestions%": null,
