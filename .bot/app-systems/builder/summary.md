@@ -313,6 +313,43 @@ All architect-directed work done and accepted (latest 0b799a5d1). Open items are
   pick-pass core.
 - **With Ingi:** where the decider key lives (settings scope) — still env-only, not written to any store.
 
+## Examples sweeps + batch-3 fixes (2026-10-03)
+
+Ran three examples-sweep batches across every module with examples (fresh builds, `cache:skip`,
+jq per example). Most misses were pre-existing core, routed to the coder. **Batch-3** (channel,
+code, debug, math, snapshot, test, timer, ui) — fixes I landed:
+
+- **channel.set** — `set <X> channel as <Goal>` inverted the channel name and the backing goal
+  (`set output channel as MyGoal` → Name="MyGoal", goal=enclosing). `set.notes.md` made the grammar
+  **positional**: the name is the word BEFORE "channel"; the goal is the one AFTER "as"/"call", never
+  the current goal. Result: CH1 5/5, CH2 4/5 (was 1/3).
+- **ui.render** — `render %t%, error=%error%` dropped the arg name to a bare `Parameter=%error%`
+  (because "error" reads like a plang word). Carried goal.call's keep-the-arg-name rule into
+  `render.notes.md`. Result: UR2 0/3 → 3/5. Residual is the writer collapsing a **single same-named
+  arg** — a cross-cutting writer tendency goal.call only beats with very forceful notes; flagged to
+  the architect as a possible `Properties.llm` kernel line (generic, would move all fixtures).
+
+Routed to coder/architect as core (not teaching):
+- **snapshot.resume** (issue 58) — `resume %snap%` BUILD-CRASHES: `JsonException: json.Reader.BeginObject:
+  expected StartObject, got String` at `app.snapshot.serializer.Reader.cs:30` via json reader.cs:92.
+- **timer.sleep** (issue 59) — `Ms` bakes the unit into the name, so `sleep 2 seconds` → `Ms:2`. No
+  teaching fixes a bare-millisecond param; needs a `duration` param (like on.timeout's `After=5s`).
+- **test.report** — `write test report` never reaches stage-2; the `test` module doesn't score high
+  enough at module-choice for test.report to be a candidate. Below the teaching layer (decider
+  retrieval). An output.write false-side counter-case was tried and measured 0/5 → reverted.
+
+Re-pin discipline: the commit touches `os/system/modules/**/*.md`, so all four decider fixtures ran;
+only **pick_golden** moved (prompt C renders channel.set step [3] + ui.render notes). Re-pinned via
+PickListTests AcceptTheFixture; word-diff confirmed only my two edits; all four green.
+
+**Untaught-module handoff (closing deliverable):** the 13 no-examples modules by `.pr` usage proxy
+(test/builder-skewed): assert 122, error 23, build 12, setting 1, rest 0. By likely real-app need:
+db, signing, identity, setting, environment first. Architect picked **setting then db**. **Drift
+flag:** `db` has NO v0.2 action handlers under `PLang/app/module/db/` — only an old-builder
+`os/system/modules/db/Builder/llm/*.llm` (MethodSelectionSystem, GetDataSourceForStep). It does not
+go through the decider/writer path, so it can't be taught the way setting can. Raising with the
+architect before touching db. **setting** (save, remove) is a normal v0.2 module and is teachable.
+
 ## Next session (in order)
 1. **Decider key:** pass `TYPESAFE_API_KEY="$(cat /shared/hopkaup/secrets/typesafe.txt)"` to every
    `plang build`; still owed — store it in a settings table so the runner doesn't need the env each time.

@@ -1192,6 +1192,50 @@
         "health": "green",
         "notes": "Next: build Types.goal (cache:skip) once member .Note lands, reconcile golden member order, add TypePageTests; defining-plang-types.md kinds pass; os-bot plang-os-stable pages. Left loop/foreach Parallel line to the builder bot per architect heads-up."
       }
+    },
+    {
+      "id": "3a354d4d-ee45-4bdd-87d3-91045e19eece",
+      "bot": "builder",
+      "timestamp_start": "2026-10-03T06:20:00Z",
+      "timestamp_end": "2026-10-03T06:34:48Z",
+      "intent": "Fix the teaching misses found in the batch-3 examples sweep (channel.set name/goal inversion, ui.render arg-name drop) and route the rest to the architect.",
+      "before": { "assumptions": "channel.set and ui.render notes described the fields but not the grammar position / the keep-arg-name rule; the writer inverted or dropped them.", "risk": "Any os/system/modules/**/*.md edit moves the decider fixtures and must be re-pinned in the same commit." },
+      "plan": "Measured in-session; no separate plan.md (continuation of v3 bug-fixing round).",
+      "actions": [
+        {
+          "paths": ["os/system/modules/channel/set.notes.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Made the grammar positional: the channel name is the word BEFORE 'channel'; the backing goal is AFTER 'as'/'call', never the current goal; inline 'set output channel as MyGoal' → Name=output, Goal=call(MyGoal). CH1 5/5, CH2 4/5 (was 1/3)."
+        },
+        {
+          "paths": ["os/system/modules/ui/render.notes.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Carried goal.call's keep-the-arg-name rule into ui.render's Parameter note (even when the name is a plang word like 'error' and the value is a same-named var). UR2 0/3 → 3/5; residual is the writer collapsing a single same-named arg — kernel-level, flagged."
+        },
+        {
+          "paths": ["PLang.Tests/Wire/App/Decider/pick_golden.json"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Re-pinned via PickListTests AcceptTheFixture — prompt C renders channel.set (step [3]) and ui.render notes. Word-diff confirms only my two edits moved; other three decider fixtures unchanged. All four green."
+        },
+        {
+          "paths": ["os/system/builder/llm/decider.json"],
+          "type": "decision",
+          "category": "config",
+          "confidence": "high",
+          "context": "Tried an output.write false-side counter-case for 'write test report'; measured 0/5 (test module never reaches stage-2) and it named a real action, so reverted. TR1 is decider module-retrieval (below teaching) → routed to architect."
+        }
+      ],
+      "after": {
+        "status": "channel.set + ui.render teaching fixed and re-pinned; TR1 (test.report), SL2 (timer.sleep seconds, issue 59), snapshot.resume crash (issue 58) routed to coder/architect as core. Next: setting module (teachable); db has NO v0.2 handlers (only old-builder llm) — flagging.",
+        "health": "green",
+        "notes": "Commit touches os/system/modules/**/*.md → all four decider fixtures run, only pick_golden moved, re-pinned same commit."
+      }
     }
   ]
 }
