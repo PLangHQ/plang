@@ -460,7 +460,25 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     internal virtual bool IsFinal => Template == null;
 
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, string> _namespaces = new();
+    // A C# class's plang identity — its namespace name, and the family it is a kind of with the kind it is, when it is
+    // one: pure facts of the class, found once each.
+    private readonly record struct Identity(string Namespace, (System.Type Family, string Kind)? Family);
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, Identity> _identities = new();
+
+    private static Identity IdentityOf(System.Type t)
+        => _identities.GetOrAdd(t, static ct =>
+        {
+            var ns = string.Join('.', (ct.Namespace ?? "").Split('.').Select(s => s.TrimStart('@')));
+            var name = ct.Name.Split('`')[0];
+            var space = (name == "this" ? ns : ns.Length == 0 ? name : $"{ns}.{name}").ToLowerInvariant();
+            for (var b = ct.BaseType; b != null; b = b.BaseType)
+                if (b.IsDefined(typeof(global::app.Attributes.KindsAttribute), inherit: false))
+                {
+                    var called = System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(ct, inherit: false)?.Name ?? space;
+                    return new(space, (b, called[(called.LastIndexOf('.') + 1)..]));
+                }
+            return new(space, null);
+        });
 
     /// <summary>The name a class's type goes by — the word it declares (<c>[PlangType("text")]</c>), else its
     /// namespace (<see cref="NamespaceOf"/>). Nothing is guessed from a folder.</summary>
@@ -476,30 +494,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// <summary>The identity of a class's type: its namespace — an <c>@this</c> class is its folder
     /// (<c>app.type.item.text</c>), any other class its folder and its name (<c>app.module.llm.toolcall</c>);
     /// lowercase, the <c>@</c> of a keyword folder dropped.</summary>
-    internal static string NamespaceOf(System.Type t)
-        => _namespaces.GetOrAdd(t, static ct =>
-        {
-            var ns = string.Join('.', (ct.Namespace ?? "").Split('.').Select(s => s.TrimStart('@')));
-            var name = ct.Name.Split('`')[0];
-            return (name == "this" ? ns : ns.Length == 0 ? name : $"{ns}.{name}").ToLowerInvariant();
-        });
-
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, (System.Type Family, string Kind)?> _families = new();
+    internal static string NamespaceOf(System.Type t) => IdentityOf(t).Namespace;
 
     /// <summary>The family a class is a kind of, and the kind it is: the nearest base that declares it has kinds
     /// (<c>[Kinds]</c>) — a file is a kind of path, a where of query, a mouse of input — and the last word of the
     /// class's own name (<c>where</c>, <c>mouse</c>). Null for a class that is no family's kind.</summary>
-    internal static (System.Type Family, string Kind)? FamilyOf(System.Type t)
-        => _families.GetOrAdd(t, static ct =>
-        {
-            for (var b = ct.BaseType; b != null; b = b.BaseType)
-                if (b.IsDefined(typeof(global::app.Attributes.KindsAttribute), inherit: false))
-                {
-                    var name = NameOf(ct);
-                    return (b, name[(name.LastIndexOf('.') + 1)..]);
-                }
-            return null;
-        });
+    internal static (System.Type Family, string Kind)? FamilyOf(System.Type t) => IdentityOf(t).Family;
 
     /// <summary>A human-readable name for a type in an error — a plang <c>@this</c> type reads as its
     /// last one/two namespace segments (<c>step.list</c>, <c>action</c>, <c>item</c>), a CLR type
