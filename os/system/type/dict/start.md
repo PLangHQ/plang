@@ -29,3 +29,10 @@ Start
 - set %user.age% = 37
 - write out "%user.name% is %user.age%"
 ```
+
+## count
+How many entries the dict has.
+
+`%person.count%`
+
+**Returns:** a number.

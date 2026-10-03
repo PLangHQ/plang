@@ -81,4 +81,13 @@ public class TypePageTests
 
     [Test]
     public Task TheDictPage_IsTheSpecsGolden() => ComparePageToGolden("dict");
+
+    [Test]
+    public Task TheNumberPage_IsTheSpecsGolden() => ComparePageToGolden("number");
+
+    [Test]
+    public Task TheDatetimePage_IsTheSpecsGolden() => ComparePageToGolden("datetime");
+
+    [Test]
+    public Task TheDurationPage_IsTheSpecsGolden() => ComparePageToGolden("duration");
 }

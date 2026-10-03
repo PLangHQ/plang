@@ -262,7 +262,7 @@ A size compares and sorts by its exact bytes, whatever unit each was written in,
 
 ## Golden output — dict
 
-The exact literal the generator must produce for the `dict` type — navigated by key, no catalog members, so description + guide and no member table. `TypePageTests` diffs against this.
+The exact literal the generator must produce for the `dict` type. `TypePageTests` diffs against this.
 
 ```markdown
 # dict
@@ -296,6 +296,259 @@ Start
 - set %user.age% = 37
 - write out "%user.name% is %user.age%"
 ```
+
+## count
+How many entries the dict has.
+
+`%person.count%`
+
+**Returns:** a number.
+```
+
+## Golden output — number
+
+The exact literal the generator must produce for the `number` type. `TypePageTests` diffs against this.
+
+```markdown
+# number
+A number, whole or decimal, of any size. Its kind is the precision it is held in (int, long, decimal, double, …).
+
+# Numbers
+
+A `number` is any numeric value — a count, a price, a measurement. Arithmetic uses the operators `+`, `-`, `*`, `/` across steps; the members below reshape a single number.
+
+## Methods
+
+Numbers' methods read with a dot and parentheses, and chain:
+
+- `%delta.abs()%` — drop the sign.
+- `%average.floor()%`, `%average.ceiling()%` — round down or up to a whole number.
+- `%price.round(2)%` — round to a number of decimal places.
+- `%area.sqrt()%` — the square root.
+- `%price.min(100)%`, `%score.max(0)%` — the smaller or larger of two numbers.
+
+## abs
+The value with its sign removed.
+
+`%delta.abs()%`
+
+**Returns:** the absolute value, a number.
+
+## floor
+The value rounded down to a whole number.
+
+`%average.floor()%`
+
+**Returns:** a number.
+
+## ceiling
+The value rounded up to a whole number.
+
+`%average.ceiling()%`
+
+**Returns:** a number.
+
+## sqrt
+The square root of the value.
+
+`%area.sqrt()%`
+
+**Returns:** a number.
+
+## round
+The value rounded to a number of decimal places.
+
+`%price.round(2)%`
+
+| Argument | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| decimals | the first argument, a number | number | yes | — | how many decimal places to keep |
+
+**Returns:** the rounded number.
+
+## min
+The smaller of this value and another.
+
+`%price.min(100)%`
+
+| Argument | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| b | the first argument | number | yes | — | the other number to compare against |
+
+**Returns:** the smaller of the two, a number.
+
+## max
+The larger of this value and another.
+
+`%score.max(0)%`
+
+| Argument | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+| b | the first argument | number | yes | — | the other number to compare against |
+
+**Returns:** the larger of the two, a number.
+```
+
+## Golden output — datetime
+
+The exact literal the generator must produce for the `datetime` type. `TypePageTests` diffs against this.
+
+```markdown
+# datetime
+A date and a time of day, with its offset from UTC.
+
+# Dates and times
+
+A `datetime` is a moment — a date, a time of day, and an offset from UTC. Its parts read with a dot.
+
+## Parts
+
+- `%when.year%`, `%when.month%`, `%when.day%` — the date, as numbers.
+- `%when.hour%`, `%when.minute%`, `%when.second%`, `%when.millisecond%` — the time, as numbers.
+- `%when.weekday%` — the day name (Monday, …), a text.
+- `%when.ticks%` — 100-nanosecond ticks since year 1, a number.
+
+## Whole parts
+
+- `%when.date%` — just the date (a `date`); `%when.time%` — just the time of day (a `time`).
+- `%when.offset%` — the offset from UTC (a `duration`).
+
+## year
+The year.
+
+`%when.year%`
+
+**Returns:** a number.
+
+## month
+The month, 1–12.
+
+`%when.month%`
+
+**Returns:** a number.
+
+## day
+The day of the month, 1–31.
+
+`%when.day%`
+
+**Returns:** a number.
+
+## hour
+The hour, 0–23.
+
+`%when.hour%`
+
+**Returns:** a number.
+
+## minute
+The minute, 0–59.
+
+`%when.minute%`
+
+**Returns:** a number.
+
+## second
+The second, 0–59.
+
+`%when.second%`
+
+**Returns:** a number.
+
+## millisecond
+The millisecond, 0–999.
+
+`%when.millisecond%`
+
+**Returns:** a number.
+
+## ticks
+The number of 100-nanosecond ticks since year 1.
+
+`%when.ticks%`
+
+**Returns:** a number.
+
+## weekday
+The day of the week by name (Monday, Tuesday, …).
+
+`%when.weekday%`
+
+**Returns:** the weekday name, a text.
+
+## date
+The date part, with no time of day.
+
+`%when.date%`
+
+**Returns:** a date.
+
+## time
+The time of day, with no date.
+
+`%when.time%`
+
+**Returns:** a time.
+
+## offset
+The offset from UTC.
+
+`%when.offset%`
+
+**Returns:** a duration.
+```
+
+## Golden output — duration
+
+The exact literal the generator must produce for the `duration` type. `TypePageTests` diffs against this.
+
+```markdown
+# duration
+A length of time: a number and its unit (200ms, 30s, 5m, 1h, 1d), or ISO 8601 (PT5M).
+
+# Durations
+
+A `duration` is a length of time — `"2s"`, `"500ms"`, `"1m30s"`, `"PT1H"`. Each member gives the whole span measured in one unit, as a number:
+
+- `%elapsed.seconds%` — the span in seconds (`1m30s` is `90`).
+- `%elapsed.minutes%` — in minutes (`1.5`); `%elapsed.hours%` — in hours; `%elapsed.days%` — in days; `%elapsed.milliseconds%` — in milliseconds.
+
+These are totals, not parts: a `1m30s` span is `90` seconds and `1.5` minutes, not `30` seconds and `1` minute.
+
+## days
+The whole span measured in days.
+
+`%elapsed.days%`
+
+**Returns:** a number.
+
+## hours
+The whole span measured in hours.
+
+`%elapsed.hours%`
+
+**Returns:** a number.
+
+## minutes
+The whole span measured in minutes.
+
+`%elapsed.minutes%`
+
+**Returns:** a number.
+
+## seconds
+The whole span measured in seconds (1m30s is 90).
+
+`%elapsed.seconds%`
+
+**Returns:** a number.
+
+## milliseconds
+The whole span measured in milliseconds.
+
+`%elapsed.milliseconds%`
+
+**Returns:** a number.
 ```
 
 ## Generation rules
