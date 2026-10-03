@@ -479,6 +479,67 @@ public class TaskTests
         await Assert.That(result.Get("count", Ctx)!.Peek()!.ToString()).IsEqualTo("3");
     }
 
+    // A loop as the builder writes it — its collection a template row (%orders%) — runs its body once per element, in
+    // parallel and one after another: each run's %item% is one element, and the loop answers how many ran.
+    private async Task<(string Written, global::app.type.item.dict.@this Answer)> LoopedOver(object collection, bool inParallel, bool key = false)
+    {
+        var written = new System.IO.MemoryStream();
+        _app.actor.list.User.Channel.Register(new global::app.channel.type.stream.@this(
+            global::app.channel.list.@this.Output, written, global::app.channel.ChannelDirection.Output, ownsStream: false)
+        { Mime = "text/plain", Framed = true });
+        await Load("Each", Make.Step("write the item", Make.Action(Ctx, "output", "write", ("Data", key ? "%key%=%item%;" : "%item%;"))));
+        var loopAction = Make.Action(Ctx, "loop", "foreach",
+            new (string, object?)[] { Make.Template(Ctx, "collection", "%orders%") }
+                .Concat(inParallel ? [("Parallel", (object?)new Dictionary<string, object?> { ["cpu"] = 2L })] : [])
+                .Concat(key ? [Make.Param(Ctx, "key", "%key%", "variable")] : []).ToArray());
+        // the collection is set by a step of the program, read back from its .pr as the program's is
+        var loop = await Load("Loop",
+            Make.Step("set %orders%", Set("orders", collection)),
+            Make.Step("foreach %orders%, call Each, write to %r%", loopAction, Make.Call(Ctx, "Each"), Set("r", "%!data%")));
+
+        await (await loop.Start(Ctx)).IsSuccess();
+        var answered = await Ctx.Variable.Get("r");
+        if ((await answered.Value()) is global::app.task.@this task) answered = await task.Wait();
+        await answered.IsSuccess();
+        return (System.Text.Encoding.UTF8.GetString(written.ToArray()), (global::app.type.item.dict.@this)(await answered.Value())!);
+    }
+
+    private async Task<string> Count(global::app.type.item.dict.@this answer) => answer.Get("count", Ctx)!.Peek()!.ToString()!;
+
+    [Test]
+    [Arguments(true)]
+    [Arguments(false)]
+    public async Task AForeach_RunsItsBodyOncePerElement(bool inParallel)
+    {
+        var (written, answer) = await LoopedOver(new List<object?> { "a", "b", "c" }, inParallel);
+
+        await Assert.That(await Count(answer)).IsEqualTo("3");
+        foreach (var element in new[] { "a;", "b;", "c;" }) await Assert.That(written).Contains(element);
+        await Assert.That(written).DoesNotContain("[");
+    }
+
+    [Test]
+    [Arguments(true)]
+    [Arguments(false)]
+    public async Task AForeachOverADict_BindsKeyAndItem(bool inParallel)
+    {
+        var (written, answer) = await LoopedOver(new Dictionary<string, object?> { ["x"] = "1", ["y"] = "2" }, inParallel, key: true);
+
+        await Assert.That(await Count(answer)).IsEqualTo("2");
+        await Assert.That(written).Contains("x=1;");
+        await Assert.That(written).Contains("y=2;");
+    }
+
+    [Test]
+    [Arguments(true)]
+    [Arguments(false)]
+    public async Task AForeachOverNothing_CountsNone(bool inParallel)
+    {
+        var (_, answer) = await LoopedOver(new List<object?>(), inParallel);
+
+        await Assert.That(await Count(answer)).IsEqualTo("0");
+    }
+
     // in parallel the same write keeps the loop's task
     [Test]
     public async Task AForeachInParallelsWriteTo_KeepsTheLoopsTask()

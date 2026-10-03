@@ -78,7 +78,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             long? cpu = null;
             foreach (var entry in dict.Entries(context))
                 if (string.Equals(entry.Name, "cpu", System.StringComparison.OrdinalIgnoreCase))
-                    cpu = entry.Peek()?.Clr<object>() is { } count ? System.Convert.ToInt64(count) : null;
+                    // through the entry's Data: an entry read off the wire decodes with its context
+                    cpu = entry.Clr<object>() is { } count ? System.Convert.ToInt64(count) : null;
                 else
                 {
                     data.Fail(new global::app.error.Error($"parallel's one member is cpu (how many at once) — not {entry.Name}", "ParallelInvalid", 400));

@@ -2,7 +2,7 @@ namespace app.type.item.parallel.serializer;
 
 /// <summary>
 /// Typed (<see cref="app.type.reader.ITypeReader"/>) pull reader for <see cref="app.type.item.parallel.@this"/> — the
-/// read-back mirror of its <c>Write</c>: <c>false</c> is off, <c>true</c> (a program built before parallel was a type)
+/// read-back mirror of its <c>Write</c>: <c>false</c> is off, <c>true</c> (what the build writes for <c>in parallel</c>)
 /// and <c>{}</c> are parallel at the machine's default, <c>{cpu: n}</c> is n at once.
 /// </summary>
 public sealed class Reader : global::app.type.reader.ITypeReader
