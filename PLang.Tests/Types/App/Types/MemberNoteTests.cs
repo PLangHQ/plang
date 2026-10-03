@@ -69,6 +69,17 @@ public class MemberNoteTests
         await Assert.That(notes.Warning.Count).IsEqualTo(0);
     }
 
+    // plang reads names case-insensitively: a line `Old` names the argument old
+    [Test]
+    public async Task ALinesName_MatchesItsArgument_WhateverItsCase()
+    {
+        Stage("replace", "Replace — swaps · say: %text.replace(\"a\", \"b\")%\nOld — the substring\nNEW — its replacement\nReturns — the text.");
+
+        var notes = await Read("replace");
+
+        await Assert.That(notes.Warning.Count).IsEqualTo(0);
+    }
+
     // a line naming none of its arguments, and an argument no line names, are what don't agree
     [Test]
     public async Task ALineNamingNoArgument_AndAnArgumentWithoutALine_AreWarnings()

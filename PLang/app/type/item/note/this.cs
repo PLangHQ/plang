@@ -50,7 +50,7 @@ public sealed class @this : global::app.type.item.@this
     public System.Collections.Generic.IReadOnlyList<line.@this> Line => _line ?? [];
 
     /// <summary>The line that says what it returns (<c>Returns — …</c>); null when none does.</summary>
-    public line.@this? Returns => Line.FirstOrDefault(line => line.Name?.ToString() == Result);
+    public line.@this? Returns => Line.FirstOrDefault(line => string.Equals(line.Name?.ToString(), Result, System.StringComparison.OrdinalIgnoreCase));
 
     /// <summary>What the notes and its parts don't agree on: a line naming none of them, a part no line names.</summary>
     [global::app.Out]
@@ -76,10 +76,12 @@ public sealed class @this : global::app.type.item.@this
             }
         }
         var warning = new global::app.warning.list.@this();
-        var named = read.Where(line => line.Name != null).Select(line => line.Name!.ToString()).ToHashSet();
+        // names are plang's: read whatever their case
+        var named = read.Where(line => line.Name != null).Select(line => line.Name!.ToString())
+            .ToHashSet(System.StringComparer.OrdinalIgnoreCase);
         var part = _about.Part;
         var title = char.ToUpperInvariant(part[0]) + part[1..];
-        foreach (var name in named.Where(name => name != Result && !_about.Names(name)))
+        foreach (var name in named.Where(name => !string.Equals(name, Result, System.StringComparison.OrdinalIgnoreCase) && !_about.Names(name)))
             warning.Add(new global::app.warning.@this { Key = $"NoteWithout{title}",
                 Message = $"{_about.Noted}: the notes line '{name}' names no {part}" });
         foreach (var owed in _about.Parts.Where(owed => !named.Contains(owed)))

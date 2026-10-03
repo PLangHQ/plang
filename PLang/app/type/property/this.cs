@@ -11,7 +11,7 @@ namespace app.type.property;
 /// its .pr (Name, the Type the step gave, the raw Value as loaded, the Properties bag). The program
 /// is shared by every run, so a property holds no Data and no context: a run makes its own Data from it.
 /// </summary>
-public sealed class @this
+public sealed class @this : global::app.type.item.note.IAbout
 {
     /// <summary>Reflects a declared property off its <see cref="PropertyInfo"/>: Name, PLang
     /// type ENTITY (Data&lt;T&gt;/Nullable&lt;T&gt; unwrap to T; bare Data is the open
@@ -87,16 +87,16 @@ public sealed class @this
     /// them, or an argument no line names. Null when this is no type's member.</summary>
     [LlmBuilder]
     public global::app.type.item.note.@this? Note(global::app.actor.context.@this context)
-        => Notes(context) is { } file ? new(new About(this), file) : null;
+        => Notes(context) is { } file ? new(this, file) : null;
 
     // What a member's notes are about: the member — its arguments the parts each line names, its own name a line too
-    private sealed class About(@this member) : global::app.type.item.note.IAbout
-    {
-        public string Noted => $"{member.Owner}.{member.Name}";
-        public string Part => "argument";
-        public System.Collections.Generic.IEnumerable<string> Parts => member.Arguments?.Select(argument => argument.Name) ?? [];
-        public bool Names(string name) => name == member.Name || Parts.Contains(name);
-    }
+    string global::app.type.item.note.IAbout.Noted => $"{Owner}.{Name}";
+    string global::app.type.item.note.IAbout.Part => "argument";
+    System.Collections.Generic.IEnumerable<string> global::app.type.item.note.IAbout.Parts
+        => Arguments?.Select(argument => argument.Name) ?? [];
+    bool global::app.type.item.note.IAbout.Names(string name)
+        => string.Equals(name, Name, System.StringComparison.OrdinalIgnoreCase)
+           || (Arguments?.Any(argument => string.Equals(argument.Name, name, System.StringComparison.OrdinalIgnoreCase)) ?? false);
 
     /// <summary>The class's <c>[Default]</c> value, or null when the property is required / has no default.</summary>
     public object? Default { get; init; }
