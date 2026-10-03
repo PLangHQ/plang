@@ -23,11 +23,6 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         _height = height;
     }
 
-    /// <summary>Its kind — window, display.</summary>
-    private protected abstract string Variant { get; }
-
-    protected internal override global::app.type.@this Type => new("screen", typeof(@this), Variant);
-
     public override bool IsLeaf => false;
 
     /// <summary>The screen's title.</summary>

@@ -34,8 +34,6 @@ public sealed class @this : browser.@this
         Report = report;
     }
 
-    private protected override string Variant => "screen";
-
     private protected override string Lost => ": the screen's windows are gone until PlangOS starts again";
 
     /// <summary>The desktop: the first page, the whole screen.</summary>
