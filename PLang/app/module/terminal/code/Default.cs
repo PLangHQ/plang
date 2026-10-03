@@ -27,7 +27,8 @@ public sealed class Default : ITerminal
     {
         var context = action.Context;
         var setting = context.Setting.Of<setting.@this>();
-        var (ready, failure) = await Prepare(context, setting, action.App, action.Parameter, action.Environment, action.WorkingDirectory, action.Permission);
+        var (ready, failure) = await Prepare(context, setting, action.App, action.Parameter, action.Environment, action.WorkingDirectory, action.Permission,
+            action.Clean, action.Keep);
         if (ready == null) return data.@this<Text>.From(failure!);
         var (info, program, sandbox, trusted) = ready.Value;
         // a start trusted by its origin runs by the terminal's defaults, none of the actor's settings (579)
@@ -152,7 +153,8 @@ public sealed class Default : ITerminal
     {
         var context = action.Context;
         var setting = context.Setting.Of<setting.@this>();
-        var (ready, failure) = await Prepare(context, setting, action.App, action.Parameter, action.Environment, action.WorkingDirectory, action.Permission);
+        var (ready, failure) = await Prepare(context, setting, action.App, action.Parameter, action.Environment, action.WorkingDirectory, action.Permission,
+            action.Clean, action.Keep);
         if (ready == null) return data.@this<Process>.From(failure!);
         var (info, program, sandbox, trusted) = ready.Value;
         // a start trusted by its origin runs by the terminal's defaults, none of the actor's settings (579)
@@ -299,7 +301,8 @@ public sealed class Default : ITerminal
         actor.context.@this context, setting.@this setting, data.@this<Text> app,
         data.@this<global::app.type.item.list.@this>? parameter, data.@this<global::app.type.item.dict.@this>? environment,
         data.@this<global::app.type.item.path.@this>? workingDirectory,
-        data.@this<global::app.type.item.list.@this<global::app.type.item.permission.@this>>? permission)
+        data.@this<global::app.type.item.list.@this<global::app.type.item.permission.@this>>? permission,
+        data.@this<global::app.type.item.@bool.@this>? clean, data.@this<global::app.type.item.list.@this>? keep)
     {
         // what the step wrote, before it is read: a %ref% names permissions even when it holds none
         var named = permission?.Peek() is { } written and not global::app.type.item.@null.@this ? written : null;
@@ -311,7 +314,7 @@ public sealed class Default : ITerminal
         if (given == null && named != null)
             return (null, context.Error(new ActionError(
                 $"The step gives the program permissions, but {named} holds none — leave Permission out to run it free.", "PermissionInvalid", 400)));
-        var (ready, failure) = await Prepare(context, setting, app, parameter, environment, workingDirectory, held: given != null);
+        var (ready, failure) = await Prepare(context, setting, app, parameter, environment, workingDirectory, clean, keep, held: given != null);
         if (ready == null) return (null, failure);
         if (given == null) return ((ready.Value.info, ready.Value.program, null, ready.Value.trusted), null);
         var (held, refused) = await Sandbox.Of(given.Rows(context), ready.Value.program, context);
@@ -354,26 +357,41 @@ public sealed class Default : ITerminal
     private static async Task<((ProcessStartInfo info, FilePath program, bool trusted)? ready, data.@this? failure)> Prepare(
         actor.context.@this context, setting.@this setting, data.@this<Text> app,
         data.@this<global::app.type.item.list.@this>? parameter, data.@this<global::app.type.item.dict.@this>? environment,
-        data.@this<global::app.type.item.path.@this>? workingDirectory, bool held = false)
+        data.@this<global::app.type.item.path.@this>? workingDirectory,
+        data.@this<global::app.type.item.@bool.@this>? clean, data.@this<global::app.type.item.list.@this>? keep, bool held = false)
     {
-        // the step names what it starts itself when the program, its arguments, environment and folder are all written
-        // in it — no variable but the running app's anchors (%!app.AbsolutePath%), nothing its caller handed it: only
-        // then may a goal that ships with plang start it unasked (decision 579; any other variable there is the
-        // caller's, and is asked as the caller)
+        // the step names what it starts itself when the program, its arguments, environment, folder, whether it is clean
+        // and what it keeps are all written in it — no variable but the running app's anchors (%!app.AbsolutePath%),
+        // nothing its caller handed it: only then may a goal that ships with plang start it unasked (decision 579; any
+        // other variable there is the caller's, and is asked as the caller)
         static bool Written(data.@this? given)
             => given?.Peek() is not { } held || held.Variable.All(global::app.type.item.path.@this.IsAnchor);
-        var named = Written(app) && Written(parameter) && Written(environment) && Written(workingDirectory);
+        var named = Written(app) && Written(parameter) && Written(environment) && Written(workingDirectory)
+            && Written(clean) && Written(keep);
+        var cleanStart = clean != null && (await clean.Value())?.Value == true;
         // an option the step doesn't write is read from the actor's settings (terminal.start.setting.<option>, then
         // terminal.setting.<option>): for a start that would be trusted, that is the actor choosing what runs — the
         // folder, the arguments, the environment — so a start is the step's own only when no setting gives it an option
-        if (named && context.call.Current?.Action is { } asking && asking.Module[asking.Name] is { } element)
+        // (a clean start takes no environment setting at all, so one there changes nothing)
+        var asking = context.call.Current?.Action;
+        if (named && asking?.Module[asking.Name] is { } element)
             foreach (var option in element.Property)
                 if (asking.Property[option.Name] == null
+                    && !(cleanStart && string.Equals(option.Name, "Environment", StringComparison.OrdinalIgnoreCase))
                     && (await context.Setting.Get(asking, option.Name.ToLowerInvariant())).IsInitialized)
                 {
                     named = false;
+                    // said, so an os goal that asks because of a setting isn't a mystery
+                    if (context.App.Debug is { } debug)
+                        await debug.Write($"terminal: a setting gives {asking.Module}.{asking.Name} its {option.Name}, so the start is the actor's and asked");
                     break;
                 }
+
+        // what a clean start keeps of plang's own environment: names, each a plain variable name, never a value
+        var kept = keep == null || !await keep.ToBooleanAsync() ? [] : ((await keep.Value())!.Clr<List<object?>>() ?? [])
+            .Select(k => k?.ToString() ?? "").ToList();
+        if (kept.FirstOrDefault(k => !System.Text.RegularExpressions.Regex.IsMatch(k, "^[A-Za-z_][A-Za-z0-9_]*$")) is { } bad)
+            return (null, context.Error(new ActionError($"Keep names variables to keep, by name: '{bad}' is no variable name.", "KeepInvalid", 400)));
 
         var name = (await app.Value())!.Clr<string>()!;
         var program = FilePath.Program(name, context);
@@ -393,22 +411,27 @@ public sealed class Default : ITerminal
         var parameters = parameter == null || !await parameter.ToBooleanAsync() ? null : (await parameter.Value())!.Clr<List<object?>>();
         foreach (var p in parameters ?? []) info.ArgumentList.Add(p?.ToString() ?? "");
 
-        // a program held to permissions starts with none of plang's own environment (its keys among it): only the
-        // sandbox's base, and what the settings and the step give it
-        if (held)
+        // a program held to permissions, or started clean, starts with none of plang's own environment (its keys among
+        // it): only the sandbox's base, what it keeps of plang's by name, and what the step gives it
+        if (held || cleanStart)
         {
+            var own = new Dictionary<string, string?>(info.Environment);
             info.Environment.Clear();
             foreach (var (key, value) in Sandbox.Environment) info.Environment[key] = value;
+            foreach (var variable in kept)
+                if (own.TryGetValue(variable, out var value) && value != null) info.Environment[variable] = value;
+                else if (context.App.Debug is { } debug) await debug.Write($"{program.FileName}: plang has no {variable} to keep");
         }
         // a start trusted by its origin (an os goal naming it all) takes nothing of the actor's settings that changes what
         // runs: the settings are the actor's, a user program sets them, and an LD_PRELOAD there would run the user's code
-        // inside what started unasked. Its environment is plang's own and what the step names, nothing else.
+        // inside what started unasked. Its environment is plang's own and what the step names, nothing else. A clean
+        // start takes no environment setting either.
         var trusted = named && global::app.type.item.path.@this.AskedByOs(context);
-        var env = trusted ? new() : setting.Environment.Clr<Dictionary<string, object?>>() ?? new();
-        // a step that writes no Environment reads the setting's through its property — for a trusted start that is the
-        // same side door: it takes only what the step itself wrote
-        var written = environment?.Peek() is { IsNull: false };
-        if (environment != null && (written || !trusted) && await environment.ToBooleanAsync())
+        var env = trusted || cleanStart ? new() : setting.Environment.Clr<Dictionary<string, object?>>() ?? new();
+        // a step that writes no Environment reads the setting's through its property — for a trusted or clean start that
+        // is the same side door: it takes only what the step itself wrote
+        var written = asking?.Property["Environment"] != null || environment?.Peek() is { IsNull: false } && asking == null;
+        if (environment != null && (written || !(trusted || cleanStart)) && await environment.ToBooleanAsync())
             foreach (var (key, value) in (await environment.Value())!.Clr<Dictionary<string, object?>>() ?? new())
                 env[key] = value;
         foreach (var (key, value) in env) info.Environment[key] = value?.ToString();

@@ -50,6 +50,16 @@ public partial class open : IContext
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Pipe { get; init; }
 
+    /// <summary>When true ("with a clean environment"), the program starts with none of plang's environment (its keys
+    /// are there): only PATH and LANG, what <see cref="Keep"/> names and what <see cref="Environment"/> gives. The
+    /// terminal's environment setting is not taken.</summary>
+    [Default(false)]
+    public partial data.@this<global::app.type.item.@bool.@this> Clean { get; init; }
+
+    /// <summary>Names of variables copied from plang's own environment into a clean one ("keep PULSE_SERVER, HOME") —
+    /// names only, never values.</summary>
+    public partial data.@this<global::app.type.item.list.@this>? Keep { get; init; }
+
     [Code]
     public partial ITerminal Terminal { get; }
 
