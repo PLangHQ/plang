@@ -342,6 +342,12 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                 var inner = held.GetGenericArguments()[0];
                 if (global::app.type.item.choice.set.@this.For(inner) is not { } set)
                     return new error.Error($"{inner.FullName} is not a closed set — no enum members, no Choices(context?), no kinds of its own.", "TypeLoadOpenSet", 400);
+                // one name, one set: a second class named as a set is (two enums both `level`) would take its reader
+                if (Items().FirstOrDefault(type => type.Names(set.Owner))?.kind[set.Name] is global::app.type.item.choice.set.@this taken
+                    && taken.Of(null) != set.Of(null))
+                    return new error.Error(
+                        $"choice set name '{set.Name}' is claimed by both {taken.Of(null)?.GetGenericArguments()[0].FullName} and {inner.FullName} — one name, one set.",
+                        "TypeLoadCollision", 400);
                 Hold(set);
                 // the closed reader for this set — one reflective instantiation, then typed reads.
                 Reader.Register("choice", set.Name,
