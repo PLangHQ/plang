@@ -184,6 +184,33 @@ public class MatchTests
         await Assert.That(result.Error!.Message).Contains("0 is in the step but not in your answer");
     }
 
+    // A quoted literal is held by one of the answer's values, never by the line's syntax: `if "= %oldHash%" is
+    // "= %hash%"` answered Left=%oldHash%, Operator="==" dropped the "= " the step wrote (the line's `Left=%oldHash%`
+    // holds the characters, no value does) — refused; written whole, taken.
+    [Test]
+    public async Task AQuotedLiteral_OnlyInTheLinesSyntax_IsRefused_AndHeldByAValue_IsTaken()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var context = app.actor.list.System.Context;
+        Goal Checked()
+        {
+            var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("""if "= %oldHash%" is "= %hash%", call Keep"""));
+            return goal;
+        }
+
+        var dropped = Checked();
+        await Picked(dropped, context, (0, "condition.if"), (0, "goal.call"));
+        var refused = await Match(dropped, """[0] condition.if(Left=%oldHash%, Operator="==", Right=%hash%) { goal.call(Name="Keep") }""", context);
+
+        var whole = Checked();
+        await Picked(whole, context, (0, "condition.if"), (0, "goal.call"));
+        var taken = await Match(whole, """[0] condition.if(Left="= %oldHash%", Operator="==", Right="= %hash%") { goal.call(Name="Keep") }""", context);
+
+        await refused.IsFailure();
+        await Assert.That(refused.Error!.Message).Contains("\"= %oldHash%\" is in the step but not in your answer");
+        await Assert.That(taken.Error?.Message ?? "").DoesNotContain("is in the step but not in your answer");
+    }
+
     [Test]
     public async Task ANumberTheStepWrites_HeldByTheAnswer_IsTaken()
     {
