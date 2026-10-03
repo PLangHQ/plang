@@ -102,8 +102,9 @@ public partial class @this
     internal static bool IsAnchor(global::app.type.item.variable.@this variable) => Anchors.Contains(variable.Text);
 
     /// <summary>The step asking runs in a goal under the runtime's os folder — what ships with plang. Its own goal (the
-    /// call frame running the step), never one further up.</summary>
-    private static bool AskedByOs(actor.context.@this context)
+    /// call frame running the step), never one further up. A start trusted so takes nothing of the actor's settings
+    /// that changes what runs (the terminal's environment).</summary>
+    internal static bool AskedByOs(actor.context.@this context)
     {
         var os = context.App?.OsAbsolutePath;
         if (string.IsNullOrEmpty(os) || context.call?.Goal?.Folder is not { } folder) return false;
