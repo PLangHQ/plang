@@ -5,8 +5,8 @@ namespace app.module.on.code;
 
 /// <summary>
 /// Runs goal calls that arrive from outside the step loop — a line from a running program, a frame
-/// from a browser, a click on a screen — one at a time per app. They share the actor's variables
-/// (<c>%!data%</c> above all), so two at once would read each other's values.
+/// from a browser, a click on a screen — one at a time per app. They share the actor's variables, so two at
+/// once would read each other's values; each one's <c>%!data%</c> is its own.
 /// </summary>
 public static class Gate
 {
@@ -23,7 +23,10 @@ public static class Gate
         try
         {
             payload.Name = "!data";
-            await context.Variable.Set("!data", payload);
+            // %!data% is a name of the call's own frame, on its own flow (as a loop binds its item) — never written into
+            // the actor's memory, where the step that started the source may still be reading its own %!data% (issue 64).
+            // What else the call writes reaches the actor's variables as before.
+            await using var bound = context.call.Push([payload], held);
             var result = await held.Start(context);
             if (!result.Success) await context.Actor.Channel.Report(result);
         }
