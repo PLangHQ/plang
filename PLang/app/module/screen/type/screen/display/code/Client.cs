@@ -26,7 +26,7 @@ internal abstract class Resource
     /// <summary>Still the client's (not destroyed, client still there).</summary>
     internal bool Alive => !Client.Closed && ReferenceEquals(Client.Find(Id), this);
 
-    internal abstract void Request(ushort opcode, Args args);
+    internal abstract void Request(ushort opcode, Request args);
 
     internal Event Event(ushort opcode) => new(this, opcode);
 
@@ -113,7 +113,7 @@ internal sealed class Client
                         at += size;
                         if (objects.TryGetValue(id, out var target))
                         {
-                            try { target.Request(opcode, new Args(this, message, 8)); }
+                            try { target.Request(opcode, new Request(this, message, 8)); }
                             catch (Exception ex)
                             {
                                 // one bad request (or a fault of ours) must not end the connection unseen

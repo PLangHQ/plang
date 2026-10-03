@@ -73,7 +73,7 @@ internal sealed class Window : ISurfaceRole
     }
 
     internal WlSurface Surface => Toplevel.Xdg.Surface;
-    internal bool Active => ReferenceEquals(Display.Windows.Active, this);
+    internal bool Active => ReferenceEquals(Display.window.Active, this);
     internal bool Visible => Shown != Shown.Minimized && !Picture.Empty;
 
     /// <summary>The page on the screen.</summary>
@@ -130,7 +130,7 @@ internal sealed class Window : ISurfaceRole
         onScreen = Drawn;
     }
 
-    public void Gone() => Display.Windows.Close(this);
+    public void Gone() => Display.window.Close(this);
 
     internal void Titled()
     {
@@ -241,7 +241,7 @@ internal sealed class Window : ISurfaceRole
         Configure();
     }
 
-    internal void Activate() => Display.Windows.Activate(this);
+    internal void Activate() => Display.window.Activate(this);
 
     internal void Toggle()
     {
@@ -253,7 +253,7 @@ internal sealed class Window : ISurfaceRole
         if (Desktop || Shown == Shown.Maximized) return;
         restore = Frame;
         Shown = Shown.Maximized;
-        var work = Display.Windows.Work;
+        var work = Display.window.Work;
         At = new Point(work.X, work.Y + TitleBar.Height);
         Ask(new Size(work.Width, work.Height - TitleBar.Height));
         Tell("maximized");
@@ -277,7 +277,7 @@ internal sealed class Window : ISurfaceRole
         Tell("minimized");
         Display.Panel?.Closed(this);
         Display.Frame.Redraw(Outer, default);
-        if (Active) Display.Windows.ActivateTop();
+        if (Active) Display.window.ActivateTop();
     }
 
     /// <summary>Shows again what was minimized (as it was: normal or maximized).</summary>
@@ -293,7 +293,7 @@ internal sealed class Window : ISurfaceRole
     internal void MoveTo(Point to)
     {
         var old = Drawn;
-        var work = Display.Windows.Work;
+        var work = Display.window.Work;
         At = to with { Y = Math.Clamp(to.Y, TitleBar.Height, work.Bottom - 8) };
         Place();
         var now = Drawn;
