@@ -7,7 +7,7 @@ namespace app.module.window;
 /// Opens a page in a window of its own, in a running browser on the screen (from
 /// <c>browser.start</c>): an app window, with PlangOS's title bar and no tabs. Returns the window once
 /// Chromium has opened it; it is shown when its page is, and what it is asked to do (navigate, post,
-/// callGoal) waits for that. A <c>file://</c> page is read as the one who opens it.
+/// call) waits for that. A <c>file://</c> page is read as the one who opens it.
 /// </summary>
 [Action("open", Cacheable = false)]
 public partial class open : IContext
