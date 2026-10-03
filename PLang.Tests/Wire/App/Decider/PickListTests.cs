@@ -240,6 +240,27 @@ public class PickListTests
         await Assert.That(string.Join("\n", differ)).IsEqualTo("");
     }
 
+    // The real path, as Decide.goal runs it: stage 1's answer goes through build.pick (Goal=%goal%), which takes it and
+    // walks the picks; stage 2's questions are then rendered from %goal% — the typed variables the walk left reach them.
+    [Test]
+    public async Task StageOnesAnswer_ThroughBuildPick_RendersThePinnedStageTwoQuestions()
+    {
+        await using var os = Os();
+        var context = os.actor.list.User.Context;
+        var differ = new List<string>();
+        foreach (var entry in Golden())
+        {
+            var goal = Goal(entry, context);
+            context.Variable.Set(new global::app.data.@this("goal", goal, context: context));
+            context.Variable.Set(new global::app.data.@this("answer", Answer(entry.GetProperty("answer1"), context), context: context));
+            context.Variable.Set(new global::app.data.@this("popular", Popular(), context: context));
+            await (await context.Action("build.pick(Goal=%goal%, Answer=%answer%, Popular=%popular%)").Start(context)).IsSuccess();
+            var question = await Rendered("decider2.template", (await context.Variable.Get("goal")).Peek() as global::app.goal.@this ?? goal, context);
+            differ.AddRange(Differ(entry.GetProperty("goal").GetString()!, question, entry.GetProperty("question2")));
+        }
+        await Assert.That(string.Join("\n", differ)).IsEqualTo("");
+    }
+
     [Test]
     public async Task BothAnswers_GiveThePinnedPicks()
     {
