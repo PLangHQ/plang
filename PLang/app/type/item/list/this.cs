@@ -690,7 +690,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
 
     // A slot lowered to the CLR element type at the exit door. A raw CLR slot is already the
     // CLR form, so it converts without a context; a stored Data or an item lowers itself.
-    private static object? Lower(object? slot, System.Type elem) => slot switch
+    private protected virtual object? Lower(object? slot, System.Type elem) => slot switch
     {
         Data d => d.Clr(elem),
         global::app.type.item.@this item => item.Clr(elem),

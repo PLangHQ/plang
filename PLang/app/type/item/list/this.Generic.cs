@@ -84,6 +84,13 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
         };
     }
 
+    /// <summary>A row lowers as the <typeparamref name="T"/> it is read as: one that isn't a T yet is made one by T's own
+    /// birth (a text in a list&lt;message&gt; is the user's message), then lowers itself — as taking it out
+    /// (<c>row.Value&lt;T&gt;()</c>) reads it.</summary>
+    private protected override object? Lower(object? slot, System.Type elem)
+        => base.Lower((slot is global::app.data.@this held ? held.Peek() : slot) is global::app.type.item.@this row and not T
+                && T.Create(row) is { } made ? made : slot, elem);
+
     /// <summary>A typed list is made from any list: a list<typeparamref name="T"/> passes through, another is
     /// re-tagged.</summary>
     public static bool Takes(global::app.type.@this other) => other.Is("list");
