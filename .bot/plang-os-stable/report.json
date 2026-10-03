@@ -1,0 +1,42 @@
+{
+  "branch": "plang-os-stable",
+  "sessions": [
+    {
+      "id": "9308d6b4-4d98-4c08-accd-6449394989e1",
+      "bot": "builder",
+      "timestamp_start": "2026-10-03T07:30:00Z",
+      "timestamp_end": "2026-10-03T07:45:09Z",
+      "intent": "Diagnose issue 41 regression: `call X in %window%` builds as goal.call instead of window.call after the window.callGoal->window.call rename.",
+      "before": { "assumptions": "Teaching may have lost the `in %window%` rule in the rename; or var-name specificity (%writer% vs %window%).", "risk": "A fresh local plang-os-stable was 286 behind remote with 3 unique (os-bot, superseded) commits; backed up, created a fresh tracking branch, deleted backup once confirmed." },
+      "plan": "No plan.md — scoped diagnosis; see .bot/plang-os-stable/builder/summary.md.",
+      "actions": [
+        {
+          "paths": ["os/system/builder/llm/decider.json"],
+          "type": "review",
+          "category": "config",
+          "confidence": "high",
+          "context": "Measured fresh: call X in %writer% AND in %window% both -> goal.call (not var-name specific). Trace: window.call 0.98 but module window 0.56 (<0.90) keeps it (possible); certain goal.call 0.93 owns the => formal line; writer follows it. Tried an imperative/general goal.call false-side counter-case -> only 0->1/5; reverted (no source change). A text counter-case can't lift the 0.56 module embedding."
+        },
+        {
+          "paths": ["os/system/modules/window/call.examples.md"],
+          "type": "review",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Typed probe (TypedW: open window ... write to %writer%; then call Show ... in %writer%) -> walk types %writer% as window (=> types: %writer% window) and the pick flips to window.call 3/5; the 2/5 misses are goal.call(... Window=%writer%) -> StepsRefused (goal.call has no Window). Root cause: the stage-1 module question is step-text only and never sees the known type."
+        },
+        {
+          "paths": [".bot/plang-os-stable/builder/summary.md"],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Routed to coder as issue 63 (stage-1 module question gets the step's known variable types; explain-don't-hide; deterministic pick hint as fallback) — same shape as 45's typed offers. Post-63 verification plan recorded; re-measure TypedW (want window.call 5/5) + call Finalize guard (goal.call 5/5)."
+        }
+      ],
+      "after": {
+        "status": "Issue 41 diagnosed as core (module-choice stage ignores a step variable's known type) and routed to coder as issue 63. No builder-source change (counter-case reverted). Awaiting the coder's fix, then re-measure.",
+        "health": "green",
+        "notes": "Probe in /shared/w41 (kept). plang-os-stable local was reset onto origin via backup+fresh-tracking (non-destructive; 3 unique commits were superseded os-bot copies)."
+      }
+    }
+  ]
+}
