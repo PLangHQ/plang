@@ -1,0 +1,24 @@
+/ The browser on PlangOS's screen: Chromium drawing onto the display, its first page an app window (no tabs, no
+/ toolbar) that becomes the desktop. DevTools speaks over its pipe (fd 3 and 4), no port. It starts on plang's own blank
+/ page (an app window needs a real page; about:blank opens a tab): the page it shows is the caller's to give, over the
+/ pipe — never on this command line.
+/ Trusted by origin (579): this goal ships with plang, so it starts Chromium without asking — only because it names
+/ the program, every flag and the environment itself. %!app.AbsolutePath% and %!app.OsAbsolutePath% are the app's own
+/ anchors (no caller sets them); any other variable here would make the start the caller's, and asked.
+Screen
+/ a Chromium that was killed (PlangOS closed hard) leaves its profile's lock naming its process; in a new PlangOS
+/ another process can have that number, and the new Chromium would hand its page to "the running one" and exit.
+/ None of ours runs yet: the lock is stale.
+- delete file '/.browser/SingletonLock', on error 'NotFound' ignore
+- delete file '/.browser/SingletonSocket', on error 'NotFound' ignore
+- delete file '/.browser/SingletonCookie', on error 'NotFound' ignore
+- start terminal '//usr/lib/chromium/chromium' with parameters '--ozone-platform=wayland', '--no-first-run',
+    '--no-default-browser-check', '--disable-gpu-compositing', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
+    '--num-raster-threads=4', '--hide-crash-restore-bubble', '--disable-quic',
+    '--disable-blink-features=AutomationControlled', '--in-process-gpu',
+    '--disable-features=SpareRendererForSitePerProcess,WebUIOmniboxPopup,WebUIOmniboxAimPopup',
+    '--user-data-dir=%!app.AbsolutePath%/.browser', '--remote-debugging-pipe',
+    '--app=file://%!app.OsAbsolutePath%/system/browser/blank.html',
+    with environment variables XDG_RUNTIME_DIR="%!app.AbsolutePath%/.run" and WAYLAND_DISPLAY="wayland-plang",
+    keep running, with pipe, write to %program%
+- return %program%

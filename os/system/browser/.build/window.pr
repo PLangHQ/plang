@@ -1,0 +1,102 @@
+{
+  "name": "Window",
+  "comment": "A window of its own for the browser on PlangOS's screen: a second Chromium, started with the running one's\nprofile, hands it a new app window on plang's own blank page and exits. The page it shows is the caller's to give,\nover the running browser's pipe — never on this command line.\nTrusted by origin (579), as Screen is: the program, its flags and environment are named here, with only the app's\nown anchors %!app.AbsolutePath% and %!app.OsAbsolutePath%.",
+  "step": [
+    {
+      "index": 0,
+      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--ozone-platform=wayland', '--no-first-run',\n'--no-default-browser-check', '--user-data-dir=%!app.AbsolutePath%/.browser',\n'--app=file://%!app.OsAbsolutePath%/system/browser/blank.html',\nwith environment variables XDG_RUNTIME_DIR=\"%!app.AbsolutePath%/.run\" and WAYLAND_DISPLAY=\"wayland-plang\",\nand wait until it exits (it hands the window over and ends)",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "terminal",
+          "name": "start",
+          "property": [
+            {
+              "name": "App",
+              "type": {
+                "name": "text"
+              },
+              "value": "//usr/lib/chromium/chromium"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": ["--ozone-platform=wayland","--no-first-run","--no-default-browser-check","--user-data-dir=%!app.AbsolutePath%/.browser","--app=file://%!app.OsAbsolutePath%/system/browser/blank.html"],
+              "variable": [
+                {
+                  "text": "%!app.AbsolutePath%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "AbsolutePath"
+                    }
+                  ]
+                },
+                {
+                  "text": "%!app.OsAbsolutePath%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "OsAbsolutePath"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Environment",
+              "type": {
+                "name": "dict",
+                "template": "plang"
+              },
+              "value": {"XDG_RUNTIME_DIR":"%!app.AbsolutePath%/.run","WAYLAND_DISPLAY":"wayland-plang"},
+              "variable": [
+                {
+                  "text": "%!app.AbsolutePath%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "AbsolutePath"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "interactive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "administrator",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/system/browser/Window.goal",
+  "prPath": "/system/browser/.build/window.pr",
+  "hash": "a20758cae1b5cbae458dfde181d38ec341fec73acb4cc59dda943b0cdee42031"
+}

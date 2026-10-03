@@ -1,11 +1,6 @@
-using System.Net.WebSockets;
-using System.Text;
-using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using app.Attributes;
-using FilePath = global::app.type.item.path.file.@this;
-using Verb = global::app.type.item.permission.Verb;
+using Program = global::app.module.terminal.Process;
 
 namespace app.module.browser.type.browser;
 
@@ -15,19 +10,26 @@ namespace app.module.browser.type.browser;
 /// through <c>browser.send</c>; <see cref="screen.@this"/> runs as a normal browser drawing onto PlangOS's display, its
 /// pages windows (the first the desktop, more with <c>window.open</c>), the screen giving it the pointer and keyboard.
 /// Which it is is its kind: <c>%browser!type.kind%</c> (<c>headless</c>, <c>screen</c>). <c>browser.stop</c> ends either.
+///
+/// <para>Chromium is a program a goal that ships with plang starts (<c>/system/browser/</c>, through terminal: trusted
+/// by its origin, decision 579 — it names the program and every flag itself), and DevTools speaks over that program's
+/// pipe (<see cref="cdp.@this"/>). What the caller gives — the page, the size — goes over the pipe, never on Chromium's
+/// command line.</para>
 /// </summary>
 [PlangType("browser"), Kinds]
 public abstract partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     private readonly string _url;
     private readonly int _width, _height;
+    private bool _stopping;
 
-    private protected @this(string url, int width, int height, System.Diagnostics.Process os)
+    private protected @this(string url, int width, int height, Program program, cdp.@this cdp)
     {
         _url = url;
         _width = width;
         _height = height;
-        Os = os;
+        Program = program;
+        Cdp = cdp;
     }
 
     /// <summary>Its kind — headless, screen.</summary>
@@ -47,181 +49,77 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     [LlmBuilder, Out] public global::app.type.item.number.@this Height => _height;
 
     /// <summary>True until the browser exits.</summary>
-    [LlmBuilder, Out] public global::app.type.item.@bool.@this Running => !Os.HasExited;
+    [LlmBuilder, Out] public global::app.type.item.@bool.@this Running => Program.Os is { HasExited: false };
 
-    /// <summary>Its Chromium.</summary>
-    internal System.Diagnostics.Process Os { get; }
+    /// <summary>The Chromium program, as terminal runs it.</summary>
+    internal Program Program { get; }
+
+    /// <summary>DevTools, over the program's pipe.</summary>
+    internal cdp.@this Cdp { get; }
 
     /// <summary>Gives it what the person did — the mouse, a key, typed text, back/forward/reload: <c>browser.send</c>.</summary>
     internal abstract Task<global::app.data.@this> Send(global::app.type.item.input.@this input, global::app.actor.context.@this context);
 
-    // ---- its end ---------------------------------------------------------------------------------
+    // ---- starting -----------------------------------------------------------------------------------
 
-    // Chromium's last words on its error output — what it said before it stopped, if it stops
-    private readonly Queue<string> _said = new();
-
-    /// <summary>A line Chromium wrote on its error output: the last 40 are kept.</summary>
-    internal void Heard(string line)
+    /// <summary>Chromium, as the goal of plang's own that starts it runs it (<c>/system/browser/&lt;goal&gt;</c>): the
+    /// program, its pipe a channel; or why not.</summary>
+    private protected static async Task<(Program? program, global::app.data.@this? failed)> Started(string goal, global::app.actor.context.@this context)
     {
-        lock (_said)
-        {
-            _said.Enqueue(line);
-            while (_said.Count > 40) _said.Dequeue();
-        }
+        var found = await context.App.goal.list.Find("/system/browser/" + goal, context.call.Goal);
+        if (!found.Success || await found.Value() is not { } starts) return (null, found.Success ? Fail(context, $"No /system/browser/{goal} goal", "BrowserNotFound", 404) : found);
+        var ran = await starts.Start(context, []);
+        if (!ran.Success) return (null, ran);
+        if (await ran.Value() is not Program { pipe: not null } program)
+            return (null, Fail(context, $"/system/browser/{goal} started no Chromium with a pipe", "BrowserStartFailed", 500));
+        return (program, null);
     }
 
-    /// <summary>True once plang stops it (browser.stop): its exit is then no failure.</summary>
-    private bool _stopping;
-
-    /// <summary>Says what went wrong away from any step: written to its app's error channel. (An item holds no
-    /// context; this is where the one it was started in reports.)</summary>
-    internal Func<global::app.error.Error, Task>? Report { get; private protected init; }
-
-    /// <summary>Its Chromium exited: unless plang stopped it, that is a failure nothing else would see. Said on the
-    /// app's error channel, with what Chromium said last.</summary>
-    private protected async Task Exited()
+    /// <summary>A <c>file://</c> page is read as the caller (finding 1 of 579: a browser started trusted must not read
+    /// for a caller what the caller couldn't read itself); a website is the browser's normal job. The refusal, or null.</summary>
+    internal static async Task<global::app.data.@this?> Readable(string url, global::app.actor.context.@this context)
     {
-        if (_stopping) return;
-        string said;
-        lock (_said) said = string.Join("\n", _said);
-        var message = $"Chromium stopped by itself (exit code {Os.ExitCode}){Lost}."
-            + (said.Length > 0 ? "\nWhat it said last:\n" + said : "");
-        if (Report != null) await Report(new global::app.error.ServiceError(message, "BrowserStopped", 500));
-    }
-
-    /// <summary>What its stopping takes with it, said when it stops by itself.</summary>
-    private protected virtual string Lost => "";
-
-    /// <summary>Its Chromium's exit is watched from now on: stopping by itself is said.</summary>
-    private protected void Watched()
-    {
-        Os.EnableRaisingEvents = true;
-        Os.Exited += (_, _) => _ = Exited();
-        if (Os.HasExited) _ = Exited();
-    }
-
-    /// <summary>Ends it: asked to close, then ended if it doesn't within a second — <c>browser.stop</c>.</summary>
-    internal async Task Stop()
-    {
-        _stopping = true;
-        try { if (Speaks is { State: WebSocketState.Open } speaks) await Cdp("Browser.close", new JsonObject(), speaks); }
-        catch (Exception ex) when (ex is WebSocketException or ObjectDisposedException or InvalidOperationException) { }
-        if (!Os.HasExited && !Os.WaitForExit(1000)) Os.Kill(entireProcessTree: true);
-    }
-
-    // ---- DevTools (the Chrome DevTools Protocol, on a WebSocket bound to 127.0.0.1) ----------------
-
-    /// <summary>The connection that speaks for it as a whole.</summary>
-    private protected abstract ClientWebSocket? Speaks { get; }
-
-    private readonly SemaphoreSlim _sending = new(1, 1);
-    private int _messageId;
-    /// <summary>DevTools requests waiting for their reply, by id.</summary>
-    private readonly System.Collections.Concurrent.ConcurrentDictionary<int, TaskCompletionSource<string>> _pending = new();
-
-    /// <summary>A request, its reply not waited for; to <see cref="Speaks"/> unless a socket is named.</summary>
-    private protected Task Cdp(string method, JsonObject parameters, ClientWebSocket? socket = null)
-        => Post(Interlocked.Increment(ref _messageId), method, parameters, socket);
-
-    /// <summary>A request whose reply is wanted: the raw reply JSON, or a timeout after 2 s.</summary>
-    private protected async Task<string> Ask(string method, JsonObject parameters, ClientWebSocket? socket = null)
-    {
-        var id = Interlocked.Increment(ref _messageId);
-        var reply = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
-        _pending[id] = reply;
-        try
-        {
-            await Post(id, method, parameters, socket);
-            return await reply.Task.WaitAsync(TimeSpan.FromSeconds(2));
-        }
-        finally { _pending.TryRemove(id, out _); }
-    }
-
-    /// <summary>A reply arrived: the request waiting on <paramref name="id"/> has it. False when none waits.</summary>
-    private protected bool Answered(int id, string reply)
-    {
-        if (!_pending.TryRemove(id, out var waiting)) return false;
-        waiting.TrySetResult(reply);
-        return true;
-    }
-
-    private async Task Post(int id, string method, JsonObject parameters, ClientWebSocket? socket)
-    {
-        var message = new JsonObject { ["id"] = id, ["method"] = method, ["params"] = parameters };
-        var bytes = Encoding.UTF8.GetBytes(message.ToJsonString());
-        await _sending.WaitAsync();
-        try { await (socket ?? Speaks!).SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None); }
-        finally { _sending.Release(); }
-    }
-
-    // ---- starting Chromium -----------------------------------------------------------------------
-
-    [GeneratedRegex(@"DevTools listening on ws://127\.0\.0\.1:(\d+)/")]
-    private static partial Regex Listening();
-
-    private protected static readonly HttpClient DevTools = new() { Timeout = TimeSpan.FromSeconds(3) };
-
-    /// <summary>The app's browser profile, as a plang path (from the app's root).</summary>
-    private protected const string Profiled = "/.browser";
-
-    /// <summary>The profile folder Chromium keeps its data in — through the path gate (it writes there), before its
-    /// <c>.Absolute</c> goes to Chromium; a refusal is the answer.</summary>
-    private protected static async Task<(FilePath? folder, global::app.data.@this? refused)> Profile(global::app.actor.context.@this context)
-    {
-        var folder = FilePath.Resolve(Profiled, context);
-        var allowed = await folder.Authorize(Verb.write, context);
-        return allowed.Success && !allowed.Exits ? (folder, null) : (null, allowed);
-    }
-
-    /// <summary>The DevTools port Chromium says it took; what it says after that goes to <paramref name="told"/>, or
-    /// nowhere.</summary>
-    private protected static async Task<int?> PortOf(StreamReader stderr, TimeSpan within, Func<string, Task>? told = null)
-    {
-        using var cts = new CancellationTokenSource(within);
-        try
-        {
-            while (await stderr.ReadLineAsync(cts.Token) is { } line)
-            {
-                var match = Listening().Match(line);
-                if (!match.Success) continue;
-                _ = Drain(stderr, told);
-                return int.Parse(match.Groups[1].Value);
-            }
-        }
-        catch (OperationCanceledException) { }
-        return null;
-    }
-
-    /// <summary>The DevTools address of its first page.</summary>
-    private protected static async Task<string?> PageOf(int port)
-    {
-        for (var i = 0; i < 40; i++)
-        {
-            try
-            {
-                using var doc = JsonDocument.Parse(await DevTools.GetStringAsync($"http://127.0.0.1:{port}/json/list"));
-                foreach (var target in doc.RootElement.EnumerateArray())
-                    if (target.GetProperty("type").GetString() == "page")
-                        return target.GetProperty("webSocketDebuggerUrl").GetString();
-            }
-            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException) { }
-            await Task.Delay(250);
-        }
-        return null;
-    }
-
-    private protected static async Task Drain(StreamReader reader, Func<string, Task>? told = null)
-    {
-        try
-        {
-            while (await reader.ReadLineAsync() is { } line)
-                if (told != null) await told(line);
-        }
-        catch (Exception ex) when (ex is IOException or ObjectDisposedException) { }
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var address) || !address.IsFile) return null;
+        var allowed = await global::app.type.item.path.file.@this.Resolve(url, context).Authorize(global::app.type.item.permission.Verb.read, context);
+        return allowed.Success && !allowed.Exits ? null : allowed;
     }
 
     private protected static global::app.data.@this<@this> Fail(global::app.actor.context.@this context, string message, string key, int status)
         => global::app.data.@this<@this>.From(context.Error(new global::app.error.ActionError(message, key, status)));
 
-    public override string ToString() => $"browser {_url} ({_width}x{_height}{(Os.HasExited ? ", exited" : "")})";
+    // ---- its end ----------------------------------------------------------------------------------
+
+    /// <summary>Says what went wrong away from any step: written to its app's error channel. (An item holds no
+    /// context; this is where the one it was started in reports.)</summary>
+    internal Func<global::app.error.Error, Task>? Report { get; private protected init; }
+
+    /// <summary>What its stopping takes with it, said when it stops by itself.</summary>
+    private protected virtual string Lost => "";
+
+    /// <summary>Its Chromium's exit is watched from now on: stopping by itself — unless plang stopped it — is a failure
+    /// nothing else would see, said on the app's error channel with what Chromium said last (its program's stderr).</summary>
+    private protected void Watched() => _ = Task.Run(async () =>
+    {
+        await Program.Os!.WaitForExitAsync();
+        if (_stopping || Report == null) return;
+        var said = Program.Said;
+        await Report(new global::app.error.ServiceError(
+            $"Chromium stopped by itself (exit code {Program.Os.ExitCode}){Lost}." + (said.Length > 0 ? "\nWhat it said last:\n" + said : ""),
+            "BrowserStopped", 500));
+    });
+
+    /// <summary>Ends it: asked to close, then ended if it doesn't within a second — <c>browser.stop</c>.</summary>
+    internal async Task Stop()
+    {
+        _stopping = true;
+        try { await Cdp.Tell("Browser.close", new JsonObject()); }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException or ObjectDisposedException) { }
+        if (Program.Os is { HasExited: false } os)
+        {
+            try { await os.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(1)); }
+            catch (TimeoutException) { os.Kill(); }
+        }
+    }
+
+    public override string ToString() => $"browser {_url} ({_width}x{_height}{(Running.Value ? "" : ", exited")})";
 }

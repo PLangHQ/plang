@@ -42,6 +42,25 @@ public sealed class Process : global::app.type.item.@this, global::app.type.item
     internal SemaphoreSlim Writing { get; } = new(1, 1);
     internal Task? Reading { get; set; }
 
+    // its last words on stderr — what it said before it stopped, if it stops
+    private readonly Queue<string> _said = new();
+
+    /// <summary>A line it wrote on stderr: the last 40 are kept.</summary>
+    internal void Heard(string line)
+    {
+        lock (_said)
+        {
+            _said.Enqueue(line);
+            while (_said.Count > 40) _said.Dequeue();
+        }
+    }
+
+    /// <summary>What it said last on stderr (up to 40 lines), oldest first.</summary>
+    internal string Said
+    {
+        get { lock (_said) return string.Join("\n", _said); }
+    }
+
     /// <summary>The app this program runs, when it is a plang that takes calls on its input (PlangOS): its goals are
     /// called like this app's — <c>call goal Question in %container%</c>, <c>%container.goal["Question"]%</c> — the call
     /// going down its input, the answer coming back beside its frames. The same link as <c>%!app.parent%</c>, the
