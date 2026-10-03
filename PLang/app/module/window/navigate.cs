@@ -20,11 +20,7 @@ public partial class navigate : IContext
 
     public async Task<data.@this> Start()
     {
-        var browser = Browser == null ? null : await Browser.Value();
-        if (await type.window.@this.Of(Window, browser, Context) is not { } window)
-            return Context.Error(new global::app.error.ActionError($"No such window: {Window.Peek()}", "WindowNotFound", 404));
-        if (await Url.Value() is not global::app.type.item.text.@this typed)
-            return Context.Error(new global::app.error.ActionError($"Nowhere to go: Url is {Url.Peek()}", "UrlMissing", 400));
-        return await window.Navigate(typed.Clr<string>() ?? "", Context) ?? Context.Ok();
+        var window = await type.window.@this.Of(Window, Browser, Context);
+        return await window.Value() is { } shown ? await shown.Navigate(Url, Context) : window;
     }
 }

@@ -6,7 +6,7 @@
     },
     "goal.call": {
       "true": "the step itself calls a goal now, alone or inside its condition or loop: `call SendMail to=%x%`, `if %n% > 5, call Big`, `foreach %list%, call X`, `call Compile, on error call Fix` (it calls Compile)",
-      "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.callGoal), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
+      "false": "the step calls no goal now; a call that says WHERE the goal runs — `call X in %window%`, `… in %browser%` — runs a page's own function (window.call), not a goal of this app; the goal behind a channel or an event, named to run later, is not called by the step"
     },
     "loop.foreach": {
       "true": "the step repeats something for each item of a collection: `foreach %list%, call X item=%item%`, `for each %order% in %orders%, …`",

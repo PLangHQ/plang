@@ -90,7 +90,7 @@ public sealed class @this : browser.@this
             // the desktop is the first page, its app window blank: shown as window 0, then sent where it goes
             var desktop = await FirstPage(cdp);
             await browser.window.ShowDesktop(desktop, url);
-            if (await browser.Desktop.Navigate(url, context) is { } refusedThere) return global::app.data.@this<browser.@this>.From(refusedThere);
+            if (await browser.Desktop.Navigate(url, context) is { Success: false } refusedThere) return global::app.data.@this<browser.@this>.From(refusedThere);
             display.Followed += browser.window.Follow;
             await browser.Watch(desktop);
         }
