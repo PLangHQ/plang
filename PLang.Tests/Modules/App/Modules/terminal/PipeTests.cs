@@ -122,7 +122,7 @@ public class PipeTests : IDisposable
     }
 
     /// <summary>terminal.open with Pipe: the program, its pipe a channel of its own.</summary>
-    private async Task<global::app.module.terminal.Process> Open(string script, params (string, object?)[] more)
+    private async Task<global::app.module.terminal.type.process.@this> Open(string script, params (string, object?)[] more)
     {
         Context.Actor!.Channel.Register(new CannedAnswerChannel("a"));
         var parameters = new List<(string, object?)> { ("App", "//bin/sh"), ("Parameter", new List<object?> { "-c", script }), ("Pipe", true) };
@@ -131,7 +131,7 @@ public class PipeTests : IDisposable
             Make.Step("open it", Make.Action(Context, "terminal", "open", parameters.ToArray())));
         var opened = await _app.Start(goal, Context);
         await opened.IsSuccess();
-        return (await opened.Value() as global::app.module.terminal.Process)!;
+        return (await opened.Value() as global::app.module.terminal.type.process.@this)!;
     }
 
     [Test]
@@ -144,7 +144,7 @@ public class PipeTests : IDisposable
         await (await pipe.Write(Context.Ok((global::app.type.item.text.@this)"{\"id\":1}"))).IsSuccess();
         var back = await pipe.Read().WaitAsync(TimeSpan.FromSeconds(10));
         await Assert.That((await back.Value())?.ToString()).IsEqualTo("{\"id\":1}");
-        program.Os!.Kill();
+        program.Kill();
     }
 
     [Test]
@@ -159,6 +159,6 @@ public class PipeTests : IDisposable
         var said = await pipe.Read().WaitAsync(TimeSpan.FromSeconds(10));
         await Assert.That((await said.Value())?.ToString()?.Trim()).IsEqualTo("held");
         await Assert.That(File.Exists(outside)).IsFalse();
-        program.Os!.Kill();
+        program.Kill();
     }
 }

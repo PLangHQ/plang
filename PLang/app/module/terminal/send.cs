@@ -1,5 +1,3 @@
-using app.module.terminal.code;
-
 namespace app.module.terminal;
 
 /// <summary>Writes a line to a running program's stdin (one started with <c>terminal.open</c>).</summary>
@@ -10,10 +8,9 @@ public partial class send : IContext
     public partial data.@this Data { get; init; }
 
     /// <summary>The running program, from <c>terminal.open</c>.</summary>
-    public partial data.@this<Process> Process { get; init; }
+    public partial data.@this<type.process.@this> Process { get; init; }
 
-    [Code]
-    public partial ITerminal Terminal { get; }
-
-    public async Task<data.@this> Start() => await Terminal.Send(this);
+    public async Task<data.@this> Start()
+        => await Process.Value() is { } running ? await running.Send(Data, Context)
+            : Context.Error(new global::app.error.ActionError("No running program to send to.", "ProgramNotRunning", 409));
 }

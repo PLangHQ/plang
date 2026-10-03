@@ -135,7 +135,7 @@ public class ProgramTests : IDisposable
             Make.Step("wait", Process("wait")));
         await ran.IsSuccess();
         await Assert.That((await ran.Value())?.ToString()).IsNotEqualTo("0").Because("it was killed, not ended by itself");
-        var program = (await (await Context.Variable.Get("program")).Value()) as global::app.module.terminal.Process;
+        var program = (await (await Context.Variable.Get("program")).Value()) as global::app.module.terminal.type.process.@this;
         await Assert.That(program!.Running).IsFalse();
     }
 

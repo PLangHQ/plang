@@ -2,7 +2,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Channels;
-using Program = global::app.module.terminal.Process;
+using Program = global::app.module.terminal.type.process.@this;
 
 namespace app.module.browser.type.browser.headless;
 
@@ -73,7 +73,7 @@ public sealed class @this : browser.@this
         }
         catch (Exception ex) when (ex is TimeoutException or IOException or InvalidOperationException)
         {
-            program.Os?.Kill();
+            program.Kill();
             return Fail(context, $"Chromium didn't open its page: {ex.Message}", "BrowserStartFailed", 500);
         }
     }

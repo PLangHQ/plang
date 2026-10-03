@@ -10,7 +10,7 @@ namespace app.module.terminal;
 /// </summary>
 [Action("open", Cacheable = false)]
 [RequiresCapability("process")]
-public partial class open : IContext
+public partial class open : IContext, type.program.IProgram
 {
     /// <summary>The program: a name found on the OS PATH (<c>wsl.exe</c>) or a path.</summary>
     public partial data.@this<global::app.type.item.text.@this> App { get; init; }
@@ -63,5 +63,5 @@ public partial class open : IContext
     [Code]
     public partial ITerminal Terminal { get; }
 
-    public async Task<data.@this<Process>> Start() => await Terminal.Open(this);
+    public async Task<data.@this<type.process.@this>> Start() => await new type.program.@this(this).Open(this);
 }

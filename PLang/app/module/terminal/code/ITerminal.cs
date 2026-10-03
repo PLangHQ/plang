@@ -3,23 +3,12 @@ using app.module.code;
 namespace app.module.terminal.code;
 
 /// <summary>
-/// Terminal provider. The action passes itself — the provider owns finding, permitting and running
-/// the program. Swappable via app.Code (a test can run programs without real processes).
+/// Terminal provider: spawns a program the program type has found and permitted (<see cref="type.program.@this"/>) —
+/// held to its permissions when it has some, with a pipe pair when it asks, ending with this plang. What it does
+/// once running is the process type's. Swappable via app.Code (a test can run programs without real processes).
 /// </summary>
 public interface ITerminal : ICode
 {
-    /// <summary>Runs the program to its end; the value is its stdout as text.</summary>
-    Task<data.@this<global::app.type.item.text.@this>> Start(start action);
-
-    /// <summary>Starts the program and returns at once; it keeps running.</summary>
-    Task<data.@this<Process>> Open(open action);
-
-    /// <summary>Writes a line to a running program's stdin.</summary>
-    Task<data.@this> Send(send action);
-
-    /// <summary>Waits for a running program to exit; the value is its exit code.</summary>
-    Task<data.@this<global::app.type.item.number.@this>> Wait(wait action);
-
-    /// <summary>Ends a running program.</summary>
-    Task<data.@this> Stop(stop action);
+    /// <summary>The program started, running; or why it isn't.</summary>
+    Task<data.@this<type.process.@this>> Start(type.program.@this program, global::app.actor.context.@this context);
 }
