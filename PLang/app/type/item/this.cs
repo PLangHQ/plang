@@ -354,7 +354,8 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// via <see cref="Is"/>. The default is its class's type — the word the class declares, else its
     /// namespace.
     /// </summary>
-    protected internal virtual global::app.type.@this Type => new(GetType());
+    protected internal virtual global::app.type.@this Type
+        => FamilyOf(GetType()) is { } kind ? new(NameOf(kind.Family), kind.Family, kind.Kind) : new(GetType());
 
     /// <summary>
     /// Is this value (now or in its narrow history) an <paramref name="other"/>? Asks its type
@@ -471,6 +472,23 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
             var ns = string.Join('.', (ct.Namespace ?? "").Split('.').Select(s => s.TrimStart('@')));
             var name = ct.Name.Split('`')[0];
             return (name == "this" ? ns : ns.Length == 0 ? name : $"{ns}.{name}").ToLowerInvariant();
+        });
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, (System.Type Family, string Kind)?> _families = new();
+
+    /// <summary>The family a class is a kind of, and the kind it is: the nearest base that declares it has kinds
+    /// (<c>[Kinds]</c>) — a file is a kind of path, a where of query, a mouse of input — and the last word of the
+    /// class's own name (<c>where</c>, <c>mouse</c>). Null for a class that is no family's kind.</summary>
+    internal static (System.Type Family, string Kind)? FamilyOf(System.Type t)
+        => _families.GetOrAdd(t, static ct =>
+        {
+            for (var b = ct.BaseType; b != null; b = b.BaseType)
+                if (b.IsDefined(typeof(global::app.Attributes.KindsAttribute), inherit: false))
+                {
+                    var name = NameOf(ct);
+                    return (b, name[(name.LastIndexOf('.') + 1)..]);
+                }
+            return null;
         });
 
     /// <summary>A human-readable name for a type in an error — a plang <c>@this</c> type reads as its

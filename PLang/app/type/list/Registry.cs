@@ -355,6 +355,14 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
                         typeof(global::app.type.item.choice.serializer.Reader<>).MakeGenericType(inner), set.Name)!);
             }
         }
+        // each class under a family that has kinds ([Kinds]) is one of its kinds, by its own name — but a class named as
+        // its family (a typed list, a class of settings: the family holds those its own way) and a kind the family
+        // already holds (path's schemes, file and http)
+        foreach (var t in assembly.GetTypes())
+            if (t is { IsAbstract: false, ContainsGenericParameters: false } && global::app.type.item.@this.FamilyOf(t) is { } member
+                && global::app.type.item.@this.NameOf(member.Family) is var family && member.Kind != family
+                && Items().FirstOrDefault(type => type.Names(family)) is { } owner && owner.kind[member.Kind] == null)
+                Hold(new global::app.type.kind.subclass.@this(member.Kind, family, t));
         return null;
     }
 
@@ -378,10 +386,5 @@ public sealed partial class @this : global::app.type.item.list.@this<global::app
     /// (modifier is "modifier", never a kind of action).
     /// </summary>
     private static string? FamilyName(System.Type type)
-    {
-        for (var b = type.BaseType; b != null; b = b.BaseType)
-            if (b.IsDefined(typeof(global::app.Attributes.KindsAttribute), inherit: false))
-                return global::app.type.item.@this.NameOf(b);
-        return null;
-    }
+        => global::app.type.item.@this.FamilyOf(type) is { } kind ? global::app.type.item.@this.NameOf(kind.Family) : null;
 }
