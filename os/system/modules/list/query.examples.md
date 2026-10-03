@@ -4,8 +4,8 @@ Properties: `{"List": "%users%", "Query": {"where": {"field": "age", "op": ">", 
 Step text: `filter %users% where type is "student" and age > 20, write to %students%`
 Properties: `{"List": "%users%", "Query": {"where": {"and": [{"field": "type", "op": "==", "value": "student"}, {"field": "age", "op": ">", "value": 20}]}}}` — two conditions joined by and; the trailing `write to %students%` is its own action.
 
-Step text: `from %users% take those under 20 or teachers, write to %some%`
-Properties: `{"List": "%users%", "Query": {"where": {"or": [{"field": "age", "op": "<", "value": 20}, {"field": "type", "op": "==", "value": "teacher"}]}}}`
+Step text: `from %users% take those under 20 or where type is "teacher", write to %some%`
+Properties: `{"List": "%users%", "Query": {"where": {"or": [{"field": "age", "op": "<", "value": 20}, {"field": "type", "op": "==", "value": "teacher"}]}}}` — name the field (`type`); a bare word like "teachers" leaves the field to a guess.
 
 Step text: `keep %users% where age > %min%, write to %old%`
 Properties: `{"List": "%users%", "Query": {"where": {"field": "age", "op": ">", "value": "%min%"}}}` — a value may be a %variable%, read at run.

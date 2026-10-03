@@ -1,0 +1,1 @@
+Stop a running task.

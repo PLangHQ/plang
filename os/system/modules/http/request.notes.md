@@ -4,3 +4,4 @@ Body — the request body, a json object or a dict · say: `body {…}` · build
 Header — request headers, a dict · say: `headers Name: value` · builder: each `headers X: Y` the step names, into the dict
 
 - Returns the parsed response body (json becomes navigable, text stays text).
+- `get`/`fetch`/`post <url>` that read the answer are this request. http.download is only when the step says `download` or save/write a URL to a file/path.

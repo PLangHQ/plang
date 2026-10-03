@@ -33,6 +33,7 @@ A value is written as the step writes it:
   %!…%          a value read from the app itself: %!app.module.file% is the file module as a value, %!llm.setting.cache% the llm setting's cache option. The words inside %…% are its name, never what the step does
   [a, b]        a list
   {k: v}        a dict
+  "%a%/.run"    a value that is TEXT around a %variable% is a quoted text — in a dict or list too: `{X: "%a%/.run"}`, `{Auth: "Bearer %key%"}`, never unquoted `{X: %a%/.run}` (the parser needs the quotes). A bare `%a%` alone stays unquoted: `{X: %a%}`
   "=="          a choice: one of the options listed for it, quoted
   goal.call(Name="X")   an action, where a property holds one
 

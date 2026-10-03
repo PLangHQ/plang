@@ -1,1 +1,1 @@
-Download bytes from a URL and return them in Data; chain with file.save to write to disk
+Download a URL's bytes, optionally straight to a file (given a path, the body is written there as it arrives). Use this ONLY when the step says **download**, or **save/write a URL to a file or path**. A plain `get`/`fetch`/`post <url>` that reads the response is http.request, not a download.
