@@ -28,7 +28,7 @@ public sealed class @this : browser.@this
 
     private @this(string url, Display display, Process os, FilePath chromium, FilePath profile, int port, string[] roots,
         Func<global::app.error.Error, Task> report)
-        : base(url, display.PixelWidth, display.PixelHeight, os)
+        : base(url, display.Width.ToInt32(), display.Height.ToInt32(), os)
     {
         _display = display;
         _chromium = chromium;
@@ -49,12 +49,6 @@ public sealed class @this : browser.@this
 
     /// <summary>Its windows on the screen, by their number (<c>%browser.window[1].url%</c>; 0 is the desktop).</summary>
     public global::app.module.window.type.window.list.@this window => _window ??= new(this);
-
-    /// <summary>One step by dot: <c>window</c> — its windows; any other member as every item's.</summary>
-    public override ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
-        => string.Equals(key, "window", StringComparison.OrdinalIgnoreCase)
-            ? ValueTask.FromResult(new global::app.data.@this(key, window, parent: parent))
-            : base.Get(parent, key);
 
     /// <summary>DevTools' port, on 127.0.0.1: the pages of its windows.</summary>
     internal int Port { get; }
