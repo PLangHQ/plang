@@ -8,6 +8,9 @@ by PickListTests (PLang.Tests/Wire/App/Decider/pick_golden.json).
 {%- assign sep = "" -%}
 {%- for s in goal.Step -%}
 {%- assign text = s.Text -%}
+{%- comment %}the step's variables whose type the build's walk knows (step.Typed): a window variable points at the
+window module itself{% endcomment -%}
+{%- capture typed %}{% for v in s.Typed %} %{{ v.Name }}% is a {{ v.Type }}.{% endfor %}{% endcapture -%}
 {%- for q in s.Pick.Question -%}
 {{ sep }}
   {{ q.Id | json }}: {
@@ -31,11 +34,11 @@ by PickListTests (PLang.Tests/Wire/App/Decider/pick_golden.json).
     "instructions": {{ ask | json }}
 {%- when "Use" -%}
 {%- if q.Also %}{% assign also = " also" %}{% else %}{% assign also = "" %}{% endif -%}
-{%- capture ask %}Step {{ s.Index }} is `{{ text }}`. Does step {{ s.Index }}{{ also }} use the plang module `{{ q.Module.Name }}`?{% endcapture %}
+{%- capture ask %}Step {{ s.Index }} is `{{ text }}`.{{ typed }} Does step {{ s.Index }}{{ also }} use the plang module `{{ q.Module.Name }}`?{% endcapture %}
     "type": "noul",
     "instructions": {{ ask | json }}
 {%- when "Action" -%}
-{%- capture ask %}Step {{ s.Index }} of this goal is `{{ text }}`. It uses the plang module `{{ q.Module.Name }}`. Which action of `{{ q.Module.Name }}` does step {{ s.Index }} call?{% endcapture %}
+{%- capture ask %}Step {{ s.Index }} of this goal is `{{ text }}`.{{ typed }} It uses the plang module `{{ q.Module.Name }}`. Which action of `{{ q.Module.Name }}` does step {{ s.Index }} call?{% endcapture %}
     "type": "choice",
     "instructions": {{ ask | json }},
     "criteria": {

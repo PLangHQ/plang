@@ -82,6 +82,8 @@ public class PickListTests
         var goal = Goal(entry, context);
         var first = Answer(entry.GetProperty("answer1"), context);
         foreach (var step in goal.Step.Items()) await step.Pick.Take(first, Popular(), context);
+        // as build.pick does: what the picks know, walked, so each step knows the types of the variables it reads
+        await goal.Step.Scope(context);
         return (await Rendered("decider2.template", goal, context), await Rendered("decider.state.template", goal, context, stage: 2));
     }
 

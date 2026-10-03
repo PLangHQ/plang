@@ -2622,15 +2622,15 @@
       },
       "s4_@also.goal": {
         "type": "noul",
-        "instructions": "Step 4 is `call EmitBuildEvent kind=\"build-path\", path=%path%`. Does step 4 use the plang module `goal`?"
+        "instructions": "Step 4 is `call EmitBuildEvent kind=\"build-path\", path=%path%`. %path% is a text. Does step 4 use the plang module `goal`?"
       },
       "s4_@also.output": {
         "type": "noul",
-        "instructions": "Step 4 is `call EmitBuildEvent kind=\"build-path\", path=%path%`. Does step 4 also use the plang module `output`?"
+        "instructions": "Step 4 is `call EmitBuildEvent kind=\"build-path\", path=%path%`. %path% is a text. Does step 4 also use the plang module `output`?"
       },
       "s4_goal": {
         "type": "choice",
-        "instructions": "Step 4 of this goal is `call EmitBuildEvent kind=\"build-path\", path=%path%`. It uses the plang module `goal`. Which action of `goal` does step 4 call?",
+        "instructions": "Step 4 of this goal is `call EmitBuildEvent kind=\"build-path\", path=%path%`. %path% is a text. It uses the plang module `goal`. Which action of `goal` does step 4 call?",
         "criteria": {
           "call": "Call a named goal, injecting parameters into its context, optionally on a different actor",
           "return": "Return early from the current goal, propagating Data as the goal result"
@@ -2638,7 +2638,7 @@
       },
       "s4_output": {
         "type": "choice",
-        "instructions": "Step 4 of this goal is `call EmitBuildEvent kind=\"build-path\", path=%path%`. It uses the plang module `output`. Which action of `output` does step 4 call?",
+        "instructions": "Step 4 of this goal is `call EmitBuildEvent kind=\"build-path\", path=%path%`. %path% is a text. It uses the plang module `output`. Which action of `output` does step 4 call?",
         "criteria": {
           "ask": "Ask the input channel a question; its result is the user's answer itself (a line typed is text: `write to %name%` holds \"Ada\"). A stateless channel suspends the goal on a pending ask and resumes it with the answer.",
           "write": "Write Data to a named channel — defaults to the actor's output channel."
@@ -2770,7 +2770,7 @@
       },
       "s6_build": {
         "type": "choice",
-        "instructions": "Step 6 of this goal is `build.goals path=%path%, write to %goals%`. It uses the plang module `build`. Which action of `build` does step 6 call?",
+        "instructions": "Step 6 of this goal is `build.goals path=%path%, write to %goals%`. %path% is a text. It uses the plang module `build`. Which action of `build` does step 6 call?",
         "criteria": {
           "appSave": "Persist the built app artifact to disk after a successful build run",
           "fold": "Place the steps indented under a condition into that condition's child, in the goal and its sub-goals",
@@ -9788,7 +9788,7 @@
       },
       "s6_llm": {
         "type": "choice",
-        "instructions": "Step 6 of this goal is `llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%`. It uses the plang module `llm`. Which action of `llm` does step 6 call?",
+        "instructions": "Step 6 of this goal is `llm.decider State=%state%, Question=%moduleQuestions%, write to %moduleAnswer%`. %moduleQuestions% is a text. It uses the plang module `llm`. Which action of `llm` does step 6 call?",
         "criteria": {
           "decider": "Ask a decision service a set of typed questions about one shared state and get an answer for each — a yes/no probability, or a pick from a closed set of options",
           "query": "Send a conversation (system + user messages) to an LLM and return the response, with optional schema or tool use"
@@ -9805,7 +9805,7 @@
       },
       "s8_llm": {
         "type": "choice",
-        "instructions": "Step 8 of this goal is `llm.decider State=%state%, Question=%actionQuestions%, write to %actionAnswer%`. It uses the plang module `llm`. Which action of `llm` does step 8 call?",
+        "instructions": "Step 8 of this goal is `llm.decider State=%state%, Question=%actionQuestions%, write to %actionAnswer%`. %actionQuestions% is a text. It uses the plang module `llm`. Which action of `llm` does step 8 call?",
         "criteria": {
           "decider": "Ask a decision service a set of typed questions about one shared state and get an answer for each — a yes/no probability, or a pick from a closed set of options",
           "query": "Send a conversation (system + user messages) to an LLM and return the response, with optional schema or tool use"
@@ -12237,7 +12237,7 @@
       },
       "s7_math": {
         "type": "choice",
-        "instructions": "Step 7 of this goal is `math.multiply A=%order.total%, B=%vat%, write to %vatAmount%`. It uses the plang module `math`. Which action of `math` does step 7 call?",
+        "instructions": "Step 7 of this goal is `math.multiply A=%order.total%, B=%vat%, write to %vatAmount%`. %vat% is a number. It uses the plang module `math`. Which action of `math` does step 7 call?",
         "criteria": {
           "abs": "Return the absolute (non-negative) value of a number",
           "add": "Add A and B together and return the numeric result",
@@ -15167,7 +15167,7 @@
       },
       "s9_file": {
         "type": "choice",
-        "instructions": "Step 9 of this goal is `save %html% to file '/reports/week.html'`. It uses the plang module `file`. Which action of `file` does step 9 call?",
+        "instructions": "Step 9 of this goal is `save %html% to file '/reports/week.html'`. %html% is a text. It uses the plang module `file`. Which action of `file` does step 9 call?",
         "criteria": {
           "copy": "Copy a file or folder from Source to Destination, optionally overwriting and including subfolders",
           "delete": "Delete a file or directory at Path, optionally recursively; nothing there is NotFound",
