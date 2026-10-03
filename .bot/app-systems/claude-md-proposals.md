@@ -216,3 +216,7 @@ Verified each against code (as for v6/v7); small commits per area.
 ## docs — 2026-10-03 — build-checks pointer (APPLIED)
 **Target:** /CLAUDE.md
 **Why:** New doc `Documentation/v0.2/build-checks.md` documents how a build answer is judged (Cover/Agree/decider stage 2/step-fixer). The teaching-edit rule (editing `os/system/modules/**/*.md` re-pins the decider fixtures + ModulePageTests) is canonical for every bot touching module teaching; the architect invited the pointer. APPLIED directly (docs owns CLAUDE.md): two bullets added to `## Build` pointing at build-checks.md + stating the teaching-edit re-pin caveat.
+
+## docs — 2026-10-03 — the locked core (APPLIED)
+**Target:** /CLAUDE.md
+**Why:** Ingi locked the core's surface (relayed by the architect). A repo-wide governance rule every bot must respect — the load-bearing shapes (app members, the type system, the serializer, data/channel/stream, call+variable memory, module registry+catalog, the core value types' public surface) change only by an architect→Ingi proposal; inside them behaviour fixes + private refactors only; new needs go to module-owned types/events; a surface golden in the gate enforces it. APPLIED directly (docs owns CLAUDE.md): new "## The locked core" section after the OBP smells.

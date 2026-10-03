@@ -52,6 +52,22 @@ If removing one line of choreography requires editing three files, those three f
 
 Full catalog with worked examples: `Documentation/v0.2/obp-smells.md`. The pattern (3 laws + rules): `Documentation/v0.2/object_pattern_formal.md`. Audit procedure: `Documentation/v0.2/obp-scan.md`.
 
+## The locked core
+
+Ingi has **locked the core's surface.** These are the load-bearing shapes the rest of the system is built on, and their surface does not change without his say-so:
+
+- **`app`'s members;**
+- **the type system** — `type`, `type.list`, `kind`, `property`, and `item`'s base virtuals;
+- **the serializer** — the readers and writers, `IWriter` / `IReader`, `format`, and `Wire`;
+- **`data`;** **`channel` and `stream`;** **call and variable memory;** the **module registry and catalog;**
+- **the core value types' public surface** — `text`, `number`, `bool`, `list`, `dict`, `path`, `datetime`, `duration`.
+
+**Inside them, behaviour fixes and private refactors only.** An **addition** to any locked surface — a member others call, a virtual, an attribute, an interface member, an `app` property, a new core type, a plang-visible member — is **a short proposal to the architect, who brings it to Ingi; nothing is built before his yes.** Do not add to a locked surface on your own judgement, however reasonable the addition seems.
+
+**New needs go to the edge, not the core:** a module owns its own types, and a module declares its own events. Reach for a module-owned type or a module-declared event before you reach for the core.
+
+**The teeth:** a surface golden runs in the gate; a change to a locked surface fails the build until it is re-pinned **with the decision that approved it.** An unapproved surface change cannot merge.
+
 ## Source Generator
 - PLang.Generators: netstandard2.0, IIncrementalGenerator
 - OBP shape: entry `PLang.Generators/this.cs` → `Discovery/this.cs` (Roslyn boundary) + `Emission/Action/this.cs` (per-handler) + `Emission/Property/{Data,Code}/this.cs` (polymorphic per-property)
