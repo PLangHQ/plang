@@ -75,7 +75,7 @@ public class InputTypeTests : IAsyncDisposable
     }
 
     [Test]
-    public async Task AGoalAsks_IsInput_IsClipboard_AndATextIsNone()
+    public async Task AGoalAsks_IsInput_IsMouse_IsClipboard_AndATextIsNone()
     {
         async Task<bool> Is(global::app.type.item.@this value, string type)
             => (await new global::app.data.Operator("is").Evaluate(new global::app.data.@this("e", value, context: Context),
@@ -84,6 +84,8 @@ public class InputTypeTests : IAsyncDisposable
         var copied = new global::app.type.item.clipboard.@this((global::app.type.item.text.@this)"x");
         global::app.type.item.text.@this line = "{\"stats\":{}}";
         await Assert.That(await Is(click, "input")).IsTrue().Because("a click is input");
+        await Assert.That(await Is(click, "mouse")).IsTrue().Because("is answers a kind: a click is mouse (593)");
+        await Assert.That(await Is(click, "key")).IsFalse().Because("a click is no key");
         await Assert.That(await Is(click, "clipboard")).IsFalse().Because("a click is no clipboard");
         await Assert.That(await Is(copied, "clipboard")).IsTrue().Because("a copy is clipboard");
         await Assert.That(await Is(copied, "input")).IsFalse().Because("a copy is no input");
@@ -142,6 +144,21 @@ public class InputTypeTests : IAsyncDisposable
         var back = (global::app.type.item.clipboard.@this)Read("clipboard", line);
         await Assert.That(back.ToString()).IsEqualTo("copied");
         await Assert.That(() => Read("clipboard", "{\"other\":1}")).Throws<FormatException>();
+    }
+
+    // input, screen and browser hold their kinds, so `is` can ask one by name (593): `if %event% is mouse`,
+    // `if %screen% is display`, `if %browser% is headless`
+    [Test]
+    public async Task InputScreenAndBrowser_HoldTheirKinds()
+    {
+        var types = Context.App.type.list;
+        foreach (var kind in new[] { "mouse", "key", "navigate", "display", "headless" })
+            await Assert.That(types.HasKind(kind)).IsTrue().Because($"{kind} is a kind some type holds");
+        await Assert.That(types["input"].kind["mouse"]).IsNotNull();
+        await Assert.That(types["screen"].kind["display"]).IsNotNull();
+        await Assert.That(types["screen"].kind["window"]).IsNotNull();
+        await Assert.That(types["browser"].kind["headless"]).IsNotNull();
+        await Assert.That(types["browser"].kind["screen"]).IsNotNull();
     }
 
     // their teaching is their markdown (os/system/type/<type>/), not a C# static — the screen's too
