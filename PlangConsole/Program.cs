@@ -6,11 +6,12 @@ using var cts = new CancellationTokenSource();
 
 RegisterStartupParameters.Register(args);
 
+// The first Ctrl+C cancels the run: its actors' tasks end Cancelled and the run ends with them. A second one exits at once.
 Console.CancelKeyPress += (_, e) =>
 {
 	e.Cancel = true;
-	cts.Cancel();
-	Environment.Exit(0);
+	if (!cts.IsCancellationRequested) { cts.Cancel(); return; }
+	Environment.Exit(130);
 };
 
 var executor = new Executor(Path.GetFullPath(Environment.CurrentDirectory));

@@ -31,6 +31,14 @@ public sealed class @this : global::app.type.item.@this
         return started;
     }
 
+    /// <summary>The tasks running now, each to its end — and any one of them starts — never asking their results, so
+    /// a failure nobody asked for still reports itself. A run that ends here waits for its tasks this way.</summary>
+    internal async System.Threading.Tasks.Task Wait()
+    {
+        while (_running.Values.Select(running => running.Done).ToArray() is { Length: > 0 } now)
+            await System.Threading.Tasks.Task.WhenAll(now);
+    }
+
     /// <summary>One step down: the list's own members first, then a running task by its id.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
     {

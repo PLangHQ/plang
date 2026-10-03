@@ -60,6 +60,75 @@ public class TaskTests
         return false;
     }
 
+    // The run ends when its tasks do: a run whose goal starts a task and returns comes back only after the task ended.
+    [Test]
+    public async Task TheRun_EndsWhenItsTasksDo()
+    {
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "run-tasks-" + System.Guid.NewGuid().ToString("N")[..8]);
+        System.IO.Directory.CreateDirectory(System.IO.Path.Combine(root, ".build"));
+        try
+        {
+            await using var app = new global::app.@this(root).Testing();
+            var ctx = app.actor.list.User.Context;
+            app.goal.list.Add(Make.Goal(ctx, "Slow", "/Slow.goal", Make.Step("sleep", Make.Action(ctx, "timer", "sleep", ("Duration", "300ms")))));
+            var start = Make.Goal(ctx, "Start", "/Start.goal", Make.Step("call Slow in parallel",
+                Make.Action(ctx, "goal", "call", ("Name", "Slow"), ("Parallel", true))));
+            System.IO.File.WriteAllText(System.IO.Path.Combine(root, "Start.goal"), "Start\n- call Slow in parallel\n");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(root, ".build", "start.pr"), await ctx.Pr(start));
+            app.actor.list.System.Context.Variable.Set("goalFile", "Start.goal");
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+
+            await (await app.Start()).IsSuccess();
+
+            await Assert.That(app.actor.list.User.Task.list.Any()).IsFalse();
+            await Assert.That(clock.ElapsedMilliseconds).IsGreaterThanOrEqualTo(285);
+        }
+        finally { System.IO.Directory.Delete(root, true); }
+    }
+
+    // A run's end waits without asking: a task that fails after its goal returned still reports itself
+    [Test]
+    public async Task WaitingAtTheEnd_LeavesALateFailureReported()
+    {
+        await Load("Fails", Make.Step("sleep", Sleep(200)),
+            Make.Step("throw", Make.Action(Ctx, "error", "throw", ("Message", "late and broken"), ("Key", "LateBroke"))));
+        await Started("Fails");
+
+        await _app.actor.list.User.Task.Wait();
+
+        await Assert.That(await Soon(() => Errors.Contains("late and broken"))).IsTrue();
+    }
+
+    // A task a task starts is waited for too
+    [Test]
+    public async Task WaitingAtTheEnd_WaitsForATaskATaskStarted()
+    {
+        await Load("Inner", Make.Step("sleep", Sleep(300)));
+        await Load("Outer", Make.Step("call Inner in parallel", InParallel("Inner")));
+        await Started("Outer");
+
+        await _app.actor.list.User.Task.Wait();
+
+        await Assert.That(_app.actor.list.User.Task.list.Any()).IsFalse();
+    }
+
+    // The run's cancellation cancels its actors: the wait ends, the task Cancelled and never reported
+    [Test]
+    public async Task CancellingTheActor_EndsTheWait_TheTaskCancelled_NotReported()
+    {
+        await Load("Slow", Make.Step("sleep", Sleep(10_000)));
+        var task = await Started("Slow");
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+
+        _app.actor.list.User.Cancel();
+        await _app.actor.list.User.Task.Wait();
+
+        await Assert.That(clock.ElapsedMilliseconds).IsLessThan(5000);
+        var waited = await task.Wait();
+        await Assert.That(waited.Error!.Key).IsEqualTo("Cancelled");
+        await Assert.That(Errors).DoesNotContain("Cancelled");
+    }
+
     [Test]
     public async Task AParallelCall_AnswersATask_AndTheNextStepRunsBeforeTheGoalEnds()
     {

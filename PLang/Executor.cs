@@ -16,6 +16,8 @@ namespace PLang
 		{
 			var (app, configError) = Configure(args);
 			if (configError != null) return configError;
+			// the run's cancellation cancels its actors: their tasks end Cancelled, as `cancel %task%` ends one
+			using var cancelled = cancellationToken.Register(() => { foreach (var actor in app!.actor.list.Items()) actor.Cancel(); });
 			return await app!.Start();
 		}
 

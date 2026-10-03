@@ -21,6 +21,9 @@ internal sealed class @this
     public string Id { get; }
     public bool Ended => _run.IsCompleted;
 
+    /// <summary>The run's end, awaited without asking for its result — a failure nobody asked for still reports itself.</summary>
+    internal System.Threading.Tasks.Task Done => _run;
+
     internal @this(global::app.goal.@this goal, string id, global::app.actor.@this actor,
         System.Func<System.Threading.CancellationToken, System.Threading.Tasks.Task<global::app.data.@this>> run,
         System.Action<@this> ended)

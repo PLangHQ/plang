@@ -480,7 +480,16 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public async Task<data.@this> Start()
     {
         var result = await Launch();
+        await Settle();
         return result.Success ? result : await Show(result);
+    }
+
+    // The run ends when its tasks do: every actor's still running, and the ones they start — cancelled with their
+    // actor; a task that fails after the goal returned reports itself.
+    private async Task Settle()
+    {
+        while (actor.list.Items().Any(each => each.Task.list.Any()))
+            foreach (var each in actor.list.Items()) await each.Task.Wait();
     }
 
     /// <summary>

@@ -41,6 +41,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Stops its run: ended already, its result; else nothing (null), and the run ends Cancelled.</summary>
     public System.Threading.Tasks.Task<global::app.data.@this> Cancel() => _run.Cancel();
 
+    /// <summary>Its run's end, awaited without asking for the result — a failure nobody asked for still reports itself.</summary>
+    internal System.Threading.Tasks.Task Done => _run.Done;
+
     /// <summary>Written where another run's task was: this run, keeping that task — <see cref="list"/> holds both. Over
     /// anything else (its own run's task included) it is itself.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Replace(
