@@ -25,6 +25,11 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     internal @this(Data? @continue) => Continue = @continue;
 
     public override bool IsLeaf => false;
+
+    /// <summary>No value of a type the build knows is a conversation: one continues an llm's answer, whose type the
+    /// build can't know.</summary>
+    public static bool Takes(global::app.type.@this other) => false;
+
     /// <summary>A conversation is made from a dict of its members — a member that is no member of a conversation, or a
     /// continue that names no response, declines with why — or from the response it continues
     /// (<c>Conversation=%answer%</c>). Whether that is an llm answer is known only when the query reads it, so the query

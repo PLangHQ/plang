@@ -43,6 +43,11 @@ public sealed class @this : global::app.type.kind.@this
         => _format != null ? _format.Decode(raw, context, name, view, ct, template, origin)
             : base.Decode(raw, context, name, view, ct, template, origin);
 
+    /// <summary>What a value of the type can be in <paramref name="step"/>: its own kind's answer when it has one (a
+    /// conversation offers only what can continue one), else the step's variables.</summary>
+    public override System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
+        => _format?.Offers(step) ?? base.Offers(step);
+
     // The kinds this type holds, in the order they came.
     private global::app.type.kind.@this[] Held
     {

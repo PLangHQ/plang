@@ -56,6 +56,29 @@ public class PickOptionTests : System.IAsyncDisposable
         await Assert.That(Formal(offers)).IsEquivalentTo(new[] { "\"Modules\"", "\"Page\"", "%m%" });
     }
 
+    // a conversation is offered only what can continue one: a variable the build's walk knows as a list is left out (no
+    // candidates — only none); an earlier query's answer, which the walk can't type, stays
+    [Test]
+    public async Task AConversationIsOfferedOnlyWhatCanContinueOne()
+    {
+        var conversation = _app.Module("llm")["query"]!["Conversation"]!.Type;
+        var listed = Make.Goal(Ctx, "D6", "/D6.goal",
+            Make.Step("set %items% = [\"b\", \"a\"]", Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "items", "variable"),
+                ("Value", new List<object?> { "b", "a" }))),
+            Make.Step("ask llm \"Sort these: %items%\", write to %answer%", 0));
+        var answered = Make.Goal(Ctx, "Chat", "/Chat.goal",
+            Make.Step("ask llm \"hi\", write to %a%", Make.Action(Ctx, "llm", "query", ("Message", "hi")),
+                Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "a", "variable"), ("Value", "%!data%"))),
+            Make.Step("ask llm \"more\", continue %a%", 0));
+
+        await listed.Step.Scope(Ctx);
+        await answered.Step.Scope(Ctx);
+
+        // the step's own write-to is all that's left, and the pick never offers where the answer goes: only none
+        await Assert.That(Formal(await conversation.Offers(listed.Step[1]))).IsEquivalentTo(new[] { "%answer%" });
+        await Assert.That(Formal(await conversation.Offers(answered.Step[1]))).IsEquivalentTo(new[] { "%a%" });
+    }
+
     // a type is offered by the plang type names, never one plang keeps for itself
     [Test]
     public async Task ATypeOffersThePlangTypeNames()
