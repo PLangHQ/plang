@@ -1,0 +1,35 @@
+diff --git a/os/system/builder/llm/Properties.llm b/os/system/builder/llm/Properties.llm
+index 41e7594ee..756fe9cdd 100644
+--- a/os/system/builder/llm/Properties.llm
++++ b/os/system/builder/llm/Properties.llm
+@@ -36,6 +36,11 @@ A value is written as the step writes it:
+   "=="          a choice: one of the options listed for it, quoted
+   goal.call(Name="X")   an action, where a property holds one
+ 
++A property whose type is open (shown as `: item`) may carry the value's own type, written before the `=`:
++`Name:type=value`. Use it when the step says WHAT the value is, not just its letters — `hash the file 'x.bin'`
++→ `crypto.hash(Data:path="x.bin")` (a path: the file's contents are hashed), where a plain `Data="x.bin"`
++would hash the text "x.bin". Only an open (`item`) slot takes a typed row, and only the type the step names.
++
+ In `call X name=value`, `name` is what the called goal reads the value as (`%name%`), even when it is a plang word such as `module`, `file` or `goal`; it is never a module or action of the step.
+ 
+ The arguments a step passes to a goal are one dict in Parameter:
+@@ -59,6 +64,7 @@ Common steps, and their formal:
+   call SendMail to=%email%, subject="Hi"          goal.call(Name="SendMail", Parameter={to: %email%, subject: "Hi"})
+   foreach %orders%, call Ship order=%item%        loop.foreach(Collection=%orders%); goal.call(Name="Ship", Parameter={order: %item%})
+   save %report% to file 'report.txt'              file.save(Path="report.txt", Value=%report%)
++  hash the file 'notes.txt' with sha256           crypto.hash(Data:path="notes.txt", Algorithm="sha256")
+   if %age% >= 18, call Adult                      condition.if(Left=%age%, Operator=">=", Right=18) { goal.call(Name="Adult") }
+   get https://example.com/rates, write to %rates% http.request(Url="https://example.com/rates"); variable.set(Name=%rates%, Value=%!data%)
+   render "page.html", title=%title%, write to %html%
+diff --git a/os/system/modules/crypto/hash.examples.md b/os/system/modules/crypto/hash.examples.md
+index e6633c53e..3068d5725 100644
+--- a/os/system/modules/crypto/hash.examples.md
++++ b/os/system/modules/crypto/hash.examples.md
+@@ -3,3 +3,6 @@ Properties: `{"Data": "%content%"}` — `Algorithm` is absent because the step d
+ 
+ Step text: `hash %content% with sha256, write to %hash%`
+ Properties: `{"Data": "%content%", "Algorithm": "sha256"}`
++
++Step text: `hash the file 'x.bin' with sha256, write to %hash%`
++Properties: `crypto.hash(Data:path="x.bin", Algorithm="sha256")` — "the file X" hashes the file's CONTENTS: Data takes the open slot's path type (`Data:path=...`), not a plain `Data="x.bin"` (which would hash the name "x.bin").
