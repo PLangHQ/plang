@@ -1228,13 +1228,20 @@
           "type": "decision",
           "category": "config",
           "confidence": "high",
-          "context": "Tried an output.write false-side counter-case for 'write test report'; measured 0/5 (test module never reaches stage-2) and it named a real action, so reverted. TR1 is decider module-retrieval (below teaching) → routed to architect."
+          "context": "Tried an output.write false-side counter-case for 'write test report'; measured 0/5 (test module never reaches stage-2) and it named a real action, so reverted. TR1 is decider module-retrieval (below teaching) → routed to architect, parked by architect."
+        },
+        {
+          "paths": ["os/system/modules/setting/save.notes.md", "os/system/modules/setting/save.examples.md", "os/system/modules/setting/remove.notes.md", "os/system/modules/setting/remove.examples.md", "PLang.Tests/Wire/App/Decider/pick_golden.json"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Taught the untaught setting module (architect pick #1). Both actions take one Setting=%!…setting% node. Disambiguated from variable.set (set %!x.setting.field% changes one value this run) and file.save (save to a path). Measured: SV1 5/5, SV2 3/3, RM1 5/5, SV3 guard 5/5 (set %!…setting.cache% stays variable.set). Caught + removed a contrast example that the examples parser was advertising as a setting e.g.; re-pinned pick_golden (net +4 setting e.g. lines, nothing else)."
         }
       ],
       "after": {
-        "status": "channel.set + ui.render teaching fixed and re-pinned; TR1 (test.report), SL2 (timer.sleep seconds, issue 59), snapshot.resume crash (issue 58) routed to coder/architect as core. Next: setting module (teachable); db has NO v0.2 handlers (only old-builder llm) — flagging.",
+        "status": "channel.set + ui.render + setting teaching landed. UR2 kernel line (Properties.llm, architect-approved), then signing then identity still to do. TR1 parked; db/environment on hold (architect). Core routed: SL2/59, snapshot/58.",
         "health": "green",
-        "notes": "Commit touches os/system/modules/**/*.md → all four decider fixtures run, only pick_golden moved, re-pinned same commit."
+        "notes": "Each os/system/modules/**/*.md commit runs all four decider fixtures; re-pin what moved in the same commit. Examples parser takes each 'Step text:' as an e.g. for THAT action — never put a contrast step of another module in an examples file (notes only)."
       }
     }
   ]
