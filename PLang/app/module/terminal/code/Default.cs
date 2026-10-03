@@ -346,11 +346,17 @@ public sealed class Default : ITerminal
         data.@this<global::app.type.item.list.@this>? parameter, data.@this<global::app.type.item.dict.@this>? environment,
         data.@this<global::app.type.item.path.@this>? workingDirectory, bool held = false)
     {
+        // the step names what it starts itself when the program, its arguments, environment and folder are all written
+        // in it — no %ref%, nothing its caller handed it: only then may a goal that ships with plang start it unasked
+        // (decision 579; a %ref% anywhere there is the caller's, and is asked as the caller)
+        static bool Written(data.@this? given) => given?.Peek() is not { HasVariable: true };
+        var named = Written(app) && Written(parameter) && Written(environment) && Written(workingDirectory);
+
         var name = (await app.Value())!.Clr<string>()!;
         var program = FilePath.Program(name, context);
         if (program == null)
             return (null, context.Error(new ActionError($"Program not found: {name}. Not a path, and not on PATH.", "ProgramNotFound", 404)));
-        var allowed = await program.Authorize(Verb.execute, context);
+        var allowed = await program.Authorize(Verb.execute, context, named);
         if (allowed.Exits || !allowed.Success) return (null, allowed);
 
         var folder = workingDirectory == null ? null : await workingDirectory.Value();

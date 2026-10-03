@@ -4,5 +4,5 @@
 - `OnOutput` / `OnError` call a goal for each line as it arrives, the line as `%!data%`. The calls run one at a time, in order.
 - `Interactive`: the program takes over the console until it exits (for `wsl -d PlangOS`, `ssh`, editors). Nothing is captured.
 - `Administrator`: Windows asks through UAC. Output is not captured and `Environment` is not passed; only `!exitCode` returns.
-- A program outside the app root asks the user first: "Allow User to execute <path>? (y/n/a)".
+- A program outside the app root asks the user first: "Allow User to execute <path>? (y/n/a)". Except in a goal that ships with plang (under `/system/`) whose step names the program, its parameters, environment and folder itself, written in the step: it starts unasked, as the user (trusted by origin). A `%variable%` in any of those is the caller's, and is asked as the caller — an os goal never starts what it was handed without the user's yes.
 - Defaults for every run live in `%!terminal%`: `environment`, `encoding`, `timeoutInSec` (0 = none), `maxOutputSize`, `echo` (also write output to plang's output as it arrives). `save %!terminal%` keeps them.
