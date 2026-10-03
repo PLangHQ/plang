@@ -178,14 +178,14 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     {
         var prop = GetType().GetProperty(key, System.Reflection.BindingFlags.Public
             | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
-        if ((prop == null || !prop.CanWrite) && Kept is { } kept && !isIndex)
+        if ((prop == null || !prop.CanWrite) && Property is { } kept && !isIndex)
         {
             // a thing that lives on keeps a member a program adds — never in place of one of its own
             if (prop != null || GetType().GetMethod(key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
                     | System.Reflection.BindingFlags.IgnoreCase) != null)
                 throw new global::app.error.AppException(new global::app.error.Error(
                     $"{key} is {Type.Name}'s own — a program adds members beside it, never over it", "OwnMember", 400));
-            kept.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
+            kept.Set(value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context), key);
             return this;
         }
         if (value is global::app.data.@this binding) value = await binding.Value();
@@ -247,12 +247,22 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         global::app.data.@this parent, string key)
     {
         var member = await new global::app.type.clr.@this(this, parent.Context).Get(parent, key);
-        return member.IsInitialized ? member : await Setting(parent, key) ?? Kept?[key] ?? member;
+        return member.IsInitialized ? member : await Setting(parent, key) ?? Kept(parent, key) ?? member;
     }
 
-    /// <summary>The members this thing keeps beyond its own (<c>%!app.home%</c>), read after its own — a thing that
-    /// lives on (the app, a call, an actor, a module, a goal, a step) keeps a list; a plain value keeps none.</summary>
-    internal virtual global::app.type.item.kept.list.@this? Kept => null;
+    /// <summary>The properties this thing keeps beyond its own members (<c>%!app.home%</c>), read after its own — a
+    /// thing that lives on (the app, a call, an actor, a module, a goal, a step) keeps a list; a plain value keeps
+    /// none.</summary>
+    internal virtual global::app.type.property.list.@this? Property => null;
+
+    // the property kept as `key`, as the Data it makes; all of them by name when `key` is `property`
+    // (`%!app.property%`); null when this thing keeps none
+    private global::app.data.@this? Kept(global::app.data.@this parent, string key)
+        => Property is not { } kept ? null
+         : string.Equals(key, "property", System.StringComparison.OrdinalIgnoreCase)
+            ? new global::app.data.@this(key, kept.ToDictionary(property => property.Name, property => property.Data(parent.Context),
+                System.StringComparer.OrdinalIgnoreCase), context: parent.Context)
+         : kept[key]?.Data(parent.Context);
 
     /// <summary>This owner's settings when <paramref name="key"/> is <c>setting</c> (<c>%!app.goal.list.setting%</c>);
     /// null for any other key, or an owner with none.</summary>

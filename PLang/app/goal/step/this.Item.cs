@@ -7,8 +7,8 @@ namespace app.goal.step;
 public partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     // what a program adds to the step — kept as long as the step is loaded
-    private readonly global::app.type.item.kept.list.@this _kept = new();
-    internal override global::app.type.item.kept.list.@this Kept => _kept;
+    private readonly global::app.type.property.list.@this _property = new();
+    internal override global::app.type.property.list.@this Property => _property;
 
     /// <summary>The step's own type entity — its class's.</summary>
     protected internal override global::app.type.@this Type => new(typeof(@this));

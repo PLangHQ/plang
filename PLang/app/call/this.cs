@@ -17,8 +17,8 @@ public partial class @this : global::app.type.item.@this, IAsyncDisposable
     public override bool IsLeaf => false;
 
     // what a program adds to the call (%!call.retries%) — kept as long as the call lives
-    private readonly global::app.type.item.kept.list.@this _kept = new();
-    internal override global::app.type.item.kept.list.@this Kept => _kept;
+    private readonly global::app.type.property.list.@this _property = new();
+    internal override global::app.type.property.list.@this Property => _property;
 
     /// <summary>
     /// The frame writes one flat form in every view — a stack-trace entry: its id and depth, where it is (the

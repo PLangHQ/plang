@@ -105,6 +105,41 @@ public class KeptMembersTests
         await dst.Restore(snap, dst.actor.list.User.Context);
 
         await Assert.That(await Read(dst.actor.list.User.Context, "%!app.home%")).IsEqualTo("lights");
+        await Assert.That(snap.HasSection("Property")).IsTrue();
         await src.DisposeAsync();
+    }
+
+    // what the app keeps is its property list: %!app.property% holds each kept member by name
+    [Test]
+    public async Task TheAppsProperty_HoldsWhatItKeeps_ByName()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var ctx = app.actor.list.User.Context;
+        await (await Set(ctx, "%!app.home%", new global::app.type.item.text.@this("lights"))).IsSuccess();
+
+        var listed = await Variable("%!app.property%").Start(ctx);
+
+        await listed.IsSuccess();
+        var held = await listed.Value<global::app.type.item.dict.@this>();
+        await Assert.That(held!.KeyNames.ToList()).IsEquivalentTo(new[] { "home" });
+        await Assert.That(await Read(ctx, "%!app.property.home%")).IsEqualTo("lights");
+    }
+
+    // a Data's two doors: Set refuses a member its value can't take; Keep holds it in the Data's own properties
+    [Test]
+    public async Task Set_RefusesAMemberTheValueCantTake_KeepHoldsIt()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var ctx = app.actor.list.User.Context;
+        var set = new global::app.data.@this("name", "Ingi", context: ctx);
+        var kept = new global::app.data.@this("name", "Ingi", context: ctx);
+
+        var refused = await set.Set("lang", false, new global::app.type.item.text.@this("is"));
+        await kept.Keep("lang", new global::app.type.item.text.@this("is"));
+
+        await refused.IsFailure();
+        await Assert.That(refused.Error!.Key).IsEqualTo("CannotSetChild");
+        await Assert.That(await kept.Property.Get<string>("lang")).IsEqualTo("is");
+        await Assert.That((await kept.Value())?.ToString()).IsEqualTo("Ingi");
     }
 }

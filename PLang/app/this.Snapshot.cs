@@ -6,7 +6,7 @@ public sealed partial class @this : global::app.snapshot.ISnapshot
     /// consume them. Each names its own section; adding an owner is adding it here.</summary>
     private IEnumerable<global::app.snapshot.ISnapshot> Snapshotted(
         global::app.snapshot.ISnapshot variables, global::app.snapshot.ISnapshot callStack)
-        => [Code, variables, _kept, this, callStack];
+        => [Code, variables, _property, this, callStack];
 
     /// <summary>
     /// The App's state as a snapshot: each owner captures its own section. Only owners implementing

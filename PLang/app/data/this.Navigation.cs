@@ -25,10 +25,37 @@ public partial class @this
     /// Writes <paramref name="value"/> as this value's child at <paramref name="key"/> —
     /// <paramref name="isIndex"/> tells a position (<c>[0]</c>) from a member (<c>.name</c>). The item
     /// owns the write; this Data rebinds when the item comes back replaced (a json host materialises
-    /// into a dict; a clr host mutates in place, so identity holds). When this Data is a variable's own binding
-    /// (<paramref name="keeps"/>), a member its value can't take is kept in its Properties. Answers this Data.
+    /// into a dict; a clr host mutates in place, so identity holds). A value that can't take the child is
+    /// refused: a plain value inside another has nowhere to keep a member. Answers this Data.
     /// </summary>
-    public async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, bool keeps = false)
+    public async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value)
+    {
+        try { return await Write(key, isIndex, value); }
+        catch (System.NotSupportedException ex)
+        {
+            return _context?.Error(new global::app.error.Error(
+                $"{ex.Message}: %{Path}% is a {Peek().Type.Name} inside another value, and has nowhere to keep a member", "CannotSetChild", 400)) ?? this;
+        }
+    }
+
+    /// <summary>
+    /// Writes <paramref name="value"/> as this value's member <paramref name="name"/> when the value takes it; else
+    /// keeps it in this Data's own <see cref="Property"/> (<c>set %name.lang% = "is"</c>). The door of a variable's own
+    /// binding, chosen by the binding that knows it is one. Answers this Data.
+    /// </summary>
+    public async System.Threading.Tasks.ValueTask<@this> Keep(string name, object? value)
+    {
+        try { return await Write(name, isIndex: false, value); }
+        catch (System.NotSupportedException)
+        {
+            Property.Set(name, value is @this given ? await given.Value() : value);
+            return this;
+        }
+    }
+
+    // The write both doors share: the child into the value, the value rebound when it comes back replaced; a value
+    // that can't take the child throws NotSupported, for the door to answer.
+    private async System.Threading.Tasks.ValueTask<@this> Write(string key, bool isIndex, object? value)
     {
         // Materialise a source-backed value (a `%cfg%` still raw json, a template container still a
         // wire) so the write lands on the PARSED value, not the raw form. The write target is the
@@ -45,22 +72,8 @@ public partial class @this
         if (target is null)
             return _context?.NotFound(key) ?? this;
 
-        // A value that can't take this child says so (NotSupported) — the write answers that as an error,
-        // not a crash: `set %!app.goal.list.setting.foo% = 1` is a program's mistake.
         global::app.type.item.@this written;
         try { written = await target.Set(key, isIndex, value, _context); }
-        catch (System.NotSupportedException ex)
-        {
-            // a variable's own binding (keeps) holds a member its value can't take (`set %name.lang% = "is"`); a plain
-            // value inside another has nowhere to keep one
-            if (keeps && !isIndex)
-            {
-                Property.Set(key, value is @this given ? await given.Value() : value);
-                return this;
-            }
-            return _context?.Error(new global::app.error.Error(
-                $"{ex.Message}: %{Path}% is a {target.Type.Name} inside another value, and has nowhere to keep a member", "CannotSetChild", 400)) ?? this;
-        }
         // a value the child refuses (an option's value out of its range, a reserved key) says why
         catch (global::app.error.AppException ex) { return _context?.Error(ex.Error) ?? this; }
         if (!ReferenceEquals(written, Peek())) SetValue(written);

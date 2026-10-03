@@ -70,7 +70,7 @@ public sealed class Property : Hop
         global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool own)
     {
         if (parent is null) return context.NotFound(Name);
-        if (!IsBinding) return await parent.Set(Name, isIndex: false, value, keeps: own);
+        if (!IsBinding) return own ? await parent.Keep(Name, value) : await parent.Set(Name, isIndex: false, value);
         if (!parent.IsInitialized)
             return context.Error(new global::app.error.Error($"Variable '{parent.Name}' is not set", "VariableNotFound", 400));
 

@@ -16,8 +16,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     private readonly CancellationTokenSource _cts;
 
     // what a program adds to the actor — kept as long as the actor lives
-    private readonly global::app.type.item.kept.list.@this _kept = new();
-    internal override global::app.type.item.kept.list.@this Kept => _kept;
+    private readonly global::app.type.property.list.@this _property = new();
+    internal override global::app.type.property.list.@this Property => _property;
 
     /// <summary>A key names this actor by its name — <c>system</c>, <c>user</c>; case is not the program's to get right.</summary>
     public ValueTask<@this?> Match(string key)

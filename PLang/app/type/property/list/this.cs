@@ -17,7 +17,7 @@ namespace app.type.property.list;
 ///   interfaces, <c>EqualityContract</c>, host + graph-infra properties).</item>
 /// </list>
 /// </summary>
-public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
+public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>, global::app.snapshot.ISnapshot
 {
     // The execution-context slots the source generator wires (not user-supplied properties) —
     // filtered out so the catalog never teaches them to the LLM.
@@ -95,16 +95,28 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
     }
 
     /// <summary>Adds a property to a program list.</summary>
-    public void Add(Property property) => Rows.Add(property);
+    public void Add(Property property)
+    {
+        var rows = Rows;
+        lock (_rows) rows.Add(property);
+    }
 
     /// <summary>Puts <paramref name="property"/> in place of the one with its name, or adds it — the
     /// builder finishing the program.</summary>
     public void Set(Property property)
     {
         var rows = Rows;
-        var i = rows.FindIndex(p => string.Equals(p.Name, property.Name, System.StringComparison.OrdinalIgnoreCase));
-        if (i >= 0) rows[i] = property; else rows.Add(property);
+        lock (_rows)
+        {
+            var i = rows.FindIndex(p => string.Equals(p.Name, property.Name, System.StringComparison.OrdinalIgnoreCase));
+            if (i >= 0) rows[i] = property; else rows.Add(property);
+        }
     }
+
+    /// <summary>Holds <paramref name="data"/> as the property <paramref name="name"/>, its own name when none is given —
+    /// its type, value and properties with it.</summary>
+    public void Set(global::app.data.@this data, string? name = null)
+        => Set(new Property { Name = name ?? data.Name, Type = data.Type, Value = data.Peek(), Property = data.Property.Clone() });
 
     /// <summary>Drops the rows the step didn't need to write, against the properties they fill
     /// (<paramref name="declared"/>, the catalogue's): an explicit null on an optional property, and a
@@ -112,18 +124,26 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
     /// <paramref name="operand"/> is a value of its own (a condition's <c>Right=null</c>) and stays.</summary>
     public void Reduce(@this declared, System.Collections.Generic.IReadOnlySet<string> operand)
     {
-        Rows.RemoveAll(row =>
-        {
-            if (declared[row.Name] is not { } slot) return false;
-            if (row.Value is null or { IsNull: true })
-                return (slot.Nullable || slot.HasDefault) && !operand.Contains(row.Name);
-            return slot.IsDefault(row.Value);
-        });
+        var rows = Rows;
+        lock (_rows)
+            rows.RemoveAll(row =>
+            {
+                if (declared[row.Name] is not { } slot) return false;
+                if (row.Value is null or { IsNull: true })
+                    return (slot.Nullable || slot.HasDefault) && !operand.Contains(row.Name);
+                return slot.IsDefault(row.Value);
+            });
     }
 
     /// <summary>The property named <paramref name="name"/>, or null.</summary>
     public Property? this[string name]
-        => Rows.FirstOrDefault(p => string.Equals(p.Name, name, System.StringComparison.OrdinalIgnoreCase));
+    {
+        get
+        {
+            var rows = Rows;
+            lock (_rows) return rows.FirstOrDefault(p => string.Equals(p.Name, name, System.StringComparison.OrdinalIgnoreCase));
+        }
+    }
 
     /// <summary>Holds <paramref name="value"/> as the property <paramref name="name"/>, in place of one by that name — a
     /// plang value as it is, a wire primitive (text, a number, a bool, a date, a guid, bytes, a dict or list) as the plang value it
@@ -169,13 +189,21 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
     }
 
     /// <summary>Takes the property <paramref name="name"/> away; whether there was one.</summary>
-    public bool Remove(string name) => Rows.RemoveAll(p => string.Equals(p.Name, name, System.StringComparison.OrdinalIgnoreCase)) > 0;
+    public bool Remove(string name)
+    {
+        var rows = Rows;
+        lock (_rows) return rows.RemoveAll(p => string.Equals(p.Name, name, System.StringComparison.OrdinalIgnoreCase)) > 0;
+    }
 
     /// <summary>Whether a property is named <paramref name="name"/>.</summary>
     public bool Contains(string name) => this[name] != null;
 
     /// <summary>Takes every property away.</summary>
-    public void Clear() => Rows.Clear();
+    public void Clear()
+    {
+        var rows = Rows;
+        lock (_rows) rows.Clear();
+    }
 
     /// <summary>Reads properties off <paramref name="reader"/> — a value's own properties object, by name. Each value
     /// is read now: a scalar as the plang value it is, an object or a list through the dict's or the list's own
@@ -202,21 +230,66 @@ public sealed class @this : System.Collections.Generic.IReadOnlyList<Property>
     public @this Clone()
     {
         var clone = new @this();
-        clone._rows.AddRange(Rows);
+        clone._rows.AddRange(Held);
         return clone;
     }
 
-    public Property this[int index] => Rows[index];
-    public int Count => Rows.Count;
-    public System.Collections.Generic.IEnumerator<Property> GetEnumerator() => Rows.GetEnumerator();
+    // The rows as they are now: a list a program adds to while another reads it (the app's, any actor's) is read whole.
+    private Property[] Held
+    {
+        get
+        {
+            var rows = Rows;
+            lock (_rows) return rows.ToArray();
+        }
+    }
+
+    public Property this[int index]
+    {
+        get
+        {
+            var rows = Rows;
+            lock (_rows) return rows[index];
+        }
+    }
+
+    public int Count
+    {
+        get
+        {
+            var rows = Rows;
+            lock (_rows) return rows.Count;
+        }
+    }
+
+    public System.Collections.Generic.IEnumerator<Property> GetEnumerator() => ((System.Collections.Generic.IEnumerable<Property>)Held).GetEnumerator();
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
 
     /// <summary>Writes the list as an array of property rows.</summary>
     public async System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
         global::app.View mode, global::app.actor.context.@this? context)
     {
-        writer.BeginArray(Count);
-        foreach (var property in Rows) await property.Output(writer, mode, context);
+        var held = Held;
+        writer.BeginArray(held.Length);
+        foreach (var property in held) await property.Output(writer, mode, context);
         writer.EndArray();
+    }
+
+    /// <summary>Its section in a snapshot.</summary>
+    public string Section => "Property";
+
+    /// <summary>Writes the properties, by name, each as the Data it makes.</summary>
+    public void Capture(global::app.snapshot.@this s)
+        => s.Write("property", Held.ToDictionary(property => property.Name, property => property.Data(s.Context),
+            System.StringComparer.OrdinalIgnoreCase));
+
+    /// <summary>Puts back the properties the section holds — a section without them leaves the list as it is.</summary>
+    public async System.Threading.Tasks.Task Restore(global::app.snapshot.@this s, global::app.actor.context.@this context)
+    {
+        var entry = s.Entries.Get("property", context);
+        if (entry == null) return;
+        var held = await entry.Value<global::app.type.item.dict.@this>();
+        Clear();
+        foreach (var property in held.Entries(context)) Set(property);
     }
 }

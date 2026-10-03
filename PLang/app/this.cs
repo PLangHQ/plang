@@ -22,8 +22,8 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public override bool IsLeaf => false;
 
     // what a program adds to the app (%!app.home%) — kept for the app's life, and in its snapshot
-    private readonly global::app.type.item.kept.list.@this _kept = new();
-    internal override global::app.type.item.kept.list.@this Kept => _kept;
+    private readonly global::app.type.property.list.@this _property = new();
+    internal override global::app.type.property.list.@this Property => _property;
 
     /// <summary>The one root: a copy of the app is the app.</summary>
     protected internal override global::app.type.item.@this Clone() => this;
