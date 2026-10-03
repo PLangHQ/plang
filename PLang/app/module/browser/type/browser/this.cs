@@ -52,8 +52,8 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// <summary>Its Chromium.</summary>
     internal System.Diagnostics.Process Os { get; }
 
-    /// <summary>Gives it one line from the person — an input, a navigation: <c>browser.send</c>.</summary>
-    internal abstract Task<global::app.data.@this> Send(global::app.data.@this line, global::app.actor.context.@this context);
+    /// <summary>Gives it what the person did — the mouse, a key, typed text, back/forward/reload: <c>browser.send</c>.</summary>
+    internal abstract Task<global::app.data.@this> Send(global::app.type.item.input.@this input, global::app.actor.context.@this context);
 
     // ---- its end ---------------------------------------------------------------------------------
 

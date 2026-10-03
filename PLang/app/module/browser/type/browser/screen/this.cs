@@ -216,13 +216,11 @@ public sealed class @this : browser.@this
         _ = Drain(handOver.StandardError);
     }
 
-    /// <summary>On a screen, input is the screen's: passed on, the Data written as text.</summary>
-    internal override async Task<global::app.data.@this> Send(global::app.data.@this data, global::app.actor.context.@this context)
+    /// <summary>On a screen, input is the screen's: the value goes to the display whole.</summary>
+    internal override Task<global::app.data.@this> Send(global::app.type.item.input.@this input, global::app.actor.context.@this context)
     {
-        using var written = new MemoryStream();
-        await Text.Encode(written, data, context, null, null, CancellationToken.None);
-        _display.Wayland.Input(Encoding.UTF8.GetString(written.ToArray()));
-        return context.Ok();
+        _display.Wayland.Take(input);
+        return Task.FromResult(context.Ok());
     }
 
     /// <summary>A line from the page as <c>%!data%</c>: a dict when it is a json object, so a goal can read its

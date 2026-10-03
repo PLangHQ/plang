@@ -106,25 +106,80 @@ public sealed class @this : browser.@this
         return context.Ok<browser.@this>(browser);
     }
 
-    internal override async Task<global::app.data.@this> Send(global::app.data.@this data, global::app.actor.context.@this context)
+    internal override async Task<global::app.data.@this> Send(global::app.type.item.input.@this input, global::app.actor.context.@this context)
     {
         if (_page.State != WebSocketState.Open)
             return context.Error(new global::app.error.ActionError($"The browser isn't running: {this}", "BrowserNotRunning", 409));
-        var value = await data.Value();
-        var line = value is Text t ? t.Clr<string>() : value?.ToString();
-        if (string.IsNullOrWhiteSpace(line)) return context.Ok();
-
-        JsonNode? input;
-        try { input = JsonNode.Parse(line); }
-        catch (JsonException) { return context.Ok(); }   // not an input event: ignored
-        if (input is not JsonObject e) return context.Ok();
-
-        var (method, parameters) = Translate(e);
-        if (method == null) return context.Ok();
-        await Cdp(method, parameters!);
-        if (method == "Input.dispatchMouseEvent" && parameters!["type"]?.GetValue<string>() == "mouseMoved")
-            AskCursor(parameters["x"]!.GetValue<int>(), parameters["y"]!.GetValue<int>());
+        var asked = new Asked();
+        input.Apply(asked);
+        if (asked.Method == null) return context.Ok();   // a key that types text comes as its text
+        await Cdp(asked.Method, asked.Parameters!);
+        if (asked.Moved is { } at) AskCursor(at.x, at.y);
         return context.Ok();
+    }
+
+    /// <summary>What an input asks of DevTools: each variant, handed over whole, lowered to its request — the
+    /// browser's native edge.</summary>
+    internal sealed class Asked : global::app.type.item.input.ITarget
+    {
+        internal string? Method { get; private set; }
+        internal JsonObject? Parameters { get; private set; }
+        /// <summary>Where the mouse moved to, when it did: the pointer there is asked for.</summary>
+        internal (int x, int y)? Moved { get; private set; }
+
+        // the modifier keys by name → DevTools' bits (alt 1, ctrl 2, meta 4, shift 8: the modifier choice's own values)
+        private static int Bits(global::app.type.item.list.@this<global::app.type.item.choice.@this<global::app.type.item.input.Modifier>> held)
+            => held.Items().Aggregate(0, (bits, modifier) => bits | (int)modifier.Value);
+
+        public void Stamped(long stamp) { }
+
+        public void Mouse(global::app.type.item.input.mouse.@this mouse)
+        {
+            int x = mouse.X.Clr<int>(), y = mouse.Y.Clr<int>();
+            var p = new JsonObject { ["x"] = x, ["y"] = y, ["modifiers"] = Bits(mouse.Modifiers) };
+            switch (mouse.Action.Value)
+            {
+                case global::app.type.item.input.mouse.Gesture.wheel:
+                    p["type"] = "mouseWheel"; p["deltaX"] = mouse.Dx.Clr<int>(); p["deltaY"] = mouse.Dy.Clr<int>();
+                    break;
+                case var gesture:
+                    p["type"] = gesture switch
+                    {
+                        global::app.type.item.input.mouse.Gesture.down => "mousePressed",
+                        global::app.type.item.input.mouse.Gesture.up => "mouseReleased",
+                        _ => "mouseMoved",
+                    };
+                    p["button"] = mouse.Button.Value.ToString();
+                    p["clickCount"] = mouse.Clicks.Clr<int>();
+                    if (gesture == global::app.type.item.input.mouse.Gesture.move) Moved = (x, y);
+                    break;
+            }
+            (Method, Parameters) = ("Input.dispatchMouseEvent", p);
+        }
+
+        public void Key(global::app.type.item.input.key.@this key)
+        {
+            if (key.Name?.ToString() is not { Length: > 0 } name) return;   // a text key: its character comes as text
+            int vk = key.Vk.Clr<int>(), mods = Bits(key.Modifiers);
+            Method = "Input.dispatchKeyEvent";
+            Parameters = !key.Down.Value
+                ? new JsonObject { ["type"] = "keyUp", ["key"] = name, ["windowsVirtualKeyCode"] = vk, ["modifiers"] = mods }
+                // Enter needs its text to act (submit, new line); other keys go raw
+                : name == "Enter"
+                    ? new JsonObject { ["type"] = "keyDown", ["key"] = "Enter", ["code"] = "Enter", ["text"] = "\r", ["windowsVirtualKeyCode"] = 13, ["modifiers"] = mods }
+                    : new JsonObject { ["type"] = "rawKeyDown", ["key"] = name, ["windowsVirtualKeyCode"] = vk, ["modifiers"] = mods };
+        }
+
+        public void Text(global::app.type.item.input.text.@this text)
+            => (Method, Parameters) = ("Input.insertText", new JsonObject { ["text"] = text.Typed.ToString() });
+
+        public void Navigate(global::app.type.item.input.navigate.@this navigate)
+            => (Method, Parameters) = navigate.To.Value switch
+            {
+                global::app.type.item.input.navigate.Direction.back => ("Runtime.evaluate", new JsonObject { ["expression"] = "history.back()" }),
+                global::app.type.item.input.navigate.Direction.forward => ("Runtime.evaluate", new JsonObject { ["expression"] = "history.forward()" }),
+                _ => ("Page.reload", new JsonObject()),
+            };
     }
 
     // The frames don't carry the pointer. After a move (at most 20 times a second, one question at a
@@ -161,55 +216,6 @@ public sealed class @this : browser.@this
             }
             finally { Interlocked.Exchange(ref _cursorBusy, 0); }
         });
-    }
-
-    // the neutral event lines → DevTools
-    private static (string? method, JsonObject? parameters) Translate(JsonObject e)
-    {
-        int Int(string key) => e[key] is JsonValue v && v.TryGetValue<double>(out var d) ? (int)d : 0;
-        string Str(string key, string fallback = "") => e[key] is JsonValue v && v.TryGetValue<string>(out var s) ? s : fallback;
-
-        if (e["mouse"] != null)
-        {
-            var kind = Str("mouse");
-            var p = new JsonObject { ["x"] = Int("x"), ["y"] = Int("y"), ["modifiers"] = Int("mods") };
-            switch (kind)
-            {
-                case "wheel":
-                    p["type"] = "mouseWheel"; p["deltaX"] = Int("dx"); p["deltaY"] = Int("dy");
-                    break;
-                case "down": case "up": case "move":
-                    p["type"] = kind == "down" ? "mousePressed" : kind == "up" ? "mouseReleased" : "mouseMoved";
-                    p["button"] = Str("button", "none");
-                    p["clickCount"] = Int("clicks");
-                    break;
-                default: return (null, null);
-            }
-            return ("Input.dispatchMouseEvent", p);
-        }
-        if (e["key"] != null)
-        {
-            var name = Str("name"); var vk = Int("vk"); var mods = Int("mods");
-            if (name.Length == 0) return (null, null);   // a text key: its character comes as {"text"}
-            if (Str("key") == "up")
-                return ("Input.dispatchKeyEvent", new JsonObject { ["type"] = "keyUp", ["key"] = name, ["windowsVirtualKeyCode"] = vk, ["modifiers"] = mods });
-            // Enter needs its text to act (submit, new line); other keys go raw
-            return name == "Enter"
-                ? ("Input.dispatchKeyEvent", new JsonObject { ["type"] = "keyDown", ["key"] = "Enter", ["code"] = "Enter", ["text"] = "\r", ["windowsVirtualKeyCode"] = 13, ["modifiers"] = mods })
-                : ("Input.dispatchKeyEvent", new JsonObject { ["type"] = "rawKeyDown", ["key"] = name, ["windowsVirtualKeyCode"] = vk, ["modifiers"] = mods });
-        }
-        if (e["text"] != null)
-            return ("Input.insertText", new JsonObject { ["text"] = Str("text") });
-        if (e["nav"] != null)
-            return Str("nav") switch
-            {
-                "back" => ("Runtime.evaluate", new JsonObject { ["expression"] = "history.back()" }),
-                "forward" => ("Runtime.evaluate", new JsonObject { ["expression"] = "history.forward()" }),
-                "reload" => ("Page.reload", new JsonObject()),
-                "url" => ("Page.navigate", new JsonObject { ["url"] = Str("url") }),
-                _ => (null, null),
-            };
-        return (null, null);
     }
 
     // the page's messages: replies to what was asked, and the frames
