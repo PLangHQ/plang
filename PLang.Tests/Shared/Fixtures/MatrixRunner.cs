@@ -45,7 +45,7 @@ public static class MatrixRunner
             Step = step
         };
         foreach (var p in parameters ?? Array.Empty<(string, object?)>())
-            action.Property.Add(global::PLang.Tests.Shared.Make.Property(new Data(p.name, p.value, context: app.actor.list.User.Context)));
+            action.Property.Add(global::PLang.Tests.Shared.Make.Row(app.actor.list.User.Context, app.Module(module)[actionName], p.name, p.value));
         foreach (var d in defaults ?? Array.Empty<(string, object?)>())
             action.Default.Add(global::PLang.Tests.Shared.Make.Property(new Data(d.name, d.value, context: app.actor.list.User.Context)));
         // Tests author actions the way the builder does — same template seam
@@ -85,7 +85,7 @@ public static class MatrixRunner
             Step = step
         };
         foreach (var p in parameters ?? Array.Empty<(string, object?)>())
-            action.Property.Add(global::PLang.Tests.Shared.Make.Property(new Data(p.name, p.value, context: app.actor.list.User.Context)));
+            action.Property.Add(global::PLang.Tests.Shared.Make.Row(app.actor.list.User.Context, app.Module(module)[actionName], p.name, p.value));
         foreach (var d in defaults ?? Array.Empty<(string, object?)>())
             action.Default.Add(global::PLang.Tests.Shared.Make.Property(new Data(d.name, d.value, context: app.actor.list.User.Context)));
         // Tests author actions the way the builder does — same template seam

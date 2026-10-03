@@ -204,13 +204,14 @@ public sealed record @this(
         sb.AppendLine($"            && !{Name}.IsSelected)");
         sb.AppendLine("        {");
         sb.AppendLine($"            await {Name}.Value();");
-        // A decline of a value written in another type than its slot's (the step's row, or the default the build
-        // froze) is a program built against an older catalog: rebuild. One in the slot's own type is a bad value, and
-        // so is a text — a value as written, which every slot reads.
+        // A decline of a value written in another type than its slot's is a program built against an older catalog:
+        // rebuild. The row judged is the one the cascade used: the step's own, else — when no setting sits above it —
+        // the default the build froze. One in the slot's own type, or a setting's, is a bad value.
         sb.AppendLine($"            if (!{Name}.Success)");
         sb.AppendLine("            {");
         sb.AppendLine($"                var __slot{Name} = Context.App.type.list[typeof({InnerType})];");
-        sb.AppendLine($"                __declined.Add((__action?[\"{Name}\"] ?? __action?.Default[\"{Name}\"]) is {{ }} __row{Name} && !__row{Name}.Type.Is(__slot{Name}) && !__row{Name}.Type.Is(\"text\")");
+        sb.AppendLine($"                var __row{Name} = __action?[\"{Name}\"] ?? (__action != null && !(await Context.Setting.Get(__action, \"{ParamName}\")).IsInitialized ? __action.Default[\"{Name}\"] : null);");
+        sb.AppendLine($"                __declined.Add(__row{Name} != null && !__row{Name}.Type.Is(__slot{Name})");
         sb.AppendLine($"                    ? new global::app.error.Error(");
         sb.AppendLine($"                        $\"{{__action!.Module}}.{{__action.Name}} was built when {Name} was a {{__row{Name}.Type.Name}}; it is a {{__slot{Name}.Name}} now — rebuild the goal\",");
         sb.AppendLine($"                        \"Stale\", 400)");

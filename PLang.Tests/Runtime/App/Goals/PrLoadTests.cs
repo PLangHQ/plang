@@ -143,6 +143,21 @@ public class PrLoadTests : System.IAsyncDisposable
         await ran.IsSuccess();
     }
 
+    // A setting supplies the value over a stale frozen default: what declines is the setting's, a bad value — the
+    // frozen row the cascade never used isn't judged
+    [Test]
+    public async Task ASettingOverAStaleFrozenDefault_IsJudgedAsTheSetting()
+    {
+        var context = _app.actor.list.User.Context;
+        await context.Setting.Set("list.split.setting.empty", context.Ok("sometimes"));
+
+        var ran = await RanWith("set.pr", Make.Action(context, "list", "split", ("Value", "a\nb")),
+            "default", "{\"name\":\"empty\",\"type\":{\"name\":\"bool\"},\"value\":true}");
+
+        await Assert.That(ran.Success).IsFalse();
+        await Assert.That(ran.Error!.Key).IsNotEqualTo("Stale");
+    }
+
     // A literal its option declines in its own type is a bad value, as the build names it — not a stale build
     [Test]
     public async Task ABadLiteralOfItsOptionsOwnType_KeepsItsOwnError()

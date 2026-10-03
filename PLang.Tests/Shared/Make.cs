@@ -45,24 +45,31 @@ public static class Make
     {
         // made by its catalog element, as the reader makes it: an on.error / on.cache / on.timeout is a clause
         var owner = context.App.Module(module);
-        var action = owner[actionName]?.Program(null)
+        var catalog = owner[actionName];
+        var action = catalog?.Program(null)
             ?? new global::app.goal.step.action.@this { Module = owner, Name = actionName };
-        foreach (var (name, value) in parameters)
-            // Param(...) hands back a ready Data carrying an explicit type; a plain tuple value
-            // borns its natural type — EXCEPT a string carrying a %ref% (full or embedded), which
-            // borns as text/template="plang" (the builder stamps this on any %var% value, so the
-            // read fills the holes against live variables — a plain `("Left", "%x%")` would otherwise
-            // ride as literal text and never resolve at eval).
-            action.Property.Add(Property(value is global::app.data.@this typed
-                ? typed
-                : value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[^%]+%")   // text.HasVariable's detector (%!data% too)
-                    ? Built(context, name, s, new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()))
-                    // a list/dict the programmer wrote holding a %variable% is marked too, as the builder marks it
-                    : value is System.Collections.IEnumerable and not string && System.Text.RegularExpressions.Regex.IsMatch(
-                            System.Text.Json.JsonSerializer.Serialize(value), "%[^%]+%")
-                        ? TemplateStamp.Container(name, value, context)
-                        : new global::app.data.@this(name, value, context: context)));
+        foreach (var (name, value) in parameters) action.Property.Add(Row(context, catalog, name, value));
         return action;
+    }
+
+    /// <summary>A row of <paramref name="catalog"/>'s action as the build writes it. A ready Data keeps its explicit
+    /// type; a string carrying a %ref% (full or embedded) borns as text/template="plang" (the builder stamps this on
+    /// any %var% value, so the read fills the holes against live variables); any other literal is typed as its slot,
+    /// as the build types it — an open item slot, or a name its action doesn't have, borns its natural type.</summary>
+    public static global::app.type.property.@this Row(global::app.actor.context.@this context,
+        global::app.goal.step.action.@this? catalog, string name, object? value)
+    {
+        return Property(value is global::app.data.@this typed
+            ? typed
+            : value is string s && System.Text.RegularExpressions.Regex.IsMatch(s, "%[^%]+%")   // text.HasVariable's detector (%!data% too)
+                ? Built(context, name, s, new global::app.type.@this("text", template: new global::app.type.item.template.kind.plang.@this()))
+                // a list/dict the programmer wrote holding a %variable% is marked too, as the builder marks it
+                : value is System.Collections.IEnumerable and not string && System.Text.RegularExpressions.Regex.IsMatch(
+                        System.Text.Json.JsonSerializer.Serialize(value), "%[^%]+%")
+                    ? TemplateStamp.Container(name, value, context)
+                    : value != null && catalog?.Property[name]?.Type is { Name: not "item" } slot
+                        ? Built(context, name, value, slot)
+                        : new global::app.data.@this(name, value, context: context));
     }
 
     /// <summary>The program property a test's Data describes — its name, type, value as held and bag.
