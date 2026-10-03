@@ -499,8 +499,9 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         where T : item.@this, global::app.type.item.ICreate<T>
         => T.Takes(other);
 
-    /// <summary>A value of this type is a name — this type's class's own answer (<c>ICreate.IsName</c>), read once.</summary>
-    internal bool IsName => _isName ??= Creatable is { } clr
+    /// <summary>A value of this type is a name — this type's class's own answer (<c>ICreate.IsName</c>), read once. A
+    /// family held by its open class (<c>choice&lt;&gt;</c> for a set the registry doesn't hold) names nothing.</summary>
+    internal bool IsName => _isName ??= Creatable is { ContainsGenericParameters: false } clr
         && (bool)_naming.MakeGenericMethod(clr).Invoke(null, null)!;
 
     private bool? _isName;

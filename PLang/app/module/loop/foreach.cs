@@ -71,29 +71,13 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
     private async Task<data.@this> Run(global::app.type.item.variable.@this itemVariable,
         global::app.type.item.variable.@this? keyVariable, System.Collections.Generic.IReadOnlyList<global::app.goal.step.action.@this> body)
     {
-        // A value-less collection (the null citizen or an absent slot) iterates zero times; an empty list/dict
-        // enumerates to zero naturally. The null citizen Peeks itself (IsNull), absent Peeks null.
-        var collectionValue = await Collection.Value();
-        if (collectionValue == null || collectionValue.IsNull || collectionValue.Peek() == null)
-            return await Result(count: 0, complete: true);
-
         int count = 0;
-        // Data owns enumeration: dicts yield (dictKey, value), lists yield (index, element)
-        foreach (var (key, item) in await Collection.EnumerateItems())
+        await foreach (var (names, failed) in Bound(itemVariable, keyVariable))
         {
+            if (failed != null) return failed;
             if (Context.CancellationToken.IsCancellationRequested)
                 return await Result(count, complete: false);
-
-            // the element as it is here, in the loop's step, as a set reads a value (a template renders here)
-            var settled = await item.Settle();
-            if (settled.IsInitialized && !settled.Success) return settled;
-            var bound = new List<data.@this>
-                { settled.IsInitialized ? settled.Copy(itemVariable.Name) : Context.NotFound(itemVariable.Name) };
-            // Optional param: absent slots are non-null Uninitialized (null model), so
-            // "was a key named?" is IsInitialized, not a C# null check.
-            if (keyVariable != null) bound.Add(key.Copy(keyVariable.Name));
-
-            await using (Context.call.Push(bound))
+            await using (Context.call.Push(names))
                 foreach (var action in body)
                 {
                     var result = await action.Start(Context);
@@ -102,6 +86,27 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
             count++;
         }
         return await Result(count, complete: true);
+    }
+
+    /// <summary>Each element of the collection as the names a run of the body binds — %item%, and %key% when one is
+    /// named — or, for an element that fails to read, that failure (and no more). The collection is read here, in the
+    /// loop's step (a template renders, a reference resolves); a value-less one (the null citizen, an absent slot)
+    /// has no elements. Each element is as it is here, as a set reads a value.</summary>
+    private async System.Collections.Generic.IAsyncEnumerable<(System.Collections.Generic.List<data.@this> Names, data.@this? Failed)> Bound(
+        global::app.type.item.variable.@this itemVariable, global::app.type.item.variable.@this? keyVariable)
+    {
+        var collection = await Collection.Value();
+        if (collection == null || collection.IsNull || collection.Peek() == null) yield break;
+        // Data owns enumeration: dicts yield (dictKey, value), lists yield (index, element)
+        foreach (var (key, item) in await Collection.EnumerateItems())
+        {
+            var settled = await item.Settle();
+            if (settled.IsInitialized && !settled.Success) { yield return ([], settled); yield break; }
+            var names = new List<data.@this>
+                { settled.IsInitialized ? settled.Copy(itemVariable.Name) : Context.NotFound(itemVariable.Name) };
+            if (keyVariable != null) names.Add(key.Copy(keyVariable.Name));
+            yield return (names, null);
+        }
     }
 
     /// <summary>The loop as a task of its actor's: each item a task of its own, run in a context of its own whose first
@@ -119,21 +124,16 @@ public partial class Foreach : IContext, IStep, IScope, ILoop
             // the places items wait for; never disposed here, as an item already started may still be waiting
             var places = new System.Threading.SemaphoreSlim(side.At);
             var items = new List<global::app.task.@this>();
-            foreach (var (key, item) in await Collection.EnumerateItems())
+            await foreach (var (names, unread) in Bound(itemVariable, keyVariable))
             {
-                // the element as it is here, in the loop's step, as a set reads a value (a template renders here)
-                var settled = await item.Settle();
-                if (settled.IsInitialized && !settled.Success) return settled;
-                var bound = new List<data.@this>
-                    { settled.IsInitialized ? settled.Copy(itemVariable.Name) : Context.NotFound(itemVariable.Name) };
-                if (keyVariable != null) bound.Add(key.Copy(keyVariable.Name));
+                if (unread != null) return unread;
                 items.Add(actor.Task.Start(goal, async own =>
                 {
                     await places.WaitAsync(own);
                     try
                     {
                         using var child = Context.Child(actor, own);
-                        await using (child.call.Isolate(bound, caller: from))
+                        await using (child.call.Isolate(names, caller: from))
                             foreach (var action in body)
                             {
                                 var result = await action.Start(child);

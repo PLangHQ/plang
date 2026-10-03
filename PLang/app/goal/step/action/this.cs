@@ -360,16 +360,24 @@ public partial class @this
     }
 
     /// <summary>What a default the build froze in a type its option no longer is answers (a .pr built when list.split's
-    /// <c>Empty</c> was a bool, a choice now): rebuild the goal. Null when every frozen default still fits its option.</summary>
-    private async Task<global::app.error.Error?> Stale(@this element, actor.context.@this context)
+    /// <c>Empty</c> was a bool, a choice now): rebuild the goal. Null when every frozen default still fits its option. A
+    /// fact of this loaded action against the catalog, so it is judged once.</summary>
+    private Task<global::app.error.Error?> Stale(@this element, actor.context.@this context)
     {
-        foreach (var frozen in Default)
-            if (element.Property[frozen.Name] is { } now && !await now.Takes(frozen, context))
-                return new global::app.error.ActionError(
-                    $"{Module}.{Name} was built when {now.Name} was a {frozen.Type.Name}; it is a {now.Type.Name} now — rebuild the goal",
-                    "StaleDefault", 400);
-        return null;
+        return _stale ??= Judged();
+
+        async Task<global::app.error.Error?> Judged()
+        {
+            foreach (var frozen in Default)
+                if (element.Property[frozen.Name] is { } now && !await now.Takes(frozen, context))
+                    return new global::app.error.ActionError(
+                        $"{Module}.{Name} was built when {now.Name} was a {frozen.Type.Name}; it is a {now.Type.Name} now — rebuild the goal",
+                        "StaleDefault", 400);
+            return null;
+        }
     }
+
+    private Task<global::app.error.Error?>? _stale;
 
     /// <summary>This action bound: its handler minted and its parameters bound as typed views —
     /// nothing resolved. What the build pass needs to ask the handler, and what a runner needs to read

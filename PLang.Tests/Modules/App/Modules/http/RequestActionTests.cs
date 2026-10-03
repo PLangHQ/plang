@@ -69,8 +69,9 @@ public class RequestActionTests
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
             LastRequest = request;
+            // a handler stops when its request is cancelled (the action's timeout), as a real one does
             if (Handler != null)
-                return Handler(request);
+                return Handler(request).WaitAsync(cancellationToken);
 
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {

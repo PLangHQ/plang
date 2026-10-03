@@ -12,18 +12,22 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static string Shape => "object";
 
     /// <summary>How many run at once — by default the machine's cores × 0.8, at least one.</summary>
-    [Out, Store] public global::app.type.item.number.@this Cpu { get; }
+    [Out, Store] public global::app.type.item.number.@this Cpu
+        => System.Math.Max(1, _cpu ?? (long)(System.Environment.ProcessorCount * 0.8));
+
+    // how many at once the program said, if it said — none is the default of the machine it runs on
+    private readonly long? _cpu;
 
     // whether it runs in parallel at all — false only for a program's `false`
     private readonly bool _on;
 
     /// <summary>Running in parallel, <paramref name="cpu"/> at once; none given, the machine's cores × 0.8, at least
     /// one.</summary>
-    public @this(long? cpu = null) : this(cpu ?? System.Math.Max(1, (long)(System.Environment.ProcessorCount * 0.8)), on: true) { }
+    public @this(long? cpu = null) : this(cpu, on: true) { }
 
-    private @this(long cpu, bool on)
+    private @this(long? cpu, bool on)
     {
-        Cpu = System.Math.Max(1, cpu);
+        _cpu = cpu;
         _on = on;
     }
 
@@ -31,6 +35,24 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     public static @this Off { get; } = new(1, on: false);
 
     public override bool IsLeaf => false;
+
+    /// <summary>Its wire form, read back by its reader as itself: <c>false</c> when it is off, else <c>{cpu: n}</c> with
+    /// the count the program said, or <c>{}</c> when it said none — so a built program takes the cores of the machine
+    /// it runs on, not the one it was built on.</summary>
+    public override void Write(global::app.type.format.IWriter w)
+    {
+        if (!_on) { w.Bool(false); return; }
+        w.BeginObject();
+        if (_cpu is { } cpu) { w.Name("cpu"); w.Long(cpu); }
+        w.EndObject();
+    }
+
+    public override System.Threading.Tasks.ValueTask Output(global::app.type.format.IWriter writer,
+        global::app.View mode, global::app.actor.context.@this? context)
+    {
+        Write(writer);
+        return System.Threading.Tasks.ValueTask.CompletedTask;
+    }
 
     /// <summary>Whether it runs in parallel.</summary>
     public override bool IsTruthy() => _on;
@@ -56,7 +78,8 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
             long? cpu = null;
             foreach (var entry in dict.Entries(context))
                 if (string.Equals(entry.Name, "cpu", System.StringComparison.OrdinalIgnoreCase))
-                    cpu = entry.Peek()?.Clr<object>() is { } count ? System.Convert.ToInt64(count) : null;
+                    // through the entry's Data: an entry read off the wire decodes with its context
+                    cpu = entry.Clr<object>() is { } count ? System.Convert.ToInt64(count) : null;
                 else
                 {
                     data.Fail(new global::app.error.Error($"parallel's one member is cpu (how many at once) — not {entry.Name}", "ParallelInvalid", 400));
