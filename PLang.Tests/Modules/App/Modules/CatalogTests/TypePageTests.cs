@@ -75,4 +75,10 @@ public class TypePageTests
 
     [Test]
     public Task TheTextPage_IsTheSpecsGolden() => ComparePageToGolden("text");
+
+    [Test]
+    public Task TheSizePage_IsTheSpecsGolden() => ComparePageToGolden("size");
+
+    [Test]
+    public Task TheDictPage_IsTheSpecsGolden() => ComparePageToGolden("dict");
 }

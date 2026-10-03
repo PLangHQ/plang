@@ -234,6 +234,70 @@ The golden is fenced as ` ```markdown ` with the guide's inner ` ```plang ` fenc
 real; `TypePageTests` extracts it with the same depth-aware reader `ModulePageTests` uses
 (an info-string fence opens, a bare ` ``` ` closes).
 
+## Golden output — size
+
+The exact literal the generator must produce for the `size` type — a memberless scalar, so description + guide and no member table. `TypePageTests` diffs against this.
+
+```markdown
+# size
+A count of bytes: a number and its unit, IEC (500 KiB, 95.4 MiB) or SI (512 kB, 100 MB).
+
+# Sizes
+
+A `size` is a count of bytes that writes itself with a unit. Its value is the exact number of bytes; the text rounds for reading.
+
+## Two standards
+
+A size's kind is the standard it is written in:
+
+- `iec` — powers of 1024: `500 KiB`, `95.4 MiB`, `1 GiB`.
+- `si` — powers of 1000: `512 kB`, `100 MB`, `1 GB`.
+
+A size read from text keeps the standard its suffix names — `95.4 MiB` is IEC, `100 MB` is SI. A size made from a bare count — a file's length, a download's bytes — is written in the standard the setting names: `%!app.type.size.setting.standard%` (`iec` or `si`, `iec` by default).
+
+## Comparing and testing
+
+A size compares and sorts by its exact bytes, whatever unit each was written in, so `100 MB` and `95.4 MiB` order correctly against each other. A size of zero bytes is falsy, so `if %size%` asks "is there anything".
+```
+
+## Golden output — dict
+
+The exact literal the generator must produce for the `dict` type — navigated by key, no catalog members, so description + guide and no member table. `TypePageTests` diffs against this.
+
+```markdown
+# dict
+Named values: each key holds a value of any type.
+
+# Dictionaries
+
+A `dict` is a set of named values — each key holds a value of any type (text, number, a nested dict or list). You write one as JSON: `{"name":"Ada","age":36}`.
+
+## Reading a value
+
+Read a key with a dot: `%person.name%`, `%person.age%`. Keys nest, so `%order.customer.city%` walks in. A key that isn't a plain word reads with brackets: `%row["first name"]%`.
+
+## Count and entries
+
+- `%person.count%` — how many entries, a number. (A key literally named `count` wins over this.)
+- `%person.entries%` — the entries in insertion order, to loop over:
+
+```plang
+Start
+- foreach %person.entries%, call Show entry=%item%
+```
+
+## Building and changing
+
+Build one inline, then read or change a key:
+
+```plang
+Start
+- set %user% = {"name":"Ada","age":36}
+- set %user.age% = 37
+- write out "%user.name% is %user.age%"
+```
+```
+
 ## Generation rules
 
 1. **Discover** types from `%!app.type.list%`; skip internal-only types the builder catalog
