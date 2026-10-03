@@ -47,7 +47,7 @@ public partial class @this
 
         // Schemes can append a hint — e.g. HttpPath warns when answering 'a' would persist a URL with a query
         // string verbatim to the local sqlite. Base returns "".
-        var hint = AuthorizationHint(verb);
+        var hint = AuthorizationHint(verb, context);
         var hintSuffix = string.IsNullOrEmpty(hint) ? "" : " " + hint;
         return await actor.Permission.Ask($"Allow {actor.Name} to {verb} {Absolute}?{hintSuffix} (y/n/a)",
             BuildRequest(actor, verb), context, persist => SignAndStore(actor, verb, persist, context));
@@ -127,11 +127,13 @@ public partial class @this
     }
 
     /// <summary>
-    /// Scheme-specific extra text appended to the Authorize prompt before the
-    /// y/n/a choices. Base returns empty. HttpPath overrides to warn when an
-    /// 'a' would persist a URL with query-string secrets verbatim to the
-    /// local sqlite. Subclasses can append any other
-    /// scheme-specific consent signal here.
+    /// Extra text appended to the Authorize prompt before the y/n/a choices: what a yes means beyond the words.
+    /// A change under the os folder (write, delete) changes what ships with plang — and a goal there runs programs
+    /// without asking (579), so the question says so (Ingi: ask, don't refuse). HttpPath overrides to warn when an
+    /// 'a' would persist a URL with query-string secrets verbatim to the local sqlite.
     /// </summary>
-    protected virtual string AuthorizationHint(Verb verb) => "";
+    protected virtual string AuthorizationHint(Verb verb, actor.context.@this context)
+        => verb is Verb.write or Verb.delete && IsUnder(context.App?.OsAbsolutePath, RootComparison)
+            ? "(files under /system/ ship with plang; a goal there runs programs without asking)"
+            : "";
 }

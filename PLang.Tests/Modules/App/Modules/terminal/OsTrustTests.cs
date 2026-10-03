@@ -56,6 +56,48 @@ public class OsTrustTests : IDisposable
         return goal;
     }
 
+    // ---- writing where plang's own goals are: asked, and the question says what a yes means (Ingi: ask, don't refuse) ----
+
+    // an input channel that keeps each question and answers it "n"
+    private sealed class Questions : global::app.channel.@this
+    {
+        public List<string> Asked { get; } = new();
+        public Questions() { Name = "input"; Direction = global::app.channel.ChannelDirection.Bidirectional; }
+        public override Task<global::app.data.@this> Write(global::app.data.@this data, CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok());
+        public override Task<global::app.data.@this> Read(CancellationToken ct = default)
+            => Task.FromResult(global::app.data.@this.Ok((object?)null));
+        public override async Task<global::app.data.@this> Ask(global::app.module.output.ask action, CancellationToken ct = default)
+        {
+            Asked.Add((await action.Question!.Value())?.ToString() ?? "");
+            return action.Context.Ok("n");
+        }
+    }
+
+    [Test]
+    [Arguments(global::app.type.item.permission.Verb.write)]
+    [Arguments(global::app.type.item.permission.Verb.delete)]
+    public async Task ChangingAFileUnderTheOsFolder_IsAsked_SayingWhatAYesMeans(global::app.type.item.permission.Verb verb)
+    {
+        var questions = new Questions();
+        Context.Actor!.Channel.Register(questions);
+        var file = new global::app.type.item.path.file.@this(Os("Changed.goal"));
+        var asked = await file.Authorize(verb, Context);
+        await asked.IsFailure();
+        await Assert.That(questions.Asked.Count).IsEqualTo(1).Because("asked, not refused");
+        await Assert.That(questions.Asked[0]).Contains("ship with plang").And.Contains("without asking");
+    }
+
+    [Test]
+    public async Task ReadingUnderTheOsFolder_OrWritingInTheAppsRoot_SaysNothingOfIt()
+    {
+        var questions = new Questions();
+        Context.Actor!.Channel.Register(questions);
+        await (await new global::app.type.item.path.file.@this(Path.Combine(_root, "own.txt")).Authorize(global::app.type.item.permission.Verb.write, Context)).IsSuccess();
+        await new global::app.type.item.path.file.@this(Os("Read.goal")).Authorize(global::app.type.item.permission.Verb.read, Context);
+        await Assert.That(questions.Asked.Any(q => q.Contains("ship with plang"))).IsFalse();
+    }
+
     [Test]
     public async Task AUserGoal_StartingAProgram_Asks()
     {
