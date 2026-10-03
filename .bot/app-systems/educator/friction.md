@@ -73,6 +73,9 @@ A user's review: I write more plang than anyone, the way a learner would, for th
   from it`, "at Key.goal:6". There is no %empty% in the app. A fresh app with the same steps runs. **Cost:** voicing
   stopped for Track D; an hour of probes to rule out my goal. **If I had** a rename that migrates an app's stored
   state (or says "this app's stored X predates a change; run Y"), an old app would keep running.
+  The cause (coder): a `.pr` freezes the defaults of options the step didn't set. It happened again 2026-10-03:
+  course lessons C1 and C3 failed `%template% holds a bool` after file.read's Template became a choice, and were
+  fixed by a cache-skip rebuild. A learner copying an older example folder would get no hint.
 - **educator · `split %x% into lines` doesn't split by lines.** It compiles with no Separator, so the default `,`
   applies and `%parts[0]%` is the whole text. **Cost:** silent; in the studio it would put a newline in an HTTP
   header (the 401 trap). **If I had** "lines" mapping to a newline separator, the step would mean what it says.
