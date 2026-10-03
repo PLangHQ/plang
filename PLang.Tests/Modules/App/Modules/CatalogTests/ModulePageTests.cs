@@ -117,6 +117,41 @@ public class ModulePageTests
         }
     }
 
+    // A teaching file that is not there is nil to a template; one that is there and can't be read fails the render with
+    // its own error — never read as empty (a page or a decider state pinned under load without its examples)
+    [Test]
+    public async Task ATeachingFileThatCantBeRead_FailsTheRender_AnAbsentOneIsNil()
+    {
+        if (System.OperatingSystem.IsWindows()) return;
+        var root = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang-page-" + System.Guid.NewGuid().ToString("N")[..8]);
+        var folder = System.IO.Path.Combine(root, "system", "modules", "file");
+        System.IO.Directory.CreateDirectory(folder);
+        var examples = System.IO.Path.Combine(folder, "read.examples.md");
+        System.IO.File.WriteAllText(examples, "Step text: `read x.txt`\n");
+        System.IO.File.SetUnixFileMode(examples, System.IO.UnixFileMode.None);
+        try
+        {
+            await using var app = new global::app.@this(root).Testing();
+            var context = app.actor.list.User.Context;
+            context.Variable.Set(new global::app.data.@this("action", app.Module("file")!["read"]!, context: context));
+            async Task<global::app.data.@this> Render(string template) => await new global::app.module.ui.code.Fluid().Render(
+                new Render(context) { Template = (global::app.type.item.text.@this)template, IsFile = (global::app.type.item.@bool.@this)false });
+
+            var unreadable = await Render("{% if action.Examples %}examples: {{ action.Examples }}{% endif %}");
+            var absent = await Render("{% if action.Guide %}guide{% endif %}none");
+
+            await unreadable.IsFailure();
+            await Assert.That(unreadable.Error!.Status.IsNotFound).IsFalse();
+            await absent.IsSuccess();
+            await Assert.That((await absent.Value())!.ToString()).IsEqualTo("none");
+        }
+        finally
+        {
+            System.IO.File.SetUnixFileMode(examples, System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite);
+            if (System.IO.Directory.Exists(root)) System.IO.Directory.Delete(root, true);
+        }
+    }
+
     // An action's guide (<action>.guide.md, the learner's prose) is on its module's page, right after the action's
     // Returns line and before the next action, and shown once.
     [Test]

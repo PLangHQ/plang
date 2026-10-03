@@ -22,6 +22,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>Whether it is a success: a code in the 200s.</summary>
     public global::app.type.item.@bool.@this Ok => Code.ToInt32() is >= 200 and < 300;
 
+    /// <summary>Whether it says the thing asked for is not there (404) — an absence, not a failure to reach it.</summary>
+    public bool IsNotFound => Code.ToInt32() == 404;
+
     /// <summary>The status of <paramref name="code"/>, its text the code's standard reason unless
     /// <paramref name="text"/> gives one.</summary>
     public @this(global::app.type.item.number.@this code, global::app.type.item.text.@this? text = null)

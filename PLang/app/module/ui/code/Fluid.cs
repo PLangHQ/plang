@@ -214,7 +214,11 @@ public class Fluid : ITemplate
             // dict/list into a view, a host re-enters this door on its next member. A value wanted in
             // its AUTHORED form is never member-accessed here — it's embedded via the `store` filter,
             // which drives the value's own Store writer (%refs% literal) instead of this resolve door.
-            var resolved = await (await new global::app.data.@this("", obj, context: context).Get(name)).Value();
+            var member = await new global::app.data.@this("", obj, context: context).Get(name);
+            var resolved = await member.Value();
+            // a member that is not there is nil (`{% if a.Examples %}` over an absent file); one that is there and
+            // could not be read (an I/O error, a timeout, a refused read) fails the render — never an empty value
+            if (member.Error is { Status.IsNotFound: false } failed) throw new AppException(failed);
             // A span stays the plang value: Fluid has no span of its own and would read it as a 1970 date.
             return (resolved is global::app.type.item.@this value ? (value.Backing is TimeSpan ? value : value.Backing) : resolved)!;
         }
@@ -247,10 +251,18 @@ public class Fluid : ITemplate
                 : new Item(container, context);
 
         public override async ValueTask<FluidValue> GetValueAsync(string name, TemplateContext ctx)
-            => Lowered(await (await item.Get(Parent, name)).Value(), ctx.Options);
+            => Lowered(await Read(await item.Get(Parent, name)), ctx.Options);
 
         public override async ValueTask<FluidValue> GetIndexAsync(FluidValue index, TemplateContext ctx)
-            => Lowered(await (await item.Get(Parent, index.ToStringValue(), isIndex: index.Type == FluidValues.Number)).Value(), ctx.Options);
+            => Lowered(await Read(await item.Get(Parent, index.ToStringValue(), isIndex: index.Type == FluidValues.Number)), ctx.Options);
+
+        // a child that is not there is nil; one that is there and could not be read fails the render
+        private async ValueTask<global::app.type.item.@this?> Read(global::app.data.@this child)
+        {
+            var value = await child.Value();
+            if (child.Error is { Status.IsNotFound: false } failed) throw new AppException(failed);
+            return value;
+        }
 
         // A hash iterates as [key, value] pairs.
         public override IEnumerable<FluidValue> Enumerate(TemplateContext ctx)
