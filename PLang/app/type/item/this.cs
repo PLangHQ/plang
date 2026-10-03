@@ -260,7 +260,7 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// through by key (a list's rows, a dict's entries) asks this, never every public member it has.</summary>
     private protected async System.Threading.Tasks.ValueTask<global::app.data.@this?> Member(global::app.data.@this parent, string key)
     {
-        var member = _marked.GetOrAdd((GetType(), key), Marked);
+        var member = IdentityOf(GetType()).Members.GetOrAdd(key, static (name, type) => Marked(type, name), GetType());
         object? answer = member switch
         {
             System.Reflection.PropertyInfo property => property.GetValue(this),
@@ -279,15 +279,13 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         return answer as global::app.data.@this ?? (answer == null ? parent.Context.NotFound(key) : new global::app.data.@this(key, answer, parent: parent));
     }
 
-    // Which member of a class is its marked surface by a name — a fact of the class, found once.
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<(System.Type, string), System.Reflection.MemberInfo?> _marked = new();
-
-    private static System.Reflection.MemberInfo? Marked((System.Type Class, string Name) at)
-        => at.Class.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-               .FirstOrDefault(p => string.Equals(p.Name, at.Name, System.StringComparison.OrdinalIgnoreCase)
+    // Which member of a class is its marked surface by a name — read into its identity the first time it is asked.
+    private static System.Reflection.MemberInfo? Marked(System.Type @class, string name)
+        => @class.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+               .FirstOrDefault(p => string.Equals(p.Name, name, System.StringComparison.OrdinalIgnoreCase)
                    && System.Attribute.IsDefined(p, typeof(global::app.LlmBuilderAttribute)))
-           ?? (System.Reflection.MemberInfo?)at.Class.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-               .FirstOrDefault(m => string.Equals(m.Name, at.Name, System.StringComparison.OrdinalIgnoreCase)
+           ?? (System.Reflection.MemberInfo?)@class.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+               .FirstOrDefault(m => string.Equals(m.Name, name, System.StringComparison.OrdinalIgnoreCase)
                    && System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute))
                    && m.GetParameters().All(p => p.ParameterType == typeof(global::app.actor.context.@this) || p.IsOptional));
 
@@ -497,9 +495,10 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     internal virtual bool IsFinal => Template == null;
 
-    // A C# class's plang identity — its namespace name, and the family it is a kind of with the kind it is, when it is
-    // one: pure facts of the class, found once each.
-    private readonly record struct Identity(string Namespace, (System.Type Family, string Kind)? Family);
+    // A C# class's plang identity — its namespace name, the family it is a kind of with the kind it is, when it is one,
+    // and its marked surface by member name, each name found the first time it is asked: pure facts of the class.
+    private readonly record struct Identity(string Namespace, (System.Type Family, string Kind)? Family,
+        System.Collections.Concurrent.ConcurrentDictionary<string, System.Reflection.MemberInfo?> Members);
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, Identity> _identities = new();
 
     private static Identity IdentityOf(System.Type t)
@@ -512,9 +511,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
                 if (b.IsDefined(typeof(global::app.Attributes.KindsAttribute), inherit: false))
                 {
                     var called = System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.Attributes.PlangTypeAttribute>(ct, inherit: false)?.Name ?? space;
-                    return new(space, (b, called[(called.LastIndexOf('.') + 1)..]));
+                    return new(space, (b, called[(called.LastIndexOf('.') + 1)..]), new(System.StringComparer.OrdinalIgnoreCase));
                 }
-            return new(space, null);
+            return new(space, null, new(System.StringComparer.OrdinalIgnoreCase));
         });
 
     /// <summary>The name a class's type goes by — the word it declares (<c>[PlangType("text")]</c>), else its

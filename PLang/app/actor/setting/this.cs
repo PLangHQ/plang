@@ -348,6 +348,18 @@ public sealed class @this : IDisposable
         return Class(node.Path) != null ? Instance(node.Path) : new data.@this(node.Path, node, context: _context);
     }
 
+    /// <summary>
+    /// <paramref name="action"/>'s settings as this scope sees them — <c>%!llm.decider.setting%</c>,
+    /// <c>%!llm.query.setting%</c>: its own class when it has one, else the action's node, whose options are its
+    /// properties.
+    /// </summary>
+    public async ValueTask<data.@this> Of(global::app.goal.step.action.@this action)
+    {
+        await Load();
+        var node = new global::app.type.item.setting.action.@this(action);
+        return Class(node.Path) != null ? Instance(node.Path) : new data.@this(node.Path, node, context: _context);
+    }
+
     // This run's values under path, the closest scope winning, as the options they set — a key deeper than
     // an option (path.llm.system) nests under it. A node set both as a whole and by its members (diff = true,
     // diff.deep = true) keeps its own value as its enabled. An actor's own class stops at that actor's scope.

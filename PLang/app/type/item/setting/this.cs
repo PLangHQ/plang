@@ -17,10 +17,14 @@ public class @this : global::app.type.item.@this, global::app.type.item.ICreate<
 
     /// <summary>A class of options: its path is its namespace — a module's read from the module, so
     /// <c>app.module.llm.setting</c> is <c>llm.setting</c>; a type's read where types are, at <c>app.type</c>, so
-    /// <c>app.type.item.size.setting</c> is <c>app.type.size.setting</c>.</summary>
+    /// <c>app.type.item.size.setting</c> is <c>app.type.size.setting</c>. A class declared inside what it configures
+    /// (an action's: <c>app.module.llm.decider.setting</c>, the action being a class) is read the same way, through
+    /// its owner: <c>llm.decider.setting</c>.</summary>
     protected @this()
     {
-        var path = GetType().Namespace!;
+        var path = GetType() is { DeclaringType: { } owner } declared
+            ? $"{declared.Namespace}.{owner.Name}.{declared.Name}"
+            : GetType().Namespace!;
         const string module = "app.module.", type = "app.type.item.";
         Path = path.StartsWith(module) ? path[module.Length..]
             : path.StartsWith(type) ? "app.type." + path[type.Length..]
