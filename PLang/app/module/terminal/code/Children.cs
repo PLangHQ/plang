@@ -14,11 +14,12 @@ internal static class Children
 {
     private static readonly Lazy<IntPtr> Job = new(Create);
 
-    /// <summary><paramref name="process"/> ends when this plang does.</summary>
-    internal static void Adopt(System.Diagnostics.Process process)
+    /// <summary><paramref name="process"/> ends when this plang does (a Windows program .NET started; a spawned one, on
+    /// Linux, ends with its input).</summary>
+    internal static void Adopt(child.@this process)
     {
-        if (!OperatingSystem.IsWindows() || Job.Value == IntPtr.Zero) return;
-        try { AssignProcessToJobObject(Job.Value, process.Handle); }
+        if (!OperatingSystem.IsWindows() || Job.Value == IntPtr.Zero || process is not child.managed.@this managed) return;
+        try { AssignProcessToJobObject(Job.Value, managed.Process.Handle); }
         catch (InvalidOperationException) { /* it has already ended */ }
     }
 

@@ -44,6 +44,12 @@ public partial class open : IContext
     /// <summary>Goal called for each line the program writes to stderr, the line as <c>%!data%</c>.</summary>
     public partial data.@this<global::app.goal.step.action.@this>? OnError { get; init; }
 
+    /// <summary>When true, the program gets a pipe pair beside its standard streams — it reads fd 3 and writes fd 4 (what
+    /// Chromium's <c>--remote-debugging-pipe</c> speaks DevTools on) — reached as <c>%program.pipe%</c>, a channel of the
+    /// actor that started it. Linux only.</summary>
+    [Default(false)]
+    public partial data.@this<global::app.type.item.@bool.@this> Pipe { get; init; }
+
     [Code]
     public partial ITerminal Terminal { get; }
 
