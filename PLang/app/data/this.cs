@@ -190,6 +190,9 @@ public partial class @this
     /// type history.</summary>
     public bool Is(type other) => _item?.Is(other) ?? false;
 
+    /// <summary>Is this value the type or the kind <paramref name="name"/> names — the value's own answer.</summary>
+    public bool Is(string name, global::app.type.list.@this types) => _item?.Is(name, types) ?? false;
+
     [JsonIgnore]
     public DateTime Created { get; }
 
