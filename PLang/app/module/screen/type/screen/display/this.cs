@@ -109,8 +109,36 @@ public sealed class @this : screen.@this
                 }
             }
         });
-        Wayland.Told += e => { told.Writer.TryWrite(e); return Task.CompletedTask; };
+        // and to what draws onto the display (a browser pairing its windows with their pages), in order, on a pump of
+        // its own: it waits on its program (DevTools), and must never wait behind a goal, nor a goal behind it
+        var followed = System.Threading.Channels.Channel.CreateUnbounded<JsonObject>();
+        _ = Task.Run(async () =>
+        {
+            await foreach (var e in followed.Reader.ReadAllAsync())
+            {
+                if (Followed is not { } follow) continue;
+                foreach (var one in follow.GetInvocationList().Cast<Func<JsonObject, global::app.actor.context.@this, Task>>())
+                {
+                    try { await one(e, context); }
+                    catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+                    {
+                        await context.Actor.Channel.Report(context.Error(new ServiceError(
+                            $"The screen could not hand on {e.ToJsonString()}: {ex.Message}", "ScreenEventFailed") { Exception = ex }));
+                    }
+                }
+            }
+        });
+        Wayland.Told += e =>
+        {
+            told.Writer.TryWrite(e);
+            followed.Writer.TryWrite(e);
+            return Task.CompletedTask;
+        };
     }
+
+    /// <summary>What happens to the display's windows, for what draws onto it (a browser pairs its windows with their
+    /// pages): each event in order, with the context the display was opened in.</summary>
+    internal event Func<JsonObject, global::app.actor.context.@this, Task>? Followed;
 
     // what happens to the windows, when %screen.verbose% asks (on under --debug): to the debug output with --debug,
     // else the error output (stderr) — never a goal (notes aren't errors; the screen's output is its frames)

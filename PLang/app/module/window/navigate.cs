@@ -25,7 +25,6 @@ public partial class navigate : IContext
             return Context.Error(new global::app.error.ActionError($"No such window: {Window.Peek()}", "WindowNotFound", 404));
         if (await Url.Value() is not global::app.type.item.text.@this typed)
             return Context.Error(new global::app.error.ActionError($"Nowhere to go: Url is {Url.Peek()}", "UrlMissing", 400));
-        await window.Navigate(typed.Clr<string>() ?? "");
-        return Context.Ok();
+        return await window.Navigate(typed.Clr<string>() ?? "", Context) ?? Context.Ok();
     }
 }

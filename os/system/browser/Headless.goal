@@ -1,0 +1,12 @@
+/ The browser off-screen: headless Chromium rendering one page, DevTools over its pipe (fd 3 and 4), no port. It starts
+/ blank, at its default size: the page and the size are the caller's to give, over the pipe — never on this command line.
+/ Headless Chromium says "HeadlessChrome" in its user agent and bot checks (Cloudflare) stop there, so it says a normal one.
+/ Trusted by origin (579): the program, its flags and environment are named here, with only the app's own anchor
+/ %!app.AbsolutePath%.
+Headless
+- start terminal '//usr/lib/chromium/chromium' with parameters '--headless', '--disable-gpu', '--hide-scrollbars',
+    '--no-first-run', '--no-default-browser-check', '--user-data-dir=%!app.AbsolutePath%/.browser',
+    '--remote-debugging-pipe',
+    '--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36',
+    'about:blank', keep running, with pipe, write to %program%
+- return %program%
