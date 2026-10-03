@@ -1,6 +1,0 @@
-Start
-- set %greeting% = 'hello'
-- set %name% = 'plang'
-- set %message% = '%greeting% %name%'
-- write out %message%
-- assert %message% equals 'hello plang'

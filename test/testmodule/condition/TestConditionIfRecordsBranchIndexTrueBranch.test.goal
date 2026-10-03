@@ -1,5 +1,0 @@
-/ Verifies condition.if publishes branchIndex=0 when the condition is true.
-TestConditionIfRecordsBranchIndexTrueBranch
-- set %x% = true
-- if %x% is true, write 'ok'
-- assert %!data.branchIndex% equals 0

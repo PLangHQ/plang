@@ -1,3 +1,0 @@
-Slow
-- timer.sleep 5000 milliseconds
-- write out 'should not reach here'
