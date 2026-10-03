@@ -38,8 +38,30 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// writes arrives as Data (an ask as an Ask), and what is sent to it goes as Data, signed.</summary>
     internal bool Plang { get; init; }
 
-    private readonly SemaphoreSlim _writing = new(1, 1);
     private Task? _reading;
+
+    /// <summary>The encoding its output is in (the terminal's Encoding setting): utf-8 unless set.</summary>
+    internal string OutputEncoding { get; init; } = "utf-8";
+
+    /// <summary>The actor that started it: its channels are that actor's, and nobody else's.</summary>
+    internal global::app.actor.@this? StartedBy { get; init; }
+
+    private global::app.channel.type.stream.@this? _input, _output, _error;
+
+    /// <summary>Its stdin as a channel: what is sent to it is written there, one writer at a time; closed, it reads
+    /// the end.</summary>
+    internal global::app.channel.type.stream.@this input => _input ??=
+        new("stdin", Os!.Input.BaseStream, global::app.channel.ChannelDirection.Output, ownsStream: true) { Actor = StartedBy! };
+
+    /// <summary>Its stdout as a channel of lines, in its encoding (a last line with no newline is a line too).</summary>
+    internal global::app.channel.type.stream.@this output => _output ??= Lines("stdout", Os!.Output.BaseStream);
+
+    /// <summary>Its stderr as a channel of lines, in its encoding.</summary>
+    internal global::app.channel.type.stream.@this error => _error ??= Lines("stderr", Os!.Error.BaseStream);
+
+    private global::app.channel.type.stream.@this Lines(string name, Stream stream)
+        => new(name, stream, global::app.channel.ChannelDirection.Input, ownsStream: true)
+            { Framed = true, End = "\n", KeepsLast = true, Encoding = OutputEncoding, Actor = StartedBy! };
 
     /// <summary>The OS process, handed to the step that started it to run it to its end (<c>terminal.start</c>): that
     /// step owns it from here and disposes it; this item holds it no longer.</summary>
@@ -78,9 +100,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                 line = Encoding.UTF8.GetString(written.ToArray()).ReplaceLineEndings(" ");
             }
         }
-        try { await Write(line); }
-        catch (IOException ex) { return context.Error(new ActionError($"Could not write to {Program}: {ex.Message}", "ProgramNotRunning", 409)); }
-        return context.Ok();
+        var sent = await Write(line, context);
+        return sent.Success ? context.Ok()
+            : context.Error(new ActionError($"Could not write to {Program}: {sent.Error?.Message}", "ProgramNotRunning", 409));
     }
 
     /// <summary>Waits for it to exit, its last lines delivered first; the value is its exit code — <c>terminal.wait</c>.</summary>
@@ -139,8 +161,7 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <paramref name="onOutput"/>, stderr to <paramref name="onError"/>, its last stderr lines kept.</summary>
     internal void Read(Call? onOutput, Call? onError, Context context)
     {
-        var os = Os!;
-        var lines = Lines(os);
+        var lines = Lines();
         _reading = Task.Run(async () =>
         {
             try
@@ -162,19 +183,30 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     /// <summary>Its stdout as binary messages ([u32 length, little-endian][bytes]): each, as it arrives, straight to
     /// <paramref name="screen"/> (no goal per message) and to <paramref name="onOutput"/> as binary; its stderr is text,
-    /// its last lines kept. A plang behind it takes calls to its goals (<c>%container.goal["Question"]%</c>): a call
-    /// goes down its input as a line, its answer comes back as a message of its own (kind 9, <c>{"reply": …}</c>).</summary>
-    internal void ReadMessages(Call? onOutput, global::app.module.screen.type.screen.@this? screen, Context context)
+    /// each line to <paramref name="onError"/> and its last lines kept. A plang behind it takes calls to its goals
+    /// (<c>%container.goal["Question"]%</c>): a call goes down its input as a line, its answer comes back as a message of
+    /// its own (kind 9, <c>{"reply": …}</c>).</summary>
+    internal void ReadMessages(Call? onOutput, Call? onError, global::app.module.screen.type.screen.@this? screen, Context context)
     {
         var os = Os!;
-        _ = Task.Run(async () =>
+        var errors = error;
+        var said = Task.Run(async () =>
         {
-            try { while (await os.Error.ReadLineAsync() is { } line) Heard(line); }
-            catch (Exception ex) when (ex is IOException or ObjectDisposedException) { }
+            while (await errors.Read() is { Success: true } line)
+            {
+                var text = (await line.Value())?.ToString() ?? "";
+                Heard(text);
+                if (onError != null) await global::app.module.on.code.Gate.Call(onError, Written(text, context), context);
+            }
         });
-        Remote.Link = Write;
+        Remote.Link = async line =>
+        {
+            var sent = await Write(line, context);
+            if (!sent.Success) throw new IOException(sent.Error?.Message);
+        };
         _reading = Task.Run(async () =>
         {
+            // binary is framed by its own lengths, not a channel's end: read off the stream itself
             await foreach (var message in Messages(os.Output.BaseStream))
             {
                 if (Reply(message) is { } reply)
@@ -187,37 +219,37 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
                     await global::app.module.on.code.Gate.Call(onOutput,
                         new Data("!data", new global::app.type.item.binary.@this(message), context.App.type.list["binary"], context: context), context);
             }
+            await said;   // its last stderr lines are delivered too
         });
     }
 
-    // one line on its stdin, one writer at a time
-    private async Task Write(string line)
-    {
-        var os = Os ?? throw new IOException($"{Program} has no input");
-        await _writing.WaitAsync();
-        try
-        {
-            await os.Input.WriteLineAsync(line);
-            await os.Input.FlushAsync();
-        }
-        finally { _writing.Release(); }
-    }
+    /// <summary>One line on its stdin, through its input channel (one writer at a time).</summary>
+    internal Task<Data> Write(string line, Context context)
+        => input.Write(context.Ok((Text)(line + System.Environment.NewLine)));
 
-    /// <summary>stdout and stderr as one queue of lines, completed when both streams end.</summary>
-    internal static ChannelReader<(bool error, string line)> Lines(code.child.@this os)
+    /// <summary>Its stdout and stderr as one queue of lines, completed when both channels end.</summary>
+    internal ChannelReader<(bool error, string line)> Lines()
     {
         var lines = System.Threading.Channels.Channel.CreateUnbounded<(bool error, string line)>();
-        _ = Task.WhenAll(
-                Pump(os.Output, false, lines.Writer),
-                Pump(os.Error, true, lines.Writer))
-            .ContinueWith(_ => lines.Writer.Complete(), TaskScheduler.Default);
+        // a read that fails (not the channel's end) ends the queue with why, so whoever reads it says so
+        _ = Task.WhenAll(Pump(output, false, lines.Writer), Pump(error, true, lines.Writer))
+            .ContinueWith(pumped => lines.Writer.Complete(pumped.Exception?.InnerException), TaskScheduler.Default);
         return lines.Reader;
     }
 
-    private static async Task Pump(StreamReader reader, bool isError, ChannelWriter<(bool, string)> writer)
+    // a channel's lines into the queue, until it ends
+    private static async Task Pump(global::app.channel.type.stream.@this channel, bool isError, ChannelWriter<(bool, string)> writer)
     {
-        while (await reader.ReadLineAsync() is { } line)
-            await writer.WriteAsync((isError, line));
+        while (true)
+        {
+            var line = await channel.Read();
+            if (!line.Success)
+            {
+                if (line.Error?.Key == "ChannelEnded") return;
+                throw new IOException($"{channel.Name}: {line.Error?.Message}");
+            }
+            await writer.WriteAsync((isError, (await line.Value())?.ToString() ?? ""));
+        }
     }
 
     /// <summary>Length-prefixed binary messages: [u32 length, little-endian][that many bytes].</summary>
