@@ -218,7 +218,7 @@ public class OnEventTests
     public async Task TwoParallelFirings_EachCallSeesItsOwnEvent()
     {
         // each handler waits between being handed its event and reading it — a shared slot would cross them
-        var sleep = Make.Step("wait", Make.Action(Ctx, "timer", "sleep", ("Ms", 50)));
+        var sleep = Make.Step("wait", Make.Action(Ctx, "timer", "sleep", ("Duration", "50ms")));
         Goal("WatchA", sleep, Keep("seenA", "%!event!item%"));
         Goal("WatchB", sleep, Keep("seenB", "%!event!item%"));
         var a = Goal("A");

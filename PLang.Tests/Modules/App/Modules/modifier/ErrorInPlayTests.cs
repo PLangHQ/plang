@@ -200,7 +200,7 @@ public class ErrorInPlayTests
         var sleep = global::PLang.Tests.Shared.Make.With(new PrAction
         {
             Module = ctx.App.Module("timer"), Name = "sleep",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 3000L, context: ctx) })
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("Duration", "3s", context: ctx) })
         }, ErrorHandlerCalling("Recover", ("order", "GoalFirst")),
            global::PLang.Tests.Shared.Make.Action(ctx, "on", "timeout", ("After", System.TimeSpan.FromMilliseconds(1))));
 

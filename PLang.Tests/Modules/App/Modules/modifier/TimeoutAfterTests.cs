@@ -29,7 +29,7 @@ public class TimeoutAfterTests
         {
             Module = _app.actor.list.User.Context.App.Module("timer"),
             Name = "sleep",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 30000, context: Ctx) })
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("Duration", "30s", context: Ctx) })
         };
 
     [Test]
@@ -115,7 +115,7 @@ public class TimeoutAfterTests
         {
             Module = _app.actor.list.User.Context.App.Module("timer"),
             Name = "sleep",
-            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("ms", 5000, context: Ctx) })
+            Property = global::PLang.Tests.Shared.Make.Properties(new List<global::app.data.@this> { new("Duration", "5s", context: Ctx) })
         }, global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error", ("Ignore", true)),
                 TimeoutModifier(50));
 

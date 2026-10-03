@@ -1,1 +1,1 @@
-Pause execution for Ms milliseconds, honouring the current cancellation token
+Pause execution for a duration, honouring the current cancellation token

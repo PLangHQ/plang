@@ -38,7 +38,7 @@ public class TaskTests
     private global::app.goal.step.action.@this Set(string name, object? value)
         => Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", name, "variable"), ("Value", value));
 
-    private global::app.goal.step.action.@this Sleep(int ms) => Make.Action(Ctx, "timer", "sleep", ("Ms", ms));
+    private global::app.goal.step.action.@this Sleep(int ms) => Make.Action(Ctx, "timer", "sleep", ("Duration", $"{ms}ms"));
 
     private global::app.goal.step.action.@this InParallel(string goal, params (string name, object? value)[] more)
         => Make.Action(Ctx, "goal", "call", new[] { ("Name", (object?)goal), ("Parallel", (object?)true) }.Concat(more).ToArray());

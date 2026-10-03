@@ -161,7 +161,7 @@ public class QueryToolTests
     [Test]
     public async Task Query_MixedBatch_APlainToolEndsBeforeTheNextIsCalled_AParallelOneRunsOn_ResultsInCallOrder()
     {
-        _app.goal.list.Add(Make.Goal(Ctx, "Gate", Make.Step("sleep", Make.Action(Ctx, "timer", "sleep", ("Ms", 20_000)))));
+        _app.goal.list.Add(Make.Goal(Ctx, "Gate", Make.Step("sleep", Make.Action(Ctx, "timer", "sleep", ("Duration", "20s")))));
         foreach (var gate in new[] { "g1", "g2" })
             await Ctx.Variable.Set(gate, (await Make.Action(Ctx, "goal", "call", ("Name", "Gate"), ("Parallel", true)).Start(Ctx)).Peek());
         Waits("A", "g1", until: "opened by C", otherwise: "ended on its own");

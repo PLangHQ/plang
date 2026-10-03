@@ -202,7 +202,7 @@ public class RunActionTests
         {
             ("timer", "sleep", new List<Data>
             {
-                new("Ms", 5000, context: _app.actor.list.User.Context) // 5s
+                new("Duration", "5s", context: _app.actor.list.User.Context) // 5s
             })
         });
 
