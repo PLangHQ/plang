@@ -26,3 +26,6 @@ Properties: `{"Name": "HandleContractError"}` — a goal called inside an error 
 
 Step text: `call Turn content=%content%, don't wait`
 Properties: `{"Name": "Turn", "Parameter": [{"name": "content", "value": "%content%"}], "Wait": false}` — "don't wait", "in the background", "and go on": the goal starts on its own and the step goes on at once; there is no result to write to.
+
+Step text: `call Backup in parallel`
+Properties: `{"Name": "Backup", "Parallel": true}` — `in parallel` is the parallel value; `in parallel(cpu: 2)` is `{"cpu": 2}`.
