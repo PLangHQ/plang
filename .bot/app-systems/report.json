@@ -1152,6 +1152,46 @@
         "health": "green (mapping) / red runtime (routed)",
         "notes": "Archive mapping fully correct incl. old compress/decompress wording. Runtime round-trip bug (DataHashMismatch) is core wire/signing, handed to coder. .pr committed as correct build; test passes once runtime fixed. My C# changes: none."
       }
+    },
+    {
+      "id": "e7b2a914-3c6d-4f8a-9b1e-2d5c7a0f6e43",
+      "bot": "docs",
+      "timestamp_start": "2026-10-03T00:00:00Z",
+      "timestamp_end": "2026-10-03T00:00:00Z",
+      "intent": "Write the text type teaching layer and the type-page generator (spec + Types.goal + template); land outstanding doc fixes.",
+      "before": {
+        "assumptions": "Q20 resolved (methods mirror C# names, parens, dot read); coder loader + verbatim type files live; Types.goal is docs' per Ingi.",
+        "risk": "Type page needs a parsed member .Note the catalog does not yet expose; member order in golden unverified until a render."
+      },
+      "plan": ".bot/app-systems/docs/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["os/system/type/text/type.guide.md", "os/system/type/text/length.notes.md", "os/system/type/text/toUpper.notes.md", "os/system/type/text/toLower.notes.md", "os/system/type/text/trim.notes.md", "os/system/type/text/replace.notes.md", "os/system/type/text/maxLength.notes.md", "os/system/type/text/grep.notes.md", "os/system/type/text/grepCount.notes.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "text type teaching: guide + per-member notes. Member set + semantics verified against PLang/app/type/item/text/this.cs (grep lines=context default 0; maxLength '...' marks cut). say forms per decision 574 (methods mirror C# names, parens, dot)."
+        },
+        {
+          "paths": ["Documentation/v0.2/type-reference-generation.md", "docs/Types.goal", "docs/templates/type.template"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Generator spec mirroring module-reference-generation.md with a byte-exact text golden; Types.goal + type.template mirror Modules.goal + module.template. Ready once coder exposes member .Note. Member order in golden reconciled at first render."
+        },
+        {
+          "paths": ["Documentation/v0.2/path-polymorphism-plan.md"],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Repointed status line from deleted docs/modules/{file,condition}.md to os/system/modules/{file,condition}/start.md (educator + architect flagged)."
+        }
+      ],
+      "after": {
+        "status": "text content + generator + spec committed and pushed to app-systems (25bb98d82..91123e003); one coder dependency (parsed member .Note) raised.",
+        "health": "green",
+        "notes": "Next: build Types.goal (cache:skip) once member .Note lands, reconcile golden member order, add TypePageTests; defining-plang-types.md kinds pass; os-bot plang-os-stable pages. Left loop/foreach Parallel line to the builder bot per architect heads-up."
+      }
     }
   ]
 }
