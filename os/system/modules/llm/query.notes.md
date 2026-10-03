@@ -1,8 +1,10 @@
-`llm.query system=…, user=…` → single `Messages` parameter of type `list<message>`:
+`llm.query system=…, user=…` → single `Message` parameter of type `list<message>`:
 
 ```json
 [{"Role":"system","Content":"…"},{"Role":"user","Content":"…"}]
 ```
+
+EVERY named part of the step — `system:`/`system=`, `user:`/`user=`, `assistant:` — is its own message in the list, in the order given. Never drop the `system` part and never collapse the parts into a single string: `system: analyze sentiment, user: %comment%` is `[{"Role":"system","Content":"analyze sentiment"},{"Role":"user","Content":"%comment%"}]`, not `Message="%comment%"`. A step with no named part is one `user` message (`ask the llm "…"`).
 
 `schema=…` → `Schema` parameter. If JSON-shaped, set `"type": {"name": "json"}` and emit as a structured object (not a string containing JSON).
 

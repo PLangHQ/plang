@@ -9,5 +9,5 @@ Properties: `{"Left": "%myList%", "Operator": "contains", "Right": 20}` — a qu
 Step text: `check if %name% starts with "plang", write to %isPlang%`
 Properties: `{"Left": "%name%", "Operator": "startswith", "Right": "plang"}`
 
-Step text: `check if %content% is empty, write out "nothing here"`
-Properties: `{"Left": "%content%", "Operator": "isempty"}` — `isempty` takes no `Right`. What follows a comparison is any action at all, not only a `variable.set`.
+Step text: `check if %content% is empty, write to %isEmpty%`
+Properties: `{"Left": "%content%", "Operator": "isempty"}` — `isempty` takes no `Right`; the `write to %isEmpty%` keeps the yes/no answer, its own variable.set.

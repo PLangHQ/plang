@@ -21,11 +21,11 @@ Properties: `{"Name": "MarkBig"}` — the condition is its own action; this one 
 Step text: `foreach %items%, call HandleItem item=%item%`
 Properties: `{"Name": "HandleItem", "Parameter": [{"name": "item", "value": "%item%"}]}` — the loop is its own action.
 
-Step text: `verify %data% with contracts ['C1'], on error call HandleContractError`
-Properties: `{"Name": "HandleContractError"}` — a goal called inside an error handler is an ordinary call.
+Step text: `read 'config.json', on error call HandleReadError`
+Properties: `{"Name": "HandleReadError"}` — a goal called inside an error handler is an ordinary call (the read is its own action; the call is in on.error's Recovery).
 
 Step text: `call Turn content=%content%, don't wait`
-Properties: `{"Name": "Turn", "Parameter": [{"name": "content", "value": "%content%"}], "Wait": false}` — "don't wait", "in the background", "and go on": the goal starts on its own and the step goes on at once; there is no result to write to.
+Properties: `{"Name": "Turn", "Parameter": [{"name": "content", "value": "%content%"}], "Parallel": true}` — "don't wait" / "in the background" / "and go on" is `Parallel=true`: the call runs beside the step and answers a task at once. There is no `Wait` property.
 
 Step text: `call Backup in parallel`
 Properties: `{"Name": "Backup", "Parallel": true}` — `in parallel` is the parallel value; `in parallel(cpu: 2)` is `{"cpu": 2}`.
