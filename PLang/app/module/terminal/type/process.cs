@@ -19,11 +19,17 @@ public sealed class Process : global::app.type.item.@this, global::app.type.item
     /// <summary>True until the program exits.</summary>
     [LlmBuilder, Out] public bool Running => Os is { HasExited: false };
 
-    internal System.Diagnostics.Process? Os { get; set; }
+    /// <summary>The operating system's process it is.</summary>
+    internal code.child.@this? Os { get; set; }
+
+    /// <summary>Its pipe pair (<c>terminal.open … with pipe</c>) as a channel: what is written goes to its fd 3, what it
+    /// writes on its fd 4 is read — each message ended as the channel's end says (a newline unless set: DevTools'
+    /// pipe ends each with NUL). Null when it was started without one.</summary>
+    [LlmBuilder, Out] public global::app.channel.type.stream.@this? pipe { get; internal set; }
 
     /// <summary>The OS process, handed to the step that started it to run it to its end (<c>terminal.start</c>): that
     /// step owns it from here and disposes it; this item holds it no longer.</summary>
-    internal System.Diagnostics.Process Take()
+    internal code.child.@this Take()
     {
         var os = Os ?? throw new InvalidOperationException($"{Program} has no process to take");
         Os = null;

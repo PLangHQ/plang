@@ -56,7 +56,7 @@ public sealed class Default : ITerminal
     {
         info.UseShellExecute = false;
         var watch = Stopwatch.StartNew();
-        var started = await Launch(info, program, sandbox, context);
+        var started = await Launch(info, program, sandbox, pipe: false, context);
         if (!started.Success) return data.@this<Text>.From(started);
         using var process = (await started.Value())!.Take();
         Children.Adopt(process);
@@ -79,12 +79,10 @@ public sealed class Default : ITerminal
         {
             return data.@this<Text>.From(context.Error(new ActionError("The user declined administrator rights.", "ElevationDeclined", 403)));
         }
-        using (process)
-        {
-            if (process == null) return data.@this<Text>.From(context.Error(new ActionError($"Could not start {program.Absolute}", "ProcessStartFailed", 500)));
-            var stopped = await WaitAsync(process, ct);
-            return Result(context, "", "", stopped ? -1 : process.ExitCode, watch.Elapsed, program, stopped);
-        }
+        if (process == null) return data.@this<Text>.From(context.Error(new ActionError($"Could not start {program.Absolute}", "ProcessStartFailed", 500)));
+        using var elevatedChild = new child.managed.@this(process);
+        var stopped = await WaitAsync(elevatedChild, ct);
+        return Result(context, "", "", stopped ? -1 : elevatedChild.ExitCode, watch.Elapsed, program, stopped);
     }
 
     // Output and error are read line by line. Both streams feed one queue, so the OnOutput and
@@ -114,12 +112,12 @@ public sealed class Default : ITerminal
         var max = (int)Math.Min(setting.MaxOutputSize.ToDouble(), int.MaxValue);
 
         var watch = Stopwatch.StartNew();
-        var started = await Launch(info, program, sandbox, context);
+        var started = await Launch(info, program, sandbox, pipe: false, context);
         if (!started.Success) return data.@this<Text>.From(started);
         using var process = (await started.Value())!.Take();
         Children.Adopt(process);
-        if (input != null) await process.StandardInput.WriteAsync(input);
-        process.StandardInput.Close();
+        if (input != null) await process.Input.WriteAsync(input);
+        process.Input.Close();
 
         var lines = Lines(process);
         var output = new StringBuilder();
@@ -140,7 +138,7 @@ public sealed class Default : ITerminal
         catch (OperationCanceledException) when (ct.IsCancellationRequested)
         {
             stopped = true;
-            process.Kill(entireProcessTree: true);
+            process.Kill();
         }
         return Result(context, output.ToString().TrimEnd('\r', '\n'), error.ToString().TrimEnd('\r', '\n'),
             stopped ? -1 : process.ExitCode, watch.Elapsed, program, stopped);
@@ -158,12 +156,16 @@ public sealed class Default : ITerminal
         Redirect(info, setting);
         var onOutput = action.OnOutput == null ? null : await action.OnOutput.Value();
         var onError = action.OnError == null ? null : await action.OnError.Value();
+        var pipe = (await action.Pipe.Value())!.Value;
+        if (pipe && !OperatingSystem.IsLinux())
+            return data.@this<Process>.From(context.Error(new ActionError("A program gets a pipe pair on Linux only.", "NotSupported", 400)));
 
-        var started = await Launch(info, program, sandbox, context);
+        var started = await Launch(info, program, sandbox, pipe, context);
         if (!started.Success) return started;
-        var os = (await started.Value())!.Os!;
+        var launched = (await started.Value())!;
+        var os = launched.Os!;
         Children.Adopt(os);   // it ends with this plang, however this plang ends
-        var running = new Process { Program = program.Absolute, Id = os.Id, Os = os, Plang = SpeaksPlang(info, context) };
+        var running = new Process { Program = program.Absolute, Id = os.Id, Os = os, Plang = SpeaksPlang(info, context), pipe = launched.pipe };
 
         // binary messages when asked — or when the output goes to a screen, which takes nothing else
         var screen = action.OutputTo == null ? null : await action.OutputTo.Value();
@@ -171,18 +173,18 @@ public sealed class Default : ITerminal
         {
             // stdout is [u32 length][bytes] messages: each one, as it arrives, straight to the screen
             // it goes to (no goal per message), and to OnOutput as binary when there is one
-            _ = Pump(os.StandardError, true, System.Threading.Channels.Channel.CreateUnbounded<(bool, string)>().Writer);
+            _ = Pump(os.Error, true, System.Threading.Channels.Channel.CreateUnbounded<(bool, string)>().Writer);
             // a plang behind it takes calls to its goals (%container.goal["Question"]%): a call goes down its input as a
             // line; its answer comes back as a message of its own (kind 9, {"reply": …}) to the call waiting on it
             running.Remote.Link = async line =>
             {
                 await running.Writing.WaitAsync();
-                try { await os.StandardInput.WriteLineAsync(line); await os.StandardInput.FlushAsync(); }
+                try { await os.Input.WriteLineAsync(line); await os.Input.FlushAsync(); }
                 finally { running.Writing.Release(); }
             };
             running.Reading = Task.Run(async () =>
             {
-                await foreach (var message in Messages(os.StandardOutput.BaseStream))
+                await foreach (var message in Messages(os.Output.BaseStream))
                 {
                     if (Reply(message) is { } reply)
                     {
@@ -251,8 +253,8 @@ public sealed class Default : ITerminal
         await running.Writing.WaitAsync();
         try
         {
-            await os.StandardInput.WriteLineAsync(line);
-            await os.StandardInput.FlushAsync();
+            await os.Input.WriteLineAsync(line);
+            await os.Input.FlushAsync();
         }
         catch (IOException ex) { return context.Error(new ActionError($"Could not write to {running.Program}: {ex.Message}", "ProgramNotRunning", 409)); }
         finally { running.Writing.Release(); }
@@ -275,7 +277,7 @@ public sealed class Default : ITerminal
     private static async Task<data.@this> StopAsync(stop action)
     {
         var running = await action.Process.Value();
-        if (running?.Os is { HasExited: false } os) os.Kill(entireProcessTree: true);
+        if (running?.Os is { HasExited: false } os) os.Kill();
         return action.Context.Ok();
     }
 
@@ -306,13 +308,30 @@ public sealed class Default : ITerminal
         return held == null ? (null, refused) : ((ready.Value.info, ready.Value.program, held), null);
     }
 
-    /// <summary>The program started — held to its permissions when it has some; or why it isn't.</summary>
-    private static Task<data.@this<Process>> Launch(ProcessStartInfo info, FilePath program, Sandbox? sandbox, actor.context.@this context)
+    /// <summary>The program started — held to its permissions when it has some, spawned with a pipe pair when it asks
+    /// for one; or why it isn't.</summary>
+    private static Task<data.@this<Process>> Launch(ProcessStartInfo info, FilePath program, Sandbox? sandbox, bool pipe,
+        actor.context.@this context)
     {
+        child.@this Started() => pipe
+            ? child.spawned.@this.Start(info, pipe: true)
+            : new child.managed.@this(System.Diagnostics.Process.Start(info)
+                ?? throw new InvalidOperationException($"Could not start {info.FileName}"));
         try
         {
-            var os = sandbox?.Start(info) ?? System.Diagnostics.Process.Start(info)!;
-            return Task.FromResult(context.Ok<Process>(new Process { Program = program.Absolute, Id = os.Id, Os = os }));
+            var os = sandbox?.Start(Started) ?? Started();
+            // the pipe pair is a channel of the program's, belonging to the actor that started it and nobody else (not
+            // listed among its named channels: each program has its own): messages each ended — a newline, until the
+            // one who reads it sets another end
+            var channel = os.Pipe is { } pair
+                ? new global::app.channel.type.stream.@this("pipe", pair, ownsStream: true) { Framed = true, Actor = context.Actor! }
+                : null;
+            return Task.FromResult(context.Ok<Process>(new Process { Program = program.Absolute, Id = os.Id, Os = os, pipe = channel }));
+        }
+        catch (Exception ex) when (pipe && sandbox == null && ex is InvalidOperationException or PlatformNotSupportedException)
+        {
+            return Task.FromResult(data.@this<Process>.From(context.Error(new ActionError(
+                $"Could not start {program.Absolute}: {ex.Message}", "ProcessStartFailed", 500))));
         }
         // the kernel couldn't hold it: it isn't started, never started free
         catch (Exception ex) when (sandbox != null && ex is not (OutOfMemoryException or StackOverflowException))
@@ -375,12 +394,12 @@ public sealed class Default : ITerminal
     }
 
     /// <summary>stdout and stderr as one queue of lines, completed when both streams end.</summary>
-    private static ChannelReader<(bool error, string line)> Lines(System.Diagnostics.Process process)
+    private static ChannelReader<(bool error, string line)> Lines(child.@this process)
     {
         var lines = System.Threading.Channels.Channel.CreateUnbounded<(bool error, string line)>();
         _ = Task.WhenAll(
-                Pump(process.StandardOutput, false, lines.Writer),
-                Pump(process.StandardError, true, lines.Writer))
+                Pump(process.Output, false, lines.Writer),
+                Pump(process.Error, true, lines.Writer))
             .ContinueWith(_ => lines.Writer.Complete(), TaskScheduler.Default);
         return lines.Reader;
     }
@@ -421,12 +440,12 @@ public sealed class Default : ITerminal
     }
 
     // True when the timeout stopped the program.
-    private static async Task<bool> WaitAsync(System.Diagnostics.Process process, CancellationToken ct)
+    private static async Task<bool> WaitAsync(child.@this process, CancellationToken ct)
     {
         try { await process.WaitForExitAsync(ct); return false; }
         catch (OperationCanceledException)
         {
-            process.Kill(entireProcessTree: true);
+            process.Kill();
             return true;
         }
     }

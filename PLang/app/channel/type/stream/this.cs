@@ -42,9 +42,13 @@ public sealed class @this : global::app.channel.type.session.@this
     public static @this Memory(string name, ChannelDirection direction = ChannelDirection.Bidirectional)
         => new(name, new MemoryStream(), direction, ownsStream: true);
 
-    /// <summary>Each text message ends with a newline — console and pipe ergonomics (NDJSON). A stream that
-    /// carries one value (a file, a request body) is not framed.</summary>
+    /// <summary>Each text message ends with <see cref="End"/> — console and pipe ergonomics (NDJSON) — and a read takes
+    /// one message. A stream that carries one value (a file, a request body) is not framed.</summary>
     [global::app.Debug] public bool Framed { get; init; }
+
+    /// <summary>What ends each message on a framed channel: a newline unless set. DevTools' pipe ends each with NUL — its
+    /// reader sets that when it takes the channel.</summary>
+    [global::app.Debug] public string End { get; set; } = System.Environment.NewLine;
 
     /// <summary>It writes and reads in the format in play for the writer (<c>%!app.type.format%</c>), not a format of
     /// its own — the console: text for a person at a terminal, plang's own for a program that runs this plang.</summary>
@@ -79,10 +83,13 @@ public sealed class @this : global::app.channel.type.session.@this
             try
             {
                 var result = await format.Encode(Stream, data, context, encoding: ResolveEncoding(), ct: ct);
-                // A framed channel delimits each text message with a newline — and, following the format in play, each
+                // A framed channel ends each text message with its end — and, following the format in play, each
                 // whole Data too: one per line, for the program reading it. Binary content is not framed.
                 if (result.Success && Framed && (format.IsText || InPlay))
-                    await Stream.WriteAsync(ResolveEncoding().GetBytes(System.Environment.NewLine), ct);
+                {
+                    await Stream.WriteAsync(ResolveEncoding().GetBytes(End), ct);
+                    await Stream.FlushAsync(ct);
+                }
                 return result;
             }
             finally { _writing.Release(); }
@@ -108,8 +115,15 @@ public sealed class @this : global::app.channel.type.session.@this
         {
             // The boundary: read the source bytes and let the base stamp
             // {type, kind} from Mime into lazy Data — no bare text, no eager
-            // parse (the value materializes on first touch).
-            var bytes = await ReadAllBytesAsync(ct);
+            // parse (the value materializes on first touch). A framed channel reads one message.
+            byte[] bytes;
+            if (Framed)
+            {
+                if (await Message(ct) is not { } message)
+                    return global::app.data.@this.FromError(new ServiceError($"Channel '{Name}' has ended", "ChannelEnded", 410));
+                bytes = message;
+            }
+            else bytes = await ReadAllBytesAsync(ct);
             if (InPlay && Context is { } context)
                 return await FormatFor(context).Decode(bytes, context, Name, ct: ct);
             return await Read(bytes, ct);
@@ -181,6 +195,37 @@ public sealed class @this : global::app.channel.type.session.@this
         {
             return action.Context.Error(new ServiceError(
                 $"Failed to ask on channel '{Name}': {ex.Message}", "AskError") { Exception = ex });
+        }
+    }
+
+    // what was read past the last message's end: the start of the next one
+    private byte[] _ahead = new byte[1 << 16];
+    private int _held;
+
+    /// <summary>The next message, without its end; null when the stream ends first (a part read before the end is
+    /// dropped: it was never a message).</summary>
+    private async Task<byte[]?> Message(CancellationToken ct)
+    {
+        var end = ResolveEncoding().GetBytes(End);
+        var searched = 0;
+        while (true)
+        {
+            var at = _ahead.AsSpan(searched, _held - searched).IndexOf(end);
+            if (at >= 0)
+            {
+                var found = searched + at;
+                var message = _ahead.AsSpan(0, found).ToArray();
+                var rest = found + end.Length;
+                _ahead.AsSpan(rest, _held - rest).CopyTo(_ahead);
+                _held -= rest;
+                return message;
+            }
+            // what was searched holds no end (an end may straddle the next read: search again from just before it)
+            searched = Math.Max(0, _held - end.Length + 1);
+            if (_held == _ahead.Length) System.Array.Resize(ref _ahead, _ahead.Length * 2);
+            var read = await Stream.ReadAsync(_ahead.AsMemory(_held), ct);
+            if (read == 0) return null;
+            _held += read;
         }
     }
 
