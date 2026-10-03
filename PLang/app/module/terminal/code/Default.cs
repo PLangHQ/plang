@@ -29,7 +29,9 @@ public sealed class Default : ITerminal
         var setting = context.Setting.Of<setting.@this>();
         var (ready, failure) = await Prepare(context, setting, action.App, action.Parameter, action.Environment, action.WorkingDirectory, action.Permission);
         if (ready == null) return data.@this<Text>.From(failure!);
-        var (info, program, sandbox) = ready.Value;
+        var (info, program, sandbox, trusted) = ready.Value;
+        // a start trusted by its origin runs by the terminal's defaults, none of the actor's settings (579)
+        if (trusted) setting = new();
 
         var timeout = setting.TimeoutInSec.ToDouble();
         using var cts = timeout > 0 ? new CancellationTokenSource(TimeSpan.FromSeconds(timeout)) : new CancellationTokenSource();
@@ -152,7 +154,9 @@ public sealed class Default : ITerminal
         var setting = context.Setting.Of<setting.@this>();
         var (ready, failure) = await Prepare(context, setting, action.App, action.Parameter, action.Environment, action.WorkingDirectory, action.Permission);
         if (ready == null) return data.@this<Process>.From(failure!);
-        var (info, program, sandbox) = ready.Value;
+        var (info, program, sandbox, trusted) = ready.Value;
+        // a start trusted by its origin runs by the terminal's defaults, none of the actor's settings (579)
+        if (trusted) setting = new();
         Redirect(info, setting);
         var onOutput = action.OnOutput == null ? null : await action.OnOutput.Value();
         var onError = action.OnError == null ? null : await action.OnError.Value();
@@ -290,8 +294,8 @@ public sealed class Default : ITerminal
     // ---- shared ------------------------------------------------------------------------------
 
     /// <summary>The program found and permitted, with its arguments, environment and folder, and the hold on it when
-    /// the step gives it permissions; or why not.</summary>
-    private static async Task<((ProcessStartInfo info, FilePath program, Sandbox? sandbox)? ready, data.@this? failure)> Prepare(
+    /// the step gives it permissions, and whether it is trusted by its origin (579); or why not.</summary>
+    private static async Task<((ProcessStartInfo info, FilePath program, Sandbox? sandbox, bool trusted)? ready, data.@this? failure)> Prepare(
         actor.context.@this context, setting.@this setting, data.@this<Text> app,
         data.@this<global::app.type.item.list.@this>? parameter, data.@this<global::app.type.item.dict.@this>? environment,
         data.@this<global::app.type.item.path.@this>? workingDirectory,
@@ -309,9 +313,9 @@ public sealed class Default : ITerminal
                 $"The step gives the program permissions, but {named} holds none — leave Permission out to run it free.", "PermissionInvalid", 400)));
         var (ready, failure) = await Prepare(context, setting, app, parameter, environment, workingDirectory, held: given != null);
         if (ready == null) return (null, failure);
-        if (given == null) return ((ready.Value.info, ready.Value.program, null), null);
+        if (given == null) return ((ready.Value.info, ready.Value.program, null, ready.Value.trusted), null);
         var (held, refused) = await Sandbox.Of(given.Rows(context), ready.Value.program, context);
-        return held == null ? (null, refused) : ((ready.Value.info, ready.Value.program, held), null);
+        return held == null ? (null, refused) : ((ready.Value.info, ready.Value.program, held, ready.Value.trusted), null);
     }
 
     /// <summary>The program started — held to its permissions when it has some, spawned with a pipe pair when it asks
@@ -347,7 +351,7 @@ public sealed class Default : ITerminal
         }
     }
 
-    private static async Task<((ProcessStartInfo info, FilePath program)? ready, data.@this? failure)> Prepare(
+    private static async Task<((ProcessStartInfo info, FilePath program, bool trusted)? ready, data.@this? failure)> Prepare(
         actor.context.@this context, setting.@this setting, data.@this<Text> app,
         data.@this<global::app.type.item.list.@this>? parameter, data.@this<global::app.type.item.dict.@this>? environment,
         data.@this<global::app.type.item.path.@this>? workingDirectory, bool held = false)
@@ -408,7 +412,7 @@ public sealed class Default : ITerminal
             foreach (var (key, value) in (await environment.Value())!.Clr<Dictionary<string, object?>>() ?? new())
                 env[key] = value;
         foreach (var (key, value) in env) info.Environment[key] = value?.ToString();
-        return ((info, program), null);
+        return ((info, program, trusted), null);
     }
 
     // stdin is always the program's own: written by plang, never inherited — inherited, it would
