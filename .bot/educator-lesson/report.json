@@ -108,6 +108,66 @@
         "health": "good",
         "notes": "Next: lesson 4 (smells). Open: doc/code table to docs bot; FINDINGS 28-31."
       }
+    },
+    {
+      "id": "deba891b-fb90-43f9-acfd-2ae5d0b1bf9b",
+      "bot": "educator",
+      "timestamp_start": "2026-10-02T00:00:00Z",
+      "timestamp_end": "2026-10-03T01:31:25.090Z",
+      "intent": "Short lessons C4 and D1-D5, module pages to os/system/modules/<m>/start.md, studio repairs after builder changes, friction review",
+      "before": {
+        "assumptions": "C4 and Track D buildable on app-systems; studio works",
+        "risk": "builder churn breaks lessons or the studio"
+      },
+      "plan": ".bot/educator-lesson/educator/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "docs/Modules.goal",
+            "docs/.build/modules.pr"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "three modules, saves via /system (decision 522); landed 7460cdd94"
+        },
+        {
+          "paths": [
+            "docs/modules/file.md",
+            "docs/modules/condition.md",
+            "docs/modules/loop.md",
+            "docs/modules/index.md"
+          ],
+          "type": "delete",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Ingi: remove now; index links to generated start.md (e5073b0ef)"
+        },
+        {
+          "paths": [
+            ".bot/app-systems/educator/friction.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "user review of the builder for the architect/Ingi"
+        },
+        {
+          "paths": [
+            ".bot/educator-lesson/educator/v4/plan.md",
+            ".bot/educator-lesson/educator/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Track D plan and state"
+        }
+      ],
+      "after": {
+        "status": "C4, D1-D5 on the course page; D6 and the loop page held on coder/builder fixes",
+        "health": "good",
+        "notes": "many builder issues found and traced (21,25,28,32,42-44, Conversation, parallel foreach)"
+      }
     }
   ]
 }

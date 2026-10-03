@@ -1,57 +1,60 @@
 # educator: summary
 
-**Version:** v3 (2026-10-01). v1 = lesson 1 "What is plang". v2 = lesson 2 "Your first plang program". v3 = lesson 3 "OBP, the object-based pattern", the mp4 export, and the course web page. All three lessons are voiced, checked, exported to mp4 and on the course page.
+**Version:** v4 (2026-10-01 → 2026-10-03), the short-lesson curriculum. Plan: `v4/plan.md`; curriculum:
+`/shared/educator/course/CURRICULUM.md`.
 
 ## What this is
 
-Teaching lessons for developers new to plang, written as narrated, hand-drawn animations:
-- **studio** (`/shared/educator/studio`): an OBP animation library plus a PLang app that voices a lesson and writes its page. PLang does the building; JS is the in-browser engine; Node + Playwright only check and export.
-- **course** (`/shared/educator/course/<lesson>/`): each lesson as `lesson.md` plus code that was built and run for real; the animation is made last, from it.
-- **the course page** (`/shared/educator/index.html`, Windows `C:\Dev\claude\shared\educator\index.html`): every exported lesson as a card; each lesson's mp4 with chapters (and their sources) and the narration as a transcript that follows the video.
+Teaching material for developers new to plang: short, one-idea lessons, each written as text plus code that
+was built and run for real, then animated with narration and exported to mp4.
+- **course** (`/shared/educator/course/<track>/`): `lesson.md` plus `code/<lesson>/` (Start.goal, data, `output.txt`, `.build`).
+- **studio** (`/shared/educator/studio`): a plang app that voices a lesson (Gemini TTS via OpenRouter) and writes its
+  page, plus the JS animation engine. Node + Playwright check and export.
+- **course page**: `/shared/educator/index.html` (Windows `C:\Dev\claude\shared\educator\index.html`), written by `studio/Hub.goal`.
 
 ## State
 
-| Lesson | Course text | Animation | mp4 |
-|---|---|---|---|
-| 1 What is plang | `course/01-what-is-plang` | `animations/what-is-plang` | 98.7 s |
-| 2 Your first plang program | `course/02-first-program` | `animations/first-program` | 206.5 s (Writer build-and-run screens still pending Ingi) |
-| 3 OBP, the object-based pattern | `course/03-obp-pattern` | `animations/obp-pattern` | 231.4 s |
-| Advanced: OBP in C# | `course/obp-in-csharp` (C# programs run with `dotnet run`) | not animated | — |
+| Track | Lessons on the course page | Held |
+|---|---|---|
+| intro | 1 what is plang, 2 first program, 3 OBP, 4 OBP smells | — |
+| A holding data | A1–A6 | — |
+| B deciding and repeating | B1–B5 | B6 sleep (builder issue 19) |
+| C files | C1–C4 | — |
+| D the outside world | D1–D5 | D6 llm at run time (coder: Conversation misread, template in the message, ask-once key flow, decision 598); D7 database (no db module) |
+| E making it solid | — | not started |
 
-**Pipeline for a lesson** (`studio/`):
-1. `lesson/<topic>/lesson.json` (scenes, voice lines, cues, source notes) + `art.js` (one drawing per scene).
-2. `plang Draft topic=<topic>` writes the page with estimated timings; `plang Start topic=<topic>` voices every line (Gemini TTS via OpenRouter, cached by hash) and writes the page.
-3. Check: `node check/voices.js <topic>` (every take transcribed against its line; `check/ask.js` for targeted questions), `node check/shots.js <topic>` (3 shots a chapter), `node check/listen.js <topic>`.
-4. `node export/mp4.js <topic>`: 720p, `--disable-gpu`, 3 browsers (the benchmark winner, `export/bench.js`), writes `<topic>.mp4`, `<topic>.timeline.json` and `<topic>.jpg`.
-5. `plang Hub` writes the course page from the timelines.
+Also:
+- **Module pages:** `docs/Modules.goal` writes `os/system/modules/{file,condition,loop}/start.md`. It saves through
+  `/system/…` (decision 522) and is on app-systems as 7460cdd94. The hand-written `docs/modules/{file,condition,loop}.md`
+  were removed (Ingi, e5073b0ef). The loop page's regeneration for foreach's `Parallel` is held: both new parallel
+  examples fail (run-time `%item%` error; the build crashes on `wait for %task%`). It's with plang-75.
+- **Friction review** (Ingi's ask: a user's review of the builder): `.bot/app-systems/educator/friction.md`, on this branch.
 
-**Player speed (2026-10-01, Ingi measured on his machine):** the pages first crawled (the live sound scheduled the whole film at once: thousands of audio nodes). Fixed in steps: just-in-time sound windows; drawing capped at 30 fps (`?fps=` to change); then, because the live synthesis still cost ~half a core (Ingi: picture only at 12 fps ~50% CPU, with live sound ~100%), each page now plays a pre-rendered `<topic>.mp3` beside it (`film.sound.track`, chosen once at load; the live engine is the fallback). `node export/sound.js <topic>` writes the mp3; `export/mp4.js` writes it too. `?sound=0` plays the picture alone (for measuring). Drawing is the remaining cost; PixiJS (GPU) is the proposed next step if needed.
+## Key decisions
 
-**Also:** lesson 4 "The smells" (`course/04-obp-smells`, `animations/obp-smells`) and a short, "Getting started is easy" (`animations/easy-start`, kind "short", not on the course page). `frame.during(line, a, b)` added: beats as fractions of a voice line (`frame.on` is seconds); lessons 3, 4 and the short use it.
-
-**v3 decisions (Ingi):**
-- OBP lesson: the pattern, any language; two lessons (laws + rules, then the smells). Then: C# only, simpler, problem first; then move the C# out as an advanced lesson; lesson 3 = the laws lightly, the root in plang (`%!app.type%`), the rules, breaking a rule as a recorded exception; then add the new dot-case rule ("a name is a path") with a real `.pr`.
-- Export to mp4 because the HTML pages didn't play in Ingi's browser; then a web UI over the lessons.
-
-**Open:**
-- Lesson 4, the smells (`obp-smells.md`), not started.
-- The OBP doc's examples differ from the code in six places (table at the end of `course/obp-in-csharp/lesson.md` and the previous lesson 3 text); not yet sent to the docs bot (asked Ingi).
-- `%!app.product%` (an app's own concepts on the root) isn't possible today; taught with plang's own concepts.
-- FINDINGS 28-31 (`studio/FINDINGS.md`): piped permission answers reach only the first prompt; `%!app.goal.list%` resolve cycle; one "timeout" phrase compiling to two timeouts; "a this" in an error message.
-- Doing the export in plang needs browser actions that `plang-os`'s browser module doesn't have yet (run JS, capture a frame now, launch flags); asked Ingi who adds them.
+- Every lesson claim is built in fresh folders (2–6×) and run. The `.pr` is checked, not just the output. Probes
+  look like the lesson code, with no explaining comments (a comment steers the builder).
+- When a step builds wrong, trace what the model was given before reporting:
+  `--debug={"llm":{"system":true,"user":true,"response":true},"goal":"NoSuchGoalX","length":{"max":50000}}`.
+- Track D uses api.frankfurter.app and httpbin.org (Ingi OK'd). Never a secret to httpbin. D6 teaches nothing about
+  keys (plang asks once, decision 598).
+- Pushing to app-systems needs Ingi's yes each time (fast-forward, no force).
 
 ## Code example
 
-A lesson scene places every beat on a word of its voice line, and draws cards with the engine's new `film.paper.label`:
-
-```js
-film.scene.art.root = frame => {
-  label('app', { size: 96, color: P.sun, seed: 'app' }).draw(frame, 960, 250, { scale: frame.on(0, 0.4, 0.8, 'outBack') });
-  const a0 = frame.word(2, 0.62);   // "like reading an address"
-  arrow(frame, [940, 320], [670, 420], [390, 580], P.clay, frame.at(a0, a0 + 0.7), 'addr', 9);
-};
+The shape every short lesson's code takes (D2):
+```plang
+Start
+- get https://api.frankfurter.app/latest?from=EUR&to=USD, write to %rates%
+- write out "1 euro is %rates.rates.USD% dollars, on %rates.date%"
+```
+and its "what plang wrote", read from `.build/start.pr`:
+```
+http.request    Url: https://api.frankfurter.app/latest?from=EUR&to=USD
+variable.set    Name: %rates%   Value: %!data%
 ```
 
-## v3 after review
+## Next
 
-Ingi's review of the first lesson 3 text: verbatim production excerpts in two languages were noisy, and "I didn't understand why it's good that any object can have access to context". Response: one small teaching example shown failing first (a static user mixes two concurrent checkouts: `Ada: 4990 USD`, 5/5 runs), then the context fixing it, and the cost of one more need measured with a real diff (3 classes change vs 2). Later moved to the advanced lesson; lesson 3 now explains the laws in plain words.
+- D6 when the coder's three changes land. Then the loop page (re-pin its golden) when the parallel examples run.
+- Track E. A6's optional `0.1 + 0.2` line and C1's one-step exists at their next re-export.
