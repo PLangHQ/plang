@@ -25,13 +25,22 @@ public partial class @this
     // parameter, the "a" branch in this file should pass a far-future
     // TimeSpan (architect's "AlwaysExpiry" intent). Tracked in todos.md.
 
-    public async Task<data.@this> Authorize(Verb verb, actor.context.@this context)
+    /// <summary>The actor may <paramref name="verb"/> this path: in its own root it may; else a grant it holds, or its
+    /// answer when asked. <paramref name="named"/>: the asking step names this path itself — written in the step, no
+    /// %ref%, nothing its caller gave — and then a step of a goal that ships with plang (under the os folder,
+    /// <c>/system/</c>) is trusted by its origin (decision 579): granted without asking, and nothing stored. The trust is
+    /// the asking step's own goal's, never a goal further up the call: a user goal an os goal calls stays the user's, and
+    /// a path an os goal was handed (a parameter, a variable) is asked as any other.</summary>
+    public async Task<data.@this> Authorize(Verb verb, actor.context.@this context, bool named = false)
     {
         var actor = context?.Actor
             ?? throw new InvalidOperationException("Path.Authorize requires the caller's context with an actor");
 
         // In-root paths are auto-granted — the actor owns its own root.
         if (IsInRoot(context)) return context.Ok();
+
+        // What ships with plang asks nobody for what it names itself (579) — the actor stays the user's own
+        if (named && AskedByOs(context)) return context.Ok();
 
         var existing = await actor.Permission.Find(this, verb);
         if (existing != null) return context.Ok();
@@ -78,6 +87,16 @@ public partial class @this
             app = app.Parent;
         }
         return false;
+    }
+
+    /// <summary>The step asking runs in a goal under the runtime's os folder — what ships with plang. Its own goal (the
+    /// call frame running the step), never one further up.</summary>
+    private static bool AskedByOs(actor.context.@this context)
+    {
+        var os = context.App?.OsAbsolutePath;
+        if (string.IsNullOrEmpty(os) || context.call?.Goal?.Folder is not { } folder) return false;
+        var under = os.EndsWith(PathHelper.DirectorySeparatorChar) ? os : os + PathHelper.DirectorySeparatorChar;
+        return folder.Absolute.StartsWith(under, RootComparison) || string.Equals(folder.Absolute, os, RootComparison);
     }
 
     /// <summary>
