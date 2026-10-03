@@ -17,6 +17,9 @@ Right — what Left is compared to · say: the value after the operator · build
 
 `if %name% is "Ingi", write out "hi"` is `condition.if(Left=%name%, Operator="==", Right="Ingi") { output.write(Data="hi") }`.
 
+`if "= %oldHash%" is "= %hash%", call Keep` is `condition.if(Left="= %oldHash%", Operator="==", Right="= %hash%") { goal.call(Name="Keep") }` — each quoted text is a whole operand; the `= ` inside the quotes is part of the text, NOT the operator.
+
+- A quoted text is the whole operand, every symbol inside it included (`"= %oldHash%"` is the text `= %oldHash%`). The operator is the word or symbol BETWEEN the two operands (`is`, `equals`, `>`, `contains`, …), never a character inside a quote.
 - `is` and `isnot` take only a type name; a value after "is" is `==`.
 - There is no istrue, isfalse, isnull or isnotnull.
 - `if '<file>' exists` / `when <file> is there`: a file-existence test asks file.exists first and tests its result — `file.exists(Path='<file>'); condition.if(Left=%!data%) { … }`. A quoted file name on its own is text (always true); never `condition.if(Left='file.json')`.
