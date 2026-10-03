@@ -70,15 +70,18 @@ public partial class @this
                     causes.Add(new global::app.error.Error(
                         $"{Module}.{Name}: the default frozen for '{frozen.Name}' is no option of this action any more.",
                         "UnknownDefault", 400));
-            // a default the build froze in a type its option no longer is
-            if (await Stale(element, context) is { } stale) causes.Add(stale);
         }
 
-        // the handler's own judgement: the combinations of its properties only it knows are legal. A
-        // literal its slot declines is the build's to name, not a judgement.
-        if (causes.Count == 0 && (await Bind(context)).Handler is global::app.module.IClass own
-            && (await own.Parse()).Count == 0 && await own.Validate() is { } complaint)
-            causes.Add(new global::app.error.Error($"{Module}.{Name}: {complaint.Message}", complaint.Key, complaint.Status));
+        // the handler's own judgement: the combinations of its properties only it knows are legal. A literal its
+        // slot declines is the build's to name, not a judgement — unless it was written in a type its option no
+        // longer is (Stale): built against an older catalog, the step is opened again.
+        if (causes.Count == 0 && (await Bind(context)).Handler is global::app.module.IClass own)
+        {
+            var declined = await own.Parse();
+            causes.AddRange(declined.Where(d => d.Key == "Stale"));
+            if (declined.Count == 0 && await own.Validate() is { } complaint)
+                causes.Add(new global::app.error.Error($"{Module}.{Name}: {complaint.Message}", complaint.Key, complaint.Status));
+        }
 
         // what it holds judges itself too — the actions its properties hold (a callback, a recovery), the steps
         // of its branch body — as the build walks them

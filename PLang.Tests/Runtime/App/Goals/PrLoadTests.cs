@@ -88,41 +88,70 @@ public class PrLoadTests : System.IAsyncDisposable
         await Assert.That(ran.Error!.Message).Contains("goal.call has no property Wait; rebuild the goal");
     }
 
+    // A one-step goal saved as a .pr (as `file`), one row of its action written as an older build wrote it — the step's
+    // own (`property`) or one the build froze (`default`) — then loaded through the real load path and run.
+    private async Task<global::app.data.@this> RanWith(string file, global::app.goal.step.action.@this action, string section, string row)
+    {
+        var context = _app.actor.list.User.Context;
+        var pr = System.Text.Json.Nodes.JsonNode.Parse(await context.Pr(Make.Goal(context, "Start", "/Start.goal", Make.Step("a step", action))))!;
+        var code = pr["step"]![0]!["code"]![0]!.AsObject();
+        if (code[section] is not System.Text.Json.Nodes.JsonArray rows) code[section] = rows = [];
+        var written = System.Text.Json.Nodes.JsonNode.Parse(row)!;
+        foreach (var old in rows.Where(r => string.Equals((string?)r!["name"], (string?)written["name"], StringComparison.OrdinalIgnoreCase)).ToList())
+            rows.Remove(old);
+        rows.Add(written);
+        var loaded = await Load(file, pr.ToJsonString());
+        await loaded.IsSuccess();
+        return await ((global::app.goal.@this)(await loaded.Value())!).Start(context);
+    }
+
     // A .pr built when list.split's Empty was a bool froze `true` for it; Empty is a choice now. Run, the step fails
     // saying to rebuild — never reads today's default in its place, running differently from how it was built.
     [Test]
-    public async Task ADefaultFrozenInATypeItsPropertyIsNoLonger_FailsTheRun_SayingRebuild()
+    public async Task ADefaultFrozenInATypeItsOptionIsNoLonger_FailsTheRun_SayingRebuild()
     {
-        var context = _app.actor.list.User.Context;
-        var built = Make.Goal(context, "Start", "/Start.goal",
-            Make.Step("split %x% into lines", Make.Action(context, "list", "split", ("Value", "a\nb"))));
-        var pr = System.Text.Json.Nodes.JsonNode.Parse(await context.Pr(built))!;
-        var action = pr["step"]![0]!["code"]![0]!.AsObject();
-        if (action["default"] is not System.Text.Json.Nodes.JsonArray frozen) action["default"] = frozen = [];
-        foreach (var old in frozen.Where(d => (string?)d!["name"] == "empty").ToList()) frozen.Remove(old);
-        frozen.Add(System.Text.Json.Nodes.JsonNode.Parse("{\"name\":\"empty\",\"type\":{\"name\":\"bool\"},\"value\":true}"));
-        var loaded = await Load("start.pr", pr.ToJsonString());
-        await loaded.IsSuccess();
+        var ran = await RanWith("split.pr", Make.Action(_app.actor.list.User.Context, "list", "split", ("Value", "a\nb")),
+            "default", "{\"name\":\"empty\",\"type\":{\"name\":\"bool\"},\"value\":true}");
 
-        var ran = await ((global::app.goal.@this)(await loaded.Value())!).Start(context);
-
-        await Assert.That(ran.Success).IsFalse();
-        await Assert.That(ran.Error!.Key).IsEqualTo("StaleDefault");
-        await Assert.That(ran.Error.Message).Contains("list.split was built when Empty was a bool; it is a choice now — rebuild the goal");
+        await Assert.That(ran.Error?.Key).IsEqualTo("Stale");
+        await Assert.That(ran.Error!.Message).Contains("list.split was built when Empty was a bool; it is a choice now — rebuild the goal");
     }
 
-    // An option takes a frozen default its type makes itself from: goal.call's Parallel (a parallel) from the bool a
-    // .pr froze before it was one; list.split's Empty (a choice) declines a bool.
+    // The step's own row the same: file.read's Template written `true`, before Template was a choice
     [Test]
-    public async Task AnOption_TakesAFrozenDefaultItsTypeMakesItselfFrom_NotOneItDeclines()
+    public async Task ALiteralTheStepSetInATypeItsOptionIsNoLonger_FailsTheRun_SayingRebuild()
+    {
+        var ran = await RanWith("read.pr", Make.Action(_app.actor.list.User.Context, "file", "read", ("Path", "note.txt")),
+            "property", "{\"name\":\"Template\",\"type\":{\"name\":\"bool\"},\"value\":true}");
+
+        await Assert.That(ran.Error?.Key).IsEqualTo("Stale");
+        await Assert.That(ran.Error!.Message).Contains("file.read was built when Template was a bool; it is a choice now — rebuild the goal");
+    }
+
+    // What the run takes is never stale: goal.call's Name is a goal's name, selected at run; a bool its option makes
+    // itself from (goal.call's Parallel, a parallel now) runs as built
+    [Test]
+    public async Task ANameTheRunSelects_AndAValueItsOptionMakesItselfFrom_AreNotStale()
     {
         var context = _app.actor.list.User.Context;
-        global::app.type.property.@this Option(string module, string action, string name)
-            => _app.module.list.Items().First(m => m.Name == module)[action]!.Property[name]!;
-        var frozenBool = new global::app.type.property.@this { Name = "x", Type = _app.type.list["bool"], Value = (global::app.type.item.@bool.@this)false };
+        _app.goal.list.Add(await RealGoalLoad.ViaChannel(_app, Make.Goal(context, "Other", "/Other.goal",
+            Make.Step("write", Make.Action(context, "output", "write", ("Data", "hi"))))));
 
-        await Assert.That(await Option("goal", "call", "Parallel").Takes(frozenBool, context)).IsTrue();
-        await Assert.That(await Option("list", "split", "Empty").Takes(frozenBool, context)).IsFalse();
+        var ran = await RanWith("call.pr", Make.Action(context, "goal", "call", ("Name", "Other")),
+            "default", "{\"name\":\"parallel\",\"type\":{\"name\":\"bool\"},\"value\":false}");
+
+        await ran.IsSuccess();
+    }
+
+    // A literal its option declines in its own type is a bad value, as the build names it — not a stale build
+    [Test]
+    public async Task ABadLiteralOfItsOptionsOwnType_KeepsItsOwnError()
+    {
+        var ran = await RanWith("bad.pr", Make.Action(_app.actor.list.User.Context, "list", "split", ("Value", "a\nb")),
+            "property", "{\"name\":\"Empty\",\"type\":{\"name\":\"choice\",\"kind\":\"empty\"},\"value\":\"sometimes\"}");
+
+        await Assert.That(ran.Success).IsFalse();
+        await Assert.That(ran.Error!.Key).IsNotEqualTo("Stale");
     }
 
     // A small goal saved as a .pr and loaded through the real load path runs: its variable is set and

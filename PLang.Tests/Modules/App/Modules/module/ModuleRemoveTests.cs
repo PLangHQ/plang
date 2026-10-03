@@ -53,7 +53,7 @@ public class ModuleRemoveTests
         var action = new Remove(_app.actor.list.User.Context) { Name = (global::app.type.item.text.@this)"variable" };
         await action.Start();
 
-        var (resolved, error) = await (new PrAction { Module = held, Name = "set" }).Instance(_app.actor.list.User.Context);
+        var (resolved, error) = (new PrAction { Module = held, Name = "set" }).Instance(_app.actor.list.User.Context);
         await Assert.That(resolved).IsNull();
         await Assert.That(error).IsNotNull();
     }

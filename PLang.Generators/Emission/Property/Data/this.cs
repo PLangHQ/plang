@@ -204,10 +204,20 @@ public sealed record @this(
         sb.AppendLine($"            && !{Name}.IsSelected)");
         sb.AppendLine("        {");
         sb.AppendLine($"            await {Name}.Value();");
+        // A decline of a value written in another type than its slot's (the step's row, or the default the build
+        // froze) is a program built against an older catalog: rebuild. One in the slot's own type is a bad value, and
+        // so is a text — a value as written, which every slot reads.
         sb.AppendLine($"            if (!{Name}.Success)");
-        sb.AppendLine($"                __declined.Add(new global::app.error.Error(");
-        sb.AppendLine($"                    $\"property '{Name}' cannot be a {{Context.App.type.list[typeof({InnerType})]}} — {{{Name}.Error?.Message ?? \"the value was declined.\"}}\",");
-        sb.AppendLine($"                    \"PropertyValue\", 400));");
+        sb.AppendLine("            {");
+        sb.AppendLine($"                var __slot{Name} = Context.App.type.list[typeof({InnerType})];");
+        sb.AppendLine($"                __declined.Add((__action?[\"{Name}\"] ?? __action?.Default[\"{Name}\"]) is {{ }} __row{Name} && !__row{Name}.Type.Is(__slot{Name}) && !__row{Name}.Type.Is(\"text\")");
+        sb.AppendLine($"                    ? new global::app.error.Error(");
+        sb.AppendLine($"                        $\"{{__action!.Module}}.{{__action.Name}} was built when {Name} was a {{__row{Name}.Type.Name}}; it is a {{__slot{Name}.Name}} now — rebuild the goal\",");
+        sb.AppendLine($"                        \"Stale\", 400)");
+        sb.AppendLine($"                    : new global::app.error.Error(");
+        sb.AppendLine($"                        $\"property '{Name}' cannot be a {{__slot{Name}}} — {{{Name}.Error?.Message ?? \"the value was declined.\"}}\",");
+        sb.AppendLine($"                        \"PropertyValue\", 400));");
+        sb.AppendLine("            }");
         sb.AppendLine("        }");
     }
 
