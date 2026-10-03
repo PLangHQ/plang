@@ -11,17 +11,17 @@ These are regular actions (not modifiers). They appear in step bodies just like 
 Pause the current step for a fixed duration.
 
 ```plang
-- timer.sleep ms=1000
-- timer sleep 250 ms
+- sleep 2 seconds
+- wait for 500 ms
 ```
 
-The delay honours the context cancellation token, so a parent `timeout after` or an external cancellation aborts the wait immediately instead of waiting it out.
+The duration is a `duration` value — `"2s"`, `"500ms"`, `"0.5s"`; a bare number is refused. The delay honours the context cancellation token, so a parent `timeout after` or an external cancellation aborts the wait immediately instead of waiting it out.
 
 **Parameters:**
 
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
-| Ms | int | yes | — | Duration in milliseconds |
+| Duration | duration | yes | — | How long to pause — `"2s"`, `"500ms"`, `"0.5s"`; a bare number is refused |
 
 ### start
 
