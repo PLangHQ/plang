@@ -131,17 +131,39 @@ public sealed class @this : global::app.type.item.list.@this<goal.@this>,
         }
     }
 
-    /// <summary>The goals <paramref name="step"/> can call by its bare name, as <see cref="Find"/> reaches them from its
-    /// goal (the same walk): the goal itself and its children, then each ancestor and its children, then the
-    /// <c>.goal</c> files beside it — each name once, as a text. Find's other reaches are not offered: a goal already
-    /// read anywhere is no goal of this step's, and an ancestor folder is reached only by a slash-qualified name.</summary>
+    /// <summary>The goals <paramref name="step"/> can call by name, as <see cref="Find"/> reaches them from its goal (the
+    /// same walk): the goal itself and its children, then each ancestor and its children, then the <c>.goal</c> files
+    /// beside it, then those one folder down by the slash name a step writes (<c>voice/Key</c>) — each name once, as a
+    /// text. One folder down, not deeper: the offers are shown on every question, and a neighbour folder's goal is what
+    /// a step names with one folder; a deeper name is still found when written. A hidden folder (<c>.build</c>) holds
+    /// none. Find's other reaches are not offered: a goal already read anywhere is no goal of this step's, and an
+    /// ancestor folder is reached only by a slash-qualified name.</summary>
     internal override async System.Threading.Tasks.ValueTask<IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
     {
+        var context = App.actor.list.System.Context;
         var names = Chain(step.Goal).Select(g => g.Name).ToList();
         if (step.Goal?.Folder is { } folder)
-            await foreach (var file in Beside(folder, App.actor.list.System.Context)) names.Add(file.FileNameWithoutExtension);
+        {
+            await foreach (var file in Beside(folder, context)) names.Add(file.FileNameWithoutExtension);
+            await foreach (var sub in Under(folder, context))
+                await foreach (var file in Beside(sub, context)) names.Add($"{sub.FileName}/{file.FileNameWithoutExtension}");
+        }
         return names.Distinct(StringComparer.OrdinalIgnoreCase)
             .Select(name => (global::app.type.item.@this)new global::app.type.item.text.@this(name)).ToList();
+    }
+
+    // The folders directly in `folder`, in each place it names, but a hidden one (.build, .db).
+    private async IAsyncEnumerable<global::app.type.item.path.@this> Under(global::app.type.item.path.@this folder,
+        global::app.actor.context.@this context)
+    {
+        foreach (var each in folder.Place(context))
+        {
+            if (!await (await each.Exists(context)).ToBooleanAsync()) continue;
+            var listed = await each.Folders(context);
+            if (!listed.Success || await listed.Value() is not { } folders) continue;
+            foreach (var sub in folders.Items())
+                if (!sub.FileName.StartsWith('.')) yield return sub;
+        }
     }
 
     // The goal already read that a call's name writes: its name (the last read wins — sub-goals in

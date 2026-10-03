@@ -2647,6 +2647,7 @@
         "criteria": {
           "Build": null,
           "Start": null,
+          "system/test": null,
           "%path%": null,
           "none": null
         }
@@ -2906,6 +2907,7 @@
         "criteria": {
           "Build": null,
           "Start": null,
+          "system/test": null,
           "%goals%": null,
           "none": null
         }
@@ -2916,6 +2918,7 @@
         "criteria": {
           "Build": null,
           "Start": null,
+          "system/test": null,
           "%goals%": null,
           "%item%": null,
           "none": null
@@ -6347,6 +6350,7 @@
         "instructions": "Step 1 is `call /system/builder/EmitBuildEvent kind=\"goalHeader\", goal=%goal%`. which goal does the step call?",
         "criteria": {
           "Start": null,
+          "system/test": null,
           "%goal%": null,
           "none": null
         }
@@ -6558,6 +6562,7 @@
         "instructions": "Step 4 is `call Compile, on error call HandleBuildFailure`. which goal does the step call?",
         "criteria": {
           "Start": null,
+          "system/test": null,
           "none": null
         }
       },
@@ -6666,6 +6671,7 @@
         "instructions": "Step 6 is `foreach %parentGoal.Child%, call BuildSubGoal subGoal=%item%`. which goal does the step call?",
         "criteria": {
           "Start": null,
+          "system/test": null,
           "%parentGoal.Child%": null,
           "%item%": null,
           "none": null
@@ -9584,6 +9590,7 @@
         "criteria": {
           "Decide": null,
           "Start": null,
+          "system/test": null,
           "%goal.Step%": null,
           "%item%": null,
           "none": null
@@ -9619,6 +9626,7 @@
         "criteria": {
           "Decide": null,
           "Start": null,
+          "system/test": null,
           "%modules%": null,
           "%item%": null,
           "none": null
@@ -9816,6 +9824,7 @@
         "criteria": {
           "Decide": null,
           "Start": null,
+          "system/test": null,
           "%goal%": null,
           "none": null
         }
@@ -12066,6 +12075,7 @@
         "criteria": {
           "Checkout": null,
           "Start": null,
+          "system/test": null,
           "%order.coupon%": null,
           "%order%": null,
           "none": null
@@ -15073,6 +15083,7 @@
         "criteria": {
           "WeeklyReport": null,
           "Start": null,
+          "system/test": null,
           "%files%": null,
           "%item%": null,
           "none": null
@@ -15158,6 +15169,7 @@
         "criteria": {
           "WeeklyReport": null,
           "Start": null,
+          "system/test": null,
           "none": null
         }
       }
@@ -18183,6 +18195,7 @@
         "criteria": {
           "Page": null,
           "Start": null,
+          "system/test": null,
           "%module.Action%": null,
           "%item%": null,
           "none": null
@@ -18218,6 +18231,7 @@
         "criteria": {
           "Page": null,
           "Start": null,
+          "system/test": null,
           "%list%": null,
           "%item%": null,
           "none": null
@@ -18292,6 +18306,7 @@
         "criteria": {
           "Page": null,
           "Start": null,
+          "system/test": null,
           "%products%": null,
           "%product%": null,
           "none": null

@@ -139,6 +139,11 @@ public abstract partial class @this
     /// <summary>Convenience — all entries, shallow.</summary>
     public Task<data.@this<global::app.type.item.list.@this<@this>>> List(actor.context.@this context) => List(pattern: "*", recursive: false, context);
 
+    /// <summary>The folders directly inside this one. A scheme with no folders (a url) has none.</summary>
+    public virtual Task<data.@this<global::app.type.item.list.@this<@this>>> Folders(actor.context.@this context)
+        => Task.FromResult(context.Ok<global::app.type.item.list.@this<@this>>(
+            new global::app.type.item.list.@this<@this>(System.Array.Empty<global::app.data.@this>())));
+
     // --- Cross-scheme defaults — virtual; subclasses override for fast paths ---
 
     /// <summary>

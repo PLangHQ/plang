@@ -147,6 +147,27 @@ public sealed partial class @this
         }
     }
 
+    /// <summary>The folders directly inside this one, each this folder combined with its name.</summary>
+    public override async Task<data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>> Folders(actor.context.@this context)
+    {
+        if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.list.@this<global::app.type.item.path.@this>>.From(early);
+        if (!context.FileSystem.IsFolder(this))
+            return context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new global::app.error.ServiceError($"Directory not found: {Raw}", "NotFound", 404));
+        try
+        {
+            var folders = context.FileSystem.List(this, "*", false).Where(context.FileSystem.IsFolder)
+                .Select(f => new data.@this("", Combine(f.Absolute[Absolute.Length..].TrimStart(PathHelper.DirectorySeparatorChar, PathHelper.AltDirectorySeparatorChar)),
+                    context: context))
+                .ToList();
+            return context.Ok<global::app.type.item.list.@this<global::app.type.item.path.@this>>(
+                new global::app.type.item.list.@this<global::app.type.item.path.@this>(folders));
+        }
+        catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException)
+        {
+            return context.Error<global::app.type.item.list.@this<global::app.type.item.path.@this>>(new global::app.error.ServiceError(ex.Message, "IOError", 500));
+        }
+    }
+
     public override async Task<data.@this<global::app.type.item.path.@this.StatInfo>> Stat(actor.context.@this context)
     {
         if (await AuthGate(Verb.read, context) is { } early) return data.@this<global::app.type.item.path.@this.StatInfo>.From(early);
