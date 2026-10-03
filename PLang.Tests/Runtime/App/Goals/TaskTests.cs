@@ -361,7 +361,8 @@ public class TaskTests
     [Test]
     public async Task Cancel_StopsTheGoal_AnswersNothing_AndALaterWaitFailsCancelled_NeverReported()
     {
-        await Load("Slow", Make.Step("sleep", Sleep(1000)), Make.Step("set after", Set("after", 1)));
+        // held open until the cancel releases it: a busy machine can't let it end first
+        await Load("Slow", Make.Step("sleep", Sleep(60_000)), Make.Step("set after", Set("after", 1)));
         await Started("Slow");
 
         var cancelled = await Action("task", "cancel", ("Task", "%task%"));
