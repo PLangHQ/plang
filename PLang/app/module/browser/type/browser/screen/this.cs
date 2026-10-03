@@ -3,7 +3,7 @@ using System.Text.Json.Nodes;
 using app.Attributes;
 using Display = global::app.module.screen.type.screen.display.@this;
 using FilePath = global::app.type.item.path.file.@this;
-using Program = global::app.module.terminal.Process;
+using Program = global::app.module.terminal.type.process.@this;
 
 namespace app.module.browser.type.browser.screen;
 
@@ -96,7 +96,7 @@ public sealed class @this : browser.@this
         }
         catch (Exception ex) when (ex is TimeoutException or IOException or InvalidOperationException or KeyNotFoundException)
         {
-            program.Os?.Kill();
+            program.Kill();
             return Fail(context, $"Chromium didn't open its desktop: {ex.Message}", "BrowserStartFailed", 500);
         }
         return context.Ok<browser.@this>(browser);

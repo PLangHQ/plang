@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
 using app.Attributes;
-using Program = global::app.module.terminal.Process;
+using Program = global::app.module.terminal.type.process.@this;
 
 namespace app.module.browser.type.browser;
 
@@ -44,7 +44,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     [LlmBuilder, Out] public global::app.type.item.number.@this Height => _height;
 
     /// <summary>True until the browser exits.</summary>
-    [LlmBuilder, Out] public global::app.type.item.@bool.@this Running => Program.Os is { HasExited: false };
+    [LlmBuilder, Out] public global::app.type.item.@bool.@this Running => Program.Running;
 
     /// <summary>The Chromium program, as terminal runs it.</summary>
     internal Program Program { get; }
@@ -95,11 +95,11 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// nothing else would see, said on the app's error channel with what Chromium said last (its program's stderr).</summary>
     private protected void Watched() => _ = Task.Run(async () =>
     {
-        await Program.Os!.WaitForExitAsync();
+        await Program.Exited;
         if (_stopping || Report == null) return;
         var said = Program.Said;
         await Report(new global::app.error.ServiceError(
-            $"Chromium stopped by itself (exit code {Program.Os.ExitCode}){Lost}." + (said.Length > 0 ? "\nWhat it said last:\n" + said : ""),
+            $"Chromium stopped by itself (exit code {Program.ExitCode}){Lost}." + (said.Length > 0 ? "\nWhat it said last:\n" + said : ""),
             "BrowserStopped", 500));
     });
 
@@ -109,10 +109,10 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         _stopping = true;
         try { await Cdp.Tell("Browser.close", new JsonObject()); }
         catch (Exception ex) when (ex is IOException or InvalidOperationException or ObjectDisposedException) { }
-        if (Program.Os is { HasExited: false } os)
+        if (Program.Running)
         {
-            try { await os.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(1)); }
-            catch (TimeoutException) { os.Kill(); }
+            try { await Program.Exited.WaitAsync(TimeSpan.FromSeconds(1)); }
+            catch (TimeoutException) { Program.Kill(); }
         }
     }
 

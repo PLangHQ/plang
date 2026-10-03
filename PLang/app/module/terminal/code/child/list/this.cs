@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace app.module.terminal.code;
+namespace app.module.terminal.code.child.list;
 
 /// <summary>
 /// The programs this plang started: they end with it. On Windows a program outlives the one that
@@ -8,18 +8,18 @@ namespace app.module.terminal.code;
 /// leave them running (PlangOS's wsl.exe kept a whole PlangOS session alive, and WSL wedged when
 /// the distro was removed). So each program goes into a Windows job that closes when this plang's
 /// last handle to it does, which ends every program in it. Elsewhere: nothing to do (a program there
-/// ends when its input closes, as PlangOS does).
+/// ends when its input closes, as PlangOS does; a pipe child when plang's ends of its pipe close).
 /// </summary>
-internal static class Children
+internal sealed class @this
 {
-    private static readonly Lazy<IntPtr> Job = new(Create);
+    private readonly Lazy<IntPtr> _job = new(Create);
 
-    /// <summary><paramref name="process"/> ends when this plang does (a Windows program .NET started; a spawned one, on
+    /// <summary><paramref name="child"/> ends when this plang does (a Windows program .NET started; a spawned one, on
     /// Linux, ends with its input).</summary>
-    internal static void Adopt(child.@this process)
+    internal void Add(child.@this child)
     {
-        if (!OperatingSystem.IsWindows() || Job.Value == IntPtr.Zero || process is not child.managed.@this managed) return;
-        try { AssignProcessToJobObject(Job.Value, managed.Process.Handle); }
+        if (!OperatingSystem.IsWindows() || child is not managed.@this managed || _job.Value == IntPtr.Zero) return;
+        try { AssignProcessToJobObject(_job.Value, managed.Process.Handle); }
         catch (InvalidOperationException) { /* it has already ended */ }
     }
 
