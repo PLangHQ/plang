@@ -4,7 +4,7 @@
   "step": [
     {
       "index": 0,
-      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--ozone-platform=wayland', '--no-first-run',\n'--no-default-browser-check', '--user-data-dir=%!app.AbsolutePath%/.browser',\n'--app=file://%!app.OsAbsolutePath%/system/browser/blank.html',\nwith environment variables XDG_RUNTIME_DIR=\"%!app.AbsolutePath%/.run\" and WAYLAND_DISPLAY=\"wayland-plang\",\nand wait until it exits (it hands the window over and ends)",
+      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--ozone-platform=wayland', '--no-first-run',\n'--no-default-browser-check', '--user-data-dir=%!app.AbsolutePath%/.browser',\n'--app=file://%!app.OsAbsolutePath%/system/browser/blank.html',\nwith environment variables XDG_RUNTIME_DIR=\"%!app.AbsolutePath%/.run\" and WAYLAND_DISPLAY=\"wayland-plang\",\nwith a clean environment, keep PULSE_SERVER and HOME from plang's environment,\nand wait until it exits (it hands the window over and ends)",
       "line": {
         "number": 7
       },
@@ -72,6 +72,20 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Clean",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
+              "name": "Keep",
+              "type": {
+                "name": "list"
+              },
+              "value": ["PULSE_SERVER","HOME"]
             }
           ],
           "default": [
@@ -98,5 +112,5 @@
   "visibility": "Public",
   "path": "/system/browser/Window.goal",
   "prPath": "/system/browser/.build/window.pr",
-  "hash": "a20758cae1b5cbae458dfde181d38ec341fec73acb4cc59dda943b0cdee42031"
+  "hash": "8b96868c0b26777635a72282f05fb6a602720acaab2fde1e7609018cc8ae4dbd"
 }

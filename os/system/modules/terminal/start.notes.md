@@ -5,4 +5,6 @@
 - `Interactive`: the program takes over the console until it exits (for `wsl -d PlangOS`, `ssh`, editors). Nothing is captured.
 - `Administrator`: Windows asks through UAC. Output is not captured and `Environment` is not passed; only `!exitCode` returns.
 - A program outside the app root asks the user first: "Allow User to execute <path>? (y/n/a)". Except in a goal that ships with plang (under `/system/`) whose step names the program, its parameters, environment and folder itself, written in the step: it starts unasked, as the user (trusted by origin). A `%variable%` in any of those is the caller's, and is asked as the caller — an os goal never starts what it was handed without the user's yes.
+- `Clean`: "with a clean environment" → true. The program gets none of plang's environment (no keys, no tokens): only PATH and LANG, plus `Keep` and `Environment`.
+- `Keep`: "keep PULSE_SERVER, HOME" → `["PULSE_SERVER", "HOME"]` — names of variables copied from plang's own environment into a clean one; names only, never `NAME=value`.
 - Defaults for every run live in `%!terminal%`: `environment`, `encoding`, `timeoutInSec` (0 = none), `maxOutputSize`, `echo` (also write output to plang's output as it arrives). `save %!terminal%` keeps them.

@@ -8,4 +8,5 @@ Window
     '--no-default-browser-check', '--user-data-dir=%!app.AbsolutePath%/.browser',
     '--app=file://%!app.OsAbsolutePath%/system/browser/blank.html',
     with environment variables XDG_RUNTIME_DIR="%!app.AbsolutePath%/.run" and WAYLAND_DISPLAY="wayland-plang",
+    with a clean environment, keep PULSE_SERVER and HOME from plang's environment,
     and wait until it exits (it hands the window over and ends)

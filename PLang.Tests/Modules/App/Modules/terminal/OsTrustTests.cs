@@ -215,6 +215,77 @@ public class OsTrustTests : IDisposable
         await Assert.That(System.Text.Encoding.UTF8.GetString(captured.ToArray())).Contains("own-word");
     }
 
+    // ---- Clean and Keep: a program's environment, checked by a marker only ----
+
+    // a start that says whether plang's own variable <paramref name="secret"/> reached it, with what the step adds
+    private global::app.goal.step.action.@this Sees(string secret, params (string, object?)[] more)
+    {
+        var parameters = new List<(string, object?)> { ("App", "//bin/sh"),
+            ("Parameter", new List<object?> { "-c", "if [ -n \"$" + secret + "\" ]; then echo marked; else echo clean; fi" }) };
+        parameters.AddRange(more);
+        return Make.Action(Context, "terminal", "start", parameters.ToArray());
+    }
+
+    // runs a user goal made by <paramref name="steps"/>, every ask answered yes, with plang's own environment holding a
+    // variable of its own (tests run side by side: a process-wide name shared between them would be unset mid-run)
+    private async Task<global::app.data.@this> RunWithSecret(Func<string, Make.StepDef[]> steps)
+    {
+        var secret = "PLANG_TEST_" + Guid.NewGuid().ToString("N")[..8].ToUpperInvariant();
+        Context.Actor!.Channel.Register(new CannedAnswerChannel("a"));
+        System.Environment.SetEnvironmentVariable(secret, "s");
+        try { return await _app.Start(await Goal("/Env" + Guid.NewGuid().ToString("N")[..6] + ".goal", steps(secret)), Context); }
+        finally { System.Environment.SetEnvironmentVariable(secret, null); }
+    }
+
+    [Test]
+    public async Task ACleanStart_HasNoneOfPlangsEnvironment_AndAPlainStartHasIt()
+    {
+        var plain = await RunWithSecret(s => [Make.Step("plain", Sees(s))]);
+        await Assert.That((await plain.Value())?.ToString()?.Trim()).IsEqualTo("marked").Because("a plain start inherits plang's environment");
+        var clean = await RunWithSecret(s => [Make.Step("clean", Sees(s, ("Clean", true)))]);
+        await Assert.That((await clean.Value())?.ToString()?.Trim()).IsEqualTo("clean").Because("a clean start keeps nothing it isn't told to");
+    }
+
+    [Test]
+    public async Task Keep_CopiesTheNamedVariablesFromPlangsEnvironment()
+    {
+        var kept = await RunWithSecret(s => [Make.Step("clean, keeping it", Sees(s, ("Clean", true), ("Keep", new List<object?> { s })))]);
+        await Assert.That((await kept.Value())?.ToString()?.Trim()).IsEqualTo("marked");
+    }
+
+    [Test]
+    public async Task Keep_RefusesWhatIsNoVariableName()
+    {
+        var bad = await RunWithSecret(s => [Make.Step("keep a value", Sees(s, ("Clean", true), ("Keep", new List<object?> { "A=B" })))]);
+        await Assert.That(bad.Success).IsFalse();
+        await Assert.That(bad.Error!.Key).IsEqualTo("KeepInvalid");
+    }
+
+    [Test]
+    public async Task ACleanStart_TakesNoEnvironmentSetting_AndAnOsOneStaysTrusted()
+    {
+        // an os goal starting clean, writing no Environment: the user's environment setting is not taken, and it is not asked
+        await OsGoal("Clean.goal", Make.Step("start clean", Make.Action(Context, "terminal", "start", ("App", "//bin/sh"),
+            ("Parameter", new List<object?> { "-c", "if [ -n \"$PLANG_MARK\" ]; then echo marked; else echo clean; fi" }), ("Clean", true))));
+        var user = await Goal("/SetsMarkClean.goal",
+            Make.Step("set the setting", SetMark()),
+            Make.Step("call the os goal", Make.Action(Context, "goal", "call", ("Name", "/system/trust/Clean"))));
+        var ran = await _app.Start(user, Context);
+        await ran.IsSuccess();
+        await Assert.That((await ran.Value())?.ToString()?.Trim()).IsEqualTo("clean");
+    }
+
+    [Test]
+    public async Task AnOsGoal_KeepingWhatItWasHanded_Asks()
+    {
+        await Context.Variable.Set("names", new global::app.data.@this("names", new List<object?> { "HOME" }, context: Context));
+        var os = await OsGoal("KeepsHanded.goal", Make.Step("keep what it was given", Make.Action(Context, "terminal", "start",
+            ("App", "//bin/true"), ("Clean", true), ("Keep", "%names%"))));
+        var ran = await _app.Start(os, Context);
+        await Assert.That(ran.Success).IsFalse().Because("names the caller gave are the caller's");
+        await Assert.That(ran.Error!.Key).IsEqualTo("PermissionDenied");
+    }
+
     [Test]
     public async Task AUserGoal_CalledBackFromAnOsGoal_Asks()
     {

@@ -20,5 +20,6 @@ Screen
     '--user-data-dir=%!app.AbsolutePath%/.browser', '--remote-debugging-pipe',
     '--app=file://%!app.OsAbsolutePath%/system/browser/blank.html',
     with environment variables XDG_RUNTIME_DIR="%!app.AbsolutePath%/.run" and WAYLAND_DISPLAY="wayland-plang",
+    with a clean environment, keep 'PULSE_SERVER', 'HOME' from plang's environment,
     keep running, with pipe, write to %program%
 - return %program%
