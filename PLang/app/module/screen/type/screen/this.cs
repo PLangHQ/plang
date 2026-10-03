@@ -63,9 +63,9 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     private protected virtual int Drawn => 0;
     private protected virtual bool Noting { get => false; set { } }
 
-    private Elements? _element;
+    private global::app.module.screen.type.element.list.@this? _element;
     /// <summary>Its elements, picked by selector (<c>%!screen.element["#window.bot"]%</c>) — to bind on their events.</summary>
-    public Elements element => _element ??= new(this);
+    public global::app.module.screen.type.element.list.@this element => _element ??= new(this);
 
     /// <summary>One step by dot: <c>element</c> — its elements; any other member as every item's.</summary>
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
