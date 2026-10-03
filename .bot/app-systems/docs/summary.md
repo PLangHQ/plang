@@ -25,20 +25,27 @@ a type has or how to write them — that knowledge lived only in C#.
 - **Doc fix:** `path-polymorphism-plan.md` repointed off the deleted hand-written module pages
   to the generated `os/system/modules/{file,condition}/start.md`.
 
-## In progress / next
-- **One coder dependency raised:** a parsed member `.Note` (`Line`/`Returns`/`Warning`),
-  generalizing the action note parser (`PLang/app/goal/step/action/note/this.cs`) to compare
-  against a member's `.Arguments`, treating the member's own name and `Returns` as allowed
-  non-argument line names. The template is written against this API.
-- **Once `.Note` lands:** build `Types.goal` with `--build={"files":"Types.goal","cache":"skip"}`
-  from `docs/`, reconcile the golden's member order against the real render, add `TypePageTests`
-  (mirror `ModulePageTests`).
-- **Then:** `defining-plang-types.md` kinds pass; the remaining types in order (path, list,
-  dict, number, datetime, duration, size, then file/url + a `data` entry); the os-bot request
-  (screen/input/clipboard/permission pages on branch `plang-os-stable` — screen examples can't
-  be run here, they need PlangOS/Windows).
-- Left the `loop/foreach` Parallel note to the builder bot (architect heads-up: its stage 4,
-  gated on coder 592).
+## Done since v1
+- **Member `.Note` landed (coder, 720c87df8)** and the **text type page is complete + verified**
+  (app-systems ae77688c9): rendered byte-exact, `TypePageTests` (TheTextPage) green,
+  `os/system/type/text/start.md` committed, `type.template` caches `m.Note` once per member.
+  The generator is proven end-to-end. Member order: length, toUpper, toLower, trim, replace,
+  maxLength, grep, grepCount.
+- **`defining-plang-types.md` kinds pass** (kinds = behaviour variants, one class per kind) +
+  **`timer.md`** (sleep → Duration, not Ms int).
+- **Screen module page** delivered + merged on `plang-os-stable` (3a2ad7050).
+
+## Next
+- **Write the next types: list, dict, number, datetime, duration, size** (architect routing).
+  Hold path/file/url — their surface isn't ready (CLR-returning members, glued names; a coder
+  pass is queued). As the first reader of each type's surface, **audit each for members that
+  return a CLR type (string/bool/int) or have a glued name, and report per type to the architect
+  before pinning its golden.**
+- Per type, same flow as text: audit → notes + guide → render (DumpType) → golden +
+  `TypePageTests` → commit. Then refs file/url + a `data` entry once path's surface lands.
+- Held for other bots: os-bot type pages (input/clipboard/permission, after their rebase);
+  parallel wire + `foreach … in parallel` docs (coder builder-issues 47/48); loop/foreach
+  Parallel note (builder bot).
 
 ## Code example
 A member note (`replace.notes.md`) — line 1 keyed by the member name carries the summary and
