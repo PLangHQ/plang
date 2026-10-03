@@ -90,4 +90,7 @@ public class TypePageTests
 
     [Test]
     public Task TheDurationPage_IsTheSpecsGolden() => ComparePageToGolden("duration");
+
+    [Test]
+    public Task ThePathPage_IsTheSpecsGolden() => ComparePageToGolden("path");
 }
