@@ -28,13 +28,6 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
 
     private protected @this(long? stamp) => _stamp = stamp;
 
-    /// <summary>Its variant — mouse, key, text, navigate: the kind of input.</summary>
-    private protected abstract string Variant { get; }
-
-    /// <summary>An input's type is <c>input</c>; its variant is the kind — <c>is input</c> and <c>is mouse</c> both
-    /// answer.</summary>
-    protected internal override global::app.type.@this Type => new("input", typeof(@this), Variant);
-
     public override bool IsLeaf => false;
 
     /// <summary>The host's clock when it happened, when it carries one.</summary>

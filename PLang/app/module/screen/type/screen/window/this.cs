@@ -19,8 +19,6 @@ public sealed class @this : screen.@this
 
     private @this(string title, int width, int height, Native window) : base(title, width, height) => _window = window;
 
-    private protected override string Variant => "window";
-
     /// <summary>Opens a window <paramref name="width"/>×<paramref name="height"/> titled <paramref name="title"/>,
     /// centred on the main monitor: what the person does in it goes to <paramref name="onInput"/>, its closing to
     /// <paramref name="onClose"/>. Its numbers (once a second) also go to stats.jsonl in the app's folder.</summary>

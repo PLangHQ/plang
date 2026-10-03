@@ -30,8 +30,6 @@ public sealed class @this : browser.@this
         _format = format;
     }
 
-    private protected override string Variant => "headless";
-
     /// <summary>Starts headless Chromium on <paramref name="url"/>, frames <paramref name="width"/>×<paramref name="height"/>
     /// in <paramref name="format"/> to <paramref name="onFrame"/>.</summary>
     internal static async Task<global::app.data.@this<browser.@this>> Start(string url, int width, int height,

@@ -7,8 +7,6 @@ public sealed class @this : input.@this
 
     public @this(string typed, long? stamp = null) : base(stamp) => _typed = typed ?? "";
 
-    private protected override string Variant => "text";
-
     /// <summary>What was typed.</summary>
     [Out] public global::app.type.item.text.@this Typed => _typed;
 

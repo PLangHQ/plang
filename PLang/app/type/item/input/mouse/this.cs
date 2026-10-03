@@ -33,8 +33,6 @@ public sealed class @this : input.@this
         _mods = mods;
     }
 
-    private protected override string Variant => "mouse";
-
     /// <summary>What it did: move, down, up, wheel.</summary>
     [Out] public global::app.type.item.choice.@this<global::app.type.item.input.mouse.Gesture> Action => new(_action);
     /// <summary>Where, across the screen.</summary>

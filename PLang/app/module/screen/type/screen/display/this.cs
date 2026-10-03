@@ -29,8 +29,6 @@ public sealed class @this : screen.@this
         Runtime = runtime;
     }
 
-    private protected override string Variant => "display";
-
     /// <summary>The compositor programs draw onto.</summary>
     internal Wayland Wayland { get; }
 

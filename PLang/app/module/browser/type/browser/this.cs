@@ -32,11 +32,6 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
         Cdp = cdp;
     }
 
-    /// <summary>Its kind — headless, screen.</summary>
-    private protected abstract string Variant { get; }
-
-    protected internal override global::app.type.@this Type => new("browser", typeof(@this), Variant);
-
     public override bool IsLeaf => false;
 
     /// <summary>The page it opened first.</summary>
