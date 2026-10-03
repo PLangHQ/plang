@@ -87,6 +87,20 @@ public class PickOptionTests : System.IAsyncDisposable
         await Assert.That(Formal(await conversation.Offers(dicted.Step[1]))).IsEquivalentTo(new[] { "%c%" });
     }
 
+    // a bool is a closed pair: offered true and false, never the step's variable; a formal true still reads
+    [Test]
+    public async Task ABoolIsOfferedTrueAndFalse_NeverAVariable()
+    {
+        var step = Step("set default %flag% = true");
+
+        var offers = Formal(await _app.Module("variable")["set"]!["Default"]!.Type.Offers(step));
+        var read = new global::app.goal.step.action.formal.Reader(step, _app.module.list)
+            .Read("variable.set(Name=%flag%, Value=true, Default=true)", Ctx);
+
+        await Assert.That(offers).IsEquivalentTo(new[] { "true", "false" });
+        await read.IsSuccess();
+    }
+
     // a type is offered by the plang type names, never one plang keeps for itself
     [Test]
     public async Task ATypeOffersThePlangTypeNames()
