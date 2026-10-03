@@ -35,17 +35,24 @@ a type has or how to write them — that knowledge lived only in C#.
   **`timer.md`** (sleep → Duration, not Ms int).
 - **Screen module page** delivered + merged on `plang-os-stable` (3a2ad7050).
 
-## Next
-- **Write the next types: list, dict, number, datetime, duration, size** (architect routing).
-  Hold path/file/url — their surface isn't ready (CLR-returning members, glued names; a coder
-  pass is queued). As the first reader of each type's surface, **audit each for members that
-  return a CLR type (string/bool/int) or have a glued name, and report per type to the architect
-  before pinning its golden.**
-- Per type, same flow as text: audit → notes + guide → render (DumpType) → golden +
-  `TypePageTests` → commit. Then refs file/url + a `data` entry once path's surface lands.
-- Held for other bots: os-bot type pages (input/clipboard/permission, after their rebase);
-  parallel wire + `foreach … in parallel` docs (coder builder-issues 47/48); loop/foreach
-  Parallel note (builder bot).
+## Type pages — 7 of 10 done
+Done + byte-exact (`TypePageTests` 7/7 green): **text, size, dict, number, datetime, duration,
+path** (app-systems fac0b64c1). The generate-from-source machinery (spec golden + `TypePageTests`
+rendering `type.template` over the catalog) is proven across member-rich, memberless, and
+reference-adjacent types. Audit protocol worked: as first reader I flagged that most type
+surfaces were unmarked / CLR-returning; the architect routed a coder surface pass (change 61)
+that marked + de-glued + plang-typed the members, then I wrote each.
+
+**Remaining 3, all parked on the coder:**
+- **list** — `all` renders `clr` (catalog unwraps `Task<T>` not `ValueTask<T>`); coder fixing, then write.
+- **file, url** — 0 marked members; reference types needing their `!`-fact surface (`%config!path%`,
+  `%url!host%`). Wait for marking + architect ping.
+- Plus a `data` entry for the universal `!type` facts.
+
+## Held for other bots
+- os-bot type pages (input/clipboard/permission, after their rebase); browser module page (on request).
+- parallel wire + `foreach … in parallel` docs (coder builder-issues 47/48); loop/foreach Parallel
+  note (builder bot).
 
 ## Code example
 A member note (`replace.notes.md`) — line 1 keyed by the member name carries the summary and
