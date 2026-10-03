@@ -1,4 +1,4 @@
-using note = global::app.goal.step.action.note.@this;
+using note = global::app.type.item.note.@this;
 
 namespace PLang.Tests.App.Modules.CatalogTests;
 

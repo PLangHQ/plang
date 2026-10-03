@@ -6,7 +6,7 @@ namespace app.goal.step.action;
 // The class-zoom face of the action host — the catalog view. A .pr action carries its steps;
 // the same host at class zoom answers its declared parameter slots (the reflection leaf) for
 // the builder catalog. Reflection happens ONCE here, cached on the element.
-public partial class @this
+public partial class @this : global::app.type.item.note.IAbout
 {
     // The catalog faces reach App by NAVIGATION — this action → its module → the module collection
     // → App — live, at ask time. A catalog element owns a MODULE, not a context: it is one entry in
@@ -87,7 +87,7 @@ public partial class @this
     // content materializes at the Value door, and an absent file is falsy (existence truthiness), so
     // `{% if action.Examples %}` guards presence without reading. The notes are read line by line (note.@this).
     private global::app.type.item.file.@this? _description;
-    private global::app.goal.step.action.note.@this? _note;
+    private global::app.type.item.note.@this? _note;
     private global::app.type.item.file.@this? _examples;
     private global::app.type.item.file.@this? _guide;
 
@@ -97,7 +97,13 @@ public partial class @this
 
     /// <summary>The action's notes, read line by line — {Name}.notes.md; no lines when the action has none.</summary>
     [JsonIgnore]
-    public global::app.goal.step.action.note.@this Note => _note ??= new(this, new(Module.Folder.Combine($"{Name}.notes.md"), App!.actor.list.System.Context!));
+    public global::app.type.item.note.@this Note => _note ??= new(this, new(Module.Folder.Combine($"{Name}.notes.md"), App!.actor.list.System.Context!));
+
+    // What its notes are about: the action, its properties the parts each line names
+    string global::app.type.item.note.IAbout.Noted => $"{Module.Name}.{Name}";
+    string global::app.type.item.note.IAbout.Part => "property";
+    System.Collections.Generic.IEnumerable<string> global::app.type.item.note.IAbout.Parts => Property.Select(property => property.Name);
+    bool global::app.type.item.note.IAbout.Names(string name) => this[name] is not null;
 
     /// <summary>The action's examples — {Name}.examples.md.</summary>
     [JsonIgnore]

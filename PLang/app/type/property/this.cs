@@ -82,6 +82,22 @@ public sealed class @this
         => Owner == null ? null
             : new(global::app.type.item.path.@this.Resolve($"/system/type/{Owner}/{Name}.notes.md", context), context);
 
+    /// <summary>This member's notes, read line by line (<see cref="Notes"/>, parsed): a line for the member itself (its
+    /// one-liner and how a step says it), one per argument, and <c>Returns</c>; warnings for a line naming none of
+    /// them, or an argument no line names. Null when this is no type's member.</summary>
+    [LlmBuilder]
+    public global::app.type.item.note.@this? Note(global::app.actor.context.@this context)
+        => Notes(context) is { } file ? new(new About(this), file) : null;
+
+    // What a member's notes are about: the member — its arguments the parts each line names, its own name a line too
+    private sealed class About(@this member) : global::app.type.item.note.IAbout
+    {
+        public string Noted => $"{member.Owner}.{member.Name}";
+        public string Part => "argument";
+        public System.Collections.Generic.IEnumerable<string> Parts => member.Arguments?.Select(argument => argument.Name) ?? [];
+        public bool Names(string name) => name == member.Name || Parts.Contains(name);
+    }
+
     /// <summary>The class's <c>[Default]</c> value, or null when the property is required / has no default.</summary>
     public object? Default { get; init; }
 

@@ -1,16 +1,17 @@
-namespace app.goal.step.action.note;
+namespace app.type.item.note;
 
 /// <summary>
-/// An action's notes, read: its <c>{Name}.notes.md</c>, each line read once into a <see cref="line.@this"/>, in the
-/// file's order. A line <c>Name — prose · say: … · builder: …</c> names what it is about: one of the action's
-/// properties, or <c>Returns</c>, the action's value. Any other line (prose, a bullet, a heading, a line inside a
-/// code fence) is a free line. The notes are born unread with their action and read the first time they are used,
-/// once. Their warnings are what the notes and the action's properties don't agree on — a line naming no property,
-/// a property no line names — found here and nowhere else.
+/// The notes of something the builder is taught (<see cref="IAbout"/>: an action, a type's member), read: its
+/// <c>{Name}.notes.md</c>, each line read once into a <see cref="line.@this"/>, in the file's order. A line
+/// <c>Name — prose · say: … · builder: …</c> names what it is about: one of its parts (an action's properties, a
+/// member's arguments), a name it allows (a member's own), or <c>Returns</c>, its value. Any other line (prose, a
+/// bullet, a heading, a line inside a code fence) is a free line. The notes are born unread with what they are about
+/// and read the first time they are used, once. Their warnings are what the notes and its parts don't agree on — a
+/// line naming none of them, a part no line names — found here and nowhere else.
 /// </summary>
 public sealed class @this : global::app.type.item.@this
 {
-    // The name of the line that says what the action returns.
+    // The name of the line that says what it returns.
     private const string Result = "Returns";
 
     // Between a line's prose and each tag after it.
@@ -22,40 +23,42 @@ public sealed class @this : global::app.type.item.@this
     // A named line: the name, then " — ", then the rest.
     private static readonly System.Text.RegularExpressions.Regex Named = new(@"^([A-Za-z_]\w*) — (.*)$");
 
-    private readonly global::app.goal.step.action.@this _action;
+    private readonly IAbout _about;
     private readonly global::app.type.item.file.@this _file;
 
     // Null until the notes are read.
     private System.Collections.Generic.IReadOnlyList<line.@this>? _line;
     private global::app.warning.list.@this _warning = new();
 
-    /// <summary>The notes of <paramref name="action"/>, in <paramref name="file"/> — nothing read yet.</summary>
-    internal @this(global::app.goal.step.action.@this action, global::app.type.item.file.@this file)
+    /// <summary>The notes of <paramref name="about"/>, in <paramref name="file"/> — nothing read yet.</summary>
+    internal @this(IAbout about, global::app.type.item.file.@this file)
     {
-        _action = action;
+        _about = about;
         _file = file;
     }
 
     protected internal override global::app.type.@this Type => new(typeof(@this));
 
+    /// <summary>Plang's own teaching, read by its templates — never a type a program's value is.</summary>
+    public static bool Internal => true;
+
     /// <summary>A structure, not a single-token leaf.</summary>
     public override bool IsLeaf => false;
 
-    /// <summary>The lines, in the file's order; none before the notes are read, or when the action has none.</summary>
+    /// <summary>The lines, in the file's order; none before the notes are read, or when there are none.</summary>
     [global::app.Out]
     public System.Collections.Generic.IReadOnlyList<line.@this> Line => _line ?? [];
 
-    /// <summary>The line that says what the action returns (<c>Returns — …</c>); null when none does.</summary>
+    /// <summary>The line that says what it returns (<c>Returns — …</c>); null when none does.</summary>
     public line.@this? Returns => Line.FirstOrDefault(line => line.Name?.ToString() == Result);
 
-    /// <summary>What the notes and the action's properties don't agree on: a line naming no property, a property
-    /// no line names.</summary>
+    /// <summary>What the notes and its parts don't agree on: a line naming none of them, a part no line names.</summary>
     [global::app.Out]
     public global::app.warning.list.@this Warning => _warning;
 
-    /// <summary>The notes read, once: the file's lines, each a named line or a free one, then what they and the
-    /// action's properties don't agree on. An action with no notes file has no lines. A file that can't be read
-    /// fails <paramref name="data"/>.</summary>
+    /// <summary>The notes read, once: the file's lines, each a named line or a free one, then what they and its parts
+    /// don't agree on. Something with no notes file has no lines. A file that can't be read fails
+    /// <paramref name="data"/>.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.type.item.@this> Value(global::app.data.@this data)
     {
         if (_line != null) return this;
@@ -74,12 +77,14 @@ public sealed class @this : global::app.type.item.@this
         }
         var warning = new global::app.warning.list.@this();
         var named = read.Where(line => line.Name != null).Select(line => line.Name!.ToString()).ToHashSet();
-        foreach (var name in named.Where(name => name != Result && _action[name] is null))
-            warning.Add(new global::app.warning.@this { Key = "NoteWithoutProperty",
-                Message = $"{_action.Module.Name}.{_action.Name}: the notes line '{name}' names no property" });
-        foreach (var property in _action.Property.Where(property => !named.Contains(property.Name)))
-            warning.Add(new global::app.warning.@this { Key = "PropertyWithoutNote",
-                Message = $"{_action.Module.Name}.{_action.Name}: the property '{property.Name}' has no notes line" });
+        var part = _about.Part;
+        var title = char.ToUpperInvariant(part[0]) + part[1..];
+        foreach (var name in named.Where(name => name != Result && !_about.Names(name)))
+            warning.Add(new global::app.warning.@this { Key = $"NoteWithout{title}",
+                Message = $"{_about.Noted}: the notes line '{name}' names no {part}" });
+        foreach (var owed in _about.Parts.Where(owed => !named.Contains(owed)))
+            warning.Add(new global::app.warning.@this { Key = $"{title}WithoutNote",
+                Message = $"{_about.Noted}: the {part} '{owed}' has no notes line" });
         _warning = warning;
         _line = read;
         return this;
