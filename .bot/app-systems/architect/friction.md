@@ -27,7 +27,7 @@ Entry form: **who** · **what** · **cost** (evidence) · **if I had** (the wish
 
 ## Docs
 
-- **docs · hand-written docs drift from code, and nothing gates them** (`object_pattern_formal.md` had five wrong examples; `file.md`, `condition.md`, `loop.md` documented v0.1 names and returns). **If I had** every module's page generated from the catalog with a golden test (as `file`, `list`, `loop` now are), drift couldn't happen; the hand-written `docs/modules/*.md` retired.
+- **docs · hand-written docs drift from code, and nothing gates them** (`object_pattern_formal.md` had five wrong examples). The hand-written module pages are retired (e5073b0ef, Ingi: `docs/modules/{file,condition,loop}.md` deleted; the index links the generated `os/system/modules/<m>/start.md`, each checked by a golden). Open: a generated page for every module, and the same for types (567, under way).
 - **docs · where a `/system/…` read or write lands isn't written in one place** (app overlay vs os; decision 522's new-file rule). **If I had** the resolution rule in one doc a goal author can find.
 - **docs, architect · CLAUDE.md is stale for every bot** (`MarkdownTeaching.ScanOrphans` deleted, `action-catalog.md` moved, path read verbs collapsed, the channel API example). v6 and v7 are applied (aa4074d4d); the docs bot is applying the rest of the proposals with a reason each.
 - **docs · verifying against a stale checkout** led to a wrong message to a teammate (76 commits behind). This is a habit, not a missing feature: `git fetch` and compare with origin before concluding something is drift.
