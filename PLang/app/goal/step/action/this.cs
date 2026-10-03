@@ -302,7 +302,7 @@ public partial class @this
         // Uniform dispatch: always resolve the shell + run Resolve (the seam). A C#-composed
         // Seed (app.Run) rides on the entity and is read by the generated Resolve as the
         // pass-through for its set params — no separate skip-Resolve path.
-        var (code, error) = Instance(context);
+        var (code, error) = await Instance(context);
         if (error != null) return context.Error(error);
 
         // `code` is the throwaway registry shell; Resolve builds the fresh, populated instance
@@ -338,9 +338,11 @@ public partial class @this
     /// <summary>This action, instantiated — the live object carrying its typed parameters and
     /// Run. The action asks the module element it HOLDS for its own name; no registry re-resolves
     /// strings. A name the module doesn't carry, a property its element doesn't have (a .pr built
-    /// before the property went — run without it, the action would do something else), or an
-    /// entry that isn't code-generated, comes back as a keyed error.</summary>
-    public (module.ICodeGenerated? Code, global::app.error.Error? Error) Instance(
+    /// before the property went — run without it, the action would do something else), a default the
+    /// build froze in a type its property no longer is (a .pr built when <c>Empty</c> was a bool — read
+    /// as today's default, the program would run differently from how it was built), or an entry that
+    /// isn't code-generated, comes back as a keyed error.</summary>
+    public async Task<(module.ICodeGenerated? Code, global::app.error.Error? Error)> Instance(
         actor.context.@this context)
     {
         if (Module[Name] is not { } element)
@@ -348,6 +350,7 @@ public partial class @this
         if (Property.FirstOrDefault(p => element.Property[p.Name] == null) is { } unknown)
             return (null, new global::app.error.ActionError(
                 $"{Module}.{Name} has no property {unknown.Name}; rebuild the goal", "UnknownProperty", 400));
+        if (await Stale(element, context) is { } stale) return (null, stale);
 
         var code = Module.Create(Name, context);
         return code == null
@@ -356,13 +359,25 @@ public partial class @this
             : (code, null);
     }
 
+    /// <summary>What a default the build froze in a type its option no longer is answers (a .pr built when list.split's
+    /// <c>Empty</c> was a bool, a choice now): rebuild the goal. Null when every frozen default still fits its option.</summary>
+    private async Task<global::app.error.Error?> Stale(@this element, actor.context.@this context)
+    {
+        foreach (var frozen in Default)
+            if (element.Property[frozen.Name] is { } now && !await now.Takes(frozen, context))
+                return new global::app.error.ActionError(
+                    $"{Module}.{Name} was built when {now.Name} was a {frozen.Type.Name}; it is a {now.Type.Name} now — rebuild the goal",
+                    "StaleDefault", 400);
+        return null;
+    }
+
     /// <summary>This action bound: its handler minted and its parameters bound as typed views —
     /// nothing resolved. What the build pass needs to ask the handler, and what a runner needs to read
     /// a held action's own properties.</summary>
     public async Task<(module.ICodeGenerated? Handler, global::app.error.Error? Error)> Bind(
         actor.context.@this context)
     {
-        var (code, error) = Instance(context);
+        var (code, error) = await Instance(context);
         if (error != null) return (null, error);
         return await code!.Resolve(this, context);
     }

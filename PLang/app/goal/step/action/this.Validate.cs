@@ -70,6 +70,8 @@ public partial class @this
                     causes.Add(new global::app.error.Error(
                         $"{Module}.{Name}: the default frozen for '{frozen.Name}' is no option of this action any more.",
                         "UnknownDefault", 400));
+            // a default the build froze in a type its option no longer is
+            if (await Stale(element, context) is { } stale) causes.Add(stale);
         }
 
         // the handler's own judgement: the combinations of its properties only it knows are legal. A

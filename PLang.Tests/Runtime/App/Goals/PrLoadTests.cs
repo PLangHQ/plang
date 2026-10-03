@@ -88,6 +88,43 @@ public class PrLoadTests : System.IAsyncDisposable
         await Assert.That(ran.Error!.Message).Contains("goal.call has no property Wait; rebuild the goal");
     }
 
+    // A .pr built when list.split's Empty was a bool froze `true` for it; Empty is a choice now. Run, the step fails
+    // saying to rebuild — never reads today's default in its place, running differently from how it was built.
+    [Test]
+    public async Task ADefaultFrozenInATypeItsPropertyIsNoLonger_FailsTheRun_SayingRebuild()
+    {
+        var context = _app.actor.list.User.Context;
+        var built = Make.Goal(context, "Start", "/Start.goal",
+            Make.Step("split %x% into lines", Make.Action(context, "list", "split", ("Value", "a\nb"))));
+        var pr = System.Text.Json.Nodes.JsonNode.Parse(await context.Pr(built))!;
+        var action = pr["step"]![0]!["code"]![0]!.AsObject();
+        if (action["default"] is not System.Text.Json.Nodes.JsonArray frozen) action["default"] = frozen = [];
+        foreach (var old in frozen.Where(d => (string?)d!["name"] == "empty").ToList()) frozen.Remove(old);
+        frozen.Add(System.Text.Json.Nodes.JsonNode.Parse("{\"name\":\"empty\",\"type\":{\"name\":\"bool\"},\"value\":true}"));
+        var loaded = await Load("start.pr", pr.ToJsonString());
+        await loaded.IsSuccess();
+
+        var ran = await ((global::app.goal.@this)(await loaded.Value())!).Start(context);
+
+        await Assert.That(ran.Success).IsFalse();
+        await Assert.That(ran.Error!.Key).IsEqualTo("StaleDefault");
+        await Assert.That(ran.Error.Message).Contains("list.split was built when Empty was a bool; it is a choice now — rebuild the goal");
+    }
+
+    // An option takes a frozen default its type makes itself from: goal.call's Parallel (a parallel) from the bool a
+    // .pr froze before it was one; list.split's Empty (a choice) declines a bool.
+    [Test]
+    public async Task AnOption_TakesAFrozenDefaultItsTypeMakesItselfFrom_NotOneItDeclines()
+    {
+        var context = _app.actor.list.User.Context;
+        global::app.type.property.@this Option(string module, string action, string name)
+            => _app.module.list.Items().First(m => m.Name == module)[action]!.Property[name]!;
+        var frozenBool = new global::app.type.property.@this { Name = "x", Type = _app.type.list["bool"], Value = (global::app.type.item.@bool.@this)false };
+
+        await Assert.That(await Option("goal", "call", "Parallel").Takes(frozenBool, context)).IsTrue();
+        await Assert.That(await Option("list", "split", "Empty").Takes(frozenBool, context)).IsFalse();
+    }
+
     // A small goal saved as a .pr and loaded through the real load path runs: its variable is set and
     // its output written. Its indented step and its warning ride the .pr and come back.
     [Test]

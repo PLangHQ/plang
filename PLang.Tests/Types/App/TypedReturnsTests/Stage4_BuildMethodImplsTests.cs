@@ -32,7 +32,7 @@ public class Stage4_BuildMethodImplsTests
     private async Task<Data> Build(string module, string action, params (string name, object? value)[] parameters)
     {
         var a = Make(module, action, parameters);
-        var (shell, err) = a.Instance(_app.actor.list.User.Context);
+        var (shell, err) = await a.Instance(_app.actor.list.User.Context);
         await Assert.That(err).IsNull();
         var (handler, resolveErr) = await shell!.Resolve(a, _app.actor.list.User.Context);
         await Assert.That(resolveErr).IsNull();
@@ -202,7 +202,7 @@ public class Stage4_BuildMethodImplsTests
                 new Data("Content", "/tmp/dummy.txt", context: context),
             }),
         };
-        var (shell, err) = a.Instance(context);
+        var (shell, err) = await a.Instance(context);
         await Assert.That(err).IsNull();
         var (handler, resolveErr) = await shell!.Resolve(a, context);
         await Assert.That(resolveErr).IsNull();

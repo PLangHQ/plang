@@ -34,7 +34,6 @@ Entry form: **who** · **what** · **cost** (evidence) · **if I had** (the wish
 
 ## Errors that don't say what to do
 
-- **os · a stale `.pr` says "holds a bool — choice<…> cannot be created from it".** **If I had** the action named and "built by an older builder: rebuild this goal".
 - **os · a formal backslash error is a JSON exception** (`'D' is an invalid escapable character… BytePositionInLine: 4`). **If I had** "a backslash in a formal string is written `\\`".
 - **educator · an error doesn't show what the step became.** A 4xx error shows the step text and `file:line` only; a 500 shows the parameters, but no template prints the action (`os/system/error/400.txt`, `500.txt`). **Cost:** a learner rewrites a correct step the builder misbuilt. **If I had** the compiled action beside the step ("this step became goal.call(Name=%!app.module.file%)").
 - **os · a failed first build leaves a folder that isn't an app**: the next `plang build` says NoAppFound until `--app={"create":true}` again.
@@ -52,6 +51,8 @@ Entry form: **who** · **what** · **cost** (evidence) · **if I had** (the wish
 - **educator · examples aren't built.** No gate or test builds or runs the `*.examples.md` steps (`dev.sh:284–292`), so an example can teach a step that fails. **If I had** each example built and run by the gate.
 - **architect · the http test server times out under load.** With the machine's load average at 15–22 (several bots building at once), 7 http path contract tests failed at ~23 s with NetworkError and no server fault (gate 113); alone they pass. **Cost:** a gate's red that means "busy machine", read as a regression until rerun. **If I had** the http tests' server and client hold up under load (or the gate run when the machine is quiet, or record its load), a red would mean a regression.
 - **architect · 18 known C# failures in every gate** hide a flake among them. **If I had** them fixed or quarantined.
+- **architect · a teaching edit breaks a C# pin nobody runs.** The builder bot's `ask:` line edits change the decider's stage-1 request, which `PickListTests` pins; a teaching commit doesn't run the C# suite, so the 3 pins went red and only my gate saw it (gate 130). **If I had** the gate (or the bot's commit hook) run `dev.sh test PickListTests` whenever `os/system/modules/**/*.md` changes, the author would re-pin in the same commit.
+- **architect · a type ships without its reader and no test notices.** `parallel` (task stage 3) has no `serializer/`, so any `.pr` holding one crashes the build; the coder's tests built the action in C#, never through a `.pr`. **If I had** a check that every type in `type.list` reads back what it writes (one round trip each, generated from the list), a missing reader would fail the gate.
 - **architect · gating a side branch disturbs my tree.** **If I had** the gate run in its own git worktree.
 - **architect · stale-binary and path traps in CLAUDE.md** (`./dev.sh test <Class>` skips PlangConsole; `Tests/` is `test/`): proposals v6 and v7, waiting for the docs pass.
 - **builder · the binary's `os/` is the source's `os/`** (the same inode): a measurement edit beside the binary changed tracked source on the wrong branch. **If I had** the build copy be a real copy, or read-only, a scratch edit couldn't change source.
