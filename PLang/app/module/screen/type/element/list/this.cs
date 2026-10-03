@@ -1,6 +1,6 @@
 namespace app.module.screen.type.element.list;
 
-/// <summary>A screen's elements, picked by selector: <c>%!screen.element["#window.bot"]%</c> — the same element each
+/// <summary>A screen's elements — a dict by selector: <c>%!screen.element["#window.bot"]%</c>, the same element each
 /// time it is asked for.</summary>
 public sealed class @this(screen.@this screen) : global::app.type.item.@this
 {
@@ -18,4 +18,13 @@ public sealed class @this(screen.@this screen) : global::app.type.item.@this
 
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
         => System.Threading.Tasks.ValueTask.FromResult(new global::app.data.@this(key, Of(key), parent: parent));
+
+    /// <summary>A dict of the elements asked for so far, by selector: <c>foreach %!screen.element%</c> gives each selector
+    /// and its element.</summary>
+    public override System.Collections.Generic.IEnumerable<(global::app.data.@this key, global::app.data.@this value)> EnumerateItems(
+        global::app.actor.context.@this? context)
+    {
+        foreach (var (selector, element) in _held.OrderBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase))
+            yield return (new global::app.data.@this("", selector, context: context), new global::app.data.@this("", element, context: context));
+    }
 }

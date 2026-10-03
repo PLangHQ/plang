@@ -7,8 +7,8 @@ using Window = app.module.window.type.window.@this;
 namespace app.module.window.type.window.list;
 
 /// <summary>
-/// A browser's windows on the screen: the desktop, and every window a page opened in — by their number on the screen
-/// (<c>%browser.window[1].url%</c>, <c>%browser.window[%click.window%]%</c>; 0 is the desktop). The screen tells about
+/// A browser's windows on the screen: the desktop, and every window a page opened in — a dict by their number on the
+/// screen (<c>%browser.window[1].url%</c>, <c>%browser.window[%click.window%]%</c>; 0 is the desktop). The screen tells about
 /// each window (its id, when it gets a title, when it closes); a window is paired with its page when it gets a title —
 /// the unpaired page with that title, else the newest unpaired one — and is then shown: a window <c>window.open</c>
 /// is waiting for (the oldest), or a new one. A page of the app's own gets <c>plang(text)</c>.
@@ -35,6 +35,16 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
         => ValueTask.FromResult(long.TryParse(key, out var number) && ById(number) is { } window
             ? new global::app.data.@this(key, window, parent: parent)
             : global::app.data.@this.NotFound(key, parent.Context));
+
+    /// <summary>A dict of the windows by their number on the screen — the desktop (0) first, then the rest as they
+    /// came: <c>foreach %browser.window%</c> gives each number and its window.</summary>
+    public override IEnumerable<(global::app.data.@this key, global::app.data.@this value)> EnumerateItems(global::app.actor.context.@this? context)
+    {
+        if (Desktop.Number >= 0)
+            yield return (new global::app.data.@this("", Desktop.Number, context: context), new global::app.data.@this("", Desktop, context: context));
+        foreach (var (id, window) in _shown.OrderBy(pair => pair.Key))
+            yield return (new global::app.data.@this("", id, context: context), new global::app.data.@this("", window, context: context));
+    }
 
     /// <summary>A window about to open: shown when its page is.</summary>
     internal Window Opening()
