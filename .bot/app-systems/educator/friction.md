@@ -67,6 +67,16 @@ A user's review: I write more plang than anyone, the way a learner would, for th
   time, against a paid API. **If I had** `plang build --diff` (which steps' actions changed against the previous `.pr`),
   I'd see the regression before running it.
 
+- **educator · an option rename breaks an existing app with an error about a variable it doesn't have.**
+  (2026-10-03) After aa45d0ca7 (list.split's `Empty` became a choice), the studio's unchanged
+  `split %keyFile% into lines` fails `CreateItemDeclined: %empty% holds a bool — choice<empty> cannot be created
+  from it`, "at Key.goal:6". There is no %empty% in the app. A fresh app with the same steps runs. **Cost:** voicing
+  stopped for Track D; an hour of probes to rule out my goal. **If I had** a rename that migrates an app's stored
+  state (or says "this app's stored X predates a change; run Y"), an old app would keep running.
+- **educator · `split %x% into lines` doesn't split by lines.** It compiles with no Separator, so the default `,`
+  applies and `%parts[0]%` is the whole text. **Cost:** silent; in the studio it would put a newline in an HTTP
+  header (the 401 trap). **If I had** "lines" mapping to a newline separator, the step would mean what it says.
+
 ## What works well
 
 - Plain steps for the everyday things (`add … to list`, `write out`, `save … to file`, `foreach … call`) build right
