@@ -26,9 +26,9 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
 
     public override bool IsLeaf => false;
 
-    /// <summary>No value of a type the build knows is a conversation: one continues an llm's answer, whose type the
-    /// build can't know.</summary>
-    public static bool Takes(global::app.type.@this other) => false;
+    /// <summary>A value of <paramref name="other"/> becomes a conversation, as its birth makes one: a conversation, or a
+    /// dict of its members. A list, a text, a number never does.</summary>
+    public static bool Takes(global::app.type.@this other) => other.Is("conversation") || other.Is("dict");
 
     /// <summary>A conversation is made from a dict of its members — a member that is no member of a conversation, or a
     /// continue that names no response, declines with why — or from the response it continues

@@ -77,6 +77,14 @@ public class PickOptionTests : System.IAsyncDisposable
         // the step's own write-to is all that's left, and the pick never offers where the answer goes: only none
         await Assert.That(Formal(await conversation.Offers(listed.Step[1]))).IsEquivalentTo(new[] { "%answer%" });
         await Assert.That(Formal(await conversation.Offers(answered.Step[1]))).IsEquivalentTo(new[] { "%a%" });
+
+        // a dict can be a conversation (its members), so one set from a dict is offered
+        var dicted = Make.Goal(Ctx, "Dict", "/Dict.goal",
+            Make.Step("set %c% = {continue: %a%}", Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "c", "variable"),
+                ("Value", new Dictionary<string, object?> { ["mood"] = "calm" }))),
+            Make.Step("ask llm \"go on\", conversation %c%", 0));
+        await dicted.Step.Scope(Ctx);
+        await Assert.That(Formal(await conversation.Offers(dicted.Step[1]))).IsEquivalentTo(new[] { "%c%" });
     }
 
     // a type is offered by the plang type names, never one plang keeps for itself
