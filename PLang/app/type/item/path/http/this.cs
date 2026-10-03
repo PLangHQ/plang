@@ -106,7 +106,7 @@ public sealed partial class @this : global::app.type.item.path.@this
     /// strip <c>?token=…</c> before sharing the URL elsewhere gets the same
     /// signal here. Suppressed when there is no query string.
     /// </summary>
-    protected override string AuthorizationHint(global::app.type.item.permission.Verb verb)
+    protected override string AuthorizationHint(global::app.type.item.permission.Verb verb, global::app.actor.context.@this context)
     {
         if (string.IsNullOrEmpty(_uri.Query) || _uri.Query == "?") return "";
         return "(note: answering 'a' saves the full URL — query string included — to your local permission store)";
