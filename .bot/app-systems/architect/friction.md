@@ -34,7 +34,6 @@ Entry form: **who** · **what** · **cost** (evidence) · **if I had** (the wish
 
 ## Errors that don't say what to do
 
-- **os · a stale `.pr` says "holds a bool — choice<…> cannot be created from it".** **If I had** the action named and "built by an older builder: rebuild this goal". **Done (coder, df8c337f0):** StaleDefault, "list.split was built when Empty was a bool; it is a choice now — rebuild the goal", and a cached build reopens the step.
 - **os · a formal backslash error is a JSON exception** (`'D' is an invalid escapable character… BytePositionInLine: 4`). **If I had** "a backslash in a formal string is written `\\`".
 - **educator · an error doesn't show what the step became.** A 4xx error shows the step text and `file:line` only; a 500 shows the parameters, but no template prints the action (`os/system/error/400.txt`, `500.txt`). **Cost:** a learner rewrites a correct step the builder misbuilt. **If I had** the compiled action beside the step ("this step became goal.call(Name=%!app.module.file%)").
 - **os · a failed first build leaves a folder that isn't an app**: the next `plang build` says NoAppFound until `--app={"create":true}` again.
