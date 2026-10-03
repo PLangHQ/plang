@@ -7,10 +7,10 @@ namespace app.type.item.input;
 /// (<see cref="mouse.@this"/>), a key went down or up (<see cref="key.@this"/>), text was typed
 /// (<see cref="text.@this"/>), back, forward or reload was asked (<see cref="navigate.@this"/>). Each variant is a
 /// value of its own data, reporting its type as <c>input</c> with the variant as the kind — so a goal asks
-/// <c>if %event% is input</c>, and reads which input it is as its kind, <c>%event!type.kind%</c> (<c>mouse</c>, <c>key</c>,
-/// <c>text</c>, <c>navigate</c>; <c>is mouse</c> doesn't answer: <c>is</c> compares type names, and mouse is input's
-/// kind). What takes input (a display, a window) is handed each variant whole by its own <see cref="Apply"/>, never by
-/// asking a message's keys.
+/// <c>if %event% is input</c> or <c>if %event% is mouse</c> (<c>is</c> answers a kind as well as a type), and reads which
+/// input it is as its kind, <c>%event!type.kind%</c> (<c>mouse</c>, <c>key</c>, <c>text</c>, <c>navigate</c>). What takes
+/// input (a display, a window) is handed each variant whole by its own <see cref="Apply"/>, never by asking a message's
+/// keys.
 ///
 /// <para>On the wire it writes itself as the screen's input line has always been — <c>{"mouse": "down", "x": 4, …}</c>,
 /// <c>{"key": "down", "sc": 30, …}</c>, <c>{"text": "a"}</c>, <c>{"nav": "back"}</c> — and <c>serializer/Reader.cs</c>
