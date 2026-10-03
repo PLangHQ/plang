@@ -102,4 +102,7 @@ public class TypePageTests
 
     [Test]
     public Task TheSecretPage_IsTheSpecsGolden() => ComparePageToGolden("secret");
+
+    [Test]
+    public Task TheListPage_IsTheSpecsGolden() => ComparePageToGolden("list");
 }
