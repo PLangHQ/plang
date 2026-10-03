@@ -9,7 +9,7 @@ Needs: numbers (the UnwrittenNumber error's Details.numbers), modules (%!app.mod
 {% endcapture -%}
 A plang step is a sentence saying what to do, written in any human language. Its code is a list of actions, each
 with properties. The code of each step below writes a number the step does not write as digits. A step can still
-give that number in words, in any language ("once" gives 1, "twice" 2, "a minute" 60 seconds); or the number is
+give that number in words, in any language ("once" gives 1, "retry" / "then retry" retries once so 1, "twice" 2, "a minute" 60 seconds); or the number is
 not in the step at all, and was invented.
 {{ nl }}The steps:
 {%- assign seen = "|" -%}
