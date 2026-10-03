@@ -121,6 +121,17 @@ public sealed class @this
         return written == fallback;
     }
 
+    /// <summary>Does this property take <paramref name="held"/>'s value — one of its type, or one its type makes itself
+    /// from (a parallel from a bool)? A choice declines a bool: a default frozen as a bool for an option that became a
+    /// choice is no longer one it takes.</summary>
+    public async System.Threading.Tasks.ValueTask<bool> Takes(@this held, global::app.actor.context.@this context)
+    {
+        if (held.Type.Is(Type)) return true;
+        var value = await held.Data(context).Value();
+        var asked = new global::app.data.@this(Name, context: context);
+        return Type.Make(value, asked) is not null && asked.Success;
+    }
+
     /// <summary>The value a program action holds, raw as loaded — a lazy wire/source, or the
     /// eagerly read action/goal.call. Never loaded here; the run's Data does that.</summary>
     public global::app.type.item.@this? Value { get; init; }

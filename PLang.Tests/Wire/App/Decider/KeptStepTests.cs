@@ -112,6 +112,32 @@ public class KeptStepTests
         await Assert.That(second.Step[1].IsCached).IsTrue();
     }
 
+    // a .pr built when list.split's Empty was a bool froze `true` for it; Empty is a choice now, so the kept step is
+    // opened again even though its text is unchanged — never kept to fail at run
+    [Test]
+    public async Task AKeptStepWithADefaultFrozenInATypeItsOptionIsNoLonger_IsOpenedAgain()
+    {
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
+        var context = os.actor.list.User.Context;
+        const string split = "Start\n- split \"a\" into lines, write to %parts%\n";
+
+        var first = Parse(split, context);
+        Built(first, context, "list.split(Value=\"a\"); variable.set(Name=%parts%, Value=%!data%)");
+        var pr = System.Text.Json.Nodes.JsonNode.Parse(await Pr(first, os))!;
+        var action = pr["step"]![0]!["code"]![0]!.AsObject();
+        if (action["default"] is not System.Text.Json.Nodes.JsonArray frozen) action["default"] = frozen = [];
+        foreach (var old in frozen.Where(d => (string?)d!["name"] == "empty").ToList()) frozen.Remove(old);
+        frozen.Add(System.Text.Json.Nodes.JsonNode.Parse("{\"name\":\"empty\",\"type\":{\"name\":\"bool\"},\"value\":true}"));
+        var second = Parse(split, context);
+        second.Merge(await RealGoalLoad.Read(os, pr.ToJsonString()));
+
+        await second.Reopen(context);
+
+        await Assert.That(second.Step[0].IsCached).IsFalse();
+        await Assert.That(second.Step[0].Warning.Single().Message).Contains("was built when Empty was a bool");
+        await Assert.That(second.IsCached).IsFalse();
+    }
+
     [Test]
     public async Task AKeptStepWhoseCodeNoLongerHolds_IsOpenedAgain_WithAWarning()
     {

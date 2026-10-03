@@ -59,6 +59,23 @@ public class SettingsTests : System.IAsyncDisposable
         await Assert.That(paths[0].ToString()).Contains("a.goal");
     }
 
+    // --build={"files":"a.goal"}: one value binds as a list of one, as a list holds any one value
+    [Test]
+    public async Task Set_OneString_BindsAsAListOfOne()
+    {
+        await using var app = new EngineType("/app");
+
+        var result = app.actor.list.System.Setting.Set("build.setting", new Dictionary<string, object?> { ["files"] = "a.goal" });
+        await Assert.That(result.Success).IsTrue().Because(result.Error?.Message ?? "ok");
+
+        var files = app.actor.list.System.Context.Setting.Of<global::app.module.build.setting.@this>().Files;
+        var paths = new List<global::app.type.item.path.@this>();
+        foreach (var row in files.Items(app.actor.list.User.Context))
+            paths.Add((await row.Value<global::app.type.item.path.@this>())!);
+        await Assert.That(paths.Count).IsEqualTo(1);
+        await Assert.That(paths[0].ToString()).Contains("a.goal");
+    }
+
     [Test]
     public async Task Set_ThenGet_ReturnsValue()
     {

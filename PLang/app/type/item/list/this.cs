@@ -100,6 +100,13 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     public static @this? Create(object? value, global::app.type.@this? declared, Data data)
     {
         if (value is @this self) return self;
+        // a raw value (the string a setting's json carried) is born as its plang value first: a sequence is a list
+        // itself, anything else one value
+        if (value is not null and not global::app.type.item.@this)
+        {
+            value = global::app.type.item.@this.Create(value, data.Context);
+            if (value is @this born) return born;
+        }
         if ((((value as global::app.type.item.@this)?.Clr<object>() ?? value) is string s) && string.IsNullOrWhiteSpace(s)) return new @this();
         // The list converts a json source (a clr(json) array) into ITSELF — the same DOM narrower
         // the list kind's Convert uses. Never route a list.@this through reflection (it has no
