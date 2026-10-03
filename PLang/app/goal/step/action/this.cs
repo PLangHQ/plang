@@ -302,7 +302,7 @@ public partial class @this
         // Uniform dispatch: always resolve the shell + run Resolve (the seam). A C#-composed
         // Seed (app.Run) rides on the entity and is read by the generated Resolve as the
         // pass-through for its set params — no separate skip-Resolve path.
-        var (code, error) = await Instance(context);
+        var (code, error) = Instance(context);
         if (error != null) return context.Error(error);
 
         // `code` is the throwaway registry shell; Resolve builds the fresh, populated instance
@@ -318,6 +318,11 @@ public partial class @this
                 return context.Error(resolveErr);
             }
             real = resolved;
+            if (await Stale(real!) is { } stale)
+            {
+                call.Record(stale, context);
+                return context.Error(stale);
+            }
             result = await real!.Start();
         }
         // a program's error that travelled as an exception is the action's answer, whole
@@ -338,11 +343,9 @@ public partial class @this
     /// <summary>This action, instantiated — the live object carrying its typed parameters and
     /// Run. The action asks the module element it HOLDS for its own name; no registry re-resolves
     /// strings. A name the module doesn't carry, a property its element doesn't have (a .pr built
-    /// before the property went — run without it, the action would do something else), a default the
-    /// build froze in a type its property no longer is (a .pr built when <c>Empty</c> was a bool — read
-    /// as today's default, the program would run differently from how it was built), or an entry that
-    /// isn't code-generated, comes back as a keyed error.</summary>
-    public async Task<(module.ICodeGenerated? Code, global::app.error.Error? Error)> Instance(
+    /// before the property went — run without it, the action would do something else), or an
+    /// entry that isn't code-generated, comes back as a keyed error.</summary>
+    public (module.ICodeGenerated? Code, global::app.error.Error? Error) Instance(
         actor.context.@this context)
     {
         if (Module[Name] is not { } element)
@@ -350,7 +353,6 @@ public partial class @this
         if (Property.FirstOrDefault(p => element.Property[p.Name] == null) is { } unknown)
             return (null, new global::app.error.ActionError(
                 $"{Module}.{Name} has no property {unknown.Name}; rebuild the goal", "UnknownProperty", 400));
-        if (await Stale(element, context) is { } stale) return (null, stale);
 
         var code = Module.Create(Name, context);
         return code == null
@@ -359,22 +361,16 @@ public partial class @this
             : (code, null);
     }
 
-    /// <summary>What a default the build froze in a type its option no longer is answers (a .pr built when list.split's
-    /// <c>Empty</c> was a bool, a choice now): rebuild the goal. Null when every frozen default still fits its option. A
-    /// fact of this loaded action against the catalog, so it is judged once.</summary>
-    private Task<global::app.error.Error?> Stale(@this element, actor.context.@this context)
+    /// <summary>What a value the build wrote in a type its option no longer is answers — the step's own (file.read's
+    /// <c>Template</c> written <c>true</c>, a choice now) or a default it froze (list.split's <c>Empty</c>): rebuild the
+    /// goal. The handler's own literal read judges it (its <c>Parse</c>, the run's typed door: a selected name, a
+    /// variable, a template are never judged). A fact of this loaded action against the catalog, judged once.</summary>
+    private Task<global::app.error.Error?> Stale(module.ICodeGenerated handler)
     {
         return _stale ??= Judged();
 
         async Task<global::app.error.Error?> Judged()
-        {
-            foreach (var frozen in Default)
-                if (element.Property[frozen.Name] is { } now && !await now.Takes(frozen, context))
-                    return new global::app.error.ActionError(
-                        $"{Module}.{Name} was built when {now.Name} was a {frozen.Type.Name}; it is a {now.Type.Name} now — rebuild the goal",
-                        "StaleDefault", 400);
-            return null;
-        }
+            => handler is global::app.module.IClass own ? (await own.Parse()).FirstOrDefault(declined => declined.Key == "Stale") : null;
     }
 
     private Task<global::app.error.Error?>? _stale;
@@ -385,7 +381,7 @@ public partial class @this
     public async Task<(module.ICodeGenerated? Handler, global::app.error.Error? Error)> Bind(
         actor.context.@this context)
     {
-        var (code, error) = await Instance(context);
+        var (code, error) = Instance(context);
         if (error != null) return (null, error);
         return await code!.Resolve(this, context);
     }

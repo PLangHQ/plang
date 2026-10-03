@@ -75,17 +75,12 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
         }
         if (raw is global::app.type.item.dict.@this dict && data.Context is { } context)
         {
-            long? cpu = null;
-            foreach (var entry in dict.Entries(context))
-                if (string.Equals(entry.Name, "cpu", System.StringComparison.OrdinalIgnoreCase))
-                    // through the entry's Data: an entry read off the wire decodes with its context
-                    cpu = entry.Clr<object>() is { } count ? System.Convert.ToInt64(count) : null;
-                else
-                {
-                    data.Fail(new global::app.error.Error($"parallel's one member is cpu (how many at once) — not {entry.Name}", "ParallelInvalid", 400));
-                    return null;
-                }
-            return new @this(cpu);
+            if (dict.Entries(context).FirstOrDefault(entry => !string.Equals(entry.Name, "cpu", System.StringComparison.OrdinalIgnoreCase)) is { } other)
+            {
+                data.Fail(new global::app.error.Error($"parallel's one member is cpu (how many at once) — not {other.Name}", "ParallelInvalid", 400));
+                return null;
+            }
+            return new @this(dict.Get<global::app.type.item.number.@this>("cpu", context)?.ToInt64());
         }
         data.Fail(new global::app.error.Error(
             "parallel is written `in parallel`, `parallel(cpu: 2)` or {cpu: 2}", "ParallelInvalid", 400));

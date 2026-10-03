@@ -104,7 +104,7 @@ public class Stage4_TypeHintPrecedenceTests
     public async Task OutputAsk_Build_ReturnsBareOk_DefersToHint()
     {
         var action = Make("output", "ask", ("Question", "?"));
-        var (shell, _) = await action.Instance(_app.actor.list.User.Context);
+        var (shell, _) = action.Instance(_app.actor.list.User.Context);
         var (handler, _) = await shell!.Resolve(action, _app.actor.list.User.Context);
         var result = await ((IClass)handler!).Build();
 

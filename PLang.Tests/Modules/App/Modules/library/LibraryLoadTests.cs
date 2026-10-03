@@ -141,7 +141,7 @@ public class ModuleAddTests
             await result.IsSuccess();
 
             // Actions registered via Discover should be resolvable
-            var (action, error) = await (new PrAction { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
+            var (action, error) = (new PrAction { Module = app.actor.list.User.Context.App.Module("variable"), Name = "set" }).Instance(app.actor.list.User.Context);
             await Assert.That(action).IsNotNull();
             await Assert.That(error).IsNull();
         }

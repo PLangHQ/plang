@@ -138,6 +138,29 @@ public class KeptStepTests
         await Assert.That(second.IsCached).IsFalse();
     }
 
+    // the step's own row the same: file.read's Template written `true`, before Template was a choice — opened again
+    [Test]
+    public async Task AKeptStepWithALiteralItsOptionNoLongerTakes_IsOpenedAgain()
+    {
+        await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing().Building();
+        var context = os.actor.list.User.Context;
+        const string read = "Start\n- read note.txt, write to %note%\n";
+
+        var first = Parse(read, context);
+        Built(first, context, "file.read(Path=\"note.txt\"); variable.set(Name=%note%, Value=%!data%)");
+        var pr = System.Text.Json.Nodes.JsonNode.Parse(await Pr(first, os))!;
+        var rows = pr["step"]![0]!["code"]![0]!["property"]!.AsArray();
+        foreach (var old in rows.Where(r => (string?)r!["name"] == "Template").ToList()) rows.Remove(old);
+        rows.Add(System.Text.Json.Nodes.JsonNode.Parse("{\"name\":\"Template\",\"type\":{\"name\":\"bool\"},\"value\":true}"));
+        var second = Parse(read, context);
+        second.Merge(await RealGoalLoad.Read(os, pr.ToJsonString()));
+
+        await second.Reopen(context);
+
+        await Assert.That(second.Step[0].IsCached).IsFalse();
+        await Assert.That(second.Step[0].Warning.Single().Message).Contains("file.read was built when Template was a bool");
+    }
+
     [Test]
     public async Task AKeptStepWhoseCodeNoLongerHolds_IsOpenedAgain_WithAWarning()
     {
