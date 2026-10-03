@@ -77,6 +77,15 @@ A user's review: I write more plang than anyone, the way a learner would, for th
   applies and `%parts[0]%` is the whole text. **Cost:** silent; in the studio it would put a newline in an HTTP
   header (the 401 trap). **If I had** "lines" mapping to a newline separator, the step would mean what it says.
 
+- **educator · the decider's question can force a wrong value past a right writer.** (2026-10-03) `ask llm
+  "Sort … %items%", write to %answer%` got `Conversation=%items%` in 3 of 8 builds. The decider's question
+  presumes a conversation exists. The writer left it out (right), and Agree refused and forced it in. **Cost:** D6
+  held; the run fails `ConversationInvalid`. **If I had** decider questions that can answer "none", and Agree treating
+  a decider-only value as a suggestion, a right writer would win.
+- **educator · `%items%` inside an `ask llm "…"` message goes to the model raw.** The model answered "I'm missing the
+  list (the '%items%' placeholder)". **Cost:** a paid call that did nothing, and the most natural D6 step fails
+  silently. **If I had** every text value render where written (as `set` does), this class of bug would be gone.
+
 ## What works well
 
 - Plain steps for the everyday things (`add … to list`, `write out`, `save … to file`, `foreach … call`) build right
@@ -84,4 +93,6 @@ A user's review: I write more plang than anyone, the way a learner would, for th
 - Errors carry `at <file>:<line>` and the step text, so a learner knows where.
 - Templates render where they're written (1f496a715). That removed a whole class of surprises.
 - The learner module pages generated from each action's notes can't drift from the code, and golden tests keep them honest.
+- `--debug={"llm":{…},"goal":"NoSuchGoalX"}` (the architect's trick) gives only the LLM exchanges: 15 KB instead of 885 KB.
+  With it, the D6 Conversation misread was clear in one read. Worth a documented flag.
 - `--debug={"goal":"X"}` with BEFORE/AFTER variables made the studio's hash mismatch findable in two runs.
