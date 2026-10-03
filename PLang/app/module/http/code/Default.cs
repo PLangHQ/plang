@@ -160,11 +160,10 @@ public sealed class Default : IHttp
         // the digest the body must have, its algorithm the value's
         var expected = action.Hash == null || !action.Hash.IsInitialized ? null : await action.Hash.Value();
         if (action.Hash != null && action.Hash.IsInitialized && !action.Hash.Success) return action.Hash;
-        if (expected != null && expected.Algorithm.Length == 0)
+        if (expected != null && expected.Algorithm == null)
             return action.Context.Error(new global::app.error.Error(
                 "a download's Hash names its algorithm: sha256:<hex>", "HashInvalid", 400));
-        using var digest = expected == null ? null
-            : ((global::app.module.crypto.type.hash.kind.@this)action.Context.App.type.list["hash"].kind[expected.Algorithm]!).Digest();
+        using var digest = expected?.Algorithm!.Digest();
 
         using var responseStream = await response.Content.ReadAsStreamAsync(cts.Token);
         await using var body = new body(responseStream, totalBytes, maxDownloadSize, sent: false, report, digest, action.Context);

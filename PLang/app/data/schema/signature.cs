@@ -28,7 +28,8 @@ public sealed class signature : ISchemaReader
         global::app.type.item.text.@this algorithm = new("ed25519"), nonce = new(""), identity = new("");
         System.DateTimeOffset created = default;
         System.DateTimeOffset? expires = null;
-        string hashAlgo = "keccak256";
+        // the hash's kind is what the layer says — none said, the signature is refused below, never a kind guessed
+        string? hashAlgo = null;
         byte[] hashValue = System.Array.Empty<byte>();
         global::app.type.item.binary.@this sig = new(System.Array.Empty<byte>());
         global::app.type.item.list.@this? contracts = null;
@@ -76,12 +77,25 @@ public sealed class signature : ISchemaReader
         }
         reader.EndObject();
 
+        // the signed hash's kind, as the layer names it: none named, or a name that is no kind of hash, is no signature
+        // that can be checked
+        if (string.IsNullOrEmpty(hashAlgo))
+            throw new global::app.error.DeclinedException(new global::app.error.Error(
+                "a signature's hash names no kind (its hash.type) — it can't be checked", "SignatureInvalid", 400));
+        global::app.module.crypto.type.hash.kind.@this hashKind;
+        try { hashKind = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse(hashAlgo).Value; }
+        catch (System.FormatException unknown)
+        {
+            throw new global::app.error.DeclinedException(new global::app.error.Error(
+                $"a signature's hash is of a kind there is none of: {unknown.Message}", "SignatureInvalid", 400));
+        }
+
         // A signature read live off the wire is good for the signing setting's window after it was made; one read
         // from plang's own store keeps only what its signer signed, and covers the value's stored form.
         var stored = ctx.View == global::app.View.Store;
         var layer = new global::app.type.item.signature.@this(
             inner, algorithm, nonce, new global::app.type.item.datetime.@this(created), identity,
-            new global::app.module.crypto.type.hash.@this(hashValue, hashAlgo), sig,
+            new global::app.module.crypto.type.hash.@this(hashValue, hashKind), sig,
             expires is { } ex ? new global::app.type.item.datetime.@this(ex) : null, contracts,
             stored ? global::app.type.item.signature.Origin.Stored : global::app.type.item.signature.Origin.Live,
             stored ? null : context.Setting.Of<global::app.module.signing.setting.@this>().Expiry);

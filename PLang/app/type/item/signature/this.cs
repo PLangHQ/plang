@@ -181,7 +181,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // hash sub-object {type, value} — read straight off the typed hash.
         w.Name("hash");
         w.BeginObject();
-        w.Name("type"); w.String(Hash.Algorithm);
+        w.Name("type"); w.String(Hash.Algorithm?.Name ?? "");
         w.Name("value"); w.String(Hash.ToBase64());
         w.EndObject();
         w.Name("signature"); Signature.Write(w);
@@ -214,7 +214,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
         w.Name("hash");
         w.BeginObject();
-        w.Name("type"); w.String(Hash.Algorithm);
+        w.Name("type"); w.String(Hash.Algorithm?.Name ?? "");
         w.Name("value"); w.String(Hash.ToBase64());
         w.EndObject();
         w.Name("signature"); Signature.Write(w);

@@ -112,7 +112,7 @@ public class Ed25519ProviderTests : System.IAsyncDisposable
             nonce: new global::app.type.item.text.@this(nonce),
             created: new global::app.type.item.datetime.@this(DateTimeOffset.UnixEpoch),
             identity: new global::app.type.item.text.@this(identityPublicKey),
-            hash: new global::app.module.crypto.type.hash.@this(Array.Empty<byte>(), "keccak256"),
+            hash: new global::app.module.crypto.type.hash.@this(Array.Empty<byte>(), new global::app.module.crypto.type.hash.kind.keccak256.@this()),
             signature: new global::app.type.item.binary.@this(Array.Empty<byte>()));
 
     // A copy of a signed signature with one field swapped — for the mismatch tests.

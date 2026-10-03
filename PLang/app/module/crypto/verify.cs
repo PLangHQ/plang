@@ -14,8 +14,9 @@ public partial class Verify : IContext
     [IsNotNull]
     public partial data.@this Hash { get; init; }
 
+    /// <summary>The kind of hash, when the expected hash doesn't carry one — one of the hash kinds (sha256, keccak256).</summary>
     [Default("keccak256")]
-    public partial data.@this<global::app.type.item.text.@this> Algorithm { get; init; }
+    public partial data.@this<global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>> Algorithm { get; init; }
 
     [Code]
     public partial ICrypto Crypto { get; }

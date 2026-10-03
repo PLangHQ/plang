@@ -27,7 +27,7 @@ public sealed class TestSigning : global::app.module.signing.code.ISigning
             nonce: new global::app.type.item.text.@this("test-nonce"),
             created: new global::app.type.item.datetime.@this(System.DateTimeOffset.FromUnixTimeSeconds(0)),
             identity: new global::app.type.item.text.@this("test-public-key"),
-            hash: new global::app.module.crypto.type.hash.@this(System.Array.Empty<byte>(), "test"),
+            hash: new global::app.module.crypto.type.hash.@this(System.Array.Empty<byte>(), new global::app.module.crypto.type.hash.kind.keccak256.@this()),
             signature: new global::app.type.item.binary.@this(System.Array.Empty<byte>()));
         return Task.FromResult(action.Context.Ok((object?)unsigned));
     }

@@ -46,7 +46,7 @@ public class TypeOwnedReadParityTests : System.IAsyncDisposable
         var via = r.Of("hash", null)!(b64, "keccak256", rc) as global::app.module.crypto.type.hash.@this;
         await Assert.That(via).IsNotNull();
         await Assert.That(via!.ToBase64()).IsEqualTo(b64);
-        await Assert.That(via.Algorithm).IsEqualTo("keccak256");
+        await Assert.That(via.Algorithm?.Name).IsEqualTo("keccak256");
     }
 
     [Test] public async Task TimeSpanRead_MatchesPriorTimeSpanIso8601Output()

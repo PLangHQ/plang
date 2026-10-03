@@ -27,7 +27,7 @@ public class SelfWritingItemsTests : System.IAsyncDisposable
         await Assert.That(await Json(filePath)).IsEqualTo("\"/docs/a.txt\"");
         await Assert.That(await Json(httpPath)).IsEqualTo("\"https://example.com/x/y.json\"");
         await Assert.That(await Json(new global::app.type.item.url.@this(httpPath, Ctx))).IsEqualTo("\"https://example.com/x/y.json\"");
-        await Assert.That(await Json(new global::app.module.crypto.type.hash.@this(new byte[] { 1, 2, 3 }, "sha256"))).IsEqualTo("\"AQID\"");
+        await Assert.That(await Json(new global::app.module.crypto.type.hash.@this(new byte[] { 1, 2, 3 }, new global::app.module.crypto.type.hash.kind.sha256.@this()))).IsEqualTo("\"AQID\"");
         await Assert.That(await Json(new global::app.type.code.@this("x = 1", "python"))).IsEqualTo("\"x = 1\"");
         await Assert.That(await Json(new global::app.type.item.permission.@this("user", "/docs/*",
                 new HashSet<global::app.type.item.permission.Verb> { global::app.type.item.permission.Verb.read }, global::app.type.item.permission.Match.glob)))

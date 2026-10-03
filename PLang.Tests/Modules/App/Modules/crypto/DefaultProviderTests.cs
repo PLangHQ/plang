@@ -21,7 +21,9 @@ public class DefaultCryptoProviderTests : System.IAsyncDisposable
         => new(app.actor.list.User.Context) {  Data = app.actor.list.User.Context.Ok(data), Algorithm = Kind(algorithm) };
 
     private Verify VerifyAction(object data, string expectedHash, string algorithm = "keccak256")
-        => new(app.actor.list.User.Context) {  Data = app.actor.list.User.Context.Ok(data), Hash = app.actor.list.User.Context.Ok(expectedHash), Algorithm = (global::app.type.item.text.@this)algorithm };
+        => new(app.actor.list.User.Context) {  Data = app.actor.list.User.Context.Ok(data), Hash = app.actor.list.User.Context.Ok(expectedHash),
+            Algorithm = new global::app.data.@this("Algorithm", algorithm, context: app.actor.list.User.Context)
+                .As<global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>>() };
 
     // --- Hash ---
 
