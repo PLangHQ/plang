@@ -177,19 +177,46 @@ public class ProgramTests : IDisposable
         await Assert.That(rows).IsEquivalentTo(new[] { "abc", "de" });
     }
 
-    // binary is its stdout; its stderr stays text, each line to OnError. (It writes once told to: a callback that runs
-    // while the opening step is still keeping its result shares %!data% with it — the on gate's race, reported.)
+    // binary is its stdout; its stderr stays text, each line to OnError — at once, while the opening step still keeps
+    // its result: the callback's %!data% is its own, never the step's (issue 64)
     [Test]
     public async Task Open_Binary_GivesItsStderrLines_ToOnError()
     {
         if (!OperatingSystem.IsLinux()) return;
         await Collects("Err");
         var ran = await Run(
-            Make.Step("open it", Sh("open", "read go; printf '\\001\\000\\000\\000x'; echo oops >&2; echo again >&2",
+            Make.Step("open it", Sh("open", "printf '\\001\\000\\000\\000x'; echo oops >&2; echo again >&2",
                 ("Binary", true), ("OnError", Make.Call(Context, "Err"))), Kept("program")),
-            Make.Step("tell it", Process("send", ("Data", "go"))),
             Make.Step("wait", Process("wait")));
         await ran.IsSuccess();
         await Assert.That(string.Join("|", await Lines())).IsEqualTo("oops|again");
+    }
+
+    // the same in text mode: lines at once, OnOutput's %!data% its own
+    [Test]
+    public async Task Open_GivesItsLinesAtOnce_EachCallbackItsOwnData()
+    {
+        if (!OperatingSystem.IsLinux()) return;
+        await Collects("Now");
+        var ran = await Run(
+            Make.Step("open it", Sh("open", "echo now; echo then", ("OnOutput", Make.Call(Context, "Now"))), Kept("program")),
+            Make.Step("wait", Process("wait")));
+        await ran.IsSuccess();
+        await Assert.That(string.Join("|", await Lines())).IsEqualTo("now|then");
+    }
+
+    // a callback's own %!data% is a name of its frame; what else it writes still reaches the actor's variables
+    [Test]
+    public async Task ACallback_StillWritesTheActorsVariables()
+    {
+        if (!OperatingSystem.IsLinux()) return;
+        var goal = await RealGoalLoad.ViaChannel(_app, Make.Goal(Context, "Remember", "/Remember.goal",
+            Make.Step("keep it", Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "%last%", "variable"), ("Value", "%!data%")))));
+        _app.goal.list.Add(goal);
+        var ran = await Run(
+            Make.Step("open it", Sh("open", "echo remembered", ("OnOutput", Make.Call(Context, "Remember"))), Kept("program")),
+            Make.Step("wait", Process("wait")));
+        await ran.IsSuccess();
+        await Assert.That((await (await Context.Variable.Get("last")).Value())?.ToString()).IsEqualTo("remembered");
     }
 }
