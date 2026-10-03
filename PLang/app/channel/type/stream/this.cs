@@ -13,6 +13,9 @@ public sealed class @this : global::app.channel.type.session.@this
 {
     private readonly bool _ownsStream;
 
+    // the one message leaving the stream at a time
+    private readonly System.Threading.SemaphoreSlim _writing = new(1, 1);
+
     /// <summary>The underlying stream this channel reads/writes — a handle, never written with the channel.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public global::System.IO.Stream Stream { get; }
@@ -62,12 +65,19 @@ public sealed class @this : global::app.channel.type.session.@this
             var opened = await data.Peek().Open(context);
             if (opened != null) return context.Error(opened);
             var format = context.App.type.list.Mime(Mime.ToString());
-            var result = await format.Encode(Stream, data, context, encoding: ResolveEncoding(), ct: ct);
-            // A framed channel delimits each text message with a newline. Binary and the self-describing plang
-            // envelope are not framed.
-            if (result.Success && Framed && format.IsText)
-                await Stream.WriteAsync(ResolveEncoding().GetBytes(System.Environment.NewLine), ct);
-            return result;
+            // One message leaves whole, in order: its bytes and its frame, never interleaved with another writer's
+            // (tasks writing side by side). Only the leaving is held — the value was opened above.
+            await _writing.WaitAsync(ct);
+            try
+            {
+                var result = await format.Encode(Stream, data, context, encoding: ResolveEncoding(), ct: ct);
+                // A framed channel delimits each text message with a newline. Binary and the self-describing plang
+                // envelope are not framed.
+                if (result.Success && Framed && format.IsText)
+                    await Stream.WriteAsync(ResolveEncoding().GetBytes(System.Environment.NewLine), ct);
+                return result;
+            }
+            finally { _writing.Release(); }
         }
         // Only the transport fails here as a write error; a program's own error raised while the value renders
         // (a %var% not set) keeps its key and travels to the action.
