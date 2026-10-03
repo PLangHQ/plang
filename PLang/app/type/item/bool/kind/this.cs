@@ -13,4 +13,7 @@ public sealed class @this : global::app.type.kind.@this
 
     public override System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
         => new([global::app.type.item.@bool.@this.True, global::app.type.item.@bool.@this.False]);
+
+    /// <summary>A bool is true or false, nothing else.</summary>
+    public override bool IsClosed => true;
 }

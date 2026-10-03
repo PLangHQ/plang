@@ -37,6 +37,9 @@ public abstract class @this : global::app.type.kind.@this
     public override System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
         => new(Values.Select(option => (global::app.type.item.@this)System.Activator.CreateInstance(_form, Member(option))!).ToList());
 
+    /// <summary>A choice is none but its options.</summary>
+    public override bool IsClosed => true;
+
     /// <summary>The member <paramref name="symbol"/> names; throws <see cref="System.ArgumentException"/> for a name
     /// that is none of the options.</summary>
     public abstract object Member(string symbol);

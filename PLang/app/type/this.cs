@@ -625,6 +625,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         => Family._offer is { } declared ? new(declared) : kind.Offers(step);
     private IReadOnlyList<item.@this>? _offer;
 
+    /// <summary>Whether what this type offers is all a value of it can be — its kind says (a choice's options, a bool's
+    /// pair); offers its class declares are a convenience, never closed.</summary>
+    public virtual bool IsClosed => Family._offer is null && kind.IsClosed;
+
     /// <summary>Scalar wire shape (the underlying primitive form, e.g. "string" for path).</summary>
     public string? Shape { get => Family._shape; init => _shape = value; }
     private string? _shape;

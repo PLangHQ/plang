@@ -158,6 +158,60 @@ public class PickOptionTests : System.IAsyncDisposable
         await read.IsSuccess();
     }
 
+    // whether a type's offers are all it can be is the type's own answer: a choice's options and a bool's pair are; a
+    // goal's names (a convenience over every goal Find reaches), the step's variables and a separator's named kinds
+    // beside variables are not
+    [Test]
+    public async Task AChoiceAndABoolAreClosed_AGoalAVariableAndASeparatorAreNot()
+    {
+        await Assert.That(_app.Module("on")["error"]!["Order"]!.Type.IsClosed).IsTrue();
+        await Assert.That(_app.Module("variable")["set"]!["Default"]!.Type.IsClosed).IsTrue();
+        await Assert.That(_app.Module("goal")["call"]!["Name"]!.Type.IsClosed).IsFalse();
+        await Assert.That(_app.Module("loop")["foreach"]!["Item"]!.Type.IsClosed).IsFalse();
+        await Assert.That(_app.Module("list")["join"]!["Separator"]!.Type.IsClosed).IsFalse();
+    }
+
+    // an option of a closed set the decider answered none for, written by the code, is invented — refused with the hint
+    // to leave it out; one the decider chose stays the code's; an option of an open set answered none (a goal no offer
+    // names, the step's variables, a separator) is the decider's guess and never refuses the writer
+    [Test]
+    public async Task AClosedOptionAnsweredNone_WrittenAnyway_IsRefused_AnOpenOneIsNot()
+    {
+        async Task<List<string>> Refused(string text, string[] actions, (string, object)[] options, string formal)
+        {
+            var step = Step(text);
+            await step.Pick.Take(Answer(actions.Select(a => ($"s0_{a}", (object)Yes(0.99))).ToArray()), [], Ctx);
+            await step.Pick.Take(Answer(options), [], Ctx);
+            var read = new global::app.goal.step.action.formal.Reader(step, _app.module.list).Read(formal, Ctx);
+            await read.IsSuccess();
+            return step.Pick.Agree((global::app.goal.step.action.list.@this)read.Peek()!).Refused;
+        }
+        const string retry = "read 'x.txt', on error retry 2 times, then call Rollback";
+        string[] readAndRetry = ["file.read", "on.error"];
+
+        var invented = await Refused(retry, readAndRetry, [("s0_@option.on.error.Order", Choice("none"))],
+            """file.read(Path="x.txt"); on.error(RetryCount=2, Order=GoalFirst, Recovery=[goal.call(Name="Rollback")])""");
+        var left = await Refused(retry, readAndRetry, [("s0_@option.on.error.Order", Choice("none"))],
+            """file.read(Path="x.txt"); on.error(RetryCount=2, Recovery=[goal.call(Name="Rollback")])""");
+        var chosen = await Refused("read 'x.txt', on error call Fallback then retry", readAndRetry,
+            [("s0_@option.on.error.Order", Choice("GoalFirst"))],
+            """file.read(Path="x.txt"); on.error(RetryCount=1, Order=GoalFirst, Recovery=[goal.call(Name="Fallback")])""");
+        var unoffered = await Refused("call Finalize", ["goal.call"], [("s0_@option.goal.call.Name", Choice("none"))],
+            """goal.call(Name="Finalize")""");
+        var guessed = await Refused("foreach %products% as %product%, call Ship", ["loop.foreach", "goal.call"],
+            [("s0_@option.loop.foreach.Item", Choice("none"))],
+            """loop.foreach(Collection=%products%, Item=%product%); goal.call(Name="Ship")""");
+        var separated = await Refused("join %names% with ';'", ["list.join"], [("s0_@option.list.join.Separator", Choice("none"))],
+            """list.join(ListName=%names%, Separator=";")""");
+
+        await Assert.That(invented).Contains("step 0's on.error writes Order, which the step doesn't give: leave Order out");
+        await Assert.That(left.Any(r => r.Contains("writes Order"))).IsFalse();
+        await Assert.That(chosen.Any(r => r.Contains("writes Order"))).IsFalse();
+        await Assert.That(unoffered.Any(r => r.Contains("writes Name"))).IsFalse();
+        await Assert.That(guessed.Any(r => r.Contains("writes Item"))).IsFalse();
+        await Assert.That(separated.Any(r => r.Contains("writes Separator"))).IsFalse();
+    }
+
     // a pick no offer shows (a goal the step can't reach) chooses nothing: the slot stays to fill
     [Test]
     public async Task APickNoOfferShows_ChoosesNothing()

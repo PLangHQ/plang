@@ -48,6 +48,9 @@ public sealed class @this : global::app.type.kind.@this
     public override System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
         => _format?.Offers(step) ?? base.Offers(step);
 
+    /// <summary>Closed as the type's own kind is (a bool's); a type with none offers an open set.</summary>
+    public override bool IsClosed => _format?.IsClosed ?? false;
+
     // The kinds this type holds, in the order they came.
     private global::app.type.kind.@this[] Held
     {

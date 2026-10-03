@@ -80,6 +80,9 @@ public class @this<T, L> : @this
     public override async System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<item.@this>> Offers(global::app.goal.step.@this step)
         => [.. await Of(_app.actor.list.System.Context).Offers(step), .. await base.Offers(step)];
 
+    /// <summary>The members offered are those the collection holds from the step, never all a name can find.</summary>
+    public override bool IsClosed => false;
+
     /// <summary>The one <paramref name="location"/> holds (<c>app.goal.Load("/system/error/Show.goal")</c>),
     /// resolved and read as the app itself; the element says how it loads.</summary>
     public System.Threading.Tasks.Task<data.@this> Load(string location)

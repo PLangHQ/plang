@@ -158,6 +158,10 @@ public class @this
         => new(new global::app.type.item.variable.parser.@this(step.Text).Variable
             .DistinctBy(v => v.Text).Cast<global::app.type.item.@this>().ToList());
 
+    /// <summary>Whether what this kind offers is all a value of it can be (a choice's options, a bool's true and
+    /// false); false for an offer that is a convenience over an open set (the step's variables, a goal's name).</summary>
+    public virtual bool IsClosed => false;
+
     /// <summary>Whether a value of C# class <paramref name="clr"/> rides as this kind — its
     /// <see cref="ClrForm"/> takes it.</summary>
     public virtual bool Carries(System.Type clr) => ClrForm is { } form && form.IsAssignableFrom(clr);
