@@ -85,6 +85,8 @@ A user's review: I write more plang than anyone, the way a learner would, for th
   presumes a conversation exists. The writer left it out (right), and Agree refused and forced it in. **Cost:** D6
   held; the run fails `ConversationInvalid`. **If I had** decider questions that can answer "none", and Agree treating
   a decider-only value as a suggestion, a right writer would win.
+  Second case (2026-10-03): `foreach %products% as %product%, call …` got `Key=%product%` pre-filled by the
+  decider (2/2 fresh), so the index overwrites the item. The Key note says "only when the step names one".
 - **educator · `%items%` inside an `ask llm "…"` message goes to the model raw.** The model answered "I'm missing the
   list (the '%items%' placeholder)". **Cost:** a paid call that did nothing, and the most natural D6 step fails
   silently. **If I had** every text value render where written (as `set` does), this class of bug would be gone.
