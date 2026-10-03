@@ -1,4 +1,4 @@
-using Browser = app.module.browser.Browser;
+using Browser = app.module.browser.type.browser.@this;
 
 namespace app.module.window;
 
@@ -22,7 +22,7 @@ public partial class post : IContext
     public async Task<data.@this> Start()
     {
         var browser = Browser == null ? null : await Browser.Value();
-        if (await global::app.module.window.Window.Of(Window, browser, Context) is not { } window)
+        if (await type.window.@this.Of(Window, browser, Context) is not { } window)
             return Context.Error(new global::app.error.ActionError($"No such window: {Window.Peek()}", "WindowNotFound", 404));
         // the Data writes itself as text
         using var text = new MemoryStream();

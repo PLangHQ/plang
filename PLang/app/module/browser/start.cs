@@ -47,5 +47,5 @@ public partial class start : IContext
     [Code]
     public partial IBrowser Provider { get; }
 
-    public async Task<data.@this<Browser>> Start() => await Provider.Start(this);
+    public async Task<data.@this<type.browser.@this>> Start() => await Provider.Start(this);
 }

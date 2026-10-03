@@ -1,35 +1,46 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Browser = app.module.browser.Browser;
+using Browser = app.module.browser.type.browser.screen.@this;
+using Window = app.module.window.type.window.@this;
 
-namespace app.module.window;
+namespace app.module.window.type.window.list;
 
 /// <summary>
-/// A browser's windows on the screen: the desktop, and every window a page opened in. The screen
-/// tells about each window (its id, when it gets a title, when it closes); a window is paired with
-/// its page when it gets a title — the unpaired page with that title, else the newest unpaired one —
-/// and is then shown: a window <c>window.open</c> is waiting for (the oldest), or a new one. A page
-/// of the app's own gets <c>plang(text)</c>.
+/// A browser's windows on the screen: the desktop, and every window a page opened in — by their number on the screen
+/// (<c>%browser.window[1].url%</c>, <c>%browser.window[%click.window%]%</c>; 0 is the desktop). The screen tells about
+/// each window (its id, when it gets a title, when it closes); a window is paired with its page when it gets a title —
+/// the unpaired page with that title, else the newest unpaired one — and is then shown: a window <c>window.open</c>
+/// is waiting for (the oldest), or a new one. A page of the app's own gets <c>plang(text)</c>.
 /// </summary>
-internal sealed class Windows(Browser browser)
+public sealed class @this(Browser browser) : global::app.type.item.@this
 {
     private static readonly HttpClient DevTools = new() { Timeout = TimeSpan.FromSeconds(3) };
-    private readonly ConcurrentDictionary<long, Window> shown = new();
-    private readonly ConcurrentQueue<Window> opening = new();
-    private readonly HashSet<string> looked = new();
-    private readonly Lock gate = new();
+    private readonly ConcurrentDictionary<long, Window> _shown = new();
+    private readonly ConcurrentQueue<Window> _opening = new();
+    private readonly HashSet<string> _looked = new();
+    private readonly Lock _gate = new();
 
     /// <summary>The desktop: the first page, the whole screen, id 0.</summary>
     internal Window Desktop { get; } = new();
 
-    internal Window? ById(long id) => id == Desktop.Number ? Desktop : shown.GetValueOrDefault(id);
+    /// <summary>The window numbered <paramref name="id"/> on the screen, if there is one.</summary>
+    internal Window? ById(long id) => id == Desktop.Number ? Desktop : _shown.GetValueOrDefault(id);
+
+    /// <summary>One step by index: a window's number on the screen; none there is nothing.</summary>
+    public override ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key, bool isIndex)
+        => Get(parent, key);
+
+    public override ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
+        => ValueTask.FromResult(long.TryParse(key, out var number) && ById(number) is { } window
+            ? new global::app.data.@this(key, window, parent: parent)
+            : global::app.data.@this.NotFound(key, parent.Context));
 
     /// <summary>A window about to open: shown when its page is.</summary>
     internal Window Opening()
     {
         var window = new Window();
-        opening.Enqueue(window);
+        _opening.Enqueue(window);
         return window;
     }
 
@@ -43,7 +54,7 @@ internal sealed class Windows(Browser browser)
     /// <summary>True the first time <paramref name="target"/> is asked about.</summary>
     internal bool First(string target)
     {
-        lock (gate) return looked.Add(target);
+        lock (_gate) return _looked.Add(target);
     }
 
     /// <summary>What the screen says about a window: titled — paired with its page and shown (or its
@@ -54,34 +65,34 @@ internal sealed class Windows(Browser browser)
         if (!idValue.TryGetValue<int>(out var id)) return;   // the screen's ids are ints
         if (what == "closed")
         {
-            if (shown.TryRemove(id, out var gone)) gone.Gone();
+            if (_shown.TryRemove(id, out var gone)) gone.Gone();
             return;
         }
         if (what != "titled") return;
         var title = e["title"]?.GetValue<string>() ?? "";
         try
         {
-            using var list = JsonDocument.Parse(await DevTools.GetStringAsync($"http://127.0.0.1:{browser.Port}/json/list"));
-            if (shown.TryGetValue(id, out var known))
+            using var pages = JsonDocument.Parse(await DevTools.GetStringAsync($"http://127.0.0.1:{browser.Port}/json/list"));
+            if (_shown.TryGetValue(id, out var known))
             {
                 // gone somewhere: its title and address follow — the address only when the page went
                 // somewhere else, and not between plang's own pages: those name their own (Writer: the
                 // file it shows, {"window":"url"})
                 known.Named = title;
-                if (Of(known, list.RootElement) is { } now && now != known.Address)
+                if (Of(known, pages.RootElement) is { } now && now != known.Address)
                 {
                     var within = browser.Own(now) && browser.Own(known.Address);
                     known.Address = now;
-                    if (!within) browser.Screen?.Wayland.Url((int)id, browser.AddressOf(known.Address));
+                    if (!within) browser.Display.Wayland.Url((int)id, browser.AddressOf(known.Address));
                 }
                 return;
             }
-            if (Free(title, list.RootElement) is not { } page) return;
-            var window = opening.TryDequeue(out var waited) ? waited : new Window();
+            if (Free(title, pages.RootElement) is not { } page) return;
+            var window = _opening.TryDequeue(out var waited) ? waited : new Window();
             window.Named = title;
             window.Address = page.GetProperty("url").GetString() ?? "";
-            if (!shown.TryAdd(id, window)) return;
-            browser.Screen?.Wayland.Url((int)id, browser.AddressOf(window.Address));
+            if (!_shown.TryAdd(id, window)) return;
+            browser.Display.Wayland.Url((int)id, browser.AddressOf(window.Address));
             await window.Show(id, new Page(page.GetProperty("id").GetString()!, browser.Port, browser.Own), browser.Own(window.Address) ? browser.Message : null);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException
@@ -94,18 +105,18 @@ internal sealed class Windows(Browser browser)
     }
 
     /// <summary>The address of <paramref name="window"/>'s page now, in DevTools' list.</summary>
-    private static string? Of(Window window, JsonElement list)
-        => list.EnumerateArray().Where(t => t.GetProperty("id").GetString() == window.Target)
+    private static string? Of(Window window, JsonElement pages)
+        => pages.EnumerateArray().Where(t => t.GetProperty("id").GetString() == window.Target)
             .Select(t => t.GetProperty("url").GetString()).FirstOrDefault();
 
     /// <summary>The page a newly titled window shows: unpaired, with that title if one has it, else
     /// the newest (DevTools lists newest first). Never the desktop's.</summary>
-    private JsonElement? Free(string title, JsonElement list)
+    private JsonElement? Free(string title, JsonElement pages)
     {
-        lock (gate)
+        lock (_gate)
         {
-            var taken = shown.Values.Select(w => w.Target).Append(Desktop.Target).ToHashSet();
-            var free = list.EnumerateArray()
+            var taken = _shown.Values.Select(w => w.Target).Append(Desktop.Target).ToHashSet();
+            var free = pages.EnumerateArray()
                 .Where(t => t.GetProperty("type").GetString() == "page" && !taken.Contains(t.GetProperty("id").GetString()))
                 .ToList();
             return free.Where(p => p.GetProperty("title").GetString() == title).Select(p => (JsonElement?)p).FirstOrDefault()

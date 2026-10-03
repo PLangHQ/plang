@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Browser = app.module.browser.Browser;
+using Browser = app.module.browser.type.browser.@this;
 
 namespace app.module.window;
 
@@ -29,7 +29,7 @@ public partial class callGoal : IContext
     public async Task<data.@this> Start()
     {
         var browser = Browser == null ? null : await Browser.Value();
-        if (await global::app.module.window.Window.Of(Window, browser, Context) is not { } window)
+        if (await type.window.@this.Of(Window, browser, Context) is not { } window)
             return Context.Error(new global::app.error.ActionError($"No such window: {Window.Peek()}", "WindowNotFound", 404));
         var name = (await Name.Value())?.Clr<string>() ?? "";
         // the arguments as one object: a dict writes itself as json. They leave for the page here, so

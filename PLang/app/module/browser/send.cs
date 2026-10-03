@@ -15,10 +15,9 @@ public partial class send : IContext
     public partial data.@this Data { get; init; }
 
     /// <summary>The running browser, from <c>browser.start</c>.</summary>
-    public partial data.@this<Browser> Browser { get; init; }
+    public partial data.@this<type.browser.@this> Browser { get; init; }
 
-    [Code]
-    public partial IBrowser Provider { get; }
-
-    public async Task<data.@this> Start() => await Provider.Send(this);
+    public async Task<data.@this> Start() => await Browser.Value() is { } browser
+        ? await browser.Send(Data, Context)
+        : Context.Error(new global::app.error.ActionError("The browser isn't running.", "BrowserNotRunning", 409));
 }

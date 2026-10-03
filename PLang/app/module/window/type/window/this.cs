@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using app.Attributes;
 
-namespace app.module.window;
+namespace app.module.window.type.window;
 
 /// <summary>
 /// A window on the screen, showing a page: the desktop, or one <c>window.open</c> opened. It goes
@@ -11,7 +11,7 @@ namespace app.module.window;
 /// is shown when its page is — until then what it is asked to do waits.
 /// </summary>
 [PlangType("window")]
-public sealed partial class Window : global::app.type.item.@this, global::app.type.item.ICreate<Window>
+public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     private readonly TaskCompletionSource shown = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private Page? page;
@@ -78,12 +78,12 @@ public sealed partial class Window : global::app.type.item.@this, global::app.ty
     /// <summary>The window a step names: a window (<c>%window%</c>), or its id on the screen in
     /// <paramref name="browser"/> (<c>window %event.id% … in %browser%</c>). A variable is followed to
     /// what it names first.</summary>
-    internal static async Task<Window?> Of(data.@this named, global::app.module.browser.Browser? browser, actor.context.@this context)
+    internal static async Task<@this?> Of(global::app.data.@this named, global::app.module.browser.type.browser.@this? browser, global::app.actor.context.@this context)
         => await (await named.Follow(context)).Value() switch
         {
-            Window window => window,
-            // an id: from an event it may arrive as any number, or as its text
-            { } id when long.TryParse(id.ToString(), out var number) => browser?.Windows.ById(number),
+            @this window => window,
+            // an id: from an event it may arrive as any number, or as its text — a window of a browser on a screen
+            { } id when long.TryParse(id.ToString(), out var number) => (browser as global::app.module.browser.type.browser.screen.@this)?.window.ById(number),
             _ => null,
         };
 
