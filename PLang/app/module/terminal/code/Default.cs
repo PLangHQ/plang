@@ -359,6 +359,17 @@ public sealed class Default : ITerminal
         static bool Written(data.@this? given)
             => given?.Peek() is not { } held || held.Variable.All(global::app.type.item.path.@this.IsAnchor);
         var named = Written(app) && Written(parameter) && Written(environment) && Written(workingDirectory);
+        // an option the step doesn't write is read from the actor's settings (terminal.start.setting.<option>, then
+        // terminal.setting.<option>): for a start that would be trusted, that is the actor choosing what runs — the
+        // folder, the arguments, the environment — so a start is the step's own only when no setting gives it an option
+        if (named && context.call.Current?.Action is { } asking && asking.Module[asking.Name] is { } element)
+            foreach (var option in element.Property)
+                if (asking.Property[option.Name] == null
+                    && (await context.Setting.Get(asking, option.Name.ToLowerInvariant())).IsInitialized)
+                {
+                    named = false;
+                    break;
+                }
 
         var name = (await app.Value())!.Clr<string>()!;
         var program = FilePath.Program(name, context);
@@ -385,8 +396,15 @@ public sealed class Default : ITerminal
             info.Environment.Clear();
             foreach (var (key, value) in Sandbox.Environment) info.Environment[key] = value;
         }
-        var env = setting.Environment.Clr<Dictionary<string, object?>>() ?? new();
-        if (environment != null && await environment.ToBooleanAsync())
+        // a start trusted by its origin (an os goal naming it all) takes nothing of the actor's settings that changes what
+        // runs: the settings are the actor's, a user program sets them, and an LD_PRELOAD there would run the user's code
+        // inside what started unasked. Its environment is plang's own and what the step names, nothing else.
+        var trusted = named && global::app.type.item.path.@this.AskedByOs(context);
+        var env = trusted ? new() : setting.Environment.Clr<Dictionary<string, object?>>() ?? new();
+        // a step that writes no Environment reads the setting's through its property — for a trusted start that is the
+        // same side door: it takes only what the step itself wrote
+        var written = environment?.Peek() is { IsNull: false };
+        if (environment != null && (written || !trusted) && await environment.ToBooleanAsync())
             foreach (var (key, value) in (await environment.Value())!.Clr<Dictionary<string, object?>>() ?? new())
                 env[key] = value;
         foreach (var (key, value) in env) info.Environment[key] = value?.ToString();

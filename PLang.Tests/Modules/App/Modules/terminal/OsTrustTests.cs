@@ -126,6 +126,54 @@ public class OsTrustTests : IDisposable
         await Assert.That(ran.Error!.Key).IsEqualTo("PermissionDenied");
     }
 
+    // the user's terminal setting gives every program a variable — what a user program could do with LD_PRELOAD
+    private global::app.goal.step.action.@this SetMark()
+        => Make.Action(Context, "variable", "set", Make.Param(Context, "Name", "%!terminal.setting.environment%", "variable"),
+            ("Value", new Dictionary<string, object?> { ["PLANG_MARK"] = "leaked" }));
+
+    // says only whether the mark reached the program — never the environment itself (it holds the box's secrets)
+    private global::app.goal.step.action.@this Env() => Make.Action(Context, "terminal", "start", ("App", "//bin/sh"),
+        ("Parameter", new List<object?> { "-c", "if [ -n \"$PLANG_MARK\" ]; then echo marked; else echo clean; fi" }));
+
+    [Test]
+    public async Task AnOsStart_GivenAnOptionByTheActorsSettings_Asks()
+    {
+        // the os step writes no Environment: the user's setting would give it one — the start is then the actor's
+        await OsGoal("Env.goal", Make.Step("show the environment", Env()));
+        var user = await Goal("/SetsMark.goal",
+            Make.Step("set the setting", SetMark()),
+            Make.Step("call the os goal", Make.Action(Context, "goal", "call", ("Name", "/system/trust/Env"))));
+        var ran = await _app.Start(user, Context);
+        await Assert.That(ran.Success).IsFalse().Because("an option a setting gives is the actor's choice: asked, and the answer was no");
+        await Assert.That(ran.Error!.Key).IsEqualTo("PermissionDenied");
+    }
+
+    [Test]
+    public async Task ATrustedStart_TakesNoEnvironmentFromTheActorsSettings()
+    {
+        // the os step writes its own Environment: trusted, and the setting's environment is not merged in
+        await OsGoal("OwnEnv.goal", Make.Step("show the environment", Make.Action(Context, "terminal", "start", ("App", "//bin/sh"),
+            ("Parameter", new List<object?> { "-c", "if [ -n \"$PLANG_MARK\" ]; then echo marked; else echo clean; fi" }),
+            ("Environment", new Dictionary<string, object?> { ["PLANG_OWN"] = "1" }))));
+        var user = await Goal("/SetsMarkToo.goal",
+            Make.Step("set the setting", SetMark()),
+            Make.Step("call the os goal", Make.Action(Context, "goal", "call", ("Name", "/system/trust/OwnEnv"))));
+        var ran = await _app.Start(user, Context);
+        await ran.IsSuccess();
+        await Assert.That((await ran.Value())?.ToString()?.Trim()).IsEqualTo("clean")
+            .Because("what starts unasked takes nothing of the actor's settings that changes what runs");
+    }
+
+    [Test]
+    public async Task AUsersOwnStart_StillTakesItsSetting()
+    {
+        Context.Actor!.Channel.Register(new CannedAnswerChannel("a"));
+        var user = await Goal("/OwnEnv.goal", Make.Step("set the setting", SetMark()), Make.Step("show the environment", Env()));
+        var ran = await _app.Start(user, Context);
+        await ran.IsSuccess();
+        await Assert.That((await ran.Value())?.ToString()?.Trim()).IsEqualTo("marked");
+    }
+
     [Test]
     public async Task AUserGoal_CalledBackFromAnOsGoal_Asks()
     {
