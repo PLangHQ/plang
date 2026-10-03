@@ -2,6 +2,25 @@
 
 **Version:** v22 (all pushed; reviews by the architect, plang-21, gate by gate)
 
+## 2026-10-03 — each gated (the 17 known C# failures + the builder's page goldens) and accepted gate by gate
+- Registry: a second closed set with a taken name is refused, naming both (4abd5bed2). `os.targets` links a bin's
+  `os` once, replacing a stale plain folder, never touching a link (b802e3966).
+- foreach: `write to` keeps the loop's answer, sequential or parallel; only a keep of `%!data%` is the loop's
+  (`IsAnswer`) (4713b37f0). One `Bound` member enumerates for both paths (023c13acc, issue 49).
+- `is X` answers a kind too; a type wins over a kind; a number is every size it fits (083a63991).
+- A `.pr` built against an older catalog says "rebuild the goal" (`Stale`), judged once per action by the handler's
+  own generated `Parse` for set rows and frozen defaults, the row the cascade used (bcbb872fa, 5d6935001); a
+  `[Default]` is born through its slot type's `Make` (bf74ec957, issue 48); `parallel` has a wire reader (95ebc9cf0).
+- Offers: conversation's own kind (41a3ef7eb, 34edcde0f), a `separator` type with named kinds (44a665e44, 42), bool
+  offers true/false (2e098176d, 52), goal.call one folder down by slash name (e46766ecd, 44; path `List` takes an
+  `Entry`, 9dac6932f).
+- Cover: a quoted literal is held by a value (`item.Holds`), not the line's syntax (2b0c3bb99, b74e535da); a `%!…%`
+  naming nothing and a dropped bare path are refused (6cd58b64d, 54/55).
+- A typed list lowers rows as its T (49ae60442); json writes its structure through the writer (2b188a427, 596);
+  `[Kinds]` subclasses are their family's kinds (2719e7612, 603); one class-identity memo (14f29769a); a member's
+  notes parse like an action's (720c87df8, 567); stream channels write a message whole (d9ea15ead, 51).
+- Next: 598 (the llm key asked once; shape sent, awaiting OK), the property branch (590/591), 594.
+
 ## After v22, later on 2026-10-02 — each gated (the 18 known) and accepted by the architect
 - 7a26894cd `size` (561): `type/item/size`, kinds iec/si; a text keeps its suffix's standard, a count is written in
   `%!app.type.size.setting.standard%` (a type's setting class reads at `app.type.X`). `MaxDownloadSize` is a size;
