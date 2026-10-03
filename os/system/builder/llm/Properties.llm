@@ -37,7 +37,7 @@ A value is written as the step writes it:
   "=="          a choice: one of the options listed for it, quoted
   goal.call(Name="X")   an action, where a property holds one
 
-In `call X name=value`, `name` is what the called goal reads the value as (`%name%`), even when it is a plang word such as `module`, `file` or `goal`; it is never a module or action of the step.
+In any `name=value` argument — a goal's parameters, a render's parameters, any action that takes named arguments — `name` is kept as the argument's name, even when it is a plang word such as `module`, `file` or `goal`, and even when the value is a variable of the same name: `error=%error%` → `{error: %error%}`, never a bare `%error%` with no name (a value with no name binds nothing). `name` is what reads the value (`%name%`); it is never a module or action of the step.
 
 The arguments a step passes to a goal are one dict in Parameter:
   `call SendMail to=%email%, subject="Hi"` → goal.call(Name="SendMail", Parameter={to: %email%, subject: "Hi"})

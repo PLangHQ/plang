@@ -1239,9 +1239,9 @@
         }
       ],
       "after": {
-        "status": "channel.set + ui.render + setting teaching landed. UR2 kernel line (Properties.llm, architect-approved), then signing then identity still to do. TR1 parked; db/environment on hold (architect). Core routed: SL2/59, snapshot/58.",
+        "status": "channel.set + ui.render + setting teaching + UR2 kernel line landed. UR2 5/5 (was 3/5), goal.call module= 5/5, no-arg guard 5/5 (no over-generation). Signing then identity still to do. TR1 parked; db/environment on hold (architect). Core routed: SL2/59, snapshot/58.",
         "health": "green",
-        "notes": "Each os/system/modules/**/*.md commit runs all four decider fixtures; re-pin what moved in the same commit. Examples parser takes each 'Step text:' as an e.g. for THAT action — never put a contrast step of another module in an examples file (notes only)."
+        "notes": "Properties.llm (writer system prompt) is NOT pinned by the four decider fixtures or ModulePageTests — generalizing line 40 (named-arg keeps its name even matching its var) moved none of them. Each os/system/modules/**/*.md commit still runs all four decider fixtures; re-pin what moved. Examples parser takes each 'Step text:' as an e.g. for THAT action — never put another module's contrast step in an examples file (notes only)."
       }
     }
   ]
