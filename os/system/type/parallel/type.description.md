@@ -1,0 +1,1 @@
+Whether work runs side by side, and how many at once: "in parallel" or "in parallel(cpu: 2)"; left out means not parallel.

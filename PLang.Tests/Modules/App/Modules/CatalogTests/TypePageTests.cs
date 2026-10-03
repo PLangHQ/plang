@@ -93,4 +93,13 @@ public class TypePageTests
 
     [Test]
     public Task ThePathPage_IsTheSpecsGolden() => ComparePageToGolden("path");
+
+    [Test]
+    public Task TheSeparatorPage_IsTheSpecsGolden() => ComparePageToGolden("separator");
+
+    [Test]
+    public Task TheParallelPage_IsTheSpecsGolden() => ComparePageToGolden("parallel");
+
+    [Test]
+    public Task TheSecretPage_IsTheSpecsGolden() => ComparePageToGolden("secret");
 }

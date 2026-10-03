@@ -624,6 +624,88 @@ Whether something is there at the path (a filesystem check, or an HTTP HEAD for 
 **Returns:** true or false (a bool).
 ```
 
+## Golden output — separator
+
+The exact literal the generator must produce for the `separator` type. `TypePageTests` diffs against this.
+
+```markdown
+# separator
+What cuts a text into pieces (`split %x% into lines`) or goes between them (`join %list% with comma`): a named separator — `line`, `comma`, `tab`, `space`, `semicolon` — standing for its characters, or any characters as written (`" | "`).
+
+# Separators
+
+A `separator` is what cuts a text into pieces or goes between them — what `split` and `join` use.
+
+## Named separators
+
+Five are named, each standing for its characters:
+
+- `line` — a line break (also `lines`, `newline`).
+- `comma` — `,`
+- `tab` — a tab.
+- `space` — a single space.
+- `semicolon` — `;`
+
+```plang
+Start
+- split %text% into lines, write to %lines%
+- join %names% with comma, write to %csv%
+```
+
+## Any characters
+
+Anything else is taken as the literal characters to use — `join %parts% with " | "`.
+
+A text that is *exactly* a separator's name means that separator, whether written in the step or held in a variable (`%sep%` holding `comma` splits on `,`). To split or join on the word "comma" itself, write it some other way.
+```
+
+## Golden output — parallel
+
+The exact literal the generator must produce for the `parallel` type. `TypePageTests` diffs against this.
+
+```markdown
+# parallel
+Whether work runs side by side, and how many at once: "in parallel" or "in parallel(cpu: 2)"; left out means not parallel.
+
+# Parallel
+
+`parallel` says whether the items of a loop (or an LLM's tool calls) run side by side, and how many at once.
+
+- `in parallel` — run them together, up to a sensible default (about the machine's cores).
+- `in parallel(cpu: 2)` — run at most 2 at a time.
+- leave it out — they run one after another.
+
+A program written before `parallel` was a type may say `true` (parallel at the default) or `false` (not parallel); both still read.
+
+A `foreach … in parallel` answers a task: the loop hands back a task you `wait for` to let the parallel work finish.
+
+```plang
+Start
+- foreach %orders% in parallel(cpu: 4), call Ship order=%item%, write to %tasks%
+- wait for %tasks%
+```
+```
+
+## Golden output — secret
+
+The exact literal the generator must produce for the `secret` type. `TypePageTests` diffs against this.
+
+```markdown
+# secret
+Characters nobody should see — a key or password; shows as **** everywhere but plang's own store.
+
+# Secrets
+
+A `secret` is characters nobody should see — an API key, a password. You make one by asking secretly:
+
+```plang
+Start
+- ask "Password?" secretly, write to %password%
+```
+
+It shows as `****` in every view — debug output, a trace, a snapshot, a channel — without you having to remember to hide it. Only plang's own settings store keeps it whole, and only code that must send it (a request's key) reads its characters.
+```
+
 ## Generation rules
 
 1. **Discover** types from `%!app.type.list%`; skip internal-only types the builder catalog

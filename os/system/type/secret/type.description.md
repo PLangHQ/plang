@@ -1,0 +1,1 @@
+Characters nobody should see — a key or password; shows as **** everywhere but plang's own store.
