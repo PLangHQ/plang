@@ -1,0 +1,37 @@
+{% comment -%}
+A type's learner page, type/<name>/start.md, written from the type catalog (the spec is
+Documentation/v0.2/type-reference-generation.md). Each fact comes from its one home: the type's description and guide
+(type.guide.md, learner prose the builder never reads); each member's summary and call form from the member-name line
+of <member>.notes.md; each argument's name and type from the catalog (member.Arguments), how a step says it and what
+it changes from the argument's notes line; what a member returns from its notes' Returns line, else its type. Members
+come in catalog order, arguments in their method's order. A property or a no-argument method has no argument table; the
+call form's parentheses (or their absence) ride the member note's say form, which the catalog cannot tell apart.
+Needs: type (one element of %!app.type.list%).
+{%- endcomment -%}
+# {{ type.Name }}
+{{ type.Description | strip }}
+{%- if type.Guide %}
+
+{{ type.Guide | strip }}
+{%- endif %}
+{%- for m in type.Property %}
+{%- assign self = m.Note.Line | where: "Name", m.Name | first %}
+
+## {{ m.Name }}
+{{ self.Prose | strip }}
+{%- if self.Say %}
+
+`{{ self.Say }}`
+{%- endif %}
+{%- if m.Arguments.size > 0 %}
+
+| Argument | How you say it | Type | Required | Default | What it changes |
+|----------|----------------|------|----------|---------|-----------------|
+{%- for a in m.Arguments %}
+{%- assign line = m.Note.Line | where: "Name", a.Name | first %}
+| {{ a.Name }} | {{ line.Say }} | {{ a.Type.Name }} | {% if a.Required %}yes{% else %}no{% endif %} | {% if a.HasDefault %}{{ a.Default }}{% else %}—{% endif %} | {{ line.Prose }} |
+{%- endfor %}
+{%- endif %}
+
+**Returns:** {% if m.Note.Returns %}{{ m.Note.Returns.Prose }}{% else %}a `{{ m.Type.Name }}`.{% endif %}
+{%- endfor %}
