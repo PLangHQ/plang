@@ -16,5 +16,5 @@ Step text: `foreach %goals% in parallel(cpu: 2), call X, write to %task%`
 Properties: `{"Collection": "%goals%", "Parallel": {"cpu": 2}}` — `in parallel(cpu: 2)` is `Parallel`; `call X` is its own goal.call; the trailing `write to %task%` keeps the loop's own answer (here its task, since it runs in parallel), its own variable.set.
 (then, a later step `wait for %task%` awaits it: `task.wait(Task=%task%)`.)
 
-Step text: `foreach %orders% in parallel, call Ship`
-Properties: `{"Collection": "%orders%", "Parallel": true}` — `in parallel` with no count is `Parallel=true` (the default cpu).
+Step text: `foreach %orders% in parallel, call Ship, write to %task%`
+Properties: `{"Collection": "%orders%", "Parallel": true}` — `in parallel` with no count is `Parallel=true` (the default cpu); the trailing `write to %task%` keeps the loop's task, awaited next with `wait for %task%`.
