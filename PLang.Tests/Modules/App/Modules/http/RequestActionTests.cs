@@ -535,9 +535,10 @@ public class RequestActionTests
     [Test]
     public async Task Get_Timeout_ReturnsTimeoutError()
     {
+        // the server answers only after far longer than the timeout: the request ends by its timeout or not at all
         _handler.Handler = async _ =>
         {
-            await Task.Delay(5000);
+            await Task.Delay(30_000);
             return new HttpResponseMessage(HttpStatusCode.OK);
         };
 
