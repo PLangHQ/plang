@@ -114,10 +114,10 @@ public partial class @this
     /// Used by the condition.Decision type to split an orchestrated step's actions into per-branch
     /// groups.
     /// </summary>
-    /// <summary>Whether this action keeps what the actions before it in its step produce (a <c>write to %x%</c>) — a
-    /// keep does; no other action.</summary>
+    /// <summary>Whether this action holds its step's answer — what the actions before it produce (a <c>write to %x%</c>):
+    /// a keep of <c>%!data%</c> does; no other action.</summary>
     [JsonIgnore]
-    internal virtual bool Keeps => false;
+    internal virtual bool IsAnswer => false;
 
     [JsonIgnore]
     public bool IsCondition =>

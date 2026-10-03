@@ -1,0 +1,2 @@
+Separator — what the string is split on · say: `by ","`, `on ";"`, `into lines`, `line by line` · builder: a step that names what it splits on ALWAYS writes it as a quoted text — `into lines` / `line by line` → `Separator="\n"`, `by tab` → `"\t"`, `on ";"` → `";"`. Only a step that names no separator at all leaves it out (then the default comma).
+Empty — what becomes of the empty pieces · say: `drop the empty ones` · builder: left out keeps them; `Empty="drop"` when the step drops them.

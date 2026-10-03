@@ -33,4 +33,12 @@ public sealed class @this
         foreach (var p in _list) if (p.Is(other)) return true;
         return false;
     }
+
+    /// <summary>Was any prior (recursively) of the kind <paramref name="name"/>? A read <c>config.json</c> parsed to a
+    /// dict still answers <c>is json</c>.</summary>
+    public bool HasKind(string name)
+    {
+        foreach (var p in _list) if (p.IsKind(name)) return true;
+        return false;
+    }
 }

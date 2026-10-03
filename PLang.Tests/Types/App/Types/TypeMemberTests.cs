@@ -81,8 +81,12 @@ public class TypeMemberTests
 
             await Assert.That(await Read(text.Notes(ctx), ctx)).IsEqualTo("text is words");
             await Assert.That(await Read(Member(app, "text", "replace").Notes(ctx)!, ctx)).IsEqualTo("old — what to find");
-            await Assert.That(await text.Guide(ctx).AsBooleanAsync(ctx)).IsFalse();
-            await Assert.That(await Member(app, "text", "trim").Notes(ctx)!.AsBooleanAsync(ctx)).IsFalse();
+            // the test's own type, which no teaching tree ever holds files for
+            await app.type.list.Add(typeof(Probe.@this), ctx, "probe").IsSuccess();
+            var probe = app.type.list["probe"];
+            await Assert.That(await probe.Guide(ctx).AsBooleanAsync(ctx)).IsFalse();
+            var key = new global::app.type.property.@this { Name = "key", Type = app.type.list["text"], Owner = "probe" };
+            await Assert.That(await key.Notes(ctx)!.AsBooleanAsync(ctx)).IsFalse();
         }
         finally { System.IO.Directory.Delete(root, true); }
 

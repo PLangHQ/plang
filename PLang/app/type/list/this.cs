@@ -101,6 +101,10 @@ public sealed partial class @this
     /// beside the indexer, which selects and throws on a miss. No name names none.</summary>
     public bool Contains(string name) => name is not null && Named.ContainsKey(name);
 
+    /// <summary>True when some type holds a kind <paramref name="name"/> names (by name, alias, MIME or extension) —
+    /// the presence question beside <see cref="Kind(string)"/>, which mints a kind for any name.</summary>
+    public bool HasKind(string name) => !string.IsNullOrEmpty(name) && Types.Any(type => type.kind[name] != null);
+
     /// <summary>
     /// The format content of this MIME is — a kind of the type that reads it: <c>image/png</c> → image's png,
     /// <c>text/plain</c> → text's own, <c>application/json; charset=utf-8</c> → item's json, <c>video/mp4</c> →

@@ -211,6 +211,51 @@ public class DefaultEvaluatorTests : System.IAsyncDisposable
     [Test] public async Task Is_AliasName_ResolvesToItsType()
         => await Assert.That(IsTrue(await EvalIf("hello", "is", "string"))).IsTrue();
 
+    // --- `is <kind>` — a word that names no type is a kind, and the value answers by its own ---
+
+    // a number is every size it fits: 5 is int (and integer) and long; 2.5 is decimal and no integer kind
+    [Test] public async Task Is_ANumbersKind_IsEverySizeItFits()
+    {
+        await Assert.That(IsTrue(await EvalIf(5L, "is", "int"))).IsTrue();
+        await Assert.That(IsTrue(await EvalIf(5L, "is", "integer"))).IsTrue();
+        await Assert.That(IsTrue(await EvalIf(5L, "is", "long"))).IsTrue();
+        await Assert.That(IsTrue(await EvalIf(2.5m, "is", "decimal"))).IsTrue();
+        await Assert.That(IsFalse(await EvalIf(2.5m, "is", "int"))).IsTrue();
+        await Assert.That(IsFalse(await EvalIf(300L, "is", "byte"))).IsTrue();
+    }
+
+    // a file is json by its extension before it is read, and its content still is once it has been
+    [Test] public async Task Is_AFilesKind_BeforeAndAfterItIsRead()
+    {
+        var ctx = _app.actor.list.User.Context;
+        System.IO.Directory.CreateDirectory(_app.AbsolutePath);
+        await System.IO.File.WriteAllTextAsync(System.IO.Path.Combine(_app.AbsolutePath, "c.json"), "{\"a\":1}");
+        var file = new global::app.type.item.file.@this(global::app.type.item.path.@this.Resolve("/c.json", ctx), ctx);
+
+        await Assert.That(IsTrue(await EvalIf(file, "is", "json"))).IsTrue();
+        await Assert.That(IsFalse(await EvalIf(file, "is", "csv"))).IsTrue();
+
+        var read = ctx.Ok(file);
+        await read.Value();
+        await Assert.That(read.Type.Name).IsNotEqualTo("file");
+        await Assert.That(read.Is("json", _app.type.list)).IsTrue();
+    }
+
+    [Test] public async Task Is_AnArchivesKind()
+    {
+        var gzip = (global::app.module.archive.type.archive.kind.@this)_app.type.list["archive"].kind["gzip"]!;
+        var archive = new global::app.module.archive.type.archive.@this([1, 2], gzip, new global::app.module.archive.type.archive.held.@this("file"));
+        await Assert.That(IsTrue(await EvalIf(archive, "is", "gzip"))).IsTrue();
+    }
+
+    // goal names a type and a kind of text: the type wins, so a text of kind goal is no goal
+    [Test] public async Task Is_AWordThatNamesATypeAndAKind_AsksTheType()
+    {
+        var goalText = new global::app.type.item.text.@this("Start\n- write out 'hi'") { Kind = "goal" };
+        await Assert.That(goalText.Is("goal", _app.type.list)).IsFalse();
+        await Assert.That(IsFalse(await EvalIf(goalText, "is", "goal"))).IsTrue();
+    }
+
     // --- `if %path% exists` — path answers its own truthiness ---
     //
     // Before the fix, file.exists returned the path object and `if X exists`

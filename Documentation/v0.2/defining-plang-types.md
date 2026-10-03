@@ -60,16 +60,18 @@ The base (`app/type/item/this.cs`) defines the full virtual surface; a new type 
 | `Peek()` | What is in memory NOW — sync, no I/O, no parse. | |
 | `IsVariable` / `Get(ctx)` | Only if the value can be a reference to a named binding. | Content answers `false`/`null`. |
 
-### Catalog statics (LLM-facing teaching)
+### Catalog teaching — markdown, not statics
 
-The type catalog folds these static properties into the type entity (`BuildTypeEntries` → `type.@this.Promote`), so the builder LLM can teach the type:
+A type's **teaching prose** lives in markdown under `os/system/type/<type>/`, not in C# statics. The catalog reads it as lazy file items on the type entity (`app/type/this.cs`):
 
-```csharp
-public static string Example => "readme.md";          // canonical literal
-public static string Shape => "string";               // the wire-scalar shape
-public static string Description => "…";              // semantic teaching
-public static IReadOnlyList<string> Kinds => […];     // advertised kind vocabulary (only if closed)
-```
+- `type.description.md` → `type.@this.Description(ctx)` — one-line semantic teaching. It is printed inline in the builder's properties prompt, so keep it **one line**.
+- `type.examples.md` → `.Example(ctx)` — a canonical literal.
+- `type.notes.md` → `.Notes(ctx)` and `type.guide.md` → `.Guide(ctx)` — learner prose the builder never reads.
+- each plang-visible member → `<member>.notes.md`, read as `member.Notes(ctx)` on `app.type.property.@this`.
+
+What stays a C# static is the type's **structural** metadata — `Shape` (the wire-scalar shape), `ConstructorSignature`, and `Internal` — read by reflection (`Declared<T>` in `app/type/this.cs`), because those describe the class, not what to teach about it. The old `static string Description` / `Example` are gone.
+
+The learner page `os/system/type/<type>/start.md` is **generated** from this markdown over the catalog, never hand-written, with each member's notes tagged `Name — prose · say: …`. Full contract: [type-reference-generation.md](type-reference-generation.md). Methods are taught by their C# names — case-insensitive, with parentheses, chainable (`%x.toUpper()%`, `%x.replace("a","b")%`); a property reads without parentheses (`%x.length%`). How members are read overall — all `.` for a plain type, `.` for content vs `!` for facts on a reference type (`file`/`url`) — is type-level; it lives in the same spec.
 
 ---
 
@@ -185,11 +187,20 @@ public sealed class Reader : global::app.type.reader.ITypeReader
 
 **The same reader serves every format** — a `.pr` JSON token, a CSV payload, a byte blob. That is the whole point: `bool`'s reader reads a bool the same way whatever the bytes were.
 
-### Kinds
+### Kinds — one class per behaviour variant
 
-A kind is a **short tail token** (`md`, `gif`, `int`, `json`), never a slash form — `"text/markdown"` is the *authoring* form, which `type.Create` splits into name + kind on the first slash, and the LLM teaching explicitly warns the slash string off the wire. A kind token carries its content family on its own (`type.Compressible` resolves jpg→image, mp3→audio through `format.TypeOf(kind)`), so a mime never needs to ride whole.
+A kind is a **behaviour variant of a type**, and the kind owns what differs between variants — nothing outside switches on it. Each kind is one class at `app/type/item/<type>/kind/<name>/this.cs`, extending the type's `kind/this.cs` base, and **a new variant is one new folder**:
 
-A type that reads differently per kind (`table`: csv vs xlsx) registers one reader per kind token; a type that reads uniformly registers `AnyKind` (`"*"`) and may switch on the passed `kind` inside `Read`. Lookup precedence: runtime-exact → generated-exact → runtime-`*` → generated-`*`. The selection door is `Context.App.Type.Reader.Reader(typeName, kind, context)` — it throws loudly when the resolved type ships no reader, because **every value type owns a `serializer/Reader.cs`**.
+- `duration/kind/{short, iso, dotnet}` — the standard a span is written in; each owns *both* directions (`Span(text)` reads it, `Text(span)` writes it), so a text names its own kind.
+- `size/kind/{iec, si}` — 1024- vs 1000-based unit scaling.
+
+This is the OBP rule applied to variants: a `switch (kind)` inside the type is misplaced behaviour (the **fork** smell) — push each arm onto its own kind class. The type keeps one shape; the kinds carry the difference, each extending a `kind/this.cs` base that is abstract over what a variant must answer (`Parse`, `Span`/`Text`, …).
+
+**When no kind is named, a type setting picks the default.** A value made from text keeps the kind its form names; one made from a bare count (a `size` from a byte length, not from text with a suffix) is written in the standard the type's setting holds — `%!app.type.size.setting.standard%` (`iec` or `si`). A type setting lives at `app/type/item/<type>/setting/this.cs` (`[Out, Store]`, a `choice<kind>`), read as `%!app.type.<type>.setting%`.
+
+**The kind token.** A kind is named by a **short tail token** (`md`, `gif`, `int`, `json`, `iso`, `iec`), never a slash form — `"text/markdown"` is the *authoring* form, which `type.Create` splits into name + kind on the first slash, and the LLM teaching explicitly warns the slash string off the wire. A kind token carries its content family on its own (`type.Compressible` resolves jpg→image, mp3→audio through `format.TypeOf(kind)`), so a mime never needs to ride whole.
+
+**Per-kind reads.** A type that reads differently per kind (`table`: csv vs xlsx) registers one reader per kind token; a type that reads uniformly registers `AnyKind` (`"*"`) and may switch on the passed `kind` inside `Read`. Lookup precedence: runtime-exact → generated-exact → runtime-`*` → generated-`*`. The selection door is `Context.App.Type.Reader.Reader(typeName, kind, context)` — it throws loudly when the resolved type ships no reader, because **every value type owns a `serializer/Reader.cs`**.
 
 ---
 

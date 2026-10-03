@@ -166,20 +166,21 @@ public sealed class Operator
         var typeName = (await right.Held()).ToString();
         if (!right.Success) return Failed(right, context);
         if (string.IsNullOrWhiteSpace(typeName)) return Answer(context, false);
-        var named = await context.App.type.Get(typeName);
-        if (!named.Success || await named.Value() is not { } type)
+        // the word names a type or a kind: the value answers which it is
+        var types = context.App.type.list;
+        if (!types.Contains(typeName) && !types.HasKind(typeName))
             return Refused(context, $"Unknown type '{typeName}'", "UnknownType");
         if (!left.Success) return Failed(left, context);
         var held = await left.Follow(context);
         if (!held.IsInitialized) return Answer(context, false);
-        if (held.Is(type)) return Answer(context, true);
+        if (held.Is(typeName, types)) return Answer(context, true);
         if (held.Peek() is { IsFinal: false })
         {
             // `is dict` on a reference not yet read examines its content: the door reads and narrows, then the
             // value answers from its retained chain
             _ = await held.Value();
             if (!held.Success) return Failed(held, context);
-            return Answer(context, held.Is(type));
+            return Answer(context, held.Is(typeName, types));
         }
         return Answer(context, false);
     }

@@ -364,6 +364,18 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public bool Is(global::app.type.@this? other) => Type.Is(other) || history.Has(other);
 
     /// <summary>
+    /// Is this value a <paramref name="name"/> — the word a program writes after <c>is</c>? A type's name asks the type
+    /// (<see cref="Is(global::app.type.@this?)"/>), so a type wins over a kind by the same word; any other word is a
+    /// kind, answered by <see cref="IsKind"/>: <c>%n% is int</c>, a read file <c>is json</c>, an archive <c>is gzip</c>.
+    /// </summary>
+    public bool Is(string name, global::app.type.list.@this types)
+        => types.Contains(name) ? Is(types[name]) : IsKind(name);
+
+    /// <summary>Is this value of the kind <paramref name="name"/> (by its name, an alias, a MIME or an extension) — its
+    /// own kind, or one a value in its history had. A value whose kinds are sizes answers every one it fits.</summary>
+    protected internal virtual bool IsKind(string name) => Type.kind.Names(name) || history.HasKind(name);
+
+    /// <summary>
     /// How this value clones when its holding <c>Data</c> is cloned. The default
     /// is a structural deep copy (so a cloned dict/list/text mutates
     /// independently). A value that holds a <em>live or shared</em> reference —

@@ -105,6 +105,24 @@ public sealed partial class @this
         _ => (@this)v,
     };
 
+    /// <summary>A number is every kind it fits, beside the one it is held in: a fractional kind (half, float, double,
+    /// decimal) holds any number, an integer kind a whole one in its range — 5 is int and long, 2.5 is decimal and not
+    /// int. The kind is named by its name or an alias (<c>integer</c>).</summary>
+    protected internal override bool IsKind(string name)
+    {
+        if (base.IsKind(name)) return true;
+        var named = System.Linq.Enumerable.FirstOrDefault(Kinds.Values, kind => kind.Names(name));
+        if (named == null) return false;
+        if (CategoryOf(named.Name) != Category.Integer) return true;
+        BigInteger? whole = Cat switch
+        {
+            Category.Decimal => AsDecimal() == System.Math.Truncate(AsDecimal()) ? (BigInteger)AsDecimal() : null,
+            Category.BinaryFloat => double.IsFinite(AsDouble()) && AsDouble() == System.Math.Truncate(AsDouble()) ? (BigInteger)AsDouble() : null,
+            _ => AsBigInteger(),
+        };
+        return whole is { } value && Ladder[LadderIndex(named.Name)].Fits(value);
+    }
+
     /// <summary>The wider (higher-ladder) of two integer kinds — the narrowing floor.</summary>
     private static string WiderInteger(string a, string b)
         => LadderIndex(a) >= LadderIndex(b) ? a : b;

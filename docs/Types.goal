@@ -1,0 +1,22 @@
+Types
+/ The learner pages, each type's start.md in its own os folder (a new /system/… file lands where its folder is, the
+/ app's own /system/ first, else the os's: decision 522), each written from the type catalog, never by hand (the spec
+/ is Documentation/v0.2/type-reference-generation.md): the type's description and guide, then each member's summary and
+/ call form, its arguments (how a step says each, its type, whether it is required, its default, what it changes) and
+/ what it returns.
+/ Only the text type's members are tagged (with a golden page). The loop over %!app.type.list% comes when every type's
+/ members are tagged.
+- call goal Page type=%!app.type.text%
+
+Page
+/ One type's page, system/type/<name>/start.md, then what its members' notes and arguments don't agree on.
+- render template "/templates/type.template", write to %page%
+- save %page% to "/system/type/%type.Name%/start.md"
+- foreach %type.Property%, call Unmatched member=%item%
+
+Unmatched
+/ What one member's notes and arguments don't agree on: a notes line that names nothing, an argument no line names.
+- foreach %member.Note.Warning%, call Warn warning=%item%
+
+Warn
+- write %warning.Message% to "error" channel

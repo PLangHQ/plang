@@ -1,7 +1,9 @@
 Collection — the list or dict to walk · say: `foreach %list%`, `for each %order% in %orders%` · builder: the collection the step names
 Item — the variable each element is bound to · say: `as %product%` (else it is %item%) · ask: which of the step's variables does it bind each element to (`as %name%`)? · builder: %item% unless the step names another with `as %name%`
 Key — the variable the key or index is bound to · say: `with key %sku%` · ask: which of the step's variables does it bind the key to (`with key %name%`)? · builder: only when the step names one
-Returns — a summary of the loop: `{count, complete}` — how many elements it ran over, and whether it finished (false if cancelled). The work per element is its own action, so there is usually nothing to write the summary to.
+Parallel — run the items side by side · say: `in parallel`, `in parallel(cpu: 2)` · ask: does the step say to run the items in parallel (`in parallel`, `in parallel(cpu: N)`)? · builder: `in parallel` → `Parallel=true`; `in parallel(cpu: N)` → `Parallel={cpu: N}`; left out when the step runs the items one after another.
+Returns — the loop's own answer: run one after another, a summary `{count, complete}` (how many ran, whether it finished); run in parallel, the loop's task (awaited later with `wait for`). A `write to %x%` at the END of the step keeps THAT answer — the loop's, not the per-item work's — so it is most often a parallel loop's task. A sequential loop usually has nothing to write.
 
 - The work done per element is its own action after loop.foreach in the step's list (usually goal.call), never inside it.
 - `name=%item%` after the called goal is an argument of that goal.call, not a foreach property.
+- A trailing `write to %x%` is the loop's answer (its task or summary). But a `set %x% = <value>` that names the element — `foreach %list%, set %seen% = %item%` — is the per-item work in the body, kept as the step writes it, not the loop's answer.
