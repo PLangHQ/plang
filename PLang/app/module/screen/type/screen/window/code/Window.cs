@@ -323,11 +323,11 @@ internal sealed class Window
     // ---- live numbers in the title: updates/s, MB/s, time to apply ------------------------------
 
     private long statBytes, statUpdates, statTicks, statSince = Environment.TickCount64;
-    private readonly Samples pipe = new(), picture = new();   // the pipe's round trip; input → picture
+    private readonly Latency pipe = new(), picture = new();   // the pipe's round trip; input → picture
     private readonly HashSet<(int sc, bool ext)> heldKeys = new();   // keys sent as down and not yet up (window thread only)
 
-    /// <summary>The last 64 latencies of one kind; they say their own percentiles.</summary>
-    private sealed class Samples
+    /// <summary>One latency, by its last 64 measures; it says its own percentiles.</summary>
+    private sealed class Latency
     {
         private readonly long[] values = new long[64];
         private int count;

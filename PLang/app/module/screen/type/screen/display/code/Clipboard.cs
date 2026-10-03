@@ -111,7 +111,7 @@ internal sealed class Clipboard(Display display)
 /// <summary>wl_data_device_manager: sources (a client's copy) and devices (its clipboard).</summary>
 internal sealed class WlDataDeviceManager(Client client, uint id, uint version) : Resource(client, id, version)
 {
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -126,7 +126,7 @@ internal sealed class WlDataSource(Client client, uint id, uint version) : Resou
 {
     internal List<string> Types { get; } = new();
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -152,7 +152,7 @@ internal sealed class WlDataDevice : Resource
 {
     internal WlDataDevice(Client client, uint id, uint version) : base(client, id, version) => Display.Clipboard.Add(this);
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -170,7 +170,7 @@ internal sealed class WlDataDevice : Resource
 /// <summary>wl_data_offer: the clipboard, offered to a client (made by the server).</summary>
 internal sealed class WlDataOffer(Client client, uint id) : Resource(client, id, 3)
 {
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {

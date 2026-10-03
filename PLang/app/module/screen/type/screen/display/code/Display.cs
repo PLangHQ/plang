@@ -29,8 +29,10 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
     internal Size Size { get; }
     internal Font? Font { get; }
     internal IReadOnlyList<Global> Globals { get; }
-    internal Windows Windows { get; }
-    internal Popups Popups { get; } = new();
+    /// <summary>Its windows, bottom to top.</summary>
+    internal global::app.module.screen.type.screen.display.code.window.list.@this window { get; }
+    /// <summary>Its open menus.</summary>
+    internal global::app.module.screen.type.screen.display.code.popup.list.@this popup { get; } = new();
     internal Pointer Pointer { get; }
     internal Keyboard Keyboard { get; }
     internal Clipboard Clipboard { get; }
@@ -72,7 +74,7 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
         this.socketPath = socketPath;
         this.debug = debug;
         Font = Font.From(font);
-        Windows = new Windows(this);
+        window = new(this);
         Pointer = new Pointer(this);
         Keyboard = new Keyboard(this, layout);
         Clipboard = new Clipboard(this);
@@ -180,8 +182,8 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
     /// parts above them), menus, the open panel.</summary>
     internal void Draw(int y, int x0, Span<byte> line)
     {
-        Windows.Draw(y, x0, line);
-        Popups.Draw(y, x0, line);
+        window.Draw(y, x0, line);
+        popup.Draw(y, x0, line);
         Panel?.Picture.Draw(y, x0, line);
     }
 
@@ -259,7 +261,7 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
             else if (S("ui") == "unbind") Bound.Remove(Part(S("element")));
             else if (e["host"] is JsonNode up) Frame.Host(up.ToJsonString());
             // the window by its id — or, from a window's own page, the one it is in ("from")
-            else if (e.ContainsKey("window")) Windows.ById(e.ContainsKey("id") ? N("id") : N("from"))?.Command(S("window"), e);
+            else if (e.ContainsKey("window")) window.ById(e.ContainsKey("id") ? N("id") : N("from"))?.Command(S("window"), e);
             Frame.Send();
             Flush();
         }
@@ -278,7 +280,7 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
     private IPart? Hit(Point at)
     {
         if (Panel is { } p && p.Picture.Rect.Contains(at.X, at.Y)) return p;
-        return Popups.Hit(at.X, at.Y) ?? Windows.Hit(at.X, at.Y);
+        return popup.Hit(at.X, at.Y) ?? window.Hit(at.X, at.Y);
     }
 
     private void Mouse(global::app.type.item.input.mouse.Gesture kind, Point at, Click click, int dx, int dy)
@@ -303,7 +305,7 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
         {
             case global::app.type.item.input.mouse.Gesture.down:
                 if (!ReferenceEquals(part, Panel)) Panel?.Close();
-                if (Windows.Desktop is { } desktop && !desktop.IsAbove(at.X, at.Y)) desktop.Lower();
+                if (window.Desktop is { } desktop && !desktop.IsAbove(at.X, at.Y)) desktop.Lower();
                 part?.Down(click);
                 if (part?.Target != null) Pointer.Button(click.Button, true);
                 break;
@@ -328,7 +330,7 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
     internal void Url(int id, Address address)
     {
         lock (Gate)
-            if (Windows.ById(id) is { } window) window.Address = address;
+            if (this.window.ById(id) is { } shown) shown.Address = address;
     }
 
     internal void Stop()

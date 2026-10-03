@@ -6,7 +6,7 @@ namespace app.module.screen.type.screen.display.code;
 /// <summary>wl_display: object 1 of every client.</summary>
 internal sealed class WlDisplay(Client client) : Resource(client, 1, 1)
 {
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -28,7 +28,7 @@ internal sealed class WlRegistry(Client client, uint id) : Resource(client, id, 
             Event(0).Uint(global.Name).String(global.Interface).Uint(global.Version).Send();
     }
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         if (opcode != 0) return;   // bind(name, interface, version, id)
         var name = args.Uint();
@@ -48,7 +48,7 @@ internal sealed record Global(uint Name, string Interface, uint Version, Func<Cl
 /// <summary>wl_callback: answered once, then gone.</summary>
 internal sealed class WlCallback(Client client, uint id) : Resource(client, id, 1)
 {
-    internal override void Request(ushort opcode, Args args) { }
+    internal override void Request(ushort opcode, Request args) { }
 
     internal void Done(uint data)
     {
@@ -60,7 +60,7 @@ internal sealed class WlCallback(Client client, uint id) : Resource(client, id, 
 /// <summary>wl_compositor: makes surfaces and regions.</summary>
 internal sealed class WlCompositor(Client client, uint id, uint version) : Resource(client, id, version)
 {
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -73,7 +73,7 @@ internal sealed class WlCompositor(Client client, uint id, uint version) : Resou
 /// <summary>wl_region: rectangles (input and opaque regions). PlangOS doesn't need their shape.</summary>
 internal sealed class WlRegion(Client client, uint id, uint version) : Resource(client, id, version)
 {
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         if (opcode == 0) Destroy();
     }
@@ -98,7 +98,7 @@ internal sealed class WlSurface(Client client, uint id, uint version) : Resource
     /// <summary>The surfaces placed on this one (wl_subsurface).</summary>
     internal List<WlSubsurface> Children { get; } = new();
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -179,7 +179,7 @@ internal sealed class WlShm : Resource
         Event(0).Uint(1).Send();   // XRGB8888
     }
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         if (opcode == 0) _ = new WlShmPool(Client, args.NewId(), args.Fd(), args.Int());
     }
@@ -203,7 +203,7 @@ internal sealed class WlShmPool : Resource
         if (Memory == IntPtr.Zero) Display.Debug($"wayland: pool#{id} fd {fd} size {size}: not mapped (errno {System.Runtime.InteropServices.Marshal.GetLastPInvokeError()})");
     }
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -236,7 +236,7 @@ internal sealed class WlShmPool : Resource
 internal sealed class WlBuffer(Client client, uint id, WlShmPool pool, int offset, int width, int height, int stride, uint format)
     : Resource(client, id, 1)
 {
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         if (opcode == 0) Destroy();
     }
@@ -273,7 +273,7 @@ internal sealed class WlBuffer(Client client, uint id, WlShmPool pool, int offse
 /// <summary>wl_subcompositor: surfaces placed on other surfaces.</summary>
 internal sealed class WlSubcompositor(Client client, uint id, uint version) : Resource(client, id, version)
 {
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -303,7 +303,7 @@ internal sealed class WlSubsurface : Resource, ISurfaceRole
         parent.Children.Add(this);
     }
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -315,14 +315,14 @@ internal sealed class WlSubsurface : Resource, ISurfaceRole
     public void Commit(WlSurface _, Update update)
     {
         if (update.Attached) Picture = update.Take(Picture);
-        Display.Windows.Of(parent)?.Changed();
+        Display.window.Of(parent)?.Changed();
         update.Answer(Display);
     }
 
     public void Gone()
     {
         parent.Children.Remove(this);
-        Display.Windows.Of(parent)?.Changed();
+        Display.window.Of(parent)?.Changed();
     }
 
     protected override void Destroyed() => Gone();
@@ -346,7 +346,7 @@ internal sealed class WlOutput : Resource
         if (Version >= 2) Event(2).Send();
     }
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         if (opcode == 0) Destroy();
     }
@@ -355,7 +355,7 @@ internal sealed class WlOutput : Resource
 /// <summary>zxdg_output_manager_v1: the screen's logical size.</summary>
 internal sealed class XdgOutputManager(Client client, uint id, uint version) : Resource(client, id, version)
 {
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -380,7 +380,7 @@ internal sealed class XdgOutput : Resource
         output?.Done();
     }
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         if (opcode == 0) Destroy();
     }

@@ -8,13 +8,13 @@ namespace app.module.screen.type.screen.display.code;
 /// read in order — each 4-byte aligned; a string or array is [u32 length] then its bytes. File
 /// descriptors don't travel in the bytes: they came alongside, in order.
 /// </summary>
-internal sealed class Args
+internal sealed class Request
 {
     private readonly Client client;
     private readonly byte[] data;
     private int at;
 
-    internal Args(Client client, byte[] data, int start)
+    internal Request(Client client, byte[] data, int start)
     {
         this.client = client;
         this.data = data;
