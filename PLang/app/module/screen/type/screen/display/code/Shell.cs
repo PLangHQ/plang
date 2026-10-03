@@ -6,7 +6,7 @@ namespace app.module.screen.type.screen.display.code;
 /// <summary>xdg_wm_base: makes xdg surfaces and positioners.</summary>
 internal sealed class XdgWmBase(Client client, uint id, uint version) : Resource(client, id, version)
 {
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -28,7 +28,7 @@ internal sealed class XdgPositioner(Client client, uint id, uint version) : Reso
     private uint anchor, gravity;
     internal uint Constraints { get; private set; }
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -76,7 +76,7 @@ internal sealed class XdgSurface : Resource
         surface.Xdg = this;
     }
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -119,11 +119,11 @@ internal sealed class XdgToplevel : Resource
     internal XdgToplevel(Client client, uint id, uint version, XdgSurface xdg) : base(client, id, version)
     {
         Xdg = xdg;
-        Window = Display.Windows.Open(this);
+        Window = Display.window.Open(this);
         xdg.Surface.Role = Window;
     }
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -172,7 +172,7 @@ internal sealed class XdgPopup : Resource, ISurfaceRole
         this.parent = parent;
         this.positioner = positioner;
         xdg.Surface.Role = this;
-        Display.Popups.Add(this);
+        Display.popup.Add(this);
         placed = Fitted(positioner.Placement());
     }
 
@@ -194,7 +194,7 @@ internal sealed class XdgPopup : Resource, ISurfaceRole
         return r with { X = x - ParentCorner.X, Y = y - ParentCorner.Y };
     }
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -232,7 +232,7 @@ internal sealed class XdgPopup : Resource, ISurfaceRole
 
     public void Gone()
     {
-        if (!Display.Popups.Remove(this)) return;
+        if (!Display.popup.Remove(this)) return;
         Display.Frame.Redraw(Picture.Rect, default);
     }
 
@@ -242,7 +242,7 @@ internal sealed class XdgPopup : Resource, ISurfaceRole
 /// <summary>zxdg_decoration_manager_v1: who draws a window's frame.</summary>
 internal sealed class XdgDecorationManager(Client client, uint id, uint version) : Resource(client, id, version)
 {
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -258,7 +258,7 @@ internal sealed class XdgDecorationManager(Client client, uint id, uint version)
 /// <summary>zxdg_toplevel_decoration_v1: always server side — plang-screen draws every title bar.</summary>
 internal sealed class XdgDecoration(Client client, uint id, XdgToplevel toplevel) : Resource(client, id, 1)
 {
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {

@@ -25,7 +25,7 @@ internal sealed class Frame
     private readonly Stream? output;
     private readonly byte[] screen;     // what the host shows now
     private readonly byte[] composing;  // the rectangle being composed
-    private readonly Encoders encoders = new(Math.Min(8, Environment.ProcessorCount));
+    private readonly Encoder encoder = new(Math.Min(8, Environment.ProcessorCount));
     private readonly List<Region> pending = new();
     private readonly List<WlCallback> later = new();
     private (Rect from, Point by)? moved;   // the move that opens the frame being built
@@ -87,8 +87,8 @@ internal sealed class Frame
         var changed = new Region(new Rect(r.X, first, r.Width, last - first + 1),
             composing.AsMemory((first - r.Y) * row, (last - first + 1) * row));
         // encoded now (the composing buffer is reused by the next present), in bands at once
-        var bands = changed.Bands(changed.Big ? encoders.Count : 1);
-        encoders.Encode(bands);
+        var bands = changed.Bands(changed.Big ? encoder.Count : 1);
+        encoder.Encode(bands);
         pending.AddRange(bands);
     }
 
@@ -325,11 +325,11 @@ internal sealed class Region(Rect rect, ReadOnlyMemory<byte> pixels)
 }
 
 /// <summary>
-/// Threads that encode bands side by side, made once and kept (a thread per band per frame would
-/// be made and thrown away 60 times a second). Their own threads, not the pool's: encoding runs
+/// The encoder: it encodes bands side by side on threads made once and kept (a thread per band per frame would
+/// be made and thrown away 60 times a second). Its own threads, not the pool's: encoding runs
 /// under the display's gate, and pool threads may be waiting on that gate.
 /// </summary>
-internal sealed class Encoders
+internal sealed class Encoder
 {
     private readonly SemaphoreSlim work = new(0);
     private readonly Lock gate = new();
@@ -339,7 +339,7 @@ internal sealed class Encoders
 
     internal int Count { get; }
 
-    internal Encoders(int count)
+    internal Encoder(int count)
     {
         Count = count;
         for (var i = 1; i < count; i++)

@@ -11,7 +11,7 @@ internal sealed class WlSeat : Resource
         if (Version >= 2) Event(1).String("seat0").Send();
     }
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -27,7 +27,7 @@ internal sealed class WlPointer : Resource
 {
     internal WlPointer(Client client, uint id, uint version) : base(client, id, version) => Display.Pointer.Add(this);
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -65,7 +65,7 @@ internal sealed class WlKeyboard : Resource
 {
     internal WlKeyboard(Client client, uint id, uint version) : base(client, id, version) => Display.Keyboard.Add(this);
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         if (opcode == 0) Destroy();
     }
@@ -93,7 +93,7 @@ internal sealed class WlKeyboard : Resource
 /// <summary>wp_cursor_shape_manager_v1: clients name the pointer they want (CSS names).</summary>
 internal sealed class CursorShapeManager(Client client, uint id, uint version) : Resource(client, id, version)
 {
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
@@ -116,7 +116,7 @@ internal sealed class CursorShapeDevice(Client client, uint id) : Resource(clien
         "zoom-out", "default", "move",
     ];
 
-    internal override void Request(ushort opcode, Args args)
+    internal override void Request(ushort opcode, Request args)
     {
         switch (opcode)
         {
