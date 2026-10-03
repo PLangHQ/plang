@@ -211,6 +211,55 @@ public class MatchTests
         await Assert.That(taken.Error?.Message ?? "").DoesNotContain("is in the step but not in your answer");
     }
 
+    // A %!…% the answer names reads one of plang's own — a run's binding (%!data%), a shortcut, the app's, a module's
+    // setting; one naming nothing (%!photo.png%, a file named as if it were one) is refused, never saved to read nothing
+    [Test]
+    public async Task ABangVariableNamingNothing_IsRefused_PlangsOwnAreTaken()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var context = app.actor.list.System.Context;
+        async Task<string> Refusal(string step, string pick, string answer)
+        {
+            var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step(step));
+            await Picked(goal, context, (0, pick));
+            return (await Match(goal, answer, context)).Error?.Message ?? "";
+        }
+
+        var photo = await Refusal("upload 'photo.png' to %url%", "http.upload", """[0] http.upload(Url=%url%, Content=%!photo.png%)""");
+        await Assert.That(photo).Contains("%!photo.png% names nothing plang has");
+
+        foreach (var named in new[] { "%!data%", "%!goal.Name%", "%!app.Name%", "%!llm.setting.cache%" })
+        {
+            var taken = await Refusal($"write out {named}", "output.write", $"[0] output.write(Data={named})");
+            await Assert.That(taken).DoesNotContain("names nothing plang has");
+        }
+    }
+
+    // A path a step writes bare is a marker like a quoted literal: `pack /photos to /backup/photos.tar.gz` answered with
+    // neither path is refused, answered with both is taken; a word with a slash (and/or) is no path
+    [Test]
+    public async Task ABarePath_DroppedFromTheAnswer_IsRefused_KeptIsTaken()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var context = app.actor.list.System.Context;
+        async Task<string> Refusal(string step, string pick, string answer)
+        {
+            var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step(step));
+            await Picked(goal, context, (0, pick));
+            return (await Match(goal, answer, context)).Error?.Message ?? "";
+        }
+        const string pack = "pack /photos to /backup/photos.tar.gz";
+
+        var dropped = await Refusal(pack, "archive.pack", "[0] archive.pack(Value=%!data%)");
+        var kept = await Refusal(pack, "archive.pack", """[0] archive.pack(Value="/photos", To="/backup/photos.tar.gz")""");
+        var prose = await Refusal("write out \"x\" and/or \"y\"", "output.write", """[0] output.write(Data="x and/or y")""");
+
+        await Assert.That(dropped).Contains("/photos is in the step but not in your answer");
+        await Assert.That(dropped).Contains("/backup/photos.tar.gz is in the step but not in your answer");
+        await Assert.That(kept).DoesNotContain("is in the step but not in your answer");
+        await Assert.That(prose).DoesNotContain("/or is in the step");
+    }
+
     // A value answers whether it holds what the step quoted: `split %csv% by ","` answered with the named separator
     // comma keeps the "," — a separator holds its characters
     [Test]

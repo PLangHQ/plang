@@ -36,6 +36,17 @@ public sealed class Variable : Hop
         return module.Success ? new global::app.data.@this(name, await module.Value(), context: context) : context.NotFound(name);
     }
 
+    /// <summary>Whether the name names something a program can read — a name the program sets is its own, always; a
+    /// <c>!</c> name is one a run binds (an action's answer <c>%!data%</c>, the event in play <c>%!event%</c>), else what
+    /// <see cref="Start"/> would read: a binding, a shortcut, the app's member, a module. <c>%!photo.png%</c> names
+    /// none of them.</summary>
+    internal async System.Threading.Tasks.ValueTask<bool> Names(global::app.actor.context.@this context)
+        => IsOwn || Bound.Contains(Name, global::app.type.item.variable.list.@this.Comparer)
+           || (await Start(null, context)).IsInitialized;
+
+    // the ! names a run binds as it goes — never there before it runs
+    private static readonly string[] Bound = ["!data", "!event", "!buildData"];
+
     /// <summary>The variable rebinds to <paramref name="value"/>.</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
         global::app.data.@this? parent, object? value, global::app.actor.context.@this context)

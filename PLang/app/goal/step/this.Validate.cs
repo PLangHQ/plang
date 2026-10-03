@@ -26,6 +26,9 @@ public sealed partial class @this
     private static readonly System.Text.RegularExpressions.Regex Literal = new(@"""([^""]*)""|(?<!\w)'([^']*)'(?!\w)");
     private static readonly System.Text.RegularExpressions.Regex Number = new(@"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])");
     private static readonly System.Text.RegularExpressions.Regex Quoted = new(@"""(?:[^""\\]|\\.)*""");
+    // A path a step writes bare: a word starting `/`, `./` or `../` (`pack /photos to /backup/photos.tar.gz`) — never
+    // inside a word (`and/or`) or a url (`http://`).
+    private static readonly System.Text.RegularExpressions.Regex BarePath = new(@"(?<![\w/.:%~])\.{0,2}/[\w.\-/]+");
 
     /// <summary>What the step's words hold that its code doesn't: a %variable%, a quoted literal — and what the
     /// code writes that the words don't: a variable, a text. (A number is <see cref="Unwritten"/>'s: words can
@@ -47,6 +50,11 @@ public sealed partial class @this
         // system variable (%!data%, %!error%) excepted
         foreach (var v in answered)
             if (!v.StartsWith("%!") && !said.Contains(v, comparer)) problems.Add($"step {Index}: {v} isn't in the step — use only the step's variables");
+        // a %!…% the answer names that names nothing — no binding, shortcut, app member or module (%!photo.png%) —
+        // reads nothing at run
+        foreach (var v in new global::app.type.item.variable.parser.@this(written).Variable.DistinctBy(x => x.Text))
+            if (!await v.Code.Root.Names(context))
+                problems.Add($"step {Index}: {v.Text} names nothing plang has — a %!…% reads one of its own: %!data% (the last answer), a shortcut (%!goal%, %!step%, %!error%), %!app…%, or a module's (%!llm.setting.cache%)");
         // a quoted literal is held by one of the answer's values — each asked, as it answers for itself (a separator
         // named comma holds ","), never the line's own syntax (`Left=%oldHash%` holds no "= %oldHash%"). An answer that
         // doubles a literal's backslashes (\\n for the step's \n) holds a backslash, not what the step says — told so,
@@ -57,6 +65,10 @@ public sealed partial class @this
                 problems.Add(l.Contains('\\') && await Held(l.Replace("\\", "\\\\"))
                     ? $"step {Index}: \"{l}\" is in the step, and your answer doubles its backslashes — write each escape as the step does"
                     : $"step {Index}: \"{l}\" is in the step but not in your answer");
+        // a path the step writes bare is one of its markers as a quoted literal is: held by one of the answer's values
+        foreach (var p in BarePath.Matches(Quoted.Replace(Text, "")).Select(m => m.Value.TrimEnd('.')).Distinct())
+            if (p.Length > 1 && !await Held(p))
+                problems.Add($"step {Index}: {p} is in the step but not in your answer");
         // a number the step writes as digits is one of its markers: an answer without it dropped what the step
         // says (`if %n% is 0` answered with no Right). Present when the digits stand in the answer on their own,
         // not inside a larger number — a duration's PT5S holds the step's 5.
