@@ -7,10 +7,11 @@ namespace app.module.browser;
 public partial class stop : IContext
 {
     /// <summary>The running browser, from <c>browser.start</c>.</summary>
-    public partial data.@this<Browser> Browser { get; init; }
+    public partial data.@this<type.browser.@this> Browser { get; init; }
 
-    [Code]
-    public partial IBrowser Provider { get; }
-
-    public async Task<data.@this> Start() => await Provider.Stop(this);
+    public async Task<data.@this> Start()
+    {
+        if (await Browser.Value() is { } browser) await browser.Stop();
+        return Context.Ok();
+    }
 }
