@@ -38,6 +38,56 @@ public class TemplateKindTests
         await Assert.That(plang.Type.Template?.Name).IsEqualTo("plang");
     }
 
+    // a row whose value is a variable is the run's to read, whatever its type: a .pr's snapshot slot holding %snap%
+    // loads as the variable, never read as the snapshot's own structure, and is the snapshot the variable holds
+    [Test] public async Task AVariableRow_OfAStructureType_LoadsAsTheVariable()
+    {
+        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        var ctx = app.actor.list.User.Context;
+        var pr = """
+            {"name": "Start", "step": [{"index": 0, "text": "resume %snap%", "line": {"number": 2},
+              "code": [{"module": "snapshot", "name": "resume", "property": [
+                {"name": "Snapshot", "type": {"name": "snapshot", "template": "plang"}, "value": "%snap%",
+                 "variable": [{"text": "%snap%", "code": [{"variable": "snap"}]}]}]}]}]}
+            """;
+
+        var goal = await RealGoalLoad.Read(app, pr);
+        await ctx.Variable.Set("snap", new global::app.data.@this("snap", app.Snapshot(ctx), context: ctx));
+        var snapshot = await goal.Step[0].Code[0].Property["Snapshot"]!.Data(ctx).Value();
+
+        await Assert.That(snapshot is global::app.snapshot.@this).IsTrue();
+    }
+
+    // a variable's name is its string: `Name=%a%`, marked a template by the build, still reads eagerly as the name
+    [Test] public async Task AVariableNameRow_StillReadsAsTheName()
+    {
+        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        var ctx = app.actor.list.User.Context;
+
+        var name = ctx.Action("variable.set(Name=%a%, Value=\"A\")").Property["Name"]!.Value;
+
+        await Assert.That(name is global::app.type.item.variable.@this { Name: "a" }).IsTrue();
+    }
+
+    // an error is an object: a row holding %err% takes the content door, never the error's own reader; an object
+    // under snapshot still reads through the snapshot's reader
+    [Test] public async Task AnErrorRowHoldingAVariable_IsContent_ASnapshotObjectIsASnapshot()
+    {
+        await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();
+        var ctx = app.actor.list.User.Context;
+        var plang = ctx.App.type.list["wire"].kind["plang"]!;
+        var error = "{\"name\":\"e\",\"type\":{\"name\":\"error\",\"template\":\"plang\"},\"value\":\"%err%\","
+            + "\"variable\":[{\"text\":\"%err%\",\"code\":[{\"variable\":\"err\"}]}]}";
+        var snapshot = "{\"name\":\"s\",\"type\":{\"name\":\"snapshot\"},\"value\":{}}";
+
+        var held = await plang.Decode(System.Text.Encoding.UTF8.GetBytes(error), ctx, view: global::app.View.Store);
+        var read = await plang.Decode(System.Text.Encoding.UTF8.GetBytes(snapshot), ctx, view: global::app.View.Store);
+
+        await held.IsSuccess();
+        await Assert.That(held.Peek() is global::app.type.item.source).IsTrue();
+        await Assert.That(read.Peek() is global::app.snapshot.@this).IsTrue();
+    }
+
     [Test] public async Task ATemplateFile_IsTextsFormat_NotTheChoiceSetNamedTemplate()
     {
         await using var app = new global::app.@this("/tmp/tplkind-" + System.Guid.NewGuid().ToString("N")[..8]).Testing();

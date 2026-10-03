@@ -12,6 +12,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     /// <summary>An error is structure, read where it is found — a received failure is known at once.</summary>
     public bool IsEager => true;
 
+    /// <summary>An error is an object (or null); a string there names a variable holding one.</summary>
+    public bool Reads(global::app.type.format.TokenKind token)
+        => token is global::app.type.format.TokenKind.Object or global::app.type.format.TokenKind.Null;
+
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct

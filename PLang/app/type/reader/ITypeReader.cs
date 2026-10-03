@@ -37,6 +37,13 @@ public interface ITypeReader
     bool IsEager => false;
 
     /// <summary>
+    /// Whether this type's value can stand in the stream as <paramref name="token"/> — a structure is an object (or
+    /// null), never a string: a string where a snapshot stands names a variable holding one, for the run to fill.
+    /// By default a reader reads whatever it is handed (a variable's name is its string).
+    /// </summary>
+    bool Reads(app.type.format.TokenKind token) => true;
+
+    /// <summary>
     /// Pull this type's value off <paramref name="reader"/>, positioned at the
     /// value's first token, and return the born-native instance. The cursor is
     /// left on the value's last token (the <see cref="app.type.format.IReader"/>

@@ -437,14 +437,16 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// <summary>Reads a value slot of this type off the reader — the one door for a
     /// <c>{name, type, value}</c> row's value, a Data's or an action property's. The slot is exactly
     /// its row's declared type: a value is a template only when that type carries the marker (born at
-    /// build), never because of what it holds. A type whose values are STRUCTURE (an action, a
-    /// goal.call) is read eagerly through its own reader; a variable name or a template takes the
-    /// content door; every other slot is a lazy wire over its verbatim bytes.</summary>
+    /// build), never because of what it holds. A type whose values are STRUCTURE (a snapshot, a variable name, an
+    /// error) is read eagerly through its own reader when the value stands in a form that reader reads; anything else
+    /// (a snapshot slot holding <c>%snap%</c>) takes the content door like any other slot — a template its row's
+    /// variables, every other slot a lazy wire over its verbatim bytes.</summary>
     public item.@this Read(ref global::app.type.item.kind.json.Reader reader,
         global::app.type.reader.ReadContext ctx)
     {
-        // Which types are structure is the TYPE's declaration (ITypeReader.IsEager), never a list of names.
-        if (ctx.Context.App.type.list.Reader.Typed(Name, null) is { IsEager: true } eager)
+        // Which types are structure is the TYPE's declaration (ITypeReader.IsEager), never a list of names; which
+        // forms it reads is the reader's own (ITypeReader.Reads).
+        if (ctx.Context.App.type.list.Reader.Typed(Name, null) is { IsEager: true } eager && eager.Reads(reader.Peek()))
             return eager.Read(ref reader, null, ctx);
 
         // The slot is captured in plang's own format — the wire type's plang kind, which reads it on first touch.

@@ -21,6 +21,10 @@ public sealed class Reader : global::app.type.reader.ITypeReader
     /// not a slice waiting to be asked.</summary>
     public bool IsEager => true;
 
+    /// <summary>A snapshot is an object of its entries (or null); a string there names a variable holding one.</summary>
+    public bool Reads(global::app.type.format.TokenKind token)
+        => token is global::app.type.format.TokenKind.Object or global::app.type.format.TokenKind.Null;
+
     public global::app.type.item.@this Read<TReader>(ref TReader reader, string? kind,
         global::app.type.reader.ReadContext ctx)
         where TReader : global::app.type.format.IReader, allows ref struct
