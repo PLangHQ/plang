@@ -479,15 +479,17 @@ Iterate over Collection, binding each element to Item (and its key or index to K
 - foreach %rows%, write out %item%
 - foreach %products% as %product%, call Handle
 - foreach %prices% as %price% with key %sku%, write out "%sku%: %price%"
+- foreach %goals% in parallel(cpu: 2), call X, write to %task%
+- foreach %orders% in parallel, call Ship, write to %task%
 
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
 | Collection | `foreach %list%`, `for each %order% in %orders%` | item | yes | — | the list or dict to walk |
 | Item | `as %product%` (else it is %item%) | variable | no | item | the variable each element is bound to |
 | Key | `with key %sku%` | variable | no | — | the variable the key or index is bound to |
-| Parallel |  | parallel | no | — |  |
+| Parallel | `in parallel`, `in parallel(cpu: 2)` | parallel | no | — | run the items side by side |
 
-**Returns:** a summary of the loop: `{count, complete}` — how many elements it ran over, and whether it finished (false if cancelled). The work per element is its own action, so there is usually nothing to write the summary to.
+**Returns:** the loop's own answer: run one after another, a summary `{count, complete}` (how many ran, whether it finished); run in parallel, the loop's task (awaited later with `wait for`). A `write to %x%` at the end of the step keeps that answer — the loop's, not the per-item work's — so it is most often a parallel loop's task. A sequential loop usually has nothing to write.
 ```
 
 ## Generation rules
