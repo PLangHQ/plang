@@ -811,11 +811,11 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         => context.Error(new global::app.error.ValidationError($"Index {index} out of range (0..{CountRaw - 1})", "IndexOutOfRange"));
 
     /// <summary>The elements' text, one after another with <paramref name="separator"/> between them.</summary>
-    public async System.Threading.Tasks.Task<Data> Join(global::app.type.item.text.@this separator, actor.context.@this context)
+    public async System.Threading.Tasks.Task<Data> Join(global::app.type.item.separator.@this separator, actor.context.@this context)
     {
         var parts = new List<string>();
         foreach (var element in Items(context)) parts.Add((await element.Value())?.ToString() ?? "");
-        return context.Ok<global::app.type.item.text.@this>(string.Join(separator.ToString(), parts));
+        return context.Ok<global::app.type.item.text.@this>(string.Join(separator.Characters, parts));
     }
 
     /// <summary>Whether any element's field holds — whether <see cref="Where"/> keeps any; an error is the answer.</summary>

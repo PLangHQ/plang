@@ -293,7 +293,7 @@ public class ListTests : System.IAsyncDisposable
         var (context, memory) = CreateContext();
         memory.Set("myList", new List<object?> { "a", "b", "c" });
 
-        var action = new Join(context) { ListName = new app.type.item.variable.@this("myList"), Separator = (global::app.type.item.text.@this)"-" };
+        var action = new Join(context) { ListName = new app.type.item.variable.@this("myList"), Separator = new global::app.type.item.separator.@this("-") };
         var result = await action.Start();
 
         await Assert.That((await result.Value())?.ToString()).IsEqualTo("a-b-c");
@@ -306,7 +306,7 @@ public class ListTests : System.IAsyncDisposable
     {
         var (context, _) = CreateContext();
 
-        var action = new Split(context) { Value = (global::app.type.item.text.@this)"a,b,c", Separator = (global::app.type.item.text.@this)"," };
+        var action = new Split(context) { Value = (global::app.type.item.text.@this)"a,b,c", Separator = new global::app.type.item.separator.@this(",") };
         var result = await action.Start();
 
         await result.IsSuccess();

@@ -1,0 +1,1 @@
+What cuts a text into pieces (`split %x% into lines`) or goes between them (`join %list% with comma`): a named separator — `line`, `comma`, `tab`, `space`, `semicolon` — standing for its characters, or any characters as written (`" | "`).

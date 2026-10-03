@@ -1,0 +1,4 @@
+- split %text% into lines, write to %lines%
+- join %names% with comma, write to %csv%
+- split %row% by tab, write to %cells%
+- join %parts% with " | ", write to %shown%
