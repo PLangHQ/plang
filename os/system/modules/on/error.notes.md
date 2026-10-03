@@ -6,7 +6,7 @@ Key — handle only errors with this key (`on error key "NotFound"`).
 Message — handle only errors whose message contains this text.
 RetryCount — how many times to run the action again; each retry is a fresh attempt. A retry with no number ("retry", "then retry") means once → `RetryCount=1`; a written number is that number ("retry 3 times" → 3). Left out entirely only when the step says nothing about retrying (then the action is not retried at all).
 RetryOver — the time the retries are spread over, a duration ("over 30 seconds" → "30s").
-Order — set `GoalFirst` ONLY when the step runs the recovery BEFORE retrying — "call X first, then retry". Left out (the default, retry first) when the step retries then calls — "retry N times, then call X". The word order in the step decides: what the step says first runs first.
+Order — which runs first, the recovery or the retry · ask: does the step name the recovery (the call) BEFORE the retry — "call X then retry", "call X first, then retry"? then `GoalFirst`; if the retry comes first ("retry N times, then call X") or the step says nothing about order, leave Order out (none) · builder: `GoalFirst` only for recovery-before-retry; the word order in the step decides — what it says first runs first.
 Ignore — true when the step says to carry on past the error ("on error ignore", "on error 'NotFound' ignore").
 
 - The recovery runs only on error: it is never also an action of the step.
