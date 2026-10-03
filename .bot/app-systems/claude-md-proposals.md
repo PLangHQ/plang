@@ -212,3 +212,7 @@ Verified each against code (as for v6/v7); small commits per area.
 **REJECTED (superseded):** architect 09-28 "Tests→Test" (→ v7's lowercase refine); architect v2 action-prose (→ builder v1).
 
 **PENDING (paused for the types-teaching job, decision 567):** architect 09-26 #1 (comment→next line; folder docs `start.md`), #2 (plang vocab lowercase in members — verify first, its `app/type/type/this.cs` example should be `app/type/item/<name>/this.cs`); coder v2 (`Run()`→`Start()`); coder v6 (variable parser — drop stale `tools/decider` twin line); architect 09-28 envelope smell, 09-28 owners-take-values, 09-29 error-answers, 09-29 Normalize/[Out], 09-30 value-writes-what-it-is; architect v3 (glued-name), v4 (builder character), v5 (flag-false); builder v3 (the two Documentation/ scrubs → apply; the `characters/*/memory` files → their owners).
+
+## docs — 2026-10-03 — build-checks pointer (APPLIED)
+**Target:** /CLAUDE.md
+**Why:** New doc `Documentation/v0.2/build-checks.md` documents how a build answer is judged (Cover/Agree/decider stage 2/step-fixer). The teaching-edit rule (editing `os/system/modules/**/*.md` re-pins the decider fixtures + ModulePageTests) is canonical for every bot touching module teaching; the architect invited the pointer. APPLIED directly (docs owns CLAUDE.md): two bullets added to `## Build` pointing at build-checks.md + stating the teaching-edit re-pin caveat.
