@@ -4,7 +4,7 @@
   "step": [
     {
       "index": 0,
-      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--headless', '--disable-gpu', '--hide-scrollbars',\n'--no-first-run', '--no-default-browser-check', '--user-data-dir=%!app.AbsolutePath%/.browser',\n'--remote-debugging-pipe',\n'--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36',\n'about:blank', keep running, with pipe, write to %program%",
+      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--headless', '--disable-gpu', '--hide-scrollbars',\n'--no-first-run', '--no-default-browser-check', '--user-data-dir=%!app.AbsolutePath%/.browser',\n'--remote-debugging-pipe',\n'--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36',\n'about:blank', with a clean environment, copying HOME from plang's environment,\nkeep running, with pipe, write to %program%",
       "line": {
         "number": 7
       },
@@ -42,11 +42,25 @@
               ]
             },
             {
+              "name": "Clean",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
               "name": "Pipe",
               "type": {
                 "name": "bool"
               },
               "value": true
+            },
+            {
+              "name": "Keep",
+              "type": {
+                "name": "list"
+              },
+              "value": ["HOME"]
             }
           ],
           "default": [
@@ -115,7 +129,7 @@
       "index": 1,
       "text": "return %program%",
       "line": {
-        "number": 12
+        "number": 13
       },
       "code": [
         {
@@ -158,5 +172,5 @@
   "visibility": "Public",
   "path": "/system/browser/Headless.goal",
   "prPath": "/system/browser/.build/headless.pr",
-  "hash": "2dacff5f9fc2e76766dfb1d3ad2d5504ba320c07a47950cc15223894cb6929b6"
+  "hash": "c19e29b3837633ac61788fa9ad0c6fb26a77f7bb3baf585a5b7cb28e3ac81324"
 }

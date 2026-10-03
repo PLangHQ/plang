@@ -3,4 +3,5 @@
 - Each line the program writes calls the OnOutput goal (stdout) or OnError goal (stderr), the line as `%!data%`. Calls run one at a time.
 - A plang app ends when its goal ends: keep it alive with `wait for %container%` as the last step when the program should run until it exits.
 - `Pipe`: "with pipe", "with a pipe pair" → true. The program also gets a pipe pair (it reads fd 3, writes fd 4 — Chromium's `--remote-debugging-pipe`), reached as `%program.pipe%`. Linux only.
+- `Clean` and `Keep` work as for `terminal.start`: "with a clean environment, keep PULSE_SERVER, HOME" — none of plang's environment but PATH, LANG and the kept names.
 - Asking works as for `terminal.start`: a program outside the app root is asked, unless a goal under `/system/` names it (and its parameters, environment, folder) itself in the step — a `%variable%` there is the caller's, and asked as the caller.

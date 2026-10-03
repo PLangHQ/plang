@@ -158,7 +158,7 @@
     },
     {
       "index": 3,
-      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--ozone-platform=wayland', '--no-first-run',\n'--no-default-browser-check', '--disable-gpu-compositing', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',\n'--num-raster-threads=4', '--hide-crash-restore-bubble', '--disable-quic',\n'--disable-blink-features=AutomationControlled', '--in-process-gpu',\n'--disable-features=SpareRendererForSitePerProcess,WebUIOmniboxPopup,WebUIOmniboxAimPopup',\n'--user-data-dir=%!app.AbsolutePath%/.browser', '--remote-debugging-pipe',\n'--app=file://%!app.OsAbsolutePath%/system/browser/blank.html',\nwith environment variables XDG_RUNTIME_DIR=\"%!app.AbsolutePath%/.run\" and WAYLAND_DISPLAY=\"wayland-plang\",\nkeep running, with pipe, write to %program%",
+      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--ozone-platform=wayland', '--no-first-run',\n'--no-default-browser-check', '--disable-gpu-compositing', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',\n'--num-raster-threads=4', '--hide-crash-restore-bubble', '--disable-quic',\n'--disable-blink-features=AutomationControlled', '--in-process-gpu',\n'--disable-features=SpareRendererForSitePerProcess,WebUIOmniboxPopup,WebUIOmniboxAimPopup',\n'--user-data-dir=%!app.AbsolutePath%/.browser', '--remote-debugging-pipe',\n'--app=file://%!app.OsAbsolutePath%/system/browser/blank.html',\nwith environment variables XDG_RUNTIME_DIR=\"%!app.AbsolutePath%/.run\" and WAYLAND_DISPLAY=\"wayland-plang\",\nwith a clean environment, keep 'PULSE_SERVER', 'HOME' from plang's environment,\nkeep running, with pipe, write to %program%",
       "line": {
         "number": 15
       },
@@ -228,11 +228,43 @@
               ]
             },
             {
+              "name": "Clean",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
+              "name": "Keep",
+              "type": {
+                "name": "list"
+              },
+              "value": ["PULSE_SERVER","HOME"]
+            },
+            {
               "name": "Pipe",
               "type": {
                 "name": "bool"
               },
               "value": true
+            },
+            {
+              "name": "OutputTo",
+              "type": {
+                "name": "screen",
+                "template": "plang"
+              },
+              "value": "%program%",
+              "variable": [
+                {
+                  "text": "%program%",
+                  "code": [
+                    {
+                      "variable": "program"
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
@@ -301,7 +333,7 @@
       "index": 4,
       "text": "return %program%",
       "line": {
-        "number": 24
+        "number": 25
       },
       "code": [
         {
@@ -344,5 +376,5 @@
   "visibility": "Public",
   "path": "/system/browser/Screen.goal",
   "prPath": "/system/browser/.build/screen.pr",
-  "hash": "7352040b3002489acb4c68289c438e291556c0f98d2fde38b2887c1c29814271"
+  "hash": "961c17bca03ebfd1d9a6a005a452e58a312bd737823d976c9cd995ac45985ada"
 }
