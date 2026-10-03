@@ -36,6 +36,13 @@ public class ModulePageTests
     // inside the golden (a module's ## Examples) does not cut it short.
     private static string[] GoldenFrom(string[] spec, int from)
     {
+        var (open, close) = Block(spec, from);
+        return spec[(open + 1)..close].Where(line => !line.StartsWith("<!--")).ToArray();
+    }
+
+    // The outer ```markdown fence at or after `from`, and the bare fence that closes it.
+    private static (int Open, int Close) Block(string[] spec, int from)
+    {
         var open = System.Array.FindIndex(spec, from, line => line == "```markdown");
         var depth = 1;
         var close = open + 1;
@@ -44,7 +51,7 @@ public class ModulePageTests
             if (spec[close] == "```") { if (--depth == 0) break; }
             else if (spec[close].StartsWith("```")) depth++;
         }
-        return spec[(open + 1)..close].Where(line => !line.StartsWith("<!--")).ToArray();
+        return (open, close);
     }
 
     [Test]
@@ -150,8 +157,8 @@ public class ModulePageTests
         }
     }
 
-    // Render a module's learner page through the template and compare it, line by line, to its golden.
-    private static async Task ComparePageToGolden(string module)
+    // A module's learner page rendered through the template, line by line.
+    private static async Task<string[]> Page(string module)
     {
         await using var os = new global::app.@this(System.IO.Path.Combine(RepoRoot(), "os")).Testing();
         var context = os.actor.list.User.Context;
@@ -166,7 +173,13 @@ public class ModulePageTests
         var result = await new global::app.module.ui.code.Fluid().Render(render);
 
         await result.IsSuccess();
-        var page = (await result.Value())!.ToString()!.TrimEnd('\n').Split('\n');
+        return (await result.Value())!.ToString()!.TrimEnd('\n').Split('\n');
+    }
+
+    // Compare a module's rendered page, line by line, to its golden.
+    private static async Task ComparePageToGolden(string module)
+    {
+        var page = await Page(module);
         var golden = Golden(module);
         var at = Enumerable.Range(0, System.Math.Max(page.Length, golden.Length))
             .FirstOrDefault(i => i >= page.Length || i >= golden.Length || page[i] != golden[i], -1);
@@ -182,4 +195,24 @@ public class ModulePageTests
 
     [Test]
     public Task TheLoopPage_IsTheSpecsGolden() => ComparePageToGolden("loop");
+
+    // Re-pins a module's golden from its rendered page, when the module's teaching changed on purpose: run it
+    // explicitly, then read the spec's diff — only the teaching's lines may move. A golden holding annotation lines is
+    // re-pinned by hand, so none is lost.
+    [Test, Explicit, NotInParallel("golden")]
+    [Arguments("file")]
+    [Arguments("condition")]
+    [Arguments("loop")]
+    public async Task AcceptTheGolden(string module)
+    {
+        var spec = System.IO.File.ReadAllLines(SpecPath());
+        var from = System.Array.FindIndex(spec, line =>
+            line.StartsWith("## Golden output") && line.Contains(module, System.StringComparison.OrdinalIgnoreCase));
+        await Assert.That(from).IsGreaterThan(-1);
+        var (open, close) = Block(spec, from);
+        await Assert.That(spec[(open + 1)..close].Any(line => line.StartsWith("<!--"))).IsFalse();
+
+        var page = await Page(module);
+        System.IO.File.WriteAllText(SpecPath(), string.Join('\n', [.. spec[..(open + 1)], .. page, .. spec[close..]]) + "\n");
+    }
 }
