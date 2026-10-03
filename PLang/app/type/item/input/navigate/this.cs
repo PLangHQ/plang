@@ -11,8 +11,6 @@ public sealed class @this : input.@this
 
     public @this(Direction to, long? stamp = null) : base(stamp) => _to = to;
 
-    private protected override string Variant => "navigate";
-
     /// <summary>back, forward or reload.</summary>
     [Out] public global::app.type.item.choice.@this<Direction> To => new(_to);
 

@@ -39,8 +39,6 @@ public sealed class @this : input.@this
         _ => null,
     };
 
-    private protected override string Variant => "key";
-
     /// <summary>True while it goes down, false as it comes up.</summary>
     [Out] public global::app.type.item.@bool.@this Down => _down;
     /// <summary>The keyboard's number for the key.</summary>
