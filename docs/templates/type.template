@@ -15,7 +15,8 @@ Needs: type (one element of %!app.type.list%).
 {{ type.Guide | strip }}
 {%- endif %}
 {%- for m in type.Property %}
-{%- assign self = m.Note.Line | where: "Name", m.Name | first %}
+{%- assign note = m.Note %}
+{%- assign self = note.Line | where: "Name", m.Name | first %}
 
 ## {{ m.Name }}
 {{ self.Prose | strip }}
@@ -28,10 +29,10 @@ Needs: type (one element of %!app.type.list%).
 | Argument | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
 {%- for a in m.Arguments %}
-{%- assign line = m.Note.Line | where: "Name", a.Name | first %}
+{%- assign line = note.Line | where: "Name", a.Name | first %}
 | {{ a.Name }} | {{ line.Say }} | {{ a.Type.Name }} | {% if a.Required %}yes{% else %}no{% endif %} | {% if a.HasDefault %}{{ a.Default }}{% else %}—{% endif %} | {{ line.Prose }} |
 {%- endfor %}
 {%- endif %}
 
-**Returns:** {% if m.Note.Returns %}{{ m.Note.Returns.Prose }}{% else %}a `{{ m.Type.Name }}`.{% endif %}
+**Returns:** {% if note.Returns %}{{ note.Returns.Prose }}{% else %}a `{{ m.Type.Name }}`.{% endif %}
 {%- endfor %}
