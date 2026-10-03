@@ -350,6 +350,29 @@ flag:** `db` has NO v0.2 action handlers under `PLang/app/module/db/` — only a
 go through the decider/writer path, so it can't be taught the way setting can. Raising with the
 architect before touching db. **setting** (save, remove) is a normal v0.2 module and is teachable.
 
+## UR2 kernel line + untaught modules setting/signing/identity (2026-10-03, cont.)
+
+- **UR2 kernel line** (13d28ab14): generalized `Properties.llm` line 40 from goal.call-only to any
+  `name=value` argument — the name is kept even when it's a plang word AND even when the value is a
+  same-named var (`error=%error%` → `{error: %error%}`). UR2 5/5 (was 3/5), goal.call `module=%cfg%`
+  5/5, guard `call Finalize` 5/5 (no Parameter invented). Properties.llm (writer system prompt) is
+  **not** pinned by any decider fixture or ModulePageTests — nothing to re-pin.
+- **setting** (cee3f3f31): save, remove — one `Setting=%!…setting%` node each. 5/5 across SV1/RM1,
+  guard `set %!llm.setting.cache% = true` stays variable.set 5/5. **Gotcha learned:** the examples
+  parser takes every `Step text:` as an `e.g.` for THAT action — a contrast step of another module
+  in an examples file gets mis-advertised; keep contrasts in notes only.
+- **signing + identity** (afc59cf6f): signing (sign/verify) disambiguated from crypto (hash /
+  verify-against-digest) — crypto guards 5/5. identity (8 actions) — **export hands out a private
+  key**, so export.notes restrict it to explicit "export" steps and get.notes carries the
+  counter-rule: `get my identity` → identity.get, never export (guard 5/5). All 10 identity
+  scenarios clean.
+
+Re-pin rhythm confirmed: teaching a module that had **no** examples adds its `e.g.` lines to the
+stage-1 request in pick_golden → re-pin via PickListTests AcceptTheFixture, verify net e.g. diff is
+only your module's lines (use `comm -13` against `git show HEAD:…`). **Architect holds:** db (no v0.2
+module — roadmap gap, Ingi), environment (only environment.start, deletion is decision 228). TR1
+(test.report) parked — decider module-retrieval, not teaching.
+
 ## Next session (in order)
 1. **Decider key:** pass `TYPESAFE_API_KEY="$(cat /shared/hopkaup/secrets/typesafe.txt)"` to every
    `plang build`; still owed — store it in a settings table so the runner doesn't need the env each time.

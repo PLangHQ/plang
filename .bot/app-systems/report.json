@@ -1253,7 +1253,7 @@
         }
       ],
       "after": {
-        "status": "channel.set + ui.render + setting + UR2 kernel line + signing + identity all landed and measured clean. identity.export guard holds (get my identity never exports). TR1 parked; db/environment on hold (architect). Core routed: SL2/59, snapshot/58. Untaught modules remaining: ai, assert, callback, db, environment, error, install, module, plang (architect holds db/environment; signing+identity done).",
+        "status": "channel.set + ui.render + setting + UR2 kernel + signing + identity + assert examples all landed. assert: added examples for all 10 actions + notes for greaterThan/lessThan/isNull/isNotNull (the 'is not null' vs 'is not empty' vs 'is not X' trio disambiguated). Next: measure assert on 10 real stale test goals, then error.throw (%!error% -> Data not Message). Core routed: SL2/59; snapshot/58 fixed by coder (f1526a48d) — need binary rebuild + resume %snap% save-check. db/environment on hold.",
         "health": "green",
         "notes": "Properties.llm (writer system prompt) is NOT pinned by the four decider fixtures or ModulePageTests — generalizing line 40 (named-arg keeps its name even matching its var) moved none of them. Each os/system/modules/**/*.md commit still runs all four decider fixtures; re-pin what moved. Examples parser takes each 'Step text:' as an e.g. for THAT action — never put another module's contrast step in an examples file (notes only)."
       }
