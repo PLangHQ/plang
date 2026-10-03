@@ -21,6 +21,10 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// <summary>A structure — written through the reflection kind, its [Out]/[Debug] members.</summary>
     public override bool IsLeaf => false;
 
+    // what a program adds to the app (%!app.home%) — kept for the app's life, and in its snapshot
+    private readonly global::app.type.item.kept.list.@this _kept = new();
+    internal override global::app.type.item.kept.list.@this Kept => _kept;
+
     /// <summary>The one root: a copy of the app is the app.</summary>
     protected internal override global::app.type.item.@this Clone() => this;
 
@@ -134,14 +138,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// </summary>
     [System.Text.Json.Serialization.JsonIgnore]
     public CancellationToken ShutdownToken => _shutdownCts.Token;
-
-    /// <summary>
-    /// App-scoped key/value store. Module-owned mutable state that must persist for
-    /// the lifetime of the App goes here. Implements ISnapshot — round-trips with
-    /// the rest of the App tree on Snapshot/Restore.
-    /// TODO: replace with goal-backed dynamic property (see todos.md).
-    /// </summary>
-    public AppStatics Statics { get; } = new();
 
     /// <summary>
     /// The app's module — <c>%!app.module%</c>: an empty module whose <c>list</c> is every module the app loads,

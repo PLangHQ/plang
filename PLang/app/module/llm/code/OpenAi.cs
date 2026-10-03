@@ -349,12 +349,19 @@ public sealed class OpenAi : ILlm
                     => await Result(action, tc, await called.Use<global::app.task.@this>(task => task.Wait()));
 
                 var ending = new List<Task<string>>();
+                var running = new List<Task<string>>();
                 foreach (var tc in toolCalls)
                 {
+                    var tool = goalTools?.Find(t => t.Name == tc.Name);
+                    var side = tool?.Call.Parallel is { } asked && await asked.ToBooleanAsync() ? await asked.Value() : null;
+                    // a Parallel tool waits for a place first: at most its cpu run at once
+                    if (side != null)
+                        while (running.Count(r => !r.IsCompleted) >= side.At)
+                            await Task.WhenAny(running.Where(r => !r.IsCompleted));
                     var called = await Call(action, tc, goalTools);
-                    var parallel = called.Success && goalTools?.Find(t => t.Name == tc.Name) is { } tool
-                        && await tool.Call.Parallel.ToBooleanAsync();
-                    ending.Add(parallel ? Ended(tc, called) : Task.FromResult(await Result(action, tc, called)));
+                    var end = called.Success && side != null ? Ended(tc, called) : Task.FromResult(await Result(action, tc, called));
+                    if (called.Success && side != null) running.Add(end);
+                    ending.Add(end);
                 }
                 var results = new List<string>();
                 foreach (var end in ending) results.Add(await end);

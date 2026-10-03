@@ -27,7 +27,7 @@ public sealed class @this : System.IO.Stream
     }
 
     /// <summary>The finished digest, with its algorithm; nothing is added after it is read.</summary>
-    public hash.@this Hash => _hash ??= new hash.@this(_finish(), _kind.Name);
+    public hash.@this Hash => _hash ??= new hash.@this(_finish(), _kind);
 
     public override void Write(byte[] buffer, int offset, int count)
     {

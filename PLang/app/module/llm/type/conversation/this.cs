@@ -10,8 +10,6 @@ namespace app.module.llm.type.conversation;
 [global::app.Attributes.PlangType("conversation")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.type.item.IDefault<@this>
 {
-    public static string Example => "{continue: %answer%}";
-    public static string Description => "How a query stands to the conversation before it: the earlier llm response it continues.";
     public static string Shape => "object";
 
     /// <summary>The llm response whose conversation the query continues — its <c>Messages</c> and <c>Schema</c>

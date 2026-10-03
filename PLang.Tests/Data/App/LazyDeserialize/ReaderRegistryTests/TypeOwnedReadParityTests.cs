@@ -31,7 +31,7 @@ public class TypeOwnedReadParityTests : System.IAsyncDisposable
             var prior = global::app.type.item.path.@this.Resolve(raw, ctx);
             await Assert.That(viaRead).IsNotNull();
             await Assert.That(viaRead!.GetType()).IsEqualTo(prior.GetType());
-            await Assert.That(viaRead.Relative(ctx)).IsEqualTo(prior.Relative(ctx));
+            await Assert.That(viaRead.Relative(ctx).Raw).IsEqualTo(prior.Relative(ctx).Raw);
         }
     }
 
@@ -46,7 +46,7 @@ public class TypeOwnedReadParityTests : System.IAsyncDisposable
         var via = r.Of("hash", null)!(b64, "keccak256", rc) as global::app.module.crypto.type.hash.@this;
         await Assert.That(via).IsNotNull();
         await Assert.That(via!.ToBase64()).IsEqualTo(b64);
-        await Assert.That(via.Algorithm).IsEqualTo("keccak256");
+        await Assert.That(via.Algorithm?.Name).IsEqualTo("keccak256");
     }
 
     [Test] public async Task TimeSpanRead_MatchesPriorTimeSpanIso8601Output()

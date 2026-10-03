@@ -8,8 +8,6 @@ namespace app.type.item.culture;
 [global::app.Attributes.PlangType("culture")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "is-IS";
-    public static string Description => "A culture by its name: how numbers read as text (decimals, separator).";
     public static string Shape => "string";
 
     private readonly System.Globalization.CultureInfo _info;

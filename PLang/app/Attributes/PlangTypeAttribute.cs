@@ -18,11 +18,8 @@ namespace app.Attributes;
 /// </list>
 ///
 /// <para>
-/// Catalog metadata (example value, description, scalar shape) used to live
-/// on this attribute as <c>Shape</c>/<c>Example</c>/<c>Description</c>
-/// parameters; those moved to a static-property convention read via
-/// reflection by <c>app.type.list.@this.BuildTypeEntries</c> — declare
-/// <c>public static string Example =&gt; "…";</c> on the type itself.
+/// A type's scalar shape is a static <c>Shape</c> on the type itself. What it is and how a step writes one are
+/// its teaching, in <c>os/system/type/&lt;name&gt;/type.description.md</c> and <c>type.examples.md</c>.
 /// </para>
 ///
 /// <para>A capability interface may declare its word too, so a value asked for as one is named the plang way

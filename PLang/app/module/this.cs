@@ -13,6 +13,10 @@ namespace app.module;
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     global::app.type.item.IMatch<@this>, global::app.type.item.ILoad<@this>
 {
+    // what a program adds to the module — kept as long as the module is registered
+    private readonly global::app.type.item.kept.list.@this _kept = new();
+    internal override global::app.type.item.kept.list.@this Kept => _kept;
+
     /// <summary>A module is registered from its actions' classes, never made from a value.</summary>
     public static @this? Create(object? raw, global::app.type.@this? declared, global::app.data.@this data)
     {

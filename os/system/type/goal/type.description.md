@@ -1,0 +1,1 @@
+A goal: a named list of steps, called by its name.

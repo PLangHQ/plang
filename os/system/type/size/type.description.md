@@ -1,0 +1,1 @@
+A count of bytes: a number and its unit, IEC (500 KiB, 95.4 MiB) or SI (512 kB, 100 MB).

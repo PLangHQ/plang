@@ -1,0 +1,1 @@
+A value signed by an identity, with the signer and the algorithm.

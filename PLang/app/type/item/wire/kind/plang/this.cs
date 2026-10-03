@@ -97,6 +97,8 @@ public sealed class @this : global::app.type.kind.@this
                     "plang content arrived unsigned — between actors a Data rides signed", "UnsignedPlang", 403));
             return read;
         }
+        // what the bytes say a value is, refused by that value (a signature whose hash is of no kind) — the read's answer
+        catch (global::app.error.DeclinedException refused) { return context.Error(refused.Error); }
         catch (System.Exception ex) when (ex is JsonException or System.NotSupportedException)
         {
             return context.Error(new global::app.error.ServiceError(

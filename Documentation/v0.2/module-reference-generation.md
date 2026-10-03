@@ -485,6 +485,7 @@ Iterate over Collection, binding each element to Item (and its key or index to K
 | Collection | `foreach %list%`, `for each %order% in %orders%` | item | yes | — | the list or dict to walk |
 | Item | `as %product%` (else it is %item%) | variable | no | item | the variable each element is bound to |
 | Key | `with key %sku%` | variable | no | — | the variable the key or index is bound to |
+| Parallel |  | parallel | no | — |  |
 
 **Returns:** a summary of the loop: `{count, complete}` — how many elements it ran over, and whether it finished (false if cancelled). The work per element is its own action, so there is usually nothing to write the summary to.
 ```

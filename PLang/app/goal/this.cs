@@ -22,8 +22,6 @@ public enum Visibility
 /// </summary>
 public sealed partial class @this
 {
-    public static string Example => "Show";
-    public static string Description => "A goal: a named list of steps, called by its name.";
 
     // A goal is a plain C# host — carried by plang as clr<goal>, navigated/written/read by
     // reflection off its [Store]/[Out] props (the * kind's Output/Read). No item.@this base.

@@ -18,6 +18,15 @@ public class NavigableFactsTests
         "app.this.data",
         "app.this.event",
         "app.type.item.path.this.MimeType",
+        // the same location written from the asker's root
+        "app.type.item.path.this.Relative",
+        "app.type.item.path.file.this.Relative",
+        // a type's teaching and a member's notes: files read when asked, nothing else done
+        "app.type.this.Description",
+        "app.type.this.Example",
+        "app.type.this.Notes",
+        "app.type.this.Guide",
+        "app.type.property.this.Notes",
         // gated reads: the asker is asked (an http path sends a HEAD); a refusal is the answer
         "app.type.item.path.this.Exists",
         "app.type.item.path.file.this.Exists",

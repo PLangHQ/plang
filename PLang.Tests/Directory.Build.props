@@ -45,19 +45,8 @@
     <ProjectReference Include="$(MSBuildThisFileDirectory)..\PLang.Generators\PLang.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
-  <!-- Symlink <OutDir>/os → <repo>/os, as PlangConsole does, so an app's OsAbsolutePath
-       (AppContext.BaseDirectory + "os") reaches the live os/system tree in a test as it does in a run:
-       the system goals (the shortcuts among them) are there. Skipped if the link already exists. -->
-  <Target Name="LinkOsDirectory" AfterTargets="Build" Condition="'$(MSBuildProjectName)' != 'PLang.Tests.Shared'">
-    <PropertyGroup>
-      <OsSourceDir>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)..\os'))</OsSourceDir>
-      <OsLinkPath>$(OutDir)os</OsLinkPath>
-    </PropertyGroup>
-    <Exec Condition="!Exists('$(OsLinkPath)') And '$(OS)' != 'Windows_NT'"
-          Command="ln -s &quot;$(OsSourceDir)&quot; &quot;$(OsLinkPath.TrimEnd('\/'))&quot;" />
-    <Exec Condition="!Exists('$(OsLinkPath)') And '$(OS)' == 'Windows_NT'"
-          Command="cmd /c mklink /D &quot;$(OsLinkPath.TrimEnd('\/'))&quot; &quot;$(OsSourceDir)&quot;" />
-  </Target>
+  <!-- <OutDir>/os links to the repo's os tree, in a test as in a run (Shared is a library, never run). -->
+  <Import Project="$(MSBuildThisFileDirectory)..\os.targets" Condition="'$(MSBuildProjectName)' != 'PLang.Tests.Shared'" />
 
   <!-- The former GlobalUsings.cs, declared once for all test projects.
        Mirror of PLang/App/GlobalUsings.cs where applicable. -->
@@ -88,7 +77,6 @@
     <Using Include="app.test.@this" Alias="Tester" />
     <Using Include="app.snapshot.@this" Alias="Snapshot" />
     <Using Include="app.snapshot.ISnapshot" Alias="ISnapshot" />
-    <Using Include="app.Statics.@this" Alias="AppStatics" />
     <!-- Test helpers (PLang.Tests.Shared) — Make.Goal/Step/Action/Param, RealGoalLoad.
          Named Make (not Goals) so it doesn't collide with the PLang.Tests.App.Goals
          namespace, which would shadow it in tests under App.*. -->

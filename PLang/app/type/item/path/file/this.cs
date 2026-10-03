@@ -88,12 +88,27 @@ public sealed partial class @this : global::app.type.item.path.@this
         return isOsLocation ? new @this(absolute, context) : new @this(absolute) { Raw = rawPath };
     }
 
+    /// <summary>This file written from the root of the asker's app: <c>/data/a.json</c> under it, <c>/</c> for the root
+    /// itself, "/" as its separator on every OS (as a goal's path is written in its .pr). A file outside the root is
+    /// written as it is — it has no place under it. Before the app is up there is no root, and it is written as typed.</summary>
+    public override global::app.type.item.path.@this Relative(actor.context.@this context)
+    {
+        var root = context.App?.AbsolutePath;
+        if (root == null) return this;
+        var under = root.EndsWith(PathHelper.DirectorySeparatorChar) || root.EndsWith(PathHelper.AltDirectorySeparatorChar)
+            ? root : root + PathHelper.DirectorySeparatorChar;
+        var written = Absolute.StartsWith(under, RootComparison) ? "/" + Absolute[under.Length..].Replace('\\', '/')
+            : string.Equals(Absolute, root, RootComparison) ? "/"
+            : Absolute;
+        return new @this(Absolute) { Raw = written };
+    }
+
     /// <summary>An OS location, shown as a plang form under <paramref name="context"/>'s root —
     /// never the install root: "/x" under the app root, "/system/x" in the runtime's system
     /// folder, "//x" (or "c:/x") anywhere else. The context is not kept.</summary>
     private @this(string absolute, actor.context.@this context) : this(absolute)
     {
-        var relative = Relative(context);
+        var relative = Relative(context).Raw;
         var system = PathHelper.Combine(context.App.OsAbsolutePath, "system") + PathHelper.DirectorySeparatorChar;
         if (!string.Equals(relative, Absolute, StringComparison.Ordinal)) Raw = relative;
         else if (Absolute.StartsWith(system, RootComparison)) Raw = "/system/" + Absolute[system.Length..].Replace('\\', '/');

@@ -211,6 +211,85 @@ public sealed partial class @this
         }
     }
 
+    /// <summary>A file packs as its contents, read as they stream (gated as a read), holding <c>file</c> with its name; a
+    /// folder has no bytes of its own — a bundle packs it.</summary>
+    internal override async Task<(data.@this result, string held, string? name)> Pack(data.@this self, System.IO.Stream into,
+        actor.context.@this context)
+    {
+        if (context.FileSystem.IsFolder(this))
+            return (context.Error(new global::app.error.ServiceError(
+                $"{Raw} is a folder, and a folder has no bytes of its own: name a bundle — tar.gz, zip", "PackNeedsBundle", 400)), "file", null);
+        return (await Pour(into, context), "file", FileName);
+    }
+
+    /// <summary>The file, to read as it streams — gated as a read; or why it can't be (not allowed, not there). The
+    /// caller disposes the stream.</summary>
+    internal async Task<(System.IO.Stream? stream, data.@this? refused)> Open(actor.context.@this context)
+    {
+        if (await AuthGate(Verb.read, context) is { } early) return (null, early);
+        if (!context.FileSystem.IsFile(this))
+            return (null, context.Error(new global::app.error.ServiceError($"File not found: {Raw}", "NotFound", 404)));
+        return (await context.FileSystem.Open(this), null);
+    }
+
+    /// <summary>Makes this a link leading to <paramref name="target"/>, as it is written — what is here is replaced
+    /// (a link itself, never what it leads to). Gated as a write.</summary>
+    internal async Task<data.@this<global::app.type.item.path.@this>> Link(string target, actor.context.@this context)
+    {
+        if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        var files = context.FileSystem;
+        if (files.Link(this) != null || files.IsFile(this) || files.IsFolder(this)) files.Delete(this, recursive: true);
+        files.Link(this, target);
+        return context.Ok<global::app.type.item.path.@this>(this);
+    }
+
+    /// <summary>Sets who may read, write and run what is here, as someone running as themselves may: a setuid or setgid
+    /// bit is dropped, and the owner always keeps read and write (and search on a folder), so it can be changed again.
+    /// Gated as a write; nothing on a system with no such modes.</summary>
+    internal async Task<data.@this<global::app.type.item.path.@this>> Mode(System.IO.UnixFileMode mode, actor.context.@this context)
+    {
+        if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
+        if (OperatingSystem.IsWindows()) return context.Ok<global::app.type.item.path.@this>(this);
+        var kept = mode | System.IO.UnixFileMode.UserRead | System.IO.UnixFileMode.UserWrite
+                   | (context.FileSystem.IsFolder(this) ? System.IO.UnixFileMode.UserExecute : 0);
+        context.FileSystem.Mode(this, kept & ~(System.IO.UnixFileMode.SetUser | System.IO.UnixFileMode.SetGroup));
+        return context.Ok<global::app.type.item.path.@this>(this);
+    }
+
+    /// <summary>
+    /// Where <paramref name="relative"/> lands, taking this folder as the root: each link on the way is followed as the
+    /// folder's own (an absolute one from this folder, never the host's root), and <c>..</c> never climbs above it — so
+    /// nothing named under this folder is ever outside it. The last part is followed only when <paramref name="last"/>
+    /// (a folder entries go into), never when it is what is written. Gated as a read of this folder; or why it can't be
+    /// (not allowed, a link loop).
+    /// </summary>
+    internal async Task<(@this? at, data.@this? refused)> Follow(string relative, bool last, actor.context.@this context)
+    {
+        if (await AuthGate(Verb.read, context) is { } early) return (null, early);
+        var root = Absolute.TrimEnd('/');
+        var parts = new Stack<string>(relative.Split('/', StringSplitOptions.RemoveEmptyEntries).Reverse());
+        var at = new List<string>();
+        var hops = 0;
+        while (parts.Count > 0)
+        {
+            var part = parts.Pop();
+            if (part == ".") continue;
+            if (part == "..") { if (at.Count > 0) at.RemoveAt(at.Count - 1); continue; }
+            var here = new @this(root + "/" + string.Join('/', at.Append(part)));
+            if ((parts.Count > 0 || last) && context.FileSystem.Link(here) is { } link)
+            {
+                if (++hops > 40)
+                    return (null, context.Error(new global::app.error.ServiceError($"too many links resolving {relative} in {Raw}", "LinkLoop", 400)));
+                // the link's parts go first; an absolute link starts again from this folder
+                foreach (var linked in link.Split('/', StringSplitOptions.RemoveEmptyEntries).Reverse()) parts.Push(linked);
+                if (link.StartsWith('/')) at.Clear();
+                continue;
+            }
+            at.Add(part);
+        }
+        return (at.Count == 0 ? this : new @this(root + "/" + string.Join('/', at)), null);
+    }
+
     public override async Task<data.@this<global::app.type.item.path.@this>> Append(string content, actor.context.@this context)
     {
         if (await AuthGate(Verb.write, context) is { } early) return data.@this<global::app.type.item.path.@this>.From(early);
@@ -239,7 +318,7 @@ public sealed partial class @this
         try
         {
             var files = context.FileSystem;
-            if (files.IsFile(this))
+            if (files.Link(this) != null || files.IsFile(this))
                 files.Delete(this, recursive: false);
             else if (files.IsFolder(this))
             {

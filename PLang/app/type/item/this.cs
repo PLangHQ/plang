@@ -176,9 +176,19 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public virtual async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
-        if (value is global::app.data.@this binding) value = await binding.Value();
         var prop = GetType().GetProperty(key, System.Reflection.BindingFlags.Public
             | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+        if ((prop == null || !prop.CanWrite) && Kept is { } kept && !isIndex)
+        {
+            // a thing that lives on keeps a member a program adds — never in place of one of its own
+            if (prop != null || GetType().GetMethod(key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
+                    | System.Reflection.BindingFlags.IgnoreCase) != null)
+                throw new global::app.error.AppException(new global::app.error.Error(
+                    $"{key} is {Type.Name}'s own — a program adds members beside it, never over it", "OwnMember", 400));
+            kept.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
+            return this;
+        }
+        if (value is global::app.data.@this binding) value = await binding.Value();
         if (prop == null || !prop.CanWrite)
             throw new System.NotSupportedException($"%…% ({Type.Name}) cannot take a child '{key}'");
         if (value is @this iv && !prop.PropertyType.IsInstanceOfType(value))
@@ -237,8 +247,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
         global::app.data.@this parent, string key)
     {
         var member = await new global::app.type.clr.@this(this, parent.Context).Get(parent, key);
-        return member.IsInitialized ? member : await Setting(parent, key) ?? member;
+        return member.IsInitialized ? member : await Setting(parent, key) ?? Kept?[key] ?? member;
     }
+
+    /// <summary>The members this thing keeps beyond its own (<c>%!app.home%</c>), read after its own — a thing that
+    /// lives on (the app, a call, an actor, a module, a goal, a step) keeps a list; a plain value keeps none.</summary>
+    internal virtual global::app.type.item.kept.list.@this? Kept => null;
 
     /// <summary>This owner's settings when <paramref name="key"/> is <c>setting</c> (<c>%!app.goal.list.setting%</c>);
     /// null for any other key, or an owner with none.</summary>
@@ -706,6 +720,17 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
                 global::app.View.Out, context);
         return context.Ok();
     }
+
+    /// <summary>A fact about the thing this value is, read with <c>!</c> (<c>%config!path%</c>) — null: a plain value
+    /// has none, its members are read with a dot. A reference answers its own (a file's path, size, kind).</summary>
+    internal virtual global::app.data.@this? Fact(string key, global::app.data.@this parent) => null;
+
+    /// <summary>What packing this value writes into <paramref name="into"/>, and what that holds — so unpacking gives
+    /// it back: a value packs as its Data whole, <paramref name="self"/>, in plang's own format (held: <c>data</c>); a
+    /// file answers its contents and its name. Ok, or why it can't be packed.</summary>
+    internal virtual async System.Threading.Tasks.Task<(global::app.data.@this result, string held, string? name)> Pack(
+        global::app.data.@this self, System.IO.Stream into, actor.context.@this context)
+        => (await context.App.type.list["wire"].kind["plang"]!.Encode(into, self, context, ct: context.CancellationToken), "data", null);
 
     /// <summary>
     /// Write this value into the format-neutral <see cref="global::app.type.format.IWriter"/>.

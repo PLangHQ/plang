@@ -11,8 +11,6 @@ namespace app.module.http.type.entity;
 [global::app.Attributes.PlangType("entity")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>, global::app.type.item.IDefault<@this>
 {
-    public static string Example => "{mime: \"application/json\", encoding: \"utf-8\"}";
-    public static string Description => "What a request's body is: its mime type and its character encoding.";
     public static string Shape => "object";
 
     /// <summary>The body's mime type — <c>%!http.request.setting.content.mime%</c>; names the format it is written in.</summary>

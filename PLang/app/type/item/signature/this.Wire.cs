@@ -40,7 +40,7 @@ public sealed partial class @this
             foreach (var c in ContractStrings()) w.WriteStringValue(c);
             w.WriteEndArray();
             w.WriteStartObject("hash");
-            w.WriteString("type", Hash.Algorithm);
+            w.WriteString("type", Hash.Algorithm?.Name ?? "");
             w.WriteString("value", Hash.ToBase64());
             w.WriteEndObject();
             w.WriteEndObject();

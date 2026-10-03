@@ -1,0 +1,1 @@
+A cryptographic digest in base64, with the algorithm that made it (sha256, keccak256).

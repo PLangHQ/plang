@@ -27,8 +27,8 @@ You don't need to know the module name — just write what you want and the LLM 
 | [variable](variable.md) | Set, get, and manage variables | set, get, remove, clear, exists |
 | [output](output.md) | Write text to the user, ask the user a question | write, ask |
 | [callback](callback.md) | Run a signed callback envelope (resume a paused goal) | run |
-| [condition](condition.md) | If/else branching | if |
-| [loop](loop.md) | Iterate over collections | foreach |
+| [condition](../../os/system/modules/condition/start.md) | If/elseif/else branching, compare | if, elseif, else, compare |
+| [loop](../../os/system/modules/loop/start.md) | Iterate over collections | foreach |
 | [goal](goal.md) | Call other goals | call |
 | [error](error.md) | Throw and handle errors | throw, handle (on error) |
 | [timer](timer.md) | Sleep and measure elapsed time | sleep, start, end |
@@ -54,7 +54,7 @@ Modifiers attach to a single action and change how it runs — retry on failure,
 
 | Module | Description | Actions |
 |--------|-------------|---------|
-| [file](file.md) | Read, write, copy, move, delete files | read, save, copy, move, delete, exists, list |
+| [file](../../os/system/modules/file/start.md) | Read, write, copy, move, delete files | read, save, copy, move, delete, exists, list |
 | [http](http.md) | HTTP requests, downloads, uploads, streaming | request, download, upload, configure |
 | [llm](llm.md) | Query LLMs with tools, streaming, structured output, caching | query |
 | [ui](ui.md) | Render Liquid templates with variables, includes, goal calls | render |

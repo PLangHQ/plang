@@ -22,8 +22,6 @@ namespace app.type.item.@null;
 [global::app.Attributes.PlangType("null")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "null";
-    public static string Description => "No value.";
     public static string Shape => "null";
 
     /// <summary>The one typeless null value in the world.</summary>

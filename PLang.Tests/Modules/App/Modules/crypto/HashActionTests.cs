@@ -127,7 +127,7 @@ public class HashActionTests
         var hex = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad";
         var read = global::app.data.@this<hash>.From(new global::app.data.@this("h", "sha256:" + hex, context: Ctx));
         var value = await read.Value();
-        await Assert.That(value!.Algorithm).IsEqualTo("sha256");
+        await Assert.That(value!.Algorithm?.Name).IsEqualTo("sha256");
         await Assert.That(value.Written).IsEqualTo("sha256:" + hex);
 
         var unknown = global::app.data.@this<hash>.From(new global::app.data.@this("h", "md5:" + hex, context: Ctx));
@@ -272,7 +272,7 @@ public class HashActionTests
         var hashResult = await hashAction.Start();
         var base64 = ((hash)(await hashResult.Value())!).ToBase64();
 
-        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok(base64), Algorithm = (global::app.type.item.text.@this)"keccak256" };
+        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok(base64), Algorithm = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse("keccak256") };
         await verifyAction.Attach(null, Ctx);
         var result = await verifyAction.Start();
 
@@ -289,7 +289,7 @@ public class HashActionTests
         var hashBytes = ((hash)(await hashResult.Value())!).Bytes.ToArray();
         hashBytes[0] ^= 0xFF; // flip first byte
         var wrongHash = Convert.ToBase64String(hashBytes);
-        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok(wrongHash), Algorithm = (global::app.type.item.text.@this)"keccak256" };
+        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok(wrongHash), Algorithm = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse("keccak256") };
         await verifyAction.Attach(null, Ctx);
         var result = await verifyAction.Start();
 
@@ -300,7 +300,7 @@ public class HashActionTests
     [Test]
     public async Task Verify_CorruptedHashString_ReturnsError()
     {
-        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok("not-a-valid-base64!!!"), Algorithm = (global::app.type.item.text.@this)"keccak256" };
+        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("hello"), Hash = Ctx.Ok("not-a-valid-base64!!!"), Algorithm = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse("keccak256") };
         await verifyAction.Attach(null, Ctx);
         var result = await verifyAction.Start();
 
@@ -348,7 +348,7 @@ public class HashActionTests
         _app.Code.Register<ICrypto>(new FailingCryptoProvider());
         _app.Code.SetDefault<ICrypto>("failing");
 
-        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("test"), Hash = Ctx.Ok(Convert.ToBase64String(new byte[32])), Algorithm = (global::app.type.item.text.@this)"keccak256" };
+        var verifyAction = new Verify(Ctx) { Data = Ctx.Ok("test"), Hash = Ctx.Ok(Convert.ToBase64String(new byte[32])), Algorithm = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse("keccak256") };
         await verifyAction.Attach(null, Ctx);
         var result = await verifyAction.Start();
 

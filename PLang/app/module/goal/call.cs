@@ -28,9 +28,9 @@ public partial class Call : IContext
 
     /// <summary>Runs on its own (<c>call X in parallel</c>): the call answers a <c>task</c> at once and the step goes
     /// on; the task is waited for, cancelled or left alone later. A failure nobody waits for goes to its actor's error
-    /// channel.</summary>
-    [Default(false)]
-    public partial data.@this<global::app.type.item.@bool.@this> Parallel { get; init; }
+    /// channel. Left out, the call runs to its end. A single call has nothing to cap: its <c>cpu</c> caps the tool
+    /// calls an llm makes side by side.</summary>
+    public partial data.@this<global::app.type.item.parallel.@this>? Parallel { get; init; }
 
     /// <summary>
     /// Build-time: the name becomes the goal's own address — one truth, a dictionary hit at run. A %variable%
@@ -80,7 +80,7 @@ public partial class Call : IContext
         // the actor named runs it; none named, this one — to its end, or in parallel as one of its tasks, in a context
         // of its own whose first frame keeps every write the task makes and reads through to the frame this call is
         // in, then this context's memory
-        var parallel = await Parallel.ToBooleanAsync();
+        var parallel = Parallel != null && await Parallel.ToBooleanAsync();
         var from = Context.call.Current;
         return await Context.App.actor.list.Use(Actor, Context, async runs => parallel
             ? Context.Ok(runs.Actor.Task.Start(goal, async token =>

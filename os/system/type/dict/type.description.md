@@ -1,0 +1,1 @@
+Named values: each key holds a value of any type.

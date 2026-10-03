@@ -27,12 +27,14 @@ public class TemplateKindTests
         var ctx = app.actor.list.User.Context;
         var row = "{\"name\":\"x\",\"type\":{\"name\":\"text\",\"template\":\"fluid\"},\"value\":\"hi %name%\"}";
 
-        var refused = await Assert.That(async () => await ctx.App.type.list["wire"].kind["plang"]!.Decode(
-            System.Text.Encoding.UTF8.GetBytes(row), ctx, view: global::app.View.Store)).Throws<global::app.error.DeclinedException>();
+        // the read answers the refusal — a decode never throws what the bytes' own value refused
+        var refused = await ctx.App.type.list["wire"].kind["plang"]!.Decode(
+            System.Text.Encoding.UTF8.GetBytes(row), ctx, view: global::app.View.Store);
         var plang = await ctx.App.type.list["wire"].kind["plang"]!.Decode(System.Text.Encoding.UTF8.GetBytes(row.Replace("fluid", "plang")), ctx,
             view: global::app.View.Store);
 
-        await Assert.That(refused!.Message).Contains("Valid: plang");
+        await refused.IsFailure();
+        await Assert.That(refused.Error!.Message).Contains("Valid: plang");
         await Assert.That(plang.Type.Template?.Name).IsEqualTo("plang");
     }
 

@@ -56,8 +56,10 @@ public class ComplexTypeDiscoveryTests
     [Test]
     public async Task PrimitiveTypes_NotInSchemas()
     {
-        // Scalars (text/number/bool) are never records: no Property list.
-        await Assert.That(_app.type.list["text"].Property).IsNull();
+        // Scalars (text/number/bool) are never records: their shape stays a scalar's, whatever members they show
+        // (a text's length).
+        await Assert.That(_app.type.list["text"].Shape).IsEqualTo("string");
+        await Assert.That(_app.type.list["text"].Property!.Any(p => p.Name == "length")).IsTrue();
         await Assert.That(_app.type.list["number"].Property).IsNull();
         await Assert.That(_app.type.list["bool"].Property).IsNull();
     }

@@ -38,7 +38,7 @@ public class Default : ICrypto
         if (!poured.Success) return global::app.data.@this<global::app.module.crypto.type.hash.@this>.From(poured);
         var hash = digest.Hash;
         return action.Context.Ok<global::app.module.crypto.type.hash.@this>(hash,
-            action.Context.App.type.list[new global::app.type.@this("hash", hash.Algorithm), action.Context]);
+            action.Context.App.type.list[new global::app.type.@this("hash", hash.Algorithm?.Name), action.Context]);
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> Verify(Verify action)
@@ -54,17 +54,21 @@ public class Default : ICrypto
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError(
                 "Verify requires a value to verify", "ValueRequired", 400));
 
+        // the kind of hash to check with: the bound hash's own, else the kind its type declares, else Algorithm
         global::app.module.crypto.type.hash.@this expected;
-        string algorithm;
-        if (await action.Hash.Value() is global::app.module.crypto.type.hash.@this bound)
+        global::app.module.crypto.type.hash.kind.@this algorithm;
+        if (await action.Hash.Value() is global::app.module.crypto.type.hash.@this { Algorithm: { } own } bound)
         {
             expected = bound;
-            algorithm = bound.Algorithm;
+            algorithm = own;
         }
         else
         {
-            var hashKind = action.Hash.Type is { Name: "hash", kind: { IsEmpty: false } k } ? k.Name : null;
-            algorithm = hashKind ?? (await action.Algorithm.Value())!.Clr<string>()!;
+            if (await action.Algorithm.Value() is not { } chosen)
+                return global::app.data.@this<global::app.type.item.@bool.@this>.From(action.Algorithm);
+            algorithm = action.Hash.Type is { Name: "hash", kind: { IsEmpty: false } k }
+                && action.Context.App.type.list["hash"].kind[k.Name] is global::app.module.crypto.type.hash.kind.@this declared
+                ? declared : chosen.Value;
             // The hash type owns base64↔byte parsing (OBP) — Verify doesn't
             // reach for Convert.FromBase64String / SequenceEqual itself.
             try { expected = global::app.module.crypto.type.hash.@this.FromBase64((await action.Hash.Value())?.ToString() ?? "", algorithm); }
@@ -76,8 +80,7 @@ public class Default : ICrypto
         var hashResult = await Hash(new Hash(action.Context)
         {
             Data = action.Data,
-            Algorithm = new global::app.data.@this("Algorithm", algorithm, context: action.Context)
-                .As<global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>>(),
+            Algorithm = (global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>)algorithm,
         });
         if (!hashResult.Success) return action.Context.Error<global::app.type.item.@bool.@this>(hashResult.Error!);
 

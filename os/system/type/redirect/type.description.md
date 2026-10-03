@@ -1,0 +1,1 @@
+How a request follows redirects: whether it follows them, and how many at most.

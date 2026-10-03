@@ -15,8 +15,6 @@ namespace app.type.item.file;
 [global::app.Attributes.PlangType("file")]
 public sealed class @this : global::app.type.item.content.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "/config/settings.json";
-    public static string Description => "A file, by its path; its content is read when it is used.";
     public static string Shape => "string";
     /// <summary>A file is made from a path.</summary>
     public static bool Takes(global::app.type.@this other) => other.Is("path");
@@ -51,6 +49,11 @@ public sealed class @this : global::app.type.item.content.@this, global::app.typ
     /// <summary>Truthiness of a reference is its location's: does it exist.</summary>
     public override System.Threading.Tasks.Task<bool> AsBooleanAsync(global::app.actor.context.@this context)
         => Path.AsBooleanAsync(context);
+
+    /// <summary>A file packs as its location does — its contents and its name.</summary>
+    internal override System.Threading.Tasks.Task<(global::app.data.@this result, string held, string? name)> Pack(
+        global::app.data.@this self, System.IO.Stream into, global::app.actor.context.@this context)
+        => Path.Pack(self, into, context);
 
     /// <summary>Stat byte-size — the file's `!size` (a <c>size</c>), as its asker may read it; never reads
     /// content.</summary>

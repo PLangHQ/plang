@@ -1,0 +1,1 @@
+How far a download or an upload has come: received (or sent), total and percent.

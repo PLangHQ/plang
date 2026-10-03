@@ -11,6 +11,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     global::app.type.item.IList<@this, global::app.goal.list.@this>, global::app.type.item.IEncode<@this>,
     global::app.type.item.IDecode<@this>
 {
+    // what a program adds to the goal — kept as long as the goal is loaded
+    private readonly global::app.type.item.kept.list.@this _kept = new();
+    internal override global::app.type.item.kept.list.@this Kept => _kept;
+
     /// <summary>
     /// The <c>.pr</c> form: the value written bare in plang's schema writer — a goal (or any program value:
     /// app.pr) writes its own structure, no Data around it, unsigned. Its own face is Store — a .pr is what

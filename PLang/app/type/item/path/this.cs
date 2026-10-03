@@ -13,9 +13,6 @@ namespace app.type.item.path;
 public abstract partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
-    public static string Example => "/docs/readme.md";
-    public static string Description =>
-        "Where a file, a folder or a web resource is: a path in the app, an absolute path, or a URL.";
 
     /// <summary>
     /// Scheme name for this path (e.g. "file", "http", "https"). Subclasses
@@ -139,35 +136,13 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     // `!absolute` (derived; leaks the install root, so it stays off the wire).
     internal virtual string Absolute => _absolute;
 
-    // INTERNAL: the raw relative string feeds IsUnder/Matches + the `!relative`
-    // derived projection; consumers do containment through those, not string math.
-    // Relative to the root of the caller's app — the root is the caller's, so it is
-    // derived per ask, never kept.
-    internal string Relative(actor.context.@this context)
-    {
-        // App not wired yet (bootstrap, before runtime is up) — no root
-        // anchor, so the portable form is the as-typed location.
-        var rootAbsolutePath = context.App?.AbsolutePath;
-        if (rootAbsolutePath == null) return _location;
+    /// <summary>The same location written from the root of the asker's app — <c>%p.relative%</c>, a path, so it chains
+    /// (<c>%config!path.relative%</c>). The root is the asker's, so it is derived per ask, never kept. A location with
+    /// no place under a root (a url) is written as it is.</summary>
+    [LlmBuilder] public virtual @this Relative(actor.context.@this context) => this;
 
-        var rootWithSeparator = rootAbsolutePath;
-        if (!rootWithSeparator.EndsWith(PathHelper.DirectorySeparatorChar) && !rootWithSeparator.EndsWith(PathHelper.AltDirectorySeparatorChar))
-            rootWithSeparator += PathHelper.DirectorySeparatorChar;
-
-        // Canonical PLang root-relative form: leading "/" anchors at the
-        // app root, "/" as separator regardless of OS (matches Goal.Path
-        // / GoalCall.PrPath stored in .pr files). Out-of-root paths
-        // return their Absolute form unchanged — those aren't "relative
-        // to root" in any meaningful sense.
-        if (Absolute.StartsWith(rootWithSeparator, RootComparison))
-            return "/" + Absolute[rootWithSeparator.Length..].Replace('\\', '/');
-        if (string.Equals(Absolute, rootAbsolutePath, RootComparison))
-            return "/";
-        return Absolute;
-    }
-
-    // INTERNAL: the raw extension feeds Kind + the `!extension` projection.
-    internal virtual string Extension => _extension ??= PathHelper.GetExtension(_location);
+    /// <summary>The location's extension, without its dot (<c>json</c>) — <c>%p.extension%</c>; empty for a folder.</summary>
+    [LlmBuilder] public virtual global::app.type.item.text.@this Extension => _extension ??= PathHelper.GetExtension(_location);
     [LlmBuilder] public string FileName => _fileName ??= PathHelper.GetFileName(_location);
     [LlmBuilder] public string FileNameWithoutExtension
         => _fileNameWithoutExtension ??= PathHelper.GetFileNameWithoutExtension(_location);
@@ -183,8 +158,8 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
                ?? "application/octet-stream";
     }
 
-    [LlmBuilder] public bool IsFile => !string.IsNullOrEmpty(Extension);
-    [LlmBuilder] public bool IsDirectory => string.IsNullOrEmpty(Extension);
+    [LlmBuilder] public bool IsFile => Extension.IsTruthy();
+    [LlmBuilder] public bool IsDirectory => !Extension.IsTruthy();
 
     // --- Typed surface (the navigable plane answers in PLang values; the
     //     interior string-math lives HERE, on the owner) ---
@@ -213,11 +188,11 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// </summary>
     public global::app.type.item.@bool.@this Matches(@this other, actor.context.@this context)
     {
-        var rel = other.Relative(context);
+        var rel = other.Relative(context).Raw;
         var pathQualified = rel.Contains('/') || rel.Contains('\\');
         if (pathQualified)
         {
-            var mine = Relative(context);
+            var mine = Relative(context).Raw;
             return mine.EndsWith(rel, StringComparison.OrdinalIgnoreCase)
                 || mine.StartsWith(rel, StringComparison.OrdinalIgnoreCase);
         }
@@ -230,7 +205,7 @@ public abstract partial class @this : global::app.type.item.@this, global::app.t
     /// Owned by the path + the type registry.
     /// </summary>
     public global::app.type.@this Kind(actor.context.@this context) =>
-        context.App?.type.list.Extension(Extension, context) ?? global::app.type.@this.Null;
+        context.App?.type.list.Extension(Extension.ToString(), context) ?? global::app.type.@this.Null;
 
     // --- Live filesystem state ---
     //

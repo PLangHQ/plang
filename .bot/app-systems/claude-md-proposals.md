@@ -200,3 +200,15 @@ run a stale binary. `./dev.sh build`, `./dev.sh ptest` and an unfiltered
 
 Do **not** delete `test/**/.build/` — those are tracked `.pr` files, not build artefacts.
 ```
+
+---
+
+## docs — proposal-pass decisions — 2026-10-02
+
+Verified each against code (as for v6/v7); small commits per area.
+
+**APPLIED:** architect v6 (C# tests via `./dev.sh test <Class>`), architect v7 (`test/` location) — CLAUDE.md "Running plang Tests". coder v8 (channel `Actor.Channel[name].WriteText`), coder v10 (`path.Read`), architect v1 (bare `Task<Data>` forwarder→item), builder v1 (teaching = lazy file items + `catalog.md`; orphan scan gone) — CLAUDE.md commit a1b448dd8. build.md: LLM blocks not goal-scoped; `[≡]`/`[✓]` markers unemitted.
+
+**REJECTED (superseded):** architect 09-28 "Tests→Test" (→ v7's lowercase refine); architect v2 action-prose (→ builder v1).
+
+**PENDING (paused for the types-teaching job, decision 567):** architect 09-26 #1 (comment→next line; folder docs `start.md`), #2 (plang vocab lowercase in members — verify first, its `app/type/type/this.cs` example should be `app/type/item/<name>/this.cs`); coder v2 (`Run()`→`Start()`); coder v6 (variable parser — drop stale `tools/decider` twin line); architect 09-28 envelope smell, 09-28 owners-take-values, 09-29 error-answers, 09-29 Normalize/[Out], 09-30 value-writes-what-it-is; architect v3 (glued-name), v4 (builder character), v5 (flag-false); builder v3 (the two Documentation/ scrubs → apply; the `characters/*/memory` files → their owners).

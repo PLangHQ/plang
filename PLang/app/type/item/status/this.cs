@@ -10,8 +10,6 @@ namespace app.type.item.status;
 [global::app.Attributes.PlangType("status")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "{code: 404, text: \"Not Found\"}";
-    public static string Description => "An outcome's code and its reason (an error's, an http response's); made from a number, its text is the code's standard reason.";
     public static string Shape => "object";
 
     /// <summary>The code — <c>%!error.status.code%</c>.</summary>

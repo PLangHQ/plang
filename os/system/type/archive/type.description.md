@@ -1,0 +1,1 @@
+Packed bytes in a format (gzip, tar.gz, zip…), and what they hold.

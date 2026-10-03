@@ -7,8 +7,6 @@ namespace app.goal.step.action;
 /// </summary>
 public partial class @this
 {
-    public static string Example => "goal.call(Name=\"Show\")";
-
     // An action is a plain C# host — carried as clr<action>, reflected off its [Store] props.
 
     private global::app.module.@this? _module;
@@ -116,6 +114,11 @@ public partial class @this
     /// Used by the condition.Decision type to split an orchestrated step's actions into per-branch
     /// groups.
     /// </summary>
+    /// <summary>Whether this action keeps what the actions before it in its step produce (a <c>write to %x%</c>) — a
+    /// keep does; no other action.</summary>
+    [JsonIgnore]
+    internal virtual bool Keeps => false;
+
     [JsonIgnore]
     public bool IsCondition =>
         string.Equals(Module.Name, "condition", StringComparison.OrdinalIgnoreCase) &&

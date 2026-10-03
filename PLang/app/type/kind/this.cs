@@ -146,11 +146,11 @@ public class @this
 
     /// <summary>An example of a value of this kind, when the kind shows one of its own (a list of records shows one of
     /// its element); null: the type's own.</summary>
-    public virtual string? Example => null;
+    public virtual global::app.type.item.prose.@this? Example(global::app.actor.context.@this context) => null;
 
     /// <summary>What a value of this kind is, when the kind says it itself (a list of records names its element); null:
     /// the type's own.</summary>
-    public virtual string? Description => null;
+    public virtual global::app.type.item.prose.@this? Description(global::app.actor.context.@this context) => null;
 
     /// <summary>What a value of this kind can be in <paramref name="step"/>, as the decider is offered it: one of the
     /// step's own variables (<c>%field%</c>), each once. A closed set offers its options.</summary>

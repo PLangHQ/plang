@@ -1,0 +1,1 @@
+An ordered list of values, each of any type.

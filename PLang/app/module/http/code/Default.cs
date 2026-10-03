@@ -154,20 +154,19 @@ public sealed class Default : IHttp
         var totalBytes = response.Content.Headers.ContentLength;
         var maxDownloadSize = (await action.MaxDownloadSize.Value())!;
         var onProgress = action.OnProgress == null ? null : await action.OnProgress.Value();
-        System.Func<TransferProgress, Task>? report = onProgress == null ? null
+        System.Func<data.@this, Task>? report = onProgress == null ? null
             : progress => RunCallbackAsync(onProgress, progress, null, "progress", app, action.Context, cts.Token);
 
         // the digest the body must have, its algorithm the value's
         var expected = action.Hash == null || !action.Hash.IsInitialized ? null : await action.Hash.Value();
         if (action.Hash != null && action.Hash.IsInitialized && !action.Hash.Success) return action.Hash;
-        if (expected != null && expected.Algorithm.Length == 0)
+        if (expected != null && expected.Algorithm == null)
             return action.Context.Error(new global::app.error.Error(
                 "a download's Hash names its algorithm: sha256:<hex>", "HashInvalid", 400));
-        using var digest = expected == null ? null
-            : ((global::app.module.crypto.type.hash.kind.@this)action.Context.App.type.list["hash"].kind[expected.Algorithm]!).Digest();
+        using var digest = expected?.Algorithm!.Digest();
 
         using var responseStream = await response.Content.ReadAsStreamAsync(cts.Token);
-        await using var body = new body(responseStream, totalBytes, maxDownloadSize, report, digest);
+        await using var body = new body(responseStream, totalBytes, maxDownloadSize, sent: false, report, digest, action.Context);
 
         var path = action.Path == null || !action.Path.IsInitialized ? null : await action.Path.Value();
         if (action.Path != null && action.Path.IsInitialized && !action.Path.Success) return action.Path;
@@ -175,8 +174,9 @@ public sealed class Default : IHttp
         {
             using var buffer = new MemoryStream();
             await body.CopyToAsync(buffer, cts.Token);
-            if (expected?.Mismatch(digest!.Hash) is { } refused) return action.Context.Error(refused);
-            return action.Context.Ok(buffer.ToArray());
+            var refused = expected?.Mismatch(digest!.Hash);
+            await body.Done(refused);
+            return refused != null ? action.Context.Error(refused) : action.Context.Ok(buffer.ToArray());
         }
 
         // the body goes beside the path under a temporary name, and moves in only when it is whole and matches: a
@@ -190,8 +190,10 @@ public sealed class Default : IHttp
             await part.Delete(action.Context);
             throw;
         }
+        var mismatch = written.Success ? expected?.Mismatch(digest!.Hash) : written.Error;
+        await body.Done(mismatch);
         if (!written.Success) return written;
-        if (expected?.Mismatch(digest!.Hash) is { } mismatch)
+        if (mismatch != null)
         {
             await part.Delete(action.Context);
             return action.Context.Error(mismatch);
@@ -223,12 +225,18 @@ public sealed class Default : IHttp
         var (httpContent, contentErr) = await ResolveUploadContentAsync(action, app, encoding);
         if (contentErr != null) return action.Context.Error(contentErr);
 
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
+        cts.CancelAfter(timeout);
+
+        // with a progress goal, the content is sent through a body that reports it
+        var onProgress = action.OnProgress == null ? null : await action.OnProgress.Value();
+        if (onProgress != null && httpContent != null)
+            httpContent = new content(httpContent,
+                progress => RunCallbackAsync(onProgress, progress, null, "progress", app, action.Context, cts.Token), action.Context);
+
         var httpMethod = ToSystemMethod((await action.Method.Value())!.Value);
         var requestMessage = new HttpRequestMessage(httpMethod, resolvedUrl) { Content = httpContent };
         ApplyHeaders(requestMessage, headers);
-
-        using var cts = CancellationTokenSource.CreateLinkedTokenSource(action.Context.CancellationToken);
-        cts.CancelAfter(timeout);
 
         using var response = await SendHttpAsync(requestMessage, HttpCompletionOption.ResponseContentRead, redirect, cts.Token);
 
@@ -247,15 +255,7 @@ public sealed class Default : IHttp
         catch (Exception ex) when (ex is TaskCanceledException or HttpRequestException
             or IOException or UnauthorizedAccessException or FormatException)
         {
-            var (key, status) = ex switch
-            {
-                TaskCanceledException => ("Timeout", 408),
-                HttpRequestException hre => ("HttpError", (int)(hre.StatusCode ?? 0)),
-                IOException or UnauthorizedAccessException => ("IOError", 500),
-                FormatException => ("InvalidContent", 400),
-                _ => ("HttpError", 500)
-            };
-            return context.Error(new ServiceError(ex.Message, key, status));
+            return context.Error(new failure(ex));
         }
     }
 

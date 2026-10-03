@@ -1,7 +1,3 @@
-using System.IO.Compression;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using app;
 using app.error;
 
@@ -11,66 +7,15 @@ using type = global::app.type.@this;
 
 /// <summary>
 /// Data — transport-pipeline concern.
-/// Signature property for wire integrity.
-/// Pipeline methods: Wrap, Compress, Encrypt (outbound) and Decrypt, Decompress, Unwrap (inbound).
+/// Pipeline methods: Encrypt (outbound) and Decrypt (inbound). Compression is the archive module's
+/// (<c>archive.pack</c>/<c>archive.unpack</c>).
 /// </summary>
 public partial class @this
 {
-    /// <summary>
-    /// Maximum decompressed payload size (100 MB). Prevents zip bomb attacks at the transport boundary.
-    /// </summary>
-    private const long MaxDecompressedSize = 100 * 1024 * 1024;
-
     // Signing is no longer carried in memory: a Data does NOT hold a Signature
     // property. Provenance is an I/O-boundary concern — a Data crossing the
     // application/plang boundary is wrapped in a `signature` layer at write
     // (Wire.Write), peeled + auto-verified at read. Nothing in memory signs.
-
-    // --- Outbound pipeline: Compress → Encrypt ---
-
-    /// <summary>
-    /// Compresses if the current type is compressible. Checks compressibility
-    /// through context → App.Types. Routes through the registered
-    /// application/plang serializer (so the bytes inside the archive are the
-    /// same canonical wire shape any other transport would emit — including the
-    /// inner Signature, fixing today's strip-Signature bug). The compressed bytes
-    /// ride as an <c>archive</c> item. Returns self if not compressible or no context.
-    /// </summary>
-    public @this Compress() => CompressAsync().GetAwaiter().GetResult();
-
-    /// <summary>
-    /// Async-native variant of <see cref="Compress"/> — preferred by
-    /// action handlers (<c>variable.compress.Start()</c>) and any caller
-    /// already in an async context. The sync wrapper exists for C#
-    /// composition sites that aren't async (and accepts the sync-over-
-    /// async cost there).
-    /// </summary>
-    public async Task<@this> CompressAsync(CancellationToken ct = default)
-    {
-        if (Type == null)
-            return this;
-
-        // whether it pays is the format's: the kind of the value's type (or the type's own format) says so
-        if (_context == null || !_context.App.type.list[Type, _context].kind.Compressible)
-            return this;
-
-        // the archive holds this Data whole, in plang's own format
-        using var ms = new MemoryStream();
-        await _context.App.type.list["wire"].kind["plang"]!.Encode(ms, this, _context, ct: ct);
-        var compressed = GZipCompress(ms.ToArray());
-
-        // TODO: compression belongs in an `archive` module, not inlined here.
-        // The target shape is a self-describing `@schema:"archive"` layer
-        // {@schema:archive, type:<algo>, value:<bytes-of-inner-schema>} whose
-        // read side dispatches on @schema to pick the decompressor, and whose
-        // value is any other layer (data | encryption | signature; data lowest).
-        // GZipCompress/GZipDecompress and the algorithm choice move there. The
-        // `archive` item below is the interim home — it removes the clr courier
-        // (a clr reflects as a transparent property bag at the wire, dragging
-        // its Context back-reference into the signed graph; an item renders
-        // itself) but is not the final layered design.
-        return new @this("", new global::app.type.item.archive.@this(compressed, "gzip"), context: _context);
-    }
 
     /// <summary>
     /// Encrypts and wraps the result as an encrypted outer. Requires a crypto
@@ -86,7 +31,7 @@ public partial class @this
         return this;
     }
 
-    // --- Inbound pipeline: Decrypt → Decompress → Unwrap ---
+    // --- Inbound pipeline: Decrypt ---
 
     /// <summary>
     /// Decrypts an encrypted outer. If type is not "encrypted", returns self (no-op).
@@ -102,93 +47,5 @@ public partial class @this
         // When available: navigate through _context.App to the crypto handler,
         // read inner Data (algorithm, keyId, nonce from Properties), decrypt, deserialize.
         return this;
-    }
-
-    /// <summary>
-    /// Decompresses an archived outer. If type is not "archived", returns self (no-op).
-    /// archived.Value is a byte[] (single-wrap shape, post-Stage-3) — gunzip and
-    /// deserialise through the registered application/plang serializer to recover
-    /// the original Data with its inner signature intact.
-    /// </summary>
-    public @this Decompress() => DecompressAsync().GetAwaiter().GetResult();
-
-    /// <summary>
-    /// Async-native variant of <see cref="Decompress"/> — preferred by
-    /// action handlers and async callers.
-    /// </summary>
-    public async Task<@this> DecompressAsync(CancellationToken ct = default)
-    {
-        if (Peek() is not global::app.type.item.archive.@this archive)
-            return this;
-
-        // The archive item carries its own bytes + algorithm — no string label,
-        // no clr carrier to reach through.
-        var compressed = archive.Value;
-        if (compressed.Length == 0)
-            return FromError(new ServiceError("Archived Data has no byte[] value", "DecompressError", 500));
-        if (!string.Equals(archive.Algo, "gzip", StringComparison.OrdinalIgnoreCase))
-            return FromError(new ServiceError(
-                $"Unsupported archive algorithm '{archive.Algo}'", "DecompressError", 500));
-
-        try
-        {
-            var decompressed = GZipDecompress(compressed);
-
-            // The archive holds a whole Data in plang's own format; the recovered Data is born with this
-            // Data's context, not rebound after.
-            if (_context == null)
-                return FromError(new ServiceError("an archived Data with no context can't be read back", "DecompressError", 500));
-            var deser = await _context.App.type.list["wire"].kind["plang"]!.Decode(decompressed, _context, ct: ct);
-            if (!deser.Success)
-                return FromError(new ServiceError(
-                    "Deserialization failed after decompression: " + (deser.Error?.Message ?? "unknown"),
-                    "DecompressError", 500));
-
-            // The container deserializer returns the reconstructed Data itself
-            // (no envelope around it — the store seam rejects bare nesting).
-            return deser;
-        }
-        catch (InvalidDataException ex)
-        {
-            return FromError(new ServiceError("Decompression failed: " + ex.Message, "DecompressError", 500));
-        }
-        catch (JsonException ex)
-        {
-            return FromError(new ServiceError("Deserialization failed after decompression: " + ex.Message, "DecompressError", 500));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return FromError(new ServiceError("Decompression failed: " + ex.Message, "DecompressError", 500));
-        }
-    }
-
-    // --- GZip helpers ---
-
-    private static byte[] GZipCompress(byte[] data)
-    {
-        using var output = new MemoryStream();
-        using (var gzip = new GZipStream(output, CompressionLevel.Optimal))
-        {
-            gzip.Write(data, 0, data.Length);
-        }
-        return output.ToArray();
-    }
-
-    private static byte[] GZipDecompress(byte[] compressed)
-    {
-        using var input = new MemoryStream(compressed);
-        using var gzip = new GZipStream(input, CompressionMode.Decompress);
-        using var output = new MemoryStream();
-        var buffer = new byte[81920];
-        int bytesRead;
-        long totalRead = 0;
-        while ((bytesRead = gzip.Read(buffer, 0, buffer.Length)) > 0)
-        {
-            totalRead += bytesRead;
-            if (totalRead > MaxDecompressedSize)
-                throw new InvalidDataException($"Decompressed payload exceeds size limit ({MaxDecompressedSize / (1024 * 1024)} MB)");
-            output.Write(buffer, 0, bytesRead);
-        }
-        return output.ToArray();
     }
 }

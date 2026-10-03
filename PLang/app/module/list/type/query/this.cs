@@ -20,8 +20,6 @@ namespace app.module.list.type.query;
 [global::app.Attributes.PlangType("query"), global::app.Attributes.Kinds]
 public abstract class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "{where: {field: \"age\", op: \">\", value: 20}, order: \"age\"}";
-    public static string Description => "What to take from a list: where (fields compared, joined by and/or), group, distinct, order.";
     public static string Shape => "object";
 
     /// <summary>A structure, never a single-token leaf.</summary>

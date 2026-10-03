@@ -27,10 +27,9 @@ public class Ed25519 : ISigning
         var identity = (Identity)(await identityResult.Value())!;
 
         // The digest of the inner data as it crosses the wire, in the view it is written in — what binds the value
-        // into the signed bytes.
+        // into the signed bytes — by the kind of hash the signing setting names.
         var view = action.StoreView != null && (await action.StoreView.Value())?.Value == true ? global::app.View.Store : global::app.View.Out;
-        if (await action.Data!.Digest(view, "keccak256", action.Context) is not { } hash)
-            return action.Context.Error(new ActionError("Hashing produced no digest", "DataHashMismatch", 500));
+        var hash = await action.Data!.Digest(view, action.Context.Setting.Of<global::app.module.signing.setting.@this>().Hash.Value, action.Context);
 
         var now = await (await action.Context.Variable.Get("NowUtc")).Clr<DateTimeOffset>(default);
         var nonce = (await (await action.Context.Variable.Get("GUID")).Clr<Guid>(default)).ToString();
@@ -96,12 +95,15 @@ public class Ed25519 : ISigning
         var storedHash = signature.Hash;
         if (storedHash.Bytes.Length == 0)
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Missing data hash", "DataHashMismatch", 400));
+        if (storedHash.Algorithm is not { } kind)
+            return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError(
+                "The signed hash names no kind — it can't be checked", "DataHashMismatch", 400));
 
-        // Re-hash in the view the data was signed in: one read from plang's own store is a property-bag
-        // carrying every [Store] field; hashing it in Out view (a subset) would diverge from the sign-time
-        // Store hash.
+        // Re-hash in the view the data was signed in, by the kind it was signed with: one read from plang's own store
+        // is a property-bag carrying every [Store] field; hashing it in Out view (a subset) would diverge from the
+        // sign-time Store hash.
         var view = signature.Origin.Value == global::app.type.item.signature.Origin.Stored ? global::app.View.Store : global::app.View.Out;
-        if (await signature.Value.Digest(view, storedHash.Algorithm, action.Context) is not { } rehashValue || !rehashValue.DigestEquals(storedHash))
+        if (!(await signature.Value.Digest(view, kind, action.Context)).DigestEquals(storedHash))
             return action.Context.Error<global::app.type.item.@bool.@this>(new ActionError("Data hash does not match signed hash", "DataHashMismatch", 400));
 
         // 5. Signature verification — over the signature's canonical signing bytes.

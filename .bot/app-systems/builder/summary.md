@@ -243,6 +243,37 @@ Idle pending:
   the recorded decider confidence 0.55 → 0.98; mapped actions byte-identical.
   Detail: `v3/issue40-remeasure.md`.
 
+## Archive module (decision 559, coder 43add1730) — mapping VERIFIED; runtime bug routed
+`variable.compress/decompress` removed; `archive.pack`/`archive.unpack` replace them. Built
+`test/serialization/CompressRoundTrip.test.goal` fresh (cache:skip, clean binary): step1
+archive.pack Value=%original%, step2 assert.equals Actual=%archived!type.name% Expected="archive"
+(`!type.name` reads — coder's open question resolved), step3 archive.unpack Value=%archived%; no
+variable.compress. Mapping 5× each: pack 5/5, unpack 5/5; **old wording** `compress %x%`→archive.pack
+5/5, `decompress`→archive.unpack 5/5. Committed the .pr (cb4e7bffe). **Test is RED at runtime (not
+mapping):** `unpack %archived%` throws `DataHashMismatch` — the archive stores the gzip of the
+original Data's wire form; unpack's `wire.plang` Decode (archive/type/archive/kind/compression/this.cs:51)
+re-verifies the embedded signature and the rehash diverges (signing/code/Ed25519.cs:105). Core
+signed-Data wire encode↔decode round-trip bug (Store-vs-Out view), archive module is faithful —
+routed to coder via architect. Detail in the report.
+
+## Issue 41 — `call X in %window%` → goal.call instead of window.callGoal — FIXED (teaching)
+From the os bot (PlangOS Screen.goal, plang-os-stable only — window module lives there).
+`call ShowFiles files=%files% in %browser.desktop%` built as goal.call 0/5 (saved wrong or
+`goal.call has no property Window`). Root cause (verified against the model's input): goal.call
+is a stage-1 **common action**; its yes/no fires certain on any `call <Name>` and its module
+skips stage 2, so window.callGoal (ordinary module action) can't win — even though the decider
+state already carried the exact `→ window.callGoal` counter-example. The offers batch
+`d2aa1358d` is NOT the lever (control: ShowFiles reachable 0/5 vs not 1/5 — no difference).
+**Fix:** added a generic `in %window%`/`in %browser%` counter-case to goal.call's common-action
+**false** side in `os/system/builder/llm/decider.json`. **Counts** (plang-os-stable, clean
+binary, cache:skip, jq): window.callGoal **5/5** (was 0/5); guards plain `call Finalize` 5/5
+goal.call, 32(b) `call goal Render module=%files%` 5/5 goal.call. Re-validated no-regression on
+app-systems. Also fixed `condition/compare.notes.md` — inlined the operator table (it said "see
+if.notes' table", a file the model never sees since notes render per picked action). The
+structural asymmetry (a common-action yes/no enforced over a disagreeing module answer) is
+flagged to architect/Ingi — not blocking, teaching fixed it. Detail: `v3/issue41-window-callgoal.md`.
+Friction log started: `.bot/app-systems/builder/friction.md` (user-review framing).
+
 ## `cache` is now a choice (choices merge `aa45d0ca7`)
 On app-systems the build `cache` flag is a `choice<cache>` (`use`|`skip`), not a boolean.
 **Use `--build={"cache":"skip"}`** to force fresh LLM calls. `--build={"cache":false}` is REFUSED

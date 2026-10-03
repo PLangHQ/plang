@@ -9,12 +9,7 @@ namespace app.type.item.base64;
 [global::app.Attributes.PlangType("base64")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "SGVsbG8=";
     public static string Shape => "string";
-    public static string Description =>
-        "A base64-encoded payload (REST binary fields, data-urls). `as base64` ENCODES the "
-        + "source value (lazily); a field/param typed base64 validates its payload at read. "
-        + "Kind carries the content family from a data-url mime (gif, png, json, ...).";
 
     // THE backing — private, per text's discipline. Null only while a held source
     // awaits its encode at the Value door.

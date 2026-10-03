@@ -1,0 +1,1 @@
+What an archive holds: a Data, a file with its name, or a folder.

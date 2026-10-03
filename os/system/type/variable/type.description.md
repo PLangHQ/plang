@@ -1,0 +1,1 @@
+A variable, named between % signs, that holds a value.

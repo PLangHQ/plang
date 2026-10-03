@@ -34,7 +34,6 @@ using hash = global::app.module.crypto.type.hash.@this;
 [global::app.Attributes.PlangType("signature")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Description => "A value signed by an identity, with the signer and the algorithm.";
     public static string Shape => "object";
 
     /// <summary>The inner schema this signature attests — the <c>value</c> slot.</summary>
@@ -182,7 +181,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         // hash sub-object {type, value} — read straight off the typed hash.
         w.Name("hash");
         w.BeginObject();
-        w.Name("type"); w.String(Hash.Algorithm);
+        w.Name("type"); w.String(Hash.Algorithm?.Name ?? "");
         w.Name("value"); w.String(Hash.ToBase64());
         w.EndObject();
         w.Name("signature"); Signature.Write(w);
@@ -215,7 +214,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         }
         w.Name("hash");
         w.BeginObject();
-        w.Name("type"); w.String(Hash.Algorithm);
+        w.Name("type"); w.String(Hash.Algorithm?.Name ?? "");
         w.Name("value"); w.String(Hash.ToBase64());
         w.EndObject();
         w.Name("signature"); Signature.Write(w);

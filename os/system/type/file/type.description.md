@@ -1,0 +1,1 @@
+A file, by its path; its content is read when it is used.

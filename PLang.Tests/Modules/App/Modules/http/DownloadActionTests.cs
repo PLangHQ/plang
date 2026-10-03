@@ -105,7 +105,7 @@ public class DownloadActionTests
 
     private static string Sha256(byte[] bytes) => "sha256:" + Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant();
 
-    private async Task<global::app.data.@this> Download(byte[] body, string? to, string? hash, long? max = null)
+    private async Task<global::app.data.@this> Download(byte[] body, string? to, string? hash, long? max = null, bool progress = false)
     {
         _handler.Handler = _ => Task.FromResult(new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -118,6 +118,7 @@ public class DownloadActionTests
             Path = to == null ? null : global::app.data.@this<global::app.type.item.path.@this>.Ok(global::app.type.item.path.@this.Resolve(to, Ctx)),
             Hash = hash == null ? null : global::app.data.@this<global::app.module.crypto.type.hash.@this>.From(new global::app.data.@this("Hash", hash, context: Ctx)),
             MaxDownloadSize = new global::app.type.item.size.@this(max ?? 100 * 1024 * 1024, Ctx),
+            OnProgress = progress ? global::PLang.Tests.Shared.Make.Call(Ctx, "Progressed") : null,
         };
         await action.Attach(null, Ctx);
         return await action.Start();
@@ -188,5 +189,113 @@ public class DownloadActionTests
 
         await result.IsSuccess();
         await Assert.That(new System.IO.FileInfo(OnDisk("/out/large.bin")).Length).IsEqualTo(body.LongLength);
+    }
+
+    // ---- Progress: %progress% as the body comes, and once more when it is done ----
+
+    // The last %progress% the callback was given.
+    private async Task<global::app.data.@this> LastProgress()
+        => (await Ctx.Variable.Get("progress"))!;
+
+    [Test]
+    public async Task AFinalReport_At100_AlwaysArrives()
+    {
+        var body = new byte[5];
+
+        await (await Download(body, null, null, progress: true)).IsSuccess();
+        var last = await LastProgress();
+
+        await last.IsSuccess();
+        var progress = (global::app.module.http.type.progress.@this)last.Peek()!;
+        await Assert.That(progress.Received!.Value).IsEqualTo(5L);
+        await Assert.That(progress.Total!.Value).IsEqualTo(5L);
+        await Assert.That(progress.Percent!.ToString()).IsEqualTo("100");
+        await Assert.That(progress.Sent).IsNull();
+    }
+
+    [Test]
+    public async Task OnAMismatch_TheLastReportCarriesHashMismatch()
+    {
+        var body = Encoding.UTF8.GetBytes("layer bytes");
+
+        await Download(body, "/out/layer.bin", Sha256(Encoding.UTF8.GetBytes("other bytes")), progress: true);
+        var last = await LastProgress();
+
+        await last.IsFailure();
+        await Assert.That(last.Error!.Key).IsEqualTo("HashMismatch");
+        await Assert.That(((global::app.module.http.type.progress.@this)last.Peek()!).Received!.Value).IsEqualTo(body.LongLength);
+    }
+
+    [Test]
+    public async Task OverItsCap_TheLastReportCarriesResponseTooLarge()
+    {
+        await Assert.That(async () => await Download(new byte[4096], null, null, max: 1000, progress: true))
+            .Throws<global::app.error.AppException>();
+        var last = await LastProgress();
+
+        await last.IsFailure();
+        await Assert.That(last.Error!.Key).IsEqualTo("ResponseTooLarge");
+    }
+
+    // A body that sends some bytes, then breaks — a server closing the connection mid-body.
+    private sealed class CutStream : System.IO.Stream
+    {
+        private bool _sent;
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken ct = default)
+        {
+            await Task.Yield();
+            if (_sent) throw new System.IO.IOException("the connection was closed mid-body");
+            _sent = true;
+            buffer.Span[..10].Fill(1);
+            return 10;
+        }
+        public override int Read(byte[] buffer, int offset, int count) => ReadAsync(buffer.AsMemory(offset, count)).AsTask().GetAwaiter().GetResult();
+        public override bool CanRead => true;
+        public override bool CanSeek => false;
+        public override bool CanWrite => false;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => 0; set => throw new NotSupportedException(); }
+        public override void Flush() { }
+        public override long Seek(long offset, System.IO.SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    [Test]
+    public async Task ABodyCutShort_TheLastReportCarriesTheFailure()
+    {
+        _handler.Handler = _ => Task.FromResult(new System.Net.Http.HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new System.Net.Http.StreamContent(new CutStream())
+        });
+        var action = new download(Ctx)
+        {
+            Url = (global::app.type.item.text.@this)"https://example.com/layer",
+            Unsigned = (global::app.type.item.@bool.@this)true,
+            OnProgress = global::PLang.Tests.Shared.Make.Call(Ctx, "Progressed"),
+        };
+        await action.Attach(null, Ctx);
+
+        var result = await action.Start();
+        var last = await LastProgress();
+
+        await result.IsFailure();
+        await last.IsFailure();
+        await Assert.That(last.Error!.Key).IsEqualTo(result.Error!.Key);
+        await Assert.That(last.Error.Message).Contains("closed mid-body");
+        await Assert.That(((global::app.module.http.type.progress.@this)last.Peek()!).Received!.Value).IsEqualTo(10L);
+    }
+
+    // %progress.received% is a size, written in the standard the asker's setting names: si says 3 kB, iec 2.9 KiB.
+    [Test]
+    public async Task Received_PrintsInTheSizeSettingsStandard()
+    {
+        await (await new global::app.type.item.variable.parser.@this("%!app.type.size.setting.standard%").Variable.Single()
+            .Set(Ctx.Ok(new global::app.type.item.text.@this("si")), Ctx)).IsSuccess();
+
+        await Download(new byte[3000], null, null, progress: true);
+        var received = await new global::app.type.item.variable.parser.@this("%progress.received%").Variable.Single().Start(Ctx);
+
+        await Assert.That((await received.Value())?.ToString()).IsEqualTo("3 kB");
     }
 }

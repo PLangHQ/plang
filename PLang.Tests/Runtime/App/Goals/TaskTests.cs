@@ -394,4 +394,77 @@ public class TaskTests
 
         await Assert.That(_app.actor.list.User.Task.list.Count()).IsEqualTo(0);
     }
+
+    // ---- foreach in parallel ----
+
+    // Loop: foreach %items% in parallel(<parallel>), call Each item=%item%, write to %task% — then the step after it
+    private async Task<global::app.task.@this> Looped(object parallel)
+    {
+        await Ctx.Variable.Set("items", new List<object?> { "a", "b", "c" });
+        var loop = await Load("Loop",
+            Make.Step("foreach %items% in parallel, call Each, write to %task%",
+                Make.Action(Ctx, "loop", "foreach", ("collection", "%items%"), Make.Param(Ctx, "item", "%item%", "variable"), ("Parallel", parallel)),
+                Make.Call(Ctx, "Each"), Set("task", "%!data%")),
+            Make.Step("set after", Set("after", "ran")));
+        await (await loop.Start(Ctx)).IsSuccess();
+        return (global::app.task.@this)(await Ctx.Variable.Get("task")).Peek()!;
+    }
+
+    [Test]
+    public async Task AForeachInParallel_AnswersATask_AndItsResultIsCountAndComplete()
+    {
+        await Load("Each", Make.Step("sleep", Sleep(300)));
+
+        var task = await Looped(true);
+
+        // the step after the loop ran before its items ended
+        await Assert.That(task.Ended.Value).IsFalse();
+        await Assert.That((await (await Ctx.Variable.Get("after")).Value())?.ToString()).IsEqualTo("ran");
+        var waited = await task.Wait();
+        await waited.IsSuccess();
+        var result = (global::app.type.item.dict.@this)(await waited.Value())!;
+        await Assert.That(result.Get("count", Ctx)!.Peek()!.ToString()).IsEqualTo("3");
+        await Assert.That(result.Get("complete", Ctx)!.Peek()!.ToString()).IsEqualTo("true");
+    }
+
+    // cpu caps how many run at once: at one, three 300 ms items take at least 900 ms
+    [Test]
+    public async Task AForeachInParallel_RunsAtMostCpuAtOnce()
+    {
+        await Load("Each", Make.Step("sleep", Sleep(300)));
+        var clock = System.Diagnostics.Stopwatch.StartNew();
+
+        await (await (await Looped(1)).Wait()).IsSuccess();
+
+        await Assert.That(clock.ElapsedMilliseconds).IsGreaterThanOrEqualTo(880);
+    }
+
+    [Test]
+    public async Task AnItemsFailure_IsTheLoopsTaskResult()
+    {
+        await Load("Each", Make.Step("fail", Make.Action(Ctx, "error", "throw", ("Message", "bad item"))));
+
+        var waited = await (await Looped(true)).Wait();
+
+        await waited.IsFailure();
+        await Assert.That(waited.Error!.Message).Contains("bad item");
+    }
+
+    // parallel is a value: true is its default, false is not parallel, a number is how many at once, {cpu} says it
+    [Test]
+    public async Task Parallel_IsMadeFromWhatAProgramWrites()
+    {
+        global::app.type.item.parallel.@this? Made(object? raw)
+            => global::app.type.item.parallel.@this.Create(raw, null, new global::app.data.@this("p", context: Ctx));
+        var cores = System.Math.Max(1, (long)(System.Environment.ProcessorCount * 0.8));
+
+        await Assert.That(Made(true)!.IsTruthy()).IsTrue();
+        await Assert.That(Made(true)!.Cpu.ToInt64()).IsEqualTo(cores);
+        await Assert.That(Made(false)!.IsTruthy()).IsFalse();
+        await Assert.That(Made(2L)!.Cpu.ToInt64()).IsEqualTo(2L);
+        await Assert.That(Made(0L)!.Cpu.ToInt64()).IsEqualTo(1L);
+        var dict = (global::app.type.item.dict.@this)(await new global::app.data.@this("d",
+            new Dictionary<string, object?> { ["cpu"] = 3L }, context: Ctx).Value())!;
+        await Assert.That(Made(dict)!.Cpu.ToInt64()).IsEqualTo(3L);
+    }
 }

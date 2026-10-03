@@ -19,8 +19,6 @@ namespace app.type.item.duration;
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>,
     System.IEquatable<@this>
 {
-    public static string Example => "5m";
-    public static string Description => "A length of time: a number and its unit (200ms, 30s, 5m, 1h, 1d), or ISO 8601 (PT5M).";
     public static string Shape => "string";
 
     public System.TimeSpan Value { get; }

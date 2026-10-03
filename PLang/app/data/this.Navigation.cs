@@ -25,9 +25,10 @@ public partial class @this
     /// Writes <paramref name="value"/> as this value's child at <paramref name="key"/> —
     /// <paramref name="isIndex"/> tells a position (<c>[0]</c>) from a member (<c>.name</c>). The item
     /// owns the write; this Data rebinds when the item comes back replaced (a json host materialises
-    /// into a dict; a clr host mutates in place, so identity holds). Answers this Data.
+    /// into a dict; a clr host mutates in place, so identity holds). When this Data is a variable's own binding
+    /// (<paramref name="keeps"/>), a member its value can't take is kept in its Properties. Answers this Data.
     /// </summary>
-    public async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value)
+    public async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, bool keeps = false)
     {
         // Materialise a source-backed value (a `%cfg%` still raw json, a template container still a
         // wire) so the write lands on the PARSED value, not the raw form. The write target is the
@@ -50,7 +51,15 @@ public partial class @this
         try { written = await target.Set(key, isIndex, value, _context); }
         catch (System.NotSupportedException ex)
         {
-            return _context?.Error(new global::app.error.Error(ex.Message, "CannotSetChild", 400)) ?? this;
+            // a variable's own binding (keeps) holds a member its value can't take (`set %name.lang% = "is"`); a plain
+            // value inside another has nowhere to keep one
+            if (keeps && !isIndex)
+            {
+                Properties[key] = value is @this given ? await given.Value() : value;
+                return this;
+            }
+            return _context?.Error(new global::app.error.Error(
+                $"{ex.Message}: %{Path}% is a {target.Type.Name} inside another value, and has nowhere to keep a member", "CannotSetChild", 400)) ?? this;
         }
         // a value the child refuses (an option's value out of its range, a reserved key) says why
         catch (global::app.error.AppException ex) { return _context?.Error(ex.Error) ?? this; }

@@ -218,7 +218,7 @@ public class VerifyActionTests
     {
         var signed = await SignHelper(new { amount = 100 }, contracts: new List<string> { "C0" });
         var tampered = Tampered(signed,
-            hash: new global::app.module.crypto.type.hash.@this(new byte[32], "keccak256"));
+            hash: new global::app.module.crypto.type.hash.@this(new byte[32], new global::app.module.crypto.type.hash.kind.keccak256.@this()));
 
         var result = await VerifyHelper(tampered, contracts: new List<string> { "C0" });
         await result.IsFailure();

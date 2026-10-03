@@ -47,9 +47,6 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         => new("number", typeof(@this), Kind.Name);
 
     /// <summary>Catalog example — read via reflection by the schema builder.</summary>
-    public static string Example => "42";
-    public static string Description =>
-        "A number, whole or decimal, of any size. Its kind is the precision it is held in (int, long, decimal, double, …).";
 
     /// <summary>Catalog shape — number's wire form is a string-shaped scalar.</summary>
     public static string Shape => "string";

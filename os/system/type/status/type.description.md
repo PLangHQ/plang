@@ -1,0 +1,1 @@
+An outcome's code and its reason (an error's, an http response's); made from a number, its text is the code's standard reason.

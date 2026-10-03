@@ -32,17 +32,12 @@ public partial class @this
     /// <summary>
     /// The digest of this Data as it crosses the wire in <paramref name="view"/> — the bytes its own <see cref="Output"/>
     /// writes at a layer (its <c>@schema</c>, type, value, properties; no signature), hashed by
-    /// <paramref name="algorithm"/>'s kind. What a signature binds: sign and verify both write the same bytes, so they
-    /// agree. Null when no kind of hash goes by that name. A value hashed for a person (<c>crypto.hash</c>) is its own
-    /// bytes, not these.
+    /// <paramref name="kind"/>. What a signature binds: sign and verify both write the same bytes, so they agree. A
+    /// value hashed for a person (<c>crypto.hash</c>) is its own bytes, not these.
     /// </summary>
-    internal async System.Threading.Tasks.ValueTask<global::app.module.crypto.type.hash.@this?> Digest(View view, string algorithm,
-        global::app.actor.context.@this context)
+    internal async System.Threading.Tasks.ValueTask<global::app.module.crypto.type.hash.@this> Digest(View view,
+        global::app.module.crypto.type.hash.kind.@this kind, global::app.actor.context.@this context)
     {
-        // the kind of hash the name names, through the choice a written name is read by; none goes by an unknown name
-        global::app.module.crypto.type.hash.kind.@this kind;
-        try { kind = global::app.type.item.choice.@this<global::app.module.crypto.type.hash.kind.@this>.Parse(algorithm).Value; }
-        catch (System.FormatException) { return null; }
         using var bytes = new System.IO.MemoryStream();
         await using (var utf8 = new System.Text.Json.Utf8JsonWriter(bytes))
             await Output(new global::app.type.item.kind.json.Writer(utf8, view, emitsSchema: true), view, context, layer: true);

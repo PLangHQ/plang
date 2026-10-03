@@ -1,0 +1,1 @@
+A culture by its name: how numbers read as text (decimals, separator).

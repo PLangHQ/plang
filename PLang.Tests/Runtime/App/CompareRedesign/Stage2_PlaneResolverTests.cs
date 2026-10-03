@@ -26,12 +26,14 @@ public class Stage2_PlaneResolverTests : System.IAsyncDisposable
     [Test]
     public async Task BangPlane_ResolvesPropertyAndEnvelope_TypeAnswers()
     {
-        // %text!length% — the value's own property, answered in a PLang value
+        // %text.length% — the value's own member, read with a dot, answered in a PLang value; a plain value has no
+        // `!` facts
         await using var app = NewApp();
         var t = new Data("s", new global::app.type.item.text.@this("hello"), context: app.actor.list.User.Context);
-        var length = await t.Get("!length");
+        var length = await t.Get("length");
         await Assert.That(length.Peek()).IsTypeOf<global::app.type.item.number.@this>();
         await Assert.That(length.Peek()!.ToString()).IsEqualTo("5");
+        await Assert.That((await t.Get("!length")).IsInitialized).IsFalse();
         // envelope properties resolve on the same plane
         t.Properties["cost"] = 42;
         var cost = await t.Get("!cost");

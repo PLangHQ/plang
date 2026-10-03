@@ -63,18 +63,8 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return context.Ok();
     }
 
-    public static string Example => "Hello, world";
     public static IReadOnlyList<string> Alias { get; } = ["string"];
     public static string Shape => "string";
-    /// <summary>
-    /// LLM-facing teaching: text's kind comes from the file extension
-    /// (`md`, `txt`, `csv`, `html`, …). The kind is a hint by default; strict
-    /// is a no-op for text since plain vs markdown can't be probed from content.
-    /// </summary>
-    public static string Description =>
-        "Textual content. Kind is set from the file extension (md, txt, csv, html, ...). "
-        + "Kind is a hint by default; strict is a no-op for text (plain vs markdown is "
-        + "not detectable from content).";
     // No static Kinds — text's kind is open (derived from extension at build).
 
     // THE backing — a private field, not a property at any visibility.
@@ -316,6 +306,10 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(
         global::app.data.@this parent, string key, bool isIndex)
     {
+        // its own members first (%s.length%) — the ones it shows plang
+        if (!isIndex && GetType().GetProperty(key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
+                | System.Reflection.BindingFlags.IgnoreCase) is { } member && System.Attribute.IsDefined(member, typeof(global::app.LlmBuilderAttribute)))
+            return System.Threading.Tasks.ValueTask.FromResult(new global::app.data.@this(key, member.GetValue(this), parent: parent));
         if (Opened(parent.Context) is { } opened)
             return opened.Success ? opened.Peek().Get(parent, key, isIndex) : System.Threading.Tasks.ValueTask.FromResult(opened);
         var who = string.IsNullOrEmpty(parent.Name) ? "value" : $"%{parent.Name}%";
@@ -412,7 +406,7 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
 
     /// <summary>Codepoint (Unicode scalar) count — surrogate pairs count once.
     /// Returns the PLang <c>number</c> (the public surface answers in PLang values).</summary>
-    public global::app.type.item.number.@this Length
+    [LlmBuilder] public global::app.type.item.number.@this Length
     {
         get
         {
@@ -439,23 +433,30 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return limit <= 0 || _value.Length <= limit ? this : new(_value[..limit] + "...");
     }
 
-    /// <summary>The lines matching <paramref name="pattern"/>, through the grep provider.</summary>
+    /// <summary>The lines matching <paramref name="pattern"/> — each <c>line number: line</c> — with <paramref name="lines"/>
+    /// lines around each when asked (0, none, by default), through the grep the app registered (<c>app.Code</c>), else
+    /// the default line matcher.</summary>
     [LlmBuilder]
-    public global::app.data.@this Grep(@this pattern, global::app.actor.context.@this context)
-        => Grep(pattern, 0, context);
-
-    /// <summary>The lines matching <paramref name="pattern"/> with <paramref name="lines"/> lines around
-    /// each, through the grep the app registered (<c>app.Code</c>), else the default line matcher.</summary>
-    [LlmBuilder]
-    public global::app.data.@this Grep(@this pattern, global::app.type.item.number.@this lines, global::app.actor.context.@this context)
-        => (context.App.Code.Get<global::app.data.code.IGrep>().Provider ?? new global::app.data.code.Default())
-            .Grep(new global::app.data.@this("", this, context: context), pattern._value, lines.Clr<int>());
+    public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.list.@this<@this>>> Grep(@this pattern,
+        global::app.actor.context.@this context, global::app.type.item.number.@this? lines = null)
+    {
+        var found = (context.App.Code.Get<global::app.data.code.IGrep>().Provider ?? new global::app.data.code.Default())
+            .Grep(new global::app.data.@this("", this, context: context), pattern._value, lines?.Clr<int>() ?? 0);
+        if (!found.Success) return global::app.data.@this<global::app.type.item.list.@this<@this>>.From(found);
+        var text = (await found.Value())?.ToString() ?? "";
+        return context.Ok(new global::app.type.item.list.@this<@this>(
+            text.Length == 0 ? [] : [.. text.Split('\n').Select(line => (@this)line.TrimEnd('\r'))]));
+    }
 
     /// <summary>How many lines match <paramref name="pattern"/>.</summary>
     [LlmBuilder]
-    public global::app.data.@this GrepCount(@this pattern, global::app.actor.context.@this context)
-        => (context.App.Code.Get<global::app.data.code.IGrep>().Provider ?? new global::app.data.code.Default())
+    public async System.Threading.Tasks.Task<global::app.data.@this<global::app.type.item.number.@this>> GrepCount(@this pattern,
+        global::app.actor.context.@this context)
+    {
+        var counted = (context.App.Code.Get<global::app.data.code.IGrep>().Provider ?? new global::app.data.code.Default())
             .GrepCount(new global::app.data.@this("", this, context: context), pattern._value);
+        return counted.Success ? counted.As<global::app.type.item.number.@this>() : global::app.data.@this<global::app.type.item.number.@this>.From(counted);
+    }
 
     /// <summary>The item membership hook — substring, same policy as below.</summary>
     public override System.Threading.Tasks.ValueTask<bool> Contains(global::app.data.@this needle)

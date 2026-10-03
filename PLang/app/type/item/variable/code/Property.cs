@@ -24,11 +24,22 @@ public sealed class Property : Hop
     /// what holds it.</summary>
     internal override bool IsOwn => !IsBinding;
 
-    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
         global::app.data.@this? previous, global::app.actor.context.@this context)
+        => Start(previous, context, own: false);
+
+    internal override async System.Threading.Tasks.ValueTask<global::app.data.@this> Start(
+        global::app.data.@this? previous, global::app.actor.context.@this context, bool own)
     {
         if (previous is null) return context.NotFound(Name);
-        if (!IsBinding) return await previous.Peek().Get(previous, Name);
+        if (!IsBinding)
+        {
+            var read = await previous.Peek().Get(previous, Name);
+            // a member a program added to a variable's own value is kept in its binding — read after the value's own
+            if (own && (!read.Success || !read.IsInitialized) && previous.Properties.ContainsKey(Name))
+                return new global::app.data.@this(Name, await previous.Properties.Value(Name), parent: previous);
+            return read;
+        }
 
         var key = Name[1..];
         if (previous.Properties.ContainsKey(key))
@@ -40,31 +51,26 @@ public sealed class Property : Hop
         if (member != null)
             return new global::app.data.@this(key, member.GetValue(previous), parent: previous);
 
-        // The value's own typed metadata (!path, !host, !size, !length) without materialising content.
-        // NonPublic included: the raw derivations (path.Relative/.Extension/.Absolute) are internal C#
-        // but ARE the !relative/!extension/!absolute projections.
-        var peeked = previous.Peek();
-        var own = peeked.GetType().GetProperty(key, Public | System.Reflection.BindingFlags.NonPublic);
-        if (own != null)
-            return new global::app.data.@this(key, own.GetValue(peeked), parent: previous);
-
-        // A member that needs the asker's context is a method taking one context — !relative,
-        // !mimetype, !kind answer with the binding's own context.
-        var asks = peeked.GetType().GetMethod(key, Public | System.Reflection.BindingFlags.NonPublic,
-            binder: null, types: [typeof(global::app.actor.context.@this)], modifiers: null);
-        if (asks != null)
-            return new global::app.data.@this(key, asks.Invoke(peeked, [previous.Context]), parent: previous);
+        // A fact about the thing the value is — a reference's own (a file's !path, !size, !kind; a url's !host), never
+        // its content's. A plain value has none: its members are read with a dot.
+        if (previous.Peek().Fact(key, previous) is { } fact) return fact;
 
         return previous.Context?.NotFound(key) ?? context.NotFound(key);
     }
 
     /// <summary>A member takes the value as the parent's child; a <c>!</c> name lands in the
     /// binding's Properties.</summary>
-    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
+    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
         global::app.data.@this? parent, object? value, global::app.actor.context.@this context)
+        => Set(parent, value, context, own: false);
+
+    /// <summary>A member written on a variable's own binding (<paramref name="own"/>) that its value can't take is kept
+    /// in the binding (<c>set %name.lang% = "is"</c>).</summary>
+    internal override async System.Threading.Tasks.ValueTask<global::app.data.@this> Set(
+        global::app.data.@this? parent, object? value, global::app.actor.context.@this context, bool own)
     {
         if (parent is null) return context.NotFound(Name);
-        if (!IsBinding) return await parent.Set(Name, isIndex: false, value);
+        if (!IsBinding) return await parent.Set(Name, isIndex: false, value, keeps: own);
         if (!parent.IsInitialized)
             return context.Error(new global::app.error.Error($"Variable '{parent.Name}' is not set", "VariableNotFound", 400));
 

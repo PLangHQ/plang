@@ -63,8 +63,8 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         writer.BeginObject();
         writer.Name("name"); writer.String(full.Namespace ?? full.Name);
         if (full.Namespace != null && full.Namespace != full.Name) { writer.Name("word"); writer.String(full.Name); }
-        if (full.Description != null) { writer.Name("description"); writer.String(full.Description); }
-        if (full.Example != null) { writer.Name("example"); writer.String(full.Example); }
+        if (await full.Description(context).Text(context) is { Length: > 0 } description) { writer.Name("description"); writer.String(description); }
+        if (await full.Example(context).Text(context) is { Length: > 0 } example) { writer.Name("example"); writer.String(example); }
         if (full.Alias.Count > 0)
         {
             writer.Name("alias");
@@ -636,15 +636,34 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     public string? ConstructorSignature { get => Family._constructorSignature; init => _constructorSignature = value; }
     private string? _constructorSignature;
 
-    /// <summary>Canonical example — the kind's own when it shows one (a list of records, one of its element), else
-    /// the static <c>Example</c> property on the type.</summary>
-    public string? Example { get => kind.Example ?? Family._example; init => _example = value; }
-    private string? _example;
+    /// <summary>Where this type's teaching lives — <c>/system/type/&lt;name&gt;/</c>, its family's (a kinded type's facts
+    /// are its family's), each read through the path's gate as the asker.</summary>
+    private item.path.@this Teaching(actor.context.@this context)
+        => item.path.@this.Resolve($"/system/type/{Family.Name}", context);
 
-    /// <summary>Semantic description — the kind's own when it says one (a list of records names its element), else
-    /// the static <c>Description</c> property on the type.</summary>
-    public string? Description { get => kind.Description ?? Family._description; init => _description = value; }
-    private string? _description;
+    // a teaching file of this type's, born unread: an absent one is falsy
+    private item.file.@this Taught(string file, actor.context.@this context) => new(Teaching(context).Combine(file), context);
+
+    /// <summary>What a value of this type is, said once — the kind's own when it says one (a list of records names
+    /// its element), else <c>type.description.md</c>; read when asked, empty when there is none.</summary>
+    [LlmBuilder] public item.prose.@this Description(actor.context.@this context)
+        => kind.Description(context) is { } its
+            ? its.Or(new item.prose.@this(Taught("type.description.md", context)))
+            : new item.prose.@this(Taught("type.description.md", context));
+
+    /// <summary>A value of this type as a step writes one (<c>5m</c>, <c>42</c>) — the kind's own when it shows one (a
+    /// list of records, one of its element), else <c>type.examples.md</c>; read when asked, empty when there is none.</summary>
+    [LlmBuilder] public item.prose.@this Example(actor.context.@this context)
+        => kind.Example(context) is { } its
+            ? its.Or(new item.prose.@this(Taught("type.examples.md", context)))
+            : new item.prose.@this(Taught("type.examples.md", context));
+
+    /// <summary>What the builder is taught about this type — <c>type.notes.md</c>; falsy when it has none.</summary>
+    [LlmBuilder] public item.file.@this Notes(actor.context.@this context) => Taught("type.notes.md", context);
+
+    /// <summary>Prose for a learner — <c>type.guide.md</c>, shown on the type's page, never read by the builder; falsy
+    /// when it has none.</summary>
+    [LlmBuilder] public item.file.@this Guide(actor.context.@this context) => Taught("type.guide.md", context);
 
     /// <summary>The other names this type answers to (<c>string</c> for text, <c>map</c> for dict),
     /// declared by its class as a static <c>Alias</c>. Never null.</summary>
@@ -710,14 +729,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         // The type entity's own wire shape and kinds are taught by the prompt's type reference, not as facts.
         if (types == null || clr == typeof(@this)) return;
 
-        var example = Declared<string>("Example");
-        var description = Declared<string>("Description");
         _offer = Declared<IReadOnlyList<item.@this>>("Offer");
         if (global::app.type.item.choice.set.@this.For(clr) is { } set)
         {
             Values = set.Values;
-            Description = description;
-            Example = example;
             return;
         }
 
@@ -731,11 +746,10 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
         }
 
         var property = new property.list.@this();
-        // A member that needs the asker's context is a one-context method; it is the same property to
-        // the catalog, listed where it is declared among the properties.
+        // Every member the class marks plang's, listed where it is declared. A method that asks only for its asker's
+        // context is read as a property (%p.relative%); any other is called with its arguments (%x.replace("a", "b")%).
         var methods = new Queue<System.Reflection.MethodInfo>(clr.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Where(m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void)
-                && m.GetParameters() is [{ ParameterType: var p }] && p == typeof(actor.context.@this))
+            .Where(m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void))
             .OrderBy(m => m.MetadataToken));
         foreach (var prop in clr.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
         {
@@ -743,15 +757,29 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             if (!System.Attribute.IsDefined(prop, typeof(global::app.LlmBuilderAttribute))) continue;
             while (methods.TryPeek(out var m) && m.DeclaringType == prop.DeclaringType
                 && m.MetadataToken < prop.GetMethod!.MetadataToken)
-                property.Add(types.Property(methods.Dequeue().Name, Answer(m)));
-            property.Add(types.Property(prop.Name, prop.PropertyType));
+                property.Add(Member(methods.Dequeue()));
+            property.Add(types.Property(prop.Name, prop.PropertyType, owner: Name));
         }
-        while (methods.TryDequeue(out var m)) property.Add(types.Property(m.Name, Answer(m)));
+        while (methods.TryDequeue(out var m)) property.Add(Member(m));
 
-        // what a one-context method answers — an asynchronous one, what its task completes with
-        System.Type Answer(System.Reflection.MethodInfo m)
-            => m.ReturnType is { IsGenericType: true } task && task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>)
+        // A method as the catalog lists it: what it answers (an asynchronous one, what its task completes with), and —
+        // unless it asks only for its asker — what it is called with. The asker's context and a cancellation are the
+        // runtime's to give, never a step's argument.
+        property.@this Member(System.Reflection.MethodInfo m)
+        {
+            var answers = m.ReturnType is { IsGenericType: true } task && task.GetGenericTypeDefinition() == typeof(System.Threading.Tasks.Task<>)
                 ? task.GenericTypeArguments[0] : m.ReturnType;
+            // a member answering through a Data (so a failure rides it) answers what the Data holds
+            if (answers is { IsGenericType: true } data && data.GetGenericTypeDefinition() == typeof(global::app.data.@this<>))
+                answers = data.GenericTypeArguments[0];
+            var parameters = m.GetParameters();
+            if (parameters is [{ ParameterType: var only }] && only == typeof(actor.context.@this))
+                return types.Property(m.Name, answers, owner: Name);
+            return types.Property(m.Name, answers, parameters
+                .Where(p => p.ParameterType != typeof(actor.context.@this) && p.ParameterType != typeof(System.Threading.CancellationToken))
+                .Select(p => types.Property(p.Name!, p.ParameterType, optional: p.IsOptional))
+                .ToList(), owner: Name);
+        }
 
         // A scalar has a constructor, a declared wire shape, or is a named type with no builder
         // properties (a domain wrapper around a primitive); a record has builder properties.
@@ -762,8 +790,6 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
             Property = property.Count > 0 ? property : null;
         }
         else Property = property;
-        Description = description;
-        Example = example;
 
         T? Declared<T>(string member) where T : class
         {
@@ -796,7 +822,15 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     }
 
     /// <summary>A type answers navigation as its full type — the registry's, found with the
-    /// asker's context. A full type is its own answer.</summary>
-    public override System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
-        => new global::app.type.clr.@this(parent.Context.App.type.list[this, parent.Context], parent.Context).Get(parent, key);
+    /// asker's context. A full type is its own answer; past its members, its settings (<c>.setting</c>).</summary>
+    public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
+    {
+        var member = await new global::app.type.clr.@this(parent.Context.App.type.list[this, parent.Context], parent.Context).Get(parent, key);
+        return member.IsInitialized ? member : await Setting(parent, key) ?? member;
+    }
+
+    /// <summary>A type's settings are the ones its class names (<c>%!app.type.size.setting%</c>) — the registry's
+    /// type, as the asker sees it.</summary>
+    protected override async System.Threading.Tasks.ValueTask<global::app.data.@this?> Setting(global::app.data.@this parent)
+        => await parent.Context.Setting.Of(parent.Context.App.type.list[this, parent.Context]);
 }

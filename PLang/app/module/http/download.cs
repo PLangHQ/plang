@@ -28,7 +28,8 @@ public partial class download : IContext, IAddressed
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> Unsigned { get; init; }
 
-    /// <summary>Goal to call with TransferProgress updates during download.</summary>
+    /// <summary>Goal called with <c>%progress%</c> (received, total, percent) as the download goes, and once more when it
+    /// is done — the last one's Data carries how it ended (a hash mismatch, a cap passed).</summary>
     [GoalCallback("progress")]
     public partial data.@this<global::app.goal.step.action.@this>? OnProgress { get; init; }
 

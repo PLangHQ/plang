@@ -1,0 +1,1 @@
+An image: its bytes, or where they are. Its kind is its format (png, jpg, gif, …).

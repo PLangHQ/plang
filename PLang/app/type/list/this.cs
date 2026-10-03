@@ -259,14 +259,19 @@ public sealed partial class @this
         => named.Kind == null ? named.Name : $"{named.Name}<{named.Kind}>";
 
     /// <summary>A type's property <paramref name="name"/> of C# class <paramref name="clr"/> — its
-    /// type born from its name and class directly, since a type's facts are read while the set fills.</summary>
-    internal property.@this Property(string name, System.Type clr)
+    /// type born from its name and class directly, since a type's facts are read while the set fills. A member a step
+    /// calls with <paramref name="arguments"/> carries them.</summary>
+    internal property.@this Property(string name, System.Type clr, System.Collections.Generic.IReadOnlyList<property.@this>? arguments = null,
+        bool optional = false, string? owner = null)
     {
         var (typeName, kind) = PlangName(clr);
         return new property.@this
         {
             Name = char.ToLower(name[0]) + name[1..],
             Type = new app.type.@this(typeName, Items().FirstOrDefault(t => t.Names(typeName))?.ClrType, kind),
+            Arguments = arguments,
+            Nullable = optional,
+            Owner = owner,
         };
     }
 

@@ -10,8 +10,6 @@ namespace app.type.item.directory;
 [global::app.Attributes.PlangType("directory")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
-    public static string Example => "/docs";
-    public static string Description => "A folder, by its path.";
     public static string Shape => "string";
     /// <summary>A directory is made from a path.</summary>
     public static bool Takes(global::app.type.@this other) => other.Is("path");
