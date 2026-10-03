@@ -19,7 +19,8 @@ public class @this : global::app.type.kind.@this
     public override async System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<global::app.type.item.@this>> Offers(global::app.goal.step.@this step)
         => [.. Named.Select(named => new global::app.type.item.separator.@this(named)), .. await base.Offers(step)];
 
-    // the named separators, found as the registry finds the kinds it holds
-    private System.Collections.Generic.IEnumerable<@this> Named
-        => Every(typeof(@this).Assembly).OfType<@this>().Where(kind => !kind.IsEmpty);
+    // the named separators, found once as the registry finds the kinds it holds
+    private System.Collections.Generic.IReadOnlyList<@this> Named
+        => _named ??= Every(typeof(@this).Assembly).OfType<@this>().Where(kind => !kind.IsEmpty).ToList();
+    private System.Collections.Generic.IReadOnlyList<@this>? _named;
 }
