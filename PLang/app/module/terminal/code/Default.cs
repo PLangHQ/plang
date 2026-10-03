@@ -173,7 +173,12 @@ public sealed class Default : ITerminal
         {
             // stdout is [u32 length][bytes] messages: each one, as it arrives, straight to the screen
             // it goes to (no goal per message), and to OnOutput as binary when there is one
-            _ = Pump(os.Error, true, System.Threading.Channels.Channel.CreateUnbounded<(bool, string)>().Writer);
+            // stderr is text: its last lines are kept (what it said, if it stops)
+            _ = Task.Run(async () =>
+            {
+                try { while (await os.Error.ReadLineAsync() is { } line) running.Heard(line); }
+                catch (Exception ex) when (ex is IOException or ObjectDisposedException) { }
+            });
             // a plang behind it takes calls to its goals (%container.goal["Question"]%): a call goes down its input as a
             // line; its answer comes back as a message of its own (kind 9, {"reply": …}) to the call waiting on it
             running.Remote.Link = async line =>
@@ -208,6 +213,7 @@ public sealed class Default : ITerminal
             {
                 await foreach (var (isError, line) in lines.ReadAllAsync())
                 {
+                    if (isError) running.Heard(line);   // its last lines on stderr are kept
                     var call = isError ? onError : onOutput;
                     if (call != null) await global::app.module.on.code.Gate.Call(call, await Said(line, running.Plang, context), context);
                 }

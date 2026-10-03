@@ -1,35 +1,30 @@
-using System.Collections.Concurrent;
-using System.Net.WebSockets;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Cdp = app.module.browser.type.cdp.@this;
+using Session = app.module.browser.type.cdp.session.@this;
 
 namespace app.module.window;
 
 /// <summary>
-/// The page a window shows, over a DevTools connection of its own. It goes where it is sent,
-/// evaluates, and gives a message event. When it is one of plang's own pages (a file under the
-/// app's folder or the os folder), it also gets <c>plang(text)</c>: what it says is heard with its
-/// window's id added (<c>"from"</c>). Every call is checked: a page that has since gone somewhere else
-/// (a website) is not heard.
+/// The page a window shows, over a DevTools session of its own on the browser's pipe. It goes where it is sent,
+/// evaluates, and gives a message event. When it is one of plang's own pages (a file under the app's folder or the os
+/// folder), it also gets <c>plang(text)</c>: what it says is heard with its window's id added (<c>"from"</c>). Every
+/// call is checked: a page that has since gone somewhere else (a website) is not heard.
 /// </summary>
-internal sealed class Page(string target, int port, Func<string, bool> own)
+internal sealed class Page(string target, Cdp cdp, Func<string, bool> own)
 {
-    private readonly ClientWebSocket socket = new();
-    private readonly SemaphoreSlim sending = new(1, 1);
-    private readonly ConcurrentDictionary<int, TaskCompletionSource<JsonElement>> waiting = new();
-    private int next;
+    private Session? _session;
 
     /// <summary>DevTools' id for this page.</summary>
     internal string Target { get; } = target;
 
-    /// <summary>Connects. Given <paramref name="hear"/>, the page gets <c>plang(text)</c> and what it
-    /// says goes there, <c>"from"</c> <paramref name="window"/>.</summary>
+    /// <summary>Attaches. Given <paramref name="hear"/>, the page gets <c>plang(text)</c> and what it says goes there,
+    /// <c>"from"</c> <paramref name="window"/>.</summary>
     internal async Task Open(long window, Func<string, Task>? hear)
     {
-        await socket.ConnectAsync(new Uri($"ws://127.0.0.1:{port}/devtools/page/{Target}"), CancellationToken.None);
-        _ = Task.Run(() => Listen(window, hear));
+        _session = await cdp.Attach(Target);
         if (hear == null) return;
+        _session.Heard += (method, parameters) => method == "Runtime.bindingCalled" ? Called(window, parameters, hear) : Task.CompletedTask;
         await Ask("Runtime.enable", new JsonObject());
         await Ask("Runtime.addBinding", new JsonObject { ["name"] = "plang" });
     }
@@ -40,12 +35,11 @@ internal sealed class Page(string target, int port, Func<string, bool> own)
     /// <summary>A message to the page: a <c>message</c> event, origin <c>"plang"</c>.</summary>
     internal Task Post(string text) => Ask("Runtime.evaluate", new JsonObject
     {
-        ["expression"] = "window.dispatchEvent(new MessageEvent('message',{data:" + JsonSerializer.Serialize(text) + ",origin:'plang'}))",
+        ["expression"] = "window.dispatchEvent(new MessageEvent('message',{data:" + JsonValue.Create(text).ToJsonString() + ",origin:'plang'}))",
     });
 
-    /// <summary>Runs <paramref name="expression"/> in the page, a promise awaited (as long as
-    /// <paramref name="within"/> allows: a page's goal may wait for the person, a question's answer);
-    /// DevTools' answer.</summary>
+    /// <summary>Runs <paramref name="expression"/> in the page, a promise awaited (as long as <paramref name="within"/>
+    /// allows: a page's goal may wait for the person, a question's answer); DevTools' answer.</summary>
     internal Task<JsonElement> Evaluate(string expression, TimeSpan? within = null) => Ask("Runtime.evaluate", new JsonObject
     {
         ["expression"] = expression, ["awaitPromise"] = true, ["returnByValue"] = true,
@@ -85,46 +79,20 @@ internal sealed class Page(string target, int port, Func<string, bool> own)
     }
 
     /// <summary>The page closes (and the window it is in).</summary>
-    internal Task Shut() => Ask("Page.close", new JsonObject());
+    internal Task Shut() => cdp.Ask("Target.closeTarget", new JsonObject { ["targetId"] = Target });
 
-    /// <summary>The connection goes.</summary>
+    /// <summary>The session goes; the page is gone already (its window closed).</summary>
     internal void Close()
     {
-        try { socket.Abort(); } catch { }
+        if (_session is { } session) _ = session.Detach();
     }
 
-    private async Task Listen(long window, Func<string, Task>? hear)
+    // the page called plang(text): heard when the page that called is still one of plang's own
+    private async Task Called(long window, JsonElement parameters, Func<string, Task> hear)
     {
-        var buffer = new byte[1 << 16];
-        var message = new MemoryStream();
-        try
-        {
-            while (socket.State == WebSocketState.Open)
-            {
-                var r = await socket.ReceiveAsync(buffer, CancellationToken.None);
-                if (r.MessageType == WebSocketMessageType.Close) break;
-                message.Write(buffer, 0, r.Count);
-                if (!r.EndOfMessage) continue;
-                using var doc = JsonDocument.Parse(message.GetBuffer().AsMemory(0, (int)message.Length));
-                message.SetLength(0);
-                var root = doc.RootElement;
-                if (root.TryGetProperty("id", out var id) && waiting.TryRemove(id.GetInt32(), out var answer))
-                {
-                    answer.TrySetResult(root.Clone());
-                    continue;
-                }
-                if (hear == null || !root.TryGetProperty("method", out var m) || m.GetString() != "Runtime.bindingCalled") continue;
-                var p = root.GetProperty("params");
-                var said = p.GetProperty("payload").GetString() ?? "";
-                var context = p.GetProperty("executionContextId").GetInt32();
-                // not awaited: the goal may talk back here, whose answer this loop reads
-                _ = Task.Run(async () =>
-                {
-                    if (await Ours(context)) await hear(From(window, said));
-                });
-            }
-        }
-        catch (Exception ex) when (ex is WebSocketException or JsonException or ObjectDisposedException) { }
+        var said = parameters.GetProperty("payload").GetString() ?? "";
+        var context = parameters.GetProperty("executionContextId").GetInt32();
+        if (await Ours(context)) await hear(From(window, said));
     }
 
     /// <summary>The page that called is still one of the app's own (not a website the window went to).</summary>
@@ -137,7 +105,7 @@ internal sealed class Page(string target, int port, Func<string, bool> own)
                 && v.TryGetProperty("value", out var href) && href.ValueKind == JsonValueKind.String
                 && own(href.GetString()!);
         }
-        catch (Exception ex) when (ex is TimeoutException or WebSocketException or KeyNotFoundException) { return false; }
+        catch (Exception ex) when (ex is TimeoutException or IOException or KeyNotFoundException) { return false; }
     }
 
     /// <summary>What the page said, with its window's id: a json object gets <c>"from"</c>; anything else stays as it is.</summary>
@@ -155,16 +123,6 @@ internal sealed class Page(string target, int port, Func<string, bool> own)
         return said;
     }
 
-    private async Task<JsonElement> Ask(string method, JsonObject parameters, TimeSpan? within = null)
-    {
-        var id = Interlocked.Increment(ref next);
-        var answer = new TaskCompletionSource<JsonElement>(TaskCreationOptions.RunContinuationsAsynchronously);
-        waiting[id] = answer;
-        var bytes = Encoding.UTF8.GetBytes(new JsonObject { ["id"] = id, ["method"] = method, ["params"] = parameters }.ToJsonString());
-        await sending.WaitAsync();
-        try { await socket.SendAsync(bytes, WebSocketMessageType.Text, true, CancellationToken.None); }
-        finally { sending.Release(); }
-        try { return await answer.Task.WaitAsync(within ?? TimeSpan.FromSeconds(5)); }
-        finally { waiting.TryRemove(id, out _); }
-    }
+    private Task<JsonElement> Ask(string method, JsonObject parameters, TimeSpan? within = null)
+        => (_session ?? throw new InvalidOperationException($"the page {Target} isn't attached")).Ask(method, parameters, within);
 }

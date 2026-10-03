@@ -1,0 +1,162 @@
+{
+  "name": "Headless",
+  "comment": "The browser off-screen: headless Chromium rendering one page, DevTools over its pipe (fd 3 and 4), no port. It starts\nblank, at its default size: the page and the size are the caller's to give, over the pipe — never on this command line.\nHeadless Chromium says \"HeadlessChrome\" in its user agent and bot checks (Cloudflare) stop there, so it says a normal one.\nTrusted by origin (579): the program, its flags and environment are named here, with only the app's own anchor\n%!app.AbsolutePath%.",
+  "step": [
+    {
+      "index": 0,
+      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--headless', '--disable-gpu', '--hide-scrollbars',\n'--no-first-run', '--no-default-browser-check', '--user-data-dir=%!app.AbsolutePath%/.browser',\n'--remote-debugging-pipe',\n'--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36',\n'about:blank', keep running, with pipe, write to %program%",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "terminal",
+          "name": "open",
+          "property": [
+            {
+              "name": "App",
+              "type": {
+                "name": "text"
+              },
+              "value": "//usr/lib/chromium/chromium"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": ["--headless","--disable-gpu","--hide-scrollbars","--no-first-run","--no-default-browser-check","--user-data-dir=%!app.AbsolutePath%/.browser","--remote-debugging-pipe","--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36","about:blank"],
+              "variable": [
+                {
+                  "text": "%!app.AbsolutePath%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "AbsolutePath"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Pipe",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "binary",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%program%",
+              "variable": [
+                {
+                  "text": "%program%",
+                  "code": [
+                    {
+                      "variable": "program"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "return %program%",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "return",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%program%",
+              "variable": [
+                {
+                  "text": "%program%",
+                  "code": [
+                    {
+                      "variable": "program"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "depth",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/system/browser/Headless.goal",
+  "prPath": "/system/browser/.build/headless.pr",
+  "hash": "2dacff5f9fc2e76766dfb1d3ad2d5504ba320c07a47950cc15223894cb6929b6"
+}

@@ -47,8 +47,15 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
         return page!;
     }
 
-    /// <summary>Goes to what was typed: an address (<c>mbl.is</c> is <c>https://mbl.is</c>), or words to search for.</summary>
-    internal async Task Navigate(string typed) => await (await Page()).Navigate(Where(typed));
+    /// <summary>Goes to what was typed: an address (<c>mbl.is</c> is <c>https://mbl.is</c>), or words to search for. A
+    /// <c>file://</c> page is read as the one who sends it there: the refusal, or null when it went.</summary>
+    internal async Task<global::app.data.@this?> Navigate(string typed, global::app.actor.context.@this context)
+    {
+        var url = Where(typed);
+        if (await global::app.module.browser.type.browser.@this.Readable(url, context) is { } refused) return refused;
+        await (await Page()).Navigate(url);
+        return null;
+    }
 
     internal async Task Post(string text) => await (await Page()).Post(text);
 

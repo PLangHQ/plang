@@ -1,0 +1,348 @@
+{
+  "name": "Screen",
+  "comment": "The browser on PlangOS's screen: Chromium drawing onto the display, its first page an app window (no tabs, no\ntoolbar) that becomes the desktop. DevTools speaks over its pipe (fd 3 and 4), no port. It starts on plang's own blank\npage (an app window needs a real page; about:blank opens a tab): the page it shows is the caller's to give, over the\npipe — never on this command line.\nTrusted by origin (579): this goal ships with plang, so it starts Chromium without asking — only because it names\nthe program, every flag and the environment itself. %!app.AbsolutePath% and %!app.OsAbsolutePath% are the app's own\nanchors (no caller sets them); any other variable here would make the start the caller's, and asked.",
+  "step": [
+    {
+      "index": 0,
+      "text": "delete file '/.browser/SingletonLock', on error 'NotFound' ignore",
+      "line": {
+        "number": 12
+      },
+      "comment": "a Chromium that was killed (PlangOS closed hard) leaves its profile's lock naming its process; in a new PlangOS\nanother process can have that number, and the new Chromium would hand its page to \"the running one\" and exit.\nNone of ours runs yet: the lock is stale.",
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "/.browser/SingletonLock"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "NotFound"
+            },
+            {
+              "name": "Ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "delete file '/.browser/SingletonSocket', on error 'NotFound' ignore",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "/.browser/SingletonSocket"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "NotFound"
+            },
+            {
+              "name": "Ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "delete file '/.browser/SingletonCookie', on error 'NotFound' ignore",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "/.browser/SingletonCookie"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "NotFound"
+            },
+            {
+              "name": "Ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "start terminal '//usr/lib/chromium/chromium' with parameters '--ozone-platform=wayland', '--no-first-run',\n'--no-default-browser-check', '--disable-gpu-compositing', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',\n'--num-raster-threads=4', '--hide-crash-restore-bubble', '--disable-quic',\n'--disable-blink-features=AutomationControlled', '--in-process-gpu',\n'--disable-features=SpareRendererForSitePerProcess,WebUIOmniboxPopup,WebUIOmniboxAimPopup',\n'--user-data-dir=%!app.AbsolutePath%/.browser', '--remote-debugging-pipe',\n'--app=file://%!app.OsAbsolutePath%/system/browser/blank.html',\nwith environment variables XDG_RUNTIME_DIR=\"%!app.AbsolutePath%/.run\" and WAYLAND_DISPLAY=\"wayland-plang\",\nkeep running, with pipe, write to %program%",
+      "line": {
+        "number": 15
+      },
+      "code": [
+        {
+          "module": "terminal",
+          "name": "open",
+          "property": [
+            {
+              "name": "App",
+              "type": {
+                "name": "text"
+              },
+              "value": "//usr/lib/chromium/chromium"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": ["--ozone-platform=wayland","--no-first-run","--no-default-browser-check","--disable-gpu-compositing","--use-angle=swiftshader","--enable-unsafe-swiftshader","--num-raster-threads=4","--hide-crash-restore-bubble","--disable-quic","--disable-blink-features=AutomationControlled","--in-process-gpu","--disable-features=SpareRendererForSitePerProcess,WebUIOmniboxPopup,WebUIOmniboxAimPopup","--user-data-dir=%!app.AbsolutePath%/.browser","--remote-debugging-pipe","--app=file://%!app.OsAbsolutePath%/system/browser/blank.html"],
+              "variable": [
+                {
+                  "text": "%!app.AbsolutePath%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "AbsolutePath"
+                    }
+                  ]
+                },
+                {
+                  "text": "%!app.OsAbsolutePath%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "OsAbsolutePath"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Environment",
+              "type": {
+                "name": "dict",
+                "template": "plang"
+              },
+              "value": {"XDG_RUNTIME_DIR":"%!app.AbsolutePath%/.run","WAYLAND_DISPLAY":"wayland-plang"},
+              "variable": [
+                {
+                  "text": "%!app.AbsolutePath%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "AbsolutePath"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Pipe",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "binary",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%program%",
+              "variable": [
+                {
+                  "text": "%program%",
+                  "code": [
+                    {
+                      "variable": "program"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "return %program%",
+      "line": {
+        "number": 24
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "return",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%program%",
+              "variable": [
+                {
+                  "text": "%program%",
+                  "code": [
+                    {
+                      "variable": "program"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "depth",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/system/browser/Screen.goal",
+  "prPath": "/system/browser/.build/screen.pr",
+  "hash": "7352040b3002489acb4c68289c438e291556c0f98d2fde38b2887c1c29814271"
+}
