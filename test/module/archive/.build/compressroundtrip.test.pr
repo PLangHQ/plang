@@ -312,7 +312,7 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/serialization/CompressRoundTrip.test.goal",
-  "prPath": "/serialization/.build/compressroundtrip.test.pr",
+  "path": "/module/archive/CompressRoundTrip.test.goal",
+  "prPath": "/module/archive/.build/compressroundtrip.test.pr",
   "hash": "a40906af1f68bd6383893bd81a07c01ee2c4d4fce1daba1fe5a7f941eb2d3166"
 }
