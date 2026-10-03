@@ -1250,10 +1250,17 @@
           "category": "doc",
           "confidence": "high",
           "context": "Taught identity (8 actions). Export hands out a private key — notes restrict it to steps that say 'export', and a guard: 'get my identity' never builds export. Measured all 10 scenarios clean: IDGETME (guard) → identity.get, no Name, NOT export 5/5; IDEXP → export 5/5; get/list/create(+Default)/setDefault/archive/rename/unarchive all 3-5/5. Re-pinned pick_golden with signing in one pass (net +signing & +identity e.g. lines only; all four decider fixtures green; no page golden for these modules)."
+        },
+        {
+          "paths": ["test/plan/task/module/goal/call/PlainCallWaits.test.goal", "test/plan/task/module/goal/call/ParallelAnswersATask.test.goal", "test/plan/task/module/goal/call/TaskListedWhileRunning.test.goal", "test/plan/task/module/task/cancel/CancelStops.test.goal", "test/plan/task/module/task/cancel/CancelAnswer.test.goal", "test/plan/task/module/task/cancel/WaitOnCancelledFails.test.goal", "test/plan/task/module/task/wait/WaitAnswersResult.test.goal", "test/plan/task/module/task/wait/WaitForSeveral.test.goal", "test/plan/task/module/task/wait/WaitForList.test.goal", "test/plan/task/module/task/wait/LateWaitGetsFailure.test.goal", "test/plan/app-systems/app/variable/NowIsReadFresh.test.goal", "test/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline.test.goal"],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "Issue 59: timer.sleep's Ms param removed (coder f13566924), now Duration. Migrated 10 formal timer.sleep(Ms=N) step texts to Duration=\"...\" + 1 natural 'sleep 1000 ms' to 'sleep 1 second', same milliseconds. Rebuilt all 12 fresh; plang --test = 58 pass. Finding: whole-second ms (1000ms->1s) normalizes and the Cover check refuses the vanished literal; wrote canonical 1s/2s. Routed the Cover-vs-normalization interaction to architect as a core note (goal/step/this.Validate.cs)."
         }
       ],
       "after": {
-        "status": "All assigned teaching landed: channel.set, ui.render, setting, UR2 kernel line, signing, identity, assert (examples+notes), error.throw. assert measured on 10 real stale test goals: 10/10 build clean, 20/20 assert steps map to the right action (incl. 'is not null'->isNotNull vs 'is not \"X\"'->notEquals). error.throw %!error% -> Data alone 5/5 (was 3/5; fixed by making Message literal-only + examples). snapshot 58 confirmed: resume %snap% saves on the rebuilt binary (f1526a48d). Next queued: issue 41 regression on plang-os-stable (window.call rename). db/environment on hold; TR1/SL2 core.",
+        "status": "All assigned work landed + measured: channel.set, ui.render, setting, UR2 kernel, signing, identity, assert (10/10 real test goals, 20/20 asserts right), error.throw (Data 5/5), snapshot 58 confirmed (resume %snap% saves), timer 59 (12 goals migrated, 58 pass, committed 74c0d75fb). Core findings routed: TR1 (parked), SL2 folded into 59, Cover-vs-duration-normalization. Next queued: issue 41 regression on plang-os-stable (window.callGoal->window.call) — a branch switch. db/environment on hold.",
         "health": "green",
         "notes": "Properties.llm (writer system prompt) is NOT pinned by the four decider fixtures or ModulePageTests — generalizing line 40 (named-arg keeps its name even matching its var) moved none of them. Each os/system/modules/**/*.md commit still runs all four decider fixtures; re-pin what moved. Examples parser takes each 'Step text:' as an e.g. for THAT action — never put another module's contrast step in an examples file (notes only)."
       }
