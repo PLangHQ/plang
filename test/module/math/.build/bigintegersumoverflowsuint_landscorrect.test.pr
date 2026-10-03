@@ -1,0 +1,287 @@
+{
+  "name": "Start",
+  "comment": "The Stage 2 marquee row at the goal surface. 3_000_000_000 + 2_000_000_000\noverflows uint(uint.MaxValue ~ 4.29e9). Under Way 3 the addition promotes\nto BigInteger, computes 5_000_000_000, and narrows the result to long —\nno silent uint wrap. The goal test pins the sum's value; the kind-on-the-\nresult test (`%sum.Type.Kind%` == \"long\") sits in C# NumberArithmeticTests.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %a% = 3000000000",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%a%",
+              "variable": [
+                {
+                  "text": "%a%",
+                  "code": [
+                    {
+                      "variable": "a"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 3000000000
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %b% = 2000000000",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%b%",
+              "variable": [
+                {
+                  "text": "%b%",
+                  "code": [
+                    {
+                      "variable": "b"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 2000000000
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %sum% = %a% + %b%",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "math",
+          "name": "add",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%a%",
+              "variable": [
+                {
+                  "text": "%a%",
+                  "code": [
+                    {
+                      "variable": "a"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%b%",
+              "variable": [
+                {
+                  "text": "%b%",
+                  "code": [
+                    {
+                      "variable": "b"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "overflow",
+              "type": {
+                "name": "choice",
+                "kind": "overflow"
+              },
+              "value": "Promote"
+            },
+            {
+              "name": "precision",
+              "type": {
+                "name": "choice",
+                "kind": "precision"
+              },
+              "value": "Error"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%sum%",
+              "variable": [
+                {
+                  "text": "%sum%",
+                  "code": [
+                    {
+                      "variable": "sum"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %sum% equals 5000000000",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 5000000000
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%sum%",
+              "variable": [
+                {
+                  "text": "%sum%",
+                  "code": [
+                    {
+                      "variable": "sum"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/math/BigIntegerSumOverflowsUInt_LandsCorrect.test.goal",
+  "prPath": "/module/math/.build/bigintegersumoverflowsuint_landscorrect.test.pr",
+  "hash": "76503d62610f3b4dc659909be627b91a8ba48b82d969df3b43da21c1cf9c2be5"
+}

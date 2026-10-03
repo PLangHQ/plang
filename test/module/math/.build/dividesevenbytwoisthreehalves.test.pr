@@ -1,0 +1,155 @@
+{
+  "name": "Start",
+  "comment": "The divide-footgun rule, end-to-end: 7 / 2 leaves the integer track and yields 3.5,\nnot 3. Promotion happens at the number type, not in the handler.",
+  "step": [
+    {
+      "index": 0,
+      "text": "math.divide A=7 B=2, write to %quotient%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "math",
+          "name": "divide",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "number"
+              },
+              "value": 7
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            }
+          ],
+          "default": [
+            {
+              "name": "overflow",
+              "type": {
+                "name": "choice",
+                "kind": "overflow"
+              },
+              "value": "Promote"
+            },
+            {
+              "name": "precision",
+              "type": {
+                "name": "choice",
+                "kind": "precision"
+              },
+              "value": "Error"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%quotient%",
+              "variable": [
+                {
+                  "text": "%quotient%",
+                  "code": [
+                    {
+                      "variable": "quotient"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %quotient% equals 3.5",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%quotient%",
+              "variable": [
+                {
+                  "text": "%quotient%",
+                  "code": [
+                    {
+                      "variable": "quotient"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "number"
+              },
+              "value": 3.5
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/math/DivideSevenByTwoIsThreeHalves.test.goal",
+  "prPath": "/module/math/.build/dividesevenbytwoisthreehalves.test.pr",
+  "hash": "cdd6531af1f15ec1ce5f35c302b578834ef65e8f93a2e104811d9d45d928f9f6"
+}
