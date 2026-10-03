@@ -212,6 +212,27 @@ public class PickOptionTests : System.IAsyncDisposable
         await Assert.That(separated.Any(r => r.Contains("writes Separator"))).IsFalse();
     }
 
+    // a property written on an action that doesn't have it, when another action the decider offered for the step does,
+    // is refused naming that action — the retry writes it there; a property no offered action has keeps the plain refusal
+    [Test]
+    public async Task APropertyOnTheWrongAction_IsRefusedNamingTheOfferedActionThatTakesIt()
+    {
+        var step = Step("call Show with the file at 'x.txt'");
+        await step.Pick.Take(Answer(("s0_goal.call", Yes(0.93)), ("s0_file.read", Yes(0.81))), [], Ctx);
+        var reader = new global::app.goal.step.action.formal.Reader(step, _app.module.list);
+
+        var named = reader.Read("""goal.call(Name="Show", Path="x.txt")""", Ctx);
+        var plain = reader.Read("""goal.call(Name="Show", Window="w")""", Ctx);
+        var retried = reader.Read("""file.read(Path="x.txt"); goal.call(Name="Show")""", Ctx);
+
+        await named.IsFailure();
+        await Assert.That(named.Error!.Message).Contains("`goal.call` has no property `Path`");
+        await Assert.That(named.Error!.Message).Contains("`file.read` takes `Path`");
+        await plain.IsFailure();
+        await Assert.That(plain.Error!.Message).DoesNotContain("takes `Window`");
+        await retried.IsSuccess();
+    }
+
     // a pick no offer shows (a goal the step can't reach) chooses nothing: the slot stays to fill
     [Test]
     public async Task APickNoOfferShows_ChoosesNothing()

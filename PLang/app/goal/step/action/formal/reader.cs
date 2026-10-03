@@ -211,7 +211,11 @@ public sealed class Reader
                 if (declared == null)
                 {
                     var have = catalog.Property.Select(p => p.Name).ToList();
-                    Fail($"`{module}.{name}` has no property `{prop}` (it has {(have.Count > 0 ? string.Join(", ", have) : "none")})", at);
+                    // another action the decider offered for this step that has the property is likely the one meant
+                    var takes = _step.Pick.Listed.Select(l => l.Name).Where(other => other != $"{module}.{name}")
+                        .FirstOrDefault(other => other.Split('.', 2) is [var m, var a] && Module(m)?[a]?.Property[prop] != null);
+                    Fail($"`{module}.{name}` has no property `{prop}` (it has {(have.Count > 0 ? string.Join(", ", have) : "none")})"
+                        + (takes != null ? $"; `{takes}` takes `{prop}`" : ""), at);
                 }
                 // a list of actions (on.error's Recovery) is program: each action read here, holding this step
                 if (declared!.Type.Name == "list" && declared.Type.kind.Name == "action")
