@@ -80,6 +80,7 @@ internal sealed class Mft : IDecoder
     private readonly IntPtr transform;
     private readonly IntPtr output = Marshal.AllocHGlobal(32);   // MFT_OUTPUT_DATA_BUFFER
     private readonly Avcc? avcc;
+    private readonly Lender lender = new();   // its pictures' buffers, used again
     private byte[]? first;   // before the first sample: H.264's parameter sets, AV1's sequence header (av1C's configOBUs)
     private int frameWidth, frameHeight, stride, showWidth, showHeight;
 
@@ -240,24 +241,15 @@ internal sealed class Mft : IDecoder
         }
     }
 
-    // NV12 — the lumas, then U and V interleaved per 2×2 block, rows of the frame's (padded) height — as the picture
-    // it shows: the planes apart, cut to what is shown
+    // NV12 — the lumas, then U and V side by side per 2×2 block, rows of the frame's (padded) height — as the picture it
+    // shows, as it is: the rows shown copied once into a borrowed buffer (no planes apart, no new memory)
     private Yuv? Picture(IntPtr data, int length)
     {
         if (length < stride * frameHeight * 3 / 2 || showWidth <= 0 || showHeight <= 0) return null;
-        var Y = new byte[stride * showHeight];
-        Marshal.Copy(data, Y, 0, Y.Length);
-        int cWidth = (showWidth + 1) / 2, cHeight = (showHeight + 1) / 2;
-        var row = new byte[cWidth * 2];
-        var U = new byte[cWidth * cHeight];
-        var V = new byte[U.Length];
-        var colour = data + stride * frameHeight;
-        for (var y = 0; y < cHeight; y++)
-        {
-            Marshal.Copy(colour + y * stride, row, 0, row.Length);
-            for (var x = 0; x < cWidth; x++) { U[y * cWidth + x] = row[2 * x]; V[y * cWidth + x] = row[2 * x + 1]; }
-        }
-        return new Yuv(Y, U, V, stride, cWidth, showWidth, showHeight);
+        var yuv = Yuv.Nv12(lender, stride, showWidth, showHeight);
+        Marshal.Copy(data, yuv.Data, 0, stride * showHeight);
+        Marshal.Copy(data + stride * frameHeight, yuv.Data, yuv.UAt, stride * ((showHeight + 1) / 2));
+        return yuv;
     }
 
     /// <summary>A new output sample (to let go of), with a buffer of at least <paramref name="size"/> bytes aligned to

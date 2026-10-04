@@ -19,8 +19,12 @@ public class MediaTests
     private sealed class Grey : IDecoder
     {
         public List<(double time, Yuv picture)> Decode(ReadOnlyMemory<byte> sample, double time)
-            => [(time, new Yuv(Enumerable.Repeat((byte)200, 16 * 16).ToArray(), Enumerable.Repeat((byte)128, 8 * 8).ToArray(),
-                Enumerable.Repeat((byte)128, 8 * 8).ToArray(), 16, 8, 16, 16))];
+        {
+            var grey = Yuv.Planes(null, 16, 8, 16, 16);
+            grey.Data.AsSpan(0, 16 * 16).Fill(200);
+            grey.Data.AsSpan(grey.UAt, 2 * 8 * 8).Fill(128);
+            return [(time, grey)];
+        }
 
         public void Dispose() { }
     }

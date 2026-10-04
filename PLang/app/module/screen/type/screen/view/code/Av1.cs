@@ -29,6 +29,7 @@ internal sealed class Av1 : IDecoder
     // Dav1dData (72 bytes in dav1d 1.x) and Dav1dPicture (~260): room to spare, zeroed before each use
     private readonly IntPtr data = Marshal.AllocHGlobal(256), picture = Marshal.AllocHGlobal(1024);
     private IntPtr context;
+    private readonly Lender lender = new();   // its pictures' buffers, used again
 
     // the stream's sequence header (av1C's configOBUs), given before the first sample: a decoder started at a key
     // frame later in the stream (a seek) has no other — key frames needn't repeat it
@@ -91,13 +92,12 @@ internal sealed class Av1 : IDecoder
             if (layout != 1 || bpc != 8) return (true, null);   // DAV1D_PIXEL_LAYOUT_I420, 8 bits
             var yStride = (int)Marshal.ReadInt64(picture, 40);
             var cStride = (int)Marshal.ReadInt64(picture, 48);
-            var Y = new byte[yStride * h];
-            var U = new byte[cStride * ((h + 1) / 2)];
-            var V = new byte[U.Length];
-            Marshal.Copy(Marshal.ReadIntPtr(picture, 16), Y, 0, Y.Length);
-            Marshal.Copy(Marshal.ReadIntPtr(picture, 24), U, 0, U.Length);
-            Marshal.Copy(Marshal.ReadIntPtr(picture, 32), V, 0, V.Length);
-            return (true, (time, new Yuv(Y, U, V, yStride, cStride, w, h)));
+            var yuv = Yuv.Planes(lender, yStride, cStride, w, h);
+            var colour = cStride * ((h + 1) / 2);
+            Marshal.Copy(Marshal.ReadIntPtr(picture, 16), yuv.Data, 0, yStride * h);
+            Marshal.Copy(Marshal.ReadIntPtr(picture, 24), yuv.Data, yuv.UAt, colour);
+            Marshal.Copy(Marshal.ReadIntPtr(picture, 32), yuv.Data, yuv.VAt, colour);
+            return (true, (time, yuv));
         }
         finally { dav1d_picture_unref(picture); }
     }
