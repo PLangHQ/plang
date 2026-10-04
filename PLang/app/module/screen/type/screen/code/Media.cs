@@ -55,7 +55,8 @@ internal sealed class Media : IDisposable
             {
                 case 10 when m.Length >= 13:
                     if (!streams.TryGetValue(id, out var s)) streams[id] = s = new Stream(decoding);
-                    s.Start(System.Text.Encoding.ASCII.GetString(m, 5, 4).Trim(), m[13..]);
+                    s.Start(System.Text.Encoding.ASCII.GetString(m, 5, 4).Trim(), m[13..],
+                        BinaryPrimitives.ReadUInt16LittleEndian(m.AsSpan(9)), BinaryPrimitives.ReadUInt16LittleEndian(m.AsSpan(11)));
                     break;
                 case 11 when m.Length >= 30 && streams.TryGetValue(id, out var sampled):
                     sampled.Add(BinaryPrimitives.ReadDoubleLittleEndian(m.AsSpan(5)), BinaryPrimitives.ReadDoubleLittleEndian(m.AsSpan(13)),
@@ -76,22 +77,39 @@ internal sealed class Media : IDisposable
         return true;
     }
 
-    /// <summary>The videos drawn over <paramref name="screen"/> (BGRA, <paramref name="width"/> × <paramref name="height"/>):
-    /// at each one's place, where the page shows its key colour.</summary>
-    internal void Draw(byte[] screen, int width, int height)
+    /// <summary>A new picture is ready at this place on the screen (a window repaints it).</summary>
+    internal event Action<Rect>? Presented;
+
+    /// <summary>Where the videos show now: each one's place, while the page shows it.</summary>
+    internal Rect[] Places
+    {
+        get
+        {
+            lock (gate) return [.. streams.Values.Select(s => s.Place).Where(p => !p.Empty)];
+        }
+    }
+
+    /// <summary>The videos drawn over <paramref name="pixels"/> — the BGRA rows of <paramref name="area"/> of the
+    /// screen (the whole screen, or a window's part to repaint): at each one's place, where the page shows its key
+    /// colour.</summary>
+    internal void Draw(Span<byte> pixels, Rect area)
     {
         lock (gate)
-            foreach (var s in streams.Values) s.Draw(screen, width, height);
+            foreach (var s in streams.Values) s.Draw(pixels, area);
     }
 
     private void Present()
     {
         var tick = Stopwatch.StartNew();
+        var presented = new List<Rect>();
         while (!stopping)
         {
             lock (gate)
                 foreach (var s in streams.Values)
-                    if (s.Present()) Shown++;
+                    if (s.Present()) { Shown++; presented.Add(s.Place); }
+            // told outside the gate: a window repaints at once, drawing the videos (which takes the gate)
+            foreach (var place in presented) Presented?.Invoke(place);
+            presented.Clear();
             var wait = 16 - (int)(tick.ElapsedMilliseconds % 16);
             Thread.Sleep(wait);
         }
@@ -114,7 +132,7 @@ internal sealed class Media : IDisposable
         private readonly record struct Sample(double Time, double Decode, bool Key, byte[] Bytes, int Generation);
 
         private readonly List<Sample> samples = new();          // in decode order
-        private readonly List<(string codec, byte[] config)> generations = new();
+        private readonly List<(string codec, byte[] config, int width, int height)> generations = new();
         private readonly List<(double time, Yuv picture)> decoded = new();
         private IDecoder? decoder;
         private int decoderGeneration = -1, clocks;
@@ -150,7 +168,7 @@ internal sealed class Media : IDisposable
             $"times of the last 5 shown: {string.Join(" ", lastShown)}";
         private readonly Queue<string> lastShown = new();
 
-        internal void Start(string codec, byte[] config) => generations.Add((codec, config));
+        internal void Start(string codec, byte[] config, int width, int height) => generations.Add((codec, config, width, height));
 
         internal void Add(double time, double decode, bool key, ReadOnlyMemory<byte> bytes)
         {
@@ -226,8 +244,8 @@ internal sealed class Media : IDisposable
             if (s.Generation != decoderGeneration)
             {
                 decoder?.Dispose();
-                var (codec, config) = generations[s.Generation];
-                decoder = decoding.Make(codec, config);
+                var (codec, config, width, height) = generations[s.Generation];
+                decoder = decoding.Make(codec, config, width, height);
                 decoderGeneration = s.Generation;
             }
             fedUpTo = Math.Max(fedUpTo, s.Time);
@@ -269,22 +287,26 @@ internal sealed class Media : IDisposable
             if (keep > 0) samples.RemoveRange(0, keep);
         }
 
-        /// <summary>Its picture over <paramref name="screen"/> at its place, where the page shows the key colour.</summary>
-        internal void Draw(byte[] screen, int width, int height)
+        /// <summary>Where it shows: its place while the page shows it and a picture is drawn, else empty.</summary>
+        internal Rect Place => layer != null && shown ? place : default;
+
+        /// <summary>Its picture over <paramref name="pixels"/> (the BGRA rows of <paramref name="area"/>) at its place,
+        /// where the page shows the key colour.</summary>
+        internal void Draw(Span<byte> pixels, Rect area)
         {
             if (layer == null || !shown || layer.Length != place.Width * place.Height * 4) return;
-            int x0 = Math.Max(0, place.X), y0 = Math.Max(0, place.Y);
-            int x1 = Math.Min(width, place.Right), y1 = Math.Min(height, place.Bottom);
-            for (var y = y0; y < y1; y++)
+            var both = place.Clip(area);
+            if (both.Empty) return;
+            for (var y = both.Y; y < both.Bottom; y++)
             {
-                var row = y * width * 4;
+                var row = ((y - area.Y) * area.Width - area.X) * 4;
                 var from = ((y - place.Y) * place.Width - place.X) * 4;
-                for (var x = x0; x < x1; x++)
+                for (var x = both.X; x < both.Right; x++)
                 {
                     var o = row + x * 4;
-                    if (screen[o] != key.b || screen[o + 1] != key.g || screen[o + 2] != key.r) continue;
+                    if (pixels[o] != key.b || pixels[o + 1] != key.g || pixels[o + 2] != key.r) continue;
                     var l = from + x * 4;
-                    screen[o] = layer[l]; screen[o + 1] = layer[l + 1]; screen[o + 2] = layer[l + 2]; screen[o + 3] = 255;
+                    pixels[o] = layer[l]; pixels[o + 1] = layer[l + 1]; pixels[o + 2] = layer[l + 2]; pixels[o + 3] = 255;
                 }
             }
         }

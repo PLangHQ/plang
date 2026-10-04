@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using Media = global::app.module.screen.type.screen.code.Media;
+using Rect = global::app.module.screen.type.screen.display.code.Rect;
 using Shown = global::app.module.screen.type.screen.code.Shown;
 using Text = global::app.type.item.text.@this;
 
@@ -58,7 +59,7 @@ public sealed class @this : screen.@this
         {
             byte[] copy;
             lock (_shown.Lock) copy = (byte[])_shown.Pixels.Clone();
-            _media.Draw(copy, _shown.Width, _shown.Height);   // the videos it plays itself, where the page shows them
+            _media.Draw(copy, new Rect(0, 0, _shown.Width, _shown.Height));   // the videos it plays itself, where the page shows them
             using var image = Image.LoadPixelData<Bgra32>(copy, _shown.Width, _shown.Height);
             using var png = new MemoryStream();
             image.SaveAsPng(png);
