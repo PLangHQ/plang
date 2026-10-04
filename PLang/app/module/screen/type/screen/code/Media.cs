@@ -181,7 +181,8 @@ internal sealed class Media : IDisposable
         private string? trouble;              // what went wrong last (a decoder that wouldn't start, a sample it refused)
         private int troubles;
 
-        internal string Numbers => (trouble == null ? "" : $"TROUBLE ×{troubles}: {trouble}; ") +
+        // with trouble, the stream's config (avcC: version, profile, compatibility, level, …, its SPS): what it is
+        internal string Numbers => (trouble == null ? "" : $"TROUBLE ×{troubles}: {trouble} (config {Convert.ToHexString(generations[^1].config.AsSpan(0, Math.Min(48, generations[^1].config.Length)))}); ") +
             $"{(generations.Count > 0 ? generations[^1].codec : "?")} {added} samples ({samples.Count} kept), {decodedCount} decoded, {restarts} restarts, " +
             $"ticks: {noPicture} no picture yet, {same} same picture, {hidden} not shown; clock {clock:F2} playing {playing} at {place}; " +
             $"now {Now:F3}, {clocks} clocks (last {Stopwatch.GetElapsedTime(clockedAt).TotalSeconds:F1} s ago), decoded up to {(decoded.Count > 0 ? decoded[^1].time : double.NaN):F3}, next sample shows {(Next < samples.Count ? samples[Next].Time : double.NaN):F3} " +

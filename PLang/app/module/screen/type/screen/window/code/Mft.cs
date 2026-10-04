@@ -13,6 +13,8 @@ namespace app.module.screen.type.screen.window.code;
 internal sealed class Mft : IDecoder
 {
     private static readonly Guid DecoderCategory = new("d6c02d4b-6833-45b4-971a-05a4b04bab91"); // MFT_CATEGORY_VIDEO_DECODER
+    private static readonly Guid H264Decoder = new("62CE7E72-4C71-4d20-B15D-452831A87D9D");     // CLSID_CMSH264DecoderMFT
+    private static readonly Guid Interlace = new("e2724bb8-e676-4806-b4b2-a8d6efb44ccd");       // MF_MT_INTERLACE_MODE
     private static readonly Guid TransformInterface = new("bf94c121-5b05-4e6f-8000-ba598961414d"); // IID_IMFTransform
     private static readonly Guid MajorType = new("48eba18e-f8c9-4687-bf11-0a74c9f96a8f");       // MF_MT_MAJOR_TYPE
     private static readonly Guid SubType = new("f7e34c9a-42e8-4714-b74b-cb29d72c35e5");         // MF_MT_SUBTYPE
@@ -30,7 +32,7 @@ internal sealed class Mft : IDecoder
 
     // vtable slots: IUnknown 0–2; IMFAttributes 3–32; IMFMediaType / IMFSample / IMFActivate go on from 33
     private const int Release = 2;
-    private const int GetUINT32 = 7, GetUINT64 = 8, GetGUID = 10, GetBlob = 15, SetUINT64 = 22, SetGUID = 24;
+    private const int GetUINT32 = 7, GetUINT64 = 8, GetGUID = 10, GetBlob = 15, SetUINT32 = 21, SetUINT64 = 22, SetGUID = 24;
     private const int ActivateObject = 33;
     private const int GetOutputStreamInfo = 7, GetOutputAvailableType = 14, SetInputType = 15,
         SetOutputType = 16, GetOutputCurrentType = 18, ProcessMessage = 23, ProcessInput = 24, ProcessOutput = 25;
@@ -40,6 +42,7 @@ internal sealed class Mft : IDecoder
     [UnmanagedFunctionPointer(CallingConvention.StdCall)] private delegate int Call0(IntPtr self);
     [UnmanagedFunctionPointer(CallingConvention.StdCall)] private delegate int CallPtr(IntPtr self, out IntPtr result);
     [UnmanagedFunctionPointer(CallingConvention.StdCall)] private delegate int CallPtrIn(IntPtr self, IntPtr value);
+    [UnmanagedFunctionPointer(CallingConvention.StdCall)] private delegate int CallGuidU32(IntPtr self, in Guid key, int value);
     [UnmanagedFunctionPointer(CallingConvention.StdCall)] private delegate int CallGuidU64(IntPtr self, in Guid key, long value);
     [UnmanagedFunctionPointer(CallingConvention.StdCall)] private delegate int CallGuidGuid(IntPtr self, in Guid key, in Guid value);
     [UnmanagedFunctionPointer(CallingConvention.StdCall)] private delegate int GetGuidOut(IntPtr self, in Guid key, out Guid value);
@@ -64,6 +67,7 @@ internal sealed class Mft : IDecoder
 
     [DllImport("ole32.dll")] private static extern int CoInitializeEx(IntPtr reserved, int model);
     [DllImport("ole32.dll")] private static extern void CoTaskMemFree(IntPtr memory);
+    [DllImport("ole32.dll")] private static extern int CoCreateInstance(in Guid clsid, IntPtr outer, int context, in Guid iid, out IntPtr instance);
     [DllImport("mfplat.dll")] private static extern int MFStartup(int version, int flags);
     [DllImport("mfplat.dll")] private static extern int MFTEnumEx(Guid category, int flags, in TypeInfo input, IntPtr output, out IntPtr activates, out int count);
     [DllImport("mfplat.dll")] private static extern int MFCreateMediaType(out IntPtr type);
@@ -104,10 +108,16 @@ internal sealed class Mft : IDecoder
     {
         if (Format(codec) is not { } format) throw new InvalidOperationException($"no decoder for {codec}");
         if (!Start()) throw new InvalidOperationException("Media Foundation doesn't start");
-        var found = Find(format);
-        if (found == IntPtr.Zero) throw new InvalidOperationException($"Windows has no decoder for {codec}");
-        try { Check(Fn<Activate>(found, ActivateObject)(found, TransformInterface, out transform), $"{codec} decoder"); }
-        finally { Let(found); }
+        if (format == H264Format)
+            // Windows' own H.264 decoder, by name: the one the pixel path's H.264 has always used on this host
+            Check(CoCreateInstance(H264Decoder, IntPtr.Zero, 1, TransformInterface, out transform), "no H.264 decoder");
+        else
+        {
+            var found = Find(format);
+            if (found == IntPtr.Zero) throw new InvalidOperationException($"Windows has no decoder for {codec}");
+            try { Check(Fn<Activate>(found, ActivateObject)(found, TransformInterface, out transform), $"{codec} decoder"); }
+            finally { Let(found); }
+        }
 
         try
         {
@@ -120,6 +130,8 @@ internal sealed class Mft : IDecoder
                 Fn<CallGuidGuid>(input, SetGUID)(input, MajorType, VideoType);
                 Fn<CallGuidGuid>(input, SetGUID)(input, SubType, format);
                 if (width > 0 && height > 0) Fn<CallGuidU64>(input, SetUINT64)(input, FrameSize, ((long)width << 32) | (uint)height);
+                // progressive or interlaced, as the stream says (television is often interlaced)
+                Fn<CallGuidU32>(input, SetUINT32)(input, Interlace, 7);   // MFVideoInterlace_MixedInterlaceOrProgressive
                 Check(Fn<StreamType>(transform, SetInputType)(transform, 0, input, 0), $"{codec} in");
             }
             finally { Let(input); }
