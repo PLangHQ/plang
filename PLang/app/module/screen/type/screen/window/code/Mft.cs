@@ -15,6 +15,7 @@ internal sealed class Mft : IDecoder
     private static readonly Guid DecoderCategory = new("d6c02d4b-6833-45b4-971a-05a4b04bab91"); // MFT_CATEGORY_VIDEO_DECODER
     private static readonly Guid H264Decoder = new("62CE7E72-4C71-4d20-B15D-452831A87D9D");     // CLSID_CMSH264DecoderMFT
     private static readonly Guid Interlace = new("e2724bb8-e676-4806-b4b2-a8d6efb44ccd");       // MF_MT_INTERLACE_MODE
+    private static readonly Guid LowLatency = new("9c27891a-ed7a-40e1-88e8-b22727a024ee");      // MF_LOW_LATENCY
     private static readonly Guid TransformInterface = new("bf94c121-5b05-4e6f-8000-ba598961414d"); // IID_IMFTransform
     private static readonly Guid MajorType = new("48eba18e-f8c9-4687-bf11-0a74c9f96a8f");       // MF_MT_MAJOR_TYPE
     private static readonly Guid SubType = new("f7e34c9a-42e8-4714-b74b-cb29d72c35e5");         // MF_MT_SUBTYPE
@@ -34,7 +35,7 @@ internal sealed class Mft : IDecoder
     private const int Release = 2;
     private const int GetUINT32 = 7, GetUINT64 = 8, GetGUID = 10, GetBlob = 15, SetUINT32 = 21, SetUINT64 = 22, SetGUID = 24;
     private const int ActivateObject = 33;
-    private const int GetOutputStreamInfo = 7, GetOutputAvailableType = 14, SetInputType = 15,
+    private const int GetOutputStreamInfo = 7, GetAttributes = 8, GetOutputAvailableType = 14, SetInputType = 15,
         SetOutputType = 16, GetOutputCurrentType = 18, ProcessMessage = 23, ProcessInput = 24, ProcessOutput = 25;
     private const int GetSampleTime = 35, SetSampleTime = 36, ConvertToContiguousBuffer = 41, AddBuffer = 42;
     private const int Lock = 3, Unlock = 4, SetCurrentLength = 6;
@@ -73,6 +74,7 @@ internal sealed class Mft : IDecoder
     [DllImport("mfplat.dll")] private static extern int MFCreateMediaType(out IntPtr type);
     [DllImport("mfplat.dll")] private static extern int MFCreateSample(out IntPtr sample);
     [DllImport("mfplat.dll")] private static extern int MFCreateMemoryBuffer(int length, out IntPtr buffer);
+    [DllImport("mfplat.dll")] private static extern int MFCreateAlignedMemoryBuffer(int length, int alignment, out IntPtr buffer);
 
     private static readonly Lazy<bool> started = new(() => MFStartup(0x00020070, 0) >= 0);
 
@@ -81,8 +83,6 @@ internal sealed class Mft : IDecoder
     private readonly Avcc? avcc;
     private byte[]? first;   // before the first sample: H.264's parameter sets, AV1's sequence header (av1C's configOBUs)
     private int frameWidth, frameHeight, stride, showWidth, showHeight;
-    private IntPtr outSample;
-    private int outSize;
 
     /// <summary>The input format of <paramref name="codec"/> (as PlangOS names it), or null for one this doesn't know.</summary>
     private static Guid? Format(string codec) => codec switch
@@ -110,7 +110,15 @@ internal sealed class Mft : IDecoder
         if (!Start()) throw new InvalidOperationException("Media Foundation doesn't start");
         if (format == H264Format)
             // Windows' own H.264 decoder, by name: the one the pixel path's H.264 has always used on this host
+        {
             Check(CoCreateInstance(H264Decoder, IntPtr.Zero, 1, TransformInterface, out transform), "no H.264 decoder");
+            // each picture out as soon as it can be (as the pixel path's H.264 runs it)
+            if (Fn<CallPtr>(transform, GetAttributes)(transform, out var attributes) >= 0 && attributes != IntPtr.Zero)
+            {
+                Fn<CallGuidU32>(attributes, SetUINT32)(attributes, LowLatency, 1);
+                Let(attributes);
+            }
+        }
         else
         {
             var found = Find(format);
@@ -206,9 +214,11 @@ internal sealed class Mft : IDecoder
         while (true)
         {
             Check(Fn<StreamInfo>(transform, GetOutputStreamInfo)(transform, 0, out var info), "output info");
-            // the decoder gives its own samples (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES), or takes ours: one, kept
+            // the decoder gives its own samples (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES), or takes ours: a fresh one each time,
+            // aligned as it asks (one kept and given again: Windows' H.264 decoder gave the first picture of a High
+            // profile stream, then failed every one after — 0x80004005, ruv.is)
             var ours = (info.Flags & 0x100) == 0;
-            var sample = ours ? Out(Math.Max(info.Size, stride * frameHeight * 3 / 2)) : IntPtr.Zero;
+            var sample = ours ? Out(Math.Max(info.Size, stride * frameHeight * 3 / 2), info.Alignment) : IntPtr.Zero;
             Marshal.Copy(new byte[32], 0, output, 32);
             Marshal.WriteIntPtr(output, 8, sample);
             var hr = Fn<Output>(transform, ProcessOutput)(transform, 0, 1, output, out _);
@@ -232,7 +242,7 @@ internal sealed class Mft : IDecoder
             }
             finally
             {
-                if (!ours && sample != IntPtr.Zero) Let(sample);
+                if (sample != IntPtr.Zero) Let(sample);
             }
         }
     }
@@ -257,17 +267,15 @@ internal sealed class Mft : IDecoder
         return new Yuv(Y, U, V, stride, cWidth, showWidth, showHeight);
     }
 
-    /// <summary>The output sample, with a buffer of at least <paramref name="size"/> bytes.</summary>
-    private IntPtr Out(int size)
+    /// <summary>A new output sample (to let go of), with a buffer of at least <paramref name="size"/> bytes aligned to
+    /// <paramref name="alignment"/> (at least 16).</summary>
+    private static IntPtr Out(int size, int alignment)
     {
-        if (outSample != IntPtr.Zero && outSize >= size) return outSample;
-        if (outSample != IntPtr.Zero) Let(outSample);
-        Check(MFCreateSample(out outSample), "sample");
-        Check(MFCreateMemoryBuffer(size, out var buffer), "buffer");
-        Fn<CallPtrIn>(outSample, AddBuffer)(outSample, buffer);
+        Check(MFCreateSample(out var sample), "sample");
+        Check(MFCreateAlignedMemoryBuffer(size, Math.Max(alignment, 16) - 1, out var buffer), "buffer");
+        Fn<CallPtrIn>(sample, AddBuffer)(sample, buffer);
         Let(buffer);   // the sample holds it
-        outSize = size;
-        return outSample;
+        return sample;
     }
 
     /// <summary>The pictures come out as NV12: the first such type the decoder offers; the frame's size and row
@@ -306,7 +314,6 @@ internal sealed class Mft : IDecoder
 
     public void Dispose()
     {
-        if (outSample != IntPtr.Zero) Let(outSample);
         if (transform != IntPtr.Zero) Let(transform);
         Marshal.FreeHGlobal(output);
     }

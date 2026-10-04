@@ -23,7 +23,9 @@
     if (typeof window.plangVideo !== 'function') { setTimeout(() => say.flush(), 50); return; }
     while (waiting.length) window.plangVideo(waiting.shift());
   };
-  const KEY = 'rgb(1, 2, 3)';
+  // magenta: under a player's half-seen controls (a dark gradient, the soft edges of white text) the host can still
+  // tell how much of it shows through, and puts the video under them (screen code/Media.cs Under)
+  const KEY = 'rgb(255, 0, 255)';
   // a new page in the window (a reload, another address): the last page's videos are over — it never said so
   if (window === window.top) say({ video: 'page' });
 

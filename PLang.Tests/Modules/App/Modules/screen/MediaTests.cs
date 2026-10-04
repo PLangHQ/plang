@@ -46,16 +46,16 @@ public class MediaTests
         return m;
     }
 
-    private static byte[] Clock(byte id = 1)
+    private static byte[] Clock(byte id = 1, (byte r, byte g, byte b)? key = null)
     {
         var m = new byte[38];
         m[0] = 12; m[1] = id;
+        m[34] = 1;
+        (m[35], m[36], m[37]) = key ?? Key;
         BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(18), Place.X);
         BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(22), Place.Y);
         BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(26), Place.Width);
         BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(30), Place.Height);
-        m[34] = 1;
-        (m[35], m[36], m[37]) = Key;
         return m;
     }
 
@@ -69,14 +69,43 @@ public class MediaTests
         return px;
     }
 
-    private static async Task<Rect> Playing(Media media)
+    private static async Task<Rect> Playing(Media media, (byte r, byte g, byte b)? key = null)
     {
         var presented = new TaskCompletionSource<Rect>(TaskCreationOptions.RunContinuationsAsynchronously);
         media.Presented += place => presented.TrySetResult(place);
         media.Take(Start());
         media.Take(Sample());
-        media.Take(Clock());
+        media.Take(Clock(key: key));
         return await presented.Task.WaitAsync(TimeSpan.FromSeconds(5));
+    }
+
+    // a player's controls over a magenta key: half-seen black shows half the video, an opaque control stays the page's
+    [Test]
+    public async Task UnderAHalfSeenOverlay_TheVideoShowsThrough_AsMuchAsTheOverlayLets()
+    {
+        using var media = new Media(new Stand());
+        await Playing(media, (255, 0, 255));
+        var area = new Rect(10, 10, 3, 1);
+        // BGRA: magenta; magenta under 50% black (128, 0, 128); an opaque grey control
+        byte[] px = [255, 0, 255, 255, 128, 0, 128, 255, 90, 90, 90, 255];
+        media.Draw(px, area);
+        // the grey picture (Y 200, no colour) is ~214 in each channel
+        var full = px[0];
+        await Assert.That((int)full).IsBetween(205, 225);
+        await Assert.That((int)px[4]).IsEqualTo((128 * full + 127) / 255).Because("half the video under the half-seen black");
+        await Assert.That(px.AsSpan(8, 3).ToArray()).IsEquivalentTo(new byte[] { 90, 90, 90 });
+    }
+
+    // before its first picture, the video's place is black, not the key colour
+    [Test]
+    public async Task BeforeItsFirstPicture_ItsPlaceIsBlack()
+    {
+        using var media = new Media(new Stand());
+        media.Take(Start(codec: "none"));   // no decoder: no picture ever
+        media.Take(Clock(key: (255, 0, 255)));
+        byte[] px = [255, 0, 255, 255];
+        media.Draw(px, new Rect(10, 10, 1, 1));
+        await Assert.That(px).IsEquivalentTo(new byte[] { 0, 0, 0, 255 });
     }
 
     [Test]

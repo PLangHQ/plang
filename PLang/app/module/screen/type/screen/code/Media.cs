@@ -334,16 +334,21 @@ internal sealed class Media : IDisposable
         /// <summary>Where the page last said it is (shown or not).</summary>
         internal Rect Where => place;
 
-        /// <summary>Where it shows: its place while the page shows it and a picture is drawn, else empty.</summary>
-        internal Rect Place => layer != null && shown ? place : default;
+        /// <summary>Where it shows: its place while the page shows it (its picture, or black until there is one), else empty.</summary>
+        internal Rect Place => shown ? place : default;
 
         /// <summary>Its picture over <paramref name="pixels"/> (the BGRA rows of <paramref name="area"/>) at its place,
-        /// where the page shows the key colour.</summary>
+        /// where the page shows the key colour — and, with a magenta key, under what the page lays over it half-seen
+        /// (a player's dark gradient behind its controls, the soft edges of white text): see <see cref="Under"/>.</summary>
         internal void Draw(Span<byte> pixels, Rect area)
         {
-            if (layer == null || !shown || layer.Length != place.Width * place.Height * 4) return;
+            if (!shown) return;
             var both = place.Clip(area);
             if (both.Empty) return;
+            // no picture yet (it starts, a seek): black where it goes — as a player shows it, not the key colour
+            var picture = layer is { } l0 && l0.Length == place.Width * place.Height * 4 ? l0 : null;
+            ReadOnlySpan<byte> black = [0, 0, 0, 255];
+            var magenta = key == (255, 0, 255);
             for (var y = both.Y; y < both.Bottom; y++)
             {
                 var row = ((y - area.Y) * area.Width - area.X) * 4;
@@ -351,11 +356,29 @@ internal sealed class Media : IDisposable
                 for (var x = both.X; x < both.Right; x++)
                 {
                     var o = row + x * 4;
-                    if (pixels[o] != key.b || pixels[o + 1] != key.g || pixels[o + 2] != key.r) continue;
-                    var l = from + x * 4;
-                    pixels[o] = layer[l]; pixels[o + 1] = layer[l + 1]; pixels[o + 2] = layer[l + 2]; pixels[o + 3] = 255;
+                    var video = picture == null ? black : picture.AsSpan(from + x * 4, 4);
+                    if (pixels[o] == key.b && pixels[o + 1] == key.g && pixels[o + 2] == key.r)
+                    {
+                        pixels[o] = video[0]; pixels[o + 1] = video[1]; pixels[o + 2] = video[2]; pixels[o + 3] = 255;
+                    }
+                    else if (magenta) Under(pixels.Slice(o, 4), video);
                 }
             }
+        }
+
+        /// <summary>
+        /// A grey of any shade laid over magenta at any opacity <c>a</c> leaves red and blue equal, and green below them
+        /// by <c>(1 − a) · 255</c> — how much of the magenta, so of the video, shows through: what the page drew is
+        /// <c>a · grey = green</c>, and the video goes under it, <c>green + (red − green) / 255 · video</c>. Anything else
+        /// (a colour, an opaque grey: red = green) stays as the page drew it.
+        /// </summary>
+        private static void Under(Span<byte> page, ReadOnlySpan<byte> video)
+        {
+            int b = page[0], g = page[1], r = page[2];
+            if (r <= g || Math.Abs(r - b) > 2) return;
+            var through = r - g;
+            for (var c = 0; c < 3; c++) page[c] = (byte)(g + (through * video[c] + 127) / 255);
+            page[3] = 255;
         }
 
         public void Dispose()
