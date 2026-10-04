@@ -3,7 +3,7 @@ using System.Buffers.Binary;
 namespace app.module.browser.type.video.code;
 
 /// <summary>
-/// Fragmented MP4 as a page's player feeds it to Media Source (YouTube's "video/mp4"): an init segment (ftyp, moov)
+/// Fragmented MP4 as a page's player feeds it to Media Source ("video/mp4", any site): an init segment (ftyp, moov)
 /// says the video track's codec, its configuration and its size; each media segment (moof, mdat) holds samples —
 /// one coded picture each, with its time, its duration and whether a decoder can start at it (a key frame). Only what
 /// a decoder needs is read; the samples are slices of the segment, not copies.

@@ -48,6 +48,60 @@ public sealed class @this : browser.@this
     /// <summary>Hands what a page of the app's own says (<c>plang(text)</c>) to OnMessage.</summary>
     internal Func<string, Task>? Message { get; private set; }
 
+    // ---- a page's video the host plays itself (pass-through) ----------------------------------------
+
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<(long window, int stream), video.@this> _videos = new();
+    private int _nextVideo;
+
+    /// <summary>The script every page runs before its own once the host has said what it decodes: the codecs, then
+    /// os/system/browser/video.js. None until then — a page's video is Chromium's and goes as pixels.</summary>
+    internal string? VideoScript { get; private set; }
+
+    /// <summary>What window <paramref name="window"/>'s page says about its videos (<c>plangVideo(json)</c>): a stream
+    /// starts, a chunk, its clock, it ends — each to its stream, which tells the host.</summary>
+    internal Func<string, Task> Video(long window) => said =>
+    {
+        try
+        {
+            using var json = JsonDocument.Parse(said);
+            var e = json.RootElement;
+            var stream = e.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.Number ? id.GetInt32() : 0;
+            switch (e.TryGetProperty("video", out var what) ? what.GetString() : null)
+            {
+                case "start":
+                    _videos[(window, stream)] = new video.@this((uint)Interlocked.Increment(ref _nextVideo), _display.Wayland);
+                    break;
+                case "chunk" when _videos.TryGetValue((window, stream), out var v):
+                    v.Chunk(Convert.FromBase64String(e.GetProperty("data").GetString() ?? ""),
+                        e.TryGetProperty("offset", out var o) && o.ValueKind == JsonValueKind.Number ? o.GetDouble() : 0);
+                    break;
+                case "clock" when e.TryGetProperty("ids", out var ids):
+                    var page = _display.Wayland.PagePlace((int)window);
+                    foreach (var each in ids.EnumerateArray())
+                        if (_videos.TryGetValue((window, each.GetInt32()), out var playing)) playing.Clock(e, page);
+                    break;
+                case "end" when _videos.TryRemove((window, stream), out var ended):
+                    ended.End();
+                    break;
+            }
+        }
+        catch (Exception ex) when (ex is JsonException or FormatException or InvalidOperationException or KeyNotFoundException)
+        {
+            // a page's line that isn't one of the stand-in's: not ours to read
+        }
+        return Task.CompletedTask;
+    };
+
+    // the host said what it decodes: every page gets the hook from its next load on
+    private async Task Codecs(string[] codecs, global::app.actor.context.@this context)
+    {
+        if (codecs.Length == 0) return;
+        var hook = await new FilePath(_os.Absolute + "/system/browser/video.js").Read(context);
+        if (!hook.Success || (await hook.Value())?.ToString() is not { Length: > 0 } source) return;
+        VideoScript = "window.__plangCodecs=" + JsonSerializer.Serialize(codecs) + ";\n" + source;
+        await window.Video(VideoScript);
+    }
+
     /// <summary>The page at <paramref name="address"/> is one of plang's own: a file under the app's folder or the
     /// os folder.</summary>
     internal bool Own(string address)
@@ -92,6 +146,9 @@ public sealed class @this : browser.@this
             await browser.window.ShowDesktop(desktop, url);
             if (await browser.Desktop.Navigate(url, context) is { Success: false } refusedThere) return global::app.data.@this<browser.@this>.From(refusedThere);
             display.Followed += browser.window.Follow;
+            // the host's codecs, now (known already) or when it says them: pages' videos go to it from then on
+            display.Wayland.CodecsKnown += codecs => _ = browser.Codecs(codecs, context);
+            if (display.Wayland.Codecs.Length > 0) await browser.Codecs(display.Wayland.Codecs, context);
             await browser.Watch(desktop);
         }
         catch (Exception ex) when (ex is TimeoutException or IOException or InvalidOperationException or KeyNotFoundException)

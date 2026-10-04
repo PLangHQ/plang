@@ -68,7 +68,15 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
     internal Task ShowDesktop(string target, string address)
     {
         Desktop.Address = address;
-        return Desktop.Show(0, new Page(target, browser.Cdp, browser.Own), browser.Own(address) ? browser.Message : null);
+        return Desktop.Show(0, new Page(target, browser.Cdp, browser.Own), browser.Own(address) ? browser.Message : null,
+            browser.Video(0), browser.VideoScript);
+    }
+
+    /// <summary>Every window's page runs the video pass-through hook from its next load on (the host said what it decodes).</summary>
+    internal async Task Video(string script)
+    {
+        await Desktop.Video(script);
+        foreach (var window in _shown.Values) await window.Video(script);
     }
 
     /// <summary>True the first time <paramref name="target"/> is asked about.</summary>
@@ -115,7 +123,8 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
             window.Address = page.url;
             if (!_shown.TryAdd(id, window)) return;
             browser.Display.Wayland.Url(id, Browser.AddressOf(window.Address, context));
-            await window.Show(id, new Page(page.target, browser.Cdp, browser.Own), browser.Own(window.Address) ? browser.Message : null);
+            await window.Show(id, new Page(page.target, browser.Cdp, browser.Own), browser.Own(window.Address) ? browser.Message : null,
+                browser.Video(id), browser.VideoScript);
         }
         catch (Exception ex) when (ex is JsonException or IOException or InvalidOperationException or TimeoutException)
         {
