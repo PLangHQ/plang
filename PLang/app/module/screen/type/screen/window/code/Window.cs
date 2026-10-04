@@ -679,10 +679,12 @@ internal sealed class Window
                     biPlanes = 1, biBitCount = 32, biCompression = 0,
                 },
             };
-            SetDIBitsToDevice(ps.hdc, 0, 0, (uint)frameWidth, (uint)frameHeight, 0, 0, 0, (uint)frameHeight, pixels, ref info, 0);
-            // where a video shows (and this paint reaches): the frame's pixels there with the video drawn in, over it
+            // where a video shows (and this paint reaches) first: the frame's pixels there with the video drawn in — then
+            // the rest of the frame around it. Never the frame's own pixels there and the video over them after: shown
+            // between the two, the key colour blinked black (ruv.is)
             var painted = new Rect(ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top)
                 .Clip(new Rect(0, 0, frameWidth, frameHeight));
+            var videos = new List<Rect>();
             foreach (var place in media.Places)
             {
                 var area = place.Clip(painted);
@@ -692,10 +694,14 @@ internal sealed class Window
                 for (var y = 0; y < area.Height; y++)
                     Buffer.BlockCopy(pixels, ((area.Y + y) * frameWidth + area.X) * 4, composed, y * area.Width * 4, area.Width * 4);
                 media.Draw(composed.AsSpan(0, bytes), area);
-                info.bmiHeader.biWidth = area.Width;
-                info.bmiHeader.biHeight = -area.Height;
-                SetDIBitsToDevice(ps.hdc, area.X, area.Y, (uint)area.Width, (uint)area.Height, 0, 0, 0, (uint)area.Height, composed, ref info, 0);
+                var part = info;
+                part.bmiHeader.biWidth = area.Width;
+                part.bmiHeader.biHeight = -area.Height;
+                SetDIBitsToDevice(ps.hdc, area.X, area.Y, (uint)area.Width, (uint)area.Height, 0, 0, 0, (uint)area.Height, composed, ref part, 0);
+                videos.Add(area);
             }
+            foreach (var area in videos) ExcludeClipRect(ps.hdc, area.X, area.Y, area.Right, area.Bottom);
+            SetDIBitsToDevice(ps.hdc, 0, 0, (uint)frameWidth, (uint)frameHeight, 0, 0, 0, (uint)frameHeight, pixels, ref info, 0);
         }
         EndPaint(h, ref ps);
     }
@@ -833,4 +839,5 @@ internal sealed class Window
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr GetModuleHandleW(string? name);
     [DllImport("gdi32.dll")]
     private static extern int SetDIBitsToDevice(IntPtr hdc, int x, int y, uint w, uint h, int srcX, int srcY, uint startScan, uint lines, byte[] bits, ref BITMAPINFO info, uint usage);
+    [DllImport("gdi32.dll")] private static extern int ExcludeClipRect(IntPtr hdc, int left, int top, int right, int bottom);
 }
