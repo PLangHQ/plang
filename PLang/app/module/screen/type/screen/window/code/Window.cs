@@ -702,29 +702,24 @@ internal sealed class Window
                     biPlanes = 1, biBitCount = 32, biCompression = 0,
                 },
             };
-            // where a video shows (and this paint reaches) first: the frame's pixels there with the video drawn in — then
-            // the rest of the frame around it. Never the frame's own pixels there and the video over them after: shown
-            // between the two, the key colour blinked black (ruv.is)
+            // with a video on the screen, what this paint reaches is made once and put on the screen once: the frame's
+            // pixels, the videos drawn in at their places, the key colour anywhere else black. Never the frame's own
+            // pixels first and the video over them after: shown between the two, the key colour blinked (ruv.is)
             var painted = new Rect(ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top)
                 .Clip(new Rect(0, 0, frameWidth, frameHeight));
-            var videos = new List<Rect>();
-            foreach (var place in media.Places)
+            if (media.Any && !painted.Empty && pixels.Length == frameWidth * frameHeight * 4)
             {
-                var area = place.Clip(painted);
-                if (area.Empty || pixels.Length != frameWidth * frameHeight * 4) continue;
-                var bytes = area.Width * area.Height * 4;
+                var bytes = painted.Width * painted.Height * 4;
                 if (composed.Length < bytes) composed = new byte[bytes];
-                for (var y = 0; y < area.Height; y++)
-                    Buffer.BlockCopy(pixels, ((area.Y + y) * frameWidth + area.X) * 4, composed, y * area.Width * 4, area.Width * 4);
-                media.Draw(composed.AsSpan(0, bytes), area);
+                for (var y = 0; y < painted.Height; y++)
+                    Buffer.BlockCopy(pixels, ((painted.Y + y) * frameWidth + painted.X) * 4, composed, y * painted.Width * 4, painted.Width * 4);
+                media.Draw(composed.AsSpan(0, bytes), painted);
                 var part = info;
-                part.bmiHeader.biWidth = area.Width;
-                part.bmiHeader.biHeight = -area.Height;
-                SetDIBitsToDevice(ps.hdc, area.X, area.Y, (uint)area.Width, (uint)area.Height, 0, 0, 0, (uint)area.Height, composed, ref part, 0);
-                videos.Add(area);
+                part.bmiHeader.biWidth = painted.Width;
+                part.bmiHeader.biHeight = -painted.Height;
+                SetDIBitsToDevice(ps.hdc, painted.X, painted.Y, (uint)painted.Width, (uint)painted.Height, 0, 0, 0, (uint)painted.Height, composed, ref part, 0);
             }
-            foreach (var area in videos) ExcludeClipRect(ps.hdc, area.X, area.Y, area.Right, area.Bottom);
-            SetDIBitsToDevice(ps.hdc, 0, 0, (uint)frameWidth, (uint)frameHeight, 0, 0, 0, (uint)frameHeight, pixels, ref info, 0);
+            else SetDIBitsToDevice(ps.hdc, 0, 0, (uint)frameWidth, (uint)frameHeight, 0, 0, 0, (uint)frameHeight, pixels, ref info, 0);
         }
         EndPaint(h, ref ps);
     }
@@ -862,5 +857,4 @@ internal sealed class Window
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr GetModuleHandleW(string? name);
     [DllImport("gdi32.dll")]
     private static extern int SetDIBitsToDevice(IntPtr hdc, int x, int y, uint w, uint h, int srcX, int srcY, uint startScan, uint lines, byte[] bits, ref BITMAPINFO info, uint usage);
-    [DllImport("gdi32.dll")] private static extern int ExcludeClipRect(IntPtr hdc, int left, int top, int right, int bottom);
 }

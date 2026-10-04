@@ -69,8 +69,16 @@ internal sealed class Media : IDisposable
                         new Rect(BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(18)), BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(22)),
                             BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(26)), BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(30))),
                         m[34] == 1, (m[35], m[36], m[37]));
-                    // (a page that goes away — a reload, another address — has its videos ended by PlangOS, which hears
-                    // the new page: not guessed here from places, where two windows' videos may well overlap)
+                    // a page that loads anew has its videos ended by PlangOS; a page that changes its player in place
+                    // (ruv.is: another video, no new page) never says the old one ended. So: another stream at this
+                    // very place, quiet for a second (a playing one says its clock four times a second), was that
+                    // player's — over, or its last picture stays over this one. (Two windows' videos overlap, but not
+                    // to the pixel, and both speak.)
+                    foreach (var (other, old) in streams.Where(o => o.Key != id && o.Value.Quiet && o.Value.At(clocked.Place)).ToList())
+                    {
+                        streams.Remove(other);
+                        old.Dispose();
+                    }
                     break;
                 case 13 when streams.Remove(id, out var ended):
                     ended.Dispose();
@@ -107,11 +115,19 @@ internal sealed class Media : IDisposable
 
     /// <summary>The videos drawn over <paramref name="pixels"/> — the BGRA rows of <paramref name="area"/> of the
     /// screen (the whole screen, or a window's part to repaint): at each one's place, where the page shows its key
-    /// colour.</summary>
+    /// colour. The exact key colour left anywhere else is black: a video's place is said four times a second, and a
+    /// window dragged in between shows its key colour where the video was about to be (magenta, on ruv.is).</summary>
     internal void Draw(Span<byte> pixels, Rect area)
     {
         lock (gate)
+        {
+            if (streams.Count == 0) return;
             foreach (var s in streams.Values) s.Draw(pixels, area);
+            var screen = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, uint>(pixels);
+            foreach (var keyed in streams.Values.Select(s => s.Keyed).Distinct())
+                for (var i = 0; i < screen.Length; i++)
+                    if ((screen[i] & 0xFFFFFFu) == keyed) screen[i] = 0xFF000000u;
+        }
     }
 
     private void Present()
@@ -356,6 +372,16 @@ internal sealed class Media : IDisposable
             for (var i = 0; i < next; i++) if (samples[i].Key && samples[i].Time <= now - 3) keep = i;
             if (keep > 0) samples.RemoveRange(0, keep);
         }
+
+        /// <summary>Its key colour as a pixel's value without alpha (BGRA).</summary>
+        internal uint Keyed => key.b | (uint)key.g << 8 | (uint)key.r << 16;
+
+        /// <summary>It hasn't said its clock for a second (a playing video says it four times a second).</summary>
+        internal bool Quiet => clockedAt != 0 && Stopwatch.GetElapsedTime(clockedAt).TotalSeconds > 1;
+
+        /// <summary>It was last at <paramref name="other"/>, to a pixel or two.</summary>
+        internal bool At(Rect other) => !other.Empty && Math.Abs(place.X - other.X) <= 2 && Math.Abs(place.Y - other.Y) <= 2
+                                        && Math.Abs(place.Width - other.Width) <= 2 && Math.Abs(place.Height - other.Height) <= 2;
 
         /// <summary>Where it shows: its place while the page shows it (its picture, or black until there is one), else empty.</summary>
         internal Rect Place => shown ? place : default;
