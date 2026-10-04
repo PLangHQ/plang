@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Buffers.Binary;
+using Qoi = app.module.screen.type.screen.code.Qoi;
 
 namespace app.module.screen.type.screen.display.code;
 
@@ -404,82 +405,5 @@ internal sealed class Encoder
             band.Encode();
             counter.Signal();
         }
-    }
-}
-
-/// <summary>
-/// QOI, the "Quite OK Image" format: lossless, fast, simple to decode anywhere. The bytes are BGRA;
-/// QOI doesn't care which channel is which, so they come out in the same order they went in.
-/// </summary>
-internal readonly ref struct Qoi(ReadOnlySpan<byte> pixels, int width, int height)
-{
-    private readonly ReadOnlySpan<byte> pixels = pixels;
-
-    /// <summary>The most a picture this size can take: every pixel spelled out, plus header and end.</summary>
-    internal static int MaxSize(int width, int height) => 14 + width * height * 5 + 8;
-
-    /// <summary>Writes the picture into <paramref name="output"/>; returns how many bytes it took.
-    /// Pixels are read as 32-bit words; a run of the same pixel — most of a web page — is found with
-    /// one vectorized search, not pixel by pixel.</summary>
-    internal int Into(Span<byte> output)
-    {
-        "qoif"u8.CopyTo(output);
-        BinaryPrimitives.WriteUInt32BigEndian(output[4..], (uint)width);
-        BinaryPrimitives.WriteUInt32BigEndian(output[8..], (uint)height);
-        output[12] = 4;
-        output[13] = 0;
-        var o = 14;
-        var all = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, uint>(pixels);
-        Span<uint> index = stackalloc uint[64];
-        index.Clear();
-        var previous = 0xFF000000u;   // r 0, g 0, b 0, a 255 (byte 0 is r, byte 3 is a)
-        byte pr = 0, pg = 0, pb = 0, pa = 255;
-        for (var i = 0; i < all.Length; i++)
-        {
-            var pixel = all[i];
-            if (pixel == previous)
-            {
-                // the run: as far as the same pixel goes, in pieces of up to 62 — a short one (text)
-                // counted here, a long one (a background) with vectors
-                var run = 1;
-                while (run < 8 && i + run < all.Length && all[i + run] == previous) run++;
-                if (run == 8)
-                {
-                    var other = all[(i + 8)..].IndexOfAnyExcept(previous);
-                    run = other < 0 ? all.Length - i : 8 + other;
-                }
-                i += run - 1;
-                for (; run > 62; run -= 62) output[o++] = 0xC0 | 61;
-                output[o++] = (byte)(0xC0 | (run - 1));
-                continue;
-            }
-            byte r = unchecked((byte)pixel), g = unchecked((byte)(pixel >> 8)), b = unchecked((byte)(pixel >> 16)), a = (byte)(pixel >> 24);
-            var h = (r * 3 + g * 5 + b * 7 + a * 11) % 64;
-            if (index[h] == pixel)
-                output[o++] = (byte)h;
-            else
-            {
-                index[h] = pixel;
-                if (a == pa)
-                {
-                    int vr = unchecked((sbyte)(byte)(r - pr)), vg = unchecked((sbyte)(byte)(g - pg)), vb = unchecked((sbyte)(byte)(b - pb));
-                    int vgr = vr - vg, vgb = vb - vg;
-                    if (vr is > -3 and < 2 && vg is > -3 and < 2 && vb is > -3 and < 2)
-                        output[o++] = (byte)(0x40 | ((vr + 2) << 4) | ((vg + 2) << 2) | (vb + 2));
-                    else if (vgr is > -9 and < 8 && vg is > -33 and < 32 && vgb is > -9 and < 8)
-                    {
-                        output[o++] = (byte)(0x80 | (vg + 32));
-                        output[o++] = (byte)(((vgr + 8) << 4) | (vgb + 8));
-                    }
-                    else { output[o++] = 0xFE; output[o++] = r; output[o++] = g; output[o++] = b; }
-                }
-                else { output[o++] = 0xFF; output[o++] = r; output[o++] = g; output[o++] = b; output[o++] = a; }
-            }
-            pr = r; pg = g; pb = b; pa = a;
-            previous = pixel;
-        }
-        for (var i = 0; i < 7; i++) output[o++] = 0;
-        output[o++] = 1;
-        return o;
     }
 }
