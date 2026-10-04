@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Rect = app.module.screen.type.screen.display.code.Rect;
 
 namespace app.module.screen.type.screen.code;
@@ -68,6 +69,13 @@ internal sealed class Media : IDisposable
                         new Rect(BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(18)), BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(22)),
                             BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(26)), BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(30))),
                         m[34] == 1, (m[35], m[36], m[37]));
+                    // one video to a place: another stream where this one now is was a page's that went away without
+                    // saying so (a reload, another address) — over, or its last picture would show in this one's place
+                    foreach (var (other, gone) in streams.Where(o => o.Key != id && o.Value.Where.Overlaps(clocked.Where)).ToList())
+                    {
+                        streams.Remove(other);
+                        gone.Dispose();
+                    }
                     break;
                 case 13 when streams.Remove(id, out var ended):
                     ended.Dispose();
@@ -79,6 +87,15 @@ internal sealed class Media : IDisposable
 
     /// <summary>A new picture is ready at this place on the screen (a window repaints it).</summary>
     internal event Action<Rect>? Presented;
+
+    /// <summary>A video is here (started, not ended) — shown or not.</summary>
+    internal bool Any
+    {
+        get
+        {
+            lock (gate) return streams.Count > 0;
+        }
+    }
 
     /// <summary>Where the videos show now: each one's place, while the page shows it.</summary>
     internal Rect[] Places
@@ -160,8 +177,12 @@ internal sealed class Media : IDisposable
         private byte[]? layer;                // the picture at its place's size, BGRA
         private double layerTime = double.NaN;
         private int added, decodedCount, restarts, noPicture, same, hidden;
+        private int failedGeneration = -1;    // a start whose decoder wouldn't start: not tried again every tick
+        private string? trouble;              // what went wrong last (a decoder that wouldn't start, a sample it refused)
+        private int troubles;
 
-        internal string Numbers => $"{added} samples ({samples.Count} kept), {decodedCount} decoded, {restarts} restarts, " +
+        internal string Numbers => (trouble == null ? "" : $"TROUBLE ×{troubles}: {trouble}; ") +
+            $"{(generations.Count > 0 ? generations[^1].codec : "?")} {added} samples ({samples.Count} kept), {decodedCount} decoded, {restarts} restarts, " +
             $"ticks: {noPicture} no picture yet, {same} same picture, {hidden} not shown; clock {clock:F2} playing {playing} at {place}; " +
             $"now {Now:F3}, {clocks} clocks (last {Stopwatch.GetElapsedTime(clockedAt).TotalSeconds:F1} s ago), decoded up to {(decoded.Count > 0 ? decoded[^1].time : double.NaN):F3}, next sample shows {(Next < samples.Count ? samples[Next].Time : double.NaN):F3} " +
             $"decodes {(Next < samples.Count ? samples[Next].Decode : double.NaN):F3}, first kept {(samples.Count > 0 ? samples[0].Time : double.NaN):F3} (decodes {(samples.Count > 0 ? samples[0].Decode : double.NaN):F3}), last {(samples.Count > 0 ? samples[^1].Time : double.NaN):F3} (decodes {(samples.Count > 0 ? samples[^1].Decode : double.NaN):F3}); last fed decodes {lastFed:F3}; {generations.Count} starts; " +
@@ -198,7 +219,7 @@ internal sealed class Media : IDisposable
             // a seek: back in time, or ahead past a key frame beyond what was decoded (decoding up to it would be
             // slower than starting there) — again from the key frame before now
             if (decoded.Count > 0 && now < decoded[0].time - 0.25 || now > fedUpTo + 1 && KeyBetween(fedUpTo, now)) Restart(now);
-            if (decoder == null) Restart(now);
+            if (decoder == null && decoderGeneration != failedGeneration) Restart(now);   // (one that wouldn't start: said, not retried)
             // decode until a picture is known to be past now (or nothing is left)
             for (var n = Next; n < samples.Count && (decoded.Count == 0 || decoded[^1].time <= now) && samples[n].Decode <= now + 1
                                && Follows(samples[n]); n = Next)
@@ -241,18 +262,34 @@ internal sealed class Media : IDisposable
 
         private void Feed(Sample s)
         {
+            // taken, whatever comes of it: the next sample is the one after it
+            fedUpTo = Math.Max(fedUpTo, s.Time);
+            lastFed = s.Decode;
             if (s.Generation != decoderGeneration)
             {
                 decoder?.Dispose();
-                var (codec, config, width, height) = generations[s.Generation];
-                decoder = decoding.Make(codec, config, width, height);
+                decoder = null;
                 decoderGeneration = s.Generation;
+                var (codec, config, width, height) = generations[s.Generation];
+                if (s.Generation != failedGeneration)
+                {
+                    // a decoder that won't start is said (Numbers), and not asked for again until the stream starts anew
+                    try { decoder = decoding.Make(codec, config, width, height) ?? throw new InvalidOperationException($"this host has no decoder for {codec}"); }
+                    catch (Exception ex) when (ex is InvalidOperationException or COMException or DllNotFoundException or EntryPointNotFoundException)
+                    {
+                        failedGeneration = s.Generation;
+                        Trouble($"no {codec} decoder ({width}×{height}): {ex.Message}");
+                    }
+                }
             }
-            fedUpTo = Math.Max(fedUpTo, s.Time);
-            lastFed = s.Decode;
+            if (decoder == null) return;
             List<(double time, Yuv picture)> pictures;
-            try { pictures = decoder?.Decode(s.Bytes, s.Time) ?? []; }
-            catch (InvalidOperationException) { pictures = []; }
+            try { pictures = decoder.Decode(s.Bytes, s.Time); }
+            catch (Exception ex) when (ex is InvalidOperationException or COMException)
+            {
+                Trouble($"a sample at {s.Time:F3} wasn't decoded: {ex.Message}");
+                pictures = [];
+            }
             // each picture with its own sample's time (the decoder carries it), kept in show order
             foreach (var p in pictures)
             {
@@ -261,6 +298,12 @@ internal sealed class Media : IDisposable
                 decoded.Insert(at, p);
                 decodedCount++;
             }
+        }
+
+        private void Trouble(string what)
+        {
+            trouble = what;
+            troubles++;
         }
 
         private void Restart(double now)
@@ -286,6 +329,9 @@ internal sealed class Media : IDisposable
             for (var i = 0; i < next; i++) if (samples[i].Key && samples[i].Time <= now - 3) keep = i;
             if (keep > 0) samples.RemoveRange(0, keep);
         }
+
+        /// <summary>Where the page last said it is (shown or not).</summary>
+        internal Rect Where => place;
 
         /// <summary>Where it shows: its place while the page shows it and a picture is drawn, else empty.</summary>
         internal Rect Place => layer != null && shown ? place : default;

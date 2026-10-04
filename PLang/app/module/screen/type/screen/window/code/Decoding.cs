@@ -10,9 +10,6 @@ internal sealed class Decoding : IDecoding
 
     public string[] Codecs => codecs.Value;
 
-    public IDecoder? Make(string codec, byte[] config, int width, int height)
-    {
-        try { return new Mft(codec, config, width, height); }
-        catch (InvalidOperationException) { return null; }   // none, or it won't take the stream: no pictures, the page goes on
-    }
+    // none, or it won't take the stream: it throws why, which Media says
+    public IDecoder? Make(string codec, byte[] config, int width, int height) => new Mft(codec, config, width, height);
 }

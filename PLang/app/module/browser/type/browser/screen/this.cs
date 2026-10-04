@@ -89,6 +89,11 @@ public sealed class @this : browser.@this
                 case "end" when _videos.TryRemove((window, stream), out var ended):
                     ended.End();
                     break;
+                case "page":
+                    // a new page in the window: the last one's videos end (a page that goes away says nothing)
+                    foreach (var key in _videos.Keys.Where(k => k.window == window).ToList())
+                        if (_videos.TryRemove(key, out var left)) left.End();
+                    break;
             }
         }
         catch (JsonException)
