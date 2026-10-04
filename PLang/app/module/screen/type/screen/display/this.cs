@@ -247,26 +247,6 @@ public sealed class @this : screen.@this
         return context.Ok<global::app.type.item.number.@this>(lines);
     }
 
-    /// <summary>The value a line from the host is, when it is an input or a clipboard — by its first member, read by
-    /// its type's own reader; null for the lines that aren't values yet (stats, video, ui, host, window).</summary>
-    private static global::app.type.item.@this? Value(string line, global::app.actor.context.@this context)
-    {
-        var bytes = Encoding.UTF8.GetBytes(line);
-        var peek = new Utf8JsonReader(bytes);
-        if (!peek.Read() || peek.TokenType != JsonTokenType.StartObject
-            || !peek.Read() || peek.TokenType != JsonTokenType.PropertyName) return null;
-        var type = peek.GetString() switch
-        {
-            "mouse" or "key" or "text" or "nav" => "input",
-            "clipboard" => "clipboard",
-            _ => null,
-        };
-        if (type == null) return null;
-        var utf8 = new Utf8JsonReader(bytes);
-        utf8.Read();
-        var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
-        return context.App.type.list.Reader.Typed(type, null)!.Read(ref reader, null, new global::app.type.reader.ReadContext(context));
-    }
 
     /// <summary>Runs the shell's goal the host called, its parameters bound by name, and answers it:
     /// <c>{"reply": {id, result}}</c>, or <c>{"reply": {id, error}}</c>. Only the shell's own goals — a bare name,
