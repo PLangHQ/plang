@@ -119,6 +119,32 @@ public class MediaTests
         await Assert.That(stand.Made).IsEqualTo(1);
     }
 
+    // a page that changes its player in place (another video, no new page) never ends the old stream: a new one at the
+    // very same place, the old one quiet for a second, ends it — or its last picture stays over the new one
+    [Test]
+    public async Task ANewVideoAtTheSamePlace_EndsAQuietOne()
+    {
+        using var media = new Media(new Stand());
+        await Playing(media);
+        await Task.Delay(1200);   // the old player's clock stopped
+        media.Take(Start(2));
+        media.Take(Clock(2));
+        await Assert.That(media.Numbers).DoesNotContain("stream 1:");
+        await Assert.That(media.Numbers).Contains("stream 2:");
+    }
+
+    // the key colour outside every video's place (a window dragged ahead of its video's place) is black, not the key
+    [Test]
+    public async Task TheKeyColourOutsideEveryPlace_IsBlack()
+    {
+        using var media = new Media(new Stand());
+        await Playing(media);
+        var outside = new Rect(Place.Right + 5, Place.Bottom + 5, 1, 1);
+        byte[] px = [Key.b, Key.g, Key.r, 255];
+        media.Draw(px, outside);
+        await Assert.That(px).IsEquivalentTo(new byte[] { 0, 0, 0, 255 });
+    }
+
     // before its first picture, the video's place is black, not the key colour
     [Test]
     public async Task BeforeItsFirstPicture_ItsPlaceIsBlack()
@@ -186,12 +212,12 @@ public class MediaTests
         for (var y = 0; y < area.Height; y++)
             await Assert.That(part.AsSpan(y * area.Width * 4, area.Width * 4).SequenceEqual(whole.AsSpan(((area.Y + y) * W + area.X) * 4, area.Width * 4)))
                 .IsTrue().Because($"row {area.Y + y}");
-        // the video where the key colour was, the control over it kept, the key colour outside the place untouched
+        // the video where the key colour was, the control over it kept, the key colour outside the place black
         var inside = ((12 - area.Y) * area.Width + (22 - area.X)) * 4;
         await Assert.That(part[inside]).IsNotEqualTo(Key.b);
         var control = ((20 - area.Y) * area.Width + 0) * 4;
         await Assert.That(part[control]).IsEqualTo((byte)250);
         var outside = ((36 - area.Y) * area.Width + (45 - area.X)) * 4;
-        await Assert.That(part[outside]).IsEqualTo(Key.b);
+        await Assert.That(part.AsSpan(outside, 4).ToArray()).IsEquivalentTo(new byte[] { 0, 0, 0, 255 });
     }
 }
