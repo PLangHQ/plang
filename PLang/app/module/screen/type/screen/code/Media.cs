@@ -69,13 +69,8 @@ internal sealed class Media : IDisposable
                         new Rect(BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(18)), BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(22)),
                             BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(26)), BinaryPrimitives.ReadInt32LittleEndian(m.AsSpan(30))),
                         m[34] == 1, (m[35], m[36], m[37]));
-                    // one video to a place: another stream where this one now is was a page's that went away without
-                    // saying so (a reload, another address) — over, or its last picture would show in this one's place
-                    foreach (var (other, gone) in streams.Where(o => o.Key != id && o.Value.Where.Overlaps(clocked.Where)).ToList())
-                    {
-                        streams.Remove(other);
-                        gone.Dispose();
-                    }
+                    // (a page that goes away — a reload, another address — has its videos ended by PlangOS, which hears
+                    // the new page: not guessed here from places, where two windows' videos may well overlap)
                     break;
                 case 13 when streams.Remove(id, out var ended):
                     ended.Dispose();
@@ -330,9 +325,6 @@ internal sealed class Media : IDisposable
             for (var i = 0; i < next; i++) if (samples[i].Key && samples[i].Time <= now - 3) keep = i;
             if (keep > 0) samples.RemoveRange(0, keep);
         }
-
-        /// <summary>Where the page last said it is (shown or not).</summary>
-        internal Rect Where => place;
 
         /// <summary>Where it shows: its place while the page shows it (its picture, or black until there is one), else empty.</summary>
         internal Rect Place => shown ? place : default;
