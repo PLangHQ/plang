@@ -96,6 +96,25 @@ public class MediaTests
         await Assert.That(px.AsSpan(8, 3).ToArray()).IsEquivalentTo(new byte[] { 90, 90, 90 });
     }
 
+    // a video in a window behind another (none of its place shows) isn't decoded; it is again when it shows
+    [Test]
+    public async Task AVideoNoneOfWhichShows_IsNotDecoded_UntilItShows()
+    {
+        var stand = new Stand();
+        using var media = new Media(stand);
+        var showing = false;
+        media.Seen = (_, _) => showing;
+        media.Take(Start());
+        media.Take(Sample());
+        media.Take(Clock());
+        await Task.Delay(300);
+        await Assert.That(stand.Made).IsEqualTo(0);
+        await Assert.That(media.Numbers).Contains("0 decoded");
+        showing = true;
+        for (var i = 0; i < 50 && stand.Made == 0; i++) await Task.Delay(20);
+        await Assert.That(stand.Made).IsEqualTo(1);
+    }
+
     // before its first picture, the video's place is black, not the key colour
     [Test]
     public async Task BeforeItsFirstPicture_ItsPlaceIsBlack()
