@@ -1,4 +1,4 @@
-namespace app.module.screen.type.screen.view.code;
+namespace app.module.screen.type.screen.code;
 
 /// <summary>
 /// A decoded picture: 8-bit Y, U and V planes, 4:2:0 (the chroma planes half the size each way), each with its stride.
@@ -40,4 +40,16 @@ internal interface IDecoder : IDisposable
     /// the time of its own sample (a decoder working on several frames at once gives them later than their samples,
     /// sometimes more than one, and none for a sample it can't decode).</summary>
     List<(double time, Yuv picture)> Decode(ReadOnlyMemory<byte> sample, double time);
+}
+
+/// <summary>A host's decoding: the codecs it plays itself (what it tells PlangOS), and a fresh decoder for one of them
+/// — dav1d and openh264 on the Linux host, Media Foundation on Windows.</summary>
+internal interface IDecoding
+{
+    /// <summary>The codecs here (<c>av01</c>, <c>avc1</c>), none when this host plays no video itself.</summary>
+    string[] Codecs { get; }
+
+    /// <summary>A decoder for <paramref name="codec"/> with the stream's <paramref name="config"/> (av1C, avcC), or
+    /// null when this host has none for it.</summary>
+    IDecoder? Make(string codec, byte[] config);
 }

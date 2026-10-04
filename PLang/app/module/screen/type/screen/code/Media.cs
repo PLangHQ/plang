@@ -2,7 +2,7 @@ using System.Buffers.Binary;
 using System.Diagnostics;
 using Rect = app.module.screen.type.screen.display.code.Rect;
 
-namespace app.module.screen.type.screen.view.code;
+namespace app.module.screen.type.screen.code;
 
 /// <summary>
 /// The videos a page plays that this host plays itself (pass-through; see the browser's video type for the messages
@@ -18,8 +18,10 @@ internal sealed class Media : IDisposable
     private readonly Thread presenter;
     private volatile bool stopping;
 
+    private readonly IDecoding decoding;
+
     /// <summary>The codecs this host decodes (what it tells PlangOS).</summary>
-    internal static string[] Codecs => [.. new[] { Av1.Here ? "av01" : null, Video.Here ? "avc1" : null }.OfType<string>()];
+    internal string[] Codecs => decoding.Codecs;
 
     /// <summary>Pictures shown so far (each new one at a stream's place).</summary>
     internal int Shown;
@@ -35,8 +37,9 @@ internal sealed class Media : IDisposable
         }
     }
 
-    internal Media()
+    internal Media(IDecoding decoding)
     {
+        this.decoding = decoding;
         presenter = new Thread(Present) { IsBackground = true, Name = "screen view: video" };
         presenter.Start();
     }
@@ -51,7 +54,7 @@ internal sealed class Media : IDisposable
             switch (m[0])
             {
                 case 10 when m.Length >= 13:
-                    if (!streams.TryGetValue(id, out var s)) streams[id] = s = new Stream();
+                    if (!streams.TryGetValue(id, out var s)) streams[id] = s = new Stream(decoding);
                     s.Start(System.Text.Encoding.ASCII.GetString(m, 5, 4).Trim(), m[13..]);
                     break;
                 case 11 when m.Length >= 30 && streams.TryGetValue(id, out var sampled):
@@ -106,7 +109,7 @@ internal sealed class Media : IDisposable
     }
 
     /// <summary>One video: its samples, its decoder, its clock and its place.</summary>
-    private sealed class Stream : IDisposable
+    private sealed class Stream(IDecoding decoding) : IDisposable
     {
         private readonly record struct Sample(double Time, double Decode, bool Key, byte[] Bytes, int Generation);
 
@@ -223,7 +226,8 @@ internal sealed class Media : IDisposable
             if (s.Generation != decoderGeneration)
             {
                 decoder?.Dispose();
-                decoder = Make(generations[s.Generation]);
+                var (codec, config) = generations[s.Generation];
+                decoder = decoding.Make(codec, config);
                 decoderGeneration = s.Generation;
             }
             fedUpTo = Math.Max(fedUpTo, s.Time);
@@ -264,13 +268,6 @@ internal sealed class Media : IDisposable
             for (var i = 0; i < next; i++) if (samples[i].Key && samples[i].Time <= now - 3) keep = i;
             if (keep > 0) samples.RemoveRange(0, keep);
         }
-
-        private static IDecoder? Make((string codec, byte[] config) g) => g.codec switch
-        {
-            "av01" when Av1.Here => new Av1(g.config),
-            "avc1" or "avc3" when Video.Here => new Avc(g.config),
-            _ => null,
-        };
 
         /// <summary>Its picture over <paramref name="screen"/> at its place, where the page shows the key colour.</summary>
         internal void Draw(byte[] screen, int width, int height)

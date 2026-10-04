@@ -1,3 +1,5 @@
+using app.module.screen.type.screen.code;
+
 namespace app.module.screen.type.screen.view.code;
 
 /// <summary>

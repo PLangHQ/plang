@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+using Media = global::app.module.screen.type.screen.code.Media;
 using Shown = global::app.module.screen.type.screen.code.Shown;
 using Text = global::app.type.item.text.@this;
 
@@ -22,7 +23,7 @@ public sealed class @this : screen.@this
     private readonly Func<Task> _closing;
     private code.Video? _video;
     private bool _noVideo;
-    private readonly code.Media _media = new();
+    private readonly Media _media = new(new code.Decoding());
     private int _told;   // PlangOS told the codecs this host decodes (once it sends frames, it listens)
     private volatile bool _closed;
     private int _frames;
@@ -73,7 +74,7 @@ public sealed class @this : screen.@this
     internal override bool Show(byte[] message)
     {
         if (_closed || message.Length == 0) return false;
-        if (Interlocked.Exchange(ref _told, 1) == 0 && code.Media.Codecs is { Length: > 0 } codecs)
+        if (Interlocked.Exchange(ref _told, 1) == 0 && _media.Codecs is { Length: > 0 } codecs)
             _ = _said((Text)("{\"codecs\":" + System.Text.Json.JsonSerializer.Serialize(codecs) + "}"));
         switch (message[0])
         {
