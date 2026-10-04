@@ -45,11 +45,34 @@ internal sealed class Window
             var a = new RECT { left = place.X, top = place.Y, right = place.Right, bottom = place.Bottom };
             InvalidateArea(hwnd, ref a, false);
         };
+        // a video in a window behind another isn't decoded: none of its key colour shows
+        media.Seen = Shows;
         // the numbers once a second even when nothing on the page changes (a video playing here)
         statClock = new Timer(_ => { lock (statGate) Said(); }, null, 1000, 1000);
     }
 
     private readonly Timer statClock;
+
+    // any of a video's place showing its key colour (or, magenta, under something half-seen): every 8th pixel each
+    // way is looked at. Read without the gate — the presenter asks while it holds Media's, which a paint takes inside
+    // this one's; a frame half put in is at worst one tick wrong
+    private bool Shows(Rect place, (byte r, byte g, byte b) key)
+    {
+        var px = pixels;
+        int w = frameWidth, h = frameHeight;
+        if (px.Length != w * h * 4) return true;
+        var area = place.Clip(new Rect(0, 0, w, h));
+        var magenta = key == (255, 0, 255);
+        for (var y = area.Y; y < area.Bottom; y += 8)
+            for (var x = area.X; x < area.Right; x += 8)
+            {
+                var o = (y * w + x) * 4;
+                int b = px[o], g = px[o + 1], r = px[o + 2];
+                if (b == key.b && g == key.g && r == key.r) return true;
+                if (magenta && r > g + 16 && Math.Abs(r - b) <= 2) return true;
+            }
+        return false;
+    }
 
     /// <summary>Creates the window on its own thread; returns when it is on screen (or why not).</summary>
     public string? Show()

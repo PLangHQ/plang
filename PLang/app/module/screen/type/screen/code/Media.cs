@@ -34,7 +34,7 @@ internal sealed class Media : IDisposable
         get
         {
             lock (gate)
-                return $"shown {Shown}; " + string.Join("; ", streams.Select(s => $"stream {s.Key}: {s.Value.Numbers}"));
+                return $"codecs {string.Join(",", Codecs)}; shown {Shown}; " + string.Join("; ", streams.Select(s => $"stream {s.Key}: {s.Value.Numbers}"));
         }
     }
 
@@ -83,6 +83,10 @@ internal sealed class Media : IDisposable
     /// <summary>A new picture is ready at this place on the screen (a window repaints it).</summary>
     internal event Action<Rect>? Presented;
 
+    /// <summary>Whether any of a video's place shows on the screen now (its key colour, in part at least) — a window
+    /// says, from what it shows; a video in a window behind another isn't decoded until it shows again. Unset: always.</summary>
+    internal Func<Rect, (byte r, byte g, byte b), bool>? Seen { get; set; }
+
     /// <summary>A video is here (started, not ended) — shown or not.</summary>
     internal bool Any
     {
@@ -118,7 +122,7 @@ internal sealed class Media : IDisposable
         {
             lock (gate)
                 foreach (var s in streams.Values)
-                    if (s.Present()) { Shown++; presented.Add(s.Place); }
+                    if (s.Present(Seen)) { Shown++; presented.Add(s.Place); }
             // told outside the gate: a window repaints at once, drawing the videos (which takes the gate)
             foreach (var place in presented) Presented?.Invoke(place);
             presented.Clear();
@@ -171,7 +175,7 @@ internal sealed class Media : IDisposable
 
         private byte[]? layer;                // the picture at its place's size, BGRA
         private double layerTime = double.NaN;
-        private int added, decodedCount, restarts, noPicture, same, hidden;
+        private int added, decodedCount, restarts, noPicture, same, hidden, covered;
         private int failedGeneration = -1;    // a start whose decoder wouldn't start: not tried again every tick
         private string? trouble;              // what went wrong last (a decoder that wouldn't start, a sample it refused)
         private int troubles;
@@ -179,7 +183,7 @@ internal sealed class Media : IDisposable
         // with trouble, the stream's config (avcC: version, profile, compatibility, level, …, its SPS): what it is
         internal string Numbers => (trouble == null ? "" : $"TROUBLE ×{troubles}: {trouble} (config {Convert.ToHexString(generations[^1].config.AsSpan(0, Math.Min(48, generations[^1].config.Length)))}); ") +
             $"{(generations.Count > 0 ? generations[^1].codec : "?")} {added} samples ({samples.Count} kept), {decodedCount} decoded, {restarts} restarts, " +
-            $"ticks: {noPicture} no picture yet, {same} same picture, {hidden} not shown; clock {clock:F2} playing {playing} at {place}; " +
+            $"ticks: {noPicture} no picture yet, {same} same picture, {hidden} not shown, {covered} covered (not decoded); clock {clock:F2} playing {playing} at {place}; " +
             $"now {Now:F3}, {clocks} clocks (last {Stopwatch.GetElapsedTime(clockedAt).TotalSeconds:F1} s ago), decoded up to {(decoded.Count > 0 ? decoded[^1].time : double.NaN):F3}, next sample shows {(Next < samples.Count ? samples[Next].Time : double.NaN):F3} " +
             $"decodes {(Next < samples.Count ? samples[Next].Decode : double.NaN):F3}, first kept {(samples.Count > 0 ? samples[0].Time : double.NaN):F3} (decodes {(samples.Count > 0 ? samples[0].Decode : double.NaN):F3}), last {(samples.Count > 0 ? samples[^1].Time : double.NaN):F3} (decodes {(samples.Count > 0 ? samples[^1].Decode : double.NaN):F3}); last fed decodes {lastFed:F3}; {generations.Count} starts; " +
             $"times of the last 5 shown: {string.Join(" ", lastShown)}";
@@ -207,10 +211,24 @@ internal sealed class Media : IDisposable
 
         private double Now => clock + (playing ? Stopwatch.GetElapsedTime(clockedAt).TotalSeconds * rate : 0);
 
-        /// <summary>Decodes up to the page's clock; true when a new picture is ready at its place.</summary>
-        internal bool Present()
+        /// <summary>Decodes up to the page's clock; true when a new picture is ready at its place. Not while none of
+        /// its place shows (<paramref name="seen"/>): the decoder goes, and starts again from the key frame before the
+        /// clock when it shows again.</summary>
+        internal bool Present(Func<Rect, (byte r, byte g, byte b), bool>? seen)
         {
             if (clockedAt == 0 || samples.Count == 0) return false;
+            if (seen != null && shown && !place.Empty && !seen(place, key))
+            {
+                if (decoder != null || decoderGeneration >= 0)
+                {
+                    decoder?.Dispose();
+                    decoder = null;
+                    decoderGeneration = -1;
+                    decoded.Clear();
+                }
+                covered++;
+                return false;
+            }
             var now = Now;
             // a seek: back in time, or ahead past a key frame beyond what was decoded (decoding up to it would be
             // slower than starting there) — again from the key frame before now
