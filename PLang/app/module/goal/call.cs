@@ -82,17 +82,26 @@ public partial class Call : IContext
         // in, then this context's memory
         var parallel = Parallel != null && await Parallel.ToBooleanAsync();
         var from = Context.call.Current;
-        return await Context.App.actor.list.Use(Actor, Context, async runs => parallel
-            ? Context.Ok(runs.Actor.Task.Start(goal, async token =>
-            {
-                using var child = Context.Child(runs.Actor, token);
-                await using (child.call.Isolate(null, caller: from))
-                    return await Run(goal, child);
-            }))
-            : await Run(goal, runs));
+        return await Context.App.actor.list.Use(Actor, Context, async runs =>
+        {
+            // the parameters are settled now, in the caller — a call in parallel too: settled later, in its task, they
+            // were whatever the caller's variables held by then (two calls from PlangOS in a row: the second's
+            // overwrote the first's before the first's task read it, and both ran the second)
+            var bound = new List<data.@this>();
+            if (await Bind(runs, bound) is { } failed) return failed;
+            return parallel
+                ? Context.Ok(runs.Actor.Task.Start(goal, async token =>
+                {
+                    using var child = Context.Child(runs.Actor, token);
+                    await using (child.call.Isolate(null, caller: from))
+                        return await goal.Start(child, bound);
+                }))
+                : await goal.Start(runs, bound);
+        });
     }
 
-    private async Task<data.@this> Run(global::app.goal.@this goal, global::app.actor.context.@this execContext)
+    // the call's parameters into bound, settled in the caller; the failure that stops the call, or null
+    private async Task<data.@this?> Bind(global::app.actor.context.@this execContext, List<data.@this> bound)
     {
         // The parameters are the variables the goal's frame is born with: they are the callee's for as long as it
         // runs and gone when it returns; any other write the callee makes reaches its memory as it would without
@@ -105,7 +114,6 @@ public partial class Call : IContext
         // shared row never enters the callee's variables. The list loads on this run's own copy, never the row.
         // The parameters are named rows: the written list's, or a dict's entries when they are given as one value
         // at run (`Parameter=%asked.parameters%`) — read as what the reference names, never converted to a list.
-        var bound = new List<data.@this>();
         // a null holds no parameters: it binds nothing, as none written does
         if (Parameter != null && await (await Parameter.Follow(Context)).Value() is { IsNull: false } parameters)
         {
@@ -124,7 +132,6 @@ public partial class Call : IContext
                 bound.Add(settled.IsInitialized ? settled.Copy(parameter.Name) : Context.NotFound(parameter.Name));
             }
         }
-
-        return await goal.Start(execContext, bound);
+        return null;
     }
 }
