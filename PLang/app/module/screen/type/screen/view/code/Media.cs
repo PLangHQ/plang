@@ -24,6 +24,17 @@ internal sealed class Media : IDisposable
     /// <summary>Pictures shown so far (each new one at a stream's place).</summary>
     internal int Shown;
 
+    /// <summary>What the streams have done so far: samples, pictures decoded, restarts (seeks), ticks with nothing new
+    /// to show and why.</summary>
+    internal string Numbers
+    {
+        get
+        {
+            lock (gate)
+                return $"shown {Shown}; " + string.Join("; ", streams.Select(s => $"stream {s.Key}: {s.Value.Numbers}"));
+        }
+    }
+
     internal Media()
     {
         presenter = new Thread(Present) { IsBackground = true, Name = "screen view: video" };
@@ -101,10 +112,21 @@ internal sealed class Media : IDisposable
 
         private readonly List<Sample> samples = new();          // in decode order
         private readonly List<(string codec, byte[] config)> generations = new();
-        private readonly PriorityQueue<double, double> fed = new();   // show times of what the decoder has, in show order
         private readonly List<(double time, Yuv picture)> decoded = new();
         private IDecoder? decoder;
-        private int decoderGeneration = -1, next;
+        private int decoderGeneration = -1, clocks;
+        private double lastFed = double.NegativeInfinity;   // the decode time of the last sample the decoder has
+
+        // the next sample to decode: the first after the last one fed (found each time: samples come and go)
+        private int Next
+        {
+            get
+            {
+                int lo = 0, hi = samples.Count;
+                while (lo < hi) { var mid = (lo + hi) / 2; if (samples[mid].Decode <= lastFed) lo = mid + 1; else hi = mid; }
+                return lo;
+            }
+        }
         private double fedUpTo = double.MinValue;
 
         private double clock;                 // the page's time when it said it
@@ -116,6 +138,14 @@ internal sealed class Media : IDisposable
 
         private byte[]? layer;                // the picture at its place's size, BGRA
         private double layerTime = double.NaN;
+        private int added, decodedCount, restarts, noPicture, same, hidden;
+
+        internal string Numbers => $"{added} samples ({samples.Count} kept), {decodedCount} decoded, {restarts} restarts, " +
+            $"ticks: {noPicture} no picture yet, {same} same picture, {hidden} not shown; clock {clock:F2} playing {playing} at {place}; " +
+            $"now {Now:F3}, {clocks} clocks (last {Stopwatch.GetElapsedTime(clockedAt).TotalSeconds:F1} s ago), decoded up to {(decoded.Count > 0 ? decoded[^1].time : double.NaN):F3}, next sample shows {(Next < samples.Count ? samples[Next].Time : double.NaN):F3} " +
+            $"decodes {(Next < samples.Count ? samples[Next].Decode : double.NaN):F3}, first kept {(samples.Count > 0 ? samples[0].Time : double.NaN):F3} (decodes {(samples.Count > 0 ? samples[0].Decode : double.NaN):F3}), last {(samples.Count > 0 ? samples[^1].Time : double.NaN):F3} (decodes {(samples.Count > 0 ? samples[^1].Decode : double.NaN):F3}); last fed decodes {lastFed:F3}; {generations.Count} starts; " +
+            $"times of the last 5 shown: {string.Join(" ", lastShown)}";
+        private readonly Queue<string> lastShown = new();
 
         internal void Start(string codec, byte[] config) => generations.Add((codec, config));
 
@@ -128,11 +158,14 @@ internal sealed class Media : IDisposable
             while (at > 0 && samples[at - 1].Decode > decode) at--;
             if (at > 0 && Math.Abs(samples[at - 1].Decode - decode) < 1e-6) { samples[at - 1] = sample; return; }
             samples.Insert(at, sample);
-            if (at < next) next++;
+            added++;
         }
 
         internal void Clock(double time, bool isPlaying, float speed, Rect at, bool isShown, (byte, byte, byte) colour)
-            => (clock, playing, rate, place, shown, key, clockedAt) = (time, isPlaying, speed, at, isShown, colour, Stopwatch.GetTimestamp());
+        {
+            (clock, playing, rate, place, shown, key, clockedAt) = (time, isPlaying, speed, at, isShown, colour, Stopwatch.GetTimestamp());
+            clocks++;
+        }
 
         private double Now => clock + (playing ? Stopwatch.GetElapsedTime(clockedAt).TotalSeconds * rate : 0);
 
@@ -141,25 +174,48 @@ internal sealed class Media : IDisposable
         {
             if (clockedAt == 0 || samples.Count == 0) return false;
             var now = Now;
-            // a seek: back in time, or far beyond what was decoded — again from the key frame before it
-            if (decoded.Count > 0 && now < decoded[0].time - 0.25 || fedUpTo != double.MinValue && now > fedUpTo + 2) Restart(now);
+            // a seek: back in time, or ahead past a key frame beyond what was decoded (decoding up to it would be
+            // slower than starting there) — again from the key frame before now
+            if (decoded.Count > 0 && now < decoded[0].time - 0.25 || now > fedUpTo + 1 && KeyBetween(fedUpTo, now)) Restart(now);
             if (decoder == null) Restart(now);
             // decode until a picture is known to be past now (or nothing is left)
-            while (next < samples.Count && (decoded.Count == 0 || decoded[^1].time <= now) && samples[next].Decode <= now + 1)
-                Feed(samples[next++]);
+            for (var n = Next; n < samples.Count && (decoded.Count == 0 || decoded[^1].time <= now) && samples[n].Decode <= now + 1
+                               && Follows(samples[n]); n = Next)
+                Feed(samples[n]);
             // the newest picture not after now; older ones go
             var pick = -1;
             for (var i = 0; i < decoded.Count; i++) if (decoded[i].time <= now + 0.001) pick = i;
-            if (pick < 0) return false;
+            if (pick < 0) { noPicture++; return false; }
             var (time, picture) = decoded[pick];
             decoded.RemoveRange(0, pick);
             Prune(now);
-            if (time == layerTime || !shown || place.Width <= 0 || place.Height <= 0) return false;
+            if (time == layerTime) { same++; return false; }
+            if (!shown || place.Width <= 0 || place.Height <= 0) { hidden++; return false; }
             layer ??= new byte[place.Width * place.Height * 4];
             if (layer.Length != place.Width * place.Height * 4) layer = new byte[place.Width * place.Height * 4];
             picture.Into(layer, place.Width, place.Height);
             layerTime = time;
+            lastShown.Enqueue($"{time:F3}@{now:F3}");
+            if (lastShown.Count > 5) lastShown.Dequeue();
             return true;
+        }
+
+        // a sample the decoder may take next: one right after the last it took — or a key frame, where a decoder can
+        // always start. Never across a gap (a segment still arriving while a later one is here): a picture whose
+        // references the decoder never saw breaks the decoding from there on; the gap's samples come, or the clock
+        // runs past it to a key frame (a jump)
+        private bool Follows(Sample s)
+        {
+            if (s.Key) return true;
+            if (double.IsNegativeInfinity(lastFed)) return false;   // a fresh decoder starts at a key frame
+            return s.Decode - lastFed <= 0.1;
+        }
+
+        private bool KeyBetween(double after, double upTo)
+        {
+            for (var i = Next; i < samples.Count; i++)
+                if (samples[i].Key && samples[i].Time > after && samples[i].Time <= upTo) return true;
+            return false;
         }
 
         private void Feed(Sample s)
@@ -169,15 +225,20 @@ internal sealed class Media : IDisposable
                 decoder?.Dispose();
                 decoder = Make(generations[s.Generation]);
                 decoderGeneration = s.Generation;
-                fed.Clear();
             }
-            fed.Enqueue(s.Time, s.Time);
             fedUpTo = Math.Max(fedUpTo, s.Time);
-            Yuv? picture;
-            try { picture = decoder?.Decode(s.Bytes); }
-            catch (InvalidOperationException) { picture = null; }
-            // a picture comes out in show order: it is the earliest show time fed and not yet given
-            if (picture != null && fed.TryDequeue(out var time, out _)) decoded.Add((time, picture));
+            lastFed = s.Decode;
+            List<(double time, Yuv picture)> pictures;
+            try { pictures = decoder?.Decode(s.Bytes, s.Time) ?? []; }
+            catch (InvalidOperationException) { pictures = []; }
+            // each picture with its own sample's time (the decoder carries it), kept in show order
+            foreach (var p in pictures)
+            {
+                var at = decoded.Count;
+                while (at > 0 && decoded[at - 1].time > p.time) at--;
+                decoded.Insert(at, p);
+                decodedCount++;
+            }
         }
 
         private void Restart(double now)
@@ -185,29 +246,28 @@ internal sealed class Media : IDisposable
             var from = 0;
             for (var i = 0; i < samples.Count; i++)
                 if (samples[i].Key && samples[i].Time <= now + 0.001) from = i;
-            next = from;
             decoder?.Dispose();
             decoder = null;
             decoderGeneration = -1;
+            restarts++;
             decoded.Clear();
-            fed.Clear();
             fedUpTo = double.MinValue;
-            if (next < samples.Count) Feed(samples[next++]);
+            lastFed = double.NegativeInfinity;
+            if (from < samples.Count) Feed(samples[from]);
         }
 
         // what is well behind the clock goes: from the key frame before (now − 3 s) on stays (a small seek back)
         private void Prune(double now)
         {
             var keep = 0;
+            var next = Next;
             for (var i = 0; i < next; i++) if (samples[i].Key && samples[i].Time <= now - 3) keep = i;
-            if (keep <= 0) return;
-            samples.RemoveRange(0, keep);
-            next -= keep;
+            if (keep > 0) samples.RemoveRange(0, keep);
         }
 
         private static IDecoder? Make((string codec, byte[] config) g) => g.codec switch
         {
-            "av01" when Av1.Here => new Av1(),
+            "av01" when Av1.Here => new Av1(g.config),
             "avc1" or "avc3" when Video.Here => new Avc(g.config),
             _ => null,
         };

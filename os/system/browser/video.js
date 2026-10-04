@@ -97,7 +97,7 @@
       this._done();
     }
     remove(start, end) { say({ video: 'remove', id: this.id, start, end: Number.isFinite(end) ? end : null }); this._done(); }
-    abort() { this.updating = false; }
+    abort() { this.updating = false; say({ video: 'abort', id: this.id }); }
     changeType(type) { this.type = type; say({ video: 'type', id: this.id, type }); }
   }
   const empty = { length: 0, start() { throw new DOMException('', 'IndexSizeError'); }, end() { throw new DOMException('', 'IndexSizeError'); } };

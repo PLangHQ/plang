@@ -26,13 +26,33 @@ public class PassedVideoTests
         using var av1 = new Av1();
         var levels = new List<int>();
         foreach (var sample in mp4.Samples(Fixture("av1-segment.m4s")))
-            if (av1.Decode(sample.Bytes) is { } picture)
+            foreach (var (time, picture) in av1.Decode(sample.Bytes, sample.Time))
             {
+                await Assert.That(time).IsLessThanOrEqualTo(sample.Time + 1e-6).Because("a picture is its own sample's or an earlier one's");
                 await Assert.That((picture.Width, picture.Height)).IsEqualTo((mp4.Width, mp4.Height));
                 levels.Add(picture.Y.Take(picture.YStride * picture.Height).Distinct().Count());
             }
         await Assert.That(levels.Count).IsGreaterThan(10);
         // the film opens on black and fades in: its pictures become pictures
         await Assert.That(levels.Max()).IsGreaterThan(16).Because("levels per picture: " + string.Join(",", levels));
+    }
+
+    // a seek: a new decoder starts at a key frame later in the stream, the sequence header coming from the init segment
+    [Test]
+    public async Task ADecoderStartedAtALaterKeyFrame_DecodesWithTheInitSegmentsSequenceHeader()
+    {
+        if (!Av1.Here)
+        {
+            Skip.Test("dav1d isn't on the library path (LD_LIBRARY_PATH=<dir with libdav1d.so.7>)");
+            return;
+        }
+        var mp4 = new Mp4();
+        mp4.Init(Fixture("av1-init.mp4"));
+        var samples = mp4.Samples(Fixture("av1-segment.m4s"));
+        var key = samples.FindLastIndex(s => s.Key);
+        if (key <= 0) { Skip.Test("the capture has one key frame only"); return; }
+        using var av1 = new Av1(mp4.Config);
+        var pictures = samples.Skip(key).Sum(s => av1.Decode(s.Bytes, s.Time).Count);
+        await Assert.That(pictures).IsGreaterThan(0);
     }
 }

@@ -69,25 +69,37 @@ public sealed class @this : browser.@this
             switch (e.TryGetProperty("video", out var what) ? what.GetString() : null)
             {
                 case "start":
-                    _videos[(window, stream)] = new video.@this((uint)Interlocked.Increment(ref _nextVideo), _display.Wayland);
+                    var started = _videos[(window, stream)] = new video.@this((uint)Interlocked.Increment(ref _nextVideo),
+                        (kind, message) => _display.Wayland.Frame.Media(kind, message));
+                    _display.Wayland.Debug($"browser: window {window}'s page starts video {stream} ({(e.TryGetProperty("type", out var t) ? t.GetString() : "")}): stream {started.Id}");
                     break;
                 case "chunk" when _videos.TryGetValue((window, stream), out var v):
-                    v.Chunk(Convert.FromBase64String(e.GetProperty("data").GetString() ?? ""),
-                        e.TryGetProperty("offset", out var o) && o.ValueKind == JsonValueKind.Number ? o.GetDouble() : 0);
+                    var chunk = Convert.FromBase64String(e.GetProperty("data").GetString() ?? "");
+                    v.Chunk(chunk, e.TryGetProperty("offset", out var o) && o.ValueKind == JsonValueKind.Number ? o.GetDouble() : 0);
+                    _display.Wayland.Debug($"browser: video {v.Id} (window {window}'s {stream}) took {chunk.Length} B; {v.Holding}");
                     break;
                 case "clock" when e.TryGetProperty("ids", out var ids):
                     var page = _display.Wayland.PagePlace((int)window);
                     foreach (var each in ids.EnumerateArray())
                         if (_videos.TryGetValue((window, each.GetInt32()), out var playing)) playing.Clock(e, page);
                     break;
+                case "abort" when _videos.TryGetValue((window, stream), out var aborted):
+                    aborted.Abort();
+                    break;
                 case "end" when _videos.TryRemove((window, stream), out var ended):
                     ended.End();
                     break;
             }
         }
-        catch (Exception ex) when (ex is JsonException or FormatException or InvalidOperationException or KeyNotFoundException)
+        catch (JsonException)
         {
             // a page's line that isn't one of the stand-in's: not ours to read
+        }
+        catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
+        {
+            // said, never swallowed: a stream that stops reading would only show as a video that stops
+            if (Report != null)
+                return Report(new global::app.error.ServiceError($"A page's video couldn't be read: {ex.GetType().Name}: {ex.Message}\n{ex.StackTrace}", "VideoUnread", 500) { Exception = ex });
         }
         return Task.CompletedTask;
     };
@@ -97,9 +109,16 @@ public sealed class @this : browser.@this
     {
         if (codecs.Length == 0) return;
         var hook = await new FilePath(_os.Absolute + "/system/browser/video.js").Read(context);
-        if (!hook.Success || (await hook.Value())?.ToString() is not { Length: > 0 } source) return;
+        if (!hook.Success || (await hook.Value())?.ToString() is not { Length: > 0 } source)
+        {
+            // said, never quietly: the videos stay Chromium's (pixels) and nothing else would tell why
+            if (Report != null)
+                await Report(new global::app.error.ServiceError($"Video pass-through is off: the page hook didn't read ({hook.Error?.Message ?? "empty"})", "VideoHookUnread", 500));
+            return;
+        }
         VideoScript = "window.__plangCodecs=" + JsonSerializer.Serialize(codecs) + ";\n" + source;
         await window.Video(VideoScript);
+        _display.Wayland.Debug($"browser: pages run the video hook from their next load (codecs {string.Join(", ", codecs)})");
     }
 
     /// <summary>The page at <paramref name="address"/> is one of plang's own: a file under the app's folder or the

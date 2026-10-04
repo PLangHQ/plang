@@ -35,7 +35,9 @@ internal sealed class Avc : IDecoder
         parameters = annexB.ToArray();
     }
 
-    public Yuv? Decode(ReadOnlyMemory<byte> sample)
+    // openh264 gives pictures in the order it decodes them, one per sample (no reordering: constrained baseline);
+    // each is its sample's
+    public List<(double time, Yuv picture)> Decode(ReadOnlyMemory<byte> sample, double time)
     {
         using var annexB = new MemoryStream(sample.Length + 64);
         if (parameters != null) { annexB.Write(parameters); parameters = null; }
@@ -50,7 +52,7 @@ internal sealed class Avc : IDecoder
             annexB.Write(s.Slice(at, n));
             at += n;
         }
-        return video.Decode(annexB.ToArray());
+        return video.Decode(annexB.ToArray()) is { } picture ? [(time, picture)] : [];
     }
 
     public void Dispose() => video.Dispose();
