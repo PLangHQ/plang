@@ -24,6 +24,8 @@
     while (waiting.length) window.plangVideo(waiting.shift());
   };
   const KEY = 'rgb(1, 2, 3)';
+  // a new page in the window (a reload, another address): the last page's videos are over — it never said so
+  if (window === window.top) say({ video: 'page' });
 
   // what the host plays: video in MP4 with one of its codecs (the codec string's first part: av01.0.08M.08 → av01)
   const played = type => {

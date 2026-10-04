@@ -27,24 +27,29 @@ public class MediaTests
 
     private sealed class Stand : IDecoding
     {
+        public int Made;
         public string[] Codecs => ["test"];
-        public IDecoder? Make(string codec, byte[] config, int width, int height) => codec == "test" ? new Grey() : null;
+        public IDecoder? Make(string codec, byte[] config, int width, int height)
+        {
+            Made++;
+            return codec == "test" ? new Grey() : codec == "bad!" ? throw new InvalidOperationException("the decoder refused the stream") : null;
+        }
     }
 
-    private static byte[] Start() => [10, 1, 0, 0, 0, .. "test"u8, 16, 0, 16, 0];
+    private static byte[] Start(byte id = 1, string codec = "test") => [10, id, 0, 0, 0, .. System.Text.Encoding.ASCII.GetBytes(codec), 16, 0, 16, 0];
 
-    private static byte[] Sample()
+    private static byte[] Sample(byte id = 1)
     {
         var m = new byte[31];
-        m[0] = 11; m[1] = 1;
+        m[0] = 11; m[1] = id;
         m[29] = 1;   // a key frame, at time 0
         return m;
     }
 
-    private static byte[] Clock()
+    private static byte[] Clock(byte id = 1)
     {
         var m = new byte[38];
-        m[0] = 12; m[1] = 1;
+        m[0] = 12; m[1] = id;
         BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(18), Place.X);
         BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(22), Place.Y);
         BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(26), Place.Width);
@@ -82,6 +87,32 @@ public class MediaTests
         await Assert.That(place).IsEqualTo(Place);
         await Assert.That(media.Places).IsEquivalentTo(new[] { Place });
         await Assert.That(media.Codecs).IsEquivalentTo(new[] { "test" });
+    }
+
+    // a decoder that won't start: why is in the numbers, and it isn't asked for again sixty times a second
+    [Test]
+    public async Task ADecoderThatWontStart_IsSaid_AndNotRetriedEveryTick()
+    {
+        var stand = new Stand();
+        using var media = new Media(stand);
+        media.Take(Start(codec: "bad!"));
+        media.Take(Sample());
+        media.Take(Clock());
+        await Task.Delay(500);   // ~30 presenter ticks
+        await Assert.That(media.Numbers).Contains("the decoder refused the stream");
+        await Assert.That(stand.Made).IsEqualTo(1);
+    }
+
+    // a page that reloads never says its video ended: a new stream at its place ends it, or its last picture stays
+    [Test]
+    public async Task ANewStreamAtAnOldOnesPlace_EndsTheOldOne()
+    {
+        using var media = new Media(new Stand());
+        await Playing(media);
+        media.Take(Start(2));
+        media.Take(Clock(2));
+        await Assert.That(media.Numbers).DoesNotContain("stream 1:");
+        await Assert.That(media.Numbers).Contains("stream 2:");
     }
 
     [Test]

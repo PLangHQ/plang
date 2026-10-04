@@ -45,7 +45,11 @@ internal sealed class Window
             var a = new RECT { left = place.X, top = place.Y, right = place.Right, bottom = place.Bottom };
             InvalidateArea(hwnd, ref a, false);
         };
+        // the numbers once a second even when nothing on the page changes (a video playing here)
+        statClock = new Timer(_ => { lock (statGate) Said(); }, null, 1000, 1000);
     }
+
+    private readonly Timer statClock;
 
     /// <summary>Creates the window on its own thread; returns when it is on screen (or why not).</summary>
     public string? Show()
@@ -374,19 +378,33 @@ internal sealed class Window
     }
 
     /// <summary>Once a second the numbers go to the screen's other side (PlangOS shows them on its
-    /// taskbar): updates/s, MB/s, ms to apply, input → picture and the pipe's round trip.</summary>
+    /// taskbar): updates/s, MB/s, ms to apply, input → picture and the pipe's round trip — and, while
+    /// a page's video plays here, what it has done (video: samples, pictures, any trouble).</summary>
     private void Stats(long appliedTicks)
     {
-        statUpdates++;
-        statTicks += appliedTicks;
+        lock (statGate)
+        {
+            statUpdates++;
+            statTicks += appliedTicks;
+            Said();
+        }
+    }
+
+    private readonly object statGate = new();
+
+    // the numbers said, when a second has gone by: after an update, or by the clock (a video plays while the
+    // page itself doesn't change: no updates, and its numbers are wanted all the same)
+    private void Said()
+    {
         var now = Environment.TickCount64;
         if (now - statSince < 1000 || hwnd == IntPtr.Zero) return;
         var seconds = (now - statSince) / 1000.0;
         var ms = statUpdates == 0 ? 0 : statTicks * 1000.0 / System.Diagnostics.Stopwatch.Frequency / statUpdates;
         var mb = Interlocked.Exchange(ref statBytes, 0) / 1048576.0 / seconds;
         var numbers = System.Globalization.CultureInfo.InvariantCulture;
+        var video = media.Any ? ",\"video\":" + JsonSerializer.Serialize(media.Numbers) : "";
         var stats = "{\"stats\":{" + string.Format(numbers, "\"updates\":{0:F0},\"mb\":{1:F2},\"apply\":{2:F1},\"queued\":{3}", statUpdates / seconds, mb, ms, patches.Count)
-            + ",\"picture\":" + picture.Json() + ",\"pipe\":" + pipe.Json() + "}}";
+            + ",\"picture\":" + picture.Json() + ",\"pipe\":" + pipe.Json() + video + "}}";
         onEvent((global::app.type.item.text.@this)stats);
         statUpdates = 0; statTicks = 0; statSince = now;
     }
@@ -558,6 +576,7 @@ internal sealed class Window
             DispatchMessageW(ref msg);
         }
         Closed = true;
+        statClock.Dispose();
         media.Dispose();
         onClosed();
     }

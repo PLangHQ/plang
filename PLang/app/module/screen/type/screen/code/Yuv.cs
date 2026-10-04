@@ -56,6 +56,6 @@ internal interface IDecoding
     string[] Codecs { get; }
 
     /// <summary>A decoder for <paramref name="codec"/> with the stream's <paramref name="config"/> (av1C, avcC) and
-    /// size, or null when this host has none for it (or it wouldn't start).</summary>
+    /// size, or null when this host has none for it; one that won't start throws why.</summary>
     IDecoder? Make(string codec, byte[] config, int width, int height);
 }
