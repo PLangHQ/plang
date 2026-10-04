@@ -50,11 +50,27 @@ internal sealed class Frame
     {
         var r = area.Clip(new Rect(0, 0, display.Size.Width, display.Size.Height));
         if (r.Empty) return;
+        // a page scrolled: the host moves the rows it has and only the new ones are sent — and a scroll is no video's
+        // motion (not counted for one). Not looked for where a video plays: its pictures are its own.
+        var composed = false;
+        if (r.Width * r.Height >= Scrolling && video?.Rect != Video.Place(r))
+        {
+            ComposeInto(r);
+            composed = true;
+            if (Scroll.Find(r, composing.AsSpan(0, r.Height * r.Width * 4), screen, display.Size.Width) is { } scrolled)
+            {
+                var (left, right, top, bottom, dy) = scrolled;
+                Move(new Rect(left, top - dy, right - left, bottom - top), new Point(0, dy));
+                Compose(r, all: false, composed: true);
+                return;
+            }
+        }
         // a video starts playing here — or where it plays now isn't where its stream is (the page
         // laid it out anew: a window maximized, the player made bigger): the stream moves
         if (motion.Playing(r) && video?.Rect != Video.Place(r))
         {
             Still();
+            composed = false;   // what ends composes into the same buffer
             video = Video.At(r, this);
             if (video != null) display.Debug($"screen: a video plays at {video.Rect}: sent as H.264");
         }
@@ -64,32 +80,34 @@ internal sealed class Frame
             foreach (var around in r.Without(v.Rect)) Compose(around, all: false);
             return;
         }
-        Compose(r, all: false);
+        Compose(r, all: false, composed);
     }
 
-    /// <summary>The screen inside <paramref name="r"/>, composed and encoded: the rows that changed,
-    /// or <paramref name="all"/> of them (what the host shows there isn't exact: a video was there).</summary>
-    private void Compose(Rect r, bool all)
+    // an area this big may be a page scrolling: looked at for it (Scroll's own floor, 200x120)
+    private const int Scrolling = 200 * 120;
+
+    /// <summary>The screen inside <paramref name="r"/>, composed into the composing buffer, a row after another.</summary>
+    private void ComposeInto(Rect r)
     {
         var row = r.Width * 4;
-        int first = -1, last = -1;   // the rows that changed: only they are sent
-        for (var y = r.Y; y < r.Bottom; y++)
+        for (var y = r.Y; y < r.Bottom; y++) display.Draw(y, r.X, composing.AsSpan((y - r.Y) * row, row));   // writes all of each row
+    }
+
+    /// <summary>The screen inside <paramref name="r"/>, composed (unless it is in the composing buffer already:
+    /// <paramref name="composed"/>) and encoded: only what changed, as narrow rectangles (<see cref="Damage"/>), or
+    /// <paramref name="all"/> of it (what the host shows there isn't exact: a video was there).</summary>
+    private void Compose(Rect r, bool all, bool composed = false)
+    {
+        if (!composed) ComposeInto(r);
+        var rows = composing.AsSpan(0, r.Height * r.Width * 4);
+        foreach (var (rect, at) in Damage.Find(r, rows, screen, display.Size.Width, all))
         {
-            var line = composing.AsSpan((y - r.Y) * row, row);
-            display.Draw(y, r.X, line);   // writes all of it: the bottom window is copied in, not blended over a cleared line
-            var shown = screen.AsSpan((y * display.Size.Width + r.X) * 4, row);
-            if (!all && shown.SequenceEqual(line)) continue;
-            line.CopyTo(shown);
-            if (first < 0) first = y;
-            last = y;
+            var changed = new Region(rect, composing.AsMemory(at, rect.Width * rect.Height * 4));
+            // encoded now (the composing buffer is reused by the next present), in bands at once
+            var bands = changed.Bands(changed.Big ? encoder.Count : 1);
+            encoder.Encode(bands);
+            pending.AddRange(bands);
         }
-        if (first < 0) return;
-        var changed = new Region(new Rect(r.X, first, r.Width, last - first + 1),
-            composing.AsMemory((first - r.Y) * row, (last - first + 1) * row));
-        // encoded now (the composing buffer is reused by the next present), in bands at once
-        var bands = changed.Bands(changed.Big ? encoder.Count : 1);
-        encoder.Encode(bands);
-        pending.AddRange(bands);
     }
 
     /// <summary>Where something was and is, composed again and sent.</summary>
