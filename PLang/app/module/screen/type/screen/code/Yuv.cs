@@ -2,31 +2,37 @@ namespace app.module.screen.type.screen.code;
 
 /// <summary>
 /// A decoded picture: 8-bit Y, U and V planes, 4:2:0 (the chroma planes half the size each way), each with its stride.
-/// It draws itself as BGRA at any size (nearest sample: a test host's scaling, not a player's), BT.709 video range —
-/// what the Windows host's Media Foundation gives.
+/// It draws itself as BGRA at any size (nearest sample), BT.709 video range — the numbers browsers stream with.
 /// </summary>
 internal sealed record Yuv(byte[] Y, byte[] U, byte[] V, int YStride, int CStride, int Width, int Height)
 {
-    /// <summary>The picture as <paramref name="width"/> × <paramref name="height"/> BGRA pixels into <paramref name="bgra"/>.</summary>
-    internal void Into(Span<byte> bgra, int width, int height)
+    /// <summary>The picture as <paramref name="width"/> × <paramref name="height"/> BGRA pixels into <paramref name="bgra"/>:
+    /// rows in bands on half the cores (the other half are PlangOS's: its VM runs on the same machine).</summary>
+    internal void Into(byte[] bgra, int width, int height)
     {
-        if (width <= 0 || height <= 0) return;
+        if (width <= 0 || height <= 0 || bgra.Length < width * height * 4) return;
         var columns = new int[width];
         for (var x = 0; x < width; x++) columns[x] = (int)((long)x * Width / width);
-        for (var y = 0; y < height; y++)
+        var bands = Math.Clamp(Environment.ProcessorCount / 2, 1, Math.Max(1, height / 32));
+        Parallel.For(0, bands, band =>
         {
-            var sy = (int)((long)y * Height / height);
-            int yr = sy * YStride, cr = sy / 2 * CStride;
-            var o = y * width * 4;
-            for (var x = 0; x < width; x++, o += 4)
-            {
-                var sx = columns[x];
-                int c = 298 * (Y[yr + sx] - 16), u = U[cr + (sx >> 1)] - 128, v = V[cr + (sx >> 1)] - 128;
-                bgra[o] = Clamp((c + 541 * u + 128) >> 8);
-                bgra[o + 1] = Clamp((c - 55 * u - 136 * v + 128) >> 8);
-                bgra[o + 2] = Clamp((c + 459 * v + 128) >> 8);
-                bgra[o + 3] = 255;
-            }
+            for (var y = height * band / bands; y < height * (band + 1) / bands; y++) Row(bgra, y, width, height, columns);
+        });
+    }
+
+    private void Row(byte[] bgra, int y, int width, int height, int[] columns)
+    {
+        var sy = (int)((long)y * Height / height);
+        int yr = sy * YStride, cr = sy / 2 * CStride;
+        var o = y * width * 4;
+        for (var x = 0; x < width; x++, o += 4)
+        {
+            var sx = columns[x];
+            int c = 298 * (Y[yr + sx] - 16), u = U[cr + (sx >> 1)] - 128, v = V[cr + (sx >> 1)] - 128;
+            bgra[o] = Clamp((c + 541 * u + 128) >> 8);
+            bgra[o + 1] = Clamp((c - 55 * u - 136 * v + 128) >> 8);
+            bgra[o + 2] = Clamp((c + 459 * v + 128) >> 8);
+            bgra[o + 3] = 255;
         }
     }
 
