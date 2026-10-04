@@ -1,5 +1,7 @@
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using Media = global::app.module.screen.type.screen.code.Media;
+using Rect = global::app.module.screen.type.screen.display.code.Rect;
 
 namespace app.module.screen.type.screen.window.code;
 
@@ -36,6 +38,13 @@ internal sealed class Window
         pixels = new byte[width * height * 4];
         frameWidth = width; frameHeight = height;
         proc = Proc;
+        // a video's new picture: its place painted again (the picture drawn in at the paint)
+        media.Presented += place =>
+        {
+            if (hwnd == IntPtr.Zero) return;
+            var a = new RECT { left = place.X, top = place.Y, right = place.Right, bottom = place.Bottom };
+            InvalidateArea(hwnd, ref a, false);
+        };
     }
 
     /// <summary>Creates the window on its own thread; returns when it is on screen (or why not).</summary>
@@ -117,20 +126,31 @@ internal sealed class Window
     /// A message from PlangOS's screen, [u8 kind][payload]: 1 a frame's rectangles, 7 a frame that
     /// opens with a move, 3/4 an input's echo (for latency) — these keep their order in the decode
     /// queue — 2 the pointer to show, 5 text PlangOS copied, 9 a message from PlangOS's PLang for
-    /// this one (json; it reaches OnInput as the events do). False when it isn't one (an image, say).
+    /// this one (json; it reaches OnInput as the events do), 10–13 a page's video this window plays
+    /// itself (see <see cref="Media"/>). False when it isn't one (an image, say). Its first message
+    /// tells PlangOS the codecs Windows decodes here: from then on PlangOS passes those videos on.
     /// </summary>
     public bool Take(byte[] message)
     {
         if (message.Length == 0) return false;
+        if (Interlocked.Exchange(ref told, 1) == 0 && media.Codecs is { Length: > 0 } codecs)
+            onEvent((global::app.type.item.text.@this)("{\"codecs\":" + JsonSerializer.Serialize(codecs) + "}"));
         switch (message[0])
         {
             case 1 or 3 or 4 or 7: PatchBinary(message); return true;
             case 2: Cursor(System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1)); return true;
             case 5: Clipboard(System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1)); return true;
             case 9: onEvent((global::app.type.item.text.@this)("{\"guest\":" + System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1) + "}")); return true;
+            case >= 10 and <= 13: return media.Take(message);
             default: return false;
         }
     }
+
+    // ---- a page's video, played here: its samples decoded by Windows, drawn where the page shows its key colour ----
+
+    private readonly Media media = new(new Decoding());
+    private int told;          // PlangOS told the codecs (once)
+    private byte[] composed = [];   // the part of a paint where a video shows: the frame's pixels with the video in
 
     /// <summary>Queues a changed rectangle; applied in order by the decoder thread.</summary>
     public void Patch(string line) => Enqueue(line);
@@ -538,6 +558,7 @@ internal sealed class Window
             DispatchMessageW(ref msg);
         }
         Closed = true;
+        media.Dispose();
         onClosed();
     }
 
@@ -640,6 +661,22 @@ internal sealed class Window
                 },
             };
             SetDIBitsToDevice(ps.hdc, 0, 0, (uint)frameWidth, (uint)frameHeight, 0, 0, 0, (uint)frameHeight, pixels, ref info, 0);
+            // where a video shows (and this paint reaches): the frame's pixels there with the video drawn in, over it
+            var painted = new Rect(ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right - ps.rcPaint.left, ps.rcPaint.bottom - ps.rcPaint.top)
+                .Clip(new Rect(0, 0, frameWidth, frameHeight));
+            foreach (var place in media.Places)
+            {
+                var area = place.Clip(painted);
+                if (area.Empty || pixels.Length != frameWidth * frameHeight * 4) continue;
+                var bytes = area.Width * area.Height * 4;
+                if (composed.Length < bytes) composed = new byte[bytes];
+                for (var y = 0; y < area.Height; y++)
+                    Buffer.BlockCopy(pixels, ((area.Y + y) * frameWidth + area.X) * 4, composed, y * area.Width * 4, area.Width * 4);
+                media.Draw(composed.AsSpan(0, bytes), area);
+                info.bmiHeader.biWidth = area.Width;
+                info.bmiHeader.biHeight = -area.Height;
+                SetDIBitsToDevice(ps.hdc, area.X, area.Y, (uint)area.Width, (uint)area.Height, 0, 0, 0, (uint)area.Height, composed, ref info, 0);
+            }
         }
         EndPaint(h, ref ps);
     }

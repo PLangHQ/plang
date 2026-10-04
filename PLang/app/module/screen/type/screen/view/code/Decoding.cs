@@ -8,10 +8,18 @@ internal sealed class Decoding : IDecoding
 {
     public string[] Codecs => [.. new[] { Av1.Here ? "av01" : null, Video.Here ? "avc1" : null }.OfType<string>()];
 
-    public IDecoder? Make(string codec, byte[] config) => codec switch
+    // dav1d and openh264 read the size from the stream itself
+    public IDecoder? Make(string codec, byte[] config, int width, int height)
     {
-        "av01" when Av1.Here => new Av1(config),
-        "avc1" or "avc3" when Video.Here => new Avc(config),
-        _ => null,
-    };
+        try
+        {
+            return codec switch
+            {
+                "av01" when Av1.Here => new Av1(config),
+                "avc1" or "avc3" when Video.Here => new Avc(config),
+                _ => null,
+            };
+        }
+        catch (InvalidOperationException) { return null; }   // no decoder: the stream shows no pictures, the page goes on
+    }
 }

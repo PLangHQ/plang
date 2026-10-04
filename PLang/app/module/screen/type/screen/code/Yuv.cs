@@ -49,7 +49,7 @@ internal interface IDecoding
     /// <summary>The codecs here (<c>av01</c>, <c>avc1</c>), none when this host plays no video itself.</summary>
     string[] Codecs { get; }
 
-    /// <summary>A decoder for <paramref name="codec"/> with the stream's <paramref name="config"/> (av1C, avcC), or
-    /// null when this host has none for it.</summary>
-    IDecoder? Make(string codec, byte[] config);
+    /// <summary>A decoder for <paramref name="codec"/> with the stream's <paramref name="config"/> (av1C, avcC) and
+    /// size, or null when this host has none for it (or it wouldn't start).</summary>
+    IDecoder? Make(string codec, byte[] config, int width, int height);
 }
