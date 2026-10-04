@@ -30,7 +30,8 @@ public class PassedVideoTests
             {
                 await Assert.That(time).IsLessThanOrEqualTo(sample.Time + 1e-6).Because("a picture is its own sample's or an earlier one's");
                 await Assert.That((picture.Width, picture.Height)).IsEqualTo((mp4.Width, mp4.Height));
-                levels.Add(picture.Y.Take(picture.YStride * picture.Height).Distinct().Count());
+                levels.Add(picture.Data.Take(picture.YStride * picture.Height).Distinct().Count());
+                picture.Dispose();
             }
         await Assert.That(levels.Count).IsGreaterThan(10);
         // the film opens on black and fades in: its pictures become pictures

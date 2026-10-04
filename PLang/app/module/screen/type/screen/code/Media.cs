@@ -174,6 +174,7 @@ internal sealed class Media : IDisposable
         private (byte r, byte g, byte b) key;
 
         private byte[]? layer;                // the picture at its place's size, BGRA
+        private Yuv? showing;                 // the picture the layer was drawn from
         private double layerTime = double.NaN;
         private int added, decodedCount, restarts, noPicture, same, hidden, covered;
         private int failedGeneration = -1;    // a start whose decoder wouldn't start: not tried again every tick
@@ -224,7 +225,7 @@ internal sealed class Media : IDisposable
                     decoder?.Dispose();
                     decoder = null;
                     decoderGeneration = -1;
-                    decoded.Clear();
+                    Drop(decoded.Count);
                 }
                 covered++;
                 return false;
@@ -243,13 +244,17 @@ internal sealed class Media : IDisposable
             for (var i = 0; i < decoded.Count; i++) if (decoded[i].time <= now + 0.001) pick = i;
             if (pick < 0) { noPicture++; return false; }
             var (time, picture) = decoded[pick];
-            decoded.RemoveRange(0, pick);
+            Drop(pick);
             Prune(now);
-            if (time == layerTime) { same++; return false; }
+            var size = place.Width * place.Height * 4;
+            if (time == layerTime && layer?.Length == size) { same++; return false; }
             if (!shown || place.Width <= 0 || place.Height <= 0) { hidden++; return false; }
-            layer ??= new byte[place.Width * place.Height * 4];
-            if (layer.Length != place.Width * place.Height * 4) layer = new byte[place.Width * place.Height * 4];
+            if (layer?.Length != size) layer = new byte[size];
             picture.Into(layer, place.Width, place.Height);
+            // the picture shown is kept until the next one (drawn again at a new size: the window resized, paused);
+            // the one before it is given back
+            if (!ReferenceEquals(showing, picture)) showing?.Dispose();
+            showing = picture;
             layerTime = time;
             lastShown.Enqueue($"{time:F3}@{now:F3}");
             if (lastShown.Count > 5) lastShown.Dequeue();
@@ -314,6 +319,14 @@ internal sealed class Media : IDisposable
             }
         }
 
+        // the first count decoded pictures go, their buffers given back — but not the one shown (kept until the next)
+        private void Drop(int count)
+        {
+            for (var i = 0; i < count; i++)
+                if (!ReferenceEquals(decoded[i].picture, showing)) decoded[i].picture.Dispose();
+            decoded.RemoveRange(0, count);
+        }
+
         private void Trouble(string what)
         {
             trouble = what;
@@ -329,7 +342,7 @@ internal sealed class Media : IDisposable
             decoder = null;
             decoderGeneration = -1;
             restarts++;
-            decoded.Clear();
+            Drop(decoded.Count);
             fedUpTo = double.MinValue;
             lastFed = double.NegativeInfinity;
             if (from < samples.Count) Feed(samples[from]);
@@ -356,22 +369,23 @@ internal sealed class Media : IDisposable
             var both = place.Clip(area);
             if (both.Empty) return;
             // no picture yet (it starts, a seek): black where it goes — as a player shows it, not the key colour
-            var picture = layer is { } l0 && l0.Length == place.Width * place.Height * 4 ? l0 : null;
-            ReadOnlySpan<byte> black = [0, 0, 0, 255];
+            var picture = layer is { } l0 && l0.Length == place.Width * place.Height * 4
+                ? System.Runtime.InteropServices.MemoryMarshal.Cast<byte, uint>(l0.AsSpan()) : default;
+            var screen = System.Runtime.InteropServices.MemoryMarshal.Cast<byte, uint>(pixels);
+            // a pixel is one 32-bit value (BGRA, alpha high): the key compared as one, the video put in as one
+            uint keyed = key.b | (uint)key.g << 8 | (uint)key.r << 16;
             var magenta = key == (255, 0, 255);
             for (var y = both.Y; y < both.Bottom; y++)
             {
-                var row = ((y - area.Y) * area.Width - area.X) * 4;
-                var from = ((y - place.Y) * place.Width - place.X) * 4;
-                for (var x = both.X; x < both.Right; x++)
+                // this row of the area, and of the picture, from where both start
+                var row = screen.Slice((y - area.Y) * area.Width + both.X - area.X, both.Width);
+                var from = picture.IsEmpty ? default : picture.Slice((y - place.Y) * place.Width + both.X - place.X, both.Width);
+                for (var x = 0; x < row.Length; x++)
                 {
-                    var o = row + x * 4;
-                    var video = picture == null ? black : picture.AsSpan(from + x * 4, 4);
-                    if (pixels[o] == key.b && pixels[o + 1] == key.g && pixels[o + 2] == key.r)
-                    {
-                        pixels[o] = video[0]; pixels[o + 1] = video[1]; pixels[o + 2] = video[2]; pixels[o + 3] = 255;
-                    }
-                    else if (magenta) Under(pixels.Slice(o, 4), video);
+                    var page = row[x];
+                    var video = from.IsEmpty ? 0xFF000000u : from[x];
+                    if ((page & 0xFFFFFFu) == keyed) row[x] = video | 0xFF000000u;
+                    else if (magenta) row[x] = Under(page, video);
                 }
             }
         }
@@ -382,19 +396,22 @@ internal sealed class Media : IDisposable
         /// <c>a · grey = green</c>, and the video goes under it, <c>green + (red − green) / 255 · video</c>. Anything else
         /// (a colour, an opaque grey: red = green) stays as the page drew it.
         /// </summary>
-        private static void Under(Span<byte> page, ReadOnlySpan<byte> video)
+        private static uint Under(uint page, uint video)
         {
-            int b = page[0], g = page[1], r = page[2];
-            if (r <= g || Math.Abs(r - b) > 2) return;
+            int b = (int)(page & 0xFF), g = (int)(page >> 8 & 0xFF), r = (int)(page >> 16 & 0xFF);
+            if (r <= g || Math.Abs(r - b) > 2) return page;
             var through = r - g;
-            for (var c = 0; c < 3; c++) page[c] = (byte)(g + (through * video[c] + 127) / 255);
-            page[3] = 255;
+            uint Channel(int shift) => (uint)(g + (through * (int)(video >> shift & 0xFF) + 127) / 255) << shift;
+            return Channel(0) | Channel(8) | Channel(16) | 0xFF000000u;
         }
 
         public void Dispose()
         {
             decoder?.Dispose();
             decoder = null;
+            Drop(decoded.Count);
+            showing?.Dispose();
+            showing = null;
         }
     }
 }

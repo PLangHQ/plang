@@ -21,6 +21,7 @@ internal sealed class Video : IDisposable
     private readonly IntPtr decoder;
     private readonly DecodeFrameNoDelay decode;
     private readonly IntPtr info = Marshal.AllocHGlobal(Info);
+    private readonly Lender lender = new();   // its pictures' buffers, used again
     private const int Info = 72;   // SBufferInfo
 
     /// <summary>The stream's number.</summary>
@@ -55,11 +56,15 @@ internal sealed class Video : IDisposable
     /// when the bytes gave none yet.</summary>
     internal byte[]? Next(ReadOnlyMemory<byte> h264, int width, int height)
     {
-        if (Decode(h264) is not { } picture || picture.Width < width || picture.Height < height) return null;
-        // the screen's part is the picture's top left (an encoder pads to whole blocks): drawn 1:1
-        var bgra = new byte[width * height * 4];
-        (picture with { Width = width, Height = height }).Into(bgra, width, height);
-        return bgra;
+        if (Decode(h264) is not { } picture) return null;
+        using (picture)
+        {
+            if (picture.Width < width || picture.Height < height) return null;
+            // the screen's part is the picture's top left (an encoder pads to whole blocks): drawn 1:1
+            var bgra = new byte[width * height * 4];
+            picture.Into(bgra, width, height, width, height);
+            return bgra;
+        }
     }
 
     /// <summary>One access unit (Annex B: start codes); the picture it gives now, or null.</summary>
@@ -74,13 +79,12 @@ internal sealed class Video : IDisposable
         if (Marshal.ReadInt32(info, 0) != 1) return null;   // iBufferStatus: a picture is ready
         int w = Marshal.ReadInt32(info, 24), h = Marshal.ReadInt32(info, 28);
         int yStride = Marshal.ReadInt32(info, 36), cStride = Marshal.ReadInt32(info, 40);
-        var Y = new byte[yStride * h];
-        var U = new byte[cStride * ((h + 1) / 2)];
-        var V = new byte[U.Length];
-        Marshal.Copy(planes[0], Y, 0, Y.Length);
-        Marshal.Copy(planes[1], U, 0, U.Length);
-        Marshal.Copy(planes[2], V, 0, V.Length);
-        return new Yuv(Y, U, V, yStride, cStride, w, h);
+        var yuv = Yuv.Planes(lender, yStride, cStride, w, h);
+        var colour = cStride * ((h + 1) / 2);
+        Marshal.Copy(planes[0], yuv.Data, 0, yStride * h);
+        Marshal.Copy(planes[1], yuv.Data, yuv.UAt, colour);
+        Marshal.Copy(planes[2], yuv.Data, yuv.VAt, colour);
+        return yuv;
     }
 
     public void Dispose()
