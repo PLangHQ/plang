@@ -25,8 +25,9 @@ internal sealed class Mp4
     private uint _track;
     private uint _defaultDuration, _defaultSize, _defaultFlags;
 
-    /// <summary>A coded picture: when it shows (seconds), how long, a key frame or not, and its bytes.</summary>
-    internal readonly record struct Sample(double Time, double Duration, bool Key, ReadOnlyMemory<byte> Bytes);
+    /// <summary>A coded picture: when it shows (seconds), when it is decoded (before a picture shown earlier that
+    /// refers to it, when pictures are reordered), how long it shows, a key frame or not, and its bytes.</summary>
+    internal readonly record struct Sample(double Time, double Decode, double Duration, bool Key, ReadOnlyMemory<byte> Bytes);
 
     /// <summary>The init segment read; false when it holds no video track this reads (AV1 or H.264).</summary>
     internal bool Init(byte[] init)
@@ -173,7 +174,7 @@ internal sealed class Mp4
                         if (data < 0 || data + z > segment.Length) return;
                         // is_non_sync_sample (bit 16) unset: a decoder can start here
                         var key = (f & 0x10000) == 0;
-                        samples.Add(new Sample(((long)decode + shift) / (double)Timescale, d / (double)Timescale, key,
+                        samples.Add(new Sample(((long)decode + shift) / (double)Timescale, decode / (double)Timescale, d / (double)Timescale, key,
                             segment.Slice((int)data, (int)z)));
                         data += z;
                         decode += d;
