@@ -113,8 +113,9 @@ public sealed class @this : global::app.type.item.@this
                 var parameters = root.TryGetProperty("params", out var p) ? p.Clone() : default;
                 var session = root.TryGetProperty("sessionId", out var s) ? s.GetString() : null;
                 var name = method.GetString()!;
+                // each listener in order, one event at a time — on its own queue, so the pipe is never held by it
                 foreach (var hear in Heard.GetInvocationList().Cast<Func<string, JsonElement, string?, Task>>())
-                    _ = Task.Run(() => hear(name, parameters, session));
+                    Queue(hear).Writer.TryWrite((name, parameters, session));
             }
         }
         catch (Exception ex) when (ex is JsonException or IOException or ObjectDisposedException or InvalidOperationException) { }
@@ -122,8 +123,28 @@ public sealed class @this : global::app.type.item.@this
         {
             // nothing more will answer: what waits is told so, not left to time out
             foreach (var (_, waiting) in _waiting) waiting.TrySetException(new IOException("DevTools' pipe ended"));
+            foreach (var queue in _queues.Values) queue.Writer.TryComplete();
         }
     }
+
+    // a listener's events, waiting for it: one queue each, drained in order by a task of its own; what it throws is
+    // its own (the queue goes on with the next event)
+    private readonly ConcurrentDictionary<Func<string, JsonElement, string?, Task>, System.Threading.Channels.Channel<(string, JsonElement, string?)>> _queues = new();
+
+    private System.Threading.Channels.Channel<(string, JsonElement, string?)> Queue(Func<string, JsonElement, string?, Task> hear)
+        => _queues.GetOrAdd(hear, listener =>
+        {
+            var queue = System.Threading.Channels.Channel.CreateUnbounded<(string, JsonElement, string?)>(new() { SingleReader = true });
+            _ = Task.Run(async () =>
+            {
+                await foreach (var (method, parameters, session) in queue.Reader.ReadAllAsync())
+                {
+                    try { await listener(method, parameters, session); }
+                    catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException)) { }
+                }
+            });
+            return queue;
+        });
 
     public override string ToString() => "DevTools over a pipe";
 }
