@@ -22,6 +22,8 @@ public sealed class @this : screen.@this
     private readonly Func<Task> _closing;
     private code.Video? _video;
     private bool _noVideo;
+    private readonly code.Media _media = new();
+    private int _told;   // PlangOS told the codecs this host decodes (once it sends frames, it listens)
     private volatile bool _closed;
     private int _frames;
 
@@ -55,6 +57,7 @@ public sealed class @this : screen.@this
         {
             byte[] copy;
             lock (_shown.Lock) copy = (byte[])_shown.Pixels.Clone();
+            _media.Draw(copy, _shown.Width, _shown.Height);   // the videos it plays itself, where the page shows them
             using var image = Image.LoadPixelData<Bgra32>(copy, _shown.Width, _shown.Height);
             using var png = new MemoryStream();
             image.SaveAsPng(png);
@@ -70,9 +73,12 @@ public sealed class @this : screen.@this
     internal override bool Show(byte[] message)
     {
         if (_closed || message.Length == 0) return false;
+        if (Interlocked.Exchange(ref _told, 1) == 0 && code.Media.Codecs is { Length: > 0 } codecs)
+            _ = _said((Text)("{\"codecs\":" + System.Text.Json.JsonSerializer.Serialize(codecs) + "}"));
         switch (message[0])
         {
             case 1 or 3 or 4 or 7: _messages.Add(message); return true;
+            case >= 10 and <= 13: return _media.Take(message);
             case 9: _ = _said((Text)("{\"guest\":" + System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1) + "}")); return true;
             case 2 or 5: return true;
             default: return false;
@@ -112,9 +118,15 @@ public sealed class @this : screen.@this
 
     internal override void Close()
     {
+        if (_closed) return;
         _closed = true;
         _messages.CompleteAdding();
+        _media.Dispose();
     }
+
+    /// <summary>Video pictures it has shown itself (pass-through) — <c>%screen.videoframes%</c>.</summary>
+    [global::app.LlmBuilder, global::app.Out]
+    public global::app.type.item.number.@this VideoFrames => _media.Shown;
 
     // ---- what PlangOS sends, in order --------------------------------------------------------------
 

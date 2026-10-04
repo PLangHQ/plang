@@ -54,6 +54,16 @@ internal sealed class Video : IDisposable
     /// when the bytes gave none yet.</summary>
     internal byte[]? Next(ReadOnlyMemory<byte> h264, int width, int height)
     {
+        if (Decode(h264) is not { } picture || picture.Width < width || picture.Height < height) return null;
+        // the screen's part is the picture's top left (an encoder pads to whole blocks): drawn 1:1
+        var bgra = new byte[width * height * 4];
+        (picture with { Width = width, Height = height }).Into(bgra, width, height);
+        return bgra;
+    }
+
+    /// <summary>One access unit (Annex B: start codes); the picture it gives now, or null.</summary>
+    internal Yuv? Decode(ReadOnlyMemory<byte> h264)
+    {
         Marshal.Copy(new byte[Info], 0, info, Info);
         var planes = new IntPtr[3];
         if (!MemoryMarshal.TryGetArray(h264, out var bytes)) bytes = new ArraySegment<byte>(h264.ToArray());
@@ -63,32 +73,14 @@ internal sealed class Video : IDisposable
         if (Marshal.ReadInt32(info, 0) != 1) return null;   // iBufferStatus: a picture is ready
         int w = Marshal.ReadInt32(info, 24), h = Marshal.ReadInt32(info, 28);
         int yStride = Marshal.ReadInt32(info, 36), cStride = Marshal.ReadInt32(info, 40);
-        if (w < width || h < height) return null;
-        var Y = new byte[yStride * height];
-        var U = new byte[cStride * ((height + 1) / 2)];
+        var Y = new byte[yStride * h];
+        var U = new byte[cStride * ((h + 1) / 2)];
         var V = new byte[U.Length];
         Marshal.Copy(planes[0], Y, 0, Y.Length);
         Marshal.Copy(planes[1], U, 0, U.Length);
         Marshal.Copy(planes[2], V, 0, V.Length);
-        var bgra = new byte[width * height * 4];
-        // BT.709 video range to BGRA, as the Windows host's Media Foundation does
-        for (var y = 0; y < height; y++)
-        {
-            int yr = y * yStride, cr = y / 2 * cStride;
-            var o = y * width * 4;
-            for (var x = 0; x < width; x++, o += 4)
-            {
-                int c = 298 * (Y[yr + x] - 16), u = U[cr + (x >> 1)] - 128, v = V[cr + (x >> 1)] - 128;
-                bgra[o] = Clamp((c + 541 * u + 128) >> 8);
-                bgra[o + 1] = Clamp((c - 55 * u - 136 * v + 128) >> 8);
-                bgra[o + 2] = Clamp((c + 459 * v + 128) >> 8);
-                bgra[o + 3] = 255;
-            }
-        }
-        return bgra;
+        return new Yuv(Y, U, V, yStride, cStride, w, h);
     }
-
-    private static byte Clamp(int v) => (byte)Math.Clamp(v, 0, 255);
 
     public void Dispose()
     {

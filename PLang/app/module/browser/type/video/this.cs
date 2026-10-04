@@ -9,7 +9,7 @@ namespace app.module.browser.type.video;
 /// A video a page plays that the host plays itself (pass-through): the page's stand-in gives its chunks (fragmented
 /// MP4, <see cref="code.Mp4"/>), its clock and its place; they go to the host beside the screen's frames, little-endian:
 ///   10 it starts (again, when the player changes quality): [u32 id][4 codec, ASCII][u16 width][u16 height][config]
-///   11 a sample: [u32 id][f64 time][f64 duration][u8 key frame][coded picture]
+///   11 a sample: [u32 id][f64 time it shows][f64 time it is decoded][f64 duration][u8 key frame][coded picture]
 ///   12 its clock and place: [u32 id][f64 time][u8 playing][f32 rate][i32 x][i32 y][i32 w][i32 h][u8 shown]
 ///      [u8 r][u8 g][u8 b] — on the screen; the host shows the picture for <c>time</c> there, where the page shows
 ///      the key colour (r, g, b), under what the page draws over it (the player's controls, captions)
@@ -43,12 +43,13 @@ internal sealed class @this(uint id, Display display)
         if (!_started) return;
         foreach (var s in _mp4.Samples(data))
         {
-            var m = new byte[21 + s.Bytes.Length];
+            var m = new byte[29 + s.Bytes.Length];
             BinaryPrimitives.WriteUInt32LittleEndian(m, Id);
             BinaryPrimitives.WriteDoubleLittleEndian(m.AsSpan(4), s.Time + offset);
-            BinaryPrimitives.WriteDoubleLittleEndian(m.AsSpan(12), s.Duration);
-            m[20] = s.Key ? (byte)1 : (byte)0;
-            s.Bytes.Span.CopyTo(m.AsSpan(21));
+            BinaryPrimitives.WriteDoubleLittleEndian(m.AsSpan(12), s.Decode + offset);
+            BinaryPrimitives.WriteDoubleLittleEndian(m.AsSpan(20), s.Duration);
+            m[28] = s.Key ? (byte)1 : (byte)0;
+            s.Bytes.Span.CopyTo(m.AsSpan(29));
             display.Frame.Media(11, m);
         }
     }
