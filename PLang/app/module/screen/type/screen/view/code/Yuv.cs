@@ -36,6 +36,8 @@ internal sealed record Yuv(byte[] Y, byte[] U, byte[] V, int YStride, int CStrid
 /// <summary>A video decoder: coded pictures in, in decode order; the pictures they give out, in show order.</summary>
 internal interface IDecoder : IDisposable
 {
-    /// <summary>One coded picture; the decoded picture it (or an earlier one) gives now, or null.</summary>
-    Yuv? Decode(ReadOnlyMemory<byte> sample);
+    /// <summary>One coded picture, which shows at <paramref name="time"/>; the decoded pictures ready now, each with
+    /// the time of its own sample (a decoder working on several frames at once gives them later than their samples,
+    /// sometimes more than one, and none for a sample it can't decode).</summary>
+    List<(double time, Yuv picture)> Decode(ReadOnlyMemory<byte> sample, double time);
 }

@@ -259,6 +259,7 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
             else if (e["codecs"] is JsonArray codecs)
             {
                 Codecs = [.. codecs.Select(c => c?.ToString().ToLowerInvariant() ?? "").Where(c => c.Length > 0)];
+                Debug($"screen: the host decodes {string.Join(", ", Codecs)} itself: pages' videos in those go to it");
                 CodecsKnown?.Invoke(Codecs);
             }
             else if (e.ContainsKey("video")) Frame.Lossless("the host can't show H.264: " + S("why"));

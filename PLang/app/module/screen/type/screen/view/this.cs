@@ -128,6 +128,10 @@ public sealed class @this : screen.@this
     [global::app.LlmBuilder, global::app.Out]
     public global::app.type.item.number.@this VideoFrames => _media.Shown;
 
+    /// <summary>What its videos have done so far, as text: samples, decoded, restarts, why nothing new showed.</summary>
+    [global::app.LlmBuilder, global::app.Out]
+    public global::app.type.item.text.@this VideoNumbers => _media.Numbers;
+
     // ---- what PlangOS sends, in order --------------------------------------------------------------
 
     private long _bytes, _updates, _ticks, _since = Environment.TickCount64;

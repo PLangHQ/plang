@@ -41,8 +41,14 @@ internal sealed class Page(string target, Cdp cdp, Func<string, bool> own)
 
     /// <summary>Every document this page loads from now on runs <paramref name="script"/> before its own (the video
     /// pass-through hook); the one showing now gets it when it loads again.</summary>
-    internal Task Video(string script)
-        => Ask("Page.addScriptToEvaluateOnNewDocument", new JsonObject { ["source"] = script });
+    internal async Task Video(string script)
+    {
+        // the page's domain on first: without it a script for new documents isn't run in them
+        await Ask("Page.enable", new JsonObject());
+        var added = await Ask("Page.addScriptToEvaluateOnNewDocument", new JsonObject { ["source"] = script });
+        if (added.TryGetProperty("error", out var error))
+            throw new InvalidOperationException($"the page {Target} didn't take the video hook: {error}");
+    }
 
     /// <summary>Goes to <paramref name="url"/>.</summary>
     internal Task Navigate(string url) => Ask("Page.navigate", new JsonObject { ["url"] = url });
