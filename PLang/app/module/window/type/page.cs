@@ -19,15 +19,30 @@ internal sealed class Page(string target, Cdp cdp, Func<string, bool> own)
     internal string Target { get; } = target;
 
     /// <summary>Attaches. Given <paramref name="hear"/>, the page gets <c>plang(text)</c> and what it says goes there,
-    /// <c>"from"</c> <paramref name="window"/>.</summary>
-    internal async Task Open(long window, Func<string, Task>? hear)
+    /// <c>"from"</c> <paramref name="window"/>. Given <paramref name="video"/>, any page's video the host plays itself
+    /// (pass-through, os/system/browser/video.js) reports to it through <c>plangVideo(json)</c>; the script itself
+    /// comes with <see cref="Video"/>, once the host has said what it decodes.</summary>
+    internal async Task Open(long window, Func<string, Task>? hear, Func<string, Task>? video = null)
     {
         _session = await cdp.Attach(Target);
-        if (hear == null) return;
-        _session.Heard += (method, parameters) => method == "Runtime.bindingCalled" ? Called(window, parameters, hear) : Task.CompletedTask;
+        if (hear == null && video == null) return;
+        _session.Heard += (method, parameters) =>
+            method != "Runtime.bindingCalled" ? Task.CompletedTask
+            : parameters.GetProperty("name").GetString() switch
+            {
+                "plang" when hear != null => Called(window, parameters, hear),
+                "plangVideo" when video != null => video(parameters.GetProperty("payload").GetString() ?? ""),
+                _ => Task.CompletedTask,
+            };
         await Ask("Runtime.enable", new JsonObject());
-        await Ask("Runtime.addBinding", new JsonObject { ["name"] = "plang" });
+        if (hear != null) await Ask("Runtime.addBinding", new JsonObject { ["name"] = "plang" });
+        if (video != null) await Ask("Runtime.addBinding", new JsonObject { ["name"] = "plangVideo" });
     }
+
+    /// <summary>Every document this page loads from now on runs <paramref name="script"/> before its own (the video
+    /// pass-through hook); the one showing now gets it when it loads again.</summary>
+    internal Task Video(string script)
+        => Ask("Page.addScriptToEvaluateOnNewDocument", new JsonObject { ["source"] = script });
 
     /// <summary>Goes to <paramref name="url"/>.</summary>
     internal Task Navigate(string url) => Ask("Page.navigate", new JsonObject { ["url"] = url });

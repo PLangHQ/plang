@@ -255,6 +255,12 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
         {
             if (e["t"] is JsonValue t && t.TryGetValue<double>(out var stamp)) Frame.Echo((ulong)stamp);
             if (e.ContainsKey("stats")) Tell(e);   // the host's numbers: the desktop's taskbar shows them
+            // what the host decodes itself (["av01","avc1"]): a page's video in one of those is passed through to it
+            else if (e["codecs"] is JsonArray codecs)
+            {
+                Codecs = [.. codecs.Select(c => c?.ToString().ToLowerInvariant() ?? "").Where(c => c.Length > 0)];
+                CodecsKnown?.Invoke(Codecs);
+            }
             else if (e.ContainsKey("video")) Frame.Lossless("the host can't show H.264: " + S("why"));
             // PLang binds a window part's click (on click on #window.bot): from now on a click on it is PLang's
             else if (S("ui") == "bind") Bound.Add(Part(S("element")));
@@ -324,6 +330,20 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
     {
         if (Panel is { } panel && panel.Key(scancode, extended, mods, down)) return;
         if (Keyboard.Evdev(scancode, extended) is { } key) Keyboard.Key(key, down);
+    }
+
+    /// <summary>The video codecs the host decodes itself (its line <c>{"codecs":[…]}</c>); none until it says.</summary>
+    internal string[] Codecs { get; private set; } = [];
+
+    /// <summary>The host said which codecs it decodes (from the input's thread, under the gate).</summary>
+    internal event Action<string[]>? CodecsKnown;
+
+    /// <summary>Where window <paramref name="id"/>'s page is on the screen now; none when it isn't shown.</summary>
+    internal Rect? PagePlace(int id)
+    {
+        lock (Gate)
+            // the page's viewport starts where the window does inside its buffer (not at its shadows)
+            return this.window.ById(id) is { } shown && shown.Visible ? shown.Frame : null;
     }
 
     /// <summary>The page window <paramref name="id"/> shows (for its address field).</summary>

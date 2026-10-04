@@ -36,13 +36,17 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     internal string Named { get; set; } = "";
 
     /// <summary>The window is on the screen with its page: what it is asked to do goes to that page.</summary>
-    internal async Task Show(long number, Page shows, Func<string, Task>? hear)
+    internal async Task Show(long number, Page shows, Func<string, Task>? hear, Func<string, Task>? video = null, string? videoScript = null)
     {
         Number = number;
         page = shows;
-        await shows.Open(number, hear);
+        await shows.Open(number, hear, video);
+        if (videoScript != null) await shows.Video(videoScript);
         shown.TrySetResult();
     }
+
+    /// <summary>Its page runs the video pass-through hook from its next load on.</summary>
+    internal Task Video(string script) => page?.Video(script) ?? Task.CompletedTask;
 
     /// <summary>Its page, once it is shown (a window just opened waits for it, up to 30 seconds).</summary>
     private async Task<Page> Page()

@@ -207,6 +207,10 @@ internal sealed class Frame
     /// <summary>A message for the host's PLang (json), beside the frames: kind 9.</summary>
     internal void Host(string json) => Message(9, System.Text.Encoding.UTF8.GetBytes(json));
 
+    /// <summary>A page's video the host plays itself (pass-through), beside the frames: 10 a stream starts, 11 one of
+    /// its samples, 12 its clock and place, 13 it ends — see the browser's video type for each one's bytes.</summary>
+    internal void Media(byte kind, ReadOnlySpan<byte> payload) => Message(kind, payload);
+
     private void Message(byte kind, ReadOnlySpan<byte> payload)
     {
         if (output == null) return;
