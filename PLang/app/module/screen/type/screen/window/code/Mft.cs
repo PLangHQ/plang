@@ -15,7 +15,6 @@ internal sealed class Mft : IDecoder
     private static readonly Guid DecoderCategory = new("d6c02d4b-6833-45b4-971a-05a4b04bab91"); // MFT_CATEGORY_VIDEO_DECODER
     private static readonly Guid H264Decoder = new("62CE7E72-4C71-4d20-B15D-452831A87D9D");     // CLSID_CMSH264DecoderMFT
     private static readonly Guid Interlace = new("e2724bb8-e676-4806-b4b2-a8d6efb44ccd");       // MF_MT_INTERLACE_MODE
-    private static readonly Guid LowLatency = new("9c27891a-ed7a-40e1-88e8-b22727a024ee");      // MF_LOW_LATENCY
     private static readonly Guid TransformInterface = new("bf94c121-5b05-4e6f-8000-ba598961414d"); // IID_IMFTransform
     private static readonly Guid MajorType = new("48eba18e-f8c9-4687-bf11-0a74c9f96a8f");       // MF_MT_MAJOR_TYPE
     private static readonly Guid SubType = new("f7e34c9a-42e8-4714-b74b-cb29d72c35e5");         // MF_MT_SUBTYPE
@@ -35,7 +34,7 @@ internal sealed class Mft : IDecoder
     private const int Release = 2;
     private const int GetUINT32 = 7, GetUINT64 = 8, GetGUID = 10, GetBlob = 15, SetUINT32 = 21, SetUINT64 = 22, SetGUID = 24;
     private const int ActivateObject = 33;
-    private const int GetOutputStreamInfo = 7, GetAttributes = 8, GetOutputAvailableType = 14, SetInputType = 15,
+    private const int GetOutputStreamInfo = 7, GetOutputAvailableType = 14, SetInputType = 15,
         SetOutputType = 16, GetOutputCurrentType = 18, ProcessMessage = 23, ProcessInput = 24, ProcessOutput = 25;
     private const int GetSampleTime = 35, SetSampleTime = 36, ConvertToContiguousBuffer = 41, AddBuffer = 42;
     private const int Lock = 3, Unlock = 4, SetCurrentLength = 6;
@@ -110,15 +109,9 @@ internal sealed class Mft : IDecoder
         if (!Start()) throw new InvalidOperationException("Media Foundation doesn't start");
         if (format == H264Format)
             // Windows' own H.264 decoder, by name: the one the pixel path's H.264 has always used on this host
-        {
+            // not in low latency: that decodes one picture at a time on one core — a 1080p50 stream (ruv.is) got ~8 of its
+            // 50 pictures a second. Without it the decoder works on several at once; the presenter decodes ahead anyway.
             Check(CoCreateInstance(H264Decoder, IntPtr.Zero, 1, TransformInterface, out transform), "no H.264 decoder");
-            // each picture out as soon as it can be (as the pixel path's H.264 runs it)
-            if (Fn<CallPtr>(transform, GetAttributes)(transform, out var attributes) >= 0 && attributes != IntPtr.Zero)
-            {
-                Fn<CallGuidU32>(attributes, SetUINT32)(attributes, LowLatency, 1);
-                Let(attributes);
-            }
-        }
         else
         {
             var found = Find(format);

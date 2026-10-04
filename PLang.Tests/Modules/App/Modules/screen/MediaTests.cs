@@ -132,15 +132,16 @@ public class MediaTests
         await Assert.That(stand.Made).IsEqualTo(1);
     }
 
-    // a page that reloads never says its video ended: a new stream at its place ends it, or its last picture stays
+    // two windows' videos may overlap on the screen: both play (a page that goes away is ended by PlangOS, not guessed)
     [Test]
-    public async Task ANewStreamAtAnOldOnesPlace_EndsTheOldOne()
+    public async Task TwoVideosAtOverlappingPlaces_BothPlay()
     {
         using var media = new Media(new Stand());
         await Playing(media);
         media.Take(Start(2));
+        media.Take(Sample(2));
         media.Take(Clock(2));
-        await Assert.That(media.Numbers).DoesNotContain("stream 1:");
+        await Assert.That(media.Numbers).Contains("stream 1:");
         await Assert.That(media.Numbers).Contains("stream 2:");
     }
 
