@@ -78,5 +78,26 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// <summary>Closes it: <c>screen.close</c>.</summary>
     internal abstract void Close();
 
+    /// <summary>The value an input line is, when it is an input or a clipboard — by its first member, read by its type's
+    /// own reader; null for the lines that aren't values yet (stats, video, ui, host, window).</summary>
+    private protected static global::app.type.item.@this? Value(string line, global::app.actor.context.@this context)
+    {
+        var bytes = System.Text.Encoding.UTF8.GetBytes(line);
+        var peek = new System.Text.Json.Utf8JsonReader(bytes);
+        if (!peek.Read() || peek.TokenType != System.Text.Json.JsonTokenType.StartObject
+            || !peek.Read() || peek.TokenType != System.Text.Json.JsonTokenType.PropertyName) return null;
+        var type = peek.GetString() switch
+        {
+            "mouse" or "key" or "text" or "nav" => "input",
+            "clipboard" => "clipboard",
+            _ => null,
+        };
+        if (type == null) return null;
+        var utf8 = new System.Text.Json.Utf8JsonReader(bytes);
+        utf8.Read();
+        var reader = new global::app.type.item.kind.json.Reader(utf8, bytes);
+        return context.App.type.list.Reader.Typed(type, null)!.Read(ref reader, null, new global::app.type.reader.ReadContext(context));
+    }
+
     public override string ToString() => $"screen '{_title}' {_width}x{_height}{(IsClosed ? ", closed" : "")}";
 }
