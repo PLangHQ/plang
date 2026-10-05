@@ -27,7 +27,11 @@ internal sealed class Page(string target, Cdp cdp, Func<string, bool> own)
         _session = await cdp.Attach(Target);
         if (hear == null && video == null) return;
         _session.Heard += (method, parameters) =>
-            method != "Runtime.bindingCalled" ? Task.CompletedTask
+            // what Chromium's media players say of themselves (DevTools' Media domain: errors, state, messages) goes to
+            // the video's listener too — what a video does when it stops (both of Ingi's videos froze together)
+            method.StartsWith("Media.", StringComparison.Ordinal) && video != null
+                ? video(new JsonObject { ["video"] = "media", ["event"] = method, ["data"] = JsonNode.Parse(parameters.GetRawText()) }.ToJsonString())
+            : method != "Runtime.bindingCalled" ? Task.CompletedTask
             : parameters.GetProperty("name").GetString() switch
             {
                 "plang" when hear != null => Called(window, parameters, hear),
@@ -36,7 +40,11 @@ internal sealed class Page(string target, Cdp cdp, Func<string, bool> own)
             };
         await Ask("Runtime.enable", new JsonObject());
         if (hear != null) await Ask("Runtime.addBinding", new JsonObject { ["name"] = "plang" });
-        if (video != null) await Ask("Runtime.addBinding", new JsonObject { ["name"] = "plangVideo" });
+        if (video != null)
+        {
+            await Ask("Runtime.addBinding", new JsonObject { ["name"] = "plangVideo" });
+            await Ask("Media.enable", new JsonObject());
+        }
     }
 
     /// <summary>Every document this page loads from now on runs <paramref name="script"/> before its own (the video

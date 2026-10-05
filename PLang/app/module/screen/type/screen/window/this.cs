@@ -45,15 +45,25 @@ public sealed class @this : screen.@this
     {
         // watched from outside (the os bot); started anew now and then, so it stays small
         var stats = PathHelper.Combine(context.App.AbsolutePath, "stats.jsonl");
+        // what PlangOS's browser says of its media players (Chromium's media log), kept beside: what a video did when it stopped
+        var media = PathHelper.Combine(context.App.AbsolutePath, "media.jsonl");
         var recorded = 0;
+        var heard = 0;
         await foreach (var e in events.ReadAllAsync())
         {
             var said = e is Text t ? t.ToString() : null;
+            var at = DateTime.Now.ToString("HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture);
             if (said != null && said.StartsWith("{\"stats\":", StringComparison.Ordinal))
             {
-                var line = "{\"at\":\"" + DateTime.Now.ToString("HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) + "\"," + said[1..] + "\n";
+                var line = "{\"at\":\"" + at[..8] + "\"," + said[1..] + "\n";
                 var file = global::app.type.item.path.file.@this.Resolve(stats, context);
                 await (recorded++ % 10_000 == 0 ? file.WriteText(line, context) : file.Append(line, context));
+            }
+            else if (said != null && said.StartsWith("{\"guest\":{\"media\":", StringComparison.Ordinal))
+            {
+                var line = "{\"at\":\"" + at + "\"," + said[1..] + "\n";
+                var file = global::app.type.item.path.file.@this.Resolve(media, context);
+                await (heard++ % 50_000 == 0 ? file.WriteText(line, context) : file.Append(line, context));
             }
             var closed = ReferenceEquals(e, closedLine);
             var call = closed ? onClose : onInput;

@@ -52,6 +52,8 @@ public sealed class @this : browser.@this
 
     private readonly System.Collections.Concurrent.ConcurrentDictionary<(long window, int stream), video.@this> _videos = new();
     private int _nextVideo;
+    private int _mediaSaid;      // media log lines sent up this second
+    private long _mediaSince;
 
     /// <summary>The script every page runs before its own once the host has said what it decodes: the codecs, then
     /// os/system/browser/video.js. None until then — a page's video is Chromium's and goes as pixels.</summary>
@@ -88,6 +90,23 @@ public sealed class @this : browser.@this
                     break;
                 case "end" when _videos.TryRemove((window, stream), out var ended):
                     ended.End();
+                    break;
+                case "media":
+                    // a media player's own words (Chromium's media log), up to the host beside the frames — it keeps
+                    // them (media.jsonl): what a video did when it stopped. At most twenty a second per window.
+                    _display.Wayland.Debug($"browser: window {window}'s media player: {e.GetProperty("event").GetString()}");
+                    if (Interlocked.Increment(ref _mediaSaid) <= 20 || Environment.TickCount64 - _mediaSince > 1000)
+                    {
+                        if (Environment.TickCount64 - _mediaSince > 1000) { _mediaSince = Environment.TickCount64; _mediaSaid = 1; }
+                        _display.Wayland.Up(new JsonObject
+                        {
+                            ["media"] = new JsonObject
+                            {
+                                ["window"] = window, ["event"] = e.GetProperty("event").GetString(),
+                                ["data"] = JsonNode.Parse(e.GetProperty("data").GetRawText()),
+                            },
+                        }.ToJsonString());
+                    }
                     break;
                 case "page":
                     // a new page in the window: the last one's videos end (a page that goes away says nothing)
