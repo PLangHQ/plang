@@ -10,17 +10,24 @@ Ingi (2026-10-12): "I would like to merge all the way back to runtime2 … only 
 - **Reviews:** no branch on the line since runtime2 had a tester, security or auditor pass. codeanalyzer last ran on scalars-as-native (06-07). The last full chain was collections-are-data (06-05, merged into runtime2).
 - **Merged today:** plang-os-stable (`8d28d8f1d`, 105 commits, +18k lines; the surface re-pinned with Ingi's yes). Gate 158: the baseline, plus 16 terminal permission tests that fail on WSL (Landlock off; production fails closed).
 
+## Status at gate 185 (2026-10-12, evening)
+
+- **C# suites:** only the 6 carried snapshot tests fail (tagged `[Property("carried","test/plan/snapshot")]`); the other 11 of the 17 below are fixed, rewritten or deleted with their decision.
+- **plang suite** (`cd test && plang --test`): **276 tests, 245 pass, 16 fail, 12 stale, 3 skipped**, every failure and stale test with an owner in `.bot/app-systems/builder/baseline.md` (the reviewer bots' baseline). None waits on the builder's teaching; the reds are next-branch items (kinded Type choices, the `{item, json}` door, issue 76, the channel slot's offers, the empty sort) or by design (the snapshot plan).
+- **OBP read of the builder's C#** (714): three findings, two fixed by the coder, one carried with 677. Who changes production C# is Ingi's open question.
+- **Next:** the reviewer bots (codeanalyzer, tester, security, auditor), which Ingi starts; then docs merges up.
+
 ## Critical before merging up
 
-1. **The plang test tree is mostly unbuilt.** `plang --test` from `test/` (before the os merge): 347 tests, 65 pass, 1 fails (`module/math/DoublePlusDecimal_Errors`: the double + decimal no longer errors), **281 have no `.pr`** since the move to `test/`. The builder bot's batches rebuild it (batch 1, `module/math`, is done); each red then gets an owner.
+1. **Done: the plang test tree is built.** It was 347 tests with 281 unbuilt; after the cleanup (`test-tree-cleanup.md`: 63 deleted, about 80 moved by concept) and five rebuild rounds it is the 276 above, every red owned.
 2. **Security review of the whole line.** It hasn't run since 06-05. (312, a goal written out showing current values in its parameters, turned out not to be a leak, since nothing sends a goal's text to another party; it's on the next-branch list, decision 690.) To review: permissions and `Authorize` (the os-folder ask, trust by origin, Clean/Keep, the terminal's Landlock sandbox), `[Sensitive]` masking and the secret type, signing (sign-if-missing on the wire). Rotation of the six keys that leaked into transcripts was skipped by Ingi (5.1).
-3. **The 17 C# baseline failures, each with a disposition:**
+3. **Done except the snapshot 6: the 17 C# baseline failures, each with a disposition:**
    - **0d, 3 tests** (`Trace_HandleReportsConceptName_NotNamespaceTail`, `Variables_HandleReportsConceptName_NotNamespaceTail`, `CallStack_ReportsItemApex_KindCallstack`): 0d is settled and built (342, 500: `%!variables%` gone, `%!callStack%` and `%!trace%` their own types), so these tests likely assert the old shape. Rewrite or delete.
    - **306, json when needed, 5 tests** (`Materialize_JsonArrayRoot_NarrowsToListValueType`, `Materialize_JsonObjectRoot_NarrowsToDict`, `Navigation_ReadsValueWhichMaterialises`, `Roundtrip_PreservesData`, `Roundtrip_StreamBased_PreservesData`): 401 says "stays text … navigation is the need", but the tests were never closed against it. Ingi's word, then fix or delete.
    - **The snapshot family, 6 tests** (`ThrowTimeSnapshot_EditSurvivesResume`, `MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal`, `NavigateAndEditCapturedVariable_ThenResumeToSuccess`, `PlangPath_AsSnapshotConvert_EditSurvivesResume`, `SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess`, `TypedSnapshotString_NavigateEditResume_PersistsEdit`): the redesign is settled (527, plan `test/plan/snapshot/`, stages 0–4) and not built.
    - **typedreturn, 2 tests** (`BuilderValidate_BuildReturnsOkWithTypeName_SetsTerminalVariableSetType`, `BuilderValidate_OnlyOneTerminalVariableSetPerStep_LastInChainWins`): an older plan, moved under `test/plan/typedreturn/` in the reorg, with 12 unbuilt plang tests. Close it or delete it.
    - **1 test** (`EveryInstanceField_IncludingInherited_IsReadonly`): needs an owner.
-4. **The terminal's 16 permission tests skip without Landlock**, or every gate on WSL is red (routed to the coder, test-only).
+4. **Done: the terminal's 16 permission tests skip without Landlock** (gates on WSL show only the 6 carried).
 
 ## Plans
 
@@ -66,8 +73,8 @@ Ingi (2026-10-12): "I would like to merge all the way back to runtime2 … only 
 
 ## The process back (proposal)
 
-1. Freeze features on app-systems: fixes for the lists above only.
-2. The builder bot rebuilds the test tree; the coder fixes the reds.
+1. Done: features frozen on app-systems (Ingi: cleanup only; bigger work to `next-branch.md`).
+2. Done: the builder bot rebuilt the test tree; the coder fixed or owned the reds.
 3. **codeanalyzer:** an OBP scan of the locked core's diff `runtime2..app-systems` (the core is where it matters; the whole diff is 4k commits).
 4. **tester:** the plang suite and the C# suites, every plan's tests run, the 17 dispositioned.
 5. **security:** the areas in Critical 2.
