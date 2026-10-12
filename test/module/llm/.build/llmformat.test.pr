@@ -1,0 +1,159 @@
+{
+  "name": "Start",
+  "comment": "Query with format=json — verify response is valid JSON",
+  "step": [
+    {
+      "index": 0,
+      "text": "[llm] system: 'Reply in JSON format only'\nuser: 'Return a JSON object with key \"color\" set to \"blue\"'\nformat: 'json'\nwrite to %result%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "llm",
+          "name": "query",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "list",
+                "kind": "message"
+              },
+              "value": [{"Role":"system","Content":"Reply in JSON format only"},{"Role":"user","Content":"Return a JSON object with key \"color\" set to \"blue\""}]
+            },
+            {
+              "name": "Format",
+              "type": {
+                "name": "text"
+              },
+              "value": "json"
+            }
+          ],
+          "default": [
+            {
+              "name": "conversation",
+              "type": {
+                "name": "conversation"
+              },
+              "value": {}
+            },
+            {
+              "name": "temperature",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            },
+            {
+              "name": "limit",
+              "type": {
+                "name": "limit"
+              },
+              "value": {
+                "token": 16000,
+                "tool": 10,
+                "retry": 0
+              }
+            },
+            {
+              "name": "cache",
+              "type": {
+                "name": "choice",
+                "kind": "cache"
+              },
+              "value": "use"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %result% is not null",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/test/module/llm/LlmFormat.test.goal",
+  "prPath": "/test/module/llm/.build/llmformat.test.pr",
+  "hash": "75d00c5590657a6fecd3e83de6defac3841282136b64dab02c482e99cec2b459"
+}
