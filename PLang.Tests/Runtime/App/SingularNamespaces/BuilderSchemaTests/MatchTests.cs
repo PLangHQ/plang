@@ -498,6 +498,28 @@ public class MatchTests
         await Assert.That(result.Error!.Message).Contains("on.error does nothing");
     }
 
+    // The appended write-back (a destination-less result-only action writes its answer back to its input)
+    // goes AFTER the action's clauses, so an on.error still anchors to the action that fails — not to the
+    // write-back variable.set. Code order: list.query, on.error, variable.set.
+    [Test]
+    public async Task AWriteBackGoesAfterTheActionsClauses_SoOnErrorAnchorsToTheAction()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "Start",
+            Make.Step("set %xs% = [3, 1, 2]"),
+            Make.Step("sort %xs% by size, on error call Caught"));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"), (1, "list.query"), (1, "on.error"));
+
+        var result = await Match(goal, """
+            [0] variable.set(Name=%xs%, Value=[3, 1, 2])
+            [1] list.query(List=%xs%, Query={order: "size"}); on.error(Recovery=[goal.call(Name="Caught")])
+            """, app.actor.list.System.Context);
+
+        await result.IsSuccess();
+        var code = goal.Step[1].Code.Items().Select(a => $"{a.Module.Name}.{a.Name}").ToList();
+        await Assert.That(string.Join(", ", code)).IsEqualTo("list.query, on.error, variable.set");
+    }
+
     [Test]
     public async Task AnOnErrorThatRetriesIgnoresOrRecovers_IsNotRefusedForDoingNothing()
     {

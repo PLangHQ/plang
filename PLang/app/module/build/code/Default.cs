@@ -278,10 +278,16 @@ public class Default : IBuilder
                 var read = new global::app.goal.step.action.formal.Reader(step, modules)
                     .Read($"variable.set(Name={target.Text}, Value=%!data%)", context);
                 if (!read.Success) return read.Error;
-                // right after the action, not at the step's end: a later output/write in the step would otherwise
-                // run first and leave its own result in %!data% before the set reads it.
+                // right after the action AND its clauses, not at the step's end: a later output/write in the
+                // step would otherwise run first and leave its own result in %!data% before the set reads it;
+                // and the action's clauses (on.error/on.cache/on.timeout) must still anchor to the action that
+                // fails, not to the write-back set — so the set goes after them, never between.
                 if (await read.Value() is global::app.goal.step.action.list.@this wb)
-                    step.Code.Insert(step.Code.IndexOf(act) + 1, wb);
+                {
+                    var at = step.Code.IndexOf(act) + 1;
+                    while (at < step.Code.Count && step.Code[at] is global::app.goal.step.action.clause.@this) at++;
+                    step.Code.Insert(at, wb);
+                }
             }
         }
         return null;
