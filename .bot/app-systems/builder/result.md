@@ -9,8 +9,9 @@ Fresh binary, `cd test && plang --test`.
 | baseline (batch built only `.test.goal`) | 129 | 126 | 28 | 283 |
 | + sibling/stale/wrong-prPath rebuild | 195 | 68 | 15 | 278 |
 | + coder-rewrites + wrong-saves + E1 sort | 203 | 61 | 14 | 278 |
+| round 3: +100 helpers + rewrites + tag fix | 220 | 33 | 21 | 277 (+3 skipped) |
 
-**Final: 203 pass, 61 fail, 14 stale.** (3 more wrong-prPath — IdentityExport, ForeachDictionary, ConditionFileNotExists — rebuilt after this run; they pass on the next run → ~206/58.) The llm built tests ran against the real provider on each full run (noted; 4 full runs total this session).
+**Round-3 baseline: 220 pass, 33 fail, 21 stale, 3 skipped.** sibling-unbuilt is 0; the skip-tag fix works (the signing pair + Duration now skip). The 33 fails: ~29 genuine runtime reds (coder's, from this session's runtime changes); 2 write-back placement wrong-saves (DictIsItemKeepsNoOrder, DoublePlusDecimal — the clause anchors to the appended set in the SERIALIZED .pr; the fix corrects the in-memory order but not the serialized/load order — WITH THE CODER, who owns the clause binding + .pr order and will replace the builder's IsClause name-check with the clause's own knowledge); 2 wrong-prPath (doubleplusdecimal, signingheadermismatch — flaky). The 21 stale are builderVersion drift from the IsClause/write-back binary rebuilds — a rebuild pass clears them, best after the coder's write-back fix lands (else they re-stale). The llm built tests ran against the real provider on each full run. This round-3 baseline is what the coder's round 3 starts from.
 
 ## What the rebuild passes fixed
 
@@ -116,6 +117,65 @@ All with decider-fixture + page-golden re-pins.
 | module/llm | LlmProperties | stale |  |
 | module/math | Math2 | stale |  |
 | module/signing | RoundTripAfterRawSignatureDeletion | stale |  |
+| plan/app-systems/app/setting | UnknownSettingIsAnError | stale |  |
+| plan/app-systems/app/type/list | TypedListHoldsItsType | stale |  |
+| plan/snapshot/module/callback/askvarsresumebindsvalue | Start | stale |  |
+| plan/snapshot/module/callback/statefulaskmidgoalbindsvalue | Start | stale |  |
+| plan/snapshot/module/callback/statelesscrossgoalresumes | Start | stale |  |
+
+## Round-3 per-test failures (for coder round 3)
+
+| folder | test | class | first failure line |
+|---|---|---|---|
+| app/actor/switch | ActorSwitch | runtime | Error: Channel 'system' not found |
+| app/callstack | Audit | runtime | Expected: "7" |
+| app/data | Cut2 | runtime | Expected: %!data% |
+| app/data | DataTypeReadsEntity | runtime | Expected: "plain" |
+| app/data | Narrow_ChainWideBangBothBranches | runtime | Expected: %!data% |
+| app/data | Plane_DataKeyVsProperty | runtime | Expected: 10 |
+| app/data | ReadConfigJson_UntouchedIsJsonString | runtime | Expected: "json" |
+| app/data | ReadCsv_LandsAsTable | runtime | Expected: "csv" |
+| app/permission/grantastorespersisted | Start | runtime | Error: 'app.channel.type.goal.this' has no wire contract — it declares no [Out]/[Store] face and is not meant to cross the wire. Write what  |
+| app/type/dict | DictIsItemKeepsNoOrder | runtime | Error: order: cannot order 'dict' against 'dict' — mixed or unordered values |
+| app/type/item | BareLiteralJudgedByForm | runtime | Expected: "date" |
+| app/type/kind/strict | SetAsImageStrictNoKind | runtime | Expected: (null) |
+| app/type/kind/strict | SetAsTextUppercase | runtime | Expected: (null) |
+| app/type/kind/strict | SetAsTextWithMdExtension | runtime | Expected: (null) |
+| app/type/kind/strict | SetIntLiteralIsNumberInt | runtime | Expected: "int" |
+| app/type/list | ListIsItemSortsAsBefore | runtime | Error: order: No item has a field '[3, 1, 2]' |
+| module/channel/goalchannelrecursion | Start | runtime | Expected: "ChannelNotFound" |
+| module/condition/compare | Cut5 | runtime | Error: cannot order 'item' and 'item' values with '>' |
+| module/condition/compare | Failure_DictEqNumber | runtime | Error: 'dict' and 'number' values cannot be compared with '==' |
+| module/condition/compare | Failure_DictOrderDict | runtime | Error: cannot order 'item' and 'item' values with '<' |
+| module/llm | LlmContinue | runtime | Error: a conversation continues an llm answer; %query% isn't one |
+| module/llm | LlmSchema | runtime | Expected: "(not null)" |
+| module/loop/foreach/dictionary | ForeachDictionary | runtime | Expected: "3" |
+| module/math | DoublePlusDecimal_Errors | runtime | Error: Not found: /test/module/math/.build/doubleplusdecimal_errors.test.pr |
+| module/on/error | OnErrorRetry | runtime | Error: intentional failure |
+| module/on/error/goalfirst | ErrorGoalFirst | runtime | Error: always fails |
+| module/signing/headermismatch | SigningHeaderMismatch | runtime | Error: Not found: /test/module/signing/headermismatch/.build/signingheadermismatch.test.pr |
+| module/test/assert | TestAssertFailureSnapshotsVariables | runtime | Error: No item has a field 'Error.Variables.foo' |
+| module/test/discover | TestDiscoverReportsStaleWhenPrMissing | runtime | Expected: true |
+| module/test/report | TestReportIncludesCoverageTables | runtime | Expected: ""[{"name":"TrivialPass","path":"/module/test/report/_fixtures_pass/trivial.fixture.goal","hash":"616f696a404101877837e02b4c912908 |
+| module/test/report | TestReportMasksSensitiveVariables | runtime | Expected: ""[{"name":"SensitiveFail","path":"/module/test/report/_fixtures_sensitive/sensitivefail.fixture.goal","hash":"e0bd94cb525644f9b2c |
+| module/test/report | TestReportMasksSensitiveVariablesJunit | runtime | Expected: ""<?xml version="1.0" encoding="UTF-8"?> |
+| module/test/tag | TestTagAccumulatesUserTagsOnRun | runtime | Expected: true |
+| app/permission/authorize/statefulauthorizegrantsandcontinues | Start | stale |  |
+| app/type/kind/strict | SetAsImageGifStrictMatching | stale |  |
+| app/type/kind/strict | SetAsImageGifStrictMismatch | stale |  |
+| app/type/kind/strict | SetAsTextDefaultNoValidation | stale |  |
+| app/type/kind/strict | SetAsTextSlashMarkdownNormalises | stale |  |
+| app/type/kind/strict | SetAsTextSlashMarkdownStrictUnverifiable | stale |  |
+| app/type/null | MissingVarIsNotNullValue | stale |  |
+| app/type/null | NullBareOnJson | stale |  |
+| app/type/text | TextLengthOp | stale |  |
+| module/error | ThrowAttachesData | stale |  |
+| module/file/read | Failure_ParamResolutionError | stale |  |
+| module/list/query | Failure_SortMixedIncomparable | stale |  |
+| module/llm | LlmProperties | stale |  |
+| module/math | Math2 | stale |  |
+| module/signing | RoundTripAfterRawSignatureDeletion | stale |  |
+| module/variable/scoping | VariableScoping | stale |  |
 | plan/app-systems/app/setting | UnknownSettingIsAnError | stale |  |
 | plan/app-systems/app/type/list | TypedListHoldsItsType | stale |  |
 | plan/snapshot/module/callback/askvarsresumebindsvalue | Start | stale |  |
