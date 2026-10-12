@@ -70,9 +70,10 @@ public partial class OnError : IContext, IClause, IAction
         if (order == ErrorOrder.GoalFirst)
         {
             // Fix, then retry: the handler goal runs first, then the step retries (RetryCount
-            // times) and gets the retry's result. With no retry configured the handler's result
-            // stands. A handler that fails still lets the retry run — the failure may not have
-            // needed its fix (a transient one) — and its error joins the list.
+            // times); a retry that succeeds is the answer. One that still fails falls through, as
+            // in RetryFirst: the handler's own success stands, then Ignore. A handler that fails
+            // still lets the retry run — the failure may not have needed its fix (a transient one)
+            // — and its error joins the list.
             global::app.data.@this? recoveryResult = null;
             if (hasRecovery)
             {
@@ -80,9 +81,9 @@ public partial class OnError : IContext, IClause, IAction
                 if (!recoveryResult.Success) Chain(failed.Error!, recoveryResult.Error!);
             }
             var retryResult = await Retry(action, context);
-            if (retryResult != null)
+            if (retryResult?.Success == true)
             {
-                if (retryResult.Success && erroredCall != null) erroredCall.Handled = true;
+                if (erroredCall != null) erroredCall.Handled = true;
                 return retryResult;
             }
             if (recoveryResult is { Success: true })

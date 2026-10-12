@@ -278,6 +278,41 @@ public class ErrorHandleTests
         await Assert.That(callCount).IsEqualTo(2); // 1 initial + 1 retry
     }
 
+    // Order=GoalFirst: a retry that still fails falls through — it never pre-empts Ignore, as in RetryFirst.
+    [Test]
+    public async Task Handle_GoalFirst_RetriesThenIgnore_SwallowsTheError()
+    {
+        int callCount = 0;
+        Func<Task<global::app.data.@this>> persistentlyFailing = () =>
+        {
+            callCount++;
+            return Task.FromResult(global::app.data.@this.FromError(
+                new global::app.error.ServiceError("intentional failure", "TransientError", 503)));
+        };
+
+        var result = await Attempting(persistentlyFailing,
+            ErrorHandler(("retryCount", 2), ("order", "GoalFirst"), ("ignore", true))).Start(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That(callCount).IsEqualTo(3); // 1 initial + 2 retries, then ignored
+    }
+
+    // Order=GoalFirst: the recovery runs, the retry still fails — the recovery's own success is the answer.
+    [Test]
+    public async Task Handle_GoalFirst_RecoveryThenAFailedRetry_TheRecoveryStands()
+    {
+        Func<Task<global::app.data.@this>> persistentlyFailing = () => Task.FromResult(global::app.data.@this.FromError(
+            new global::app.error.ServiceError("always fails", "TransientError", 503)));
+        var fix = global::PLang.Tests.Shared.Make.Action(Ctx, "variable", "set",
+            global::PLang.Tests.Shared.Make.Param(Ctx, "Name", "fixed", "variable"), ("Value", true));
+
+        var result = await Attempting(persistentlyFailing, global::PLang.Tests.Shared.Make.Action(Ctx, "on", "error",
+            ("retryCount", 1), ("order", "GoalFirst"), global::PLang.Tests.Shared.Make.Recovery(Ctx, fix))).Start(Ctx);
+
+        await result.IsSuccess();
+        await Assert.That((await Ctx.Variable.Get("fixed")).IsInitialized).IsTrue();
+    }
+
     [Test]
     public async Task Handle_RetryFirst_PersistentFailure_AllRetriesFail()
     {
