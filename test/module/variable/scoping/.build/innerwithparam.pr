@@ -1,0 +1,106 @@
+{
+  "name": "InnerWithParam",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %id% = 999",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%id%",
+              "variable": [
+                {
+                  "text": "%id%",
+                  "code": [
+                    {
+                      "variable": "id"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 999
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %user% = \"alice\"",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%user%",
+              "variable": [
+                {
+                  "text": "%user%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "alice"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/variable/scoping/InnerWithParam.goal",
+  "prPath": "/module/variable/scoping/.build/innerwithparam.pr",
+  "hash": "102814f85f43ca7b34c5cc81922f613376371f350dda54b25637c2ab413e560e"
+}

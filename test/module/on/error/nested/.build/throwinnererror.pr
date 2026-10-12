@@ -1,0 +1,48 @@
+{
+  "name": "ThrowInnerError",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"inner error\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "inner error"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/nested/ThrowInnerError.goal",
+  "prPath": "/module/on/error/nested/.build/throwinnererror.pr",
+  "hash": "08c249d9aa963c397ea47358d9ff90d8a62db0e28e449db1cdd6cbe89a214b38"
+}

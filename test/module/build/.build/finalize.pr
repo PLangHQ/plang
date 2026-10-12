@@ -1,0 +1,69 @@
+{
+  "name": "Finalize",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %label% = '%label%-and-done'",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%label%",
+              "variable": [
+                {
+                  "text": "%label%",
+                  "code": [
+                    {
+                      "variable": "label"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "%label%-and-done",
+              "variable": [
+                {
+                  "text": "%label%",
+                  "code": [
+                    {
+                      "variable": "label"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/build/Finalize.goal",
+  "prPath": "/module/build/.build/finalize.pr",
+  "hash": "bfac44bc6aced8bf3e8b6134f79aa4bdbf4c2a060dd7c9a60dbbaa71c3fe272c"
+}
