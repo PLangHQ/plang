@@ -84,10 +84,7 @@ public sealed partial class @this
         // the value `{"port":8080}`), a single-quoted one as written.
         var literals = new List<string>();
         foreach (System.Text.RegularExpressions.Match m in Quoted.Matches(Text))
-        {
-            try { if (System.Text.Json.JsonSerializer.Deserialize<string>(m.Value) is { } s) literals.Add(s); }
-            catch { /* not a json-string literal; the raw-text check still applies */ }
-        }
+            if (await Meant(m.Value, context) is { } s) literals.Add(s);
         foreach (System.Text.RegularExpressions.Match m in Literal.Matches(Text))
             if (m.Groups[2].Success) literals.Add(m.Groups[2].Value);
         foreach (var t in (await Texts(Code.Items(), context)).Distinct())
@@ -174,11 +171,20 @@ public sealed partial class @this
                 if (p.Type?.Name != "text" || p.Value is null) continue;
                 var writer = new global::app.goal.step.action.formal.Writer();
                 await p.Value.Output(writer, global::app.View.Store, context);
-                var json = writer.ToString();
-                if (json.StartsWith('"') && System.Text.Json.JsonSerializer.Deserialize<string>(json) is { } s) texts.Add(s);
+                if (await Meant(writer.ToString(), context) is { } s) texts.Add(s);
             }
             foreach (var child in a.Child.Items()) texts.AddRange(await Texts(child.Code.Items(), context));
         }
         return texts;
+    }
+
+    // A double-quoted literal as it means it ("{\"port\":8080}" means {"port":8080}), read by plang's own json — the way
+    // the answer's values are read; null when it is no quoted literal (a malformed escape answers so, never throws).
+    private async System.Threading.Tasks.Task<string?> Meant(string quoted, global::app.actor.context.@this context)
+    {
+        if (!quoted.StartsWith('"')) return null;
+        var read = await context.App.type.list.Kind("item", "json").Decode(System.Text.Encoding.UTF8.GetBytes(quoted), context);
+        // the decode reads when touched: a literal that isn't one answers a failure there
+        return await read.Value() is global::app.type.item.text.@this text && read.Success ? text.ToString() : null;
     }
 }
