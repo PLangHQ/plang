@@ -36,7 +36,9 @@ public class CdpEventTests : IDisposable
         var cdp = new global::app.module.browser.type.cdp.@this(pipe);
         cdp.Heard += async (method, parameters, session) =>
         {
-            await Task.Delay(random.Next(0, 3));   // a listener that takes its time
+            // a listener that takes its time: it gives up its thread a few times before it hears, so it is still busy
+            // when the next event is read — yielding, never sleeping, so the bound below only ever means a hang
+            for (var turns = random.Next(0, 4); turns > 0; turns--) await Task.Yield();
             lock (heard)
             {
                 heard.Add(parameters.GetProperty("n").GetInt32());
