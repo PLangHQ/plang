@@ -1,0 +1,131 @@
+{
+  "name": "TestTagWritesPairsOntoCurrentCall",
+  "comment": "debug.tag attaches Tags to the running goal's frame (%!call.Scope%), which lives for the goal's run — the tag step's own frames pop when the step ends — so a later step reads them there.",
+  "step": [
+    {
+      "index": 0,
+      "text": "debug.tag critical=true, owner=checkout",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "debug",
+          "name": "tag",
+          "property": [
+            {
+              "name": "Tags",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"critical":true,"owner":"checkout"}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %!call.Scope.Tags.critical% equals \"true\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "true"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!call.Scope.Tags.critical%",
+              "variable": [
+                {
+                  "text": "%!call.Scope.Tags.critical%",
+                  "code": [
+                    {
+                      "variable": "!call"
+                    },
+                    {
+                      "property": "Scope"
+                    },
+                    {
+                      "property": "Tags"
+                    },
+                    {
+                      "property": "critical"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %!call.Scope.Tags.owner% equals \"checkout\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "checkout"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!call.Scope.Tags.owner%",
+              "variable": [
+                {
+                  "text": "%!call.Scope.Tags.owner%",
+                  "code": [
+                    {
+                      "variable": "!call"
+                    },
+                    {
+                      "property": "Scope"
+                    },
+                    {
+                      "property": "Tags"
+                    },
+                    {
+                      "property": "owner"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/debug/tag/TagWritesPairsOntoCurrentCall.test.goal",
+  "prPath": "/module/debug/tag/.build/tagwritespairsontocurrentcall.test.pr",
+  "hash": "56714e4afb0a51cf8716cd3f725b054e339557b59282e7eba4c59c119def8a88"
+}

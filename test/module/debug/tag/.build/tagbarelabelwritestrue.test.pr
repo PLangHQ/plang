@@ -1,0 +1,82 @@
+{
+  "name": "TestTagBareLabelWritesTrue",
+  "comment": "debug.tag attaches Tags to the running goal's frame (%!call.Scope%), which lives for the goal's run — the tag step's own frames pop when the step ends. A bare label is a tag set to true.",
+  "step": [
+    {
+      "index": 0,
+      "text": "debug.tag \"manual-checkpoint\"",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "debug",
+          "name": "tag",
+          "property": [
+            {
+              "name": "Tags",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"manual-checkpoint":true}
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %!call.Scope.Tags.\"manual-checkpoint\"% equals \"true\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "true"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!call.Scope.Tags.\"manual-checkpoint\"%",
+              "variable": [
+                {
+                  "text": "%!call.Scope.Tags.\"manual-checkpoint\"%",
+                  "code": [
+                    {
+                      "variable": "!call"
+                    },
+                    {
+                      "property": "Scope"
+                    },
+                    {
+                      "property": "Tags"
+                    },
+                    {
+                      "property": "manual-checkpoint"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/debug/tag/TagBareLabelWritesTrue.test.goal",
+  "prPath": "/module/debug/tag/.build/tagbarelabelwritestrue.test.pr",
+  "hash": "01c5db7cc2bbb12c104f28a46f39ec24b38fb0f15aa657a6ac4e3cb3972abab9"
+}
