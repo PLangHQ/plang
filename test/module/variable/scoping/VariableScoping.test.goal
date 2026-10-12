@@ -12,8 +12,9 @@ Start
 - assert %captured% contains "alpha"
 - assert %captured% contains "beta"
 
-/ param value passed into goal: mutating it inside leaks back to caller
-/ (sequential goal.call has no overlay → all writes hit actor dict)
+/ a parameter is the callee's own: changing it inside doesn't reach the caller, and it ends with the call
+/ (the plan's rule: test/plan/app-systems/module/goal/call/ParameterEndsWithTheCall); a fresh name the callee
+/ sets still lands with the caller
 - call InnerWithParam id=42
-- assert %id% equals 999
+- assert %id% is null, "the parameter ends with the call"
 - assert %user% equals "alice"

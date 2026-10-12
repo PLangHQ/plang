@@ -2,5 +2,5 @@
 / prompt would fire on this path) for inspection, then returns "a". Writing
 / to //tmp here would recurse into Authorize → output.ask → stdin EOF.
 ProbeAnswerer
-- file.save %!data% to probe-question.txt
+- file.save %message% to probe-question.txt
 - return "a"
