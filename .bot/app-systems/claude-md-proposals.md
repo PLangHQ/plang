@@ -228,3 +228,11 @@ Verified each against code (as for v6/v7); small commits per area.
 ```
 - When a plan is done, its tests move into the concept tree at the same path (`test/plan/<id>/module/on/cache/X` → `test/module/on/cache/X`); `start.md`, `start.goal` and `done.list` stay as the plan's record, so `test/plan/` holds only plans in progress. A moved test's `.pr` is rebuilt by the builder, never hand-edited.
 ```
+
+## architect — 2026-10-12 — events are part of the locked core
+**Target:** /CLAUDE.md, "## The locked core"
+**Why:** Ingi, decision 689: "yes" to adding `app.event` (the event door every item's events go through) to the locked set and its surface golden. 660's additions (the `[Events]` attribute, the generic declared event, `click` leaving the core) passed the golden unseen because events weren't in it.
+**Proposed change:** in the locked list, after "**`channel` and `stream`;**", add:
+```
+**events** — the event door (`event.on`), the core events and `[Events(...)]`;
+```
