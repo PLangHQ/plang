@@ -61,14 +61,15 @@ public class LazyMaterialisationTests
     [Test] public async Task ConvertValue_IsRemoved()
         => await Assert.That(typeof(data).GetMethod("ConvertValue", BindingFlags.Public | BindingFlags.Instance)).IsNull();
 
-    [Test] public async Task Navigation_ReadsValueWhichMaterialises()
+    // A json value is text until something reads into it: navigation is the need that parses it.
+    [Test] public async Task Navigation_IsTheNeed_ThatParsesJson()
     {
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg");
-        await Assert.That((await d.Value())).IsTypeOf<app.type.item.dict.@this>();
-        var dict = (app.type.item.dict.@this)(await d.Value())!;
-        await Assert.That(dict.Has("port")).IsTrue();
+        var d = new data("cfg", "{\"port\":8080}", new type("text", "json"), context: ctx);
+        await Assert.That((await d.Value())).IsTypeOf<app.type.item.text.@this>();
+        var port = await d.Get("port");
+        await Assert.That((await port.Value())?.ToString()).IsEqualTo("8080");
     }
 
     // Unchanged contract — `%var%` in an authored value is RAW per read.

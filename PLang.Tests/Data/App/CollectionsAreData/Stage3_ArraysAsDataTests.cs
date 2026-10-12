@@ -45,14 +45,16 @@ public class Stage3_ArraysAsDataTests : System.IAsyncDisposable
     }
 
     [Test]
-    public async Task Materialize_JsonArrayRoot_NarrowsToListValueType()
+    public async Task ReadingIntoAJsonArray_ParsesIt_AndFindsTheElement()
     {
-        // A raw-backed json-array value materializes to the list value type on first touch (B+J).
+        // A json `[...]` stays text, written as it came; reading into it (`[1]`) is the need: its kind parses the json
+        // and finds the element.
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        var d = new global::app.data.@this("nums", ctx.App.type.list[new type("item", "json"), ctx].Make("[1,2,3]", ctx), context: ctx);
-        await Assert.That((await d.Value())).IsTypeOf<ListV>();
-        await Assert.That(((ListV)(await d.Value())!).Count).IsEqualTo(3);
+        var d = new global::app.data.@this("nums", "[1,2,3]", new type("text", "json"), context: ctx);
+        await Assert.That((await d.Value())).IsTypeOf<global::app.type.item.text.@this>();
+        var second = await d.Get("1");
+        await Assert.That((await second.Value())?.ToString()).IsEqualTo("2");
     }
 
     [Test]

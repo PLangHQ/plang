@@ -14,15 +14,6 @@ public partial class NoopBuild : global::app.module.IContext
     public Task<global::app.data.@this> Start() => Task.FromResult(global::app.data.@this.Ok());
 }
 
-/// <summary>Build() returns Ok("foo") — exercises the terminal-type stamping path.</summary>
-[global::app.module.Action("buildreturnstype")]
-public partial class BuildReturnsType : global::app.module.IContext
-{
-    public partial global::app.data.@this<global::app.type.item.text.@this>? Tag { get; init; }
-    public Task<global::app.data.@this> Start() => Task.FromResult(global::app.data.@this.Ok());
-    public Task<global::app.data.@this> Build() => Task.FromResult(Context.Ok("foo"));
-}
-
 /// <summary>Build() returns Fail — exercises the abort-validation path.</summary>
 [global::app.module.Action("buildfails")]
 public partial class BuildFails : global::app.module.IContext

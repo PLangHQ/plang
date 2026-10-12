@@ -3,12 +3,9 @@ using app;
 namespace PLang.Tests.App.Context;
 
 /// <summary>
-/// A foreign host object (a runtime handle like %!app%) reports the value-lattice
-/// apex — <c>type=item</c> — with its PLang vocabulary name in <c>kind</c>. The
-/// name can't be derived from the CLR type (the collection handles all tail to
-/// "list", "tester", "trail"), so it comes from the declared [PlangType]. The
-/// instant navigation reaches a value a type family owns (a string Name), the
-/// result peels off into that real item — a leaf is never an opaque <c>item</c>.
+/// A runtime handle (%!app%, %!call%, %!trace%) is the live object itself, of its own type — never a host carried
+/// inside an opaque <c>item</c>. The instant navigation reaches a value a type family owns (a string Name), the
+/// result peels off into that real item.
 /// </summary>
 public class HostCarrierKindTests
 {
@@ -40,29 +37,25 @@ public class HostCarrierKindTests
         await Assert.That(v.Type.Name).IsEqualTo("app");
     }
 
+    private Task<global::app.data.@this> Read(string name)
+        => new global::app.type.item.variable.@this(name).Start(_app.actor.list.User.Context).AsTask();
+
+    // %!call% is the context's own call list, of its own type — never a host carried inside an item.
     [Test]
-    public async Task CallStack_ReportsItemApex_KindCallstack()
+    public async Task Call_IsTheContextsCallList_OfItsOwnType()
     {
-        var v = await Materialise("!callStack");
-        await Assert.That(v.Type.Name).IsEqualTo("item");
-        await Assert.That(v.Kind).IsEqualTo("callstack");
+        var v = await Read("!call");
+        await Assert.That(v.Peek()).IsSameReferenceAs(_app.actor.list.User.Context.call);
+        await Assert.That(v.Type.Name).IsNotEqualTo("item");
     }
 
+    // %!trace% is the context's own trace, of its own type — never a host carried inside an item.
     [Test]
-    public async Task Variables_HandleReportsConceptName_NotNamespaceTail()
+    public async Task Trace_IsTheContextsTrace_OfItsOwnType()
     {
-        // namespace tail is "list" — only the declared [PlangType] recovers "variable"
-        var v = await Materialise("!variables");
-        await Assert.That(v.Type.Name).IsEqualTo("item");
-        await Assert.That(v.Kind).IsEqualTo("variable");
-    }
-
-    [Test]
-    public async Task Trace_HandleReportsConceptName_NotNamespaceTail()
-    {
-        var v = await Materialise("!trace");
-        await Assert.That(v.Type.Name).IsEqualTo("item");
-        await Assert.That(v.Kind).IsEqualTo("trace");
+        var v = await Read("!trace");
+        await Assert.That(v.Peek()).IsSameReferenceAs(_app.actor.list.User.Context.Trace);
+        await Assert.That(v.Type.Name).IsNotEqualTo("item");
     }
 
     [Test]

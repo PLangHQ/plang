@@ -6,6 +6,8 @@ namespace PLang.Tests.App.SnapshotTests;
 /// The disk round-trip: Snapshot → SnapshotToWire (JSON string) → SnapshotFromWire
 /// → Restore. Proves a captured failure can be persisted and replayed with no live
 /// state — the deterministic-replay loop the builder needs.
+/// <para>A test marked <c>carried</c> waits on the snapshot redesign planned at <c>test/plan/snapshot/</c>: it is red
+/// until that plan is built, and known to be (select them with <c>[carried=test/plan/snapshot]</c>).</para>
 /// </summary>
 public class SnapshotWireTests
 {
@@ -129,7 +131,7 @@ public class SnapshotWireTests
         await Assert.That((await context.Variable.Get("s0")).IsInitialized).IsFalse();
     }
 
-    [Test]
+    [Test, TUnit.Core.Property("carried", "test/plan/snapshot")]
     public async Task SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess()
     {
         // Proves the consumer-typed deserialize: the wire string converts to a
@@ -173,7 +175,7 @@ public class SnapshotWireTests
         return step;
     }
 
-    [Test]
+    [Test, TUnit.Core.Property("carried", "test/plan/snapshot")]
     public async Task MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal()
     {
         // The realistic shape: Start sets vars and calls Sub; Sub sets a var and
@@ -230,7 +232,7 @@ public class SnapshotWireTests
         await Assert.That((await context.Variable.GetValue("keep"))).IsEqualTo("alive");
     }
 
-    [Test]
+    [Test, TUnit.Core.Property("carried", "test/plan/snapshot")]
     public async Task PlangPath_AsSnapshotConvert_EditSurvivesResume()
     {
         // Mirrors the .test.goal EXACTLY: the read result (an envelope STRING) goes
@@ -304,7 +306,7 @@ public class SnapshotWireTests
         await Assert.That(content).Contains("\"Variables\"");
     }
 
-    [Test]
+    [Test, TUnit.Core.Property("carried", "test/plan/snapshot")]
     public async Task ThrowTimeSnapshot_EditSurvivesResume()
     {
         // The ONE difference from the passing edit-resume tests: the snapshot comes
@@ -343,7 +345,7 @@ public class SnapshotWireTests
         await Assert.That(System.Convert.ToInt64((await context.Variable.GetValue("seen")))).IsEqualTo(2L);
     }
 
-    [Test]
+    [Test, TUnit.Core.Property("carried", "test/plan/snapshot")]
     public async Task TypedSnapshotString_NavigateEditResume_PersistsEdit()
     {
         // The `as snapshot` contract: %snap% is a Data with a string Value (wire bytes
@@ -378,7 +380,7 @@ public class SnapshotWireTests
         await Assert.That(seen).IsEqualTo(2L);  // edit persists IFF navigation materializes+caches
     }
 
-    [Test]
+    [Test, TUnit.Core.Property("carried", "test/plan/snapshot")]
     public async Task NavigateAndEditCapturedVariable_ThenResumeToSuccess()
     {
         // The PLang fix-and-replay loop, in C#: read a snapshot back, navigate

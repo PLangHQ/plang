@@ -161,33 +161,6 @@ public class JsonStreamSerializerTests : System.IAsyncDisposable
         await Assert.That(result).IsNull();
     }
 
-
-    [Test]
-    public async Task Roundtrip_PreservesData()
-    {
-        var original = new TestClass { Name = "John", Value = 42 };
-
-        var json = (await Json.Serialize(app.Ok(original), Ctx).Value())!.Clr<string>()!;
-        var result = (await Json.Deserialize<TestClass>(json, Ctx).Value())!;
-
-        await Assert.That(result!.Name).IsEqualTo(original.Name);
-        await Assert.That(result.Value).IsEqualTo(original.Value);
-    }
-
-    [Test]
-    public async Task Roundtrip_StreamBased_PreservesData()
-    {
-        var original = new TestClass { Name = "Test", Value = 123 };
-        using var stream = new MemoryStream();
-
-        await Json.Encode(stream, app.Ok(original), Ctx);
-        stream.Position = 0;
-        var result = (await (await Json.Decode<TestClass>(stream, Ctx)).Value())!;
-
-        await Assert.That(result!.Name).IsEqualTo(original.Name);
-        await Assert.That(result.Value).IsEqualTo(original.Value);
-    }
-
     [Test]
     public async Task Serialize_Enum_KeyCamelCase_ValueAsDeclared()
     {

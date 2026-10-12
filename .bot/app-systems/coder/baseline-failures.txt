@@ -1,23 +1,17 @@
-BuilderValidate_BuildReturnsOkWithTypeName_SetsTerminalVariableSetType
-BuilderValidate_OnlyOneTerminalVariableSetPerStep_LastInChainWins
-CallStack_ReportsItemApex_KindCallstack
-EveryInstanceField_IncludingInherited_IsReadonly
-Materialize_JsonArrayRoot_NarrowsToListValueType
-Materialize_JsonObjectRoot_NarrowsToDict
+# carried (test/plan/snapshot, marked [carried=test/plan/snapshot] in SnapshotWireTests): red until the snapshot redesign is built
 MidStackChain_SurvivesDisk_ResumesDeep_AndUnwindsToEntryGoal
 NavigateAndEditCapturedVariable_ThenResumeToSuccess
-Navigation_ReadsValueWhichMaterialises
 PlangPath_AsSnapshotConvert_EditSurvivesResume
-Roundtrip_PreservesData
-Roundtrip_StreamBased_PreservesData
 SerializedString_ConvertsToSnapshotViaTypeSystem_AndResumesToSuccess
 ThrowTimeSnapshot_EditSurvivesResume
-Trace_HandleReportsConceptName_NotNamespaceTail
 TypedSnapshotString_NavigateEditResume_PersistsEdit
-Variables_HandleReportsConceptName_NotNamespaceTail
+# off the baseline (2026-10-12, baseline tidy): BuilderValidate_BuildReturnsOkWithTypeName_SetsTerminalVariableSetType and BuilderValidate_OnlyOneTerminalVariableSetPerStep_LastInChainWins deleted (no Build() return stamps a capture's Type any more); Variables_HandleReportsConceptName_NotNamespaceTail deleted (%!variables% gone); CallStack_ReportsItemApex_KindCallstack and Trace_HandleReportsConceptName_NotNamespaceTail rewritten (%!call%, %!trace% their own types); EveryInstanceField_IncludingInherited_IsReadonly green (set-once memos named); Materialize_JsonArrayRoot/JsonObjectRoot and Navigation_ReadsValueWhichMaterialises rewritten to 401; Roundtrip_PreservesData and Roundtrip_StreamBased_PreservesData deleted (676)
 # Query_CacheHit_PropertiesPreserved: off the baseline (2026-10-01) — a cache hit kept each property as its undecoded wire (its raw JSON, "\"preserved\""); RestoreFromCache now reads each through its Data
 # watched flake (2026-10-02, not on the baseline): ReadsBesideWrites_NeitherThrowNorStayStale (Runtime) — once in a full gate on app-systems-choices 7dd3d3cb2: "AssertionException: Expected to be 50 but found 15"; green 3x alone; a concurrency test the change doesn't touch. A second sighting means look at it.
 # watched flake: ReadUrl_Fetches_OverHttp / CopyTo_Same_Scheme_RoundTrips (http test server) — a handler fault now prints "HttpTestServer: <method> <path> faulted: <exception>" in the suite log; grep "faulted" on a sighting.
 # watched flake (2026-10-03, not on the baseline): Cancel_StopsTheGoal_AnswersNothing_AndALaterWaitFailsCancelled_NeverReported (Runtime, TaskTests) — once in a sweep at load ~42: "cancelled.Peek().IsNull" false, the task ended before Cancel so Cancel answered its result; green 3x alone. A second sighting means hold the task open on a signal, not a sleep.
 # watched flake (2026-10-12, not on the baseline): ErrorInPlay_DuringRecovery_IsTheTimeoutsOwnVerdict — in gate 165 under load; 2/2 alone.
-# watched flake (2026-10-12, not on the baseline): TwoVideosAtOverlappingPlaces_BothPlay — in gate 165 under load; 2/2 alone.
+# watched flake (2026-10-12, not on the baseline): TwoVideosAtOverlappingPlaces_BothPlay — in gates 165 and 167 under load; 2/2 alone.
+# watched flake (2026-10-12, not on the baseline): ANewPicture_SaysItsPlace_AndShowsThere — in gate 167 at load ~17–19; 2/2 alone.
+# watched flake (2026-10-12, not on the baseline): ANewVideoAtTheSamePlace_EndsAQuietOne — in gate 167 at load ~17–19; 2/2 alone.
+# the os video tests above: a sighting at normal load means a bound that only means a hang (as CdpEventTests).

@@ -16,15 +16,16 @@ public class Stage1_DictNavigationAndWriterTests : System.IAsyncDisposable
             "plang-dictnav-" + System.Guid.NewGuid().ToString("N")[..8])).Testing();
 
     [Test]
-    public async Task Materialize_JsonObjectRoot_NarrowsToDict()
+    public async Task ReadingIntoAJsonObject_ParsesIt_AndFindsTheMember()
     {
-        // A Data carrying raw json bytes for `{...}` (kind=json), on first navigation,
-        // materializes Value as a dict — not a raw Dictionary<string,object?> (B+J).
+        // A json `{...}` stays text, written as it came; reading into it (`.port`) is the need: its kind parses the
+        // json and finds the member.
         await using var app = NewApp();
         var ctx = app.actor.list.User.Context;
-        var d = global::PLang.Tests.Shared.Make.FromRaw("{\"port\":8080}", ctx.App.type.list[new type("item", "json"), ctx], ctx, "cfg");
-        await Assert.That((await d.Value())).IsTypeOf<Dict>();
-        await Assert.That(((app.type.item.@this)(await ((Dict)(await d.Value())!).Get("port", app.actor.list.User.Context)!.Value())!).Clr<object>()).IsEqualTo(8080L);
+        var d = new global::app.data.@this("cfg", "{\"port\":8080}", new type("text", "json"), context: ctx);
+        await Assert.That((await d.Value())).IsTypeOf<app.type.item.text.@this>();
+        var port = await d.Get("port");
+        await Assert.That(((app.type.item.@this)(await port.Value())!).Clr<object>()).IsEqualTo(8080L);
     }
 
     [Test]

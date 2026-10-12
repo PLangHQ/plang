@@ -6,9 +6,8 @@ using app.module.typedreturns;
 namespace PLang.Tests.App.TypedReturnsTests;
 
 // Contract: IClass exposes a Build() method that the validate pass invokes
-// per action. A handler's Build() can return Data.Ok(typeName) to stamp the
-// type on the step's terminal variable.set, Data.Fail to abort validation,
-// or bare Data.Ok() to contribute nothing.
+// per action, in order. A handler's Build() can return Data.Fail to abort
+// validation, or Data.Ok() to contribute nothing.
 
 // [NotInParallel]: BuildOrdered.InvocationLog is a process-static List that all
 // instances of this fixture share.  TUnit parallelises siblings by default;
@@ -24,7 +23,6 @@ public class Stage0_BuildMethodTests
     {
         _app = new global::app.@this("/app");
         _app.module.Register("typedreturns", "noopbuild", typeof(NoopBuild));
-        _app.module.Register("typedreturns", "buildreturnstype", typeof(BuildReturnsType));
         _app.module.Register("typedreturns", "buildfails", typeof(BuildFails));
         _app.module.Register("typedreturns", "buildbareok", typeof(BuildBareOk));
         _app.module.Register("typedreturns", "buildordered", typeof(BuildOrdered));
@@ -94,25 +92,6 @@ public class Stage0_BuildMethodTests
         await Assert.That(BuildOrdered.InvocationLog).IsEquivalentTo(new[] { "first", "second", "third" });
     }
 
-    // Build() returning Ok(typeName) stamps the terminal variable.set's Type parameter.
-    [Test]
-    public async Task BuilderValidate_BuildReturnsOkWithTypeName_SetsTerminalVariableSetType()
-    {
-        var setAction = Make("variable", "set", ("Name", "x"), ("Value", "v"));
-        var actions = ActionsOf(
-            Make("typedreturns", "buildreturnstype"),
-            setAction);
-
-        var errors = await Build(actions);
-
-        await Assert.That(errors).IsEmpty();
-        var typeParam = setAction["Type"];
-        await Assert.That(typeParam).IsNotNull();
-        // The stamp is a structured type entity; a bare-string Build() return is
-        // canonicalised into one. The terminal variable.set carries {name:"foo"}.
-        await Assert.That(((global::app.type.@this)typeParam!.Value!).Name).IsEqualTo("foo");
-    }
-
     // Build() returning Fail aborts and surfaces the error message in the errors list.
     [Test]
     public async Task BuilderValidate_BuildReturnsFail_SurfacesErrorAndFailsValidation()
@@ -150,25 +129,5 @@ public class Stage0_BuildMethodTests
         var errors = await Build(actions);
 
         await Assert.That(errors).IsEmpty();
-    }
-
-    // With two variable.set actions, the stamp must land on the trailing one.
-    [Test]
-    public async Task BuilderValidate_OnlyOneTerminalVariableSetPerStep_LastInChainWins()
-    {
-        var firstSet = Make("variable", "set", ("Name", "a"), ("Value", "v1"));
-        var lastSet = Make("variable", "set", ("Name", "b"), ("Value", "v2"));
-        var actions = ActionsOf(
-            Make("typedreturns", "buildreturnstype"),
-            firstSet,
-            lastSet);
-
-        var errors = await Build(actions);
-
-        await Assert.That(errors).IsEmpty();
-        await Assert.That(firstSet["Type"] != null).IsFalse();
-        var lastType = lastSet["Type"];
-        await Assert.That(lastType).IsNotNull();
-        await Assert.That(((global::app.type.@this)lastType!.Value!).Name).IsEqualTo("foo");
     }
 }
