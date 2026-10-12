@@ -100,7 +100,10 @@ public sealed partial class @this(IProgram asked)
             return context.Error(new ActionError($"Keep names variables to keep, by name: '{bad}' is no variable name.", "KeepInvalid", 400));
 
         var name = (await app.Value())!.Clr<string>()!;
-        var program = FilePath.Program(name, context);
+        // a name with a folder in it is a plang path; a bare name is the terminal's to find, on this machine's PATH
+        var program = name.Contains('/') || name.Contains('\\')
+            ? FilePath.Resolve(name, context) is var given && context.FileSystem.IsFile(given) ? given : null
+            : asked.Terminal.Find(name, context);
         if (program == null)
             return context.Error(new ActionError($"Program not found: {name}. Not a path, and not on PATH.", "ProgramNotFound", 404));
         var allowed = await program.Authorize(Verb.execute, context, named);

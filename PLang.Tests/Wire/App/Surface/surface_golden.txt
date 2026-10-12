@@ -2186,7 +2186,6 @@ class app.type.item.path.file.this : app.type.item.path.this [PathScheme]
   override Write(System.IO.Stream content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
   override WriteBytes(System.Byte[] content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
   override WriteText(System.String content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
-  static Program(System.String name, app.actor.context.this context) : app.type.item.path.file.this
   static Resolve(System.String rawPath, app.actor.context.this context) : app.type.item.path.file.this
   static ValidatePath(System.String path, app.this app) : System.String
 

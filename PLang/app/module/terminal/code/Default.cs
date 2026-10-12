@@ -17,6 +17,29 @@ public sealed class Default : ITerminal
     // the programs it started: on Windows, they end with this plang
     private readonly child.list.@this _child = new();
 
+    /// <summary>The program a bare name names on <c>PATH</c>, as a shell finds it: each folder in order, the name as given
+    /// and, on Windows when it has none, each <c>PATHEXT</c> extension. Only which files exist is asked — never permission.</summary>
+    public global::app.type.item.path.file.@this? Find(string name, global::app.actor.context.@this context)
+    {
+        var folders = (System.Environment.GetEnvironmentVariable("PATH") ?? "")
+            .Split(global::app.Utils.PathHelper.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (var folder in folders)
+            foreach (var extension in Extensions(name))
+            {
+                var candidate = new global::app.type.item.path.file.@this(global::app.Utils.PathHelper.Combine(folder, name + extension));
+                if (context.FileSystem.IsFile(candidate)) return candidate;
+            }
+        return null;
+    }
+
+    // Windows runs "wsl" as "wsl.exe": the name as given, then each PATHEXT extension. Other systems run the name as given.
+    private string[] Extensions(string name)
+    {
+        if (!OperatingSystem.IsWindows() || global::app.Utils.PathHelper.GetExtension(name).Length > 0) return [""];
+        var pathExt = System.Environment.GetEnvironmentVariable("PATHEXT") ?? ".COM;.EXE;.BAT;.CMD";
+        return [.. pathExt.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
+    }
+
     public Task<data.@this<Process>> Start(type.program.@this program, global::app.actor.context.@this context)
     {
         var (info, file, sandbox, pipe) = (program.Info!, program.File!, program.Sandbox, program.Pipe);
