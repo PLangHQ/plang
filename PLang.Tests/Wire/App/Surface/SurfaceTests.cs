@@ -3,7 +3,7 @@ using System.Reflection;
 namespace PLang.Tests.App.Surface;
 
 // The core's surface, pinned: what other code calls in the locked parts (app's members, the type system and the core
-// values, the serializer, data, channel, call and variable memory, the module registry) — each public type and its own
+// values, the serializer, data, channel, call and variable memory, events, the module registry) — each public type and its own
 // public and protected members, with the plang marks on them — and what a plang program sees (each type's members,
 // each module's actions and their properties). A change here is an addition to the core: it fails until it is
 // re-pinned through AcceptTheSurface, and the commit that re-pins names the decision that allowed it.
@@ -13,7 +13,7 @@ public class SurfaceTests
 
     // The locked parts, by namespace: one exactly (app's own types, the module registry), or one and all below it.
     private static readonly string[] Exactly = ["app", "app.module", "app.module.list"];
-    private static readonly string[] Below = ["app.type", "app.data", "app.channel", "app.call"];
+    private static readonly string[] Below = ["app.type", "app.data", "app.channel", "app.call", "app.event"];
 
     private static bool Locked(System.Type t)
         => t.Namespace is { } ns && (Exactly.Contains(ns) || Below.Any(b => ns == b || ns.StartsWith(b + ".")));

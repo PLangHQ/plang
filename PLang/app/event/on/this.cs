@@ -40,7 +40,7 @@ public class @this : global::app.type.item.@this
 
     /// <summary>The events of an item of <paramref name="class"/> nothing is bound on: <see cref="Empty"/>, or, when its
     /// plang type declares events (<c>[Events(…)]</c>), its class's own shared empty ones, which answer those too.</summary>
-    public static @this Of(System.Type @class)
+    internal static @this Of(System.Type @class)
         => Emptied.GetOrAdd(@class, static type =>
             System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.Attributes.EventsAttribute>(type, inherit: false) is { } events
                 ? new @this(events.Names)

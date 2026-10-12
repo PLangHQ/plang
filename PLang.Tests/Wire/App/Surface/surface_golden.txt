@@ -472,6 +472,114 @@ class app.data.this<T> : app.data.this
   static Ok(T value, app.type.this type = …) : app.data.this<T>
   static Uninitialized(System.String name) : app.data.this<T>
 
+enum app.event.When [PlangType]
+  static const after : app.event.When
+  static const before : app.event.When
+
+enum app.event.binding.Scope [PlangType]
+  static const actor : app.event.binding.Scope
+  static const app : app.event.binding.Scope
+
+class app.event.binding.action.this : app.event.binding.this
+
+class app.event.binding.clause.this : app.event.binding.this
+
+class app.event.binding.list.after : app.event.binding.list.this
+
+class app.event.binding.list.before : app.event.binding.list.this
+
+abstract class app.event.binding.list.this : System.Collections.Generic.IEnumerable<app.event.binding.this>, System.Collections.Generic.IReadOnlyCollection<app.event.binding.this>, System.Collections.Generic.IReadOnlyList<app.event.binding.this>, System.Collections.IEnumerable
+  Count : System.Int32 { get; }
+  GetEnumerator() : System.Collections.Generic.IEnumerator<app.event.binding.this>
+  Item[System.Int32] : app.event.binding.this { get; }
+  Start(app.type.item.this item, app.data.this result, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
+
+class app.event.binding.this : app.type.item.this, app.type.item.ICreate<app.event.binding.this>
+  Actor : app.actor.this { get; }
+  Remove() : System.Void
+  Scope : app.event.binding.Scope { get; }
+
+class app.event.on.ask : app.event.this
+  protected override Of(app.event.on.this on) : app.event.this
+
+class app.event.on.create : app.event.this
+  protected override Of(app.event.on.this on) : app.event.this
+
+class app.event.on.declared : app.event.this
+
+class app.event.on.error : app.event.this
+  Catch(app.type.item.this item, app.data.this failed, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
+  protected override Of(app.event.on.this on) : app.event.this
+
+class app.event.on.hit : app.event.this
+
+class app.event.on.load : app.event.this
+  protected override Of(app.event.on.this on) : app.event.this
+
+class app.event.on.miss : app.event.this
+
+class app.event.on.own : app.event.on.this
+  Bind(System.String event, app.event.When when, System.Func<app.type.item.this, app.data.this, app.actor.context.this, System.Threading.Tasks.Task<app.data.this>> handler, app.actor.this actor, app.event.binding.Scope scope) : app.event.binding.this
+  Bind(System.String event, app.event.When when, System.Func<app.type.item.this, app.data.this, app.actor.context.this, System.Threading.Tasks.Task<app.data.this>> handler, app.actor.this actor, app.event.binding.Scope scope, System.Func<app.type.item.this, app.actor.context.this, System.Boolean> filter) : app.event.binding.this
+  Bind<T>(System.String event, app.event.When when, System.Func<app.event.binding.list.this, T> make) : T
+  override Item[System.String] : app.event.this { get; }
+  override ask : app.event.on.ask { get; }
+  override create : app.event.on.create { get; }
+  override error : app.event.on.error { get; }
+  override load : app.event.on.load { get; }
+  override read : app.event.on.read { get; }
+  override remove : app.event.on.remove { get; }
+  override set : app.event.on.set { get; }
+  override start : app.event.on.start { get; }
+  override write : app.event.on.write { get; }
+
+class app.event.on.read : app.event.this
+  protected override Of(app.event.on.this on) : app.event.this
+
+class app.event.on.remove : app.event.this
+  protected override Of(app.event.on.this on) : app.event.this
+
+class app.event.on.set : app.event.this
+  protected override Of(app.event.on.this on) : app.event.this
+
+class app.event.on.start : app.event.this
+  protected override Of(app.event.on.this on) : app.event.this
+
+class app.event.on.this : app.type.item.this
+  Names : System.Collections.Generic.IEnumerable<System.String> { get; }
+  NoEvent(System.String name) : app.error.Error
+  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
+  static readonly Empty : app.event.on.this
+  virtual Item[System.String] : app.event.this { get; }
+  virtual ask : app.event.on.ask { get; }
+  virtual create : app.event.on.create { get; }
+  virtual error : app.event.on.error { get; }
+  virtual load : app.event.on.load { get; }
+  virtual read : app.event.on.read { get; }
+  virtual remove : app.event.on.remove { get; }
+  virtual set : app.event.on.set { get; }
+  virtual start : app.event.on.start { get; }
+  virtual write : app.event.on.write { get; }
+
+class app.event.on.write : app.event.this
+  protected override Of(app.event.on.this on) : app.event.this
+
+class app.event.serializer.Reader : app.type.reader.ITypeReader
+  Kind : System.String { get; }
+  Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
+  ctor()
+
+abstract class app.event.this : app.type.item.this, app.type.item.ICreate<app.event.this> [PlangType]
+  After(app.type.item.this item, app.data.this result, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.data.this>
+  Before(app.type.item.this item, app.actor.context.this context, app.data.this result = …) : System.Threading.Tasks.ValueTask<app.data.this>
+  IsBound(app.type.item.this item, app.actor.context.this context) : System.Boolean
+  Name : System.String { get; }
+  after : app.event.binding.list.after { get; }
+  before : app.event.binding.list.before { get; }
+  override ToString() : System.String
+  protected override Type : app.type.this { get; }
+  protected virtual Of(app.event.on.this on) : app.event.this
+
 class app.module.ActionAttribute : System.Attribute
   Cacheable : System.Boolean { get; set; }
   Name : System.String { get; }
