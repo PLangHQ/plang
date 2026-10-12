@@ -1,9 +1,0 @@
-Start
-/ DISABLED — httpbin.org returned 503 (rate-limited from repeated test runs).
-/ Re-enable the steps below when the http suite is revisited.
-/ - get https://httpbin.org/get, unsigned, write to %response%
-/ - if %response% is not empty then
-/     - write out 'GET request returned data'
-/ - if %response!status% equals 200 then
-/     - write out 'Status code is 200'
-- write out 'GetRequest disabled (httpbin blocked)'

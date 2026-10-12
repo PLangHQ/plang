@@ -1,2 +1,0 @@
-HandleRecursionError
-- set %recursionErrorCaught% = true

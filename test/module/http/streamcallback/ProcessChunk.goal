@@ -1,3 +1,0 @@
-/ Called per stream chunk
-ProcessChunk
-- write out 'Received chunk: %!data%'

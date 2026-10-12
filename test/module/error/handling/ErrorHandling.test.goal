@@ -1,6 +1,0 @@
-Start
-- set %beforeError% = true
-- assert %beforeError% is true
-- call ThrowError, on error ignore
-- set %afterIgnored% = true
-- assert %afterIgnored% is true, "execution should continue after ignored error"

@@ -1,3 +1,0 @@
-MockProbe
-- mock.intercept pattern="file.read", return="mocked", write to %m%
-- write out "ok"

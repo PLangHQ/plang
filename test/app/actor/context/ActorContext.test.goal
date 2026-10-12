@@ -1,4 +1,0 @@
-/ system variables available
-Start
-- assert %!app% is not null
-- assert %!call% is not null

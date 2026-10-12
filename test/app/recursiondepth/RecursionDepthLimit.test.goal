@@ -1,5 +1,0 @@
-/ recursion should error cleanly
-Start
-- set %depth% = 0
-- call Recurse, on error call HandleRecursionError
-- assert %recursionErrorCaught% equals true

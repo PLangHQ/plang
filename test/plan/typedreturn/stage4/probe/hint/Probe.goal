@@ -1,3 +1,0 @@
-HintProbe
-- file.read path='data.csv', write to %x%(json)
-- write out %x%

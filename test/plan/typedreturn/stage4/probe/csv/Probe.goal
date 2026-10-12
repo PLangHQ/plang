@@ -1,3 +1,0 @@
-CsvProbe
-- file.read path='data.csv', write to %x%
-- write out %x%

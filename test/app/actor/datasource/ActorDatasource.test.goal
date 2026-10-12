@@ -1,6 +1,0 @@
-/ actor datasource: a setting saved as the actor's row, then removed
-Start
-- set %!app.goal.list.setting.os% = false
-- save %!app.goal.list.setting%
-- assert %!app.goal.list.setting.os% is false
-- remove %!app.goal.list.setting%

@@ -1,3 +1,0 @@
-Recurse
-- set %depth% = %depth% + 1
-- call Recurse

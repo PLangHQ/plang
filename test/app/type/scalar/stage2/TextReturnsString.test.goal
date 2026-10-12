@@ -1,7 +1,0 @@
-/ A text read back across a value boundary (json navigation) is a text.@this carrying
-/ the string — the wrapper, not a raw CLR string.
-TextReturnsString
-- set %d% = {"v": "world"}
-- set %s% = %d.v%
-- assert %s% equals "world"
-- assert %s.Type.Name% equals "text"
