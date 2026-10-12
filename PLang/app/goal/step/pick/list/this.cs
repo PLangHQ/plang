@@ -227,7 +227,8 @@ public sealed class @this
         {
             var name = key[..key.LastIndexOf('.')];
             var built = every.Where(a => $"{a.Module.Name}.{a.Name}" == name).ToList();
-            if (built.Count > 0 && built.All(a => a[property.Name] == null) && !property.IsDefault(value))
+            // a capture's options aren't the step's to give: none is held to it
+            if (built.Count > 0 && !built.Any(IsCapture) && built.All(a => a[property.Name] == null) && !property.IsDefault(value))
             {
                 var option = new global::app.goal.step.action.formal.Writer();
                 option.Option(property.Name, value);
@@ -479,11 +480,18 @@ public sealed class @this
     // ---------------------------------------------------------------- what stage 1 means
 
     // The modules of the choice, most probable first — only modules the app has.
-    private List<(string Module, number Share)> Ranked(global::app.actor.context.@this context) =>
+    private List<(string Module, number Share)> Ranked() =>
         _module.Where(m => m.Value is not null && _modules.ContainsKey(m.Key))
                .Select(m => (m.Key, m.Value!))
                .OrderByDescending(m => m.Item2)
                .ToList();
+
+    // Whether `action` is only the step's capture: the variable.set a `write to %x%` makes of another module's answer
+    // (`get random number …, write to %rand%`). It writes %!data% as it is, so its options (a Type) aren't the step's
+    // to give; a step whose main work is variable's own (`set %x% = "5" as number`) still has them.
+    private bool IsCapture(global::app.goal.step.action.@this action)
+        => action.Module.Name == "variable" && action.Name == "set" && Destination() != null
+           && Ranked() is [var main, ..] && main.Module != "variable";
 
     // The modules a near-certain common action already answers.
     private HashSet<string> Settled =>
@@ -493,7 +501,7 @@ public sealed class @this
     // unless settled.
     private List<string> Asked(global::app.actor.context.@this context)
     {
-        var ranked = Ranked(context);
+        var ranked = Ranked();
         var settled = Settled;
         var asked = ranked.Take(1).Where(m => !settled.Contains(m.Module)).Select(m => m.Module).ToList();
         asked.AddRange(ranked.Skip(1).Take(1).Where(m => m.Share >= (number)Runner && !settled.Contains(m.Module)).Select(m => m.Module));
@@ -504,7 +512,7 @@ public sealed class @this
     // "main work" choice is not whether it is used), and the runner-up.
     private List<string> YesNo(global::app.actor.context.@this context)
     {
-        var ranked = Ranked(context);
+        var ranked = Ranked();
         return Asked(context).Where(m => m != ranked[0].Module || ranked[0].Share < (number)Near).ToList();
     }
 
@@ -514,7 +522,7 @@ public sealed class @this
     // Stage 1 was unsure of the step: neither a common action nor a module scored Sure.
     private bool Unsure(global::app.actor.context.@this context)
     {
-        var scores = _named.Values.Where(p => p is not null).Concat(Ranked(context).Select(m => (number?)m.Share)).ToList();
+        var scores = _named.Values.Where(p => p is not null).Concat(Ranked().Select(m => (number?)m.Share)).ToList();
         return scores.Count == 0 || scores.Max()! < (number)Sure;
     }
 
@@ -588,7 +596,7 @@ public sealed class @this
         // when its action ends up certain
         var actions = _items.Where(p => p.Score is { } s && s >= (number)Near).Select(p => Catalog(p.Name, context))
             .Concat(asked.SelectMany(m => _modules[m].ActionNames.Select(a => _modules[m][a])))
-            .Where(a => a != null).Select(a => a!).Distinct();
+            .Where(a => a != null && !IsCapture(a)).Select(a => a!).Distinct();
         foreach (var action in actions)
         {
             await action.Note.Value(context.Ok());

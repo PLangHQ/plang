@@ -233,6 +233,40 @@ public class PickOptionTests : System.IAsyncDisposable
         await retried.IsSuccess();
     }
 
+    // a `write to %x%` capture writes %!data% as it is: when the step's main work is another module's, its variable.set
+    // isn't asked for options (a Type), so none is held to it; a step whose main work is variable's own still is
+    [Test]
+    public async Task ACapturesVariableSet_IsNotAskedItsType_ASetsOwnStillIs()
+    {
+        var capture = Step("get random number between 1 and 100, write to %rand%");
+        await capture.Pick.Take(Answer(
+            ("s0_@module", Choice("math", 0.9, new Dictionary<string, object?> { ["math"] = 0.9, ["variable"] = 0.1 })),
+            ("s0_variable.set", Yes(0.99))), [], Ctx);
+        var set = Step("set %x% = \"5\" as number");
+        await set.Pick.Take(Answer(
+            ("s0_@module", Choice("variable", 0.95, new Dictionary<string, object?> { ["variable"] = 0.95, ["math"] = 0.05 })),
+            ("s0_variable.set", Yes(0.99))), [], Ctx);
+
+        await Assert.That(capture.Pick.Question.Any(q => q.Id.EndsWith("@option.variable.set.Type"))).IsFalse();
+        await Assert.That(set.Pick.Question.Any(q => q.Id.EndsWith("@option.variable.set.Type"))).IsTrue();
+
+        // an answer for the capture's Type, had one come back, holds nothing: the Type-less capture is agreed
+        await capture.Pick.Take(Answer(("s0_@option.variable.set.Type", Choice("number"))), [], Ctx);
+        var read = new global::app.goal.step.action.formal.Reader(capture, _app.module.list)
+            .Read("""math.random(Min=1, Max=100); variable.set(Name=%rand%, Value=%!data%)""", Ctx);
+        await read.IsSuccess();
+        var refused = capture.Pick.Agree((global::app.goal.step.action.list.@this)read.Peek()!).Refused;
+        await Assert.That(refused.Any(r => r.Contains("Type"))).IsFalse();
+
+        // a set's own Type, answered, is held: left out, it is refused
+        await set.Pick.Take(Answer(("s0_@option.variable.set.Type", Choice("number"))), [], Ctx);
+        var typeless = new global::app.goal.step.action.formal.Reader(set, _app.module.list)
+            .Read("""variable.set(Name=%x%, Value="5")""", Ctx);
+        await typeless.IsSuccess();
+        var held = set.Pick.Agree((global::app.goal.step.action.list.@this)typeless.Peek()!).Refused;
+        await Assert.That(held.Any(r => r.Contains("leaves out Type"))).IsTrue();
+    }
+
     // a pick no offer shows (a goal the step can't reach) chooses nothing: the slot stays to fill
     [Test]
     public async Task APickNoOfferShows_ChoosesNothing()
