@@ -498,26 +498,36 @@ public class MatchTests
         await Assert.That(result.Error!.Message).Contains("on.error does nothing");
     }
 
-    // The appended write-back (a destination-less result-only action writes its answer back to its input)
-    // goes AFTER the action's clauses, so an on.error still anchors to the action that fails — not to the
-    // write-back variable.set. Code order: list.query, on.error, variable.set.
+    // A step's on.error belongs to the action that fails, not to the set that keeps that action's answer — however
+    // the set came to stand between them: appended by the build's write-back (a destination-less query), or written
+    // before the clause (`set %sum% = %a% + %b%, on error …`). Built, written as the .pr, read back and run, as a
+    // built app runs it: the failing action's error is caught.
     [Test]
-    public async Task AWriteBackGoesAfterTheActionsClauses_SoOnErrorAnchorsToTheAction()
+    [Arguments("sort %people%, on error set %caught% = true",
+        "[1] list.query(List=%people%, Query={order: {}}); on.error(Recovery=[variable.set(Name=%caught%, Value=true)])",
+        "list.query")]
+    [Arguments("set %sum% = %people% + 1, on error set %caught% = true",
+        "[1] math.add(A=%people%, B=1); variable.set(Name=%sum%, Value=%!data%); on.error(Recovery=[variable.set(Name=%caught%, Value=true)])",
+        "math.add")]
+    public async Task AnOnErrorAfterTheKeptAnswer_CatchesTheActionThatFails(string text, string answer, string action)
     {
-        await using var app = new global::app.@this("/test").Testing().Building();
-        var goal = Make.Goal(app.actor.list.User.Context, "Start",
-            Make.Step("set %xs% = [3, 1, 2]"),
-            Make.Step("sort %xs% by size, on error call Caught"));
-        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"), (1, "list.query"), (1, "on.error"));
+        var root = System.IO.Directory.CreateDirectory(System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+            "plang_keptclause_" + Guid.NewGuid().ToString("N")[..8])).FullName;
+        await using var app = new global::app.@this(root).Testing().Building();
+        var user = app.actor.list.User.Context;
+        var goal = Make.Goal(user, "Start", "/Start.goal",
+            Make.Step("set %people% = [{\"name\": \"b\"}, {\"name\": \"a\"}]"),
+            Make.Step(text));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"), (1, action), (1, "on.error"), (1, "variable.set"));
 
-        var result = await Match(goal, """
-            [0] variable.set(Name=%xs%, Value=[3, 1, 2])
-            [1] list.query(List=%xs%, Query={order: "size"}); on.error(Recovery=[goal.call(Name="Caught")])
-            """, app.actor.list.System.Context);
+        var built = await Match(goal, "[0] variable.set(Name=%people%, Value=[{\"name\": \"b\"}, {\"name\": \"a\"}])\n" + answer,
+            app.actor.list.System.Context);
+        await built.IsSuccess();
 
-        await result.IsSuccess();
-        var code = goal.Step[1].Code.Items().Select(a => $"{a.Module.Name}.{a.Name}").ToList();
-        await Assert.That(string.Join(", ", code)).IsEqualTo("list.query, on.error, variable.set");
+        var loaded = await global::PLang.Tests.Shared.RealGoalLoad.ViaChannel(app, goal);
+        await loaded.Start(user);
+
+        await Assert.That((await user.Variable.Get("caught")).IsInitialized).IsTrue();
     }
 
     [Test]
