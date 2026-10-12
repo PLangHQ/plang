@@ -19,53 +19,57 @@ public sealed class @this : global::app.type.kind.@this
     // to them per hop.
     public override (bool, object?) Descend(object obj, string key, bool isIndex, global::app.actor.context.@this ctx)
     {
-        if (Property(obj, key) is { } prop) return (true, prop.GetValue(obj));
+        if (Property(obj.GetType(), key) is { } prop) return (true, prop.GetValue(obj));
         // A member that answers as its asker (the app's name, as the asker's settings have it) is a one-context
         // method the catalog lists as a property — read the same, with the asker's context.
-        var members = obj.GetType().GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Where(m => string.Equals(m.Name, key, System.StringComparison.OrdinalIgnoreCase)
-                 && System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void)
-                 && m.GetParameters() is [{ ParameterType: var p }] && p == typeof(global::app.actor.context.@this))
-            .ToArray();
-        if (members.Length > 1) throw Twice(obj, key, members.Select(m => m.Name));
-        return members.Length == 0 ? (false, null) : (true, members[0].Invoke(obj, [ctx]));
+        var member = Method(obj.GetType(), key, m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute))
+            && m.ReturnType != typeof(void)
+            && m.GetParameters() is [{ ParameterType: var p }] && p == typeof(global::app.actor.context.@this));
+        return member == null ? (false, null) : (true, member.Invoke(obj, [ctx]));
     }
 
-    /// <summary>The property <paramref name="key"/> names on <paramref name="obj"/>, its case ignored: the most derived
-    /// type's own, a base's only when no type below it has one. Two of one type that it names is the error naming both.
-    /// The one lookup a member is read and written by — here and on an item's own <see cref="global::app.type.item.@this.Set"/>.</summary>
-    internal static System.Reflection.PropertyInfo? Property(object obj, string key)
+    /// <summary>The property <paramref name="key"/> names on <paramref name="class"/>, its case ignored, among those
+    /// <paramref name="only"/> takes (all, when none is given): the most derived type's own, a base's only when no type
+    /// below it has one. Two of one type that it names is the error naming both. The one lookup a member is found by —
+    /// read and written here, written on an item (<see cref="global::app.type.item.@this.Set"/>), and an item's marked
+    /// surface (<see cref="global::app.type.item.@this.Member"/>).</summary>
+    internal static System.Reflection.PropertyInfo? Property(System.Type @class, string key,
+        System.Func<System.Reflection.PropertyInfo, bool>? only = null)
     {
         const System.Reflection.BindingFlags Own = System.Reflection.BindingFlags.Public
             | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly;
-        for (var t = obj.GetType(); t != null; t = t.BaseType)
+        for (var t = @class; t != null; t = t.BaseType)
         {
             var named = t.GetProperties(Own)
-                .Where(p => p.GetIndexParameters().Length == 0 && string.Equals(p.Name, key, System.StringComparison.OrdinalIgnoreCase))
+                .Where(p => p.GetIndexParameters().Length == 0 && string.Equals(p.Name, key, System.StringComparison.OrdinalIgnoreCase)
+                    && (only == null || only(p)))
                 .ToArray();
-            if (named.Length > 1) throw Twice(obj, key, named.Select(p => p.Name));
+            if (named.Length > 1) throw Twice(@class, key, named.Select(p => p.Name));
             if (named.Length == 1) return named[0];
         }
         return null;
     }
 
-    /// <summary>The method <paramref name="key"/> names on <paramref name="obj"/>, its case ignored (its overloads are one
-    /// name); two names that differ only by case is the error naming both.</summary>
-    internal static System.Reflection.MethodInfo? Method(object obj, string key)
+    /// <summary>The method <paramref name="key"/> names on <paramref name="class"/>, its case ignored, among those
+    /// <paramref name="only"/> takes (all, when none is given); its overloads are one name, and two names that differ
+    /// only by case is the error naming both.</summary>
+    internal static System.Reflection.MethodInfo? Method(System.Type @class, string key,
+        System.Func<System.Reflection.MethodInfo, bool>? only = null)
     {
-        var named = obj.GetType().GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-            .Where(m => !m.IsSpecialName && string.Equals(m.Name, key, System.StringComparison.OrdinalIgnoreCase))
+        var named = @class.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Where(m => !m.IsSpecialName && string.Equals(m.Name, key, System.StringComparison.OrdinalIgnoreCase)
+                && (only == null || only(m)))
             .ToArray();
         var names = named.Select(m => m.Name).Distinct().ToArray();
-        if (names.Length > 1) throw Twice(obj, key, names);
+        if (names.Length > 1) throw Twice(@class, key, names);
         return named.FirstOrDefault();
     }
 
     // The error for a name two members of one type answer to: plang reads names ignoring case, so it can't tell them apart.
-    private static global::app.error.AppException Twice(object obj, string key, System.Collections.Generic.IEnumerable<string> names)
+    private static global::app.error.AppException Twice(System.Type @class, string key, System.Collections.Generic.IEnumerable<string> names)
         => new(new global::app.error.Error(
-            $"`{(obj is global::app.type.item.@this item ? item.Type.Name : obj.GetType().Name)}` has two members named {key}: "
-            + string.Join(", ", names.Select(n => $"`{n}`")), "AmbiguousMember", 400));
+            $"`{(typeof(global::app.type.item.@this).IsAssignableFrom(@class) ? global::app.type.item.@this.NameOf(@class) : @class.Name)}` "
+            + $"has two members named {key}: " + string.Join(", ", names.Select(n => $"`{n}`")), "AmbiguousMember", 400));
 
     public override System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate(
         object obj, global::app.actor.context.@this ctx)
@@ -81,7 +85,7 @@ public sealed class @this : global::app.type.kind.@this
     public override global::System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
         object host, string key, bool isIndex, object? value, global::app.actor.context.@this ctx)
     {
-        var prop = Property(host, key);
+        var prop = Property(host.GetType(), key);
         if (prop == null || !prop.CanWrite)
             throw new System.NotSupportedException(
                 $"'{host.GetType().Name}' has no writable property '{key}'");

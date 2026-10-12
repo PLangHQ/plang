@@ -177,11 +177,11 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     public virtual async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
         // a name is found ignoring its case; two members it names is the error naming both (the reflection kind's one lookup)
-        var prop = global::app.type.item.kind.reflection.@this.Property(this, key);
+        var prop = global::app.type.item.kind.reflection.@this.Property(GetType(), key);
         if ((prop == null || !prop.CanWrite) && Kept is { } kept && !isIndex)
         {
             // a thing that lives on keeps a member a program adds — never in place of one of its own
-            if (prop != null || global::app.type.item.kind.reflection.@this.Method(this, key) != null)
+            if (prop != null || global::app.type.item.kind.reflection.@this.Method(GetType(), key) != null)
                 throw new global::app.error.AppException(new global::app.error.Error(
                     $"{key} is {Type.Name}'s own — a program adds members beside it, never over it", "OwnMember", 400));
             kept.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));
@@ -279,13 +279,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     }
 
     // Which member of a class is its marked surface by a name — read into its identity the first time it is asked.
+    // (The reflection kind's one lookup, among the marked members: two a name matches is the error naming both.)
     private static System.Reflection.MemberInfo? Marked(System.Type @class, string name)
-        => @class.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-               .FirstOrDefault(p => string.Equals(p.Name, name, System.StringComparison.OrdinalIgnoreCase)
-                   && System.Attribute.IsDefined(p, typeof(global::app.LlmBuilderAttribute)))
-           ?? (System.Reflection.MemberInfo?)@class.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
-               .FirstOrDefault(m => string.Equals(m.Name, name, System.StringComparison.OrdinalIgnoreCase)
-                   && System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute))
+        => global::app.type.item.kind.reflection.@this.Property(@class, name,
+               p => System.Attribute.IsDefined(p, typeof(global::app.LlmBuilderAttribute)))
+           ?? (System.Reflection.MemberInfo?)global::app.type.item.kind.reflection.@this.Method(@class, name,
+               m => System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute))
                    && m.GetParameters().All(p => p.ParameterType == typeof(global::app.actor.context.@this) || p.IsOptional));
 
     /// <summary>This owner's settings when <paramref name="key"/> is <c>setting</c> (<c>%!app.goal.list.setting%</c>);

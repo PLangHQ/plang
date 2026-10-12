@@ -82,6 +82,29 @@ public class AppRootTests
         }
     }
 
+    private sealed class CasedList : global::app.type.item.list.@this
+    {
+        [global::app.LlmBuilder] public global::app.type.item.number.@this Total => 1;
+        [global::app.LlmBuilder] public global::app.type.item.number.@this total => 2;
+    }
+
+    // a value's own marked surface (a list's count, first) is found the same way: two marked members a name matches is
+    // the error naming both, under any spelling
+    [Test] public async Task TwoMarkedMembersDifferingOnlyByCase_AreTheErrorNamingBoth()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var ctx = app.actor.list.User.Context;
+        var held = new global::app.data.@this("rows", new CasedList(), context: ctx);
+
+        foreach (var spelling in new[] { "total", "Total", "TOTAL" })
+        {
+            var refused = await Assert.That(async () => await held.Get(spelling)).Throws<global::app.error.AppException>();
+            await Assert.That(refused!.Error.Message).Contains("has two members named");
+            await Assert.That(refused.Error.Message).Contains("`Total`");
+            await Assert.That(refused.Error.Message).Contains("`total`");
+        }
+    }
+
     private sealed class Cased
     {
         public string Thing { get; set; } = "upper";
