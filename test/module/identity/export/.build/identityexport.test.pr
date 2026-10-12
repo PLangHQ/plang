@@ -1,0 +1,215 @@
+{
+  "name": "Start",
+  "comment": "Test: export identity and verify non-empty result",
+  "step": [
+    {
+      "index": 0,
+      "text": "archive identity 'TestExportId', force, on error ignore, force",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "archive",
+          "name": "pack",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestExportId"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "create identity 'TestExportId', set as default",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "create",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestExportId"
+            },
+            {
+              "name": "Default",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "export identity 'TestExportId', write to %exported%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "export",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestExportId"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%exported%",
+              "variable": [
+                {
+                  "text": "%exported%",
+                  "code": [
+                    {
+                      "variable": "exported"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %exported% is not null",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%exported%",
+              "variable": [
+                {
+                  "text": "%exported%",
+                  "code": [
+                    {
+                      "variable": "exported"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "archive identity 'TestExportId', force",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "archive",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestExportId"
+            },
+            {
+              "name": "Force",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 4 uses identity.archive, which the decider was not sure of (0.98)"
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/test/module/identity/export/IdentityExport.test.goal",
+  "prPath": "/test/module/identity/export/.build/identityexport.test.pr",
+  "hash": "be73b892f487bbc09c8cfca5050febb8ba1ba5a3a2f3cd222b4916da374ac4d2"
+}
