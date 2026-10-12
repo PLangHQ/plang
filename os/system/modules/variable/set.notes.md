@@ -5,3 +5,4 @@ Default — true when the step says "set default", "default to" or "only if unse
 
 - `set %x% = …` is one variable.set.
 - `<action>, write to %x%` is that action followed by variable.set(Name=%x%, Value=%!data%) — its own action, never a modifier, and without a Type.
+- `set %x% as list of <type> = [...]` keeps the element type: Type is `list<type>` (e.g. `as list of path` → Type `list<path>`), never a bare `list` — the element is born the element type at its first read.

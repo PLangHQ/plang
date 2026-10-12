@@ -31,6 +31,9 @@ Properties: `{"Name": "%img%", "Value": "real.gif", "Type": {"name": "image", "k
 Step text: `set %n% = "42" as int`
 Properties: `{"Name": "%n%", "Value": "42", "Type": {"name": "number", "kind": "int"}}` — `int` is a kind of `number`, never a name of its own.
 
+Step text: `set %files% as list of path = ["a.txt", "b.txt"]`
+Properties: `{"Name": "%files%", "Value": ["a.txt", "b.txt"], "Type": "list<path>"}` — `as list of <type>` keeps the element type: Type is the whole `list<path>`, never a bare `list`; each element is born the element type.
+
 Step text: `set %cfg% = '{"port": 8080}', type=json`
 Properties: `{"Name": "%cfg%", "Value": "{\"port\": 8080}", "Type": {"name": "json"}}` — `type=json` (or `as json`) keeps the value as text of kind json, written exactly as the step's literal; never parsed into a dict, and `Type` is `json`, never `dict`.
 
