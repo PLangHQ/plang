@@ -1,0 +1,479 @@
+{
+  "name": "Start",
+  "comment": "Test: verify fails when expected headers don't match signed headers",
+  "step": [
+    {
+      "index": 0,
+      "text": "archive identity 'testSigner', force, on error ignore",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "archive",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "testSigner"
+            },
+            {
+              "name": "Force",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 0 uses identity.archive, which the decider was not sure of (0.89)"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "create identity testSigner",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "create",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "testSigner"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %data% = { \"body\": \"content\" }",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"body":"content"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "set %signHeaders% = { \"method\": \"POST\", \"url\": \"/api/send\" }",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%signHeaders%",
+              "variable": [
+                {
+                  "text": "%signHeaders%",
+                  "code": [
+                    {
+                      "variable": "signHeaders"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"method":"POST","url":"/api/send"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "sign %data% with headers %signHeaders%",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "signing",
+          "name": "sign",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Header",
+              "type": {
+                "name": "dict",
+                "template": "plang"
+              },
+              "value": "%signHeaders%",
+              "variable": [
+                {
+                  "text": "%signHeaders%",
+                  "code": [
+                    {
+                      "variable": "signHeaders"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "set %wrongHeaders% = { \"method\": \"GET\", \"url\": \"/api/send\" }",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%wrongHeaders%",
+              "variable": [
+                {
+                  "text": "%wrongHeaders%",
+                  "code": [
+                    {
+                      "variable": "wrongHeaders"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"method":"GET","url":"/api/send"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "verify %data% with contracts ['C0'] and headers %wrongHeaders%, on error call HandleHeaderError",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "signing",
+          "name": "verify",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Contracts",
+              "type": {
+                "name": "list"
+              },
+              "value": ["C0"]
+            },
+            {
+              "name": "Header",
+              "type": {
+                "name": "dict",
+                "template": "plang"
+              },
+              "value": "%wrongHeaders%",
+              "variable": [
+                {
+                  "text": "%wrongHeaders%",
+                  "code": [
+                    {
+                      "variable": "wrongHeaders"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "HandleHeaderError"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "assert %headerFailed% is true, \"header mismatch should fail verification\"",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%headerFailed%",
+              "variable": [
+                {
+                  "text": "%headerFailed%",
+                  "code": [
+                    {
+                      "variable": "headerFailed"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "header mismatch should fail verification"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "HandleHeaderError",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %headerFailed% = true",
+          "line": {
+            "number": 13
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%headerFailed%",
+                  "variable": [
+                    {
+                      "text": "%headerFailed%",
+                      "code": [
+                        {
+                          "variable": "headerFailed"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": true
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/test/module/signing/headermismatch/SigningHeaderMismatch.test.goal",
+      "prPath": "/test/module/signing/headermismatch/.build/signingheadermismatch.test.pr",
+      "hash": "e48e7f68f38833d5493a0f607a8ea7a919c99b21f96df28b21f56f66cbd3312c"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/test/module/signing/headermismatch/SigningHeaderMismatch.test.goal",
+  "prPath": "/test/module/signing/headermismatch/.build/signingheadermismatch.test.pr",
+  "hash": "15e2dcbb46285782cb0a540c9f07cc83f0d27a2121c3ef9e33fc205c5b86365b"
+}
