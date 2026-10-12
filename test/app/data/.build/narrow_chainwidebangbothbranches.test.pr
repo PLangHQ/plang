@@ -1,0 +1,589 @@
+{
+  "name": "Start",
+  "comment": "Narrow — %config!file!path% resolves whether config narrowed to dict or not.\nChain-wide !, never headline-only — no flow-dependent crash on the un-examined branch.",
+  "step": [
+    {
+      "index": 0,
+      "text": "save 'narrowchain.json' with content '{\"db\":\"plang\"}'",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "narrowchain.json"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"db\":\"plang\"}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "read file 'narrowchain.json', write to %config%",
+      "line": {
+        "number": 6
+      },
+      "comment": "un-examined branch: the file facet answers from the headline",
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "narrowchain.json"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%config%",
+              "variable": [
+                {
+                  "text": "%config%",
+                  "code": [
+                    {
+                      "variable": "config"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "json"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %loc1% = %config!file!path%",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%loc1%",
+              "variable": [
+                {
+                  "text": "%loc1%",
+                  "code": [
+                    {
+                      "variable": "loc1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%config!file!path%",
+              "variable": [
+                {
+                  "text": "%config!file!path%",
+                  "code": [
+                    {
+                      "variable": "config"
+                    },
+                    {
+                      "property": "!file"
+                    },
+                    {
+                      "property": "!path"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %loc1% is not null",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%loc1%",
+              "variable": [
+                {
+                  "text": "%loc1%",
+                  "code": [
+                    {
+                      "variable": "loc1"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %config% is file",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%config%",
+              "variable": [
+                {
+                  "text": "%config%",
+                  "code": [
+                    {
+                      "variable": "config"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "set %db% = %config.db%",
+      "line": {
+        "number": 11
+      },
+      "comment": "examine the content → narrows to dict, file retained in the chain",
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%db%",
+              "variable": [
+                {
+                  "text": "%db%",
+                  "code": [
+                    {
+                      "variable": "db"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%config.db%",
+              "variable": [
+                {
+                  "text": "%config.db%",
+                  "code": [
+                    {
+                      "variable": "config"
+                    },
+                    {
+                      "property": "db"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "assert %db% equals \"plang\"",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "plang"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%db%",
+              "variable": [
+                {
+                  "text": "%db%",
+                  "code": [
+                    {
+                      "variable": "db"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "assert %config% is dict",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%config%",
+              "variable": [
+                {
+                  "text": "%config%",
+                  "code": [
+                    {
+                      "variable": "config"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "assert %config% is file",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%config%",
+              "variable": [
+                {
+                  "text": "%config%",
+                  "code": [
+                    {
+                      "variable": "config"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "text": "set %loc2% = %config!file!path%",
+      "line": {
+        "number": 16
+      },
+      "comment": "post-narrow: the SAME facet hop still resolves",
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%loc2%",
+              "variable": [
+                {
+                  "text": "%loc2%",
+                  "code": [
+                    {
+                      "variable": "loc2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%config!file!path%",
+              "variable": [
+                {
+                  "text": "%config!file!path%",
+                  "code": [
+                    {
+                      "variable": "config"
+                    },
+                    {
+                      "property": "!file"
+                    },
+                    {
+                      "property": "!path"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "text": "assert %loc2% is not null",
+      "line": {
+        "number": 17
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%loc2%",
+              "variable": [
+                {
+                  "text": "%loc2%",
+                  "code": [
+                    {
+                      "variable": "loc2"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "text": "delete file 'narrowchain.json'",
+      "line": {
+        "number": 18
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "narrowchain.json"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/data/Narrow_ChainWideBangBothBranches.test.goal",
+  "prPath": "/app/data/.build/narrow_chainwidebangbothbranches.test.pr",
+  "hash": "79c95b7d75ac5346653ba93727a1ab22960bb824612419409002a228b456305e"
+}

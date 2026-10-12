@@ -1,9 +1,8 @@
-/ Stage 5 — the developer's escape hatch for a type-unknown value.
-/ `as object/json` stamps the cast (shape `object`, encoding `json`);
-/ navigation then materialises through the (object, json) reader and the
-/ field resolves. Companion to NavigationOnTypeUnknown_AsksForAsType:
-/ that one errors, this one shows the fix. Architect 829785fbe — json
-/ values are `object`-shaped, not `text`.
+/ The developer's escape hatch for a type-unknown value: cast it with `as json`.
+/ `as json` stamps a text of kind json; navigation then materialises through the
+/ json reader and the field resolves. Companion to NavigationOnTypeUnknown_AsksForAsType:
+/ that one leaves the value type-unknown, this one casts it so the field resolves.
+/ Decision 401 — json is a text of kind json; there is no `object` type.
 Start
-- set %x% = "{\"port\":8080}" as object/json
+- set %x% = "{\"port\":8080}" as json
 - assert %x.port% equals 8080

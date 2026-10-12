@@ -1,0 +1,236 @@
+{
+  "name": "Start",
+  "comment": "%response!cost.input% must dereference Properties[\"cost\"] and then dot-navigate into\nthe resulting dict. Chained navigation: bang first, then dot. Coverage row 4.12.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %response% = 'hello'",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%response%",
+              "variable": [
+                {
+                  "text": "%response%",
+                  "code": [
+                    {
+                      "variable": "response"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %costDict% = '{\"input\":50, \"output\":75}', type=json",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%costDict%",
+              "variable": [
+                {
+                  "text": "%costDict%",
+                  "code": [
+                    {
+                      "variable": "costDict"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"input\":50, \"output\":75}"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "dict"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %response!cost% = %costDict%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%response!cost%",
+              "variable": [
+                {
+                  "text": "%response!cost%",
+                  "code": [
+                    {
+                      "variable": "response"
+                    },
+                    {
+                      "property": "!cost"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%costDict%",
+              "variable": [
+                {
+                  "text": "%costDict%",
+                  "code": [
+                    {
+                      "variable": "costDict"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "dict"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %response!cost.input% equals 50",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 50
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%response!cost.input%",
+              "variable": [
+                {
+                  "text": "%response!cost.input%",
+                  "code": [
+                    {
+                      "variable": "response"
+                    },
+                    {
+                      "property": "!cost"
+                    },
+                    {
+                      "property": "input"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/data/PropertiesBangChainedNavigation.test.goal",
+  "prPath": "/app/data/.build/propertiesbangchainednavigation.test.pr",
+  "hash": "7055f24af100ba90a7cc2b77c09ecbdc71ec1a8f4bfcf5f12defbe02a2fcfa20"
+}

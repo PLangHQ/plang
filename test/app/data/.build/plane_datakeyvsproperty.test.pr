@@ -1,0 +1,246 @@
+{
+  "name": "Start",
+  "comment": "Plane — %x.size% (the content key) and %x!size% (the typed property) are distinct, no shadowing.\nSigil picks the plane: . = data, ! = property + envelope.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %x% = '{\"size\": 10, \"name\": \"box\"}', type=json",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"size\": 10, \"name\": \"box\"}"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "json"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %x!size% = 28",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x!size%",
+              "variable": [
+                {
+                  "text": "%x!size%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!size"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 28
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %x.size% equals 10",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 10
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x.size%",
+              "variable": [
+                {
+                  "text": "%x.size%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "size"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %x!size% equals 28",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 28
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x!size%",
+              "variable": [
+                {
+                  "text": "%x!size%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "!size"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %x.name% equals \"box\"",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "box"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x.name%",
+              "variable": [
+                {
+                  "text": "%x.name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/data/Plane_DataKeyVsProperty.test.goal",
+  "prPath": "/app/data/.build/plane_datakeyvsproperty.test.pr",
+  "hash": "4da4b9070e58eba653e5352eea215475c22e459ec986b86173a6a755b360c50c"
+}
