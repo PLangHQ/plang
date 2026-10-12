@@ -407,23 +407,32 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
 
     /// <summary>Does this value, as an answer writes it, hold the text a step quoted (<paramref name="quoted"/>)? By its
     /// own written form, by default — the build's check that an answer kept what the step said. A value that stands for
-    /// what it doesn't write (a separator named <c>comma</c> stands for <c>,</c>) answers by that too.</summary>
+    /// what it doesn't write (a separator named <c>comma</c> stands for <c>,</c>) answers by that too. A value with rows (a
+    /// list's elements, a dict's entries) also holds what any of them holds — each answers by its own, so a text inside
+    /// a list is found by its characters, never by the escaped form the list writes it in.</summary>
     internal virtual async System.Threading.Tasks.ValueTask<bool> Holds(string quoted, global::app.actor.context.@this context)
     {
         var writer = new global::app.goal.step.action.formal.Writer();
         await Output(writer, global::app.View.Store, context);
-        return writer.ToString().Contains(quoted);
+        if (writer.ToString().Contains(quoted)) return true;
+        foreach (var row in Rows(context) ?? [])
+            if (await row.Value() is { } held && !ReferenceEquals(held, this) && await held.Holds(quoted, context)) return true;
+        return false;
     }
 
     /// <summary>Does this value, as an answer writes it, hold the number a step wrote as digits? By its own written form,
     /// by default: the digits standing on their own, never inside a larger number (5 is not in 15). A value that spells
-    /// a number another way (a duration of 1s holds 1000, as milliseconds) answers by that too.</summary>
+    /// a number another way (a duration of 1s holds 1000, as milliseconds) answers by that too. A value with rows also
+    /// holds what any of them holds.</summary>
     internal virtual async System.Threading.Tasks.ValueTask<bool> Holds(global::app.type.item.number.@this number, global::app.actor.context.@this context)
     {
         var writer = new global::app.goal.step.action.formal.Writer();
         await Output(writer, global::app.View.Store, context);
-        return System.Text.RegularExpressions.Regex.IsMatch(writer.ToString(),
-            $@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(number.ToString())}(?![\d.]|\.\d)");
+        if (System.Text.RegularExpressions.Regex.IsMatch(writer.ToString(),
+                $@"(?<![\d.]){System.Text.RegularExpressions.Regex.Escape(number.ToString())}(?![\d.]|\.\d)")) return true;
+        foreach (var row in Rows(context) ?? [])
+            if (await row.Value() is { } held && !ReferenceEquals(held, this) && await held.Holds(number, context)) return true;
+        return false;
     }
 
     /// <summary>Is this value of the kind <paramref name="name"/> (by its name, an alias, a MIME or an extension) — its
