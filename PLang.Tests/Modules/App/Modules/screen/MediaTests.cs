@@ -50,16 +50,17 @@ public class MediaTests
         return m;
     }
 
-    private static byte[] Clock(byte id = 1, (byte r, byte g, byte b)? key = null)
+    private static byte[] Clock(byte id = 1, (byte r, byte g, byte b)? key = null, Rect? at = null)
     {
         var m = new byte[38];
         m[0] = 12; m[1] = id;
         m[34] = 1;
         (m[35], m[36], m[37]) = key ?? Key;
-        BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(18), Place.X);
-        BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(22), Place.Y);
-        BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(26), Place.Width);
-        BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(30), Place.Height);
+        var place = at ?? Place;
+        BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(18), place.X);
+        BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(22), place.Y);
+        BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(26), place.Width);
+        BinaryPrimitives.WriteInt32LittleEndian(m.AsSpan(30), place.Height);
         return m;
     }
 
@@ -181,7 +182,9 @@ public class MediaTests
         await Assert.That(stand.Made).IsEqualTo(1);
     }
 
-    // two windows' videos may overlap on the screen: both play (a page that goes away is ended by PlangOS, not guessed)
+    // two windows' videos may overlap on the screen: both play (a page that goes away is ended by PlangOS, not guessed).
+    // Overlapping, never the very same place: a quiet stream at the very place of a new one is that player's old video,
+    // and goes — so the same place would make this test depend on how long the first stream took to show.
     [Test]
     public async Task TwoVideosAtOverlappingPlaces_BothPlay()
     {
@@ -189,7 +192,7 @@ public class MediaTests
         await Playing(media);
         media.Take(Start(2));
         media.Take(Sample(2));
-        media.Take(Clock(2));
+        media.Take(Clock(2, at: new Rect(Place.X + 4, Place.Y + 4, Place.Width, Place.Height)));
         await Assert.That(media.Numbers).Contains("stream 1:");
         await Assert.That(media.Numbers).Contains("stream 2:");
     }
