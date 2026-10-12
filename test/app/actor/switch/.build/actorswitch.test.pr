@@ -1,0 +1,150 @@
+{
+  "name": "Start",
+  "comment": "write to different actors",
+  "step": [
+    {
+      "index": 0,
+      "text": "write out \"user message\"",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "user message"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "write out \"system message\" actor=\"system\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "system message"
+            },
+            {
+              "name": "channel",
+              "type": {
+                "name": "text"
+              },
+              "value": "system"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %actorTestDone% = true",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%actorTestDone%",
+              "variable": [
+                {
+                  "text": "%actorTestDone%",
+                  "code": [
+                    {
+                      "variable": "actorTestDone"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %actorTestDone% equals true",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%actorTestDone%",
+              "variable": [
+                {
+                  "text": "%actorTestDone%",
+                  "code": [
+                    {
+                      "variable": "actorTestDone"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/actor/switch/ActorSwitch.test.goal",
+  "prPath": "/app/actor/switch/.build/actorswitch.test.pr",
+  "hash": "cae5dc7ec928d48eb00e39d3e99a485299ad6dbc6f575b1da249491addd11f23"
+}
