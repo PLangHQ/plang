@@ -559,7 +559,7 @@ Close a screen window
 Open a window to draw frames in; returns the screen at once; each mouse/keyboard event calls OnInput with `%!data%` = one JSON line; closing the window calls OnClose
 
 - open screen 'PlangOS', size 1920x1080, on input call Input, on close call Close, write to %screen%
-- open screen size 1920x1080, frames to output, on window call Window, write to %screen%
+- open screen size 1920x1080, frames to output, write to %screen%
 
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|
@@ -569,7 +569,6 @@ Open a window to draw frames in; returns the screen at once; each mouse/keyboard
 | OnInput | on input call <Goal> | action | no | — | a goal called for each input event, the event an input value in %!data% |
 | OnClose | on close call <Goal> | action | no | — | a goal called when the window is closed |
 | ToOutput | frames to output | bool | no | false | PlangOS (Linux): send the frames to this app's own output instead of to a window |
-| OnWindow | on window call <Goal> | action | no | — | PlangOS (Linux): a goal called as a window on the screen opens, is focused, moved, closed, or asks to navigate |
 
 **Returns:** the screen, held so later steps draw into it (draw … on %screen%).
 

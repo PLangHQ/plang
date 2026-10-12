@@ -269,7 +269,7 @@ public sealed class @this : browser.@this
 
     /// <summary>Watches the browser's pages. A page opened as a tab (Ctrl+click, a link to a new tab) lands in the only
     /// tabbed window, the desktop, and would cover the screen: it is closed there and told to the screen as
-    /// <c>{"open": url}</c> — its OnWindow opens it as a window of its own.</summary>
+    /// <c>{"open": url}</c> — the desktop window's <c>open</c> event, whose binding opens it as a window of its own.</summary>
     private async Task Watch(string desktop)
     {
         var window = await Cdp.Ask("Browser.getWindowForTarget", new JsonObject { ["targetId"] = desktop });

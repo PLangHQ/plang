@@ -17,8 +17,7 @@ public sealed class Wayland : IScreen
         var title = (await action.Title.Value())?.ToString() ?? "";
         int width = (int)(await action.Width.Value())!.ToDouble(), height = (int)(await action.Height.Value())!.ToDouble();
         if ((await action.ToOutput.Value())!.Value)
-            return await Display.Start(title, width, height, true,
-                action.OnWindow == null ? null : await action.OnWindow.Value(), action.Context);
+            return await Display.Start(title, width, height, true, action.Context);
         return Shows.Start(title, width, height,
             action.OnInput == null ? null : await action.OnInput.Value(),
             action.OnClose == null ? null : await action.OnClose.Value(), action.Context);

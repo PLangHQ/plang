@@ -8,7 +8,7 @@ namespace app.module.screen.type.element;
 /// time it is asked for, so what is bound on its events stays: <c>on click on #window.bot, call ShowClaude</c>. Its
 /// events reached (to bind on them), the screen hands its clicks to it instead of doing their own.
 /// </summary>
-[PlangType("element")]
+[PlangType("element"), Events("click")]
 public sealed class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     private readonly string _selector;
@@ -34,9 +34,10 @@ public sealed class @this : global::app.type.item.@this, global::app.type.item.I
     /// <summary>It was clicked: what is bound on its click runs, handed the click (the window it was in, where).</summary>
     internal async System.Threading.Tasks.Task Clicked(global::app.data.@this click, global::app.actor.context.@this context)
     {
-        var before = await on.click.Before(this, context, click);
+        var clicked = on["click"]!;
+        var before = await clicked.Before(this, context, click);
         if (before is { Success: false } or { Handled: true }) return;
-        await on.click.After(this, before ?? click, context);
+        await clicked.After(this, before ?? click, context);
     }
 
     public override string ToString() => _selector;

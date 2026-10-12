@@ -34,12 +34,6 @@ public partial class open : IContext
     [Default(false)]
     public partial data.@this<global::app.type.item.@bool.@this> ToOutput { get; init; }
 
-    /// <summary>PlangOS (Linux): goal called when a window on the screen opens, gets a title, is
-    /// focused, minimized, maximized, restored or closed — and when its address field or menu asks to
-    /// go somewhere. <c>%!data%</c> is a dict: <c>{"window":"opened","id":1,"title":…}</c>,
-    /// <c>{"navigate":…,"id":…}</c>, <c>{"open":…,"id":…}</c>.</summary>
-    public partial data.@this<global::app.goal.step.action.@this>? OnWindow { get; init; }
-
     [Code]
     public partial IScreen Provider { get; }
 

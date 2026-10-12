@@ -241,6 +241,7 @@ public class ModulePageTests
     [Arguments("file")]
     [Arguments("condition")]
     [Arguments("loop")]
+    [Arguments("screen")]
     public async Task AcceptTheGolden(string module)
     {
         var spec = System.IO.File.ReadAllLines(SpecPath());

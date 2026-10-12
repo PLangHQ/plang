@@ -12,9 +12,11 @@ namespace app.module.window.type.window;
 /// (<c>window.navigate</c>), gives its page messages (<c>window.post</c>), calls its page's goals (<c>window.call</c>),
 /// shows how it looks (<c>window.screenshot</c>, an image), loads again (<c>window.reload</c>) and closes. A window just
 /// opened is not on the screen yet: it is shown when its page is — until then what it is asked to do waits. Each verb
-/// answers as itself: what came of it, or why not.
+/// answers as itself: what came of it, or why not. Its events are what happens to it (<c>opened</c> … <c>closed</c>)
+/// and what its title bar asks (<c>navigate</c>, <c>open</c>, <c>tool</c>, <c>paste</c>): <c>on %window% closed, call X</c>.
 /// </summary>
-[PlangType("window")]
+[PlangType("window"), Events("opened", "titled", "focused", "minimized", "maximized", "restored", "closed",
+    "navigate", "open", "tool", "paste")]
 public sealed partial class @this : global::app.type.item.@this, global::app.type.item.ICreate<@this>
 {
     private readonly TaskCompletionSource shown = new(TaskCreationOptions.RunContinuationsAsynchronously);

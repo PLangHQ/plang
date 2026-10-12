@@ -446,18 +446,18 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     {
         // a copy is a new value: nothing is bound on it (its events would reach the actors and the app)
         var copy = (@this)MemberwiseClone();
-        copy._on = global::app.@event.on.@this.Empty;
+        copy._on = null;
         var deep = Force.DeepCloner.DeepClonerExtensions.DeepClone(copy);
-        deep._on = global::app.@event.on.@this.Empty;   // the shared one, not a copy of it
+        deep._on = null;   // its class's shared ones, not a copy of the original's
         return deep;
     }
 
-    private global::app.@event.on.@this _on = global::app.@event.on.@this.Empty;
+    private global::app.@event.on.@this? _on;
 
-    /// <summary>This value's events (<c>%x.on.start%</c>) — the shared empty ones until something is bound on it.
-    /// Not written with the value, and not taught as one of its properties.</summary>
+    /// <summary>This value's events (<c>%x.on.start%</c>) — its class's shared empty ones (the core's, and its type's
+    /// declared ones) until something is bound on it. Not written with the value, and not taught as one of its properties.</summary>
     [System.Text.Json.Serialization.JsonIgnore]
-    public global::app.@event.on.@this on => _on;
+    public global::app.@event.on.@this on => _on ??= global::app.@event.on.@this.Of(GetType());
 
     /// <summary>The item whose events this one's fire through at <paramref name="depth"/>, outermost first — the
     /// general wrapping the specific, the last being the item itself; null past the last. An item on its own has
@@ -468,8 +468,9 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     internal global::app.@event.on.own Own()
     {
         if (_on is global::app.@event.on.own held) return held;
-        var made = new global::app.@event.on.own();
-        return System.Threading.Interlocked.CompareExchange(ref _on, made, global::app.@event.on.@this.Empty) is global::app.@event.on.own won
+        var shared = on;
+        var made = new global::app.@event.on.own(shared.Declared);
+        return System.Threading.Interlocked.CompareExchange(ref _on, made, shared) is global::app.@event.on.own won
             ? won : made;
     }
 

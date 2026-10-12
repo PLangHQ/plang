@@ -4086,7 +4086,6 @@ action screen.open
   OnInput : action
   OnClose : action
   ToOutput : bool
-  OnWindow : action
 
 action screen.send
   Data : item required

@@ -19,9 +19,9 @@ public sealed class own : @this
     private read? _read;
     private ask? _ask;
     private error? _error;
-    private click? _click;
 
-    internal own() { }
+    /// <summary>An item's own events — the core's and the ones its type declares (<paramref name="declared"/>).</summary>
+    internal own(IEnumerable<string> declared) : base(declared) { }
 
     /// <summary>This item's own start — the one its indexer answers under <c>start</c>, held.</summary>
     public override start start => _start ??= (start)this["start"]!;
@@ -50,12 +50,12 @@ public sealed class own : @this
     /// <summary>This item's own ask — the one its indexer answers under <c>ask</c>, held.</summary>
     public override ask ask => _ask ??= (ask)this["ask"]!;
 
-    /// <summary>This item's own click — the one its indexer answers under <c>click</c>, held.</summary>
-    public override click click => _click ??= (click)this["click"]!;
-
-    /// <summary>The event named <paramref name="name"/>, this item's own; null when there is no event of that name.</summary>
+    /// <summary>The event named <paramref name="name"/>, this item's own — one of the core's, or one its type declares;
+    /// null when there is no event of that name.</summary>
     public override global::app.@event.@this? this[string name]
-        => Made.TryGetValue(name, out var made) ? _events.GetOrAdd(name, _ => made(new binding.list.before(), new binding.list.after())) : null;
+        => Made.TryGetValue(name, out var made) ? _events.GetOrAdd(name, _ => made(new binding.list.before(), new binding.list.after()))
+         : IsDeclared(name) ? _events.GetOrAdd(name, n => new declared(n, new binding.list.before(), new binding.list.after()))
+         : null;
 
     /// <summary>Binds <paramref name="handler"/> on the event named <paramref name="event"/>, <paramref name="when"/>
     /// it runs, for <paramref name="actor"/> in <paramref name="scope"/>; it fires for every item.</summary>

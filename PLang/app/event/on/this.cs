@@ -3,9 +3,10 @@ using System.Collections.Frozen;
 namespace app.@event.on;
 
 /// <summary>
-/// An object's events, by name — <c>%!app.goal["/start"].on.start%</c>, <c>%!app.type.text.on.create%</c>. An
-/// item nothing is bound on has the shared empty one, whose events are shared and closed to bindings; the
-/// first binding gives the item its own (<see cref="own"/>).
+/// An object's events, by name — <c>%!app.goal["/start"].on.start%</c>, <c>%!app.type.text.on.create%</c>: the core's,
+/// and the ones the item's plang type declares (<c>[Events("closed")]</c>, a window's). An item nothing is bound on has
+/// its class's shared empty one, whose events are shared and closed to bindings; the first binding gives the item its
+/// own (<see cref="own"/>).
 /// </summary>
 public class @this : global::app.type.item.@this
 {
@@ -24,18 +25,43 @@ public class @this : global::app.type.item.@this
             ["error"] = (before, after) => new error(before, after),
             ["hit"] = (before, after) => new hit(before, after),
             ["miss"] = (before, after) => new miss(before, after),
-            ["click"] = (before, after) => new click(before, after),
         }.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
 
     // The shared empty events: one of each, closed to bindings.
     private static readonly FrozenDictionary<string, global::app.@event.@this> None =
         Made.ToFrozenDictionary(made => made.Key, made => made.Value(binding.list.before.None, binding.list.after.None), StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>The events of an item nothing is bound on — one for the whole app, never changed: every event
-    /// it answers is shared and closed to bindings.</summary>
+    /// <summary>The events of an item nothing is bound on and whose type declares none — one for the whole app,
+    /// never changed: every event it answers is shared and closed to bindings.</summary>
     public static readonly @this Empty = new();
 
-    private protected @this() { }
+    // Each class's shared empty events, its type's declared ones among them — a fact of the class, made once.
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<System.Type, @this> Emptied = new();
+
+    /// <summary>The events of an item of <paramref name="class"/> nothing is bound on: <see cref="Empty"/>, or, when its
+    /// plang type declares events (<c>[Events(…)]</c>), its class's own shared empty ones, which answer those too.</summary>
+    public static @this Of(System.Type @class)
+        => Emptied.GetOrAdd(@class, static type =>
+            System.Reflection.CustomAttributeExtensions.GetCustomAttribute<global::app.Attributes.EventsAttribute>(type, inherit: false) is { } events
+                ? new @this(events.Names)
+                : Empty);
+
+    // the events this item's type declares besides the core's
+    private readonly FrozenSet<string> _declared;
+
+    // a declared event of the shared empty events, each made once, closed to bindings
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, global::app.@event.@this> _closed = new(StringComparer.OrdinalIgnoreCase);
+
+    private protected @this() : this([]) { }
+
+    private protected @this(IEnumerable<string> declared) => _declared = declared.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>The events the item's type declares besides the core's (a window's <c>closed</c>) — what its own events
+    /// are made with when something is first bound on it.</summary>
+    internal IReadOnlyCollection<string> Declared => _declared;
+
+    /// <summary>Whether <paramref name="name"/> is one of the events the item's type declares.</summary>
+    private protected bool IsDeclared(string name) => _declared.Contains(name);
 
     // The shared empty start and load, typed.
     private static readonly start NoStart = (start)None["start"];
@@ -47,14 +73,16 @@ public class @this : global::app.type.item.@this
     private static readonly read NoRead = (read)None["read"];
     private static readonly ask NoAsk = (ask)None["ask"];
     private static readonly error NoError = (error)None["error"];
-    private static readonly click NoClick = (click)None["click"];
 
-    /// <summary>The event named <paramref name="name"/>; null when there is no event of that name.</summary>
-    public virtual global::app.@event.@this? this[string name] => None.GetValueOrDefault(name);
+    /// <summary>The event named <paramref name="name"/>: one of the core's, or one the item's type declares; null when
+    /// there is no event of that name.</summary>
+    public virtual global::app.@event.@this? this[string name]
+        => None.GetValueOrDefault(name)
+           ?? (IsDeclared(name) ? _closed.GetOrAdd(name, n => new declared(n, binding.list.before.None, binding.list.after.None)) : null);
 
-    /// <summary>The names of the events an item has (<c>ask</c>, <c>create</c>, … <c>write</c>) — every item the same
-    /// ones; before or after one is a binding's <c>When</c>, never part of its name.</summary>
-    public IEnumerable<string> Names => Made.Keys.Order(StringComparer.Ordinal);
+    /// <summary>The names of the events an item has: the core's (<c>ask</c>, <c>create</c>, … <c>write</c>), every item
+    /// the same ones, and those its type declares; before or after one is a binding's <c>When</c>, never part of its name.</summary>
+    public IEnumerable<string> Names => Made.Keys.Concat(_declared).Order(StringComparer.Ordinal);
 
     /// <summary>The start — what runs before and after the item starts.</summary>
     public virtual start start => NoStart;
@@ -83,14 +111,11 @@ public class @this : global::app.type.item.@this
     /// <summary>The ask — what runs before and after the item asks.</summary>
     public virtual ask ask => NoAsk;
 
-    /// <summary>The click — what runs when the item (a screen's element) is clicked.</summary>
-    public virtual click click => NoClick;
-
-    /// <summary>The refusal of <paramref name="name"/>, which is no event: it says the events an item has, and that
-    /// before or after one is a binding's When — every item has the same events, so the name never binds.</summary>
+    /// <summary>The refusal of <paramref name="name"/>, which is no event: it says the events this item has (the core's
+    /// and its type's), and that before or after one is a binding's When — so the name never binds.</summary>
     public global::app.error.Error NoEvent(string name)
         => new global::app.error.ActionError(
-            $"'{name}' names no event — an item's events are {string.Join(", ", Names)}; before or after one is When " +
+            $"'{name}' names no event — this item's events are {string.Join(", ", Names)}; before or after one is When " +
             "(Event=%!app.type.step.on.start%, When=before)", "EventNotFound", 404);
 
     /// <summary>One step down: the event by its name (<c>.start</c>); a name that is no event is refused

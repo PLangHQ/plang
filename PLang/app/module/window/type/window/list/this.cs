@@ -11,10 +11,19 @@ namespace app.module.window.type.window.list;
 /// screen (<c>%browser.window[1].url%</c>, <c>%browser.window[%click.window%]%</c>; 0 is the desktop). The screen tells about
 /// each window (its id, when it gets a title, when it closes); a window is paired with its page when it gets a title —
 /// the unpaired page with that title, else the newest unpaired one — and is then shown: a window <c>window.open</c>
-/// is waiting for (the oldest), or a new one. A page of the app's own gets <c>plang(text)</c>.
+/// is waiting for (the oldest), or a new one. A page of the app's own gets <c>plang(text)</c>. What happens to a window
+/// is that window's event and the list's: <c>on %browser.window% closed, call X</c> hears every window, today's and later.
 /// </summary>
+[global::app.Attributes.Events("opened", "titled", "focused", "minimized", "maximized", "restored", "closed",
+    "navigate", "open", "tool", "paste")]
 public sealed class @this(Browser browser) : global::app.type.item.@this
 {
+    // What happened, raised in order through the callback gate on a pump of its own: Follow, on the display's
+    // pump, never waits behind a goal, nor a goal behind it.
+    private readonly System.Threading.Channels.Channel<(string Name, Window? Window, JsonObject Said, global::app.actor.context.@this Context)> _raised
+        = System.Threading.Channels.Channel.CreateUnbounded<(string, Window?, JsonObject, global::app.actor.context.@this)>();
+    private int _raising;
+
     private readonly ConcurrentDictionary<long, Window> _shown = new();
     private readonly ConcurrentQueue<Window> _opening = new();
     private readonly HashSet<string> _looked = new();
@@ -89,10 +98,16 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
     /// title and address follow); closed — it goes.</summary>
     internal async Task Follow(JsonObject e, global::app.actor.context.@this context)
     {
-        // a window's own news names what happened ({"window":"titled","id":…}); an event that only says which window
-        // it was in ({"ui":"click","window":1}) is not about the window
-        if (e["window"] is not JsonValue said || !said.TryGetValue<string>(out var what) || e["id"] is not JsonValue idValue) return;
-        if (!idValue.TryGetValue<int>(out var id)) return;   // the screen's ids are ints
+        if (e["id"] is not JsonValue idValue || !idValue.TryGetValue<int>(out var id)) return;   // the screen's ids are ints
+        // a window's own news names what happened ({"window":"titled","id":…}); its title bar's requests name what they
+        // ask ({"navigate":"mbl.is","id":2}); an event that only says which window it was in ({"ui":"click","window":1})
+        // is not about the window
+        var what = e["window"] is JsonValue said && said.TryGetValue<string>(out var happened) ? happened
+            : Request.FirstOrDefault(e.ContainsKey);
+        if (what == null || !on.Names.Contains(what, StringComparer.OrdinalIgnoreCase)) return;
+        // the window it is about, before what happened changes the list (a closed one leaves it)
+        Raise(what, ById(id), e, context);
+        if (e["window"] is null) return;
         if (what == "closed")
         {
             if (_shown.TryRemove(id, out var gone)) gone.Gone();
@@ -132,6 +147,28 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
             if (browser.Report is { } report)
                 await report(new global::app.error.ServiceError($"Window {id} ('{title}') couldn't be paired with its page: {ex.Message}", "WindowNotPaired", 500) { Exception = ex });
         }
+    }
+
+    // A title bar's requests, by the key they arrive under.
+    private static readonly string[] Request = ["navigate", "open", "tool", "paste"];
+
+    // What happened goes to what is bound on it — the window's event and the list's — in order, one at a time with the
+    // app's other callbacks, the happening as %!data% (today's line: {"window":"closed","id":3}).
+    private void Raise(string name, Window? window, JsonObject said, global::app.actor.context.@this context)
+    {
+        _raised.Writer.TryWrite((name, window, said, context));
+        if (Interlocked.Exchange(ref _raising, 1) == 1) return;
+        _ = Task.Run(async () =>
+        {
+            await foreach (var (what, about, e, ctx) in _raised.Reader.ReadAllAsync())
+                await global::app.module.on.code.Gate.Run(async () =>
+                {
+                    using var json = JsonDocument.Parse(e.ToJsonString());
+                    var happened = new global::app.data.@this("!data", new global::app.type.item.serializer.json(ctx).Parse(json.RootElement.Clone()), context: ctx);
+                    if (about != null) await about.on[what]!.After(about, happened, ctx);
+                    await on[what]!.After(this, happened, ctx);
+                }, ctx);
+        });
     }
 
     /// <summary>The page a newly titled window shows: unpaired, with that title if one has it, else the newest

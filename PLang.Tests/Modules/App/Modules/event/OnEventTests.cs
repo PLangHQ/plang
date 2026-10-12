@@ -121,7 +121,9 @@ public class OnEventTests
 
         await bound.IsFailure();
         await Assert.That(bound.Error!.Key).IsEqualTo("EventNotFound");
-        await Assert.That(bound.Error.Message).Contains("an item's events are ask, click, create");
+        // a core item's events are the core's: click is a screen element's, not every item's
+        await Assert.That(bound.Error.Message).Contains("this item's events are ask, create");
+        await Assert.That(bound.Error.Message).DoesNotContain("click");
     }
 
     // at bind, what is missing is said: a name that is no event is the events' refusal; an item that isn't there is

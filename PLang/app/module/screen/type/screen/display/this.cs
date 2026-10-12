@@ -12,8 +12,8 @@ namespace app.module.screen.type.screen.display;
 /// <summary>
 /// A screen that is PlangOS's display (Linux): programs draw onto it — a Wayland compositor inside plang. Its frames go
 /// to the app's output (to the host that shows them); the host's input comes back in through screen.send, or the screen
-/// takes the app's input itself (screen.listen). What happens to its windows goes to OnWindow, an element's click to
-/// what is bound on it.
+/// takes the app's input itself (screen.listen). What happens to its windows is their own events (a browser's windows
+/// raise them), an element's click goes to what is bound on it.
 /// </summary>
 public sealed class @this : screen.@this
 {
@@ -40,7 +40,7 @@ public sealed class @this : screen.@this
     /// folder; its frames to the app's output when <paramref name="toOutput"/>. It becomes <c>%!screen%</c>, the screen
     /// in play for the goals here.</summary>
     internal static async Task<global::app.data.@this<screen.@this>> Start(string title, int width, int height, bool toOutput,
-        global::app.goal.step.action.@this? onWindow, global::app.actor.context.@this context)
+        global::app.actor.context.@this context)
     {
         // the socket lives in the app's .run folder; programs find it through XDG_RUNTIME_DIR
         var folder = FilePath.Resolve("/.run", context);
@@ -65,7 +65,7 @@ public sealed class @this : screen.@this
         var display = new Wayland(new code.Size(width, height), "is", socket.Absolute, output,
             font == null ? null : (await font.Value())?.RawBytes, note => notes.Writer.TryWrite(note));
         var screen = new @this(title, width, height, display, folder.Absolute);
-        screen.Told(onWindow, context);
+        screen.Told(context);
         screen.Watched(context);
         display.Start();
         // the screen's output is the pipe to the host plang that started this one: the host is %!app.parent%, and
@@ -78,10 +78,10 @@ public sealed class @this : screen.@this
         return opened;
     }
 
-    // what happens to windows goes to OnWindow in order, and an element's click to what is bound on it
-    // (on click on #window.bot) — but the display never waits for either: a goal running now (one at a time
-    // per app) may itself wait for a window to be shown, and showing it is the display's next event
-    private void Told(global::app.goal.step.action.@this? onWindow, global::app.actor.context.@this context)
+    // an element's click goes to what is bound on it (on click on #window.bot), in order — but the display never waits
+    // for it: a goal running now (one at a time per app) may itself wait for a window to be shown, and showing it is the
+    // display's next event
+    private void Told(global::app.actor.context.@this context)
     {
         var told = System.Threading.Channels.Channel.CreateUnbounded<JsonObject>();
         _ = Task.Run(async () =>
@@ -92,13 +92,9 @@ public sealed class @this : screen.@this
                 // loop without a word, and with it every click and window after it
                 try
                 {
-                    if (e["ui"]?.GetValue<string>() == "click" && e["element"]?.GetValue<string>() is { } selector)
-                    {
-                        if (element.Held(selector) is { } clicked)
-                            await global::app.module.on.code.Gate.Run(() => clicked.Clicked(Payload(e, context), context), context);
-                    }
-                    else if (onWindow != null)
-                        await global::app.module.on.code.Gate.Call(onWindow, Payload(e, context), context);
+                    if (e["ui"]?.GetValue<string>() == "click" && e["element"]?.GetValue<string>() is { } selector
+                        && element.Held(selector) is { } clicked)
+                        await global::app.module.on.code.Gate.Run(() => clicked.Clicked(Payload(e, context), context), context);
                 }
                 catch (Exception ex) when (ex is not (OutOfMemoryException or StackOverflowException))
                 {

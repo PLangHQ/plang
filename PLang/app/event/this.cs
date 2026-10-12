@@ -25,8 +25,9 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     /// <summary>What is started after it.</summary>
     public binding.list.after after { get; }
 
-    /// <summary>This event as <paramref name="on"/> holds it — the same event of another level.</summary>
-    protected virtual @this Of(global::app.@event.on.@this on) => on[Name]!;
+    /// <summary>This event as <paramref name="on"/> holds it — the same event of another level; null at a level whose
+    /// type doesn't have it (a declared event, on a level of another type).</summary>
+    protected virtual @this? Of(global::app.@event.on.@this on) => on[Name];
 
     /// <summary>Whether anything is bound on this event, before or after it, at any of <paramref name="item"/>'s
     /// levels — so a door whose before is handed something it would have to make asks first.</summary>
@@ -42,7 +43,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     {
         int outer = -1, inner = -1;
         for (var depth = 0; item.Level(depth, context) is { } level; depth++)
-            if (side(Of(level.on)).Count > 0)
+            if (Of(level.on) is { } held && side(held).Count > 0)
             {
                 if (outer < 0) outer = depth;
                 inner = depth;
@@ -71,8 +72,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
         var answer = result ?? context.Ok();
         for (; item.Level(depth, context) is { } level; depth++)
         {
-            var side = Of(level.on).before;
-            if (side.Count == 0) continue;
+            if (Of(level.on)?.before is not { Count: > 0 } side) continue;
             answer = await side.Start(item, answer, context);
             if (!answer.Success || answer.Handled) return answer;
         }
@@ -97,8 +97,7 @@ public abstract class @this : global::app.type.item.@this, global::app.type.item
     {
         for (; depth >= 0; depth--)
         {
-            var side = Of(item.Level(depth, context)!.on).after;
-            if (side.Count > 0) result = await side.Start(item, result, context);
+            if (Of(item.Level(depth, context)!.on)?.after is { Count: > 0 } side) result = await side.Start(item, result, context);
         }
         return result;
     }
