@@ -13,9 +13,9 @@ Builder fixes landed (each with decider-fixture + page-golden re-pins):
 - **condition** — `and`=nested ifs, `or`=if+elseif, `if <file> exists … else …`, `!%b%`→`==false` (if.notes/examples).
 - **issue-75** refusal wording (`formal/reader.cs`); `as list of <type>` + llm `maxTokens`→Limit.token teaching.
 
-## Step-3 run (final)
+## Step-3 run (round-3 baseline)
 
-Progression across rebuild passes: baseline **129/126/28** → sibling+stale+wrong-prPath **195/68/15** → coder-rewrites+wrong-saves+E1 **203/61/14** (full report + per-test table: `result.md`). 3 more wrong-prPath fixed after the final run (→ ~206/58 next run).
+Progression: **129/126/28** → **195/68/15** → **203/61/14** → round 3 **220/33/21/3 skipped** (full report + per-test table: `result.md`). sibling-unbuilt is 0; the skip-tag fix works (signing pair + Duration skip). Remaining fails: ~29 genuine runtime reds (coder's); 2 write-back placement (DictIsItemKeepsNoOrder, DoublePlusDecimal — with coder); 2 flaky wrong-prPath. 21 stale = builderVersion drift (rebuild-pass clears, best after the coder's write-back fix). Open builder C#: the write-back clause-detection (IsClause name-check) handed to coder to replace with the clause's own knowledge.
 
 Rebuild passes done (siblings — now 0 unbuilt; stale/wrong-prPath rebuilt from test/; coder-triage wrong-saves + 39 coder stale-rewrites built; E1 sort). The remaining 61 fails are genuine RUNTIME reds (build clean, fail at run from the session's coder runtime changes — kind-redesign, signing, on.error) = coder's domain, matching plang-triage.md. The 14 stale are the known next-branch build items + 3 snapshot-by-design.
 
