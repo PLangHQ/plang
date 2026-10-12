@@ -28,7 +28,11 @@ public class CdpEventTests : IDisposable
     {
         const int count = 200;
         var said = string.Concat(Enumerable.Range(0, count).Select(i => "{\"method\":\"Runtime.bindingCalled\",\"params\":{\"n\":" + i + "}}\0"));
-        var pipe = new global::app.channel.type.stream.@this("pipe", new MemoryStream(System.Text.Encoding.UTF8.GetBytes(said)), ownsStream: true)
+        // Chromium says nothing until the listener is there: the pipe is empty until it is, so no event is read (and
+        // dropped, heard by no one) before the listener is added
+        using var chromium = new System.IO.Pipes.AnonymousPipeServerStream(System.IO.Pipes.PipeDirection.Out);
+        var pipe = new global::app.channel.type.stream.@this("pipe",
+            new System.IO.Pipes.AnonymousPipeClientStream(System.IO.Pipes.PipeDirection.In, chromium.ClientSafePipeHandle), ownsStream: true)
             { Framed = true, Actor = _app.actor.list.User.Context.Actor! };
         var heard = new List<int>();
         var all = new TaskCompletionSource();
@@ -45,6 +49,8 @@ public class CdpEventTests : IDisposable
                 if (heard.Count == count) all.TrySetResult();
             }
         };
+        await chromium.WriteAsync(System.Text.Encoding.UTF8.GetBytes(said));
+        await chromium.FlushAsync();
         await all.Task.WaitAsync(TimeSpan.FromSeconds(30));
         await Assert.That(heard).IsEquivalentTo(Enumerable.Range(0, count), TUnit.Assertions.Enums.CollectionOrdering.Matching);
     }
