@@ -59,7 +59,7 @@
     },
     {
       "index": 1,
-      "text": "assert %d.Type.Name% equals \"date\"",
+      "text": "assert %d!type.name% equals \"date\"",
       "line": {
         "number": 4
       },
@@ -81,19 +81,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%d.Type.Name%",
+              "value": "%d!type.name%",
               "variable": [
                 {
-                  "text": "%d.Type.Name%",
+                  "text": "%d!type.name%",
                   "code": [
                     {
                       "variable": "d"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -151,5 +151,5 @@
   "visibility": "Public",
   "path": "/app/type/date/DateReturnsDateOnly.test.goal",
   "prPath": "/app/type/date/.build/datereturnsdateonly.test.pr",
-  "hash": "a2ec2808d9e1cf24680f44aff5758d4dcb8eaa25b0903b3bd79bce204ece32c2"
+  "hash": "8b653d0773485610af76bc9544e316371609f568dbf5baa959e2a58ced67366d"
 }

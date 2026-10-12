@@ -59,7 +59,7 @@
     },
     {
       "index": 1,
-      "text": "assert %x.Type.Name% equals \"text\"",
+      "text": "assert %x!type.name% equals \"text\"",
       "line": {
         "number": 5
       },
@@ -81,19 +81,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x.Type.Name%",
+              "value": "%x!type.name%",
               "variable": [
                 {
-                  "text": "%x.Type.Name%",
+                  "text": "%x!type.name%",
                   "code": [
                     {
                       "variable": "x"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -200,5 +200,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetAsTextSlashMarkdownStrictUnverifiable.test.goal",
   "prPath": "/app/type/kind/strict/.build/setastextslashmarkdownstrictunverifiable.test.pr",
-  "hash": "186da3c177a459c2607be79b678c559965a0a5383870df4f26c73a360ac04c3c"
+  "hash": "071797ce7ce96955b51948a09f5c367f21965932be7e3be5dd472f624072136a"
 }

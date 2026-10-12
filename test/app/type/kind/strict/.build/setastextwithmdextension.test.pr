@@ -59,7 +59,7 @@
     },
     {
       "index": 1,
-      "text": "assert %doc.Type.Name% equals \"text\"",
+      "text": "assert %doc!type.name% equals \"text\"",
       "line": {
         "number": 6
       },
@@ -81,19 +81,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%doc.Type.Name%",
+              "value": "%doc!type.name%",
               "variable": [
                 {
-                  "text": "%doc.Type.Name%",
+                  "text": "%doc!type.name%",
                   "code": [
                     {
                       "variable": "doc"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -147,5 +147,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetAsTextWithMdExtension.test.goal",
   "prPath": "/app/type/kind/strict/.build/setastextwithmdextension.test.pr",
-  "hash": "4fd13e5055631d764755358c8c88e582939cd7b6d3813d089698abc35df8bee9"
+  "hash": "b976ba8e81423231a8def19c507c1d16a04b9b52bfeb6cd5f932dd627a169cd2"
 }

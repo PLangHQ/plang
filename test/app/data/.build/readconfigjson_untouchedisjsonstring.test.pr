@@ -86,7 +86,7 @@
     },
     {
       "index": 1,
-      "text": "assert %cfg.Type.Name% equals \"file\"",
+      "text": "assert %cfg!type.name% equals \"file\"",
       "line": {
         "number": 9
       },
@@ -108,19 +108,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%cfg.Type.Name%",
+              "value": "%cfg!type.name%",
               "variable": [
                 {
-                  "text": "%cfg.Type.Name%",
+                  "text": "%cfg!type.name%",
                   "code": [
                     {
                       "variable": "cfg"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -224,5 +224,5 @@
   "visibility": "Public",
   "path": "/app/data/ReadConfigJson_UntouchedIsJsonString.test.goal",
   "prPath": "/app/data/.build/readconfigjson_untouchedisjsonstring.test.pr",
-  "hash": "596f17da382d542557b8fd010bb14cc25459d99c1eadc603dbd445d28b1b8d53"
+  "hash": "3e2c97536232a686822d42a47ad56c5aa3f64555fead33a775c63eb3a9307c9f"
 }

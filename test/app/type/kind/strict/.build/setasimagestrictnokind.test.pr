@@ -59,7 +59,7 @@
     },
     {
       "index": 1,
-      "text": "assert %x.Type.Name% equals \"image\"",
+      "text": "assert %x!type.name% equals \"image\"",
       "line": {
         "number": 6
       },
@@ -81,19 +81,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x.Type.Name%",
+              "value": "%x!type.name%",
               "variable": [
                 {
-                  "text": "%x.Type.Name%",
+                  "text": "%x!type.name%",
                   "code": [
                     {
                       "variable": "x"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -193,5 +193,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetAsImageStrictNoKind.test.goal",
   "prPath": "/app/type/kind/strict/.build/setasimagestrictnokind.test.pr",
-  "hash": "29fafc25e0fcc8847609546de687c4f321b8ca11ea9cd991ffefe6d084a6de5c"
+  "hash": "d5e1893432ae7a780acd1942864203872b55288ae6945bb641295f5171c1b7ae"
 }

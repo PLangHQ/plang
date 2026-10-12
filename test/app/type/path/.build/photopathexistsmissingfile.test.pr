@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "Integration cut 3 (negative): same shape as PhotoPathExistsNavigation but the source\nfile is removed before the if. `%photo.Path.Exists%` evaluates false (HEAD-style stat\nvia path.IBooleanResolvable). No crash.",
+  "comment": "Integration cut 3 (negative): same shape as PhotoPathExistsNavigation but the source\nfile is removed first. `%photo!path.exists%` is false (a stat of the path). No crash.",
   "step": [
     {
       "index": 0,
       "text": "file.copy from=photo.png to=tmp-photo-missing.png",
       "line": {
-        "number": 5
+        "number": 4
       },
       "code": [
         {
@@ -52,7 +52,7 @@
       "index": 1,
       "text": "file.read tmp-photo-missing.png, write to %photo%",
       "line": {
-        "number": 6
+        "number": 5
       },
       "code": [
         {
@@ -134,7 +134,7 @@
       "index": 2,
       "text": "file.delete path=tmp-photo-missing.png",
       "line": {
-        "number": 7
+        "number": 6
       },
       "code": [
         {
@@ -163,9 +163,9 @@
     },
     {
       "index": 3,
-      "text": "set %exists% = %photo.Path.Exists%",
+      "text": "set %exists% = %photo!path.exists%",
       "line": {
-        "number": 8
+        "number": 7
       },
       "code": [
         {
@@ -195,19 +195,13 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%photo.Path.Exists%",
+              "value": "%!data%",
               "variable": [
                 {
-                  "text": "%photo.Path.Exists%",
+                  "text": "%!data%",
                   "code": [
                     {
-                      "variable": "photo"
-                    },
-                    {
-                      "property": "Path"
-                    },
-                    {
-                      "property": "Exists"
+                      "variable": "!data"
                     }
                   ]
                 }
@@ -223,6 +217,42 @@
               "value": false
             }
           ]
+        },
+        {
+          "module": "file",
+          "name": "exists",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path",
+                "template": "plang"
+              },
+              "value": "%photo!path.exists%",
+              "variable": [
+                {
+                  "text": "%photo!path.exists%",
+                  "code": [
+                    {
+                      "variable": "photo"
+                    },
+                    {
+                      "property": "!path"
+                    },
+                    {
+                      "property": "exists"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 3 uses file.exists, which the decider was not sure of (0.77)"
         }
       ]
     },
@@ -230,7 +260,7 @@
       "index": 4,
       "text": "assert %exists% is false",
       "line": {
-        "number": 9
+        "number": 8
       },
       "code": [
         {
@@ -264,5 +294,5 @@
   "visibility": "Public",
   "path": "/app/type/path/PhotoPathExistsMissingFile.test.goal",
   "prPath": "/app/type/path/.build/photopathexistsmissingfile.test.pr",
-  "hash": "bc21815def5f851aa200fe00598d2e906379434626780b69eec5d533fecc1b59"
+  "hash": "94d73c95b7f6c42d91c4534d49024bdecf4c24da166ecfaa554fae58acba8459"
 }

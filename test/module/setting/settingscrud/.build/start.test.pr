@@ -4,7 +4,7 @@
   "step": [
     {
       "index": 0,
-      "text": "set %!llm.setting.cache% = false",
+      "text": "set %!llm.setting.cache% = \"skip\"",
       "line": {
         "number": 3
       },
@@ -39,9 +39,9 @@
             {
               "name": "Value",
               "type": {
-                "name": "bool"
+                "name": "text"
               },
-              "value": false
+              "value": "skip"
             }
           ],
           "default": [
@@ -58,17 +58,24 @@
     },
     {
       "index": 1,
-      "text": "assert %!llm.setting.cache% is false",
+      "text": "assert %!llm.setting.cache% equals \"skip\"",
       "line": {
         "number": 4
       },
       "code": [
         {
           "module": "assert",
-          "name": "isFalse",
+          "name": "equals",
           "property": [
             {
-              "name": "Value",
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "skip"
+            },
+            {
+              "name": "Actual",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -133,7 +140,7 @@
     },
     {
       "index": 3,
-      "text": "set %!llm.setting.cache% = true",
+      "text": "set %!llm.setting.cache% = \"use\"",
       "line": {
         "number": 6
       },
@@ -168,9 +175,9 @@
             {
               "name": "Value",
               "type": {
-                "name": "bool"
+                "name": "text"
               },
-              "value": true
+              "value": "use"
             }
           ],
           "default": [
@@ -187,17 +194,24 @@
     },
     {
       "index": 4,
-      "text": "assert %!llm.setting.cache% is true",
+      "text": "assert %!llm.setting.cache% equals \"use\"",
       "line": {
         "number": 7
       },
       "code": [
         {
           "module": "assert",
-          "name": "isTrue",
+          "name": "equals",
           "property": [
             {
-              "name": "Value",
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "use"
+            },
+            {
+              "name": "Actual",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -265,5 +279,5 @@
   "visibility": "Public",
   "path": "/module/setting/settingscrud/Start.test.goal",
   "prPath": "/module/setting/settingscrud/.build/start.test.pr",
-  "hash": "e345f5ebced21af7e12f0f530800e5832a8bbad27bb22681d30ee0fcc1a774b2"
+  "hash": "71eea88dd09d35283f30e1c0a883fb84f02c1bd642b93a5a907791478e5e0d07"
 }

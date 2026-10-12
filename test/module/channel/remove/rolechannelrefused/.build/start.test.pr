@@ -25,49 +25,59 @@
         {
           "module": "on",
           "name": "error",
-          "property": [],
-          "default": [
-            {
-              "name": "ignore",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        },
-        {
-          "module": "variable",
-          "name": "set",
           "property": [
             {
-              "name": "Name",
+              "name": "Recovery",
               "type": {
-                "name": "variable"
+                "name": "list",
+                "kind": "action"
               },
-              "value": "%removalRefused%",
-              "variable": [
+              "value": [
                 {
-                  "text": "%removalRefused%",
-                  "code": [
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
                     {
-                      "variable": "removalRefused"
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%removalRefused%",
+                      "variable": [
+                        {
+                          "text": "%removalRefused%",
+                          "code": [
+                            {
+                              "variable": "removalRefused"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
                     }
                   ]
                 }
               ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "bool"
-              },
-              "value": true
             }
           ],
           "default": [
             {
-              "name": "default",
+              "name": "ignore",
               "type": {
                 "name": "bool"
               },

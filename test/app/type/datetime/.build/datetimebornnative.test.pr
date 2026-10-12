@@ -59,7 +59,7 @@
     },
     {
       "index": 1,
-      "text": "assert %dt.Type.Name% equals \"datetime\"",
+      "text": "assert %dt!type.name% equals \"datetime\"",
       "line": {
         "number": 5
       },
@@ -81,19 +81,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%dt.Type.Name%",
+              "value": "%dt!type.name%",
               "variable": [
                 {
-                  "text": "%dt.Type.Name%",
+                  "text": "%dt!type.name%",
                   "code": [
                     {
                       "variable": "dt"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -151,5 +151,5 @@
   "visibility": "Public",
   "path": "/app/type/datetime/DatetimeBornNative.test.goal",
   "prPath": "/app/type/datetime/.build/datetimebornnative.test.pr",
-  "hash": "48b1fa429bb723bca7b74210174c1fe4f1035cf1d5cfd2fd059a32b79dffc662"
+  "hash": "790edf58e3623148ea9e57f5935161d5007ef89179074090ca6ba7baffc93af4"
 }

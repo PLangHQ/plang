@@ -1,6 +1,6 @@
 {
   "name": "TestRunEnforcesTimeout",
-  "comment": "Discover a fixture that sleeps 30 seconds, run it with test's setting timeoutSeconds=1.\nThe fixture must come back with Status=Timeout — proves test.run cancels\nthe child via CancellationToken and maps the cancellation to TestStatus.Timeout\nrather than hanging the parent.",
+  "comment": "Discover a fixture that sleeps 30 seconds, run it with test's setting timeout = 1s.\nThe fixture must come back with Status=Timeout — proves test.run cancels\nthe child via CancellationToken and maps the cancellation to TestStatus.Timeout\nrather than hanging the parent.",
   "step": [
     {
       "index": 0,
@@ -215,7 +215,7 @@
     },
     {
       "index": 3,
-      "text": "set %!app.test.setting.timeoutSeconds% = 1",
+      "text": "set %!app.test.setting.timeout% = 1s",
       "line": {
         "number": 9
       },
@@ -229,10 +229,10 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%!app.test.setting.timeoutSeconds%",
+              "value": "%!app.test.setting.timeout%",
               "variable": [
                 {
-                  "text": "%!app.test.setting.timeoutSeconds%",
+                  "text": "%!app.test.setting.timeout%",
                   "code": [
                     {
                       "variable": "!app"
@@ -244,7 +244,7 @@
                       "property": "setting"
                     },
                     {
-                      "property": "timeoutSeconds"
+                      "property": "timeout"
                     }
                   ]
                 }
@@ -253,9 +253,9 @@
             {
               "name": "Value",
               "type": {
-                "name": "number"
+                "name": "text"
               },
-              "value": 1
+              "value": "1s"
             }
           ],
           "default": [
@@ -267,6 +267,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 3 uses variable.set, which the decider was not sure of (0.86)"
         }
       ]
     },
@@ -464,7 +470,7 @@
         },
         {
           "key": "Unsure",
-          "message": "step 5 uses variable.set, which the decider was not sure of (0.83)"
+          "message": "step 5 uses variable.set, which the decider was not sure of (0.87)"
         }
       ]
     },
@@ -506,5 +512,5 @@
   "visibility": "Public",
   "path": "/module/test/run/TestRunEnforcesTimeout.test.goal",
   "prPath": "/module/test/run/.build/testrunenforcestimeout.test.pr",
-  "hash": "2f55a25aab40d1dd5a10085e2a57b421d72b13a7ef8a41467c27a688541e8ffb"
+  "hash": "1011d007ed983d84de03fb2b44dd3c54642ca369cbc29a5e693f952bb465a0e3"
 }

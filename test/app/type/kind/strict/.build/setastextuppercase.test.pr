@@ -59,7 +59,7 @@
     },
     {
       "index": 1,
-      "text": "assert %x.Type.Name% equals \"text\"",
+      "text": "assert %x!type.name% equals \"text\"",
       "line": {
         "number": 7
       },
@@ -81,19 +81,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x.Type.Name%",
+              "value": "%x!type.name%",
               "variable": [
                 {
-                  "text": "%x.Type.Name%",
+                  "text": "%x!type.name%",
                   "code": [
                     {
                       "variable": "x"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -147,5 +147,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetAsTextUppercase.test.goal",
   "prPath": "/app/type/kind/strict/.build/setastextuppercase.test.pr",
-  "hash": "9e27bb881e8a0048a55132f1180e3cea774c29c38e7fecb517037d91b51b243b"
+  "hash": "71fa6760eb0dd4654bb58f060aebe934235b9254b362df8afa7008a0dd642d9d"
 }

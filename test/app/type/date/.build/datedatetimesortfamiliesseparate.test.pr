@@ -59,7 +59,7 @@
     },
     {
       "index": 1,
-      "text": "assert %d.Type.Name% equals \"date\"",
+      "text": "assert %d!type.name% equals \"date\"",
       "line": {
         "number": 5
       },
@@ -81,19 +81,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%d.Type.Name%",
+              "value": "%d!type.name%",
               "variable": [
                 {
-                  "text": "%d.Type.Name%",
+                  "text": "%d!type.name%",
                   "code": [
                     {
                       "variable": "d"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -160,7 +160,7 @@
     },
     {
       "index": 3,
-      "text": "assert %dt.Type.Name% equals \"datetime\"",
+      "text": "assert %dt!type.name% equals \"datetime\"",
       "line": {
         "number": 7
       },
@@ -182,19 +182,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%dt.Type.Name%",
+              "value": "%dt!type.name%",
               "variable": [
                 {
-                  "text": "%dt.Type.Name%",
+                  "text": "%dt!type.name%",
                   "code": [
                     {
                       "variable": "dt"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -209,5 +209,5 @@
   "visibility": "Public",
   "path": "/app/type/date/DateDatetimeSortFamiliesSeparate.test.goal",
   "prPath": "/app/type/date/.build/datedatetimesortfamiliesseparate.test.pr",
-  "hash": "8b587d67429dd2ea3bbd1baac4106672de2353f54b28efaa2439d1b30f62c1da"
+  "hash": "6946ec630b2b135dafdf8ec67624f61f2c4ae70915044e45b9b2ca7ae1543edc"
 }

@@ -52,7 +52,7 @@
     },
     {
       "index": 1,
-      "text": "assert %s.Type.Name% equals \"text\"",
+      "text": "assert %s!type.name% equals \"text\"",
       "line": {
         "number": 5
       },
@@ -74,19 +74,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%s.Type.Name%",
+              "value": "%s!type.name%",
               "variable": [
                 {
-                  "text": "%s.Type.Name%",
+                  "text": "%s!type.name%",
                   "code": [
                     {
                       "variable": "s"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -141,5 +141,5 @@
   "visibility": "Public",
   "path": "/app/type/text/TextBornNative.test.goal",
   "prPath": "/app/type/text/.build/textbornnative.test.pr",
-  "hash": "2093789fa3bea0595566277e9666b4f1c36ba1a83a1a589b76d8da0321825dfc"
+  "hash": "738b57a01f130f1d1a251f83ad2bed55eb0a4ebf2bb1d94ed1190da94532bbcb"
 }

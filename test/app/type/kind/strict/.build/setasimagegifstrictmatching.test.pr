@@ -59,7 +59,7 @@
     },
     {
       "index": 1,
-      "text": "assert %img.Type.Name% equals \"image\"",
+      "text": "assert %img!type.name% equals \"image\"",
       "line": {
         "number": 5
       },
@@ -81,19 +81,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%img.Type.Name%",
+              "value": "%img!type.name%",
               "variable": [
                 {
-                  "text": "%img.Type.Name%",
+                  "text": "%img!type.name%",
                   "code": [
                     {
                       "variable": "img"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -154,5 +154,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetAsImageGifStrictMatching.test.goal",
   "prPath": "/app/type/kind/strict/.build/setasimagegifstrictmatching.test.pr",
-  "hash": "21ae6aade7ace1533a4f540ead8ae0b4d7bd6143921c2b278b016aa96365d6a8"
+  "hash": "c7c5f37a9a9d058cb9dd6a8afb32e3fd4c0abd90382c7174734dbbd2862da192"
 }

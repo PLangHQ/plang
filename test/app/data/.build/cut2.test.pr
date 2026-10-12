@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "comment": "Cut 2 — lazy read + narrow + chain-wide !.\n%file!file!path% resolves location-only (no content read); is file → true with no read.\n%file.field% reads + parses + narrows; second use stays cached; the facet hop\nstill resolves after the narrow.",
+  "comment": "Cut 2 — lazy read + narrow + chain-wide !.\n%file!path% resolves location-only (no content read); is file → true with no read.\n%file.field% reads + parses + narrows; second use stays cached; the facet hop\nstill resolves after the narrow.",
   "step": [
     {
       "index": 0,
@@ -115,7 +115,7 @@
     },
     {
       "index": 2,
-      "text": "set %loc% = %cfg!file!path%",
+      "text": "set %loc% = %cfg!path%",
       "line": {
         "number": 8
       },
@@ -147,16 +147,13 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%cfg!file!path%",
+              "value": "%cfg!path%",
               "variable": [
                 {
-                  "text": "%cfg!file!path%",
+                  "text": "%cfg!path%",
                   "code": [
                     {
                       "variable": "cfg"
-                    },
-                    {
-                      "property": "!file"
                     },
                     {
                       "property": "!path"
@@ -225,9 +222,20 @@
             {
               "name": "Expected",
               "type": {
-                "name": "text"
+                "name": "item",
+                "template": "plang"
               },
-              "value": "file"
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "name": "Actual",
@@ -464,17 +472,10 @@
       "code": [
         {
           "module": "assert",
-          "name": "equals",
+          "name": "isTrue",
           "property": [
             {
-              "name": "Expected",
-              "type": {
-                "name": "text"
-              },
-              "value": "dict"
-            },
-            {
-              "name": "Actual",
+              "name": "Value",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -497,7 +498,7 @@
     },
     {
       "index": 10,
-      "text": "set %loc2% = %cfg!file!path%",
+      "text": "set %loc2% = %cfg!path%",
       "line": {
         "number": 16
       },
@@ -529,16 +530,13 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%cfg!file!path%",
+              "value": "%cfg!path%",
               "variable": [
                 {
-                  "text": "%cfg!file!path%",
+                  "text": "%cfg!path%",
                   "code": [
                     {
                       "variable": "cfg"
-                    },
-                    {
-                      "property": "!file"
                     },
                     {
                       "property": "!path"
@@ -629,5 +627,5 @@
   "visibility": "Public",
   "path": "/app/data/Cut2.test.goal",
   "prPath": "/app/data/.build/cut2.test.pr",
-  "hash": "8b6b6eeb8cb6dce32ffa313a549de8a3f5d531956fc6541bd17d834c1f2723aa"
+  "hash": "f5c87d63b09393ae8c8d33783ff86c3dbbd83785eff82dc5acee07d2759b4baa"
 }

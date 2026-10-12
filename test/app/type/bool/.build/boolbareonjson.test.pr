@@ -154,7 +154,7 @@
     },
     {
       "index": 3,
-      "text": "assert %flag.Type.Name% equals \"bool\"",
+      "text": "assert %flag!type.name% equals \"bool\"",
       "line": {
         "number": 7
       },
@@ -176,19 +176,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%flag.Type.Name%",
+              "value": "%flag!type.name%",
               "variable": [
                 {
-                  "text": "%flag.Type.Name%",
+                  "text": "%flag!type.name%",
                   "code": [
                     {
                       "variable": "flag"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -203,5 +203,5 @@
   "visibility": "Public",
   "path": "/app/type/bool/BoolBareOnJson.test.goal",
   "prPath": "/app/type/bool/.build/boolbareonjson.test.pr",
-  "hash": "6e987471c6900eb5d16377a8b91f65365018d324316325f46c9845ff99199701"
+  "hash": "6482666241454b39b436fc836c066dbae55bb32fc3880a28b512daab9de6f4e2"
 }

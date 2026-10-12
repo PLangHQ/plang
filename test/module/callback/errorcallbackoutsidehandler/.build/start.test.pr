@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "Reading %!error.callback% outside an error handler scope: %!error% itself is\nnull (no AsyncLocal-flowed error in this context), so the callback path is\nunresolved. Coder flipped the default from \"throws\" to \"null\" — simpler\nruntime contract, matches how %!error.X% works generally outside scope.",
+  "comment": "Reading %!error.callback% outside an error handler: no error is current, and reading a %!…% node that\nisn't there is an error — it never reads as null.",
   "step": [
     {
       "index": 0,
-      "text": "set %callbackOutsideScope% = %!error.callback%",
+      "text": "set %callbackOutsideScope% = %!error.callback%, on error call Caught",
       "line": {
-        "number": 6
+        "number": 4
       },
       "code": [
         {
@@ -61,33 +61,77 @@
               "value": false
             }
           ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "Caught"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
         }
       ]
     },
     {
       "index": 1,
-      "text": "assert %callbackOutsideScope% is null",
+      "text": "assert %caught% equals \"NotFound\"",
       "line": {
-        "number": 7
+        "number": 5
       },
       "code": [
         {
           "module": "assert",
-          "name": "isNull",
+          "name": "equals",
           "property": [
             {
-              "name": "Value",
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "NotFound"
+            },
+            {
+              "name": "Actual",
               "type": {
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%callbackOutsideScope%",
+              "value": "%caught%",
               "variable": [
                 {
-                  "text": "%callbackOutsideScope%",
+                  "text": "%caught%",
                   "code": [
                     {
-                      "variable": "callbackOutsideScope"
+                      "variable": "caught"
                     }
                   ]
                 }
@@ -98,9 +142,82 @@
       ]
     }
   ],
-  "child": [],
+  "child": [
+    {
+      "name": "Caught",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %caught% = %!error.Key%",
+          "line": {
+            "number": 8
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%caught%",
+                  "variable": [
+                    {
+                      "text": "%caught%",
+                      "code": [
+                        {
+                          "variable": "caught"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!error.Key%",
+                  "variable": [
+                    {
+                      "text": "%!error.Key%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Key"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/module/callback/errorcallbackoutsidehandler/Start.test.goal",
+      "prPath": "/module/callback/errorcallbackoutsidehandler/.build/start.test.pr",
+      "hash": "ec0f5fc53113edce508631be46166dab0372210530613172a5ff489cca506038"
+    }
+  ],
   "visibility": "Public",
   "path": "/module/callback/errorcallbackoutsidehandler/Start.test.goal",
   "prPath": "/module/callback/errorcallbackoutsidehandler/.build/start.test.pr",
-  "hash": "c84fbfe9146b61611982822073c3275fba0cb91982b41dc0b0c6b506cb5425c5"
+  "hash": "5c3edf798ffabe43b5b183709fc2a7758b13ad831fc1b5851d4fcf559fa6d6f6"
 }

@@ -59,7 +59,7 @@
     },
     {
       "index": 1,
-      "text": "assert %x.Type.Name% equals \"text\"",
+      "text": "assert %x!type.name% equals \"text\"",
       "line": {
         "number": 5
       },
@@ -81,19 +81,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x.Type.Name%",
+              "value": "%x!type.name%",
               "variable": [
                 {
-                  "text": "%x.Type.Name%",
+                  "text": "%x!type.name%",
                   "code": [
                     {
                       "variable": "x"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -147,5 +147,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetAsTextDefaultNoValidation.test.goal",
   "prPath": "/app/type/kind/strict/.build/setastextdefaultnovalidation.test.pr",
-  "hash": "7e5d09d4474eab4453e237442b29f7df3292c7fb9a4977f31ffe74b6a2277d04"
+  "hash": "6b850d9f0960cce5c3e397c77d51118694f7f3ea13554a58658a67486d827194"
 }

@@ -86,7 +86,7 @@
     },
     {
       "index": 1,
-      "text": "assert %report.Type.Name% equals \"file\"",
+      "text": "assert %report!type.name% equals \"file\"",
       "line": {
         "number": 8
       },
@@ -108,19 +108,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%report.Type.Name%",
+              "value": "%report!type.name%",
               "variable": [
                 {
-                  "text": "%report.Type.Name%",
+                  "text": "%report!type.name%",
                   "code": [
                     {
                       "variable": "report"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -214,5 +214,5 @@
   "visibility": "Public",
   "path": "/app/data/ReadCsv_LandsAsTable.test.goal",
   "prPath": "/app/data/.build/readcsv_landsastable.test.pr",
-  "hash": "d41d78e5785bda02e52ba618baeb1e79d08f9119224545191111fc06d928b5e2"
+  "hash": "9cb4cf906dcef577124425e9c1d120716291759208dbb09920b3d283ea7f0dea"
 }

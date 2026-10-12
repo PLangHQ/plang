@@ -211,7 +211,7 @@
               "type": {
                 "name": "query"
               },
-              "value": {"order":{"field":"size"}}
+              "value": {"order":{}}
             }
           ],
           "default": [
@@ -270,7 +270,7 @@
     },
     {
       "index": 5,
-      "text": "set %first% = \"%files[0]%\"",
+      "text": "set %first% = \"first: %files[0]%\"",
       "line": {
         "number": 9
       },
@@ -302,7 +302,7 @@
                 "name": "text",
                 "template": "plang"
               },
-              "value": "%files[0]%",
+              "value": "first: %files[0]%",
               "variable": [
                 {
                   "text": "%files[0]%",
@@ -334,7 +334,7 @@
     },
     {
       "index": 6,
-      "text": "set %last% = \"%files[2]%\"",
+      "text": "set %last% = \"last: %files[2]%\"",
       "line": {
         "number": 10
       },
@@ -366,7 +366,7 @@
                 "name": "text",
                 "template": "plang"
               },
-              "value": "%files[2]%",
+              "value": "last: %files[2]%",
               "variable": [
                 {
                   "text": "%files[2]%",
@@ -574,5 +574,5 @@
   "visibility": "Public",
   "path": "/module/list/query/Cut4.test.goal",
   "prPath": "/module/list/query/.build/cut4.test.pr",
-  "hash": "078cac80f037fd1cec7dc2fc7f01c60e82a0b13b494301b4d05a1eeb0bf5c4bf"
+  "hash": "cf0020eca14e8b2829bb0a97e7b466d02aae68e18752a155139452c084371b9e"
 }

@@ -52,7 +52,7 @@
     },
     {
       "index": 1,
-      "text": "assert %birthday.Type.Name% equals \"date\"",
+      "text": "assert %birthday!type.name% equals \"date\"",
       "line": {
         "number": 6
       },
@@ -74,19 +74,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%birthday.Type.Name%",
+              "value": "%birthday!type.name%",
               "variable": [
                 {
-                  "text": "%birthday.Type.Name%",
+                  "text": "%birthday!type.name%",
                   "code": [
                     {
                       "variable": "birthday"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -146,7 +146,7 @@
     },
     {
       "index": 3,
-      "text": "assert %written.Type.Name% equals \"date\"",
+      "text": "assert %written!type.name% equals \"date\"",
       "line": {
         "number": 8
       },
@@ -168,19 +168,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%written.Type.Name%",
+              "value": "%written!type.name%",
               "variable": [
                 {
-                  "text": "%written.Type.Name%",
+                  "text": "%written!type.name%",
                   "code": [
                     {
                       "variable": "written"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -283,7 +283,7 @@
     },
     {
       "index": 6,
-      "text": "assert %timeout.Type.Name% equals \"duration\"",
+      "text": "assert %timeout!type.name% equals \"duration\"",
       "line": {
         "number": 11
       },
@@ -305,19 +305,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%timeout.Type.Name%",
+              "value": "%timeout!type.name%",
               "variable": [
                 {
-                  "text": "%timeout.Type.Name%",
+                  "text": "%timeout!type.name%",
                   "code": [
                     {
                       "variable": "timeout"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -377,7 +377,7 @@
     },
     {
       "index": 8,
-      "text": "assert %count.Type.Name% equals \"number\"",
+      "text": "assert %count!type.name% equals \"number\"",
       "line": {
         "number": 13
       },
@@ -399,19 +399,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%count.Type.Name%",
+              "value": "%count!type.name%",
               "variable": [
                 {
-                  "text": "%count.Type.Name%",
+                  "text": "%count!type.name%",
                   "code": [
                     {
                       "variable": "count"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -471,7 +471,7 @@
     },
     {
       "index": 10,
-      "text": "assert %version.Type.Name% equals \"text\"",
+      "text": "assert %version!type.name% equals \"text\"",
       "line": {
         "number": 15
       },
@@ -493,19 +493,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%version.Type.Name%",
+              "value": "%version!type.name%",
               "variable": [
                 {
-                  "text": "%version.Type.Name%",
+                  "text": "%version!type.name%",
                   "code": [
                     {
                       "variable": "version"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -520,5 +520,5 @@
   "visibility": "Public",
   "path": "/app/type/item/BareLiteralJudgedByForm.test.goal",
   "prPath": "/app/type/item/.build/bareliteraljudgedbyform.test.pr",
-  "hash": "af7f1c7a78ded4929ff8fb9a811d7c6e040caa5c687e5fd27c4df4f45635eae0"
+  "hash": "3e4d5dc8d40afbe3c26640233d7178bf48a426b3baf6ee966006f5d4a6542bc2"
 }

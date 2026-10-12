@@ -52,7 +52,7 @@
     },
     {
       "index": 1,
-      "text": "assert %b.Type.Name% equals \"bool\"",
+      "text": "assert %b!type.name% equals \"bool\"",
       "line": {
         "number": 5
       },
@@ -74,19 +74,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%b.Type.Name%",
+              "value": "%b!type.name%",
               "variable": [
                 {
-                  "text": "%b.Type.Name%",
+                  "text": "%b!type.name%",
                   "code": [
                     {
                       "variable": "b"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -186,7 +186,7 @@
     },
     {
       "index": 4,
-      "text": "assert %c.Type.Name% equals \"bool\"",
+      "text": "assert %c!type.name% equals \"bool\"",
       "line": {
         "number": 8
       },
@@ -208,19 +208,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%c.Type.Name%",
+              "value": "%c!type.name%",
               "variable": [
                 {
-                  "text": "%c.Type.Name%",
+                  "text": "%c!type.name%",
                   "code": [
                     {
                       "variable": "c"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -275,5 +275,5 @@
   "visibility": "Public",
   "path": "/app/type/bool/BoolBornNative.test.goal",
   "prPath": "/app/type/bool/.build/boolbornnative.test.pr",
-  "hash": "c3c5167377835a096df31264b20e2c23902a919e1b2492b24fb37dbefd7f52fb"
+  "hash": "adc2dd5c6c824d56c72d66caf1f6df4165c7b6327069e68e793c896c4b8e98f4"
 }

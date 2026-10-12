@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "Test: set crypto provider via settings, then hash — verifies builder recognizes the setting",
+  "comment": "Test: set the crypto provider, then hash — the step names a provider the app has (`default`, the built-in one),\nso the swap is real and the hash still works.",
   "step": [
     {
       "index": 0,
-      "text": "set the crypto provider as sha256-only",
+      "text": "set the crypto provider as default",
       "line": {
-        "number": 3
+        "number": 4
       },
       "code": [
         {
@@ -18,7 +18,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "sha256-only"
+              "value": "default"
             },
             {
               "name": "Type",
@@ -36,13 +36,20 @@
       "index": 1,
       "text": "set %data% = \"hello world\"",
       "line": {
-        "number": 4
+        "number": 5
       },
       "code": [
         {
           "module": "variable",
           "name": "set",
           "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello world"
+            },
             {
               "name": "Name",
               "type": {
@@ -59,20 +66,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "hello world"
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "text"
             }
           ],
           "default": [
@@ -91,7 +84,7 @@
       "index": 2,
       "text": "hash %data%, write to %hash%",
       "line": {
-        "number": 5
+        "number": 6
       },
       "code": [
         {
@@ -133,23 +126,6 @@
           "name": "set",
           "property": [
             {
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "%hash%",
-              "variable": [
-                {
-                  "text": "%hash%",
-                  "code": [
-                    {
-                      "variable": "hash"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
               "name": "Value",
               "type": {
                 "name": "item",
@@ -162,6 +138,23 @@
                   "code": [
                     {
                       "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%hash%",
+              "variable": [
+                {
+                  "text": "%hash%",
+                  "code": [
+                    {
+                      "variable": "hash"
                     }
                   ]
                 }
@@ -184,7 +177,7 @@
       "index": 3,
       "text": "assert %hash% is not empty, \"hash with swapped provider should still work\"",
       "line": {
-        "number": 6
+        "number": 7
       },
       "code": [
         {
@@ -232,5 +225,5 @@
   "visibility": "Public",
   "path": "/module/crypto/providerswap/ProviderSwap.test.goal",
   "prPath": "/module/crypto/providerswap/.build/providerswap.test.pr",
-  "hash": "78809e0f2c56312c75fabe3dc7ea2c0e58b053e25ea2ed4cd805ab51cea4aa3b"
+  "hash": "2c4aa1082817ef3f98290bff047bd13e37ae5efa87205a1dbbfb53760c22a30b"
 }

@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "comment": "Narrow — %config!file!path% resolves whether config narrowed to dict or not.\nChain-wide !, never headline-only — no flow-dependent crash on the un-examined branch.",
+  "comment": "Narrow — %config!path% resolves whether config narrowed to dict or not.\nChain-wide !, never headline-only — no flow-dependent crash on the un-examined branch.",
   "step": [
     {
       "index": 0,
@@ -116,7 +116,7 @@
     },
     {
       "index": 2,
-      "text": "set %loc1% = %config!file!path%",
+      "text": "set %loc1% = %config!path%",
       "line": {
         "number": 7
       },
@@ -148,16 +148,13 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%config!file!path%",
+              "value": "%config!path%",
               "variable": [
                 {
-                  "text": "%config!file!path%",
+                  "text": "%config!path%",
                   "code": [
                     {
                       "variable": "config"
-                    },
-                    {
-                      "property": "!file"
                     },
                     {
                       "property": "!path"
@@ -452,7 +449,7 @@
     },
     {
       "index": 9,
-      "text": "set %loc2% = %config!file!path%",
+      "text": "set %loc2% = %config!path%",
       "line": {
         "number": 16
       },
@@ -485,16 +482,13 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%config!file!path%",
+              "value": "%config!path%",
               "variable": [
                 {
-                  "text": "%config!file!path%",
+                  "text": "%config!path%",
                   "code": [
                     {
                       "variable": "config"
-                    },
-                    {
-                      "property": "!file"
                     },
                     {
                       "property": "!path"
@@ -585,5 +579,5 @@
   "visibility": "Public",
   "path": "/app/data/Narrow_ChainWideBangBothBranches.test.goal",
   "prPath": "/app/data/.build/narrow_chainwidebangbothbranches.test.pr",
-  "hash": "79c95b7d75ac5346653ba93727a1ab22960bb824612419409002a228b456305e"
+  "hash": "eddbb0942501600538a399c606c830757fb5ba5933bb5ab61afb4413d325c9d0"
 }

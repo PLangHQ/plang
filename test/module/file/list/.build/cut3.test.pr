@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "Cut 3 — write out %dir% is a listing, not a content dump.\nA directory with files. Serialising %dir% emits paths/names, NOT the files' contents.",
+  "comment": "Cut 3 — write out %dir% is a listing, not a content dump.\nA directory with files. Written into a text, %dir% emits paths/names, NOT the files' contents (\"%dir%\" alone\nwould be the directory itself, not a text).",
   "step": [
     {
       "index": 0,
       "text": "save 'cut3dir/a.txt' with content 'CUT3-SECRET-ALPHA'",
       "line": {
-        "number": 4
+        "number": 5
       },
       "code": [
         {
@@ -35,7 +35,7 @@
       "index": 1,
       "text": "save 'cut3dir/b.txt' with content 'CUT3-SECRET-BETA'",
       "line": {
-        "number": 5
+        "number": 6
       },
       "code": [
         {
@@ -64,7 +64,7 @@
       "index": 2,
       "text": "read file 'cut3dir', write to %dir%",
       "line": {
-        "number": 6
+        "number": 7
       },
       "code": [
         {
@@ -152,7 +152,7 @@
       "index": 3,
       "text": "assert %dir% is directory",
       "line": {
-        "number": 7
+        "number": 8
       },
       "code": [
         {
@@ -179,13 +179,19 @@
             }
           ]
         }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 3 uses assert.isTrue, which the decider was not sure of (0.92)"
+        }
       ]
     },
     {
       "index": 4,
-      "text": "set %listing% = \"%dir%\"",
+      "text": "set %listing% = \"listing: %dir%\"",
       "line": {
-        "number": 8
+        "number": 9
       },
       "code": [
         {
@@ -215,7 +221,7 @@
                 "name": "text",
                 "template": "plang"
               },
-              "value": "%dir%",
+              "value": "listing: %dir%",
               "variable": [
                 {
                   "text": "%dir%",
@@ -244,7 +250,7 @@
       "index": 5,
       "text": "assert %listing% contains \"a.txt\"",
       "line": {
-        "number": 9
+        "number": 10
       },
       "code": [
         {
@@ -284,7 +290,7 @@
       "index": 6,
       "text": "assert %listing% contains \"b.txt\"",
       "line": {
-        "number": 10
+        "number": 11
       },
       "code": [
         {
@@ -324,7 +330,7 @@
       "index": 7,
       "text": "assert %listing% not contains \"CUT3-SECRET-ALPHA\"",
       "line": {
-        "number": 11
+        "number": 12
       },
       "code": [
         {
@@ -364,7 +370,7 @@
       "index": 8,
       "text": "delete file 'cut3dir/a.txt'",
       "line": {
-        "number": 12
+        "number": 13
       },
       "code": [
         {
@@ -395,7 +401,7 @@
       "index": 9,
       "text": "delete file 'cut3dir/b.txt'",
       "line": {
-        "number": 13
+        "number": 14
       },
       "code": [
         {
@@ -427,5 +433,5 @@
   "visibility": "Public",
   "path": "/module/file/list/Cut3.test.goal",
   "prPath": "/module/file/list/.build/cut3.test.pr",
-  "hash": "2ea2a4001884ddf4435c3b4f9dd8fee259c3db58e5a28b75df5495ccdec81eb5"
+  "hash": "c34caf0adb52a54ad4d227fd9a2d7a5ee96d5bb6b63589b3d41199b0cac0aa86"
 }

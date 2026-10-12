@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "Integration cut 3 (composition over union): `read photo.png, write to %photo%` followed\nby an if on `%photo.Path.Exists%` against a real on-disk file evaluates true. Proves\nthe typed-property catalog lets the LLM navigate image → Path(path) → Exists, and that\nthe file-backed image carries a non-null Path facet.",
+  "comment": "Integration cut 3 (composition over union): `read photo.png, write to %photo%` followed\nby `%photo!path.exists%` against a real on-disk file is true. A read file's path is a fact about it (`!path`),\nand the path's own member answers whether it exists.",
   "step": [
     {
       "index": 0,
       "text": "file.read photo.png, write to %photo%",
       "line": {
-        "number": 6
+        "number": 5
       },
       "code": [
         {
@@ -86,9 +86,9 @@
     },
     {
       "index": 1,
-      "text": "set %exists% = %photo.Path.Exists%",
+      "text": "set %exists% = %photo!path.exists%",
       "line": {
-        "number": 7
+        "number": 6
       },
       "code": [
         {
@@ -118,19 +118,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%photo.Path.Exists%",
+              "value": "%photo!path.exists%",
               "variable": [
                 {
-                  "text": "%photo.Path.Exists%",
+                  "text": "%photo!path.exists%",
                   "code": [
                     {
                       "variable": "photo"
                     },
                     {
-                      "property": "Path"
+                      "property": "!path"
                     },
                     {
-                      "property": "Exists"
+                      "property": "exists"
                     }
                   ]
                 }
@@ -153,7 +153,7 @@
       "index": 2,
       "text": "assert %exists% is true",
       "line": {
-        "number": 8
+        "number": 7
       },
       "code": [
         {
@@ -187,5 +187,5 @@
   "visibility": "Public",
   "path": "/app/type/path/PhotoPathExistsNavigation.test.goal",
   "prPath": "/app/type/path/.build/photopathexistsnavigation.test.pr",
-  "hash": "a8e131a8c282e3084439ac04125e2cad6831119073e9130197b44dd367783143"
+  "hash": "6183277c34e616dbe60e568321700739ca65d817bc38b3d5ec3e30fbc5b28b5c"
 }

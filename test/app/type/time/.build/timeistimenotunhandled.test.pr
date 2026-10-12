@@ -59,7 +59,7 @@
     },
     {
       "index": 1,
-      "text": "assert %t.Type.Name% equals \"time\"",
+      "text": "assert %t!type.name% equals \"time\"",
       "line": {
         "number": 5
       },
@@ -81,19 +81,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%t.Type.Name%",
+              "value": "%t!type.name%",
               "variable": [
                 {
-                  "text": "%t.Type.Name%",
+                  "text": "%t!type.name%",
                   "code": [
                     {
                       "variable": "t"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -108,5 +108,5 @@
   "visibility": "Public",
   "path": "/app/type/time/TimeIsTimeNotUnhandled.test.goal",
   "prPath": "/app/type/time/.build/timeistimenotunhandled.test.pr",
-  "hash": "7b9f007a2775da4c15fbd6c26612c19b8d09a9d79fcbb33a08481db94153de09"
+  "hash": "ac9166a59af417aa2d4d8c44c1df33045e7585dfbeed31b277c6c6aa28adc6fe"
 }

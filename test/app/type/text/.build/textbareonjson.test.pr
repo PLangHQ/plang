@@ -154,7 +154,7 @@
     },
     {
       "index": 3,
-      "text": "assert %v.Type.Name% equals \"text\"",
+      "text": "assert %v!type.name% equals \"text\"",
       "line": {
         "number": 7
       },
@@ -176,19 +176,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%v.Type.Name%",
+              "value": "%v!type.name%",
               "variable": [
                 {
-                  "text": "%v.Type.Name%",
+                  "text": "%v!type.name%",
                   "code": [
                     {
                       "variable": "v"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -203,5 +203,5 @@
   "visibility": "Public",
   "path": "/app/type/text/TextBareOnJson.test.goal",
   "prPath": "/app/type/text/.build/textbareonjson.test.pr",
-  "hash": "6ae137764886c77dc17a02f7765071ad1c7c7d863412292169de97adb0dc1fd5"
+  "hash": "90abda4b7aaeb8b6fe115d9eaccd51b024e3a862c4af8fe9370d88645f97d564"
 }

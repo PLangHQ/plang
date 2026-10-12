@@ -1,6 +1,6 @@
 {
   "name": "TestDiscoverHandlesIcelandicGoalNames",
-  "comment": "Discovery must be encoding-safe for non-ASCII filenames and goal names.\nThe fixture directory contains a Próf.fixture.goal with goal name \"Próf\".\nAssert discover finds it and carries the Icelandic name on Goal.Name.",
+  "comment": "Discovery must be encoding-safe for non-ASCII filenames and goal names.\nThe fixture directory contains a Próf.fixture.goal with goal name \"Próf\".\nAssert discover finds it and carries the Icelandic name on its Name.",
   "step": [
     {
       "index": 0,
@@ -215,7 +215,7 @@
     },
     {
       "index": 3,
-      "text": "list.any %tests% where Goal.Name equals 'Próf', write to %hasProf%",
+      "text": "list.any %tests% where Name equals 'Próf', write to %hasProf%",
       "line": {
         "number": 8
       },
@@ -246,7 +246,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "Goal.Name"
+              "value": "Name"
             },
             {
               "name": "Operator",
@@ -319,11 +319,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 3 uses list.any, which the decider was not sure of (0.98)"
-        },
-        {
-          "key": "Unsure",
-          "message": "step 3 uses variable.set, which the decider was not sure of (0.89)"
+          "message": "step 3 uses list.any, which the decider was not sure of (0.99)"
         }
       ]
     },
@@ -365,5 +361,5 @@
   "visibility": "Public",
   "path": "/module/test/edgecase/TestDiscoverHandlesIcelandicGoalNames.test.goal",
   "prPath": "/module/test/edgecase/.build/testdiscoverhandlesicelandicgoalnames.test.pr",
-  "hash": "0d4e8bf5210e4d9327f8327c6be80f7b84f881319e3ce33352ea77edb32f40d2"
+  "hash": "88228dc3912dd6a04841a0d33e7a67b3afc530007ef89c94a75b56b12c840f44"
 }

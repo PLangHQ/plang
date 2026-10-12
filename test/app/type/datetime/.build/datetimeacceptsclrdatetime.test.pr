@@ -59,7 +59,7 @@
     },
     {
       "index": 1,
-      "text": "assert %dt.Type.Name% equals \"datetime\"",
+      "text": "assert %dt!type.name% equals \"datetime\"",
       "line": {
         "number": 4
       },
@@ -81,19 +81,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%dt.Type.Name%",
+              "value": "%dt!type.name%",
               "variable": [
                 {
-                  "text": "%dt.Type.Name%",
+                  "text": "%dt!type.name%",
                   "code": [
                     {
                       "variable": "dt"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Name"
+                      "property": "name"
                     }
                   ]
                 }
@@ -108,5 +108,5 @@
   "visibility": "Public",
   "path": "/app/type/datetime/DatetimeAcceptsClrDateTime.test.goal",
   "prPath": "/app/type/datetime/.build/datetimeacceptsclrdatetime.test.pr",
-  "hash": "fceaf51de62ddae735cd86ce050e507375fa2823debc506a1fee2ae578d986dc"
+  "hash": "d54322700a4efe312a3c69621731a5dd7439b59b59abe5066456b88689a576eb"
 }
