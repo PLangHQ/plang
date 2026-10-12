@@ -80,6 +80,13 @@ Today's snapshot serves only the first need, and its shape is wrong: the app kee
 - **Every test must fail without its change.**
 - The plan's plang says what is wanted; the coder rewrites each test in real plang that compiles, keeping what it proves.
 
+### Tests waiting for the resume design
+
+Three resume/ask tests moved here from `test/module/callback/` (they pre-bind `%!ask.answer%`, output.ask's resume sentinel — not a plang path the builder resolves; `output/ask.cs:73–82`). They are unbuilt and wait for this plan's resume design (stage 2's resume snapshot and stage 4's stateless ask/callback) to say how a resume is expressed in plang:
+- `module/callback/askvarsresumebindsvalue/` — a pre-bound answer short-circuits output.ask.
+- `module/callback/statefulaskmidgoalbindsvalue/` — a mid-goal ask binds its value on resume.
+- `module/callback/statelesscrossgoalresumes/` — a stateless cross-goal resume.
+
 ## What tests can't show (checks the coder runs and reports)
 
 - **Stage 1:** no `ISnapshot`, no hand-written section name, no snapshot list on the app (grep); the existing resume and snapshot tests pass.
