@@ -4,7 +4,7 @@ namespace PLang.Tests.App.Tester;
 
 /// <summary>
 /// test.tag — "- tag this test 'http', 'fast'". The tags are the goal's own build-birth fact: Build()
-/// stamps them on the goal being built (%goal%), the goal writes them into its .pr and reads them
+/// stamps them on the goal being built (the goal whose frame it is built in), the goal writes them into its .pr and reads them
 /// back. Running the step does nothing.
 /// </summary>
 public class TagActionTests
@@ -35,7 +35,7 @@ public class TagActionTests
     public async Task Build_StampsTheGoalBeingBuilt()
     {
         var goal = Goal();
-        await Ctx.Variable.Set("goal", goal);
+        await using var frame = Ctx.call.Push(goal);
 
         var result = await new Tag(Ctx) { Tags = Tags("http", "Fast") }.Build();
 
@@ -48,7 +48,7 @@ public class TagActionTests
     public async Task Build_SameTagTwice_StampedOnce()
     {
         var goal = Goal();
-        await Ctx.Variable.Set("goal", goal);
+        await using var frame = Ctx.call.Push(goal);
 
         await new Tag(Ctx) { Tags = Tags("http") }.Build();
         await new Tag(Ctx) { Tags = Tags("HTTP", "slow") }.Build();
@@ -60,7 +60,7 @@ public class TagActionTests
     public async Task Build_VariableTags_StampNothing()
     {
         var goal = Goal();
-        await Ctx.Variable.Set("goal", goal);
+        await using var frame = Ctx.call.Push(goal);
 
         var action = global::PLang.Tests.Shared.Make.Action(Ctx, "test", "tag", new (string, object?)[] { ("Tags", "%myTags%") });
         await Assert.That(await action.Build(Ctx)).IsNull();

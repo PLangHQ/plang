@@ -68,6 +68,7 @@ public class KeptMembersTests
         var set = await Set(ctx, "%d.note.lang%", new global::app.type.item.text.@this("is"));
 
         await set.IsFailure();
+        await Assert.That(set.Error!.Key).IsEqualTo("CannotSetChild");
         await Assert.That(set.Error!.Message).Contains("nowhere to keep a member");
     }
 

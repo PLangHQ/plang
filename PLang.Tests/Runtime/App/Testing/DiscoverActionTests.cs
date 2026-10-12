@@ -94,12 +94,12 @@ public class DiscoverActionTests
         // the hash is locked in, so the stored .pr's hash diverges from a fresh parse.
         var _ = goal.Hash;
 
-        // The build pass stamps the goal's build-birth facts (test.tag → goal.Tag), reading the goal
-        // being built from %goal%, as the builder's build.validate does.
+        // The build pass stamps the goal's build-birth facts (test.tag → goal.Tag), building each step inside
+        // the goal's frame, as the build's step check does.
         var buildContext = _app.actor.list.User.Context;
-        await buildContext.Variable.Set("goal", goal);
-        foreach (var step in goal.Step.Items())
-            await step.Code.Build(buildContext);
+        await using (buildContext.call.Push(goal))
+            foreach (var step in goal.Step.Items())
+                await step.Code.Build(buildContext);
 
         var prDir = System.IO.Path.Combine(absDir, ".build");
         System.IO.Directory.CreateDirectory(prDir);
