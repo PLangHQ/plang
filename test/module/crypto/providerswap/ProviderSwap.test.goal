@@ -1,6 +1,7 @@
-/ Test: set crypto provider via settings, then hash — verifies builder recognizes the setting
+/ Test: set the crypto provider, then hash — the step names a provider the app has (`default`, the built-in one),
+/ so the swap is real and the hash still works.
 Start
-- set the crypto provider as sha256-only
+- set the crypto provider as default
 - set %data% = "hello world"
 - hash %data%, write to %hash%
 - assert %hash% is not empty, "hash with swapped provider should still work"

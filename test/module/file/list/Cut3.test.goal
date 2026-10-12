@@ -1,11 +1,12 @@
 / Cut 3 — write out %dir% is a listing, not a content dump.
-/ A directory with files. Serialising %dir% emits paths/names, NOT the files' contents.
+/ A directory with files. Written into a text, %dir% emits paths/names, NOT the files' contents ("%dir%" alone
+/ would be the directory itself, not a text).
 Start
 - save 'cut3dir/a.txt' with content 'CUT3-SECRET-ALPHA'
 - save 'cut3dir/b.txt' with content 'CUT3-SECRET-BETA'
 - read file 'cut3dir', write to %dir%
 - assert %dir% is directory
-- set %listing% = "%dir%"
+- set %listing% = "listing: %dir%"
 - assert %listing% contains "a.txt"
 - assert %listing% contains "b.txt"
 - assert %listing% not contains "CUT3-SECRET-ALPHA"

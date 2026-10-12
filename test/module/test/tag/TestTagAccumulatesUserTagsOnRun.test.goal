@@ -1,14 +1,13 @@
-/ Calls test.tag (module test, action tag) twice. The handler returns the
-/ accumulated UserTags. Capture into %tags% and verify union semantics:
-/ three unique tags across both calls.
+/ A test's tags are its goal's own, stamped when it is built: two tag steps give it the union of theirs. The test
+/ reads its own tags as the runner does, by discovering itself.
 TestTagAccumulatesUserTagsOnRun
 - tag this test 'http'
-- tag this test 'fast', 'slow', write to %tags%
-- list.count %tags%, write to %count%
-- assert %count% equals 3
-- list.contains %tags% has 'http', write to %hasHttp%
+- tag this test 'fast', 'slow'
+- test.discover tests in '.', pattern='TestTagAccumulatesUserTagsOnRun.test.goal', write to %tests%
+- get first item from %tests%, write to %me%
+- list.contains %me.tags% has 'http', write to %hasHttp%
 - assert %hasHttp% is true
-- list.contains %tags% has 'fast', write to %hasFast%
+- list.contains %me.tags% has 'fast', write to %hasFast%
 - assert %hasFast% is true
-- list.contains %tags% has 'slow', write to %hasSlow%
+- list.contains %me.tags% has 'slow', write to %hasSlow%
 - assert %hasSlow% is true

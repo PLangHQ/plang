@@ -6,8 +6,8 @@ Start
 - save 'cut4/large.txt' with content 'cccccccccccccccccccccccccccccc'
 - list files in 'cut4', write to %files%
 - sort %files% by size
-- set %first% = "%files[0]%"
-- set %last% = "%files[2]%"
+- set %first% = "first: %files[0]%"
+- set %last% = "last: %files[2]%"
 - assert %first% contains "small.txt"
 - assert %last% contains "large.txt"
 - delete file 'cut4/small.txt'
