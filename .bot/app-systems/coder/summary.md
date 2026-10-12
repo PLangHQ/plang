@@ -2,6 +2,22 @@
 
 **Version:** v22 (all pushed; reviews by the architect, gate by gate)
 
+## 2026-10-12 (evening) — rounds 3–5, runtime fixes, OBP cleanups
+- Runtime fixes, each pinned + mutation-checked: a keep of the step's answer passes its anchor so an on.error after it
+  binds to the failing action (keep.Anchor, 8fe4ca9f2); assert.equals/notEquals show values, sensitive masked
+  (512f756b3); a type's kind reads as its name / null (707 stopgap, 80e4c9e4e — a known exception until kind becomes an
+  item next branch, 711); MediaTests' first-picture bound 30 s and overlapping (not identical) places (1cc02e738,
+  ede6e1b67).
+- OBP cleanups (714): one answer for an action's still-to-freeze defaults, `Unfrozen` (b982cbc94, e45cf212b); a step's
+  quoted literal decoded by plang's json kind, no swallowed exception (0eb097e00).
+- Triage: rounds 3–5 in `.bot/app-systems/coder/v23/`; stale tests rewritten (572 `!`, 226, report facts, masks `****`,
+  coverage out of the report, LlmContinue names %first%).
+- Carried to next branch: `{item, json}` holds structured json as clr(JsonElement) — a json file never narrows to a
+  dict, so Cut2/Narrow's `is dict` fails (with the trace); kind as an item (711); dotted where fields; the
+  item.Set NotSupported bridge; DoublePlusDecimal / kinded Type choices (builder).
+- My own test/.data/setting store (dirtied by direct debug runs) moved to scratchpad; debug test goals only under
+  --test or a temp root.
+
 ## 2026-10-12 (later) — plang test reds triaged by cause, two rounds (gate 176 clean)
 - Triage docs: `.bot/app-systems/coder/v23/plang-triage.md`, `plang-triage-round2.md`. Most reds were the builder's
   (goals reached only via recovery / foreach / test.discover never built; wrong saves dropping clauses or kinds).
