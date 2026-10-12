@@ -1,0 +1,376 @@
+{
+  "name": "Start",
+  "comment": "Test: sign with short TTL, wait, verify fails as expired",
+  "step": [
+    {
+      "index": 0,
+      "text": "archive identity 'testSigner', force, on error ignore",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "archive",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "testSigner"
+            },
+            {
+              "name": "Force",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 0 uses identity.archive, which the decider was not sure of (0.90)"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "create identity testSigner",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "create",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "testSigner"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %data% = { \"payload\": \"expiring\" }",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"payload":"expiring"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "sign %data%, expires in 50 ms",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "signing",
+          "name": "sign",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Expires",
+              "type": {
+                "name": "duration"
+              },
+              "value": "50ms"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "wait for 60 ms",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "timer",
+          "name": "sleep",
+          "property": [
+            {
+              "name": "Duration",
+              "type": {
+                "name": "duration"
+              },
+              "value": "60ms"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "verify %data% with contracts ['C0'], on error call HandleExpired",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "signing",
+          "name": "verify",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Contracts",
+              "type": {
+                "name": "list"
+              },
+              "value": ["C0"]
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "HandleExpired"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "assert %expired% is true, \"expired signature should fail verification\"",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%expired%",
+              "variable": [
+                {
+                  "text": "%expired%",
+                  "code": [
+                    {
+                      "variable": "expired"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "expired signature should fail verification"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "HandleExpired",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %expired% = true",
+          "line": {
+            "number": 12
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%expired%",
+                  "variable": [
+                    {
+                      "text": "%expired%",
+                      "code": [
+                        {
+                          "variable": "expired"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": true
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/test/module/signing/expired/SigningExpired.test.goal",
+      "prPath": "/test/module/signing/expired/.build/signingexpired.test.pr",
+      "hash": "9a968dd66fba5f554f539a8992ea1b9c8f370b39562670ad7d5d9c2856cfb901"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/test/module/signing/expired/SigningExpired.test.goal",
+  "prPath": "/test/module/signing/expired/.build/signingexpired.test.pr",
+  "hash": "ee3597b157ca30a3ea01cb10586d6e6bdd0632ef94182cb009d236055272489d"
+}
