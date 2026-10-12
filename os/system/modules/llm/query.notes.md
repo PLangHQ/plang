@@ -6,7 +6,7 @@
 
 EVERY named part of the step — `system:`/`system=`, `user:`/`user=`, `assistant:` — is its own message in the list, in the order given. Never drop the `system` part and never collapse the parts into a single string: `system: analyze sentiment, user: %comment%` is `[{"Role":"system","Content":"analyze sentiment"},{"Role":"user","Content":"%comment%"}]`, not `Message="%comment%"`. A step with no named part is one `user` message (`ask the llm "…"`).
 
-`schema=…` → `Schema` parameter. If JSON-shaped, set `"type": {"name": "json"}` and emit as a structured object (not a string containing JSON).
+`schema=…` → `Schema` parameter — however the step names it (`schema:`, `schema=`, or the near-spelling `scheme:`) and in a one-line or a multi-line `[llm]` block. If JSON-shaped, set `"type": {"name": "json"}` and emit as a structured object (not a string containing JSON). A schema the step gives is never dropped — dropping it leaves the answer plain text.
 
 Limit — caps on the call · say: `maxTokens: N`, `at most N tokens`, `max N tokens` · builder: `maxTokens: N` is `Limit={"token": N}` — ONLY the cap the step names, never the default 16000 and never the tool/retry defaults (no `"tool": 10`, no `"retry": 0`); left out entirely when the step names no token cap. (`temperature:` is its own Temperature parameter, not a Limit.)
 

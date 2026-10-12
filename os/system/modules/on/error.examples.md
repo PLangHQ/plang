@@ -9,6 +9,9 @@ Properties: `{"Recovery": [goal.call(Name="HandleContractError")]}`
 Step text: `write 'hi' to dbg, on error set %failed% = true`
 Properties: `{"Recovery": [variable.set(Name="%failed%", Value=true)]}` — the recovery is a `set`; it goes inside `Recovery`, never a top-level variable.set after the clause (that would run every time, not only on error).
 
+Step text: `if %a% == %b% then, on error call Caught`
+Properties: `{"Recovery": [goal.call(Name="Caught")]}` — the comparison is the step's action (condition.if); comparing values that can't be compared fails, and the on.error after the if catches it: `condition.if(Left=%a%, Operator="==", Right=%b%){ … }; on.error(Recovery=[goal.call(Name="Caught")])`. The on.error is never dropped because the action it guards is an if.
+
 Step text: `foreach %items%, call DoItem item=%item%, on error set %caught% = true`
 Properties: `{"Recovery": [variable.set(Name="%caught%", Value=true)]}` — the loop is the step's action (loop.foreach), the on.error comes after it, and the `set` nests in `Recovery`; an empty on.error with the set left beside it does nothing and is refused.
 

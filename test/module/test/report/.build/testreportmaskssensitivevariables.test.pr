@@ -1,12 +1,12 @@
 {
   "name": "TestReportMasksSensitiveVariables",
-  "comment": "Regression test for security finding #3: proves test.report routes assertion\nfailure content through DiagnosticOutput so [Sensitive] properties are masked.\nThe fixture fails with an Identity (carrying a Sensitive PrivateKey) in\nAssertionError.Actual + the Variables snapshot. We then check the written\nreport content has the key name preserved ('privateKey') but the value\nredacted ('******'), while the non-sensitive 'publicKey' still serializes.\nA regression that drops the DiagnosticOutput modifier — or falls back to\nvalue.ToString() — would fail the '******' assertion.",
+  "comment": "Proves test.report writes an assertion failure through the diagnostic face, so a\nsensitive value is masked. The fixture fails with an Identity (carrying a sensitive\nPrivateKey) as the failure's Actual and in the Variables snapshot. The written\nreport content keeps the key name ('privateKey') with its value masked ('****'),\nwhile the non-sensitive 'publicKey' still serializes. A regression that writes the\nvalue itself would fail the '****' assertion.",
   "step": [
     {
       "index": 0,
       "text": "test.discover tests in '_fixtures_sensitive', pattern='*.fixture.goal', recursive, write to %tests%",
       "line": {
-        "number": 10
+        "number": 8
       },
       "code": [
         {
@@ -95,7 +95,7 @@
       "index": 1,
       "text": "test.run tests %tests%, write to %results%",
       "line": {
-        "number": 11
+        "number": 9
       },
       "code": [
         {
@@ -177,7 +177,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 1 uses variable.set, which the decider was not sure of (0.86)"
+          "message": "step 1 uses variable.set, which the decider was not sure of (0.85)"
         }
       ]
     },
@@ -185,7 +185,7 @@
       "index": 2,
       "text": "test.report, write to %report%",
       "line": {
-        "number": 12
+        "number": 10
       },
       "code": [
         {
@@ -249,7 +249,7 @@
       "index": 3,
       "text": "assert %report!summaryFail% equals 1",
       "line": {
-        "number": 13
+        "number": 11
       },
       "code": [
         {
@@ -292,7 +292,7 @@
       "index": 4,
       "text": "assert %report!content% contains 'privateKey'",
       "line": {
-        "number": 14
+        "number": 12
       },
       "code": [
         {
@@ -333,9 +333,9 @@
     },
     {
       "index": 5,
-      "text": "assert %report!content% contains '******'",
+      "text": "assert %report!content% contains '****'",
       "line": {
-        "number": 15
+        "number": 13
       },
       "code": [
         {
@@ -368,7 +368,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "******"
+              "value": "****"
             }
           ]
         }
@@ -378,7 +378,7 @@
       "index": 6,
       "text": "assert %report!content% contains 'publicKey'",
       "line": {
-        "number": 16
+        "number": 14
       },
       "code": [
         {
@@ -422,5 +422,5 @@
   "visibility": "Public",
   "path": "/module/test/report/TestReportMasksSensitiveVariables.test.goal",
   "prPath": "/module/test/report/.build/testreportmaskssensitivevariables.test.pr",
-  "hash": "4ecdb8703b0ca0706db880739bda93f4ddb8e9b600b235127daa3eab9c757f9d"
+  "hash": "d2f0a116f787a8091c61503f777c6307e34f82216e7d9b87eec60b2ddfca6b08"
 }

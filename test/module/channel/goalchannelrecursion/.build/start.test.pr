@@ -60,6 +60,13 @@
                 "name": "text"
               },
               "value": "hello"
+            },
+            {
+              "name": "channel",
+              "type": {
+                "name": "text"
+              },
+              "value": "echo"
             }
           ]
         },

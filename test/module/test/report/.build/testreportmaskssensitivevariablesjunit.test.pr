@@ -177,7 +177,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 1 uses variable.set, which the decider was not sure of (0.88)"
+          "message": "step 1 uses variable.set, which the decider was not sure of (0.89)"
         }
       ]
     },
@@ -239,8 +239,8 @@
       ],
       "warning": [
         {
-          "key": "Unsure",
-          "message": "step 2 uses variable.set, which the decider was not sure of (0.56)"
+          "key": "Popular",
+          "message": "step 2 uses variable.set from the decider's popular-action choice (1.00): unsure"
         }
       ]
     },
@@ -305,12 +305,6 @@
               "value": false
             }
           ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Unsure",
-          "message": "step 3 uses variable.set, which the decider was not sure of (0.89)"
         }
       ]
     },
@@ -445,7 +439,7 @@
     },
     {
       "index": 7,
-      "text": "assert %report!content% contains '******'",
+      "text": "assert %report!content% contains '****'",
       "line": {
         "number": 14
       },
@@ -480,7 +474,7 @@
               "type": {
                 "name": "text"
               },
-              "value": "******"
+              "value": "****"
             }
           ]
         }
@@ -577,5 +571,5 @@
   "visibility": "Public",
   "path": "/module/test/report/TestReportMasksSensitiveVariablesJunit.test.goal",
   "prPath": "/module/test/report/.build/testreportmaskssensitivevariablesjunit.test.pr",
-  "hash": "0b44de2fdd7f4ef6197f436f180b098b5cceb1eea96637a05f50fdc8187163d9"
+  "hash": "24909ed90f05776c4b02fcded3bf00a866e08f19ab1c9bbae9c571185c38ff65"
 }

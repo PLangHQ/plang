@@ -20,6 +20,13 @@
                 "kind": "message"
               },
               "value": [{"Role":"system","Content":"You analyze sentiment. Respond in JSON only."},{"Role":"user","Content":"Analyze: I love sunny days"}]
+            },
+            {
+              "name": "Schema",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"sentiment":"string","score":"number"}
             }
           ],
           "default": [

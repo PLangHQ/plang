@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "Two queries — second uses continuePreviousConversation, verify LLM remembers context",
+  "comment": "Two queries — the second continues the first's conversation (it names the answer it continues), so the LLM\nremembers what was said",
   "step": [
     {
       "index": 0,
       "text": "[llm] system: 'You are a helpful assistant'\nuser: 'My favorite color is blue. Remember that.'\nwrite to %first%",
       "line": {
-        "number": 3
+        "number": 4
       },
       "code": [
         {
@@ -112,9 +112,9 @@
     },
     {
       "index": 1,
-      "text": "[llm] system: 'You are a helpful assistant'\nuser: 'What is my favorite color?'\ncontinuePreviousConversation: true\nwrite to %second%",
+      "text": "[llm] user: 'What is my favorite color?'\ncontinue the conversation in %first%\nwrite to %second%",
       "line": {
-        "number": 6
+        "number": 7
       },
       "code": [
         {
@@ -127,7 +127,7 @@
                 "name": "list",
                 "kind": "message"
               },
-              "value": [{"Role":"system","Content":"You are a helpful assistant"},{"Role":"user","Content":"What is my favorite color?"}]
+              "value": [{"Role":"user","Content":"What is my favorite color?"}]
             },
             {
               "name": "Conversation",
@@ -135,16 +135,13 @@
                 "name": "conversation",
                 "template": "plang"
               },
-              "value": "%!llm.query%",
+              "value": "%first%",
               "variable": [
                 {
-                  "text": "%!llm.query%",
+                  "text": "%first%",
                   "code": [
                     {
-                      "variable": "!llm"
-                    },
-                    {
-                      "property": "query"
+                      "variable": "first"
                     }
                   ]
                 }
@@ -303,5 +300,5 @@
   "visibility": "Public",
   "path": "/module/llm/LlmContinue.test.goal",
   "prPath": "/module/llm/.build/llmcontinue.test.pr",
-  "hash": "ec4fd724149a319d6c7346bb2c98d1a49debacdd6e31ab410715954d16565884"
+  "hash": "7db9e5424fc1905d40a6d1fd6f50db776f24e4cd44c6462c5859c8cc485aaecd"
 }

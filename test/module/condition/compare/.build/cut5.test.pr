@@ -14,6 +14,13 @@
           "name": "set",
           "property": [
             {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"a\": 1}"
+            },
+            {
               "name": "Name",
               "type": {
                 "name": "variable"
@@ -29,13 +36,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "{\"a\": 1}"
             },
             {
               "name": "Type",
@@ -69,6 +69,13 @@
           "name": "set",
           "property": [
             {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"a\": 1}"
+            },
+            {
               "name": "Name",
               "type": {
                 "name": "variable"
@@ -84,13 +91,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "{\"a\": 1}"
             },
             {
               "name": "Type",
@@ -124,6 +124,13 @@
           "name": "set",
           "property": [
             {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 5
+            },
+            {
               "name": "Name",
               "type": {
                 "name": "variable"
@@ -139,13 +146,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "number"
-              },
-              "value": 5
             }
           ],
           "default": [
@@ -172,6 +172,13 @@
           "name": "set",
           "property": [
             {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": ""
+            },
+            {
               "name": "Name",
               "type": {
                 "name": "variable"
@@ -187,13 +194,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": ""
             }
           ],
           "default": [
@@ -278,6 +278,13 @@
                   "name": "set",
                   "property": [
                     {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    },
+                    {
                       "name": "Name",
                       "type": {
                         "name": "variable"
@@ -293,13 +300,6 @@
                           ]
                         }
                       ]
-                    },
-                    {
-                      "name": "Value",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": true
                     }
                   ],
                   "default": [
@@ -370,6 +370,13 @@
           "name": "set",
           "property": [
             {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
               "name": "Name",
               "type": {
                 "name": "variable"
@@ -385,13 +392,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
             }
           ],
           "default": [
@@ -476,6 +476,13 @@
                   "name": "set",
                   "property": [
                     {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    },
+                    {
                       "name": "Name",
                       "type": {
                         "name": "variable"
@@ -491,13 +498,6 @@
                           ]
                         }
                       ]
-                    },
-                    {
-                      "name": "Value",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": true
                     }
                   ],
                   "default": [
@@ -561,6 +561,13 @@
           "name": "set",
           "property": [
             {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": []
+            },
+            {
               "name": "Name",
               "type": {
                 "name": "variable"
@@ -576,13 +583,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "list"
-              },
-              "value": []
             }
           ],
           "default": [
@@ -668,6 +668,13 @@
           "name": "set",
           "property": [
             {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
               "name": "Name",
               "type": {
                 "name": "variable"
@@ -683,13 +690,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
             }
           ],
           "default": [
@@ -774,6 +774,13 @@
                   "name": "set",
                   "property": [
                     {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    },
+                    {
                       "name": "Name",
                       "type": {
                         "name": "variable"
@@ -789,13 +796,6 @@
                           ]
                         }
                       ]
-                    },
-                    {
-                      "name": "Value",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": true
                     }
                   ],
                   "default": [
