@@ -1,0 +1,112 @@
+{
+  "name": "TimeIsTimeNotUnhandled",
+  "comment": "A value cast `as time` lands as `time`, a first-class born-native wrapper (not\nunhandled, not folded into datetime).",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %t% = \"14:30:00\" as time",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%t%",
+              "variable": [
+                {
+                  "text": "%t%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "14:30:00"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "time"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %t.Type.Name% equals \"time\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "time"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%t.Type.Name%",
+              "variable": [
+                {
+                  "text": "%t.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/time/TimeIsTimeNotUnhandled.test.goal",
+  "prPath": "/app/type/time/.build/timeistimenotunhandled.test.pr",
+  "hash": "7b9f007a2775da4c15fbd6c26612c19b8d09a9d79fcbb33a08481db94153de09"
+}

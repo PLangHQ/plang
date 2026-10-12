@@ -1,0 +1,207 @@
+{
+  "name": "TextBareOnJson",
+  "comment": "A text rides the json wire bare — `{\"v\": \"hi\"}` parses so %d.v% navigates to the\ntext.@this \"hi\", no envelope around the scalar.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %d% = {\"v\": \"hi\"}",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%d%",
+              "variable": [
+                {
+                  "text": "%d%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"v":"hi"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %v% = %d.v%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%v%",
+              "variable": [
+                {
+                  "text": "%v%",
+                  "code": [
+                    {
+                      "variable": "v"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%d.v%",
+              "variable": [
+                {
+                  "text": "%d.v%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    },
+                    {
+                      "property": "v"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %v% equals \"hi\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "hi"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%v%",
+              "variable": [
+                {
+                  "text": "%v%",
+                  "code": [
+                    {
+                      "variable": "v"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %v.Type.Name% equals \"text\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%v.Type.Name%",
+              "variable": [
+                {
+                  "text": "%v.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "v"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/text/TextBareOnJson.test.goal",
+  "prPath": "/app/type/text/.build/textbareonjson.test.pr",
+  "hash": "6ae137764886c77dc17a02f7765071ad1c7c7d863412292169de97adb0dc1fd5"
+}

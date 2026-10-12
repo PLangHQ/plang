@@ -1,0 +1,405 @@
+{
+  "name": "ListIsItemSortsAsBefore",
+  "comment": "A list is `: item` AND still sorts. list owns IOrderableValue (item does not),\nso the inheritance is no-op for ordering — the sort produces the same shape\ncollections-are-data shipped.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %nums% = [3, 1, 2]",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%nums%",
+              "variable": [
+                {
+                  "text": "%nums%",
+                  "code": [
+                    {
+                      "variable": "nums"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [3,1,2]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "sort %nums%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "query",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": "%nums%",
+              "variable": [
+                {
+                  "text": "%nums%",
+                  "code": [
+                    {
+                      "variable": "nums"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Query",
+              "type": {
+                "name": "query",
+                "template": "plang"
+              },
+              "value": {"order":{"field":"%nums%","desc":false}},
+              "variable": [
+                {
+                  "text": "%nums%",
+                  "code": [
+                    {
+                      "variable": "nums"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "execution",
+              "type": {
+                "name": "choice",
+                "kind": "execution"
+              },
+              "value": "sql"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%nums%",
+              "variable": [
+                {
+                  "text": "%nums%",
+                  "code": [
+                    {
+                      "variable": "nums"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "get first item from %nums%, write to %first%",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "first",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%nums%",
+              "variable": [
+                {
+                  "text": "%nums%",
+                  "code": [
+                    {
+                      "variable": "nums"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%first%",
+              "variable": [
+                {
+                  "text": "%first%",
+                  "code": [
+                    {
+                      "variable": "first"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %first% equals 1",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%first%",
+              "variable": [
+                {
+                  "text": "%first%",
+                  "code": [
+                    {
+                      "variable": "first"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "get last item from %nums%, write to %last%",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "last",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%nums%",
+              "variable": [
+                {
+                  "text": "%nums%",
+                  "code": [
+                    {
+                      "variable": "nums"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%last%",
+              "variable": [
+                {
+                  "text": "%last%",
+                  "code": [
+                    {
+                      "variable": "last"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %last% equals 3",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%last%",
+              "variable": [
+                {
+                  "text": "%last%",
+                  "code": [
+                    {
+                      "variable": "last"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/list/ListIsItemSortsAsBefore.test.goal",
+  "prPath": "/app/type/list/.build/listisitemsortsasbefore.test.pr",
+  "hash": "7e782eba57da2272ed1fa124742b375f7cf13cdd0667bd659f2e04fcddb9f9e3"
+}

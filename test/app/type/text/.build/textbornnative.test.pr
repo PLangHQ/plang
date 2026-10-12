@@ -1,0 +1,145 @@
+{
+  "name": "TextBornNative",
+  "comment": "`set %s% = \"Hello\"` lands %s% with type \"text\" — the value is text.@this, not a raw\nstring mid-flight. The construction seam emits the wrapper at birth.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %s% = \"Hello\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%s%",
+              "variable": [
+                {
+                  "text": "%s%",
+                  "code": [
+                    {
+                      "variable": "s"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "Hello"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %s.Type.Name% equals \"text\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%s.Type.Name%",
+              "variable": [
+                {
+                  "text": "%s.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "s"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %s% equals \"Hello\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "Hello"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%s%",
+              "variable": [
+                {
+                  "text": "%s%",
+                  "code": [
+                    {
+                      "variable": "s"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/text/TextBornNative.test.goal",
+  "prPath": "/app/type/text/.build/textbornnative.test.pr",
+  "hash": "2093789fa3bea0595566277e9666b4f1c36ba1a83a1a589b76d8da0321825dfc"
+}

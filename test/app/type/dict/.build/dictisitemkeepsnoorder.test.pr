@@ -1,0 +1,279 @@
+{
+  "name": "DictIsItemKeepsNoOrder",
+  "comment": "A dict is `: item` AND still rejects ordering — `item` carries no IOrderableValue\nto leak in. sort over a list-of-dict is unorderable; PLang returns that as an error\n(not a thrown exception), so the on-error handler catches it.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %people% = [{\"name\":\"b\"}, {\"name\":\"a\"}]",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%people%",
+              "variable": [
+                {
+                  "text": "%people%",
+                  "code": [
+                    {
+                      "variable": "people"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"b"},{"name":"a"}]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "sort %people%, on error call Caught",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "query",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": "%people%",
+              "variable": [
+                {
+                  "text": "%people%",
+                  "code": [
+                    {
+                      "variable": "people"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Query",
+              "type": {
+                "name": "query"
+              },
+              "value": {"order":"name"}
+            }
+          ],
+          "default": [
+            {
+              "name": "execution",
+              "type": {
+                "name": "choice",
+                "kind": "execution"
+              },
+              "value": "sql"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%people%",
+              "variable": [
+                {
+                  "text": "%people%",
+                  "code": [
+                    {
+                      "variable": "people"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "Caught"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %caught% is true",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%caught%",
+              "variable": [
+                {
+                  "text": "%caught%",
+                  "code": [
+                    {
+                      "variable": "caught"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Caught",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %caught% = true",
+          "line": {
+            "number": 10
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%caught%",
+                  "variable": [
+                    {
+                      "text": "%caught%",
+                      "code": [
+                        {
+                          "variable": "caught"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": true
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/app/type/dict/DictIsItemKeepsNoOrder.test.goal",
+      "prPath": "/app/type/dict/.build/dictisitemkeepsnoorder.test.pr",
+      "hash": "042ba1a10796aa9ad45f537565f2353c3bf5b4b243fc21cec6223d4d6c6c21cd"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/app/type/dict/DictIsItemKeepsNoOrder.test.goal",
+  "prPath": "/app/type/dict/.build/dictisitemkeepsnoorder.test.pr",
+  "hash": "b4d8eccb68fd966f133c911bff2a098b174e7b56ab76a5f006b5f99a3ce94f9d"
+}

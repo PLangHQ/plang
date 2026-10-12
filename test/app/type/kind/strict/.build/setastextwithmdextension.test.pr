@@ -1,0 +1,151 @@
+{
+  "name": "Start",
+  "comment": "A bare `as text` on a literal does NOT read the .md extension as a kind:\nthe value is the string \"readme.md\", not a markdown document. Kind stays\nnull — it comes only from an explicit `as text/<kind>` or a producing action.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %doc% = \"readme.md\" as text",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%doc%",
+              "variable": [
+                {
+                  "text": "%doc%",
+                  "code": [
+                    {
+                      "variable": "doc"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "readme.md"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %doc.Type.Name% equals \"text\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%doc.Type.Name%",
+              "variable": [
+                {
+                  "text": "%doc.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "doc"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %doc.Type.Kind% is null",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%doc.Type.Kind%",
+              "variable": [
+                {
+                  "text": "%doc.Type.Kind%",
+                  "code": [
+                    {
+                      "variable": "doc"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Kind"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/kind/strict/SetAsTextWithMdExtension.test.goal",
+  "prPath": "/app/type/kind/strict/.build/setastextwithmdextension.test.pr",
+  "hash": "4fd13e5055631d764755358c8c88e582939cd7b6d3813d089698abc35df8bee9"
+}

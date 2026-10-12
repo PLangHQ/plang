@@ -1,0 +1,158 @@
+{
+  "name": "Start",
+  "comment": "Strict + literal + matching bytes → builds clean, runs clean.\nRequires fixture real.gif (1x1 transparent GIF, committed alongside).",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %img% = \"real.gif\" as image/gif strict",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%img%",
+              "variable": [
+                {
+                  "text": "%img%",
+                  "code": [
+                    {
+                      "variable": "img"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "real.gif"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "image"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %img.Type.Name% equals \"image\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "image"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%img.Type.Name%",
+              "variable": [
+                {
+                  "text": "%img.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "img"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %img.Type.Kind% equals \"gif\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "gif"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%img.Type.Kind%",
+              "variable": [
+                {
+                  "text": "%img.Type.Kind%",
+                  "code": [
+                    {
+                      "variable": "img"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Kind"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/kind/strict/SetAsImageGifStrictMatching.test.goal",
+  "prPath": "/app/type/kind/strict/.build/setasimagegifstrictmatching.test.pr",
+  "hash": "21ae6aade7ace1533a4f540ead8ae0b4d7bd6143921c2b278b016aa96365d6a8"
+}

@@ -1,0 +1,356 @@
+{
+  "name": "DurationPartsAndCompare",
+  "comment": "Durations expose component parts and are orderable by total length — a 90s duration is\nMinutes=1 Seconds=30 and is longer than a 30s duration.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %long% = \"PT90S\" as duration",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%long%",
+              "variable": [
+                {
+                  "text": "%long%",
+                  "code": [
+                    {
+                      "variable": "long"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "PT90S"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "duration"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %short% = \"PT30S\" as duration",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%short%",
+              "variable": [
+                {
+                  "text": "%short%",
+                  "code": [
+                    {
+                      "variable": "short"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "PT30S"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "duration"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %long.Minutes% equals 1",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%long.Minutes%",
+              "variable": [
+                {
+                  "text": "%long.Minutes%",
+                  "code": [
+                    {
+                      "variable": "long"
+                    },
+                    {
+                      "property": "Minutes"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %long.Seconds% equals 30",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 30
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%long.Seconds%",
+              "variable": [
+                {
+                  "text": "%long.Seconds%",
+                  "code": [
+                    {
+                      "variable": "long"
+                    },
+                    {
+                      "property": "Seconds"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "if %long.TotalSeconds% is bigger than %short.TotalSeconds%",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%long.TotalSeconds%",
+              "variable": [
+                {
+                  "text": "%long.TotalSeconds%",
+                  "code": [
+                    {
+                      "variable": "long"
+                    },
+                    {
+                      "property": "TotalSeconds"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": ">"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%short.TotalSeconds%",
+              "variable": [
+                {
+                  "text": "%short.TotalSeconds%",
+                  "code": [
+                    {
+                      "variable": "short"
+                    },
+                    {
+                      "property": "TotalSeconds"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "child": [
+            {
+              "index": 5,
+              "text": "set %longerWins% = true",
+              "line": {
+                "number": 9,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%longerWins%",
+                      "variable": [
+                        {
+                          "text": "%longerWins%",
+                          "code": [
+                            {
+                              "variable": "longerWins"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "assert %longerWins% is true",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%longerWins%",
+              "variable": [
+                {
+                  "text": "%longerWins%",
+                  "code": [
+                    {
+                      "variable": "longerWins"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/duration/DurationPartsAndCompare.test.goal",
+  "prPath": "/app/type/duration/.build/durationpartsandcompare.test.pr",
+  "hash": "628f7408f14e1f9643c0197b041df7b2d9019630675544488f32f26b07255064"
+}

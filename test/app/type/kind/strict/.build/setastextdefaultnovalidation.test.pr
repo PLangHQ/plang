@@ -1,0 +1,151 @@
+{
+  "name": "Start",
+  "comment": "`as text` without strict → builds clean; text.Build(\"a\") returns null\n(no extension); kind stays null; no validation runs.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %x% = \"a\" as text",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "a"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %x.Type.Name% equals \"text\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x.Type.Name%",
+              "variable": [
+                {
+                  "text": "%x.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %x.Type.Kind% is null",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x.Type.Kind%",
+              "variable": [
+                {
+                  "text": "%x.Type.Kind%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Kind"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/kind/strict/SetAsTextDefaultNoValidation.test.goal",
+  "prPath": "/app/type/kind/strict/.build/setastextdefaultnovalidation.test.pr",
+  "hash": "7e5d09d4474eab4453e237442b29f7df3292c7fb9a4977f31ffe74b6a2277d04"
+}

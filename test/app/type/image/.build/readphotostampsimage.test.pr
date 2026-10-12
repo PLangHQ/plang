@@ -1,0 +1,169 @@
+{
+  "name": "Start",
+  "comment": "file.read of photo.png produces an image value (build-time kind stamping for\nimage+png is verified end-to-end in C# FileReadBuildTests.FileReadRun_ImageMime).",
+  "step": [
+    {
+      "index": 0,
+      "text": "file.read photo.png, write to %photo%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "photo.png"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%photo%",
+              "variable": [
+                {
+                  "text": "%photo%",
+                  "code": [
+                    {
+                      "variable": "photo"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "png"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %photo% is not null",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%photo%",
+              "variable": [
+                {
+                  "text": "%photo%",
+                  "code": [
+                    {
+                      "variable": "photo"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %photo.Mime% equals \"image/png\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "image/png"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%photo.Mime%",
+              "variable": [
+                {
+                  "text": "%photo.Mime%",
+                  "code": [
+                    {
+                      "variable": "photo"
+                    },
+                    {
+                      "property": "Mime"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/image/ReadPhotoStampsImage.test.goal",
+  "prPath": "/app/type/image/.build/readphotostampsimage.test.pr",
+  "hash": "8926336072eb355534894208272981114edc57c277429d75a5544b2cd16a179c"
+}

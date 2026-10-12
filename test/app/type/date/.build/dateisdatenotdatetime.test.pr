@@ -1,0 +1,112 @@
+{
+  "name": "DateIsDateNotDatetime",
+  "comment": "A value cast `as date` lands as `date`, NOT `datetime` — the two are distinct\nborn-native wrappers. Type.Name is the observable proof at the PLang surface.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %d% = \"2026-01-01\" as date",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%d%",
+              "variable": [
+                {
+                  "text": "%d%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "2026-01-01"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "date"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %d.Type.Name% equals \"date\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "date"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%d.Type.Name%",
+              "variable": [
+                {
+                  "text": "%d.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/date/DateIsDateNotDatetime.test.goal",
+  "prPath": "/app/type/date/.build/dateisdatenotdatetime.test.pr",
+  "hash": "adb6a6cc521d65bbcbbd344e68dc2f4ce62ba5f0a594017d78fc76bd7ce3b4dc"
+}

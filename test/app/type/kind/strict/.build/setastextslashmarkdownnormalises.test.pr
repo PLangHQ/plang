@@ -1,0 +1,158 @@
+{
+  "name": "Start",
+  "comment": "`as text/markdown` exercises the slash-tolerant type factory + the kind\ncanonicaliser: \"markdown\" is the MIME subtype; canonical kind is \"md\".",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %x% = \"a\" as text/markdown",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "a"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %x.Type.Name% equals \"text\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "text"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x.Type.Name%",
+              "variable": [
+                {
+                  "text": "%x.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %x.Type.Kind% equals \"md\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "md"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x.Type.Kind%",
+              "variable": [
+                {
+                  "text": "%x.Type.Kind%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Kind"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/kind/strict/SetAsTextSlashMarkdownNormalises.test.goal",
+  "prPath": "/app/type/kind/strict/.build/setastextslashmarkdownnormalises.test.pr",
+  "hash": "e7957eb92e54f9fc9b45929b729166e69cdcbf2e249f8144b10fafdf86523803"
+}

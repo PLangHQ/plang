@@ -1,0 +1,155 @@
+{
+  "name": "DatetimeBornNative",
+  "comment": "A datetime cast lands the value as datetime.@this (born-native), backed by DateTimeOffset —\nnot a Data-wrapping-a-Data. Type is \"datetime\" and its parts read off the wrapper.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %dt% = \"2026-01-01T12:00:00Z\" as datetime",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%dt%",
+              "variable": [
+                {
+                  "text": "%dt%",
+                  "code": [
+                    {
+                      "variable": "dt"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "2026-01-01T12:00:00Z"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "datetime"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %dt.Type.Name% equals \"datetime\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "datetime"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%dt.Type.Name%",
+              "variable": [
+                {
+                  "text": "%dt.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "dt"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %dt.Year% equals 2026",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 2026
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%dt.Year%",
+              "variable": [
+                {
+                  "text": "%dt.Year%",
+                  "code": [
+                    {
+                      "variable": "dt"
+                    },
+                    {
+                      "property": "Year"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/datetime/DatetimeBornNative.test.goal",
+  "prPath": "/app/type/datetime/.build/datetimebornnative.test.pr",
+  "hash": "48b1fa429bb723bca7b74210174c1fe4f1035cf1d5cfd2fd059a32b79dffc662"
+}

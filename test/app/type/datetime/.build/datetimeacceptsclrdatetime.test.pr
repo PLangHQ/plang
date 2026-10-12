@@ -1,0 +1,112 @@
+{
+  "name": "DatetimeAcceptsClrDateTime",
+  "comment": "datetime accepts a tz-less CLR DateTime on construction — it is stored as an offset.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %dt% = \"2026-01-01T12:00:00\" as datetime",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%dt%",
+              "variable": [
+                {
+                  "text": "%dt%",
+                  "code": [
+                    {
+                      "variable": "dt"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "2026-01-01T12:00:00"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "datetime"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %dt.Type.Name% equals \"datetime\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "datetime"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%dt.Type.Name%",
+              "variable": [
+                {
+                  "text": "%dt.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "dt"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/datetime/DatetimeAcceptsClrDateTime.test.goal",
+  "prPath": "/app/type/datetime/.build/datetimeacceptsclrdatetime.test.pr",
+  "hash": "fceaf51de62ddae735cd86ce050e507375fa2823debc506a1fee2ae578d986dc"
+}

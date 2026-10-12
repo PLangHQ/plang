@@ -1,0 +1,155 @@
+{
+  "name": "DateReturnsDateOnly",
+  "comment": "date is backed by DateOnly — its Y/M/D parts read off the wrapper, no time component.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %d% = \"2026-01-01\" as date",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%d%",
+              "variable": [
+                {
+                  "text": "%d%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "2026-01-01"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "date"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %d.Type.Name% equals \"date\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "date"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%d.Type.Name%",
+              "variable": [
+                {
+                  "text": "%d.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %d.Year% equals 2026",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 2026
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%d.Year%",
+              "variable": [
+                {
+                  "text": "%d.Year%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    },
+                    {
+                      "property": "Year"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/date/DateReturnsDateOnly.test.goal",
+  "prPath": "/app/type/date/.build/datereturnsdateonly.test.pr",
+  "hash": "a2ec2808d9e1cf24680f44aff5758d4dcb8eaa25b0903b3bd79bce204ece32c2"
+}

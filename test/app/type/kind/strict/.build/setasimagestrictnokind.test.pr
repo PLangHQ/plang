@@ -1,0 +1,197 @@
+{
+  "name": "Start",
+  "comment": "Strict without a kind → no byte probe runs (nothing to check against);\nbuilds clean. Soft-degradation contract: strict implies \"match what was\nasked\", and nothing was asked for kind.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %x% = \"irrelevant\" as image strict",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "irrelevant"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "image"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %x.Type.Name% equals \"image\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "image"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x.Type.Name%",
+              "variable": [
+                {
+                  "text": "%x.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %x.Type.Kind% is null",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x.Type.Kind%",
+              "variable": [
+                {
+                  "text": "%x.Type.Kind%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Kind"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %x.Type.Strict% equals true",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x.Type.Strict%",
+              "variable": [
+                {
+                  "text": "%x.Type.Strict%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Strict"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/kind/strict/SetAsImageStrictNoKind.test.goal",
+  "prPath": "/app/type/kind/strict/.build/setasimagestrictnokind.test.pr",
+  "hash": "29fafc25e0fcc8847609546de687c4f321b8ca11ea9cd991ffefe6d084a6de5c"
+}

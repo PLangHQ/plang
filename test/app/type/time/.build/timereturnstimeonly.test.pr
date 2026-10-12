@@ -1,0 +1,155 @@
+{
+  "name": "TimeReturnsTimeOnly",
+  "comment": "time is backed by TimeOnly — its H/M/S parts read off the wrapper, no date component.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %t% = \"14:30:00\" as time",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%t%",
+              "variable": [
+                {
+                  "text": "%t%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "14:30:00"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "time"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %t.Type.Name% equals \"time\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "time"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%t.Type.Name%",
+              "variable": [
+                {
+                  "text": "%t.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %t.Hour% equals 14",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 14
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%t.Hour%",
+              "variable": [
+                {
+                  "text": "%t.Hour%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    },
+                    {
+                      "property": "Hour"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/time/TimeReturnsTimeOnly.test.goal",
+  "prPath": "/app/type/time/.build/timereturnstimeonly.test.pr",
+  "hash": "f1e98a9decf0a675a08b56ac8916190db036b40d8709938fc018f59fbb436c37"
+}

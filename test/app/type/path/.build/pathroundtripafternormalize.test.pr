@@ -1,0 +1,165 @@
+{
+  "name": "Start",
+  "comment": "Sanity smoke for the path round-trip surface — confirms the developer-facing\n\"the path I wrote is the path I read\" expectation holds.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %pathString% = \"/example/subdir/file.txt\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%pathString%",
+              "variable": [
+                {
+                  "text": "%pathString%",
+                  "code": [
+                    {
+                      "variable": "pathString"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "/example/subdir/file.txt"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %readBack% = %pathString%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%readBack%",
+              "variable": [
+                {
+                  "text": "%readBack%",
+                  "code": [
+                    {
+                      "variable": "readBack"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%pathString%",
+              "variable": [
+                {
+                  "text": "%pathString%",
+                  "code": [
+                    {
+                      "variable": "pathString"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %readBack% equals \"/example/subdir/file.txt\", \"path string round-trip\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "/example/subdir/file.txt"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%readBack%",
+              "variable": [
+                {
+                  "text": "%readBack%",
+                  "code": [
+                    {
+                      "variable": "readBack"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "path string round-trip"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/path/PathRoundTripAfterNormalize.test.goal",
+  "prPath": "/app/type/path/.build/pathroundtripafternormalize.test.pr",
+  "hash": "c145c802151c39fc97b969d2f11563eeb35d0e15479bc034dff3fab61a670f88"
+}

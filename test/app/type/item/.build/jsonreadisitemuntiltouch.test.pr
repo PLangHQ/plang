@@ -1,0 +1,161 @@
+{
+  "name": "JsonReadIsItemUntilTouch",
+  "comment": "`(object,json)` → `(item,json)`: a json value narrows to dict so `%x.field%`\nnavigates it at runtime. There is no enduring PLang `object` type — item is both\nthe apex and the un-narrowed type. (The `is item`/`is dict` apex contract is\npinned in C# ItemApexTests; this goal proves the end-to-end narrow + navigation.)",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %x% = {\"field\": 42}",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"field":42}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %field% = %x.field%",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%field%",
+              "variable": [
+                {
+                  "text": "%field%",
+                  "code": [
+                    {
+                      "variable": "field"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x.field%",
+              "variable": [
+                {
+                  "text": "%x.field%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "field"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %field% equals 42",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 42
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%field%",
+              "variable": [
+                {
+                  "text": "%field%",
+                  "code": [
+                    {
+                      "variable": "field"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/item/JsonReadIsItemUntilTouch.test.goal",
+  "prPath": "/app/type/item/.build/jsonreadisitemuntiltouch.test.pr",
+  "hash": "07866e970125559ef763ffbd094552106f8d00805cc81b31041aed1bc23475ef"
+}

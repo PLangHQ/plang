@@ -1,0 +1,173 @@
+{
+  "name": "TextEmptyIsFalsy",
+  "comment": "An empty text is falsy — assert.isFalse reads the wrapper's truthiness (an empty text\nis falsy, matching empty dict/list/null); a non-empty text is truthy.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %s% = \"\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%s%",
+              "variable": [
+                {
+                  "text": "%s%",
+                  "code": [
+                    {
+                      "variable": "s"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": ""
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %s% is false",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isFalse",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%s%",
+              "variable": [
+                {
+                  "text": "%s%",
+                  "code": [
+                    {
+                      "variable": "s"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %t% = \"x\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%t%",
+              "variable": [
+                {
+                  "text": "%t%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "x"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %t% is true",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%t%",
+              "variable": [
+                {
+                  "text": "%t%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/text/TextEmptyIsFalsy.test.goal",
+  "prPath": "/app/type/text/.build/textemptyisfalsy.test.pr",
+  "hash": "37a9748ce510a62915ed026875df68981d791d8b7666f38fc3ab946d0db53f4c"
+}

@@ -1,0 +1,268 @@
+{
+  "name": "Start",
+  "comment": "Integration cut 3 (negative): same shape as PhotoPathExistsNavigation but the source\nfile is removed before the if. `%photo.Path.Exists%` evaluates false (HEAD-style stat\nvia path.IBooleanResolvable). No crash.",
+  "step": [
+    {
+      "index": 0,
+      "text": "file.copy from=photo.png to=tmp-photo-missing.png",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "copy",
+          "property": [
+            {
+              "name": "Source",
+              "type": {
+                "name": "path"
+              },
+              "value": "photo.png"
+            },
+            {
+              "name": "Destination",
+              "type": {
+                "name": "path"
+              },
+              "value": "tmp-photo-missing.png"
+            }
+          ],
+          "default": [
+            {
+              "name": "overwrite",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "subfolder",
+              "type": {
+                "name": "choice",
+                "kind": "subfolder"
+              },
+              "value": "include"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "file.read tmp-photo-missing.png, write to %photo%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "tmp-photo-missing.png"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%photo%",
+              "variable": [
+                {
+                  "text": "%photo%",
+                  "code": [
+                    {
+                      "variable": "photo"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "png"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "file.delete path=tmp-photo-missing.png",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "tmp-photo-missing.png"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "set %exists% = %photo.Path.Exists%",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%exists%",
+              "variable": [
+                {
+                  "text": "%exists%",
+                  "code": [
+                    {
+                      "variable": "exists"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%photo.Path.Exists%",
+              "variable": [
+                {
+                  "text": "%photo.Path.Exists%",
+                  "code": [
+                    {
+                      "variable": "photo"
+                    },
+                    {
+                      "property": "Path"
+                    },
+                    {
+                      "property": "Exists"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %exists% is false",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isFalse",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%exists%",
+              "variable": [
+                {
+                  "text": "%exists%",
+                  "code": [
+                    {
+                      "variable": "exists"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/path/PhotoPathExistsMissingFile.test.goal",
+  "prPath": "/app/type/path/.build/photopathexistsmissingfile.test.pr",
+  "hash": "bc21815def5f851aa200fe00598d2e906379434626780b69eec5d533fecc1b59"
+}

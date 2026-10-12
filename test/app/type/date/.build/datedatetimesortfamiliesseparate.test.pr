@@ -1,0 +1,213 @@
+{
+  "name": "DateDatetimeSortFamiliesSeparate",
+  "comment": "date and datetime are distinct families — a `date` value is NOT classed `datetime`, and a\n`datetime` value is NOT classed `date`. Their orderings live on their own wrappers.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %d% = \"2026-06-01\" as date",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%d%",
+              "variable": [
+                {
+                  "text": "%d%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "2026-06-01"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "date"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %d.Type.Name% equals \"date\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "date"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%d.Type.Name%",
+              "variable": [
+                {
+                  "text": "%d.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %dt% = \"2026-06-01T00:00:00Z\" as datetime",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%dt%",
+              "variable": [
+                {
+                  "text": "%dt%",
+                  "code": [
+                    {
+                      "variable": "dt"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "2026-06-01T00:00:00Z"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "datetime"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %dt.Type.Name% equals \"datetime\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "datetime"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%dt.Type.Name%",
+              "variable": [
+                {
+                  "text": "%dt.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "dt"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/date/DateDatetimeSortFamiliesSeparate.test.goal",
+  "prPath": "/app/type/date/.build/datedatetimesortfamiliesseparate.test.pr",
+  "hash": "8b587d67429dd2ea3bbd1baac4106672de2353f54b28efaa2439d1b30f62c1da"
+}

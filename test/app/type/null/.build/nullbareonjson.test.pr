@@ -1,0 +1,200 @@
+{
+  "name": "NullBareOnJson",
+  "comment": "A JSON null navigates out as the born-native null value — Type \"null\", and it satisfies\n`is null` exactly as a literal `set %x% = null` does (one null value, two sources).",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %d% = {\"v\": null}",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%d%",
+              "variable": [
+                {
+                  "text": "%d%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"v":null}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %v% = %d.v%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%v%",
+              "variable": [
+                {
+                  "text": "%v%",
+                  "code": [
+                    {
+                      "variable": "v"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%d.v%",
+              "variable": [
+                {
+                  "text": "%d.v%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    },
+                    {
+                      "property": "v"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %v.Type.Name% equals \"null\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "null"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%v.Type.Name%",
+              "variable": [
+                {
+                  "text": "%v.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "v"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %v% is null",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%v%",
+              "variable": [
+                {
+                  "text": "%v%",
+                  "code": [
+                    {
+                      "variable": "v"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/null/NullBareOnJson.test.goal",
+  "prPath": "/app/type/null/.build/nullbareonjson.test.pr",
+  "hash": "90f465a2fb3a68d02588e2ded25402e93d628909498254f85b573b82db6960e1"
+}

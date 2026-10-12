@@ -1,0 +1,158 @@
+{
+  "name": "Start",
+  "comment": "A path-backed image reads nothing at the set, so a strict mismatch does NOT\nfail here — it is deferred to byte-materialization (first content load). The\nset itself is clean; the throw-at-load is covered by the C#\nLazyPathHandleTests.BytesAsync_StrictKindMismatch_ThrowsAtLoad. Requires the\ncommitted photo.png fixture.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %img% = \"photo.png\" as image/gif strict",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%img%",
+              "variable": [
+                {
+                  "text": "%img%",
+                  "code": [
+                    {
+                      "variable": "img"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "photo.png"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "image"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %img.Type.Name% equals \"image\"",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "image"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%img.Type.Name%",
+              "variable": [
+                {
+                  "text": "%img.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "img"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %img.Type.Kind% equals \"gif\"",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "gif"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%img.Type.Kind%",
+              "variable": [
+                {
+                  "text": "%img.Type.Kind%",
+                  "code": [
+                    {
+                      "variable": "img"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Kind"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/type/kind/strict/SetAsImageGifStrictMismatch.test.goal",
+  "prPath": "/app/type/kind/strict/.build/setasimagegifstrictmismatch.test.pr",
+  "hash": "3a0b4184fc2ddc511bdc4d92f50ba164297a8b8183b644ba8aa87d33f4f17b66"
+}
