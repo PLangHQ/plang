@@ -464,4 +464,21 @@ public class MatchTests
             "the step has nothing indented below it, so what the step does when the condition holds goes inside the if's `{ }`");
         await Assert.That(result.Error.Message).Contains("condition.else isn't one of step 4's actions (condition.if, goal.call)");
     }
+
+    // Cover's inverse check (a text the answer writes must be the step's) reads the step's quoted
+    // literals as the step means them: an escaped-quote json literal in the step is held by the answer's
+    // unescaped value, so the step is not refused. The invented-text negative stays (ScopeTests).
+    [Test]
+    public async Task AnEscapedQuoteJsonLiteral_IsHeldByTheAnswer_NotRefused()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "Start", Make.Step("set %x% = \"{\\\"port\\\":8080}\""));
+        await Picked(goal, app.actor.list.System.Context, (0, "variable.set"));
+
+        var result = await Match(goal, """
+            [0] variable.set(Name=%x%, Value="{\"port\":8080}")
+            """, app.actor.list.System.Context);
+
+        await result.IsSuccess();
+    }
 }

@@ -78,9 +78,21 @@ public sealed partial class @this
                 && !await Counted((global::app.type.item.number.@this)double.Parse(n, System.Globalization.CultureInfo.InvariantCulture)))
                 problems.Add($"step {Index}: {n} is in the step but not in your answer");
         // and a text the answer writes that the step's words don't hold is invented (channel="X" on a
-        // step that names no X) — a choice's option, a number and a dict's keys are not texts
+        // step that names no X) — a choice's option, a number and a dict's keys are not texts. The step's
+        // own quoted literals are read as it MEANS them, not as raw text: a double-quoted literal decoded
+        // as the answer's values are (so an escaped-quote json literal `"{\"port\":8080}"` means, and holds,
+        // the value `{"port":8080}`), a single-quoted one as written.
+        var literals = new List<string>();
+        foreach (System.Text.RegularExpressions.Match m in Quoted.Matches(Text))
+        {
+            try { if (System.Text.Json.JsonSerializer.Deserialize<string>(m.Value) is { } s) literals.Add(s); }
+            catch { /* not a json-string literal; the raw-text check still applies */ }
+        }
+        foreach (System.Text.RegularExpressions.Match m in Literal.Matches(Text))
+            if (m.Groups[2].Success) literals.Add(m.Groups[2].Value);
         foreach (var t in (await Texts(Code.Items(), context)).Distinct())
-            if (t.Length > 0 && !Text.Contains(t, System.StringComparison.OrdinalIgnoreCase))
+            if (t.Length > 0 && !Text.Contains(t, System.StringComparison.OrdinalIgnoreCase)
+                && !literals.Any(l => l.Contains(t, System.StringComparison.OrdinalIgnoreCase)))
                 problems.Add($"step {Index}: your answer writes \"{t}\", which the step doesn't — leave out what the step doesn't give");
         return problems;
 
