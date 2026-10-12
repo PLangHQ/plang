@@ -1,0 +1,225 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %items% = [\"apple\", \"banana\", \"cherry\"]",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%items%",
+              "variable": [
+                {
+                  "text": "%items%",
+                  "code": [
+                    {
+                      "variable": "items"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": ["apple","banana","cherry"]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %count% = 0",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "foreach %items%, call CountItem item=%item%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "loop",
+          "name": "foreach",
+          "property": [
+            {
+              "name": "Collection",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%items%",
+              "variable": [
+                {
+                  "text": "%items%",
+                  "code": [
+                    {
+                      "variable": "items"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "item",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%item%",
+              "variable": [
+                {
+                  "text": "%item%",
+                  "code": [
+                    {
+                      "variable": "item"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "CountItem"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"item","type":{"name":"item","template":"plang"},"value":"%item%","variable":[{"text":"%item%","code":[{"variable":"item"}]}]}]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %count% equals 3, \"foreach should iterate 3 times\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "foreach should iterate 3 times"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/loop/Loop.test.goal",
+  "prPath": "/module/loop/.build/loop.test.pr",
+  "hash": "9ef13ad01c6f5d2f334f9e6fb0b46b7413ba71451756f18bb7cf7f8d39efd7c5"
+}

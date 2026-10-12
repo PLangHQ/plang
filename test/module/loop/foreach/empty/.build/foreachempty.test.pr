@@ -1,0 +1,219 @@
+{
+  "name": "Start",
+  "comment": "empty list foreach",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %items% = []",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%items%",
+              "variable": [
+                {
+                  "text": "%items%",
+                  "code": [
+                    {
+                      "variable": "items"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": []
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %count% = 0",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "foreach %items%, call ProcessItem item=%item%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "loop",
+          "name": "foreach",
+          "property": [
+            {
+              "name": "Collection",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%items%",
+              "variable": [
+                {
+                  "text": "%items%",
+                  "code": [
+                    {
+                      "variable": "items"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "item",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%item%",
+              "variable": [
+                {
+                  "text": "%item%",
+                  "code": [
+                    {
+                      "variable": "item"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "ProcessItem"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"item","type":{"name":"item","template":"plang"},"value":"%item%","variable":[{"text":"%item%","code":[{"variable":"item"}]}]}]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %count% equals 0",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/loop/foreach/empty/ForeachEmpty.test.goal",
+  "prPath": "/module/loop/foreach/empty/.build/foreachempty.test.pr",
+  "hash": "ea7fe7ef99cd71302acc810cd71fcb64ae7b36780d97028144dc47cc7b80f7ec"
+}
