@@ -171,6 +171,29 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
         => slot is Data d ? d
            : new Data("", global::app.type.item.@this.Create(slot, context), context: context);
 
+    /// <summary>The element a slot is born as at its first read, or null when the slot is handed out as it is (typed on
+    /// read, the slot left as it came). A plain list births nothing; a typed list (<c>list&lt;path&gt;</c>) makes a raw
+    /// slot its element type's value. A failure is the element's answer, where it is read.</summary>
+    private protected virtual Data? Born(object? slot, actor.context.@this context) => null;
+
+    // The element at row `row` (holding `slot`), handed out with the asker's context: born at its first read and kept in
+    // its slot, so it is born once; else typed on read.
+    private Data Element(int row, object? slot, actor.context.@this context)
+    {
+        if (Born(slot, context) is not { } born) return Row(slot, context);
+        if (born.Success) Keep(row, slot, born.Peek());
+        return born;
+    }
+
+    // An element born at its read replaces the slot it was born from — unless a change moved that slot meanwhile.
+    private void Keep(int row, object? was, object? born)
+        => Change((row, was, born), static (list, kept) =>
+        {
+            if (kept.row >= list._items.Count || !ReferenceEquals(list._items[kept.row], kept.was)) return;
+            list._items[kept.row] = kept.born;
+            list._hasWrapped = true;
+        });
+
     /// <summary>Appends a raw value (store raw, type on read) — the wire reader /
     /// literal-parse seam. A scalar rides verbatim; a native container holds its
     /// own raw slots; a Data carries its own type.</summary>
@@ -256,11 +279,12 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     /// value.</summary>
     public IEnumerable<Data> Items(actor.context.@this context)
     {
-        foreach (var row in Now)
+        var rows = Now;
+        for (int r = 0; r < rows.Length; r++)
         {
-            if (row is Chunk chunk)
+            if (rows[r] is Chunk chunk)
                 foreach (var e in chunk.List.Items(context)) yield return e;
-            else yield return Row(row, context);
+            else yield return Element(r, rows[r], context);
         }
     }
 
@@ -309,7 +333,7 @@ public partial class @this : global::app.type.item.@this, global::app.type.item.
     {
         lock (_gate)
             return Locate(index, out int row, out int offset, out @this? inner)
-                ? (inner != null ? inner.At(offset, context) : Row(_items[row], context))
+                ? (inner != null ? inner.At(offset, context) : Element(row, _items[row], context))
                 : null;
     }
 

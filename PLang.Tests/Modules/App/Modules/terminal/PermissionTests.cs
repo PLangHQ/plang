@@ -318,12 +318,12 @@ public class PermissionTests : IDisposable
     [Test]
     public async Task APermissionThatComesBackEmpty_IsRefused_NeverRunFree()
     {
-        // a .pr written from CLR values (each member a whole Data row) reads back without path or verbs:
-        // refused, never a program run free
+        // a .pr written from CLR values (each member a whole Data row), read back: held to it, or refused — as no good
+        // permission, or as one the kernel can't hold — never a program run free
         var result = await Sh($"echo ran > {_outside}/ran.txt", Permissions(May("/granted", "write")), wire: true);
-        if (result.Success) return;   // the permission reads them now: the test above covers the held run
-        await Assert.That(result.Error!.Key).IsEqualTo("PermissionInvalid");
         await Assert.That(File.Exists(Path.Combine(_outside, "ran.txt"))).IsFalse();
+        if (!result.Success)
+            await Assert.That(new[] { "PermissionInvalid", "PermissionNotEnforced" }).Contains(result.Error!.Key);
     }
 
     [Test]

@@ -84,6 +84,28 @@ public class @this<T> : @this, global::app.type.item.ICreate<@this<T>>
         };
     }
 
+    /// <summary>A raw slot is born a <typeparamref name="T"/> at its first read (<c>"a.txt"</c> in a <c>list&lt;path&gt;</c>
+    /// is a path then; a dict in a <c>list&lt;permission&gt;</c> a permission), through <typeparamref name="T"/>'s own birth.
+    /// Nothing fires: the list's birth is the event, its elements are part of it. A slot that is already a
+    /// <typeparamref name="T"/>, or a Data that carries its own type, is not born again; a value that makes no
+    /// <typeparamref name="T"/> fails where it is read. A list of any item births nothing.</summary>
+    private protected override global::app.data.@this? Born(object? slot, global::app.actor.context.@this context)
+    {
+        if (typeof(T) == typeof(global::app.type.item.@this) || slot is null or T or global::app.data.@this) return null;
+        // a raw value is its plang value first (a string is a text), which T is made from
+        var value = slot as global::app.type.item.@this ?? global::app.type.item.@this.Create(slot, context);
+        var born = new global::app.data.@this("", value, context: context);
+        try
+        {
+            if (T.Create(value, null, born) is { } made) return new global::app.data.@this("", made, context: context);
+        }
+        catch (global::app.error.DeclinedException declined) { return context.Error(declined.Error); }
+        return born.Success
+            ? context.Error(new global::app.error.Error(
+                $"{value} is no {(global::app.type.item.@this.NameOf(typeof(T)))}: the list holds only those.", "CreateItemDeclined", 400))
+            : born;
+    }
+
     /// <summary>A row lowers as the <typeparamref name="T"/> it is read as: one that isn't a T yet is made one by T's own
     /// birth (a text in a list&lt;message&gt; is the user's message), then lowers itself — as taking it out
     /// (<c>row.Value&lt;T&gt;()</c>) reads it.</summary>

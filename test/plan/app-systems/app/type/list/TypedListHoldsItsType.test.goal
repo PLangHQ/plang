@@ -1,5 +1,5 @@
-/ Stage 10 (decision 67): a typed list holds its element type. The type door can make a closed list<T>, so what
-/ goes in is born as a path, not left as text.
+/ A typed list holds its element type: what goes in stays as it came, and each element is born a path at its own
+/ first read, never left as text.
 Start
 - set %files% as list of path = ["a.txt", "b.txt"]
 - assert %files!type.name% equals "list"
