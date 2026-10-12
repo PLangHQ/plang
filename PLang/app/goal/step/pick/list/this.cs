@@ -92,11 +92,9 @@ public sealed class @this
     /// and a <c>write to %x%</c> last. Empty when nothing is certain.</summary>
     public global::app.goal.step.action.list.@this Known { get; private set; } = new();
 
-    // The step's words the known code reads: its first variable, a foreach's `as` name, and a
-    // `%x% = ` that ends in one literal (quoted text, a number, true/false) or one variable. The
-    // variables are the parser's; the words around them are these.
-    private static readonly System.Text.RegularExpressions.Regex As =
-        new(@"\bas\s+%?([A-Za-z_]\w*)%?", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    // The step's words the known code reads: its first variable, and a `%x% = ` that ends in one
+    // literal (quoted text, a number, true/false) or one variable. The variables are the parser's;
+    // the `=` is the symbol around them — no English word is read.
     private static readonly System.Text.RegularExpressions.Regex Assigns = new(@"^\s*=(?!=)");
     private static readonly System.Text.RegularExpressions.Regex AssignsOne =
         new(@"^\s*=\s*(""(?:[^""\\]|\\.)*""|-?\d+(?:\.\d+)?|true|false|%\S+%)\s*$");
@@ -148,24 +146,11 @@ public sealed class @this
         }
     }
 
-    /// <summary>The variable the step's words say it writes — a <c>write to %x%</c>, or the <c>%x%</c> of a
-    /// <c>%x% = …</c> on a step that tests no condition (there `=` compares). Null when the words say none.</summary>
+    /// <summary>The variable a <c>%x% = …</c> on a step that tests no condition writes (there `=`
+    /// compares). Null when the words say none. A <c>write to %x%</c> is not read here — the decider
+    /// offers variable.set and the writer fills its Name from the step like any other property.</summary>
     private string? Writes()
-    {
-        if (Destination() is { } known) return known.Text;
-        return !Tests && Target() is { } target ? target.Text : null;
-    }
-
-    // The step's words that fill a value the decider can't: `write to %x%` is a known variable.set, `on
-    // error … call` names what a recovery runs, `call X name=value` passes arguments.
-    private static readonly System.Text.RegularExpressions.Regex WriteTo =
-        new(@"write to\s+(?=%)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-
-    // The variable a `write to %x%` names.
-    private global::app.type.item.variable.@this? Destination()
-        => WriteTo.Match(_step.Text) is { Success: true } m
-            ? new global::app.type.item.variable.parser.@this(_step.Text).Read(m.Index + m.Length)
-            : null;
+        => !Tests && Target() is { } target ? target.Text : null;
 
     /// <summary>The top three of the popular choice (when the step was asked it), most probable first.</summary>
     public IReadOnlyList<(string Name, number? Score)> Top =>
@@ -289,9 +274,6 @@ public sealed class @this
         var shown = new List<(string Name, number Score)>();
         foreach (var p in _items)
             if (p.Score is { } s && s >= (number)Possible) shown.Add((p.Name, s));
-        var known = Destination() != null;
-        if (known && shown.All(p => p.Name != "variable.set"))
-            shown.Add(("variable.set", _items.FirstOrDefault(p => p.Name == "variable.set")?.Score ?? (number)0.0));
         var popular = Popular();
         foreach (var (name, score) in popular)
             if (shown.All(p => p.Name != name)) shown.Add((name, score));
@@ -305,7 +287,6 @@ public sealed class @this
         {
             Name = p.Name, Score = p.Score,
             Mark = p.Score >= (number)Near && Sure(p.Name) ? listed.Mark.Certain
-                 : p.Name == "variable.set" && known ? listed.Mark.WriteTo
                  : popular.ContainsKey(p.Name) && !(_items.FirstOrDefault(i => i.Name == p.Name)?.Score is { } own && own >= (number)Possible)
                      ? listed.Mark.Popular
                  : listed.Mark.Possible,
@@ -320,8 +301,7 @@ public sealed class @this
 
     private string? Prefill(global::app.actor.context.@this context)
     {
-        var known = Destination();
-        var certain = _listed.Where(l => l.Mark == listed.Mark.Certain && !(l.Name == "variable.set" && known != null))
+        var certain = _listed.Where(l => l.Mark == listed.Mark.Certain)
             .Select(l => Catalog(l.Name, context)).Where(a => a != null).Select(a => a!).ToList();
         // a lone if — no elseif or else listed, nothing indented below the step — holds the step's other actions in
         // its { }
@@ -332,10 +312,9 @@ public sealed class @this
         // each certain action takes its own place: the test a lone if is asked of before it (a step whose answer goes
         // to its own destination has no such test), the chain in its order, the rest after — a tie in the scores
         // never puts a body's action before its if
-        certain = certain.OrderBy(a => a.Place(nests && known == null)).ToList();
+        certain = certain.OrderBy(a => a.Place(nests)).ToList();
         var line = new line.@this(nests);
         foreach (var action in certain) action.Prefill(line, Call(action));
-        if (known != null) line.Append($"variable.set(Name={known.Text}, Value=%!data%)");
         return line.ToString();
     }
 
@@ -344,8 +323,6 @@ public sealed class @this
     private async Task<global::app.goal.step.action.list.@this> Code(
         global::app.type.item.list.@this<global::app.module.@this> modules, global::app.actor.context.@this context)
     {
-        var text = _step.Text;
-        var known = Destination();
         var certain = _listed.Where(l => l.Mark == listed.Mark.Certain).Select(l => Catalog(l.Name, context))
             .Where(a => a != null).Select(a => a!).ToList();
         var line = new List<string>();
@@ -356,17 +333,15 @@ public sealed class @this
             if (name == "loop.foreach")
             {
                 if (First() is not { } collection) continue;
-                var item = As.Match(text) is { Success: true } named ? named.Groups[1].Value : "item";
-                action.Know(line, $"loop.foreach(Collection={collection.Text}, Item=%{item}%)");
+                action.Know(line, $"loop.foreach(Collection={collection.Text})");
             }
             else if (name == "variable.set")
             {
-                if (known != null || Assigned() is not { } set) continue;
+                if (Assigned() is not { } set) continue;
                 line.Add($"variable.set(Name={set.Name}, Value={set.Value})");
             }
             else action.Know(line, $"{name}()");
         }
-        if (known != null) line.Add($"variable.set(Name={known.Text}, Value=%!data%)");
         if (line.Count == 0) return new();
         var read = new global::app.goal.step.action.formal.Reader(_step, modules).Read(string.Join("; ", line), context);
         if (read.Success) return (global::app.goal.step.action.list.@this)read.Peek()!;
@@ -427,13 +402,13 @@ public sealed class @this
 
     // What `property` of `action` is offered in this step: what its type offers (a closed set its options, a
     // collection the members the step can name, any other the step's variables) — but never a variable the action
-    // itself writes: the step's write-to, where its answer goes, or one the action binds when the step names none
-    // (foreach's %item%), which is choosing none. The question shows these, and a pick is matched against these.
+    // itself binds when the step names none (foreach's %item%), which is choosing none. The question shows these,
+    // and a pick is matched against these.
     private async Task<List<global::app.type.item.@this>> Offered(global::app.goal.step.action.@this action,
         global::app.type.property.@this property, global::app.actor.context.@this context)
     {
-        var written = action.Bound.Cast<global::app.type.item.@this>().Append(Destination())
-            .OfType<global::app.type.item.@this>().Select(v => Shown(v, context)).ToHashSet(StringComparer.Ordinal);
+        var written = action.Bound.Cast<global::app.type.item.@this>()
+            .Select(v => Shown(v, context)).ToHashSet(StringComparer.Ordinal);
         return (await property.Type.Offers(_step)).Where(o => !written.Contains(Shown(o, context))).ToList();
     }
 

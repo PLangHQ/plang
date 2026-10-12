@@ -349,19 +349,6 @@ public class PickOptionTests : System.IAsyncDisposable
         await Assert.That(step.Pick.Listed.Single(l => l.Name == "goal.call").Mark).IsEqualTo(global::app.goal.step.pick.listed.Mark.Certain);
     }
 
-    // the step's write-to is where its answer goes, never an option's value
-    [Test]
-    public async Task AnOptionsOffers_LeaveOutTheStepsWriteTo()
-    {
-        var step = Step("foreach %person% as %value%, write to %answer%");
-        await step.Pick.Take(Answer(("s0_loop.foreach", Yes(0.99))), [], Ctx);
-
-        var item = step.Pick.Question.Single(q => q.Property?.Name == "Item");
-
-        await Assert.That(item.Values).Contains("%value%");
-        await Assert.That(item.Values).DoesNotContain("%answer%");
-    }
-
     // issue 2 at the writer: the option picks ride the starting line as the step's variables
     [Test]
     public async Task ItemAndKey_RideTheStartingLine()

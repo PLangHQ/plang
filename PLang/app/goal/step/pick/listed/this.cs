@@ -7,8 +7,6 @@ public enum Mark
     Certain,
     /// <summary>Below 0.90: used only when the step's words need it.</summary>
     Possible,
-    /// <summary>The variable.set of a <c>write to %x%</c> — a known value, not a guess.</summary>
-    WriteTo,
     /// <summary>From the popular-action choice on a step the decider was unsure of.</summary>
     Popular,
 }
