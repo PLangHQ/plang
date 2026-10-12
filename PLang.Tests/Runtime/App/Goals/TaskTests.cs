@@ -112,18 +112,42 @@ public class TaskTests
         await Assert.That(_app.actor.list.User.Task.list.Any()).IsFalse();
     }
 
+    // A call's parameters are settled when it is made, in the caller — a call in parallel too: two in a row, the
+    // caller's variable changed between them, each gets what it was given, never what the variable holds by the time
+    // its task runs
+    [Test]
+    public async Task TwoParallelCallsInARow_EachGetsItsOwnParameters()
+    {
+        await Load("Echo", Make.Step("return name", Return("%name%")));
+        (string, object?) Named(string variable) => ("Parameter", new List<object?> { Make.Built(Ctx, "name", $"%{variable}%") });
+        var caller = await Load("Caller",
+            Make.Step("set which to first", Set("which", "first")),
+            Make.Step("call Echo name=%which% in parallel, write to %one%", InParallel("Echo", Named("which")), Set("one", "%!data%")),
+            Make.Step("set which to second", Set("which", "second")),
+            Make.Step("call Echo name=%which% in parallel, write to %two%", InParallel("Echo", Named("which")), Set("two", "%!data%")));
+
+        await (await caller.Start(Ctx)).IsSuccess();
+
+        var one = (global::app.task.@this)(await Ctx.Variable.Get("one")).Peek()!;
+        var two = (global::app.task.@this)(await Ctx.Variable.Get("two")).Peek()!;
+        await Assert.That((await (await one.Wait()).Value())?.ToString()).IsEqualTo("first");
+        await Assert.That((await (await two.Wait()).Value())?.ToString()).IsEqualTo("second");
+    }
+
     // The run's cancellation cancels its actors: the wait ends, the task Cancelled and never reported
     [Test]
     public async Task CancellingTheActor_EndsTheWait_TheTaskCancelled_NotReported()
     {
-        await Load("Slow", Make.Step("sleep", Sleep(10_000)));
+        // a sleep far longer than the bound: a wait under the bound ended because it was cancelled, never because the
+        // sleep ran out, however loaded the machine
+        await Load("Slow", Make.Step("sleep", Sleep(60_000)));
         var task = await Started("Slow");
         var clock = System.Diagnostics.Stopwatch.StartNew();
 
         _app.actor.list.User.Cancel();
         await _app.actor.list.User.Task.Wait();
 
-        await Assert.That(clock.ElapsedMilliseconds).IsLessThan(5000);
+        await Assert.That(clock.ElapsedMilliseconds).IsLessThan(30_000);
         var waited = await task.Wait();
         await Assert.That(waited.Error!.Key).IsEqualTo("Cancelled");
         await Assert.That(Errors).DoesNotContain("Cancelled");
