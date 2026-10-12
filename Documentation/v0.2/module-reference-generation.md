@@ -403,6 +403,7 @@ Evaluate a condition and execute the then-branch actions; pair with elseif/else 
 - if %count% > 0, call ProcessItems
 - if %content% is not empty, call Process
 - if %flag%, call Go
+- if !%flag%, call Go
 - if %done%, return %result%
 - if %x% == 1 or %y% == 2, call Handle
 - if %x% > 1 and %y% < 10, call Handle

@@ -7,6 +7,9 @@ Properties: `{"Left": "%content%", "Operator": "isnotempty"}` — the negation i
 Step text: `if %flag%, call Go`
 Properties: `{"Left": "%flag%"}` — a bare `%flag%` is Left's own truth; no Operator, no Right.
 
+Step text: `if !%flag%, call Go`
+Properties: `{"Left": "%flag%", "Operator": "==", "Right": false}` — `!%flag%` / `if not %flag%` (a bare bool negated) is the bool compared false; there is no `not` operator.
+
 Step text: `if %done%, return %result%`
 Properties: `{"Left": "%done%"}` — Left's own truth; the return is the body: `condition.if(Left=%done%) { goal.return(Data=%result%) }`, never beside the if.
 
