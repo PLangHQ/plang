@@ -176,7 +176,7 @@ public sealed class Reader
             // each action names the step action it belongs to; one that belongs to none is a clause with no action
             var before = actions.Aggregate((global::app.goal.step.action.@this?)null, (anchor, a) => a.Anchor(anchor));
             if (read.Action.Anchor(before) == null)
-                Fail($"{read.Action.Module.Name}.{read.Action.Name} is a clause of the action before it; step {_index} has none", read.At);
+                Fail($"{read.Action.Module.Name}.{read.Action.Name} is a clause of the action before it; step {_index} has none — write the step's main action first, then this clause", read.At);
             actions.Add(read.Action);
         }
 

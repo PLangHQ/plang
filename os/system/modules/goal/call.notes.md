@@ -5,4 +5,5 @@ Parallel — run this call beside the step, answering a task at once · say: `in
 
 - The arguments belong to the called goal; they are never properties of goal.call.
 - `foreach %list%, call X item=%y%` is loop.foreach, then goal.call with `item` as its argument.
+- `call X` is always goal.call, and X is the goal's name even when the name reads like an action — a goal whose name begins with a verb (`SendReceipt`, `SaveDraft`, `RunNightly`) is still a goal to invoke, never the module action the word resembles. The token after `call` names a goal; a verb inside that name is never a reason to pick an action by the same verb.
 - `call goal X` and `call the goal X` call X: the leading `goal` / `the goal` is only a word, never part of the name or an argument — the same whether X is a bare name, a `Folder/Goal`, or a `/path/name`. `call goal Unmatched action=%item%` → goal.call(Name="Unmatched", Parameter={action: %item%}); `call goal /builder/Build` → goal.call(Name="/builder/Build") (the path is the whole name, `goal` dropped). A name that itself starts with Goal keeps it: `call goal GoalSetup` → Name="GoalSetup".
