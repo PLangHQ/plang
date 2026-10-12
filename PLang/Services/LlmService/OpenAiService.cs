@@ -52,12 +52,17 @@ namespace PLang.Services.OpenAi
 		// PLangLlmService already switched the token parameter for o-models; this is the same rule
 		// for the openai service, extended to gpt-5. gpt-4o accepts max_completion_tokens as well,
 		// so nothing in use today changes shape unnecessarily.
+		// Every generation after gpt-5 keeps the new shape, so the test is on the generation number
+		// rather than a list of names: gpt-6.1-sol was sent the old shape and the api rejected it.
 		protected static bool UsesCompletionTokenSchema(string? model)
 		{
 			if (string.IsNullOrEmpty(model)) return false;
 
-			return model.StartsWith("gpt-5", StringComparison.OrdinalIgnoreCase)
-				|| model.StartsWith("o", StringComparison.OrdinalIgnoreCase);
+			if (model.StartsWith("o", StringComparison.OrdinalIgnoreCase)) return true;
+			if (!model.StartsWith("gpt-", StringComparison.OrdinalIgnoreCase)) return false;
+
+			var generation = model.Substring(4).Split('.', '-')[0];
+			return int.TryParse(generation, out var number) && number >= 5;
 		}
 
 		// The model actually called. A subclass that talks to one fixed model returns it here so the
