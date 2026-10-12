@@ -2,6 +2,18 @@
 
 **Version:** v22 (all pushed; reviews by the architect, gate by gate)
 
+## 2026-10-12 (later) — plang test reds triaged by cause, two rounds (gate 176 clean)
+- Triage docs: `.bot/app-systems/coder/v23/plang-triage.md`, `plang-triage-round2.md`. Most reds were the builder's
+  (goals reached only via recovery / foreach / test.discover never built; wrong saves dropping clauses or kinds).
+- Stale tests rewritten to their decisions: `!type.name/.kind/.strict` (572), `!path`, branchIndex gone, timeout
+  duration, `Name`, cache choice, `%!error%` outside a handler errs (226), goal-channel `%message%`, parameter ends
+  with its call; deleted compilellmnotes ×2 and SigningCorruptedSignature (C# pins tampering).
+- Runtime fixes, each pinned + mutation-checked: test.tag stamps the goal from its call frame (a1a8ca80d — every tag
+  and 'skip' was lost since b6e09798a); default identity moves in one write (3f8201bf8 — real signing promoted the old
+  default back); on.error GoalFirst lets a failed retry fall through to recovery/Ignore (a9c68c847); cdp test race
+  (a025c14f1). CallMissingTests pin GoalNotFound catchable.
+- Next: after the builder's final rebuild, re-run `cd test && plang --test` and triage what's left the same way.
+
 ## 2026-10-12 — the architect's queue for this branch, done (waiting on the gate)
 - 660 events a type declares (49efce319); app.event in the surface golden, `on.Of` internal (689, 5cf01dceb).
 - 669: a bare program name is the terminal provider's to find (`ITerminal.Find`, 3cfba3272).
