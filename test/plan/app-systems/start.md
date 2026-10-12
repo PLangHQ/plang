@@ -12,7 +12,7 @@ Stages 1–12, except 10b's (C). See [done.list](done.list).
 
 Each stage is a goal in [start.goal](start.goal); each behaviour there is a comment with the test that proves it.
 
-**10b (C): a typed list holds its type.** `list<text>` knows its element type when read back. Its plan test, `TypedListHoldsItsType`, waits on Ingi: whether a typed list's elements are born eagerly (when the list is made) or lazily (when each is read), and the `list<path>` teaching.
+**10b (C): a typed list holds its type.** `list<text>` knows its element type when read back (decisions 679, 694: each element is born at its own first read). 10b closes on its C# pins (`TypedListElementTests`, mutation-checked). Its plang test, `TypedListHoldsItsType`, waits for the next branch with the kinded-Type-choice item (the decider must offer a type's kinds — `list<path>`, `json` — so `as list of path` maps to `Type=list<path>` instead of bare `list`); left in place unbuilt.
 
 ## How it's proven
 
