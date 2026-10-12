@@ -3,7 +3,8 @@
 / %file.field% reads + parses + narrows; second use stays cached; the facet hop
 / still resolves after the narrow.
 Start
-- save 'cut2.json' with content '{"db":"plang","port":8080}'
+- set %content% = '{"db":"plang","port":8080}' as json
+- save 'cut2.json' with content %content%
 - read file 'cut2.json', write to %cfg%
 - set %loc% = %cfg!path%
 - assert %loc% is not null

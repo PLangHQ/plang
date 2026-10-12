@@ -4,9 +4,64 @@
   "step": [
     {
       "index": 0,
-      "text": "save 'narrowchain.json' with content '{\"db\":\"plang\"}'",
+      "text": "set %content% = '{\"db\":\"plang\"}' as json",
       "line": {
         "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"db\":\"plang\"}"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "dict"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "save 'narrowchain.json' with content %content%",
+      "line": {
+        "number": 5
       },
       "code": [
         {
@@ -23,19 +78,30 @@
             {
               "name": "Value",
               "type": {
-                "name": "text"
+                "name": "item",
+                "template": "plang"
               },
-              "value": "{\"db\":\"plang\"}"
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
       ]
     },
     {
-      "index": 1,
+      "index": 2,
       "text": "read file 'narrowchain.json', write to %config%",
       "line": {
-        "number": 6
+        "number": 7
       },
       "comment": "un-examined branch: the file facet answers from the headline",
       "code": [
@@ -115,10 +181,10 @@
       ]
     },
     {
-      "index": 2,
+      "index": 3,
       "text": "set %loc1% = %config!path%",
       "line": {
-        "number": 7
+        "number": 8
       },
       "code": [
         {
@@ -177,10 +243,10 @@
       ]
     },
     {
-      "index": 3,
+      "index": 4,
       "text": "assert %loc1% is not null",
       "line": {
-        "number": 8
+        "number": 9
       },
       "code": [
         {
@@ -210,10 +276,10 @@
       ]
     },
     {
-      "index": 4,
+      "index": 5,
       "text": "if %config% is not file, call NotAFile",
       "line": {
-        "number": 9
+        "number": 10
       },
       "code": [
         {
@@ -259,7 +325,7 @@
               "index": 0,
               "text": "goal.call(Name=\"NotAFile\")",
               "line": {
-                "number": 9
+                "number": 10
               },
               "code": [
                 {
@@ -282,10 +348,10 @@
       ]
     },
     {
-      "index": 5,
+      "index": 6,
       "text": "set %db% = %config.db%",
       "line": {
-        "number": 11
+        "number": 12
       },
       "comment": "examine the content → narrows to dict, file retained in the chain",
       "code": [
@@ -345,10 +411,10 @@
       ]
     },
     {
-      "index": 6,
+      "index": 7,
       "text": "assert %db% equals \"plang\"",
       "line": {
-        "number": 12
+        "number": 13
       },
       "code": [
         {
@@ -385,10 +451,10 @@
       ]
     },
     {
-      "index": 7,
+      "index": 8,
       "text": "if %config% is not dict, call NotADict",
       "line": {
-        "number": 13
+        "number": 14
       },
       "code": [
         {
@@ -434,7 +500,7 @@
               "index": 0,
               "text": "goal.call(Name=\"NotADict\")",
               "line": {
-                "number": 13
+                "number": 14
               },
               "code": [
                 {
@@ -457,10 +523,10 @@
       ]
     },
     {
-      "index": 8,
+      "index": 9,
       "text": "if %config% is not file, call NotAFile",
       "line": {
-        "number": 14
+        "number": 15
       },
       "code": [
         {
@@ -506,7 +572,7 @@
               "index": 0,
               "text": "goal.call(Name=\"NotAFile\")",
               "line": {
-                "number": 14
+                "number": 15
               },
               "code": [
                 {
@@ -529,10 +595,10 @@
       ]
     },
     {
-      "index": 9,
+      "index": 10,
       "text": "set %loc2% = %config!path%",
       "line": {
-        "number": 16
+        "number": 17
       },
       "comment": "post-narrow: the SAME facet hop still resolves",
       "code": [
@@ -592,10 +658,10 @@
       ]
     },
     {
-      "index": 10,
+      "index": 11,
       "text": "assert %loc2% is not null",
       "line": {
-        "number": 17
+        "number": 18
       },
       "code": [
         {
@@ -625,10 +691,10 @@
       ]
     },
     {
-      "index": 11,
+      "index": 12,
       "text": "delete file 'narrowchain.json'",
       "line": {
-        "number": 18
+        "number": 19
       },
       "code": [
         {
@@ -664,7 +730,7 @@
           "index": 0,
           "text": "throw \"config is not a file\"",
           "line": {
-            "number": 21
+            "number": 22
           },
           "code": [
             {
@@ -712,7 +778,7 @@
           "index": 0,
           "text": "throw \"config is not a dict\"",
           "line": {
-            "number": 24
+            "number": 25
           },
           "code": [
             {
@@ -757,5 +823,5 @@
   "visibility": "Public",
   "path": "/app/data/Narrow_ChainWideBangBothBranches.test.goal",
   "prPath": "/app/data/.build/narrow_chainwidebangbothbranches.test.pr",
-  "hash": "1f72f245123024e40ae8b9bddc64f300f9a06ed8564f4ab0735c2ee81f9df2bd"
+  "hash": "df6b53acbce44ddef71c4727b4c94c18305ea14d2b869d27484d1bfe29e39db3"
 }

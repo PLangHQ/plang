@@ -4,9 +4,64 @@
   "step": [
     {
       "index": 0,
-      "text": "save 'cut2.json' with content '{\"db\":\"plang\",\"port\":8080}'",
+      "text": "set %content% = '{\"db\":\"plang\",\"port\":8080}' as json",
       "line": {
         "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"db\":\"plang\",\"port\":8080}"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "dict"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "save 'cut2.json' with content %content%",
+      "line": {
+        "number": 7
       },
       "code": [
         {
@@ -23,19 +78,30 @@
             {
               "name": "Value",
               "type": {
-                "name": "text"
+                "name": "item",
+                "template": "plang"
               },
-              "value": "{\"db\":\"plang\",\"port\":8080}"
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }
       ]
     },
     {
-      "index": 1,
+      "index": 2,
       "text": "read file 'cut2.json', write to %cfg%",
       "line": {
-        "number": 7
+        "number": 8
       },
       "code": [
         {
@@ -114,10 +180,10 @@
       ]
     },
     {
-      "index": 2,
+      "index": 3,
       "text": "set %loc% = %cfg!path%",
       "line": {
-        "number": 8
+        "number": 9
       },
       "code": [
         {
@@ -176,10 +242,10 @@
       ]
     },
     {
-      "index": 3,
+      "index": 4,
       "text": "assert %loc% is not null",
       "line": {
-        "number": 9
+        "number": 10
       },
       "code": [
         {
@@ -209,10 +275,10 @@
       ]
     },
     {
-      "index": 4,
+      "index": 5,
       "text": "if %cfg% is not file, call NotAFile",
       "line": {
-        "number": 10
+        "number": 11
       },
       "code": [
         {
@@ -258,7 +324,7 @@
               "index": 0,
               "text": "goal.call(Name=\"NotAFile\")",
               "line": {
-                "number": 10
+                "number": 11
               },
               "code": [
                 {
@@ -281,10 +347,10 @@
       ]
     },
     {
-      "index": 5,
+      "index": 6,
       "text": "set %db% = %cfg.db%",
       "line": {
-        "number": 11
+        "number": 12
       },
       "code": [
         {
@@ -343,10 +409,10 @@
       ]
     },
     {
-      "index": 6,
+      "index": 7,
       "text": "assert %db% equals \"plang\"",
       "line": {
-        "number": 12
+        "number": 13
       },
       "code": [
         {
@@ -383,10 +449,10 @@
       ]
     },
     {
-      "index": 7,
+      "index": 8,
       "text": "set %port% = %cfg.port%",
       "line": {
-        "number": 13
+        "number": 14
       },
       "code": [
         {
@@ -445,10 +511,10 @@
       ]
     },
     {
-      "index": 8,
+      "index": 9,
       "text": "assert %port% equals 8080",
       "line": {
-        "number": 14
+        "number": 15
       },
       "code": [
         {
@@ -485,10 +551,10 @@
       ]
     },
     {
-      "index": 9,
+      "index": 10,
       "text": "if %cfg% is not dict, call NotADict",
       "line": {
-        "number": 15
+        "number": 16
       },
       "code": [
         {
@@ -534,7 +600,7 @@
               "index": 0,
               "text": "goal.call(Name=\"NotADict\")",
               "line": {
-                "number": 15
+                "number": 16
               },
               "code": [
                 {
@@ -557,10 +623,10 @@
       ]
     },
     {
-      "index": 10,
+      "index": 11,
       "text": "set %loc2% = %cfg!path%",
       "line": {
-        "number": 16
+        "number": 17
       },
       "code": [
         {
@@ -619,10 +685,10 @@
       ]
     },
     {
-      "index": 11,
+      "index": 12,
       "text": "assert %loc2% is not null",
       "line": {
-        "number": 17
+        "number": 18
       },
       "code": [
         {
@@ -652,10 +718,10 @@
       ]
     },
     {
-      "index": 12,
+      "index": 13,
       "text": "delete file 'cut2.json'",
       "line": {
-        "number": 18
+        "number": 19
       },
       "code": [
         {
@@ -691,7 +757,7 @@
           "index": 0,
           "text": "throw \"cfg is not a file\"",
           "line": {
-            "number": 21
+            "number": 22
           },
           "code": [
             {
@@ -739,7 +805,7 @@
           "index": 0,
           "text": "throw \"cfg is not a dict\"",
           "line": {
-            "number": 24
+            "number": 25
           },
           "code": [
             {
@@ -784,5 +850,5 @@
   "visibility": "Public",
   "path": "/app/data/Cut2.test.goal",
   "prPath": "/app/data/.build/cut2.test.pr",
-  "hash": "b1bc3c12f999a53474d0e8a76a2c77afcf2c47924d108984115e5331500e2a9f"
+  "hash": "9965aed26b4844be7c96610d2976bbc8ef8f6286c466072d1f1e71e93c551551"
 }

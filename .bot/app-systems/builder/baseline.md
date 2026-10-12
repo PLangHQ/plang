@@ -12,8 +12,8 @@ No builder-mapping refusal that a teaching edit can fix remains. Every fail/stal
 |---|---|---|
 | app/data/DataTypeReadsEntity | coder / next-branch | kinded-Type (kind redesign 707–712) |
 | app/data/Plane_DataKeyVsProperty | next-branch | kinded Type `{text, json}` not yet a decider Type choice |
-| app/data/Cut2 | coder | is-file BUILD now fixed (`if %cfg% is not file, call NotAFile`); fails at run on the file→dict narrow — `cannot navigate .db: %cfg% is text` |
-| app/data/Narrow_ChainWideBangBothBranches | coder | same as Cut2 — is-file build fixed; run-fails on the narrow navigation |
+| app/data/Cut2 | coder (triage) | save fixed (json content, `.db` navigates, db/port asserts pass) + is-file build fixed; now fails on `%cfg% is dict` after navigating a json file answering false — likely a runtime bug (Operator.cs:177–183 IsType reads/narrows/answers from the chain) |
+| app/data/Narrow_ChainWideBangBothBranches | coder (triage) | same as Cut2 — `%config% is dict` after the json-file narrow answers false |
 | app/type/list/ListIsItemSortsAsBefore | carried-builder (A) | writer emits an empty query for a no-field sort |
 | app/type/item/BareLiteralJudgedByForm | coder | kind/type runtime |
 | app/type/kind/strict/SetAsImageStrictNoKind | coder / next-branch | kind redesign (also a held-5 kind test) |
@@ -23,7 +23,7 @@ No builder-mapping refusal that a teaching edit can fix remains. Every fail/stal
 | module/condition/compare/Failure_DictEqNumber | next-branch (issue 76) | on-error clause on a block-if dropped — builder can't parse |
 | module/condition/compare/Failure_DictOrderDict | next-branch (issue 76) | same (on-error on block-if) |
 | module/condition/compare/Cut5 | next-branch (issue 76) | same — `if %d% > %n% then` + indented `on error call CaughtOrder` saved as condition.if alone, clause dropped |
-| module/channel/goalchannelrecursion | coder | helper EchoBack `write %message% to echo` (variable form) drops the channel — channel isn't in output.write's decider formal; the writer fills it only for a literal Data (`write 'x' to echo` keeps it). Decider/writer gap, not teaching |
+| module/channel/goalchannelrecursion | carried (next-branch: channel slot offers) | helper EchoBack `write %message% to echo` drops the channel — the channel slot is a CHOICE over the step's variables + none, so a literal channel name (`echo`) is never offered; the decider picks none. The slot should offer the channels the goal has registered (the build simulates `set channel "echo"`) |
 | module/signing/headermismatch/SigningHeaderMismatch | carried-builder (B3) | decider pre-empts the main action when an on-error clause trails |
 | module/math/DoublePlusDecimal_Errors | carried-builder | `as number/decimal` kind dropped (kinded Type choice) |
 
@@ -45,9 +45,10 @@ No builder-mapping refusal that a teaching edit can fix remains. Every fail/stal
 | plan/snapshot/module/callback/statelesscrossgoalresumes/Start | by-design | snapshot plan |
 
 ## Owner summary
-- **coder** (runtime reds / kind-redesign C#): DataTypeReadsEntity, BareLiteral, 4 kind/strict; Cut2, Narrow (is-file build FIXED; now run-fail on the file→dict narrow); goalchannelrecursion (helper EchoBack drops the channel on the variable `write %message%` form).
+- **coder** (runtime reds / kind-redesign C#): DataTypeReadsEntity, BareLiteral, 4 kind/strict.
+- **coder (triage)**: Cut2, Narrow — save + is-file builds FIXED; `%cfg% is dict` after navigating a json file answers false (likely an IsType runtime bug, Operator.cs:177–183).
 - **carried-builder** (no teaching fix this branch): ListIsItemSortsAsBefore + Failure_SortMixedIncomparable (A, empty query), SigningHeaderMismatch (B3), DoublePlusDecimal.
-- **next-branch** (deferred, listed with Ingi): Plane_DataKey + TypedListHoldsItsType (kinded Type choices); Failure_DictEqNumber/DictOrderDict/Cut5 (issue 76 — on-error on a block-if); issue-74 trio; LlmProperties; RoundTrip + UnknownSettingIsAnError; the empty-query Parse-preempt seam; `throw` in an if-body → `throw.error` (reader rejects); the output.write channel not in its decider formal (dropped on variable Data).
+- **next-branch** (deferred, listed with Ingi): Plane_DataKey + TypedListHoldsItsType (kinded Type choices); Failure_DictEqNumber/DictOrderDict/Cut5 (issue 76 — on-error on a block-if); goalchannelrecursion (the channel slot should offer the goal's registered channels, not just the step's variables, so a literal channel name is offered); issue-74 trio; LlmProperties; RoundTrip + UnknownSettingIsAnError; the empty-query Parse-preempt seam; `throw` in an if-body → `throw.error` (reader rejects).
 - **FIXED this pass (teaching)**: `is`/`is not <type>` is the type check (not `==`/`!=`) — ReadCsv_LandsAsTable now a real pass (was pass-by-luck), Cut2/Narrow build correctly. output.write bare `to <name>` channel (literal form). llm.query schema spelled schema/scheme/block. on.error after an erroring `if`.
 - **by-design**: 3 snapshot callback Starts.
 - **3 skipped**: signing pair + Duration (skip-tag).
