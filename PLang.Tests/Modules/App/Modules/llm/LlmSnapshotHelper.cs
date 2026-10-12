@@ -14,12 +14,23 @@ namespace PLang.Tests.App.Modules.llm;
 /// Saves real API responses to disk. On subsequent runs, reuses the snapshot
 /// if the input messages AND class structure haven't changed.
 /// Supports multi-turn snapshots (tool call loops produce multiple HTTP responses).
+/// A snapshot is read from the ones kept in the repo, then from this machine's own; a new one is written to this
+/// machine's own (a temp folder), never into the repo — a test run leaves the tree as it found it.
 /// </summary>
 internal static class LlmSnapshotHelper
 {
-    private static readonly string SnapshotDir = System.IO.Path.Combine(
+    private static readonly string Kept = System.IO.Path.Combine(
         AppContext.BaseDirectory, "..", "..", "..",
         "App", "Modules", "llm", "snapshots");
+
+    private static readonly string Recorded = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "plang_llm_snapshots");
+
+    // the snapshot's file: the repo's when it keeps one, else this machine's
+    private static string Snapshot(string file)
+    {
+        var kept = System.IO.Path.Combine(Kept, file);
+        return System.IO.File.Exists(kept) ? kept : System.IO.Path.Combine(Recorded, file);
+    }
 
     /// <summary>
     /// Types whose shape is included in the cache key.
@@ -40,7 +51,7 @@ internal static class LlmSnapshotHelper
     internal static string? TryLoadSnapshot(string testName, List<LlmMessage> messages)
     {
         var key = ComputeKey(testName, messages);
-        var path = System.IO.Path.Combine(SnapshotDir, $"{key}.json");
+        var path = Snapshot($"{key}.json");
 
         if (System.IO.File.Exists(path))
             return System.IO.File.ReadAllText(path);
@@ -54,7 +65,7 @@ internal static class LlmSnapshotHelper
     internal static List<string>? TryLoadMultiSnapshot(string testName, List<LlmMessage> messages)
     {
         var key = ComputeKey(testName, messages);
-        var path = System.IO.Path.Combine(SnapshotDir, $"{key}.multi.json");
+        var path = Snapshot($"{key}.multi.json");
 
         if (!System.IO.File.Exists(path)) return null;
 
@@ -68,8 +79,8 @@ internal static class LlmSnapshotHelper
     internal static void SaveSnapshot(string testName, List<LlmMessage> messages, string responseJson)
     {
         var key = ComputeKey(testName, messages);
-        System.IO.Directory.CreateDirectory(SnapshotDir);
-        var path = System.IO.Path.Combine(SnapshotDir, $"{key}.json");
+        System.IO.Directory.CreateDirectory(Recorded);
+        var path = System.IO.Path.Combine(Recorded, $"{key}.json");
         System.IO.File.WriteAllText(path, responseJson);
     }
 
@@ -79,8 +90,8 @@ internal static class LlmSnapshotHelper
     internal static void SaveMultiSnapshot(string testName, List<LlmMessage> messages, List<string> responses)
     {
         var key = ComputeKey(testName, messages);
-        System.IO.Directory.CreateDirectory(SnapshotDir);
-        var path = System.IO.Path.Combine(SnapshotDir, $"{key}.multi.json");
+        System.IO.Directory.CreateDirectory(Recorded);
+        var path = System.IO.Path.Combine(Recorded, $"{key}.multi.json");
         System.IO.File.WriteAllText(path, JsonSerializer.Serialize(responses));
     }
 
