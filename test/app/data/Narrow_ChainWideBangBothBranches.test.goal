@@ -6,13 +6,19 @@ Start
 - read file 'narrowchain.json', write to %config%
 - set %loc1% = %config!path%
 - assert %loc1% is not null
-- assert %config% is file
+- if %config% is not file, call NotAFile
 / examine the content → narrows to dict, file retained in the chain
 - set %db% = %config.db%
 - assert %db% equals "plang"
-- assert %config% is dict
-- assert %config% is file
+- if %config% is not dict, call NotADict
+- if %config% is not file, call NotAFile
 / post-narrow: the SAME facet hop still resolves
 - set %loc2% = %config!path%
 - assert %loc2% is not null
 - delete file 'narrowchain.json'
+
+NotAFile
+- throw "config is not a file"
+
+NotADict
+- throw "config is not a dict"

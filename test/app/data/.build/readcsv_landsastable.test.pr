@@ -178,17 +178,17 @@
     },
     {
       "index": 3,
-      "text": "assert %report% is file",
+      "text": "if %report% is not file, call NotAFile",
       "line": {
         "number": 10
       },
       "code": [
         {
-          "module": "assert",
-          "name": "isTrue",
+          "module": "condition",
+          "name": "if",
           "property": [
             {
-              "name": "Value",
+              "name": "Left",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -204,21 +204,103 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "isnot"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "file"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.call(Name=\"NotAFile\")",
+              "line": {
+                "number": 10
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "NotAFile"
+                    }
+                  ]
+                }
+              ]
             }
           ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Unsure",
-          "message": "step 3 uses assert.isTrue, which the decider was not sure of (0.96)"
         }
       ]
     }
   ],
-  "child": [],
+  "child": [
+    {
+      "name": "NotAFile",
+      "step": [
+        {
+          "index": 0,
+          "text": "throw \"report is not a file\"",
+          "line": {
+            "number": 13
+          },
+          "code": [
+            {
+              "module": "error",
+              "name": "throw",
+              "property": [
+                {
+                  "name": "Message",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "report is not a file"
+                }
+              ],
+              "default": [
+                {
+                  "name": "status",
+                  "type": {
+                    "name": "status"
+                  },
+                  "value": 400
+                },
+                {
+                  "name": "key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "error"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/app/data/ReadCsv_LandsAsTable.test.goal",
+      "prPath": "/app/data/.build/readcsv_landsastable.test.pr",
+      "hash": "ecd7a802e50e6e8fe63eabc59324ef81846106a2cf13976442d2cf0fc689bef2"
+    }
+  ],
   "visibility": "Public",
   "path": "/app/data/ReadCsv_LandsAsTable.test.goal",
   "prPath": "/app/data/.build/readcsv_landsastable.test.pr",
-  "hash": "bff6d51a6f9c1e366485451774bbdf528b61b234ced64b945aab207efba5e088"
+  "hash": "db6d4dcbf76cedf4208f37cf23c317ef213809ac5513224fb3b7d348566d495b"
 }

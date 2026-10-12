@@ -7,12 +7,18 @@ Start
 - read file 'cut2.json', write to %cfg%
 - set %loc% = %cfg!path%
 - assert %loc% is not null
-- assert %cfg% is file
+- if %cfg% is not file, call NotAFile
 - set %db% = %cfg.db%
 - assert %db% equals "plang"
 - set %port% = %cfg.port%
 - assert %port% equals 8080
-- assert %cfg% is dict
+- if %cfg% is not dict, call NotADict
 - set %loc2% = %cfg!path%
 - assert %loc2% is not null
 - delete file 'cut2.json'
+
+NotAFile
+- throw "cfg is not a file"
+
+NotADict
+- throw "cfg is not a dict"

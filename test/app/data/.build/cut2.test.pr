@@ -210,24 +210,17 @@
     },
     {
       "index": 4,
-      "text": "assert %cfg% is file",
+      "text": "if %cfg% is not file, call NotAFile",
       "line": {
         "number": 10
       },
       "code": [
         {
-          "module": "assert",
-          "name": "equals",
+          "module": "condition",
+          "name": "if",
           "property": [
             {
-              "name": "Expected",
-              "type": {
-                "name": "text"
-              },
-              "value": "file"
-            },
-            {
-              "name": "Actual",
+              "name": "Left",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -239,6 +232,45 @@
                   "code": [
                     {
                       "variable": "cfg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "isnot"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "file"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.call(Name=\"NotAFile\")",
+              "line": {
+                "number": 10
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "NotAFile"
                     }
                   ]
                 }
@@ -454,17 +486,17 @@
     },
     {
       "index": 9,
-      "text": "assert %cfg% is dict",
+      "text": "if %cfg% is not dict, call NotADict",
       "line": {
         "number": 15
       },
       "code": [
         {
-          "module": "assert",
-          "name": "isTrue",
+          "module": "condition",
+          "name": "if",
           "property": [
             {
-              "name": "Value",
+              "name": "Left",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -476,6 +508,45 @@
                   "code": [
                     {
                       "variable": "cfg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "isnot"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "dict"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.call(Name=\"NotADict\")",
+              "line": {
+                "number": 15
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "NotADict"
                     }
                   ]
                 }
@@ -612,9 +683,106 @@
       ]
     }
   ],
-  "child": [],
+  "child": [
+    {
+      "name": "NotAFile",
+      "step": [
+        {
+          "index": 0,
+          "text": "throw \"cfg is not a file\"",
+          "line": {
+            "number": 21
+          },
+          "code": [
+            {
+              "module": "error",
+              "name": "throw",
+              "property": [
+                {
+                  "name": "Message",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "cfg is not a file"
+                }
+              ],
+              "default": [
+                {
+                  "name": "status",
+                  "type": {
+                    "name": "status"
+                  },
+                  "value": 400
+                },
+                {
+                  "name": "key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "error"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/app/data/Cut2.test.goal",
+      "prPath": "/app/data/.build/cut2.test.pr",
+      "hash": "afe1e3e48d013a7c34bb6a5ea8b3e06c8c86831520ee7a71c8c6a62af71e95f4"
+    },
+    {
+      "name": "NotADict",
+      "step": [
+        {
+          "index": 0,
+          "text": "throw \"cfg is not a dict\"",
+          "line": {
+            "number": 24
+          },
+          "code": [
+            {
+              "module": "error",
+              "name": "throw",
+              "property": [
+                {
+                  "name": "Message",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "cfg is not a dict"
+                }
+              ],
+              "default": [
+                {
+                  "name": "status",
+                  "type": {
+                    "name": "status"
+                  },
+                  "value": 400
+                },
+                {
+                  "name": "key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "error"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/app/data/Cut2.test.goal",
+      "prPath": "/app/data/.build/cut2.test.pr",
+      "hash": "74f11921efb9f7d585e16519e2840baf8efbdfb1f89ec55cfe8f634cb34a2fdf"
+    }
+  ],
   "visibility": "Public",
   "path": "/app/data/Cut2.test.goal",
   "prPath": "/app/data/.build/cut2.test.pr",
-  "hash": "f5c87d63b09393ae8c8d33783ff86c3dbbd83785eff82dc5acee07d2759b4baa"
+  "hash": "b1bc3c12f999a53474d0e8a76a2c77afcf2c47924d108984115e5331500e2a9f"
 }

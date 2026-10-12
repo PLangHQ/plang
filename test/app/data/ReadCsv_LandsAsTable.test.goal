@@ -7,4 +7,7 @@ Start
 - read file 'report.csv', write to %report%
 - assert %report!type.name% equals "file"
 - assert %report!type.kind% equals "csv"
-- assert %report% is file
+- if %report% is not file, call NotAFile
+
+NotAFile
+- throw "report is not a file"

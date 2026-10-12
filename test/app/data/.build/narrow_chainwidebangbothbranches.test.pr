@@ -211,35 +211,17 @@
     },
     {
       "index": 4,
-      "text": "assert %config% is file",
+      "text": "if %config% is not file, call NotAFile",
       "line": {
         "number": 9
       },
       "code": [
         {
-          "module": "assert",
-          "name": "equals",
+          "module": "condition",
+          "name": "if",
           "property": [
             {
-              "name": "Expected",
-              "type": {
-                "name": "item",
-                "template": "plang"
-              },
-              "value": "%!data%",
-              "variable": [
-                {
-                  "text": "%!data%",
-                  "code": [
-                    {
-                      "variable": "!data"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Actual",
+              "name": "Left",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -251,6 +233,45 @@
                   "code": [
                     {
                       "variable": "config"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "isnot"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "file"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.call(Name=\"NotAFile\")",
+              "line": {
+                "number": 9
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "NotAFile"
                     }
                   ]
                 }
@@ -365,17 +386,17 @@
     },
     {
       "index": 7,
-      "text": "assert %config% is dict",
+      "text": "if %config% is not dict, call NotADict",
       "line": {
         "number": 13
       },
       "code": [
         {
-          "module": "assert",
-          "name": "isTrue",
+          "module": "condition",
+          "name": "if",
           "property": [
             {
-              "name": "Value",
+              "name": "Left",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -387,6 +408,45 @@
                   "code": [
                     {
                       "variable": "config"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "isnot"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "dict"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.call(Name=\"NotADict\")",
+              "line": {
+                "number": 13
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "NotADict"
                     }
                   ]
                 }
@@ -398,35 +458,17 @@
     },
     {
       "index": 8,
-      "text": "assert %config% is file",
+      "text": "if %config% is not file, call NotAFile",
       "line": {
         "number": 14
       },
       "code": [
         {
-          "module": "assert",
-          "name": "equals",
+          "module": "condition",
+          "name": "if",
           "property": [
             {
-              "name": "Expected",
-              "type": {
-                "name": "item",
-                "template": "plang"
-              },
-              "value": "%!data%",
-              "variable": [
-                {
-                  "text": "%!data%",
-                  "code": [
-                    {
-                      "variable": "!data"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Actual",
+              "name": "Left",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -438,6 +480,45 @@
                   "code": [
                     {
                       "variable": "config"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "isnot"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "file"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.call(Name=\"NotAFile\")",
+              "line": {
+                "number": 14
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "NotAFile"
                     }
                   ]
                 }
@@ -575,9 +656,106 @@
       ]
     }
   ],
-  "child": [],
+  "child": [
+    {
+      "name": "NotAFile",
+      "step": [
+        {
+          "index": 0,
+          "text": "throw \"config is not a file\"",
+          "line": {
+            "number": 21
+          },
+          "code": [
+            {
+              "module": "error",
+              "name": "throw",
+              "property": [
+                {
+                  "name": "Message",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "config is not a file"
+                }
+              ],
+              "default": [
+                {
+                  "name": "status",
+                  "type": {
+                    "name": "status"
+                  },
+                  "value": 400
+                },
+                {
+                  "name": "key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "error"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/app/data/Narrow_ChainWideBangBothBranches.test.goal",
+      "prPath": "/app/data/.build/narrow_chainwidebangbothbranches.test.pr",
+      "hash": "771079e87779e4be05ab82151de859898ee1e2d55d06cb9fc3173c26545abf79"
+    },
+    {
+      "name": "NotADict",
+      "step": [
+        {
+          "index": 0,
+          "text": "throw \"config is not a dict\"",
+          "line": {
+            "number": 24
+          },
+          "code": [
+            {
+              "module": "error",
+              "name": "throw",
+              "property": [
+                {
+                  "name": "Message",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "config is not a dict"
+                }
+              ],
+              "default": [
+                {
+                  "name": "status",
+                  "type": {
+                    "name": "status"
+                  },
+                  "value": 400
+                },
+                {
+                  "name": "key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "error"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/app/data/Narrow_ChainWideBangBothBranches.test.goal",
+      "prPath": "/app/data/.build/narrow_chainwidebangbothbranches.test.pr",
+      "hash": "0fc3d8292008456a4e6c9de4afb3b207004b252be30ead9738d63c7793002dd5"
+    }
+  ],
   "visibility": "Public",
   "path": "/app/data/Narrow_ChainWideBangBothBranches.test.goal",
   "prPath": "/app/data/.build/narrow_chainwidebangbothbranches.test.pr",
-  "hash": "eddbb0942501600538a399c606c830757fb5ba5933bb5ab61afb4413d325c9d0"
+  "hash": "1f72f245123024e40ae8b9bddc64f300f9a06ed8564f4ab0735c2ee81f9df2bd"
 }

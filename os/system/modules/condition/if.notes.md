@@ -13,7 +13,9 @@ Right — what Left is compared to · say: the value after the operator · build
 | `ends with` / `does not end with` | `Operator="endswith"` / `"notendswith"` | the value |
 | `is in [..]` / `is not in [..]` | `Operator="in"` / `"notin"` | the list |
 | `is empty` / `is not empty` | `Operator="isempty"` / `"isnotempty"` | left out |
-| `is a number` / `is not a list` | `Operator="is"` / `"isnot"` | the type name: number, list |
+| `is a number` / `is not a list` / `is file` / `is not dict` | `Operator="is"` / `"isnot"` | the type name: number, list, file, dict, path, … |
+
+**`is` / `is not` followed by a TYPE'S NAME — any plang type (`file`, `dict`, `path`, `text`, `number`, `list`, `datetime`, …), with or without `a`/`an` — is the TYPE CHECK `is`/`isnot`, Right the type's name.** `is file` → `Operator="is", Right="file"`; `is not a dict` → `Operator="isnot", Right="dict"`. Never `==`/`!=` (those compare two VALUES — `is "file"` as a quoted string is an equality, but a bare type word is a type check) and never `Operator="not"`.
 
 `if %name% is "Ingi", write out "hi"` is `condition.if(Left=%name%, Operator="==", Right="Ingi") { output.write(Data="hi") }`.
 
