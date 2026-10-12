@@ -24,6 +24,37 @@ public class AssertTests
 
     private static Data D(global::app.actor.context.@this ctx, object? value) => value == null ? new Data("", context: ctx) : ctx.Ok(value);
 
+    // --- A failure shows each operand's value ---
+
+    // `assert %n% equals 8` with %n% = 7: the failure says 7, never the %n% the step wrote
+    [Test]
+    public async Task Equals_Failing_NamesTheValue_NotTheVariable()
+    {
+        var (context, memory) = CreateContext();
+        await memory.Set("n", 7L);
+
+        var result = await Make.Action(context, "assert", "equals", ("Expected", 8L), ("Actual", "%n%")).Start(context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("Actual: 7");
+        await Assert.That(result.Error!.Message).DoesNotContain("%n%");
+    }
+
+    // a sensitive value in a failure is shown masked — its characters never reach the message
+    [Test]
+    public async Task NotEquals_Failing_ShowsASensitiveValueMasked()
+    {
+        var (context, memory) = CreateContext();
+        await memory.Set(new Data("pw", new global::app.type.item.sensitive.@this("hunter2"), context: context));
+
+        var result = await Make.Action(context, "assert", "notEquals", ("Expected", "%pw%"), ("Actual", "%pw%")).Start(context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("****");
+        await Assert.That(result.Error!.Message).DoesNotContain("hunter2");
+        await Assert.That(result.Error!.Message).DoesNotContain("%pw%");
+    }
+
     // --- Equals ---
 
     [Test]

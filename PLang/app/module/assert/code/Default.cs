@@ -15,9 +15,10 @@ public class Default : IAssert
         if (await IsEqual(action.Expected, action.Actual))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        // Error display keeps the materialised form (the masked/rendered path);
-        // only the comparison uses the scalar form.
-        return action.Context.Error<global::app.type.item.@bool.@this>(await Failure(action.Expected?.Peek(), action.Actual?.Peek(), action.Message?.Peek()?.ToString(), action.Context));
+        // the failure shows each operand's value, read (a %variable% shows what it holds, a sensitive value masked)
+        return action.Context.Error<global::app.type.item.@bool.@this>(await Failure(
+            action.Expected == null ? null : await action.Expected.Value(), action.Actual == null ? null : await action.Actual.Value(),
+            action.Message?.Peek()?.ToString(), action.Context));
     }
 
     public async Task<data.@this<global::app.type.item.@bool.@this>> NotEquals(NotEquals action)
@@ -25,7 +26,8 @@ public class Default : IAssert
         if (!await IsEqual(action.Expected, action.Actual))
             return action.Context.Ok<global::app.type.item.@bool.@this>(true);
 
-        return action.Context.Error<global::app.type.item.@bool.@this>(await Failure(action.Expected?.Peek(), action.Actual?.Peek(),
+        return action.Context.Error<global::app.type.item.@bool.@this>(await Failure(
+            action.Expected == null ? null : await action.Expected.Value(), action.Actual == null ? null : await action.Actual.Value(),
             action.Message?.Peek()?.ToString() ?? "Values should not be equal", action.Context));
     }
 
