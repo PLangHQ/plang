@@ -84,7 +84,7 @@
               "type": {
                 "name": "query"
               },
-              "value": {"order":{"field":"null","desc":false}}
+              "value": {"order":{}}
             }
           ],
           "default": [

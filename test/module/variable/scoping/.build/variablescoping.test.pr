@@ -36,13 +36,6 @@
                 "name": "text"
               },
               "value": "before"
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "text"
             }
           ],
           "default": [
@@ -73,7 +66,7 @@
               "type": {
                 "name": "goal"
               },
-              "value": "InnerGoal"
+              "value": "/module/variable/scoping/InnerGoal"
             }
           ]
         }
@@ -250,13 +243,6 @@
                 "name": "text"
               },
               "value": ""
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "text"
             }
           ],
           "default": [
@@ -330,7 +316,7 @@
               "type": {
                 "name": "goal"
               },
-              "value": "CaptureItem"
+              "value": "/module/variable/scoping/CaptureItem"
             },
             {
               "name": "Parameter",
@@ -440,7 +426,7 @@
               "type": {
                 "name": "goal"
               },
-              "value": "InnerWithParam"
+              "value": "/module/variable/scoping/InnerWithParam"
             },
             {
               "name": "Parameter",

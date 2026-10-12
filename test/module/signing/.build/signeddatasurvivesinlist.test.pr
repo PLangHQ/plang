@@ -25,7 +25,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 0 uses test.tag, which the decider was not sure of (0.95)"
+          "message": "step 0 uses test.tag, which the decider was not sure of (0.94)"
         }
       ]
     },
@@ -251,7 +251,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 3 uses variable.set, which the decider was not sure of (0.84)"
+          "message": "step 3 uses variable.set, which the decider was not sure of (0.82)"
         }
       ]
     },
@@ -300,5 +300,8 @@
   "visibility": "Public",
   "path": "/module/signing/SignedDataSurvivesInList.test.goal",
   "prPath": "/module/signing/.build/signeddatasurvivesinlist.test.pr",
-  "hash": "7bc3f86d8e4003df4653cab019529b4348cdc60e184f5bf2e26906a5ef7dee84"
+  "hash": "7bc3f86d8e4003df4653cab019529b4348cdc60e184f5bf2e26906a5ef7dee84",
+  "tag": [
+    "skip"
+  ]
 }

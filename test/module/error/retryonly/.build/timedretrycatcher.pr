@@ -1,0 +1,58 @@
+{
+  "name": "TimedRetryCatcher",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %timedRetryCaught% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%timedRetryCaught%",
+              "variable": [
+                {
+                  "text": "%timedRetryCaught%",
+                  "code": [
+                    {
+                      "variable": "timedRetryCaught"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/error/retryonly/TimedRetryCatcher.goal",
+  "prPath": "/module/error/retryonly/.build/timedretrycatcher.pr",
+  "hash": "41eb069ef6a7cf9670b49865dd3b53fb266c3b0ab3aceeff3efe905f6ded2fb7"
+}

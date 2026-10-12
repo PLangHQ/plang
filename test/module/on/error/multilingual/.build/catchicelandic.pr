@@ -1,0 +1,58 @@
+{
+  "name": "CatchIcelandic",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %caughtIcelandic% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%caughtIcelandic%",
+              "variable": [
+                {
+                  "text": "%caughtIcelandic%",
+                  "code": [
+                    {
+                      "variable": "caughtIcelandic"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/multilingual/CatchIcelandic.goal",
+  "prPath": "/module/on/error/multilingual/.build/catchicelandic.pr",
+  "hash": "aed1bb5073b16d16694e17a52c02fb5fe94e9b70f926bca44f4e1b7044c227fa"
+}

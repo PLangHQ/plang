@@ -1,0 +1,58 @@
+{
+  "name": "HandleMissing",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %missingCaught% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%missingCaught%",
+              "variable": [
+                {
+                  "text": "%missingCaught%",
+                  "code": [
+                    {
+                      "variable": "missingCaught"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/goal/missing/HandleMissing.goal",
+  "prPath": "/module/goal/missing/.build/handlemissing.pr",
+  "hash": "db43e380ce242129ffa56b5205e7f87e4a0b84173da5b88d8dacfcbb6842c654"
+}

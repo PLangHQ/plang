@@ -1,0 +1,423 @@
+{
+  "name": "Start",
+  "comment": "Test 1: file.read with cache - proves cache hit skips re-reading changed file",
+  "step": [
+    {
+      "index": 0,
+      "text": "save \"first-value\" to file 'testdata.txt'",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "testdata.txt"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "first-value"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "call ReadCached",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "/module/on/cache/basic/ReadCached"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "write out \"  1st call returned: %fileData.Value%\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "  1st call returned: %fileData.Value%",
+              "variable": [
+                {
+                  "text": "%fileData.Value%",
+                  "code": [
+                    {
+                      "variable": "fileData"
+                    },
+                    {
+                      "property": "Value"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "save \"second-value\" to file 'testdata.txt'",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "testdata.txt"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "second-value"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "call ReadCached",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "/module/on/cache/basic/ReadCached"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "write out \"  2nd call returned: %fileData.Value% (should still be 'first-value' if cached)\"",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "  2nd call returned: %fileData.Value% (should still be 'first-value' if cached)",
+              "variable": [
+                {
+                  "text": "%fileData.Value%",
+                  "code": [
+                    {
+                      "variable": "fileData"
+                    },
+                    {
+                      "property": "Value"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "save \"key-value-1\" to file 'keytest.txt'",
+      "line": {
+        "number": 10
+      },
+      "comment": "Test 2: custom cache key",
+      "code": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "keytest.txt"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "key-value-1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "call ReadWithKey",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "/module/on/cache/basic/ReadWithKey"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "write out \"  key test 1st: %keyData.Value%\"",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "  key test 1st: %keyData.Value%",
+              "variable": [
+                {
+                  "text": "%keyData.Value%",
+                  "code": [
+                    {
+                      "variable": "keyData"
+                    },
+                    {
+                      "property": "Value"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "text": "save \"key-value-2\" to file 'keytest.txt'",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "keytest.txt"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "key-value-2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "text": "call ReadWithKey",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "/module/on/cache/basic/ReadWithKey"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "text": "write out \"  key test 2nd: %keyData.Value% (should still be 'key-value-1' if cached)\"",
+      "line": {
+        "number": 15
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "  key test 2nd: %keyData.Value% (should still be 'key-value-1' if cached)",
+              "variable": [
+                {
+                  "text": "%keyData.Value%",
+                  "code": [
+                    {
+                      "variable": "keyData"
+                    },
+                    {
+                      "property": "Value"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "text": "delete file 'testdata.txt'",
+      "line": {
+        "number": 17
+      },
+      "comment": "Cleanup",
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "testdata.txt"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "text": "delete file 'keytest.txt'",
+      "line": {
+        "number": 18
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "keytest.txt"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/cache/basic/Start.goal",
+  "prPath": "/module/on/cache/basic/.build/start.pr",
+  "hash": "a0342f43e4284305e4b19906c77648a0d190cef96bb1a7ee5308083f240d9922"
+}

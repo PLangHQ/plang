@@ -1,0 +1,39 @@
+{
+  "name": "Failing",
+  "step": [
+    {
+      "index": 0,
+      "text": "assert 1 equals 2",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/run/_fail/failing.fixture.goal",
+  "prPath": "/module/test/run/_fail/.build/failing.fixture.pr",
+  "hash": "c8d8acd7307ffbf15c76dfab948fddb09356ceb64beca6a45e94f65fd066bf85"
+}

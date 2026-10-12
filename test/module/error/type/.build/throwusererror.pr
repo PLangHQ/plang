@@ -1,0 +1,48 @@
+{
+  "name": "ThrowUserError",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"user error\" key=\"TestKey\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "user error"
+            },
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestKey"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/error/type/ThrowUserError.goal",
+  "prPath": "/module/error/type/.build/throwusererror.pr",
+  "hash": "70a7d68f9acfca63cfe363bfe5a010e751b669b6152a88030383dbe38c1b01de"
+}

@@ -1,0 +1,58 @@
+{
+  "name": "SubGoal",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %subResult% = \"from sub\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%subResult%",
+              "variable": [
+                {
+                  "text": "%subResult%",
+                  "code": [
+                    {
+                      "variable": "subResult"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "from sub"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/goal/relative/sub/SubGoal.goal",
+  "prPath": "/module/goal/relative/sub/.build/subgoal.pr",
+  "hash": "cf9b15ac47b82e9d27c130f49d62a3e92b67ced98c0964fbbf4e0aeda25584f3"
+}

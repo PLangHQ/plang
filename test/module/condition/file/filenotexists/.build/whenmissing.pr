@@ -1,0 +1,58 @@
+{
+  "name": "WhenMissing",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"missing\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "missing"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/file/filenotexists/WhenMissing.goal",
+  "prPath": "/module/condition/file/filenotexists/.build/whenmissing.pr",
+  "hash": "16b079298271186919993ae27fad2db105b7dff3251b99404dc16747799e645b"
+}

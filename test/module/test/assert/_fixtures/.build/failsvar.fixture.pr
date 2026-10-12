@@ -1,0 +1,98 @@
+{
+  "name": "FailsVar",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %foo% = 42",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%foo%",
+              "variable": [
+                {
+                  "text": "%foo%",
+                  "code": [
+                    {
+                      "variable": "foo"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 42
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %foo% equals 99",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 99
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%foo%",
+              "variable": [
+                {
+                  "text": "%foo%",
+                  "code": [
+                    {
+                      "variable": "foo"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/assert/_fixtures/failsvar.fixture.goal",
+  "prPath": "/module/test/assert/_fixtures/.build/failsvar.fixture.pr",
+  "hash": "74e4e4f69b5b003d32b0f84d6850cf71b5c08deac77278e2e8508317fe8537e7"
+}

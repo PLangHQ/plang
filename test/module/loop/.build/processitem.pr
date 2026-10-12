@@ -1,0 +1,43 @@
+{
+  "name": "ProcessItem",
+  "step": [
+    {
+      "index": 0,
+      "text": "write out \"Item: %item%\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "Item: %item%",
+              "variable": [
+                {
+                  "text": "%item%",
+                  "code": [
+                    {
+                      "variable": "item"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/loop/ProcessItem.goal",
+  "prPath": "/module/loop/.build/processitem.pr",
+  "hash": "b9f04ed8c6c8647eff2063b9d13bb87a059103d9c555d701d890e7d4238911d0"
+}

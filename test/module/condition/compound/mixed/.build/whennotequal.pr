@@ -1,0 +1,58 @@
+{
+  "name": "WhenNotEqual",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %notEqualResult% = \"yes\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%notEqualResult%",
+              "variable": [
+                {
+                  "text": "%notEqualResult%",
+                  "code": [
+                    {
+                      "variable": "notEqualResult"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/compound/mixed/WhenNotEqual.goal",
+  "prPath": "/module/condition/compound/mixed/.build/whennotequal.pr",
+  "hash": "bdb2f048e12cf656176ae73f35ab6f55c948d492a94b0fb85c9874e446e52392"
+}

@@ -1,0 +1,58 @@
+{
+  "name": "BareRetryCatcher",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %bareRetryCaught% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%bareRetryCaught%",
+              "variable": [
+                {
+                  "text": "%bareRetryCaught%",
+                  "code": [
+                    {
+                      "variable": "bareRetryCaught"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/error/retryonly/BareRetryCatcher.goal",
+  "prPath": "/module/error/retryonly/.build/bareretrycatcher.pr",
+  "hash": "65ff31dbb61606845c711f5ea560a91a4d0add862f5c6c0cd3cb1eb93742b71f"
+}

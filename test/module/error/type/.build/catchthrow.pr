@@ -1,0 +1,72 @@
+{
+  "name": "CatchThrow",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %throwKey% = %!error.Key%",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%throwKey%",
+              "variable": [
+                {
+                  "text": "%throwKey%",
+                  "code": [
+                    {
+                      "variable": "throwKey"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!error.Key%",
+              "variable": [
+                {
+                  "text": "%!error.Key%",
+                  "code": [
+                    {
+                      "variable": "!error"
+                    },
+                    {
+                      "property": "Key"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/error/type/CatchThrow.goal",
+  "prPath": "/module/error/type/.build/catchthrow.pr",
+  "hash": "a20cda4598f72d130b7bea3105145756cbc4ecff0decf08a2371b83d4f056f58"
+}

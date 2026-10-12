@@ -1,0 +1,58 @@
+{
+  "name": "WhenGreater",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %greaterResult% = \"yes\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%greaterResult%",
+              "variable": [
+                {
+                  "text": "%greaterResult%",
+                  "code": [
+                    {
+                      "variable": "greaterResult"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/compound/mixed/WhenGreater.goal",
+  "prPath": "/module/condition/compound/mixed/.build/whengreater.pr",
+  "hash": "7aeff84b071d0b88538f519f73e32bd418d63eacdb3b0fa07dd437dc06f3110e"
+}

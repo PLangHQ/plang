@@ -1,0 +1,115 @@
+{
+  "name": "ReadDynamic",
+  "step": [
+    {
+      "index": 0,
+      "text": "read file %fileName%, cache for 60 seconds, write to %dynContent%",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path",
+                "template": "plang"
+              },
+              "value": "%fileName%",
+              "variable": [
+                {
+                  "text": "%fileName%",
+                  "code": [
+                    {
+                      "variable": "fileName"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "cache",
+          "property": [
+            {
+              "name": "Duration",
+              "type": {
+                "name": "duration"
+              },
+              "value": "60s"
+            }
+          ],
+          "default": [
+            {
+              "name": "sliding",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%dynContent%",
+              "variable": [
+                {
+                  "text": "%dynContent%",
+                  "code": [
+                    {
+                      "variable": "dynContent"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/cache/dynamickey/ReadDynamic.goal",
+  "prPath": "/module/cache/dynamickey/.build/readdynamic.pr",
+  "hash": "fe24ed7808792a1607fd4f03dd9dedc270ccb4807487627e52aa98d8c2eb4069"
+}

@@ -1,0 +1,58 @@
+{
+  "name": "Setup",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %setupDone% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%setupDone%",
+              "variable": [
+                {
+                  "text": "%setupDone%",
+                  "code": [
+                    {
+                      "variable": "setupDone"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/setupgoal/Setup.goal",
+  "prPath": "/app/setupgoal/.build/setup.pr",
+  "hash": "dd26b2a416d791e92ebe324d1abba4020d2f3828b0bed94d9cfc944549d64688"
+}

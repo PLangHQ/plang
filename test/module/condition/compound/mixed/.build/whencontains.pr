@@ -1,0 +1,58 @@
+{
+  "name": "WhenContains",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %containsResult% = \"yes\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%containsResult%",
+              "variable": [
+                {
+                  "text": "%containsResult%",
+                  "code": [
+                    {
+                      "variable": "containsResult"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/compound/mixed/WhenContains.goal",
+  "prPath": "/module/condition/compound/mixed/.build/whencontains.pr",
+  "hash": "677379069a0dfa3e8d83469b433622f545b78abcb775119cff68f9be18b107ce"
+}

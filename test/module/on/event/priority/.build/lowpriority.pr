@@ -1,0 +1,69 @@
+{
+  "name": "LowPriority",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %order% = \"%order%,low\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%order%",
+              "variable": [
+                {
+                  "text": "%order%",
+                  "code": [
+                    {
+                      "variable": "order"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "%order%,low",
+              "variable": [
+                {
+                  "text": "%order%",
+                  "code": [
+                    {
+                      "variable": "order"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/event/priority/LowPriority.goal",
+  "prPath": "/module/on/event/priority/.build/lowpriority.pr",
+  "hash": "c412cc6195fed8e4293ea2c3b6ace6f478f9ace351a8ab06c9591c3ae90a45a7"
+}

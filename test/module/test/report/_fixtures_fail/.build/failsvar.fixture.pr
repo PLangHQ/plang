@@ -1,0 +1,99 @@
+{
+  "name": "FailsVar",
+  "comment": "Sets %score%=42 and asserts %score%=99 — AssertSnapshot attaches the\nVariables map to AssertionError. The Report test then verifies that\ntest.report's JSON output carries the %score% snapshot.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %score% = 42",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%score%",
+              "variable": [
+                {
+                  "text": "%score%",
+                  "code": [
+                    {
+                      "variable": "score"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 42
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %score% equals 99",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "99"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%score%",
+              "variable": [
+                {
+                  "text": "%score%",
+                  "code": [
+                    {
+                      "variable": "score"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/report/_fixtures_fail/failsvar.fixture.goal",
+  "prPath": "/module/test/report/_fixtures_fail/.build/failsvar.fixture.pr",
+  "hash": "96dd623240d9f3b43437ddafb0f28473c2c6e9bc3451aa1e8274ed469e794f34"
+}

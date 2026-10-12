@@ -1,0 +1,252 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %deep% = {a:{b:{c:{d:{e:\"found\"}}}}}",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%deep%",
+              "variable": [
+                {
+                  "text": "%deep%",
+                  "code": [
+                    {
+                      "variable": "deep"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"a":{"b":{"c":{"d":{"e":"found"}}}}}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "write out %deep.a.b.c.d.e%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%deep.a.b.c.d.e%",
+              "variable": [
+                {
+                  "text": "%deep.a.b.c.d.e%",
+                  "code": [
+                    {
+                      "variable": "deep"
+                    },
+                    {
+                      "property": "a"
+                    },
+                    {
+                      "property": "b"
+                    },
+                    {
+                      "property": "c"
+                    },
+                    {
+                      "property": "d"
+                    },
+                    {
+                      "property": "e"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %list% = [{items:[{val:1},{val:2}]},{items:[{val:3}]}]",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%list%",
+              "variable": [
+                {
+                  "text": "%list%",
+                  "code": [
+                    {
+                      "variable": "list"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"items":[{"val":1},{"val":2}]},{"items":[{"val":3}]}]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "write out %list[0].items[1].val%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%list[0].items[1].val%",
+              "variable": [
+                {
+                  "text": "%list[0].items[1].val%",
+                  "code": [
+                    {
+                      "variable": "list"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "items"
+                    },
+                    {
+                      "index": {
+                        "number": 1
+                      }
+                    },
+                    {
+                      "property": "val"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "write out %list[1].items[0].val%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%list[1].items[0].val%",
+              "variable": [
+                {
+                  "text": "%list[1].items[0].val%",
+                  "code": [
+                    {
+                      "variable": "list"
+                    },
+                    {
+                      "index": {
+                        "number": 1
+                      }
+                    },
+                    {
+                      "property": "items"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "val"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/deepnavigation/Start.goal",
+  "prPath": "/app/deepnavigation/.build/start.pr",
+  "hash": "e258c334893865a9059fdce9e70648ac626d4c8c678f8f663313dbf3969ac774"
+}

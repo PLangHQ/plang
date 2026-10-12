@@ -1,0 +1,58 @@
+{
+  "name": "HandleRetryError",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %retryErrorHandled% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%retryErrorHandled%",
+              "variable": [
+                {
+                  "text": "%retryErrorHandled%",
+                  "code": [
+                    {
+                      "variable": "retryErrorHandled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/retry/HandleRetryError.goal",
+  "prPath": "/module/on/error/retry/.build/handleretryerror.pr",
+  "hash": "ae8e61d18118c580cb96228c47462b23b9c87795c796b241df65d7ba04ed1a39"
+}

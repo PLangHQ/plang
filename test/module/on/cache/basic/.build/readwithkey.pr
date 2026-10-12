@@ -1,0 +1,111 @@
+{
+  "name": "ReadWithKey",
+  "step": [
+    {
+      "index": 0,
+      "text": "read file 'keytest.txt', write to %keyData%\ncache for 5 minutes, key 'myKeyTest'",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "keytest.txt"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "cache",
+          "property": [
+            {
+              "name": "Duration",
+              "type": {
+                "name": "duration"
+              },
+              "value": "5m"
+            },
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "myKeyTest"
+            }
+          ],
+          "default": [
+            {
+              "name": "sliding",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%keyData%",
+              "variable": [
+                {
+                  "text": "%keyData%",
+                  "code": [
+                    {
+                      "variable": "keyData"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/cache/basic/ReadWithKey.goal",
+  "prPath": "/module/on/cache/basic/.build/readwithkey.pr",
+  "hash": "84bbfc21860aa0bf67bcf84fc6e609d1ec9731f109c45da939118291c38fdf73"
+}

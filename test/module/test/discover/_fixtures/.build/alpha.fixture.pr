@@ -1,0 +1,32 @@
+{
+  "name": "Alpha",
+  "step": [
+    {
+      "index": 0,
+      "text": "write out 'alpha fixture'",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "alpha fixture"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/discover/_fixtures/alpha.fixture.goal",
+  "prPath": "/module/test/discover/_fixtures/.build/alpha.fixture.pr",
+  "hash": "0347321ff766c9984dca340a99d0c2b17cb4331e3948f009915636b2613f1341"
+}

@@ -1,12 +1,12 @@
 {
   "name": "TestErrorVarIsNullOutsideHandler",
-  "comment": "Outside any on.error scope, %!error% resolves to null (no leakage from prior recovery scopes that have already closed).",
+  "comment": "Outside any on.error scope no error is current: reading %!error% there is an error (a %!…% node that isn't\nthere never reads as null), and nothing leaks from recovery scopes that have already closed.",
   "step": [
     {
       "index": 0,
-      "text": "set %check% = %!error%",
+      "text": "set %check% = %!error%, on error call Caught",
       "line": {
-        "number": 3
+        "number": 4
       },
       "code": [
         {
@@ -58,33 +58,77 @@
               "value": false
             }
           ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "Caught"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
         }
       ]
     },
     {
       "index": 1,
-      "text": "assert %check% is null",
+      "text": "assert %caught% equals \"NotFound\"",
       "line": {
-        "number": 4
+        "number": 5
       },
       "code": [
         {
           "module": "assert",
-          "name": "isNull",
+          "name": "equals",
           "property": [
             {
-              "name": "Value",
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "NotFound"
+            },
+            {
+              "name": "Actual",
               "type": {
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%check%",
+              "value": "%caught%",
               "variable": [
                 {
-                  "text": "%check%",
+                  "text": "%caught%",
                   "code": [
                     {
-                      "variable": "check"
+                      "variable": "caught"
                     }
                   ]
                 }
@@ -95,9 +139,82 @@
       ]
     }
   ],
-  "child": [],
+  "child": [
+    {
+      "name": "Caught",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %caught% = %!error.Key%",
+          "line": {
+            "number": 8
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%caught%",
+                  "variable": [
+                    {
+                      "text": "%caught%",
+                      "code": [
+                        {
+                          "variable": "caught"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!error.Key%",
+                  "variable": [
+                    {
+                      "text": "%!error.Key%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Key"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/app/callstack/ErrorVarIsNullOutsideHandler.test.goal",
+      "prPath": "/app/callstack/.build/errorvarisnulloutsidehandler.test.pr",
+      "hash": "ec0f5fc53113edce508631be46166dab0372210530613172a5ff489cca506038"
+    }
+  ],
   "visibility": "Public",
   "path": "/app/callstack/ErrorVarIsNullOutsideHandler.test.goal",
   "prPath": "/app/callstack/.build/errorvarisnulloutsidehandler.test.pr",
-  "hash": "caf1e59df65a23b441e2e1accf10e71ceb21e4831baaadf7b9c19be44729b94a"
+  "hash": "092a495bce243b050127624e47506ebee6765a2b56ad07aa281ff42f9a636204"
 }

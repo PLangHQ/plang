@@ -1,10 +1,10 @@
 {
   "name": "Start",
-  "comment": "Stage 12 (decision 59): a problem the programmer caused is an error result with its own key, never an exception.\nToday item.Set throws NotSupported and data.Set catches it (a bridge that also hides real bugs), so the error has\nno key of its own. The key's name is settled in the conversation; the spec is that it names the problem.",
+  "comment": "A member a program adds lands on the nearest thing that lives on (decision 564): a variable's own value keeps it,\nbut a plain value inside another value (the number under %d.t%) has nowhere to keep one. That write is an error\nunder its own key — never a silent success, never a crash.",
   "step": [
     {
       "index": 0,
-      "text": "set %n% = 5",
+      "text": "set %d% = {\"t\": 5}",
       "line": {
         "number": 5
       },
@@ -18,13 +18,13 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%n%",
+              "value": "%d%",
               "variable": [
                 {
-                  "text": "%n%",
+                  "text": "%d%",
                   "code": [
                     {
-                      "variable": "n"
+                      "variable": "d"
                     }
                   ]
                 }
@@ -33,9 +33,9 @@
             {
               "name": "Value",
               "type": {
-                "name": "number"
+                "name": "dict"
               },
-              "value": 5
+              "value": {"t":5}
             }
           ],
           "default": [
@@ -52,7 +52,7 @@
     },
     {
       "index": 1,
-      "text": "set %n.name% = \"x\", on error set %key% = %!error.key%",
+      "text": "set %d.t.name% = \"x\", on error set %key% = %!error.key%",
       "line": {
         "number": 6
       },
@@ -66,13 +66,16 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%n.name%",
+              "value": "%d.t.name%",
               "variable": [
                 {
-                  "text": "%n.name%",
+                  "text": "%d.t.name%",
                   "code": [
                     {
-                      "variable": "n"
+                      "variable": "d"
+                    },
+                    {
+                      "property": "t"
                     },
                     {
                       "property": "name"
@@ -103,6 +106,27 @@
           "module": "on",
           "name": "error",
           "property": [
+            {
+              "name": "Key",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "%!error.key%",
+              "variable": [
+                {
+                  "text": "%!error.key%",
+                  "code": [
+                    {
+                      "variable": "!error"
+                    },
+                    {
+                      "property": "key"
+                    }
+                  ]
+                }
+              ]
+            },
             {
               "name": "Recovery",
               "type": {
@@ -180,54 +204,21 @@
     },
     {
       "index": 2,
-      "text": "assert %key% is not null",
+      "text": "assert %key% equals \"CannotSetChild\"",
       "line": {
         "number": 7
       },
       "code": [
         {
           "module": "assert",
-          "name": "isNotNull",
-          "property": [
-            {
-              "name": "Value",
-              "type": {
-                "name": "item",
-                "template": "plang"
-              },
-              "value": "%key%",
-              "variable": [
-                {
-                  "text": "%key%",
-                  "code": [
-                    {
-                      "variable": "key"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 3,
-      "text": "assert %key% is not \"ServiceError\", \"the error names what went wrong, not that something threw\"",
-      "line": {
-        "number": 8
-      },
-      "code": [
-        {
-          "module": "assert",
-          "name": "notEquals",
+          "name": "equals",
           "property": [
             {
               "name": "Expected",
               "type": {
                 "name": "text"
               },
-              "value": "ServiceError"
+              "value": "CannotSetChild"
             },
             {
               "name": "Actual",
@@ -246,13 +237,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Message",
-              "type": {
-                "name": "text"
-              },
-              "value": "the error names what went wrong, not that something threw"
             }
           ]
         }
@@ -263,5 +247,5 @@
   "visibility": "Public",
   "path": "/plan/app-systems/app/type/item/SetChildOnAValueIsAnError.test.goal",
   "prPath": "/plan/app-systems/app/type/item/.build/setchildonavalueisanerror.test.pr",
-  "hash": "8ae7f842547a077ad99ae9af48946e26a9b018bb2f7e85456f4700ea65dd3957"
+  "hash": "6443716d556d531f0e0ef68ae07ff82b3e543c4f798a914687c1374c0e8b0fdd"
 }

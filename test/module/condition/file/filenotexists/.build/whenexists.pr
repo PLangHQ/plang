@@ -1,0 +1,58 @@
+{
+  "name": "WhenExists",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"exists\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "exists"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/file/filenotexists/WhenExists.goal",
+  "prPath": "/module/condition/file/filenotexists/.build/whenexists.pr",
+  "hash": "1eb04494e579f00737036e9c3ff2130f79a04cd327b1835eb04cc6417dbb686f"
+}

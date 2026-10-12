@@ -105,7 +105,7 @@
     },
     {
       "index": 2,
-      "text": "assert %x.Type.Kind% is null",
+      "text": "assert %x!type.kind% is null",
       "line": {
         "number": 8
       },
@@ -120,19 +120,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x.Type.Kind%",
+              "value": "%x!type.kind%",
               "variable": [
                 {
-                  "text": "%x.Type.Kind%",
+                  "text": "%x!type.kind%",
                   "code": [
                     {
                       "variable": "x"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Kind"
+                      "property": "kind"
                     }
                   ]
                 }
@@ -147,5 +147,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetAsTextUppercase.test.goal",
   "prPath": "/app/type/kind/strict/.build/setastextuppercase.test.pr",
-  "hash": "71fa6760eb0dd4654bb58f060aebe934235b9254b362df8afa7008a0dd642d9d"
+  "hash": "b75c8ed5ab5fc6af8a31a94001262ae36c3d8e424fab459dfdcb22c3f938870c"
 }

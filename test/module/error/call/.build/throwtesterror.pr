@@ -1,0 +1,48 @@
+{
+  "name": "ThrowTestError",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"test error\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "test error"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/error/call/ThrowTestError.goal",
+  "prPath": "/module/error/call/.build/throwtesterror.pr",
+  "hash": "3d5aec7cc078c1cc615ef13ab3327ca7ba175613ceb77b40a4a7692eb72afc0a"
+}

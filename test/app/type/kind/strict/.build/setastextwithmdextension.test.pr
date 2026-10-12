@@ -105,7 +105,7 @@
     },
     {
       "index": 2,
-      "text": "assert %doc.Type.Kind% is null",
+      "text": "assert %doc!type.kind% is null",
       "line": {
         "number": 7
       },
@@ -120,19 +120,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%doc.Type.Kind%",
+              "value": "%doc!type.kind%",
               "variable": [
                 {
-                  "text": "%doc.Type.Kind%",
+                  "text": "%doc!type.kind%",
                   "code": [
                     {
                       "variable": "doc"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Kind"
+                      "property": "kind"
                     }
                   ]
                 }
@@ -147,5 +147,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetAsTextWithMdExtension.test.goal",
   "prPath": "/app/type/kind/strict/.build/setastextwithmdextension.test.pr",
-  "hash": "b976ba8e81423231a8def19c507c1d16a04b9b52bfeb6cd5f932dd627a169cd2"
+  "hash": "65c94d9286926d580253b1e45ef99a00b7a6299e4c7281fe618be43c228fe621"
 }

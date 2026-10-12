@@ -1,0 +1,58 @@
+{
+  "name": "SetWrong",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %wasWrong% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%wasWrong%",
+              "variable": [
+                {
+                  "text": "%wasWrong%",
+                  "code": [
+                    {
+                      "variable": "wasWrong"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/if/basic/SetWrong.goal",
+  "prPath": "/module/condition/if/basic/.build/setwrong.pr",
+  "hash": "98dd080abbd94b464bfbb0a7914f381a531d3cfce030d533de94422ebe7776ce"
+}

@@ -1,0 +1,58 @@
+{
+  "name": "CatchArabic",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %caughtArabic% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%caughtArabic%",
+              "variable": [
+                {
+                  "text": "%caughtArabic%",
+                  "code": [
+                    {
+                      "variable": "caughtArabic"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/multilingual/CatchArabic.goal",
+  "prPath": "/module/on/error/multilingual/.build/catcharabic.pr",
+  "hash": "8665a8db81b5d572c5fb025c53666386946ed9dc721b18e9acc1a47e2bda5044"
+}

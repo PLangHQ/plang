@@ -10,75 +10,6 @@
       },
       "code": [
         {
-          "module": "variable",
-          "name": "set",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "%content%",
-              "variable": [
-                {
-                  "text": "%content%",
-                  "code": [
-                    {
-                      "variable": "content"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "from-recovery"
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        },
-        {
-          "module": "on",
-          "name": "error",
-          "property": [
-            {
-              "name": "Order",
-              "type": {
-                "name": "choice",
-                "kind": "errororder"
-              },
-              "value": "RetryFirst"
-            },
-            {
-              "name": "RetryCount",
-              "type": {
-                "name": "number"
-              },
-              "value": 1
-            }
-          ],
-          "default": [
-            {
-              "name": "ignore",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        },
-        {
           "module": "error",
           "name": "throw",
           "property": [
@@ -104,6 +35,84 @@
                 "name": "text"
               },
               "value": "error"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Order",
+              "type": {
+                "name": "choice",
+                "kind": "errororder"
+              },
+              "value": "RetryFirst"
+            },
+            {
+              "name": "RetryCount",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%content%",
+                      "variable": [
+                        {
+                          "text": "%content%",
+                          "code": [
+                            {
+                              "variable": "content"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "from-recovery"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
             }
           ]
         }

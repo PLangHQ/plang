@@ -1,0 +1,58 @@
+{
+  "name": "WhenBig",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"big\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "big"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/if/elsebranch/WhenBig.goal",
+  "prPath": "/module/condition/if/elsebranch/.build/whenbig.pr",
+  "hash": "60279b36ae171e0c794d315a0182b12ee6b88bc00af091e39a5efe5a3ddaaf23"
+}

@@ -1,0 +1,58 @@
+{
+  "name": "HandleError",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %errorHandled% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%errorHandled%",
+              "variable": [
+                {
+                  "text": "%errorHandled%",
+                  "code": [
+                    {
+                      "variable": "errorHandled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/chain/HandleError.goal",
+  "prPath": "/module/on/error/chain/.build/handleerror.pr",
+  "hash": "98a1df6dde955740300871d2d02b884f12da9b3cd7722ebb43b0569acb46b6ff"
+}

@@ -1,0 +1,58 @@
+{
+  "name": "CatchSwahili",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %caughtSwahili% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%caughtSwahili%",
+              "variable": [
+                {
+                  "text": "%caughtSwahili%",
+                  "code": [
+                    {
+                      "variable": "caughtSwahili"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/multilingual/CatchSwahili.goal",
+  "prPath": "/module/on/error/multilingual/.build/catchswahili.pr",
+  "hash": "f73c779afffe2a0327c44468bf4142f01c8c5f01bd0b9d0c0dd393a0bf7ed75f"
+}

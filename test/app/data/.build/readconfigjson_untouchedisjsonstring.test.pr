@@ -132,7 +132,7 @@
     },
     {
       "index": 2,
-      "text": "assert %cfg.Type.Kind% equals \"json\"",
+      "text": "assert %cfg!type.kind% equals \"json\"",
       "line": {
         "number": 10
       },
@@ -154,19 +154,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%cfg.Type.Kind%",
+              "value": "%cfg!type.kind%",
               "variable": [
                 {
-                  "text": "%cfg.Type.Kind%",
+                  "text": "%cfg!type.kind%",
                   "code": [
                     {
                       "variable": "cfg"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Kind"
+                      "property": "kind"
                     }
                   ]
                 }
@@ -224,5 +224,5 @@
   "visibility": "Public",
   "path": "/app/data/ReadConfigJson_UntouchedIsJsonString.test.goal",
   "prPath": "/app/data/.build/readconfigjson_untouchedisjsonstring.test.pr",
-  "hash": "3e2c97536232a686822d42a47ad56c5aa3f64555fead33a775c63eb3a9307c9f"
+  "hash": "a70a23ace73c178e601fe3b8382129b3fb5dcc2853af86a65d8ad6cdad1a914b"
 }

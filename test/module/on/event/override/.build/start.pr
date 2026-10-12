@@ -1,0 +1,207 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "before action file.read call OverrideFileRead",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Event",
+              "type": {
+                "name": "event",
+                "template": "plang"
+              },
+              "value": "%!app.type.step.on.start%",
+              "variable": [
+                {
+                  "text": "%!app.type.step.on.start%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "step"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "before"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "OverrideFileRead"
+                  }
+                ]
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "scope",
+              "type": {
+                "name": "choice",
+                "kind": "scope"
+              },
+              "value": "actor"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "read file \"nonexistent.json\", write to %content%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "nonexistent.json"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "json"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "write out %content%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/event/override/Start.goal",
+  "prPath": "/module/on/event/override/.build/start.pr",
+  "hash": "8c8536db2c4aa006f48641adc99524446a40d6402a24184dc29711ddb5bf1f7f"
+}

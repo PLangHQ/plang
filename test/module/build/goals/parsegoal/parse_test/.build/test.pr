@@ -1,0 +1,8 @@
+{
+  "name": "null",
+  "step": [],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/build/goals/parsegoal/parse_test/Test.goal",
+  "prPath": "/module/build/goals/parsegoal/parse_test/.build/test.pr"
+}

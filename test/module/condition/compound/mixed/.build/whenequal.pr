@@ -1,0 +1,58 @@
+{
+  "name": "WhenEqual",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %equalResult% = \"yes\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%equalResult%",
+              "variable": [
+                {
+                  "text": "%equalResult%",
+                  "code": [
+                    {
+                      "variable": "equalResult"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/compound/mixed/WhenEqual.goal",
+  "prPath": "/module/condition/compound/mixed/.build/whenequal.pr",
+  "hash": "ca8568378c878b4a87a953aee8b429345ddb0bc886c94ad3e47663c621239f46"
+}

@@ -1,0 +1,49 @@
+{
+  "name": "BadHandler",
+  "comment": "this handler also throws",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"handler error\"",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "handler error"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/inhandler/BadHandler.goal",
+  "prPath": "/module/on/error/inhandler/.build/badhandler.pr",
+  "hash": "d3ca2727ec52cf4f2ba9951ebf434767f45f74edf7b5ae442b1d80069d375292"
+}

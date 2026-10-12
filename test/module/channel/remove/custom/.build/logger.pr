@@ -1,0 +1,58 @@
+{
+  "name": "Logger",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %loggerCalled% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%loggerCalled%",
+              "variable": [
+                {
+                  "text": "%loggerCalled%",
+                  "code": [
+                    {
+                      "variable": "loggerCalled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/remove/custom/Logger.goal",
+  "prPath": "/module/channel/remove/custom/.build/logger.pr",
+  "hash": "c125c4dbd12f970fe8e5547eb01f7901bd13c5e91b0a45800f9c10af855d6d60"
+}

@@ -1,0 +1,32 @@
+{
+  "name": "Beta",
+  "step": [
+    {
+      "index": 0,
+      "text": "write out 'beta fixture'",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "beta fixture"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/discover/_fixtures/beta.fixture.goal",
+  "prPath": "/module/test/discover/_fixtures/.build/beta.fixture.pr",
+  "hash": "861c0bada7395a957dbbeef3b79f47d30bedb69b4d69d2b708bb4f7643ba5dad"
+}

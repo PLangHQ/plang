@@ -132,7 +132,7 @@
     },
     {
       "index": 2,
-      "text": "assert %report.Type.Kind% equals \"csv\"",
+      "text": "assert %report!type.kind% equals \"csv\"",
       "line": {
         "number": 9
       },
@@ -154,19 +154,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%report.Type.Kind%",
+              "value": "%report!type.kind%",
               "variable": [
                 {
-                  "text": "%report.Type.Kind%",
+                  "text": "%report!type.kind%",
                   "code": [
                     {
                       "variable": "report"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Kind"
+                      "property": "kind"
                     }
                   ]
                 }
@@ -207,6 +207,12 @@
             }
           ]
         }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 3 uses assert.isTrue, which the decider was not sure of (0.96)"
+        }
       ]
     }
   ],
@@ -214,5 +220,5 @@
   "visibility": "Public",
   "path": "/app/data/ReadCsv_LandsAsTable.test.goal",
   "prPath": "/app/data/.build/readcsv_landsastable.test.pr",
-  "hash": "9cb4cf906dcef577124425e9c1d120716291759208dbb09920b3d283ea7f0dea"
+  "hash": "bff6d51a6f9c1e366485451774bbdf528b61b234ced64b945aab207efba5e088"
 }

@@ -1,0 +1,152 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %items% = [\"apple\", \"banana\", \"cherry\"]",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%items%",
+              "variable": [
+                {
+                  "text": "%items%",
+                  "code": [
+                    {
+                      "variable": "items"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": ["apple","banana","cherry"]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "foreach %items%, call ProcessItem item=%item%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "loop",
+          "name": "foreach",
+          "property": [
+            {
+              "name": "Collection",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%items%",
+              "variable": [
+                {
+                  "text": "%items%",
+                  "code": [
+                    {
+                      "variable": "items"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "item",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%item%",
+              "variable": [
+                {
+                  "text": "%item%",
+                  "code": [
+                    {
+                      "variable": "item"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "/module/loop/ProcessItem"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"item","type":{"name":"item","template":"plang"},"value":"%item%","variable":[{"text":"%item%","code":[{"variable":"item"}]}]}]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "write out \"Loop done\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "Loop done"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/loop/Start.goal",
+  "prPath": "/module/loop/.build/start.pr",
+  "hash": "f7a43e3b0011c304c3f65aa79eab3f723e0e948a8aa57aabc39cf367f4802847"
+}

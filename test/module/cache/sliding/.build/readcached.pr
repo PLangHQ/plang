@@ -1,0 +1,104 @@
+{
+  "name": "ReadCached",
+  "step": [
+    {
+      "index": 0,
+      "text": "read file 'cacheslide.txt', cache for 60 seconds, write to %cachedValue%",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "cacheslide.txt"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "cache",
+          "property": [
+            {
+              "name": "Duration",
+              "type": {
+                "name": "duration"
+              },
+              "value": "60s"
+            }
+          ],
+          "default": [
+            {
+              "name": "sliding",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%cachedValue%",
+              "variable": [
+                {
+                  "text": "%cachedValue%",
+                  "code": [
+                    {
+                      "variable": "cachedValue"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/cache/sliding/ReadCached.goal",
+  "prPath": "/module/cache/sliding/.build/readcached.pr",
+  "hash": "533b8924ad3c814420aa42e1b823e83a1625fed8828c49352b72b083e65ac5c9"
+}

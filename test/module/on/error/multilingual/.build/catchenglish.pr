@@ -1,0 +1,58 @@
+{
+  "name": "CatchEnglish",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %caughtEnglish% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%caughtEnglish%",
+              "variable": [
+                {
+                  "text": "%caughtEnglish%",
+                  "code": [
+                    {
+                      "variable": "caughtEnglish"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/multilingual/CatchEnglish.goal",
+  "prPath": "/module/on/error/multilingual/.build/catchenglish.pr",
+  "hash": "aea9a89f7a5e0df1763664483db284f54ae05c1e12cd6e2cf5da80e62e3a3914"
+}

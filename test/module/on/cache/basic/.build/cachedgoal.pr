@@ -1,0 +1,138 @@
+{
+  "name": "CachedGoal",
+  "comment": "Called twice from Start - second call should hit cache",
+  "step": [
+    {
+      "index": 0,
+      "text": "read file 'testdata.txt', write to %cachedMsg%\ncache for 5 minutes",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "testdata.txt"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "cache",
+          "property": [
+            {
+              "name": "Duration",
+              "type": {
+                "name": "duration"
+              },
+              "value": "5m"
+            }
+          ],
+          "default": [
+            {
+              "name": "sliding",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%cachedMsg%",
+              "variable": [
+                {
+                  "text": "%cachedMsg%",
+                  "code": [
+                    {
+                      "variable": "cachedMsg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "write out \"  CachedGoal read: %cachedMsg%\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "  CachedGoal read: %cachedMsg%",
+              "variable": [
+                {
+                  "text": "%cachedMsg%",
+                  "code": [
+                    {
+                      "variable": "cachedMsg"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/cache/basic/CachedGoal.goal",
+  "prPath": "/module/on/cache/basic/.build/cachedgoal.pr",
+  "hash": "ad22f8e3e29000b4a289193977539fcb5a6f344bd07e79f257a0b63edde8da14"
+}

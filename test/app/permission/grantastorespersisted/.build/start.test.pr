@@ -34,7 +34,7 @@
                     "type": {
                       "name": "goal"
                     },
-                    "value": "ProbeAnswerer"
+                    "value": "/app/permission/grantastorespersisted/ProbeAnswerer"
                   }
                 ]
               }

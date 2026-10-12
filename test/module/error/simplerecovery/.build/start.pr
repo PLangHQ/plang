@@ -1,0 +1,77 @@
+{
+  "name": "Start",
+  "comment": "Minimum case: one action, one modifier, one nested recovery action.\nExercises the file.read Path([path] ...) | on.error Status + Actions=[output.write ...] shape.",
+  "step": [
+    {
+      "index": 0,
+      "text": "read 'data.txt', on error 404, write out \"missing\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "data.txt"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Status",
+              "type": {
+                "name": "status"
+              },
+              "value": 404
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "output",
+                  "name": "write",
+                  "property": [
+                    {
+                      "name": "Data",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "missing"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/error/simplerecovery/Start.goal",
+  "prPath": "/module/error/simplerecovery/.build/start.pr",
+  "hash": "0aadf028c648e175a5c62908bf0802ffd6c2037aa8cbf2dbac9ae8df0d96cadf"
+}

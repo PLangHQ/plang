@@ -34,7 +34,7 @@
                     "type": {
                       "name": "goal"
                     },
-                    "value": "VerbBasedAnswerer"
+                    "value": "/app/permission/authorize/statefulauthorizegrantsandcontinues/VerbBasedAnswerer"
                   }
                 ]
               }

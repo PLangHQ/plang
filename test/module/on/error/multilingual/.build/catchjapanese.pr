@@ -1,0 +1,58 @@
+{
+  "name": "CatchJapanese",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %caughtJapanese% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%caughtJapanese%",
+              "variable": [
+                {
+                  "text": "%caughtJapanese%",
+                  "code": [
+                    {
+                      "variable": "caughtJapanese"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/multilingual/CatchJapanese.goal",
+  "prPath": "/module/on/error/multilingual/.build/catchjapanese.pr",
+  "hash": "53989623d60fab0db5cdd6d98f35549d1cbf516bde069d9b01d6dd25d1f951d9"
+}

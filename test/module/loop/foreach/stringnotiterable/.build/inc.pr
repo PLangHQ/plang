@@ -1,0 +1,49 @@
+{
+  "name": "Inc",
+  "comment": "Helper goal — increments %count% by 1 each time it's called. The body of\nForeachStringNotIterable's foreach. A single body call after iterating the\natomic string proves the carve-out works end-to-end.",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw \"not implemented\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "not implemented"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/loop/foreach/stringnotiterable/Inc.goal",
+  "prPath": "/module/loop/foreach/stringnotiterable/.build/inc.pr",
+  "hash": "af5f4751db6c3f3a3b658421149b585d254a914f1dd3b89044e08cd8bac03dc5"
+}

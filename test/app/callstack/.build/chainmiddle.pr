@@ -1,0 +1,33 @@
+{
+  "name": "ChainMiddle",
+  "comment": "Middle link in the cross-file chain. Calls ChainThrows.",
+  "step": [
+    {
+      "index": 0,
+      "text": "call ChainThrows",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "/app/callstack/ChainThrows"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/ChainMiddle.goal",
+  "prPath": "/app/callstack/.build/chainmiddle.pr",
+  "hash": "3c66ab1231f25e8b6a40ad86b7cae400289e59f07b7786d2ab8168abfa048464"
+}

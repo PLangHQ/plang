@@ -1,0 +1,359 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "before each goal call LogBefore",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Event",
+              "type": {
+                "name": "event",
+                "template": "plang"
+              },
+              "value": "%!app.type.goal.on.start%",
+              "variable": [
+                {
+                  "text": "%!app.type.goal.on.start%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "before"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "/module/on/event/basic/LogBefore"
+                  }
+                ]
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "scope",
+              "type": {
+                "name": "choice",
+                "kind": "scope"
+              },
+              "value": "actor"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "after each goal call LogAfter",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Event",
+              "type": {
+                "name": "event",
+                "template": "plang"
+              },
+              "value": "%!app.type.goal.on.start%",
+              "variable": [
+                {
+                  "text": "%!app.type.goal.on.start%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "goal"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "after"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "/module/on/event/basic/LogAfter"
+                  }
+                ]
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "scope",
+              "type": {
+                "name": "choice",
+                "kind": "scope"
+              },
+              "value": "actor"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "before action variable.set call OnVarSet",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "on",
+          "name": "event",
+          "property": [
+            {
+              "name": "Event",
+              "type": {
+                "name": "event",
+                "template": "plang"
+              },
+              "value": "%!app.type.action.on.start%",
+              "variable": [
+                {
+                  "text": "%!app.type.action.on.start%",
+                  "code": [
+                    {
+                      "variable": "!app"
+                    },
+                    {
+                      "property": "type"
+                    },
+                    {
+                      "property": "action"
+                    },
+                    {
+                      "property": "on"
+                    },
+                    {
+                      "property": "start"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "When",
+              "type": {
+                "name": "choice",
+                "kind": "when"
+              },
+              "value": "before"
+            },
+            {
+              "name": "Action",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "/module/on/event/basic/OnVarSet"
+                  }
+                ]
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "scope",
+              "type": {
+                "name": "choice",
+                "kind": "scope"
+              },
+              "value": "actor"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "set %name% = \"hello\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%name%",
+              "variable": [
+                {
+                  "text": "%name%",
+                  "code": [
+                    {
+                      "variable": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "write out %name%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%name%",
+              "variable": [
+                {
+                  "text": "%name%",
+                  "code": [
+                    {
+                      "variable": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "call TestGoal",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "/module/on/event/basic/TestGoal"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/event/basic/Start.goal",
+  "prPath": "/module/on/event/basic/.build/start.pr",
+  "hash": "7bc97ed560e2a3fbfeb975feba15d1cd1b34a4d282ad1149056117793dc11cde"
+}

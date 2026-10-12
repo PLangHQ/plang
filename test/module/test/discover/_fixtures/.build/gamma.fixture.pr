@@ -1,0 +1,32 @@
+{
+  "name": "Gamma",
+  "step": [
+    {
+      "index": 0,
+      "text": "write out 'gamma fixture'",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "gamma fixture"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/discover/_fixtures/gamma.fixture.goal",
+  "prPath": "/module/test/discover/_fixtures/.build/gamma.fixture.pr",
+  "hash": "d371a59c9722110e90154d8d5c8d16b4c8cc47227f8b0ed711e36f557ab7508b"
+}

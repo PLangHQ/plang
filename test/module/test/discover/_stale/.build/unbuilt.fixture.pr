@@ -1,0 +1,32 @@
+{
+  "name": "Unbuilt",
+  "step": [
+    {
+      "index": 0,
+      "text": "write out 'unbuilt'",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "unbuilt"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/discover/_stale/unbuilt.fixture.goal",
+  "prPath": "/module/test/discover/_stale/.build/unbuilt.fixture.pr",
+  "hash": "c29326395ee7d48f3a5b8b30a0a808cfadea8401128e8f7701b6fd05108f37fd"
+}

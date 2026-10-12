@@ -1,0 +1,44 @@
+{
+  "name": "EchoBack",
+  "comment": "Body writes back to its own channel name. The IsExecuting guard makes the\nregistry treat \"echo\" as not-found while this body is running, so this\ninner write surfaces ChannelNotFound rather than recursing.",
+  "step": [
+    {
+      "index": 0,
+      "text": "write %message% to echo",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%message%",
+              "variable": [
+                {
+                  "text": "%message%",
+                  "code": [
+                    {
+                      "variable": "message"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/goalchannelrecursion/EchoBack.goal",
+  "prPath": "/module/channel/goalchannelrecursion/.build/echoback.pr",
+  "hash": "2efbde2d405bdcd05e5e256e07ce8ca8baa12134fc97d386d1d45ffb7feb1e95"
+}

@@ -1,0 +1,58 @@
+{
+  "name": "WhenLess",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %lessResult% = \"yes\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%lessResult%",
+              "variable": [
+                {
+                  "text": "%lessResult%",
+                  "code": [
+                    {
+                      "variable": "lessResult"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/compound/mixed/WhenLess.goal",
+  "prPath": "/module/condition/compound/mixed/.build/whenless.pr",
+  "hash": "c37903f7987fcfada32bdd1a4cc128db85e9298de69b48b437d5e9e276b0fc35"
+}

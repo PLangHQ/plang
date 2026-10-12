@@ -1,0 +1,32 @@
+{
+  "name": "Ready",
+  "step": [
+    {
+      "index": 0,
+      "text": "write out 'ready'",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "ready"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/discover/_stale/ready.fixture.goal",
+  "prPath": "/module/test/discover/_stale/.build/ready.fixture.pr",
+  "hash": "d68ef84b556618d9a0a4b604e5718358fb83c7312fa8c5a1d18e99822ab78e0c"
+}

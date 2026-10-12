@@ -1,0 +1,476 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "set  %user% = {name:\"john\", age:20, addresses:[{street:\"first street\", nr:10}, {street:\"second street\", nr:2}]}",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%user%",
+              "variable": [
+                {
+                  "text": "%user%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"name":"john","age":20,"addresses":[{"street":"first street","nr":10},{"street":"second street","nr":2}]}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "write out %user.name%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.name%",
+              "variable": [
+                {
+                  "text": "%user.name%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "write out %user.age%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.age%",
+              "variable": [
+                {
+                  "text": "%user.age%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "age"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "write out %user.addresses%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.addresses%",
+              "variable": [
+                {
+                  "text": "%user.addresses%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "addresses"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "write out %user.addresses.street%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.addresses.street%",
+              "variable": [
+                {
+                  "text": "%user.addresses.street%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "addresses"
+                    },
+                    {
+                      "property": "street"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "write out %user.addresses.first.street%",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.addresses.first.street%",
+              "variable": [
+                {
+                  "text": "%user.addresses.first.street%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "addresses"
+                    },
+                    {
+                      "property": "first"
+                    },
+                    {
+                      "property": "street"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "write out %user.addresses.last.street%",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.addresses.last.street%",
+              "variable": [
+                {
+                  "text": "%user.addresses.last.street%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "addresses"
+                    },
+                    {
+                      "property": "last"
+                    },
+                    {
+                      "property": "street"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "write out %user.addresses[0].street%",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.addresses[0].street%",
+              "variable": [
+                {
+                  "text": "%user.addresses[0].street%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "addresses"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "street"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "set %idx% = 1",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%idx%",
+              "variable": [
+                {
+                  "text": "%idx%",
+                  "code": [
+                    {
+                      "variable": "idx"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "text": "write out %user.addresses[idx].street%",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.addresses[idx].street%",
+              "variable": [
+                {
+                  "text": "%user.addresses[idx].street%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "addresses"
+                    },
+                    {
+                      "index": {
+                        "variable": [
+                          {
+                            "text": "%idx%",
+                            "code": [
+                              {
+                                "variable": "idx"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "property": "street"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "text": "write out %user.addresses.random.street%",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.addresses.random.street%",
+              "variable": [
+                {
+                  "text": "%user.addresses.random.street%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "addresses"
+                    },
+                    {
+                      "property": "random"
+                    },
+                    {
+                      "property": "street"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/variable/basic/Start.goal",
+  "prPath": "/module/variable/basic/.build/start.pr",
+  "hash": "c454a27e8fcf1ea3f648987379e397989899b14289ee587d743ee5ee9db4846f"
+}

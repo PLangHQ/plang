@@ -1,0 +1,58 @@
+{
+  "name": "GoalFirstHandler",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %goalFirstHandled% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%goalFirstHandled%",
+              "variable": [
+                {
+                  "text": "%goalFirstHandled%",
+                  "code": [
+                    {
+                      "variable": "goalFirstHandled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/goalfirst/GoalFirstHandler.goal",
+  "prPath": "/module/on/error/goalfirst/.build/goalfirsthandler.pr",
+  "hash": "b4a440ca009053da87c6fff1477bcc1b9e3da2b3386c1df6107ae0825ff1e770"
+}

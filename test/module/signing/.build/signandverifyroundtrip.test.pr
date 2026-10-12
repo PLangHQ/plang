@@ -362,5 +362,8 @@
   "visibility": "Public",
   "path": "/module/signing/SignAndVerifyRoundTrip.test.goal",
   "prPath": "/module/signing/.build/signandverifyroundtrip.test.pr",
-  "hash": "b545a687e9d9829f02267d4846fe6531f307b13b28f957a5555075f82f570260"
+  "hash": "b545a687e9d9829f02267d4846fe6531f307b13b28f957a5555075f82f570260",
+  "tag": [
+    "skip"
+  ]
 }

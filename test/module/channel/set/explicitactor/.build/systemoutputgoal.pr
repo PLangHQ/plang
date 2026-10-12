@@ -1,0 +1,58 @@
+{
+  "name": "SystemOutputGoal",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %systemOutputCalled% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%systemOutputCalled%",
+              "variable": [
+                {
+                  "text": "%systemOutputCalled%",
+                  "code": [
+                    {
+                      "variable": "systemOutputCalled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/set/explicitactor/SystemOutputGoal.goal",
+  "prPath": "/module/channel/set/explicitactor/.build/systemoutputgoal.pr",
+  "hash": "14b4e52ef429a468a75b12acaae818b74940d4327183f85ed8cf30f7714cb253"
+}

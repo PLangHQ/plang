@@ -1,0 +1,58 @@
+{
+  "name": "ProcessFile",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"file-processed\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "file-processed"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/file/fileexists/ProcessFile.goal",
+  "prPath": "/module/condition/file/fileexists/.build/processfile.pr",
+  "hash": "0eade57d1db7f47039cc373196dbefcf66cbd361e0905e5e2583ebcb7ce080af"
+}

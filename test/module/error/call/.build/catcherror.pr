@@ -1,0 +1,72 @@
+{
+  "name": "CatchError",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %caughtMessage% = %!error.Message%",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%caughtMessage%",
+              "variable": [
+                {
+                  "text": "%caughtMessage%",
+                  "code": [
+                    {
+                      "variable": "caughtMessage"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!error.Message%",
+              "variable": [
+                {
+                  "text": "%!error.Message%",
+                  "code": [
+                    {
+                      "variable": "!error"
+                    },
+                    {
+                      "property": "Message"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/error/call/CatchError.goal",
+  "prPath": "/module/error/call/.build/catcherror.pr",
+  "hash": "d64d1a688c894bbb8a1a0ff4e49b4095e4429eef9045dd651214792ac6e8ca23"
+}

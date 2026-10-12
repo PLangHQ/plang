@@ -1,0 +1,44 @@
+{
+  "name": "Start",
+  "comment": "Goal designed to potentially trip required-param check.\nfile.read requires Path; if the LLM forgets it, the new validator should reject.",
+  "step": [
+    {
+      "index": 0,
+      "text": "read",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/error/requiredparamcheck/Start.goal",
+  "prPath": "/module/error/requiredparamcheck/.build/start.pr",
+  "hash": "8f28fedcff25aa3195c39152089f4df1f9e6d101035de4ba9fb3ef1ee28594da"
+}

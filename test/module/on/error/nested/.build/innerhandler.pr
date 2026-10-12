@@ -1,0 +1,58 @@
+{
+  "name": "InnerHandler",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %innerErrorHandled% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%innerErrorHandled%",
+              "variable": [
+                {
+                  "text": "%innerErrorHandled%",
+                  "code": [
+                    {
+                      "variable": "innerErrorHandled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/nested/InnerHandler.goal",
+  "prPath": "/module/on/error/nested/.build/innerhandler.pr",
+  "hash": "3273fc98dca63bca1ca5e13f0ad201a2cedca134506c1a5d7de2c31977026b0d"
+}

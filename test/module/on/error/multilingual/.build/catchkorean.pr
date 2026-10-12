@@ -1,0 +1,58 @@
+{
+  "name": "CatchKorean",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %caughtKorean% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%caughtKorean%",
+              "variable": [
+                {
+                  "text": "%caughtKorean%",
+                  "code": [
+                    {
+                      "variable": "caughtKorean"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/multilingual/CatchKorean.goal",
+  "prPath": "/module/on/error/multilingual/.build/catchkorean.pr",
+  "hash": "27651b06d98f1c94579a1da5a0c94e057e3c8742ed9b1e262c28d873cc6cb3a6"
+}

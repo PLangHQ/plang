@@ -1,0 +1,69 @@
+{
+  "name": "Greet",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %greeting% = \"hello %name%\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%greeting%",
+              "variable": [
+                {
+                  "text": "%greeting%",
+                  "code": [
+                    {
+                      "variable": "greeting"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "hello %name%",
+              "variable": [
+                {
+                  "text": "%name%",
+                  "code": [
+                    {
+                      "variable": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/goal/basic/Greet.goal",
+  "prPath": "/module/goal/basic/.build/greet.pr",
+  "hash": "481aa0852804ee9c0713f0f9acc2f8d56b10c1ba2fb5ebeca6923acdcdee248d"
+}

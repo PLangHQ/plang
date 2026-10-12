@@ -1,0 +1,78 @@
+{
+  "name": "Start",
+  "comment": "Minimum case: a single step that's just a goal.call with one parameter.\nIf the saved .pr has camelCase value, the bug is builder-specific.\nIf it has PascalCase + nulls, the bug is in general goal.call handling.",
+  "step": [
+    {
+      "index": 0,
+      "text": "call DoStuff name=World",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "DoStuff"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "DoStuff",
+      "comment": "Trivial sub-goal called by Start.",
+      "step": [
+        {
+          "index": 0,
+          "text": "write out \"Hello %name%\"",
+          "line": {
+            "number": 12
+          },
+          "code": [
+            {
+              "module": "output",
+              "name": "write",
+              "property": [
+                {
+                  "name": "Data",
+                  "type": {
+                    "name": "text",
+                    "template": "plang"
+                  },
+                  "value": "Hello %name%",
+                  "variable": [
+                    {
+                      "text": "%name%",
+                      "code": [
+                        {
+                          "variable": "name"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/module/error/simplegoalcall/Start.goal",
+      "prPath": "/module/error/simplegoalcall/.build/start.pr",
+      "hash": "80125df8e26cfa3159f5acfeb69e723b91dad5b8be5cebeab7556630a16a38b8"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/module/error/simplegoalcall/Start.goal",
+  "prPath": "/module/error/simplegoalcall/.build/start.pr",
+  "hash": "d951f67d70a411e56fb7cf9a0dbb2136e6e3d023e3bfdfbcf329a06076b8bdcc"
+}

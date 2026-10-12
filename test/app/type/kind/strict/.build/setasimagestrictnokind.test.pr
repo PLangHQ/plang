@@ -105,7 +105,7 @@
     },
     {
       "index": 2,
-      "text": "assert %x.Type.Kind% is null",
+      "text": "assert %x!type.kind% is null",
       "line": {
         "number": 7
       },
@@ -120,19 +120,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x.Type.Kind%",
+              "value": "%x!type.kind%",
               "variable": [
                 {
-                  "text": "%x.Type.Kind%",
+                  "text": "%x!type.kind%",
                   "code": [
                     {
                       "variable": "x"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Kind"
+                      "property": "kind"
                     }
                   ]
                 }
@@ -144,7 +144,7 @@
     },
     {
       "index": 3,
-      "text": "assert %x.Type.Strict% equals true",
+      "text": "assert %x!type.strict% equals true",
       "line": {
         "number": 8
       },
@@ -166,19 +166,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x.Type.Strict%",
+              "value": "%x!type.strict%",
               "variable": [
                 {
-                  "text": "%x.Type.Strict%",
+                  "text": "%x!type.strict%",
                   "code": [
                     {
                       "variable": "x"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Strict"
+                      "property": "strict"
                     }
                   ]
                 }
@@ -193,5 +193,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetAsImageStrictNoKind.test.goal",
   "prPath": "/app/type/kind/strict/.build/setasimagestrictnokind.test.pr",
-  "hash": "d5e1893432ae7a780acd1942864203872b55288ae6945bb641295f5171c1b7ae"
+  "hash": "d44e0b49a3aeb6bed0fdacba91585424c4ef7f05ceda39eafa65125fb88794b6"
 }

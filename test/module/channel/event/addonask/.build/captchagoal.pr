@@ -1,0 +1,58 @@
+{
+  "name": "CaptchaGoal",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %captchaCalled% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%captchaCalled%",
+              "variable": [
+                {
+                  "text": "%captchaCalled%",
+                  "code": [
+                    {
+                      "variable": "captchaCalled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/event/addonask/CaptchaGoal.goal",
+  "prPath": "/module/channel/event/addonask/.build/captchagoal.pr",
+  "hash": "a500c701d7dae31203f887b3cb106e908a4634a4d9b6cd432778deecab371c99"
+}

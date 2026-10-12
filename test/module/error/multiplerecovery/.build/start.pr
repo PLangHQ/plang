@@ -1,0 +1,149 @@
+{
+  "name": "Start",
+  "comment": "Multiple nested recovery actions — the case that was breaking last session.\nThe on.error.Actions list must carry three nested action records:\noutput.write, file.read (with [path] type), variable.set.\nThis is the shape last session's LLM kept mangling.",
+  "step": [
+    {
+      "index": 0,
+      "text": "read 'data.txt', on error 404, write out \"primary missing\", read 'fallback.txt', write to %content%",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "data.txt"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Status",
+              "type": {
+                "name": "status"
+              },
+              "value": 404
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "output",
+                  "name": "write",
+                  "property": [
+                    {
+                      "name": "Data",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "primary missing"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "fallback.txt"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/error/multiplerecovery/Start.goal",
+  "prPath": "/module/error/multiplerecovery/.build/start.pr",
+  "hash": "c9d3263c19b6513c7333dd71353e906a9333a575298a893dfd394d4628e7a206"
+}

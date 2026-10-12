@@ -1,0 +1,33 @@
+{
+  "name": "CycleB",
+  "comment": "Helper for IndirectGoalCycleThrows. Calls back into CycleA — A's PrPath is already on the chain, ContainsGoal trips, CallStackOverflowException is thrown and caught by the test goal's on-error.",
+  "step": [
+    {
+      "index": 0,
+      "text": "call CycleA",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "/app/callstack/CycleA"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/CycleB.goal",
+  "prPath": "/app/callstack/.build/cycleb.pr",
+  "hash": "cc93253391d5025dffcd8413f3a15906f1e27736ecd0fadd7c8a1f9652ae2c96"
+}

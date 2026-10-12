@@ -1,0 +1,94 @@
+{
+  "name": "TestGoal",
+  "step": [
+    {
+      "index": 0,
+      "text": "step one",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "TestGoal"
+            }
+          ]
+        },
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Popular",
+          "message": "step 0 uses goal.call from the decider's popular-action choice (0.61): unsure"
+        },
+        {
+          "key": "Popular",
+          "message": "step 0 uses output.write from the decider's popular-action choice (0.24): unsure"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "step two",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "TestGoal"
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Popular",
+          "message": "step 1 uses goal.call from the decider's popular-action choice (0.56): unsure"
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/build/goals/parse_test/Test.goal",
+  "prPath": "/module/build/goals/parse_test/.build/test.pr",
+  "hash": "258c52f36008ff97e777535525e3ecab4b8fa303dc3f653839c1db7e5dbec5af"
+}

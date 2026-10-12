@@ -98,7 +98,7 @@
     },
     {
       "index": 2,
-      "text": "assert %x.Type.Kind% equals \"int\"",
+      "text": "assert %x!type.kind% equals \"int\"",
       "line": {
         "number": 7
       },
@@ -120,19 +120,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x.Type.Kind%",
+              "value": "%x!type.kind%",
               "variable": [
                 {
-                  "text": "%x.Type.Kind%",
+                  "text": "%x!type.kind%",
                   "code": [
                     {
                       "variable": "x"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Kind"
+                      "property": "kind"
                     }
                   ]
                 }
@@ -147,5 +147,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetIntLiteralIsNumberInt.test.goal",
   "prPath": "/app/type/kind/strict/.build/setintliteralisnumberint.test.pr",
-  "hash": "9c160c351c161637a63d4779c828641b8c534810264c4f7951bda09e8d01f093"
+  "hash": "660f76ffbe830e2196c92e7368a32688be6d8e7cb5b0ba2372c1dff5bdd1d6ab"
 }

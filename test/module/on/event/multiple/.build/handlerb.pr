@@ -1,0 +1,58 @@
+{
+  "name": "HandlerB",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %eventB% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%eventB%",
+              "variable": [
+                {
+                  "text": "%eventB%",
+                  "code": [
+                    {
+                      "variable": "eventB"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/event/multiple/HandlerB.goal",
+  "prPath": "/module/on/event/multiple/.build/handlerb.pr",
+  "hash": "0a94de317eb1e72958d46dbe9221d905beb08600d144c60f441c7826b2a06ec0"
+}

@@ -1,0 +1,59 @@
+{
+  "name": "OuterHandler",
+  "comment": "catches the propagated error from BadHandler",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %outerHandled% = true",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%outerHandled%",
+              "variable": [
+                {
+                  "text": "%outerHandled%",
+                  "code": [
+                    {
+                      "variable": "outerHandled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/inhandler/OuterHandler.goal",
+  "prPath": "/module/on/error/inhandler/.build/outerhandler.pr",
+  "hash": "ffe69ee534bb54dd66aa0e511ec3a3ecc5e1a189a711cad4caf414af8b93547f"
+}

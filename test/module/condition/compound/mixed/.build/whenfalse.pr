@@ -1,0 +1,58 @@
+{
+  "name": "WhenFalse",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %falseResult% = \"no\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%falseResult%",
+              "variable": [
+                {
+                  "text": "%falseResult%",
+                  "code": [
+                    {
+                      "variable": "falseResult"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/compound/mixed/WhenFalse.goal",
+  "prPath": "/module/condition/compound/mixed/.build/whenfalse.pr",
+  "hash": "1f438e37ddb2454bb9386346661fa28903f9798eda96e681711f1ad2e995463e"
+}

@@ -1,0 +1,33 @@
+{
+  "name": "ChainOuter",
+  "comment": "Cross-file chain helper. Calls ChainMiddle which calls ChainThrows. The throw propagates back up through all three goals.",
+  "step": [
+    {
+      "index": 0,
+      "text": "call ChainMiddle",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "/app/callstack/ChainMiddle"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/ChainOuter.goal",
+  "prPath": "/app/callstack/.build/chainouter.pr",
+  "hash": "5bf7b8ca25f958bc5733a645e79d8692781dbf664618af8369aaad85d4f9dd2e"
+}

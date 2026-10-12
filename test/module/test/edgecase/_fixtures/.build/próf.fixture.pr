@@ -1,0 +1,32 @@
+{
+  "name": "Próf",
+  "step": [
+    {
+      "index": 0,
+      "text": "write out 'íslenska prufa'",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "íslenska prufa"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/edgecase/_fixtures/Próf.fixture.goal",
+  "prPath": "/module/test/edgecase/_fixtures/.build/próf.fixture.pr",
+  "hash": "b220917f0f556e2eb31cc5e55b702bc2f30d79590a59434d7affa359662d9c00"
+}

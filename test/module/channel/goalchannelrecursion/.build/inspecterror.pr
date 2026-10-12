@@ -1,0 +1,72 @@
+{
+  "name": "InspectError",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %errorKey% = %!error.Key%",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%errorKey%",
+              "variable": [
+                {
+                  "text": "%errorKey%",
+                  "code": [
+                    {
+                      "variable": "errorKey"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!error.Key%",
+              "variable": [
+                {
+                  "text": "%!error.Key%",
+                  "code": [
+                    {
+                      "variable": "!error"
+                    },
+                    {
+                      "property": "Key"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/goalchannelrecursion/InspectError.goal",
+  "prPath": "/module/channel/goalchannelrecursion/.build/inspecterror.pr",
+  "hash": "bd088e61b173267d195040a7b6434c8b52c29debd5f51caded07417b33f2f6f1"
+}

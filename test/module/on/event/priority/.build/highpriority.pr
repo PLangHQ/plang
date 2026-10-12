@@ -1,0 +1,58 @@
+{
+  "name": "HighPriority",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %order% = \"high\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%order%",
+              "variable": [
+                {
+                  "text": "%order%",
+                  "code": [
+                    {
+                      "variable": "order"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "high"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/event/priority/HighPriority.goal",
+  "prPath": "/module/on/event/priority/.build/highpriority.pr",
+  "hash": "24939d7758cb6c71b440ece5ef637dedf6d16370b5f8b799a1310cfcb4c731b8"
+}
