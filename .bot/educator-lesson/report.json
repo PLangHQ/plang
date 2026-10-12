@@ -1,0 +1,173 @@
+{
+  "branch": "educator-lesson",
+  "sessions": [
+    {
+      "id": "36c1cd91-f5c1-4cf8-a890-c1ec7b21743a",
+      "bot": "educator",
+      "timestamp_start": "2026-09-30T11:40:00Z",
+      "intent": "Design an OBP animation library (PLang app + JS runtime) distilled from aniva/rafbokin/coder animations, then a beginner PLang lesson built with it",
+      "before": {
+        "assumptions": "Three bots built near-identical canvas animation engines; the reusable core can be one OBP library. PLang builds/assembles; only the browser player/draw engine is JS.",
+        "risk": "OpenRouter account has no credits (TTS/music blocked); committing on the architect branch app-systems may collide"
+      },
+      "plan": ".bot/educator-lesson/educator/v1/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "/shared/educator/studio/film/"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "OBP JS engine: root film.this, context film.frame, lesson data sealed; ported best-of aniva/rafbokin/coder with origin comments; offline-baked soundtrack (music+cues+voice+ducking) played from offset; code blocks as real DOM text; smoke test in chromium: no errors, voice intelligible over music (verified by transcription), peak -0.5 dBFS"
+        },
+        {
+          "paths": [
+            "/shared/educator/voices/"
+          ],
+          "type": "create",
+          "category": "config",
+          "confidence": "high",
+          "context": "12+4 Gemini 3.8 TTS samples; found instructions field + lowercase plang needed; Ingi chose Achird on flash-lite"
+        }
+      ],
+      "timestamp_end": "2026-09-30T19:15:00Z",
+      "after": {
+        "status": "Lessons 1 and 2 done; lesson 2 exported to mp4 (export/mp4.js); Writer shots pending Ingi"
+      }
+    },
+    {
+      "id": "80b466de-3c56-4ffa-8db9-80f6f94dcf89",
+      "bot": "educator",
+      "timestamp_start": "2026-10-01T08:00:00Z",
+      "intent": "Teach OBP (the Object-Based Pattern) as a language-agnostic pattern in two lessons: A the laws and rules, B the named smells",
+      "before": {
+        "assumptions": "The docs (object_pattern_formal.md, obp-smells.md) are the source of the pattern; every code excerpt in the lesson is quoted verbatim from plang C# or the film engine JS with path:line",
+        "risk": "Doc examples are partly illustrative and the docs list known drift in the codebase; a lesson could present drift as the pattern, or doc pseudo-code as real code"
+      },
+      "actions": [
+        {
+          "paths": [
+            "/shared/educator/course/03-obp-pattern/lesson.md",
+            "/shared/educator/course/03-obp-pattern/code/01-three-paths/"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Lesson 3 (OBP, any language) text: 12 scenes, every excerpt verbatim with path:line (C# PLang/app, JS film engine), checked by grep -F; %!app.type% proven by a built and run goal. Six doc/code disagreements tabled for Ingi."
+        },
+        {
+          "paths": [
+            "/shared/educator/studio/Hub.goal",
+            "/shared/educator/studio/hub/index.html",
+            "/shared/educator/studio/export/record.js",
+            "/shared/educator/studio/export/timeline.js",
+            "/shared/educator/studio/export/mp4.js",
+            "/shared/educator/index.html"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Course web UI (Ingi asked): plang Hub writes /shared/educator/index.html from each lesson's timeline.json, written by the export from the film engine itself; mp4 player, chapters with sources, transcript following the video, resume. Checked in Playwright at 1280 and 400 px with a WebM copy (Playwright Chromium has no H.264)."
+        },
+        {
+          "paths": [
+            "/shared/educator/animations/what-is-plang/what-is-plang.mp4"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Lesson 1 exported to mp4 (291 s, --disable-gpu, 3 browsers)."
+        },
+        {
+          "paths": [
+            "/shared/educator/course/03-obp-pattern/",
+            "/shared/educator/course/obp-in-csharp/"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Lesson 3 reworked on Ingi's review: C# only and problem-first, then the C# moved to an advanced lesson; lesson 3 is the laws lightly, the root in plang (built and run), the rules, the new dot-case rule with a real .pr (app-systems merged, aa5eb3084), and a recorded exception from obp-scan.md."
+        },
+        {
+          "paths": [
+            "/shared/educator/studio/lesson/obp-pattern/",
+            "/shared/educator/studio/film/paper/label/this.js",
+            "/shared/educator/animations/obp-pattern/"
+          ],
+          "type": "create",
+          "category": "code",
+          "confidence": "high",
+          "context": "Lesson 3 animated: 13 chapters, 40 voice takes (35 exact by transcription; 5 confirmed by targeted questions), 39 shots with no errors, mp4 231.4 s, on the course page. New engine piece film.paper.label (a card sized to its words) to stop repeating piece+fillText per card."
+        }
+      ],
+      "plan": ".bot/educator-lesson/educator/v3/plan.md",
+      "timestamp_end": "2026-10-01T13:53:54.314Z",
+      "after": {
+        "status": "Lessons 1-3 voiced, checked, exported to mp4 and on the course page; advanced OBP-in-C# lesson written (not animated)",
+        "health": "good",
+        "notes": "Next: lesson 4 (smells). Open: doc/code table to docs bot; FINDINGS 28-31."
+      }
+    },
+    {
+      "id": "deba891b-fb90-43f9-acfd-2ae5d0b1bf9b",
+      "bot": "educator",
+      "timestamp_start": "2026-10-02T00:00:00Z",
+      "timestamp_end": "2026-10-03T01:31:25.090Z",
+      "intent": "Short lessons C4 and D1-D5, module pages to os/system/modules/<m>/start.md, studio repairs after builder changes, friction review",
+      "before": {
+        "assumptions": "C4 and Track D buildable on app-systems; studio works",
+        "risk": "builder churn breaks lessons or the studio"
+      },
+      "plan": ".bot/educator-lesson/educator/v4/plan.md",
+      "actions": [
+        {
+          "paths": [
+            "docs/Modules.goal",
+            "docs/.build/modules.pr"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "three modules, saves via /system (decision 522); landed 7460cdd94"
+        },
+        {
+          "paths": [
+            "docs/modules/file.md",
+            "docs/modules/condition.md",
+            "docs/modules/loop.md",
+            "docs/modules/index.md"
+          ],
+          "type": "delete",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Ingi: remove now; index links to generated start.md (e5073b0ef)"
+        },
+        {
+          "paths": [
+            ".bot/app-systems/educator/friction.md"
+          ],
+          "type": "create",
+          "category": "doc",
+          "confidence": "high",
+          "context": "user review of the builder for the architect/Ingi"
+        },
+        {
+          "paths": [
+            ".bot/educator-lesson/educator/v4/plan.md",
+            ".bot/educator-lesson/educator/summary.md"
+          ],
+          "type": "modify",
+          "category": "doc",
+          "confidence": "high",
+          "context": "Track D plan and state"
+        }
+      ],
+      "after": {
+        "status": "C4, D1-D5 on the course page; D6 and the loop page held on coder/builder fixes",
+        "health": "good",
+        "notes": "many builder issues found and traced (21,25,28,32,42-44, Conversation, parallel foreach)"
+      }
+    }
+  ]
+}
