@@ -1,0 +1,167 @@
+{
+  "name": "Start",
+  "comment": "%response!cost% must resolve to Properties[\"cost\"] — the bang operator reaches into\nthe Properties scope, not into Value. Coverage row 4.10.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %response% = 'hello'",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%response%",
+              "variable": [
+                {
+                  "text": "%response%",
+                  "code": [
+                    {
+                      "variable": "response"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %response!cost% = 100",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%response!cost%",
+              "variable": [
+                {
+                  "text": "%response!cost%",
+                  "code": [
+                    {
+                      "variable": "response"
+                    },
+                    {
+                      "property": "!cost"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 100
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %response!cost% equals 100",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 100
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%response!cost%",
+              "variable": [
+                {
+                  "text": "%response!cost%",
+                  "code": [
+                    {
+                      "variable": "response"
+                    },
+                    {
+                      "property": "!cost"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/data/PropertiesBangNavigation.test.goal",
+  "prPath": "/app/data/.build/propertiesbangnavigation.test.pr",
+  "hash": "df2317ab8efbf87b356ba12b9470d1b596448465d005369c74d62fabb413f9ec"
+}

@@ -1,0 +1,218 @@
+{
+  "name": "Start",
+  "comment": "Stage 3 → value model: read yields a `file` reference (headline \"file\",\nkind \"csv\"); metadata reads never parse. Scalar equality is a USE — the csv\ncompares as its parsed table, not raw text (PROVISIONAL: model position,\npending Ingi's scalar-equality decision). The row/column navigation surface\nlives in C# Cut2 / TableTypeTests.",
+  "step": [
+    {
+      "index": 0,
+      "text": "read file 'report.csv', write to %report%",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "report.csv"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%report%",
+              "variable": [
+                {
+                  "text": "%report%",
+                  "code": [
+                    {
+                      "variable": "report"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "csv"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %report.Type.Name% equals \"file\"",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "file"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%report.Type.Name%",
+              "variable": [
+                {
+                  "text": "%report.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "report"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %report.Type.Kind% equals \"csv\"",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "csv"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%report.Type.Kind%",
+              "variable": [
+                {
+                  "text": "%report.Type.Kind%",
+                  "code": [
+                    {
+                      "variable": "report"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Kind"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %report% is file",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%report%",
+              "variable": [
+                {
+                  "text": "%report%",
+                  "code": [
+                    {
+                      "variable": "report"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/data/ReadCsv_LandsAsTable.test.goal",
+  "prPath": "/app/data/.build/readcsv_landsastable.test.pr",
+  "hash": "d41d78e5785bda02e52ba618baeb1e79d08f9119224545191111fc06d928b5e2"
+}

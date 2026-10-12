@@ -1,0 +1,228 @@
+{
+  "name": "Start",
+  "comment": "Stage 3 → value model: a read yields a `file` reference (headline \"file\",\nkind from the extension) and METADATA reads never parse. Scalar equality is\na USE under the value model — it opens the door, so the json compares as its\nparsed dict, not as raw text (PROVISIONAL: model position taken while Ingi\ndecides the scalar-equality-on-unread-reference question; flip back if the\nraw-face compare is chosen). Requires the config.json fixture.",
+  "step": [
+    {
+      "index": 0,
+      "text": "read file 'config.json', write to %cfg%",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "config.json"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%cfg%",
+              "variable": [
+                {
+                  "text": "%cfg%",
+                  "code": [
+                    {
+                      "variable": "cfg"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "json"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %cfg.Type.Name% equals \"file\"",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "file"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%cfg.Type.Name%",
+              "variable": [
+                {
+                  "text": "%cfg.Type.Name%",
+                  "code": [
+                    {
+                      "variable": "cfg"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %cfg.Type.Kind% equals \"json\"",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "json"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%cfg.Type.Kind%",
+              "variable": [
+                {
+                  "text": "%cfg.Type.Kind%",
+                  "code": [
+                    {
+                      "variable": "cfg"
+                    },
+                    {
+                      "property": "Type"
+                    },
+                    {
+                      "property": "Kind"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %cfg.port% equals 8080",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 8080
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%cfg.port%",
+              "variable": [
+                {
+                  "text": "%cfg.port%",
+                  "code": [
+                    {
+                      "variable": "cfg"
+                    },
+                    {
+                      "property": "port"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/data/ReadConfigJson_UntouchedIsJsonString.test.goal",
+  "prPath": "/app/data/.build/readconfigjson_untouchedisjsonstring.test.pr",
+  "hash": "596f17da382d542557b8fd010bb14cc25459d99c1eadc603dbd445d28b1b8d53"
+}

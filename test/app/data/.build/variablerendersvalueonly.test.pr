@@ -1,0 +1,164 @@
+{
+  "name": "Start",
+  "comment": "%response% (no operator) must render the Value, not the whole Data. Properties must\nNOT bleed into the variable's primary render. Coverage row 4.14.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %response% = 'just-the-value'",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%response%",
+              "variable": [
+                {
+                  "text": "%response%",
+                  "code": [
+                    {
+                      "variable": "response"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "just-the-value"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %response!cost% = 100",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%response!cost%",
+              "variable": [
+                {
+                  "text": "%response!cost%",
+                  "code": [
+                    {
+                      "variable": "response"
+                    },
+                    {
+                      "property": "!cost"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 100
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %response% equals 'just-the-value'",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "just-the-value"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%response%",
+              "variable": [
+                {
+                  "text": "%response%",
+                  "code": [
+                    {
+                      "variable": "response"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/data/VariableRendersValueOnly.test.goal",
+  "prPath": "/app/data/.build/variablerendersvalueonly.test.pr",
+  "hash": "9d312a43a2a5947c840dbb9c32b9fd2b2d6219fce25af6111fc13fc6fc7e09a7"
+}

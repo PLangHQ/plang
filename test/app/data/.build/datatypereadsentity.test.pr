@@ -1,0 +1,108 @@
+{
+  "name": "TestDataTypeReadsEntityAfterStamp",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %name% = \"alice\", type=text/plain",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%name%",
+              "variable": [
+                {
+                  "text": "%name%",
+                  "code": [
+                    {
+                      "variable": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "alice"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %name!Type% equals \"text/plain\"",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "text/plain"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%name!Type%",
+              "variable": [
+                {
+                  "text": "%name!Type%",
+                  "code": [
+                    {
+                      "variable": "name"
+                    },
+                    {
+                      "property": "!Type"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/data/DataTypeReadsEntity.test.goal",
+  "prPath": "/app/data/.build/datatypereadsentity.test.pr",
+  "hash": "ceb0e347b6336e0bf56389ce58537a31b3c6aadefa9c4847b0008bb072b70be7"
+}
