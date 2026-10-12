@@ -1,6 +1,6 @@
 {
   "name": "TestReportIncludesCoverageTables",
-  "comment": "Runs a passing fixture via test.run, then test.report in default (json)\nformat. Asserts the BuildJson branch actually ran by checking the content\ncarries the branchCoverage block — deleting that block in BuildJson would\nthen fail this test (earlier version only checked %report.format% which\nechoes the input regardless of which branch formatted the content).",
+  "comment": "Runs a passing fixture via test.run, then test.report in default (json)\nformat. Asserts the json branch actually ran by checking the content\ncarries the branchCoverage block — deleting that block would then fail this\ntest (checking %report!format% alone echoes the input regardless of which\nbranch formatted the content).",
   "step": [
     {
       "index": 0,
@@ -173,12 +173,6 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Unsure",
-          "message": "step 1 uses variable.set, which the decider was not sure of (0.86)"
-        }
       ]
     },
     {
@@ -247,7 +241,7 @@
     },
     {
       "index": 3,
-      "text": "assert %report.content% contains 'branchCoverage'",
+      "text": "assert %report!content% contains 'branchCoverage'",
       "line": {
         "number": 10
       },
@@ -262,16 +256,16 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%report.content%",
+              "value": "%report!content%",
               "variable": [
                 {
-                  "text": "%report.content%",
+                  "text": "%report!content%",
                   "code": [
                     {
                       "variable": "report"
                     },
                     {
-                      "property": "content"
+                      "property": "!content"
                     }
                   ]
                 }
@@ -290,7 +284,7 @@
     },
     {
       "index": 4,
-      "text": "assert %report.summaryPass% equals 1",
+      "text": "assert %report!summaryPass% equals 1",
       "line": {
         "number": 11
       },
@@ -312,16 +306,16 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%report.summaryPass%",
+              "value": "%report!summaryPass%",
               "variable": [
                 {
-                  "text": "%report.summaryPass%",
+                  "text": "%report!summaryPass%",
                   "code": [
                     {
                       "variable": "report"
                     },
                     {
-                      "property": "summaryPass"
+                      "property": "!summaryPass"
                     }
                   ]
                 }
@@ -333,7 +327,7 @@
     },
     {
       "index": 5,
-      "text": "file.exists %report.reportPath%, write to %exists%",
+      "text": "file.exists %report!reportPath%, write to %exists%",
       "line": {
         "number": 12
       },
@@ -348,16 +342,16 @@
                 "name": "path",
                 "template": "plang"
               },
-              "value": "%report.reportPath%",
+              "value": "%report!reportPath%",
               "variable": [
                 {
-                  "text": "%report.reportPath%",
+                  "text": "%report!reportPath%",
                   "code": [
                     {
                       "variable": "report"
                     },
                     {
-                      "property": "reportPath"
+                      "property": "!reportPath"
                     }
                   ]
                 }
@@ -419,7 +413,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 5 uses variable.set, which the decider was not sure of (0.86)"
+          "message": "step 5 uses variable.set, which the decider was not sure of (0.89)"
         }
       ]
     },
@@ -461,5 +455,5 @@
   "visibility": "Public",
   "path": "/module/test/report/TestReportIncludesCoverageTables.test.goal",
   "prPath": "/module/test/report/.build/testreportincludescoveragetables.test.pr",
-  "hash": "b7fba6180536b4e930f210a34a05e0bb31aeea4f49a8cfa5eea2ff1d498735b1"
+  "hash": "d8074c8e9564d2f76d253ee02294f0ba455e90b208267fd30ae31bb2aa57284a"
 }

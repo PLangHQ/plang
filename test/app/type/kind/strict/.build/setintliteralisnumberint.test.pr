@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "A bare integer literal binds Type to {name:number, kind:int} — the int\nprimitive is no longer a top-level name; it surfaces as a kind of number.\nPins the architect's \"set %x% = 5 → {number, int}\" rule end-to-end.",
+  "comment": "A bare integer literal is a number, and it is an int: `is int` answers by fit — a number is every size it\nfits — whatever size it is held in.",
   "step": [
     {
       "index": 0,
       "text": "set %x% = 5",
       "line": {
-        "number": 5
+        "number": 4
       },
       "code": [
         {
@@ -54,7 +54,7 @@
       "index": 1,
       "text": "assert %x!type.name% equals \"number\"",
       "line": {
-        "number": 6
+        "number": 5
       },
       "code": [
         {
@@ -64,14 +64,7 @@
             {
               "name": "Expected",
               "type": {
-                "name": "text"
-              },
-              "value": "number"
-            },
-            {
-              "name": "Actual",
-              "type": {
-                "name": "item",
+                "name": "text",
                 "template": "plang"
               },
               "value": "%x!type.name%",
@@ -91,6 +84,13 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "text"
+              },
+              "value": "number"
             }
           ]
         }
@@ -98,41 +98,28 @@
     },
     {
       "index": 2,
-      "text": "assert %x!type.kind% equals \"int\"",
+      "text": "assert %x% is int",
       "line": {
-        "number": 7
+        "number": 6
       },
       "code": [
         {
           "module": "assert",
-          "name": "equals",
+          "name": "isTrue",
           "property": [
             {
-              "name": "Expected",
-              "type": {
-                "name": "text"
-              },
-              "value": "int"
-            },
-            {
-              "name": "Actual",
+              "name": "Value",
               "type": {
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x!type.kind%",
+              "value": "%x%",
               "variable": [
                 {
-                  "text": "%x!type.kind%",
+                  "text": "%x%",
                   "code": [
                     {
                       "variable": "x"
-                    },
-                    {
-                      "property": "!type"
-                    },
-                    {
-                      "property": "kind"
                     }
                   ]
                 }
@@ -147,5 +134,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetIntLiteralIsNumberInt.test.goal",
   "prPath": "/app/type/kind/strict/.build/setintliteralisnumberint.test.pr",
-  "hash": "660f76ffbe830e2196c92e7368a32688be6d8e7cb5b0ba2372c1dff5bdd1d6ab"
+  "hash": "7ac34638600aed3ef3650dbd3b1f155908973a04db1ae7ed37bb03ac706e5029"
 }

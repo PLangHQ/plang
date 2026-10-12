@@ -1,12 +1,12 @@
 {
   "name": "TestAssertFailureSnapshotsVariables",
-  "comment": "Fixture sets %foo%=42 then asserts %foo% equals 99 — forces AssertSnapshot\nto attach the Variables map to the AssertionError. Run via test.run, then\nconfirm both Status=Fail AND the %foo%=42 snapshot survived end-to-end.",
+  "comment": "Fixture sets %foo%=42 then asserts %foo% equals 99 — forces AssertSnapshot\nto attach the Variables map to the AssertionError. Run via test.run, then\nconfirm both Status=Fail AND the %foo%=42 snapshot survived end-to-end: the\nfailed test's error holds its variables, read first, then foo in them.",
   "step": [
     {
       "index": 0,
       "text": "test.discover tests in '_fixtures' recursive, pattern='*.fixture.goal', write to %tests%",
       "line": {
-        "number": 5
+        "number": 6
       },
       "code": [
         {
@@ -95,7 +95,7 @@
       "index": 1,
       "text": "list.count %tests%, write to %count%",
       "line": {
-        "number": 6
+        "number": 7
       },
       "code": [
         {
@@ -177,7 +177,7 @@
       "index": 2,
       "text": "assert %count% equals 1",
       "line": {
-        "number": 7
+        "number": 8
       },
       "code": [
         {
@@ -217,7 +217,7 @@
       "index": 3,
       "text": "test.run tests %tests%, write to %results%",
       "line": {
-        "number": 8
+        "number": 9
       },
       "code": [
         {
@@ -299,7 +299,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 3 uses variable.set, which the decider was not sure of (0.89)"
+          "message": "step 3 uses variable.set, which the decider was not sure of (0.88)"
         }
       ]
     },
@@ -307,7 +307,7 @@
       "index": 4,
       "text": "list.any %results% where Status equals 'Fail', write to %hasFail%",
       "line": {
-        "number": 9
+        "number": 10
       },
       "code": [
         {
@@ -413,7 +413,7 @@
         },
         {
           "key": "Unsure",
-          "message": "step 4 uses variable.set, which the decider was not sure of (0.86)"
+          "message": "step 4 uses variable.set, which the decider was not sure of (0.81)"
         }
       ]
     },
@@ -421,7 +421,7 @@
       "index": 5,
       "text": "assert %hasFail% is true",
       "line": {
-        "number": 10
+        "number": 11
       },
       "code": [
         {
@@ -452,14 +452,14 @@
     },
     {
       "index": 6,
-      "text": "list.any %results% where Error.Variables.foo equals 42, write to %hasSnapshot%",
+      "text": "get first item from %results%, write to %failed%",
       "line": {
-        "number": 11
+        "number": 12
       },
       "code": [
         {
           "module": "list",
-          "name": "any",
+          "name": "first",
           "property": [
             {
               "name": "ListName",
@@ -477,28 +477,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Key",
-              "type": {
-                "name": "text"
-              },
-              "value": "Error.Variables.foo"
-            },
-            {
-              "name": "Operator",
-              "type": {
-                "name": "choice",
-                "kind": "operator"
-              },
-              "value": "=="
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "number"
-              },
-              "value": 42
             }
           ]
         },
@@ -511,13 +489,13 @@
               "type": {
                 "name": "variable"
               },
-              "value": "%hasSnapshot%",
+              "value": "%failed%",
               "variable": [
                 {
-                  "text": "%hasSnapshot%",
+                  "text": "%failed%",
                   "code": [
                     {
-                      "variable": "hasSnapshot"
+                      "variable": "failed"
                     }
                   ]
                 }
@@ -552,42 +530,107 @@
             }
           ]
         }
-      ],
-      "warning": [
-        {
-          "key": "Unsure",
-          "message": "step 6 uses list.any, which the decider was not sure of (0.98)"
-        },
-        {
-          "key": "Unsure",
-          "message": "step 6 uses variable.set, which the decider was not sure of (0.87)"
-        }
       ]
     },
     {
       "index": 7,
-      "text": "assert %hasSnapshot% is true",
+      "text": "set %snapshot% = %failed.error.variables%",
       "line": {
-        "number": 12
+        "number": 13
       },
       "code": [
         {
-          "module": "assert",
-          "name": "isTrue",
+          "module": "variable",
+          "name": "set",
           "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%snapshot%",
+              "variable": [
+                {
+                  "text": "%snapshot%",
+                  "code": [
+                    {
+                      "variable": "snapshot"
+                    }
+                  ]
+                }
+              ]
+            },
             {
               "name": "Value",
               "type": {
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%hasSnapshot%",
+              "value": "%failed.error.variables%",
               "variable": [
                 {
-                  "text": "%hasSnapshot%",
+                  "text": "%failed.error.variables%",
                   "code": [
                     {
-                      "variable": "hasSnapshot"
+                      "variable": "failed"
+                    },
+                    {
+                      "property": "error"
+                    },
+                    {
+                      "property": "variables"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "assert %snapshot.foo% equals 42",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 42
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%snapshot.foo%",
+              "variable": [
+                {
+                  "text": "%snapshot.foo%",
+                  "code": [
+                    {
+                      "variable": "snapshot"
+                    },
+                    {
+                      "property": "foo"
                     }
                   ]
                 }
@@ -602,5 +645,5 @@
   "visibility": "Public",
   "path": "/module/test/assert/TestAssertFailureSnapshotsVariables.test.goal",
   "prPath": "/module/test/assert/.build/testassertfailuresnapshotsvariables.test.pr",
-  "hash": "d8cceff11aa2abf8dc3b2b1f9dea504a1b7ca8b63804a611a8bdd544a74cc01d"
+  "hash": "d12dd1177382ce44e1ee510a3f9a7f00b90094c3903ad6feab0fa739b8a3545d"
 }

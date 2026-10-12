@@ -177,7 +177,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 1 uses variable.set, which the decider was not sure of (0.88)"
+          "message": "step 1 uses variable.set, which the decider was not sure of (0.87)"
         }
       ]
     },
@@ -247,7 +247,7 @@
     },
     {
       "index": 3,
-      "text": "assert %report.summaryFail% equals 1",
+      "text": "assert %report!summaryFail% equals 1",
       "line": {
         "number": 9
       },
@@ -269,16 +269,16 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%report.summaryFail%",
+              "value": "%report!summaryFail%",
               "variable": [
                 {
-                  "text": "%report.summaryFail%",
+                  "text": "%report!summaryFail%",
                   "code": [
                     {
                       "variable": "report"
                     },
                     {
-                      "property": "summaryFail"
+                      "property": "!summaryFail"
                     }
                   ]
                 }
@@ -290,7 +290,7 @@
     },
     {
       "index": 4,
-      "text": "assert %report.variableSnapshotCount% equals 1",
+      "text": "assert %report!variableSnapshotCount% equals 1",
       "line": {
         "number": 10
       },
@@ -312,16 +312,16 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%report.variableSnapshotCount%",
+              "value": "%report!variableSnapshotCount%",
               "variable": [
                 {
-                  "text": "%report.variableSnapshotCount%",
+                  "text": "%report!variableSnapshotCount%",
                   "code": [
                     {
                       "variable": "report"
                     },
                     {
-                      "property": "variableSnapshotCount"
+                      "property": "!variableSnapshotCount"
                     }
                   ]
                 }
@@ -336,5 +336,5 @@
   "visibility": "Public",
   "path": "/module/test/report/TestReportRendersFailureWithVariables.test.goal",
   "prPath": "/module/test/report/.build/testreportrendersfailurewithvariables.test.pr",
-  "hash": "f9e4b4adcb69498335cf5bb47ea195ec8b2019d3edc17623e5b8684cf37e7072"
+  "hash": "ebb18d016270a38a3b6c5026836fc79575ee89a43886f0a1a1830e3f506e939d"
 }
