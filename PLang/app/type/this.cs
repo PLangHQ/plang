@@ -834,7 +834,13 @@ public class @this : item.@this, item.ICreate<@this>, item.IMatch<@this>, item.I
     /// asker's context. A full type is its own answer; past its members, its settings (<c>.setting</c>).</summary>
     public override async System.Threading.Tasks.ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
     {
-        var member = await new global::app.type.clr.@this(parent.Context.App.type.list[this, parent.Context], parent.Context).Get(parent, key);
+        var full = parent.Context.App.type.list[this, parent.Context];
+        var member = await new global::app.type.clr.@this(full, parent.Context).Get(parent, key);
+        // a type's own kind is, to plang, its name (`%x!type.kind%` is "json") — nothing when it has none
+        if (member.Peek() is global::app.type.clr.@this { Value: var held } && ReferenceEquals(held, full.kind))
+            return full.kind.IsEmpty
+                ? new global::app.data.@this(key, global::app.type.item.@null.@this.Instance, context: parent.Context)
+                : new global::app.data.@this(key, new global::app.type.item.text.@this(full.kind.Name), context: parent.Context);
         return member.IsInitialized ? member : await Setting(parent, key) ?? member;
     }
 
