@@ -254,6 +254,11 @@ public sealed partial class @this : global::app.type.item.@this, global::app.typ
     private global::app.type.kind.@this Format(global::app.actor.context.@this? context)
         => context?.App.type.list.Kind(Type, context) ?? Type.kind;
 
+    /// <summary>A text holds what a step quoted by its own characters, whatever kind they are in: a json text
+    /// <c>{"size": 10}</c> holds the step's <c>{"size": 10}</c>, never only the escaped form a writer would give it.</summary>
+    internal override System.Threading.Tasks.ValueTask<bool> Holds(string quoted, global::app.actor.context.@this context)
+        => System.Threading.Tasks.ValueTask.FromResult(_value.Contains(quoted));
+
     public override bool IsLeaf => true;
 
     /// <summary>A stamped template whose WHOLE content is one <c>%ref%</c> IS a reference
