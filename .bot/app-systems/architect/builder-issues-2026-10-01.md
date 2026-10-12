@@ -159,3 +159,9 @@ Collected by the architect from the coder's eval rounds, the educator's probes a
 - **68. A formal line that doesn't parse: "expected `=`"** (`module/code/load/LoadDllRegistersType`; the raw ends at `code.load(Path=`): the writer's line cut off, or the reader on a three-action line.
 - **69. A bare `sort` maps to list.query with no part** (`module/list/query/Failure_SortMixedIncomparable`: "a query names at least one part"): teaching (sort → `Order`), or the decider's pick.
 - **70.** `module/file/read/Failure_ParamResolutionError` refused with an empty log; to be re-run.
+- **Batch module/on** (f4e2cf34e): 18/19; the refusal is 67 (`module/on/event/basic/Events`). **Batch module/list** (88ceaa683): 20/21, the moved list-query tests at their new paths; `QueryBuildPinTests` re-pointed (3/3); the refusal is 69. **Batch module/condition**: 19/28.
+- **71. A json literal on a `type=json` set isn't kept verbatim** (6 tests: compare/Cut5, Failure_DictEqNumber, Failure_DictOrderDict, Failure_DictOrderNumber, Plane_MembershipNeverErrors, Plane_NullComparisonsWork): `set %x% = '{"a": 1}', type=json` → Cover: `"{"a": 1}" is in the step but not in your answer`. Likely the writer turns the literal into a dict.
+- **72. An `or` condition drops its second operand** (compound/or/ConditionCompoundOr): `if %a% == 1 or %b% == 2, call DoThing` → `%b% not in your answer`.
+- **73. A nested if with sub-steps** (if/nested/ConditionNested): the formal `condition.if(… Operator=` doesn't parse ("expected a name"), and the indented sub-steps aren't placed ("step 5 (if %y% > 100) has no entry").
+- 67 again: file/filenotexists/ConditionFileNotExists, compare/Cut5.
+- **The English word checks go (decision 677):** before batch 4, the builder bot removes `write to` and `as` from `pick/list/this.cs` and measures.
