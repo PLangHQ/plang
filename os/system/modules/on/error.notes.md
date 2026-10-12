@@ -9,6 +9,6 @@ RetryOver — the time the retries are spread over, a duration ("over 30 seconds
 Order — which runs first, the recovery or the retry · ask: does the step name the recovery (the call) BEFORE the retry — "call X then retry", "call X first, then retry"? then `GoalFirst`; if the retry comes first ("retry N times, then call X") or the step says nothing about order, leave Order out (none) · builder: `GoalFirst` only for recovery-before-retry; the word order in the step decides — what it says first runs first.
 Ignore — true when the step says to carry on past the error ("on error ignore", "on error 'NotFound' ignore").
 
-- The recovery runs only on error: it is never also an action of the step.
+- The recovery runs only on error: it is never also an action of the step. Whatever the recovery is — a call, a `set`, a `write out` — it goes INSIDE `Recovery`, never as a top-level action written after the on.error clause. `write 'x' to c, on error set %flag% = true` is `output.write(...); on.error(Recovery=[variable.set(Name=%flag%, Value=true)])`, never a third top-level `variable.set` (which would run every time, not only on error).
 - Status, Key and Message filter which errors are handled; they never hold what the recovery does. Left out when the step names no filter.
 - Several on.error clauses are asked in the order written; the first that matches takes the error, and the others never see it.

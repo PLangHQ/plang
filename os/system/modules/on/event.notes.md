@@ -2,11 +2,11 @@
 
 `Event` is the event itself, written as the path that reaches it: what it belongs to, then `.on.`, then its name. Read both off the step:
 - what it belongs to:
-  - a channel the step names ("on "input" channel", "the audit channel") → `%!channels.input%`, `%!channels.audit%`
+  - a channel the step names ("on "input" channel", "the audit channel") → `%!channel.input%`, `%!channel.audit%` (the asker's actor's channels, picked by name)
   - an action the step names as module.action ("action file.read", "action variable.set") → `%!app.module.file.read%`, `%!app.module.variable.set%` — not `%!app.type.action%`, which is every action
   - "each goal" / "each step" / "each action" → `%!app.type.goal%`, `%!app.type.step%`, `%!app.type.action%`
   - one goal by name → `%!app.goal["/Name"]%`; every action of a module → `%!app.module.http%`
-- its event: a goal, step or action's is `start` ("before each step" → `%!app.type.step.on.start%`; "after action output.write" is that action's start, not a write); a channel's is `write`, `read` or `ask` ("before write on … channel" → `%!channels.audit.on.write%`). The event name is only `start` (or `error`, or a channel's `write`/`read`/`ask`) — **never `before`, `after` or `end`**: those are the moment, carried by `When`, not part of the path. "before each step" → Event=`%!app.type.step.on.start%`, When="before"; "before a goal ends" / "when each goal ends" → Event=`%!app.type.goal.on.start%`, When="after" (there is no `.on.end`/`.on.after`/`.on.before`).
+- its event: a goal, step or action's is `start` ("before each step" → `%!app.type.step.on.start%`; "after action output.write" is that action's start, not a write); a channel's is `write`, `read` or `ask` ("before write on … channel" → `%!channel.audit.on.write%`). The event name is only `start` (or `error`, or a channel's `write`/`read`/`ask`) — **never `before`, `after` or `end`**: those are the moment, carried by `When`, not part of the path. "before each step" → Event=`%!app.type.step.on.start%`, When="before"; "before a goal ends" / "when each goal ends" → Event=`%!app.type.goal.on.start%`, When="after" (there is no `.on.end`/`.on.after`/`.on.before`).
 
 `When` is `before` or `after`.
 
