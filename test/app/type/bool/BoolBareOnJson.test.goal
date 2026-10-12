@@ -4,4 +4,4 @@ BoolBareOnJson
 - set %d% = {"flag": true}
 - set %flag% = %d.flag%
 - assert %flag% equals true
-- assert %flag.Type.Name% equals "bool"
+- assert %flag!type.name% equals "bool"

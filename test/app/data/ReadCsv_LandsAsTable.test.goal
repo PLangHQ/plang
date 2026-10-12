@@ -5,6 +5,6 @@
 / lives in C# Cut2 / TableTypeTests.
 Start
 - read file 'report.csv', write to %report%
-- assert %report.Type.Name% equals "file"
+- assert %report!type.name% equals "file"
 - assert %report.Type.Kind% equals "csv"
 - assert %report% is file

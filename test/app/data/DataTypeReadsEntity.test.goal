@@ -1,3 +1,4 @@
 TestDataTypeReadsEntityAfterStamp
 - set %name% = "alice", type=text/plain
-- assert %name!Type% equals "text/plain"
+- assert %name!type.name% equals "text"
+- assert %name!type.kind% equals "plain"

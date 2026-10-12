@@ -5,5 +5,5 @@
 / committed photo.png fixture.
 Start
 - set %img% = "photo.png" as image/gif strict
-- assert %img.Type.Name% equals "image"
+- assert %img!type.name% equals "image"
 - assert %img.Type.Kind% equals "gif"

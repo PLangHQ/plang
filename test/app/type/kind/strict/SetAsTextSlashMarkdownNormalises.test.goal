@@ -2,5 +2,5 @@
 / canonicaliser: "markdown" is the MIME subtype; canonical kind is "md".
 Start
 - set %x% = "a" as text/markdown
-- assert %x.Type.Name% equals "text"
+- assert %x!type.name% equals "text"
 - assert %x.Type.Kind% equals "md"

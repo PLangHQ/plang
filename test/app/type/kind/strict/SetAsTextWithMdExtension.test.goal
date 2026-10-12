@@ -3,5 +3,5 @@
 / null — it comes only from an explicit `as text/<kind>` or a producing action.
 Start
 - set %doc% = "readme.md" as text
-- assert %doc.Type.Name% equals "text"
+- assert %doc!type.name% equals "text"
 - assert %doc.Type.Kind% is null

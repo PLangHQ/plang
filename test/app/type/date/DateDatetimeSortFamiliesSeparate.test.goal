@@ -2,6 +2,6 @@
 / `datetime` value is NOT classed `date`. Their orderings live on their own wrappers.
 DateDatetimeSortFamiliesSeparate
 - set %d% = "2026-06-01" as date
-- assert %d.Type.Name% equals "date"
+- assert %d!type.name% equals "date"
 - set %dt% = "2026-06-01T00:00:00Z" as datetime
-- assert %dt.Type.Name% equals "datetime"
+- assert %dt!type.name% equals "datetime"

@@ -3,5 +3,5 @@
 NullBareOnJson
 - set %d% = {"v": null}
 - set %v% = %d.v%
-- assert %v.Type.Name% equals "null"
+- assert %v!type.name% equals "null"
 - assert %v% is null

@@ -2,5 +2,5 @@
 / not a Data-wrapping-a-Data. Type is "datetime" and its parts read off the wrapper.
 DatetimeBornNative
 - set %dt% = "2026-01-01T12:00:00Z" as datetime
-- assert %dt.Type.Name% equals "datetime"
+- assert %dt!type.name% equals "datetime"
 - assert %dt.Year% equals 2026

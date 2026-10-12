@@ -1,7 +1,8 @@
-/ Reading %!error.callback% outside an error handler scope: %!error% itself is
-/ null (no AsyncLocal-flowed error in this context), so the callback path is
-/ unresolved. Coder flipped the default from "throws" to "null" — simpler
-/ runtime contract, matches how %!error.X% works generally outside scope.
+/ Reading %!error.callback% outside an error handler: no error is current, and reading a %!…% node that
+/ isn't there is an error — it never reads as null.
 Start
-- set %callbackOutsideScope% = %!error.callback%
-- assert %callbackOutsideScope% is null
+- set %callbackOutsideScope% = %!error.callback%, on error call Caught
+- assert %caught% equals "NotFound"
+
+Caught
+- set %caught% = %!error.Key%

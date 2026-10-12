@@ -2,8 +2,8 @@
 / raw CLR bool mid-flight. Same for false. JSON True/False arms emit the wrapper.
 BoolBornNative
 - set %b% = true
-- assert %b.Type.Name% equals "bool"
+- assert %b!type.name% equals "bool"
 - assert %b% equals true
 - set %c% = false
-- assert %c.Type.Name% equals "bool"
+- assert %c!type.name% equals "bool"
 - assert %c% equals false

@@ -1,11 +1,11 @@
 / Cut 2 — lazy read + narrow + chain-wide !.
-/ %file!file!path% resolves location-only (no content read); is file → true with no read.
+/ %file!path% resolves location-only (no content read); is file → true with no read.
 / %file.field% reads + parses + narrows; second use stays cached; the facet hop
 / still resolves after the narrow.
 Start
 - save 'cut2.json' with content '{"db":"plang","port":8080}'
 - read file 'cut2.json', write to %cfg%
-- set %loc% = %cfg!file!path%
+- set %loc% = %cfg!path%
 - assert %loc% is not null
 - assert %cfg% is file
 - set %db% = %cfg.db%
@@ -13,6 +13,6 @@ Start
 - set %port% = %cfg.port%
 - assert %port% equals 8080
 - assert %cfg% is dict
-- set %loc2% = %cfg!file!path%
+- set %loc2% = %cfg!path%
 - assert %loc2% is not null
 - delete file 'cut2.json'

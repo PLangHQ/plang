@@ -6,6 +6,6 @@
 / raw-face compare is chosen). Requires the config.json fixture.
 Start
 - read file 'config.json', write to %cfg%
-- assert %cfg.Type.Name% equals "file"
+- assert %cfg!type.name% equals "file"
 - assert %cfg.Type.Kind% equals "json"
 - assert %cfg.port% equals 8080

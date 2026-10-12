@@ -2,4 +2,4 @@
 / unhandled, not folded into datetime).
 TimeIsTimeNotUnhandled
 - set %t% = "14:30:00" as time
-- assert %t.Type.Name% equals "time"
+- assert %t!type.name% equals "time"

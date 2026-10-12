@@ -2,5 +2,5 @@
 / (no extension); kind stays null; no validation runs.
 Start
 - set %x% = "a" as text
-- assert %x.Type.Name% equals "text"
+- assert %x!type.name% equals "text"
 - assert %x.Type.Kind% is null

@@ -3,5 +3,5 @@
 / Pins the architect's "set %x% = 5 → {number, int}" rule end-to-end.
 Start
 - set %x% = 5
-- assert %x.Type.Name% equals "number"
+- assert %x!type.name% equals "number"
 - assert %x.Type.Kind% equals "int"

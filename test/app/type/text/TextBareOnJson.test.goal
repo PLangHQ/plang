@@ -4,4 +4,4 @@ TextBareOnJson
 - set %d% = {"v": "hi"}
 - set %v% = %d.v%
 - assert %v% equals "hi"
-- assert %v.Type.Name% equals "text"
+- assert %v!type.name% equals "text"

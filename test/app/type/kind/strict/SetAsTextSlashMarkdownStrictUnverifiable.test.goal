@@ -2,6 +2,6 @@
 / degrades to "kind name accepted"; no byte probe runs; builds clean.
 Start
 - set %x% = "a" as text/markdown strict
-- assert %x.Type.Name% equals "text"
+- assert %x!type.name% equals "text"
 - assert %x.Type.Kind% equals "md"
 - assert %x.Type.Strict% equals true

@@ -2,5 +2,5 @@
 / Requires fixture real.gif (1x1 transparent GIF, committed alongside).
 Start
 - set %img% = "real.gif" as image/gif strict
-- assert %img.Type.Name% equals "image"
+- assert %img!type.name% equals "image"
 - assert %img.Type.Kind% equals "gif"

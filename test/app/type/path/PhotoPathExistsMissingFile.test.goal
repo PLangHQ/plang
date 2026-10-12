@@ -1,9 +1,8 @@
 / Integration cut 3 (negative): same shape as PhotoPathExistsNavigation but the source
-/ file is removed before the if. `%photo.Path.Exists%` evaluates false (HEAD-style stat
-/ via path.IBooleanResolvable). No crash.
+/ file is removed first. `%photo!path.exists%` is false (a stat of the path). No crash.
 Start
 - file.copy from=photo.png to=tmp-photo-missing.png
 - file.read tmp-photo-missing.png, write to %photo%
 - file.delete path=tmp-photo-missing.png
-- set %exists% = %photo.Path.Exists%
+- set %exists% = %photo!path.exists%
 - assert %exists% is false

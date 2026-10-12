@@ -2,4 +2,4 @@
 / born-native wrappers. Type.Name is the observable proof at the PLang surface.
 DateIsDateNotDatetime
 - set %d% = "2026-01-01" as date
-- assert %d.Type.Name% equals "date"
+- assert %d!type.name% equals "date"

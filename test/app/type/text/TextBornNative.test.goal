@@ -2,5 +2,5 @@
 / string mid-flight. The construction seam emits the wrapper at birth.
 TextBornNative
 - set %s% = "Hello"
-- assert %s.Type.Name% equals "text"
+- assert %s!type.name% equals "text"
 - assert %s% equals "Hello"
