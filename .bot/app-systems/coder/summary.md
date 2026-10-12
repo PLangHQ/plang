@@ -1,6 +1,27 @@
 # coder — app-systems
 
-**Version:** v22 (all pushed; reviews by the architect, plang-21, gate by gate)
+**Version:** v22 (all pushed; reviews by the architect, gate by gate)
+
+## 2026-10-12 — the architect's queue for this branch, done (waiting on the gate)
+- 660 events a type declares (49efce319); app.event in the surface golden, `on.Of` internal (689, 5cf01dceb).
+- 669: a bare program name is the terminal provider's to find (`ITerminal.Find`, 3cfba3272).
+- Test fixes: a malformed permission is refused before the kernel check, hold tests skip without Landlock
+  (a5a06b8a5); a parallel call's parameters pinned, cancel bound 30 s (865370646); cdp listener yields, not sleeps
+  (c51a56343); llm snapshots record to a temp folder (6c37fcc94).
+- Cover: a text holds a quote by its own characters (dc90cb6c8); a value with rows holds what any row holds, a
+  message by its Content (00fe6c72e). LlmProperties' refusal is NOT explained by Holds(number) — needs the builder's
+  refusal text.
+- Baseline tidy: 17 → 6 (the carried snapshot tests, `[carried=test/plan/snapshot]`) (0460bf1a4); IClass doc (322becf45).
+- 681 `secret` → `sensitive`, ask's `Secret` → `Sensitive`, writer `Secret()` → `Sensitive()` (4afe34fcb).
+- 228 environment.start and its module deleted (35d2f74bf).
+- 10b (679/694): a `list<T>` element is born through `T.Create` at its first read and kept in its slot; no
+  on.create for elements (af46fb646). Plan test `TypedListHoldsItsType` written, needs the builder to build it.
+- Parked: 312 (Ingi and the architect on "Live"); app-systems-property branch.
+
+```csharp
+// list<T>: a raw slot born at its first read, kept (list/this.Generic.cs)
+if (T.Create(value, null, born) is { } made) return new data.@this("", made, context: context);
+```
 
 ## 2026-10-03 — each gated (the 17 known C# failures + the builder's page goldens) and accepted gate by gate
 - Registry: a second closed set with a taken name is refused, naming both (4abd5bed2). `os.targets` links a bin's

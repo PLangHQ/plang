@@ -1264,6 +1264,30 @@
         "health": "green",
         "notes": "Properties.llm (writer system prompt) is NOT pinned by the four decider fixtures or ModulePageTests — generalizing line 40 (named-arg keeps its name even matching its var) moved none of them. Each os/system/modules/**/*.md commit still runs all four decider fixtures; re-pin what moved. Examples parser takes each 'Step text:' as an e.g. for THAT action — never put another module's contrast step in an examples file (notes only)."
       }
+    },
+    {
+      "id": "6f2b9c1e-4d7a-4e0b-9a51-3c8e2d7f1a12",
+      "bot": "coder",
+      "timestamp_start": "2026-10-12T08:00:00Z",
+      "timestamp_end": "2026-10-12T20:00:00Z",
+      "intent": "Work the architect's ordered queue for app-systems: test fixes, baseline tidy, 10b, 681, 228, Cover Holds.",
+      "before": { "assumptions": "17 known C# failures on the baseline; Landlock off on this kernel", "risk": "core list read path (10b) touches every list read" },
+      "plan": ".bot/app-systems/coder/summary.md",
+      "actions": [
+        { "paths": ["PLang/app/module/terminal/code/Sandbox.cs", "PLang.Tests/Modules/App/Modules/terminal/"], "type": "modify", "category": "code", "confidence": "high", "context": "validate permissions before the kernel check; hold tests skip without Landlock" },
+        { "paths": ["PLang.Tests/Wire/App/Surface/", "PLang/app/event/on/this.cs"], "type": "modify", "category": "test", "confidence": "high", "context": "app.event joins the surface golden (689)" },
+        { "paths": ["PLang.Tests/Runtime/App/Goals/TaskTests.cs", "PLang.Tests/Modules/App/Modules/browser/CdpEventTests.cs", "PLang.Tests/Modules/App/Modules/llm/LlmSnapshotHelper.cs"], "type": "modify", "category": "test", "confidence": "high", "context": "pins and timing fixes, mutation-checked" },
+        { "paths": ["PLang/app/type/item/text/this.cs", "PLang/app/type/item/this.cs", "PLang/app/module/llm/type/message/this.cs"], "type": "modify", "category": "code", "confidence": "high", "context": "Cover's Holds: text by characters; containers by rows; message by Content" },
+        { "paths": [".bot/app-systems/coder/baseline-failures.txt"], "type": "modify", "category": "test", "confidence": "high", "context": "baseline 17 -> 6 carried" },
+        { "paths": ["PLang/app/type/item/sensitive/", "os/system/type/sensitive/"], "type": "rename", "category": "code", "confidence": "high", "context": "681 secret -> sensitive" },
+        { "paths": ["PLang/app/module/environment/start.cs"], "type": "delete", "category": "code", "confidence": "high", "context": "228" },
+        { "paths": ["PLang/app/type/item/list/this.cs", "PLang/app/type/item/list/this.Generic.cs"], "type": "modify", "category": "code", "confidence": "high", "context": "10b: element born through T.Create at first read, kept; T.Create over type.Make because Make keeps a dict a dict for record element types" }
+      ],
+      "after": {
+        "status": "queue done; waiting on the architect's gate",
+        "health": "green except the 6 carried snapshot tests",
+        "notes": "Open: LlmProperties' Cover refusal needs the builder's refusal text; plan test TypedListHoldsItsType needs a builder build."
+      }
     }
   ]
 }
