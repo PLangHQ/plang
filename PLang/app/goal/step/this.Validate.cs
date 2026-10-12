@@ -148,7 +148,7 @@ public sealed partial class @this
         foreach (var a in actions)
         {
             values.AddRange(Values(a.Held, context));
-            foreach (var p in a.Property.Concat(a.Default).Concat(a.Frozen(context)))
+            foreach (var p in a.Property.Concat(a.Default).Concat(a.Unfrozen(context)))
                 if (p.Value is not (null or global::app.goal.step.action.@this or global::app.goal.step.action.list.@this))
                     values.Add(p.Value);
             foreach (var child in a.Child.Items()) values.AddRange(Values(child.Code.Items(), context));
