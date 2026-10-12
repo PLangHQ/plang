@@ -1,0 +1,601 @@
+{
+  "name": "TestTagAccumulatesUserTagsOnRun",
+  "comment": "Calls test.tag (module test, action tag) twice. The handler returns the\naccumulated UserTags. Capture into %tags% and verify union semantics:\nthree unique tags across both calls.",
+  "step": [
+    {
+      "index": 0,
+      "text": "tag this test 'http'",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "test",
+          "name": "tag",
+          "property": [
+            {
+              "name": "Tags",
+              "type": {
+                "name": "list"
+              },
+              "value": ["http"]
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 0 uses test.tag, which the decider was not sure of (0.98)"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "tag this test 'fast', 'slow', write to %tags%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tags%",
+              "variable": [
+                {
+                  "text": "%tags%",
+                  "code": [
+                    {
+                      "variable": "tags"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": ["fast","slow"]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "list.count %tags%, write to %count%",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "count",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tags%",
+              "variable": [
+                {
+                  "text": "%tags%",
+                  "code": [
+                    {
+                      "variable": "tags"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %count% equals 3",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "list.contains %tags% has 'http', write to %hasHttp%",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "contains",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tags%",
+              "variable": [
+                {
+                  "text": "%tags%",
+                  "code": [
+                    {
+                      "variable": "tags"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "http"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%hasHttp%",
+              "variable": [
+                {
+                  "text": "%hasHttp%",
+                  "code": [
+                    {
+                      "variable": "hasHttp"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 4 uses list.contains, which the decider was not sure of (0.96)"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %hasHttp% is true",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%hasHttp%",
+              "variable": [
+                {
+                  "text": "%hasHttp%",
+                  "code": [
+                    {
+                      "variable": "hasHttp"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "list.contains %tags% has 'fast', write to %hasFast%",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "contains",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tags%",
+              "variable": [
+                {
+                  "text": "%tags%",
+                  "code": [
+                    {
+                      "variable": "tags"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "fast"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%hasFast%",
+              "variable": [
+                {
+                  "text": "%hasFast%",
+                  "code": [
+                    {
+                      "variable": "hasFast"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 6 uses list.contains, which the decider was not sure of (0.97)"
+        },
+        {
+          "key": "Unsure",
+          "message": "step 6 uses variable.set, which the decider was not sure of (0.86)"
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "assert %hasFast% is true",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%hasFast%",
+              "variable": [
+                {
+                  "text": "%hasFast%",
+                  "code": [
+                    {
+                      "variable": "hasFast"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "list.contains %tags% has 'slow', write to %hasSlow%",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "contains",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tags%",
+              "variable": [
+                {
+                  "text": "%tags%",
+                  "code": [
+                    {
+                      "variable": "tags"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "slow"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%hasSlow%",
+              "variable": [
+                {
+                  "text": "%hasSlow%",
+                  "code": [
+                    {
+                      "variable": "hasSlow"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 8 uses list.contains, which the decider was not sure of (0.97)"
+        },
+        {
+          "key": "Unsure",
+          "message": "step 8 uses variable.set, which the decider was not sure of (0.89)"
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "text": "assert %hasSlow% is true",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%hasSlow%",
+              "variable": [
+                {
+                  "text": "%hasSlow%",
+                  "code": [
+                    {
+                      "variable": "hasSlow"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/tag/TestTagAccumulatesUserTagsOnRun.test.goal",
+  "prPath": "/module/test/tag/.build/testtagaccumulatesusertagsonrun.test.pr",
+  "hash": "2b57090be9dd337553f08cf2addce967e6c2442b7799b0b70cce2ba642e9cc27"
+}

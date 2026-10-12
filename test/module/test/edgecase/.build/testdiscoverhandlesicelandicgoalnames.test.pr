@@ -1,0 +1,369 @@
+{
+  "name": "TestDiscoverHandlesIcelandicGoalNames",
+  "comment": "Discovery must be encoding-safe for non-ASCII filenames and goal names.\nThe fixture directory contains a Próf.fixture.goal with goal name \"Próf\".\nAssert discover finds it and carries the Icelandic name on Goal.Name.",
+  "step": [
+    {
+      "index": 0,
+      "text": "test.discover tests in '_fixtures' recursive, pattern='*.fixture.goal', write to %tests%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "test",
+          "name": "discover",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "_fixtures"
+            },
+            {
+              "name": "Pattern",
+              "type": {
+                "name": "text"
+              },
+              "value": "*.fixture.goal"
+            }
+          ],
+          "default": [
+            {
+              "name": "subfolder",
+              "type": {
+                "name": "choice",
+                "kind": "subfolder"
+              },
+              "value": "include"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tests%",
+              "variable": [
+                {
+                  "text": "%tests%",
+                  "code": [
+                    {
+                      "variable": "tests"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "list.count %tests%, write to %count%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "count",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tests%",
+              "variable": [
+                {
+                  "text": "%tests%",
+                  "code": [
+                    {
+                      "variable": "tests"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %count% equals 1",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "list.any %tests% where Goal.Name equals 'Próf', write to %hasProf%",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "any",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tests%",
+              "variable": [
+                {
+                  "text": "%tests%",
+                  "code": [
+                    {
+                      "variable": "tests"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "Goal.Name"
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "Próf"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%hasProf%",
+              "variable": [
+                {
+                  "text": "%hasProf%",
+                  "code": [
+                    {
+                      "variable": "hasProf"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 3 uses list.any, which the decider was not sure of (0.98)"
+        },
+        {
+          "key": "Unsure",
+          "message": "step 3 uses variable.set, which the decider was not sure of (0.89)"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %hasProf% is true",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%hasProf%",
+              "variable": [
+                {
+                  "text": "%hasProf%",
+                  "code": [
+                    {
+                      "variable": "hasProf"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/edgecase/TestDiscoverHandlesIcelandicGoalNames.test.goal",
+  "prPath": "/module/test/edgecase/.build/testdiscoverhandlesicelandicgoalnames.test.pr",
+  "hash": "0d4e8bf5210e4d9327f8327c6be80f7b84f881319e3ce33352ea77edb32f40d2"
+}

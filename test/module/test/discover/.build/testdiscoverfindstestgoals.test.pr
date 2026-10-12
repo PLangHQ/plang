@@ -1,0 +1,222 @@
+{
+  "name": "TestDiscoverFindsTestGoals",
+  "comment": "Calls test.discover against a fixture directory with three built\n*.fixture.goal files. Asserts the discover result has length 3. The outer\nrunner uses pattern '*.test.goal' so it ignores these fixtures.",
+  "step": [
+    {
+      "index": 0,
+      "text": "test.discover tests in '_fixtures' recursive, pattern='*.fixture.goal', write to %tests%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "test",
+          "name": "discover",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "_fixtures"
+            },
+            {
+              "name": "Pattern",
+              "type": {
+                "name": "text"
+              },
+              "value": "*.fixture.goal"
+            }
+          ],
+          "default": [
+            {
+              "name": "subfolder",
+              "type": {
+                "name": "choice",
+                "kind": "subfolder"
+              },
+              "value": "include"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tests%",
+              "variable": [
+                {
+                  "text": "%tests%",
+                  "code": [
+                    {
+                      "variable": "tests"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "list.count %tests%, write to %count%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "count",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tests%",
+              "variable": [
+                {
+                  "text": "%tests%",
+                  "code": [
+                    {
+                      "variable": "tests"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %count% equals 3",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/discover/TestDiscoverFindsTestGoals.test.goal",
+  "prPath": "/module/test/discover/.build/testdiscoverfindstestgoals.test.pr",
+  "hash": "33d3059b0b956195b68f9eaaf99e5fc97309aa75133583b27b902b68bf51ff03"
+}

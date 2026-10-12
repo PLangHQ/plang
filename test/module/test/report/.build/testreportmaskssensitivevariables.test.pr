@@ -1,0 +1,420 @@
+{
+  "name": "TestReportMasksSensitiveVariables",
+  "comment": "Regression test for security finding #3: proves test.report routes assertion\nfailure content through DiagnosticOutput so [Sensitive] properties are masked.\nThe fixture fails with an Identity (carrying a Sensitive PrivateKey) in\nAssertionError.Actual + the Variables snapshot. We then check the written\nreport content has the key name preserved ('privateKey') but the value\nredacted ('******'), while the non-sensitive 'publicKey' still serializes.\nA regression that drops the DiagnosticOutput modifier — or falls back to\nvalue.ToString() — would fail the '******' assertion.",
+  "step": [
+    {
+      "index": 0,
+      "text": "test.discover tests in '_fixtures_sensitive', pattern='*.fixture.goal', recursive, write to %tests%",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "test",
+          "name": "discover",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "_fixtures_sensitive"
+            },
+            {
+              "name": "Pattern",
+              "type": {
+                "name": "text"
+              },
+              "value": "*.fixture.goal"
+            }
+          ],
+          "default": [
+            {
+              "name": "subfolder",
+              "type": {
+                "name": "choice",
+                "kind": "subfolder"
+              },
+              "value": "include"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tests%",
+              "variable": [
+                {
+                  "text": "%tests%",
+                  "code": [
+                    {
+                      "variable": "tests"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "test.run tests %tests%, write to %results%",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "test",
+          "name": "start",
+          "property": [
+            {
+              "name": "Tests",
+              "type": {
+                "name": "list",
+                "kind": "test",
+                "template": "plang"
+              },
+              "value": "%tests%",
+              "variable": [
+                {
+                  "text": "%tests%",
+                  "code": [
+                    {
+                      "variable": "tests"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%results%",
+              "variable": [
+                {
+                  "text": "%results%",
+                  "code": [
+                    {
+                      "variable": "results"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "test.report, write to %report%",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "test",
+          "name": "report",
+          "property": []
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%report%",
+              "variable": [
+                {
+                  "text": "%report%",
+                  "code": [
+                    {
+                      "variable": "report"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %report.summaryFail% equals 1",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%report.summaryFail%",
+              "variable": [
+                {
+                  "text": "%report.summaryFail%",
+                  "code": [
+                    {
+                      "variable": "report"
+                    },
+                    {
+                      "property": "summaryFail"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %report.content% contains 'privateKey'",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%report.content%",
+              "variable": [
+                {
+                  "text": "%report.content%",
+                  "code": [
+                    {
+                      "variable": "report"
+                    },
+                    {
+                      "property": "content"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "privateKey"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %report.content% contains '******'",
+      "line": {
+        "number": 15
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%report.content%",
+              "variable": [
+                {
+                  "text": "%report.content%",
+                  "code": [
+                    {
+                      "variable": "report"
+                    },
+                    {
+                      "property": "content"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "******"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "assert %report.content% contains 'publicKey'",
+      "line": {
+        "number": 16
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%report.content%",
+              "variable": [
+                {
+                  "text": "%report.content%",
+                  "code": [
+                    {
+                      "variable": "report"
+                    },
+                    {
+                      "property": "content"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "publicKey"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/report/TestReportMasksSensitiveVariables.test.goal",
+  "prPath": "/module/test/report/.build/testreportmaskssensitivevariables.test.pr",
+  "hash": "38f8c821f6a9b3a0b939e258a286b1fece80f06ea40a3875614e919a25263901"
+}

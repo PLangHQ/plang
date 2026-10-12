@@ -1,0 +1,334 @@
+{
+  "name": "TestReportRendersFailureWithVariables",
+  "comment": "Runs a failing fixture whose AssertionError carries %score%=42 in its\nVariables snapshot. Asserts that test.report observes exactly 1 Fail\nand 1 variable snapshot. A regression that dropped the Variables map\nfrom AssertionError would fail the variableSnapshotCount check.",
+  "step": [
+    {
+      "index": 0,
+      "text": "test.discover tests in '_fixtures_fail' recursive, pattern='*.fixture.goal', write to %tests%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "test",
+          "name": "discover",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "_fixtures_fail"
+            },
+            {
+              "name": "Pattern",
+              "type": {
+                "name": "text"
+              },
+              "value": "*.fixture.goal"
+            }
+          ],
+          "default": [
+            {
+              "name": "subfolder",
+              "type": {
+                "name": "choice",
+                "kind": "subfolder"
+              },
+              "value": "include"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tests%",
+              "variable": [
+                {
+                  "text": "%tests%",
+                  "code": [
+                    {
+                      "variable": "tests"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "test.run tests %tests%, write to %results%",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "test",
+          "name": "start",
+          "property": [
+            {
+              "name": "Tests",
+              "type": {
+                "name": "list",
+                "kind": "test",
+                "template": "plang"
+              },
+              "value": "%tests%",
+              "variable": [
+                {
+                  "text": "%tests%",
+                  "code": [
+                    {
+                      "variable": "tests"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%results%",
+              "variable": [
+                {
+                  "text": "%results%",
+                  "code": [
+                    {
+                      "variable": "results"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "test.report, write to %report%",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "test",
+          "name": "report",
+          "property": []
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%report%",
+              "variable": [
+                {
+                  "text": "%report%",
+                  "code": [
+                    {
+                      "variable": "report"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %report.summaryFail% equals 1",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%report.summaryFail%",
+              "variable": [
+                {
+                  "text": "%report.summaryFail%",
+                  "code": [
+                    {
+                      "variable": "report"
+                    },
+                    {
+                      "property": "summaryFail"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %report.variableSnapshotCount% equals 1",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%report.variableSnapshotCount%",
+              "variable": [
+                {
+                  "text": "%report.variableSnapshotCount%",
+                  "code": [
+                    {
+                      "variable": "report"
+                    },
+                    {
+                      "property": "variableSnapshotCount"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/report/TestReportRendersFailureWithVariables.test.goal",
+  "prPath": "/module/test/report/.build/testreportrendersfailurewithvariables.test.pr",
+  "hash": "f9e4b4adcb69498335cf5bb47ea195ec8b2019d3edc17623e5b8684cf37e7072"
+}

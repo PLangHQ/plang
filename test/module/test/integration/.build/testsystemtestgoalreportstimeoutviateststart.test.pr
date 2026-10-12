@@ -1,0 +1,133 @@
+{
+  "name": "TestSystemTestGoalReportsTimeout",
+  "comment": "Structural guard: timeout enforcement lives in test.start. A system runner\nthat skips test.start or reimplements the loop would bypass timeout handling\nentirely. Assert the system runner routes through test.start.",
+  "step": [
+    {
+      "index": 0,
+      "text": "read file '/system/test.goal', write to %goalText%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "/system/test.goal"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%goalText%",
+              "variable": [
+                {
+                  "text": "%goalText%",
+                  "code": [
+                    {
+                      "variable": "goalText"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "goal"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %goalText% contains 'test.start'",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%goalText%",
+              "variable": [
+                {
+                  "text": "%goalText%",
+                  "code": [
+                    {
+                      "variable": "goalText"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "test.start"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/integration/TestSystemTestGoalReportsTimeoutViaTestStart.test.goal",
+  "prPath": "/module/test/integration/.build/testsystemtestgoalreportstimeoutviateststart.test.pr",
+  "hash": "0ba8f2c30c63795b5f68b228527b89726a77edf306fe8380e215cfa2646a4e8b"
+}

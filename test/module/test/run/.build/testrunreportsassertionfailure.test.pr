@@ -1,0 +1,453 @@
+{
+  "name": "TestRunReportsAssertionFailure",
+  "comment": "Discover a fixture that deliberately fails (assert 1 equals 2). Run it.\nExpected TestStatus.Fail carrying an AssertionError. Proves the runner\ntranslates assert failures to Fail status without escaping as an exception.",
+  "step": [
+    {
+      "index": 0,
+      "text": "test.discover tests in '_fail' recursive, pattern='*.fixture.goal', write to %tests%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "test",
+          "name": "discover",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "_fail"
+            },
+            {
+              "name": "Pattern",
+              "type": {
+                "name": "text"
+              },
+              "value": "*.fixture.goal"
+            }
+          ],
+          "default": [
+            {
+              "name": "subfolder",
+              "type": {
+                "name": "choice",
+                "kind": "subfolder"
+              },
+              "value": "include"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tests%",
+              "variable": [
+                {
+                  "text": "%tests%",
+                  "code": [
+                    {
+                      "variable": "tests"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "list.count %tests%, write to %count%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "count",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%tests%",
+              "variable": [
+                {
+                  "text": "%tests%",
+                  "code": [
+                    {
+                      "variable": "tests"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %count% equals 1",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "test.run tests %tests%, write to %results%",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "test",
+          "name": "start",
+          "property": [
+            {
+              "name": "Tests",
+              "type": {
+                "name": "list",
+                "kind": "test",
+                "template": "plang"
+              },
+              "value": "%tests%",
+              "variable": [
+                {
+                  "text": "%tests%",
+                  "code": [
+                    {
+                      "variable": "tests"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%results%",
+              "variable": [
+                {
+                  "text": "%results%",
+                  "code": [
+                    {
+                      "variable": "results"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "list.any %results% where Status equals 'Fail', write to %hasFail%",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "any",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%results%",
+              "variable": [
+                {
+                  "text": "%results%",
+                  "code": [
+                    {
+                      "variable": "results"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "Status"
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "Fail"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%hasFail%",
+              "variable": [
+                {
+                  "text": "%hasFail%",
+                  "code": [
+                    {
+                      "variable": "hasFail"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 4 uses list.any, which the decider was not sure of (0.99)"
+        },
+        {
+          "key": "Unsure",
+          "message": "step 4 uses variable.set, which the decider was not sure of (0.85)"
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %hasFail% is true",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%hasFail%",
+              "variable": [
+                {
+                  "text": "%hasFail%",
+                  "code": [
+                    {
+                      "variable": "hasFail"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/run/TestRunReportsAssertionFailure.test.goal",
+  "prPath": "/module/test/run/.build/testrunreportsassertionfailure.test.pr",
+  "hash": "29b1b02a713f40b40d04d7b149848d94df45186d614bb83fde65849547075357"
+}

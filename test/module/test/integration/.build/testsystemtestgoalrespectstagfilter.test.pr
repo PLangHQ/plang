@@ -1,0 +1,133 @@
+{
+  "name": "TestSystemTestGoalRespectsTagFilter",
+  "comment": "Structural guard: the tag filter lives on Testing.Include / Testing.Exclude\nand is applied inside test.discover. A system runner that respects\ninclude/exclude must route through test.discover — verify it does.",
+  "step": [
+    {
+      "index": 0,
+      "text": "read file '/system/test.goal', write to %goalText%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "/system/test.goal"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%goalText%",
+              "variable": [
+                {
+                  "text": "%goalText%",
+                  "code": [
+                    {
+                      "variable": "goalText"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "goal"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %goalText% contains 'test.discover'",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%goalText%",
+              "variable": [
+                {
+                  "text": "%goalText%",
+                  "code": [
+                    {
+                      "variable": "goalText"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "test.discover"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/integration/TestSystemTestGoalRespectsTagFilter.test.goal",
+  "prPath": "/module/test/integration/.build/testsystemtestgoalrespectstagfilter.test.pr",
+  "hash": "ebc575f74c0a72262840167ace15cef996a801572577e7ef7e9350b3188d39f6"
+}

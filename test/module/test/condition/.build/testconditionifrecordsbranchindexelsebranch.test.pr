@@ -1,0 +1,344 @@
+{
+  "name": "TestConditionIfRecordsBranchIndexElseBranch",
+  "comment": "Verifies condition.if publishes branchIndex=2 when else branch fires.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %x% = 0",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "if %x% > 10 set %a% = 1, else if %x% > 5 set %b% = 2, else set %c% = 3",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": ">"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "number"
+              },
+              "value": 10
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%a%, Value=1)",
+              "line": {
+                "number": 4
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%a%",
+                      "variable": [
+                        {
+                          "text": "%a%",
+                          "code": [
+                            {
+                              "variable": "a"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "number"
+                      },
+                      "value": 1
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "condition",
+          "name": "elseif",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": ">"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "number"
+              },
+              "value": 5
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%b%, Value=2)",
+              "line": {
+                "number": 4
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%b%",
+                      "variable": [
+                        {
+                          "text": "%b%",
+                          "code": [
+                            {
+                              "variable": "b"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "number"
+                      },
+                      "value": 2
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "condition",
+          "name": "else",
+          "property": [],
+          "child": [
+            {
+              "index": 0,
+              "text": "variable.set(Name=%c%, Value=3)",
+              "line": {
+                "number": 4
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%c%",
+                      "variable": [
+                        {
+                          "text": "%c%",
+                          "code": [
+                            {
+                              "variable": "c"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "number"
+                      },
+                      "value": 3
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %!data.branchIndex% equals 2",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data.branchIndex%",
+              "variable": [
+                {
+                  "text": "%!data.branchIndex%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    },
+                    {
+                      "property": "branchIndex"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/condition/TestConditionIfRecordsBranchIndexElseBranch.test.goal",
+  "prPath": "/module/test/condition/.build/testconditionifrecordsbranchindexelsebranch.test.pr",
+  "hash": "5c1c70b69c4c75dd9c67f4277e55181bf35a8c2334f9e03ec42b387160f03e57"
+}

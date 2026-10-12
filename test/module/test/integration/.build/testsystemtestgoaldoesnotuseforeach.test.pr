@@ -1,0 +1,133 @@
+{
+  "name": "TestSystemTestGoalDoesNotUseForeach",
+  "comment": "Structural guard against the silent-skip regression that motivated this\nrewrite: the foreach-based runner skipped tests when one errored. The\nreplacement uses test.run (a C# loop). Assert system/test.goal contains\nno 'foreach' — a regression that reverted to the foreach loop would fail.",
+  "step": [
+    {
+      "index": 0,
+      "text": "read file '/system/test.goal', write to %goalText%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "/system/test.goal"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%goalText%",
+              "variable": [
+                {
+                  "text": "%goalText%",
+                  "code": [
+                    {
+                      "variable": "goalText"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file",
+                "kind": "goal"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %goalText% does not contain 'foreach'",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "notContains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%goalText%",
+              "variable": [
+                {
+                  "text": "%goalText%",
+                  "code": [
+                    {
+                      "variable": "goalText"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "foreach"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/test/integration/TestSystemTestGoalDoesNotUseForeach.test.goal",
+  "prPath": "/module/test/integration/.build/testsystemtestgoaldoesnotuseforeach.test.pr",
+  "hash": "d61de12e28565f5dc899573c1cc9685d672f4fc43f338678623cda339b82cd41"
+}
