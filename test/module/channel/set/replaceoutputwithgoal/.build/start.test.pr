@@ -1,0 +1,107 @@
+{
+  "name": "Start",
+  "comment": "channel.set replaces the role channel with a Goal-backed channel — writes\nto output now run OutputGoal, which sets a flag we can assert.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set output channel as OutputGoal",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "channel",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "output"
+            },
+            {
+              "name": "Goal",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "OutputGoal"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "write 'hello'",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %outputGoalCalled% is true",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%outputGoalCalled%",
+              "variable": [
+                {
+                  "text": "%outputGoalCalled%",
+                  "code": [
+                    {
+                      "variable": "outputGoalCalled"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/set/replaceoutputwithgoal/Start.test.goal",
+  "prPath": "/module/channel/set/replaceoutputwithgoal/.build/start.test.pr",
+  "hash": "69ea8909321607dbfb9b81e8c4bd0d026f2406a68be05a19d93d9e2bffb71713"
+}

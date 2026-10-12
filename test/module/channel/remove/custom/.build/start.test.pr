@@ -1,0 +1,199 @@
+{
+  "name": "Start",
+  "comment": "channel.remove unregisters a custom-named channel — subsequent write to it errors.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set channel \"logger\" call Logger",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "channel",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "logger"
+            },
+            {
+              "name": "Goal",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "Logger"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "remove channel \"logger\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "channel",
+          "name": "remove",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "logger"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "write 'hi' to logger, on error set %writeFailed% = true",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "hi"
+            },
+            {
+              "name": "channel",
+              "type": {
+                "name": "text"
+              },
+              "value": "logger"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%writeFailed%",
+                      "variable": [
+                        {
+                          "text": "%writeFailed%",
+                          "code": [
+                            {
+                              "variable": "writeFailed"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %writeFailed% is true",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%writeFailed%",
+              "variable": [
+                {
+                  "text": "%writeFailed%",
+                  "code": [
+                    {
+                      "variable": "writeFailed"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/remove/custom/Start.test.goal",
+  "prPath": "/module/channel/remove/custom/.build/start.test.pr",
+  "hash": "836f3f8719fb491cd096c34684d98b6112b5c035bc1d72c814fda1bd9297823a"
+}

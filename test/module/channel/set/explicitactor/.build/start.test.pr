@@ -1,0 +1,107 @@
+{
+  "name": "Start",
+  "comment": "channel.set targeting System rebinds System's output, not User's.\nDefault context actor is User; writing 'u-msg' must NOT trigger SystemOutputGoal.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set system output channel as SystemOutputGoal",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "channel",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "SystemOutputGoal"
+            },
+            {
+              "name": "Goal",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "Start"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "write 'u-msg'",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "u-msg"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %systemOutputCalled% is null",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%systemOutputCalled%",
+              "variable": [
+                {
+                  "text": "%systemOutputCalled%",
+                  "code": [
+                    {
+                      "variable": "systemOutputCalled"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/set/explicitactor/Start.test.goal",
+  "prPath": "/module/channel/set/explicitactor/.build/start.test.pr",
+  "hash": "f95e9e1257b9d3f045d70beafb1702e0e0676c1ac9ddaeaaa3973f396e1f323d"
+}

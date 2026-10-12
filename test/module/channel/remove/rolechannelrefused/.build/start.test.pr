@@ -1,0 +1,141 @@
+{
+  "name": "Start",
+  "comment": "channel.remove on a standard role-channel (output / error / input) is refused.",
+  "step": [
+    {
+      "index": 0,
+      "text": "remove channel \"output\", on error set %removalRefused% = true",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "channel",
+          "name": "remove",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "output"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%removalRefused%",
+              "variable": [
+                {
+                  "text": "%removalRefused%",
+                  "code": [
+                    {
+                      "variable": "removalRefused"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %removalRefused% is true",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%removalRefused%",
+              "variable": [
+                {
+                  "text": "%removalRefused%",
+                  "code": [
+                    {
+                      "variable": "removalRefused"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "write 'still here' to output",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "still here"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/remove/rolechannelrefused/Start.test.goal",
+  "prPath": "/module/channel/remove/rolechannelrefused/.build/start.test.pr",
+  "hash": "572f2dd470dfa2943cdc211fa521469663c1ee0d31e31313694c96b16268cdf9"
+}

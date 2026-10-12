@@ -1,0 +1,107 @@
+{
+  "name": "Start",
+  "comment": "channel.set without an explicit actor uses Context.Actor (User by default).\nWriting 'hi' must trigger OutputGoal because User's output got rebound.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set output channel as OutputGoal",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "channel",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "output"
+            },
+            {
+              "name": "Goal",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "OutputGoal"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "write 'hi'",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "hi"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %userOutputCalled% is true",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%userOutputCalled%",
+              "variable": [
+                {
+                  "text": "%userOutputCalled%",
+                  "code": [
+                    {
+                      "variable": "userOutputCalled"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/set/contextactor/Start.test.goal",
+  "prPath": "/module/channel/set/contextactor/.build/start.test.pr",
+  "hash": "50a7d28fb55becba0d8c8c853443776817bb3d6db0af7030c6c0f73a19d5fd17"
+}

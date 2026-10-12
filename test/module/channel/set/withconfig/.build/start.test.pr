@@ -1,0 +1,242 @@
+{
+  "name": "Start",
+  "comment": "channel.add honours optional config: buffer (int bytes), timeout (ISO 8601 string),\nmime, encoding. Verifying via Data result of the add step.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set channel \"audit\" call AuditLog, buffer: 65536, timeout: PT30S, mime: 'application/json', write to %channel%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "channel",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "audit"
+            },
+            {
+              "name": "Goal",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "AuditLog"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Buffer",
+              "type": {
+                "name": "number"
+              },
+              "value": 65536
+            },
+            {
+              "name": "Timeout",
+              "type": {
+                "name": "duration"
+              },
+              "value": "PT30S"
+            },
+            {
+              "name": "Mime",
+              "type": {
+                "name": "text"
+              },
+              "value": "application/json"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%channel%",
+              "variable": [
+                {
+                  "text": "%channel%",
+                  "code": [
+                    {
+                      "variable": "channel"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %channel% is not null",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%channel%",
+              "variable": [
+                {
+                  "text": "%channel%",
+                  "code": [
+                    {
+                      "variable": "channel"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %channel.Buffer% equals 65536",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 65536
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%channel.Buffer%",
+              "variable": [
+                {
+                  "text": "%channel.Buffer%",
+                  "code": [
+                    {
+                      "variable": "channel"
+                    },
+                    {
+                      "property": "Buffer"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %channel.Mime% equals 'application/json'",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "application/json"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%channel.Mime%",
+              "variable": [
+                {
+                  "text": "%channel.Mime%",
+                  "code": [
+                    {
+                      "variable": "channel"
+                    },
+                    {
+                      "property": "Mime"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/set/withconfig/Start.test.goal",
+  "prPath": "/module/channel/set/withconfig/.build/start.test.pr",
+  "hash": "ad4e710387a20e942f6e0dc15cd7ac5c71783c3ed9c7878d99a20df61ff7183b"
+}

@@ -1,0 +1,151 @@
+{
+  "name": "Start",
+  "comment": "Arms the IsExecuting recursion guard end-to-end and asserts on the\nspecific error key — guard surfaces ChannelNotFound, recursion-depth\nbackstop surfaces RecursionDepthExceeded.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set channel \"echo\" call EchoBack",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "channel",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "echo"
+            },
+            {
+              "name": "Goal",
+              "type": {
+                "name": "action"
+              },
+              "value": {
+                "module": "goal",
+                "name": "call",
+                "property": [
+                  {
+                    "name": "Name",
+                    "type": {
+                      "name": "goal"
+                    },
+                    "value": "EchoBack"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "write 'hello' to echo, on error call InspectError",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "InspectError"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %errorKey% equals 'ChannelNotFound'",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "ChannelNotFound"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%errorKey%",
+              "variable": [
+                {
+                  "text": "%errorKey%",
+                  "code": [
+                    {
+                      "variable": "errorKey"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/goalchannelrecursion/Start.test.goal",
+  "prPath": "/module/channel/goalchannelrecursion/.build/start.test.pr",
+  "hash": "391ed0fb5826378a5419969ab672a03868f1d4db602b555f38a8870915f699ca"
+}
