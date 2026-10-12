@@ -1,0 +1,254 @@
+{
+  "name": "Start",
+  "comment": "same step with same input hits cache",
+  "step": [
+    {
+      "index": 0,
+      "text": "save 'cachekey.txt' with content 'value1'",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "cachekey.txt"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "value1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "call ReadCachedFile",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "ReadCachedFile"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %first% = %cachedContent%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%first%",
+              "variable": [
+                {
+                  "text": "%first%",
+                  "code": [
+                    {
+                      "variable": "first"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%cachedContent%",
+              "variable": [
+                {
+                  "text": "%cachedContent%",
+                  "code": [
+                    {
+                      "variable": "cachedContent"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "save 'cachekey.txt' with content 'value2'",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "cachekey.txt"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "value2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "call ReadCachedFile",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "ReadCachedFile"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %cachedContent% equals %first%",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "%first%",
+              "variable": [
+                {
+                  "text": "%first%",
+                  "code": [
+                    {
+                      "variable": "first"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%cachedContent%",
+              "variable": [
+                {
+                  "text": "%cachedContent%",
+                  "code": [
+                    {
+                      "variable": "cachedContent"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "delete file 'cachekey.txt'",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "cachekey.txt"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/cache/key/CacheKey.test.goal",
+  "prPath": "/module/cache/key/.build/cachekey.test.pr",
+  "hash": "ab151075936f16cb7c3540c269e9b1c1df43ee343a49c6e2188b174778e36992"
+}

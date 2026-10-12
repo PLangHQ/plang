@@ -1,0 +1,2173 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %myList% = [10, 20, 30]",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%myList%",
+              "variable": [
+                {
+                  "text": "%myList%",
+                  "code": [
+                    {
+                      "variable": "myList"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [10,20,30]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "list"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "add 40 to %myList%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "add",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%myList%",
+              "variable": [
+                {
+                  "text": "%myList%",
+                  "code": [
+                    {
+                      "variable": "myList"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 40
+            }
+          ],
+          "default": [
+            {
+              "name": "at",
+              "type": {
+                "name": "number"
+              },
+              "value": -1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "get count of %myList%, write to %count%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "count",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%myList%",
+              "variable": [
+                {
+                  "text": "%myList%",
+                  "code": [
+                    {
+                      "variable": "myList"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %count% equals 4, \"list should have 4 items after add\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 4
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%count%",
+              "variable": [
+                {
+                  "text": "%count%",
+                  "code": [
+                    {
+                      "variable": "count"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "list should have 4 items after add"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "get first item from %myList%, write to %first%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "first",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%myList%",
+              "variable": [
+                {
+                  "text": "%myList%",
+                  "code": [
+                    {
+                      "variable": "myList"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%first%",
+              "variable": [
+                {
+                  "text": "%first%",
+                  "code": [
+                    {
+                      "variable": "first"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %first% equals 10",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 10
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%first%",
+              "variable": [
+                {
+                  "text": "%first%",
+                  "code": [
+                    {
+                      "variable": "first"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "get last item from %myList%, write to %last%",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "last",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%myList%",
+              "variable": [
+                {
+                  "text": "%myList%",
+                  "code": [
+                    {
+                      "variable": "myList"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%last%",
+              "variable": [
+                {
+                  "text": "%last%",
+                  "code": [
+                    {
+                      "variable": "last"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "assert %last% equals 40",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 40
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%last%",
+              "variable": [
+                {
+                  "text": "%last%",
+                  "code": [
+                    {
+                      "variable": "last"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "check if %myList% contains 20, write to %has20%",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "compare",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%myList%",
+              "variable": [
+                {
+                  "text": "%myList%",
+                  "code": [
+                    {
+                      "variable": "myList"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "contains"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "number"
+              },
+              "value": 20
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%has20%",
+              "variable": [
+                {
+                  "text": "%has20%",
+                  "code": [
+                    {
+                      "variable": "has20"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 8 uses condition.compare, which the decider was not sure of (0.98)"
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "text": "assert %has20% is true, \"list should contain 20\"",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%has20%",
+              "variable": [
+                {
+                  "text": "%has20%",
+                  "code": [
+                    {
+                      "variable": "has20"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "list should contain 20"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "text": "join %myList% with separator \", \", write to %joined%",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "join",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%myList%",
+              "variable": [
+                {
+                  "text": "%myList%",
+                  "code": [
+                    {
+                      "variable": "myList"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Separator",
+              "type": {
+                "name": "separator"
+              },
+              "value": ", "
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%joined%",
+              "variable": [
+                {
+                  "text": "%joined%",
+                  "code": [
+                    {
+                      "variable": "joined"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "text": "assert %joined% contains \"10\"",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%joined%",
+              "variable": [
+                {
+                  "text": "%joined%",
+                  "code": [
+                    {
+                      "variable": "joined"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "10"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "text": "assert %joined% contains \"40\"",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%joined%",
+              "variable": [
+                {
+                  "text": "%joined%",
+                  "code": [
+                    {
+                      "variable": "joined"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "40"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "text": "split \"a-b-c\" by \"-\", write to %parts%",
+      "line": {
+        "number": 15
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "split",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "a-b-c"
+            },
+            {
+              "name": "Separator",
+              "type": {
+                "name": "separator"
+              },
+              "value": "-"
+            }
+          ],
+          "default": [
+            {
+              "name": "empty",
+              "type": {
+                "name": "choice",
+                "kind": "empty"
+              },
+              "value": "keep"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%parts%",
+              "variable": [
+                {
+                  "text": "%parts%",
+                  "code": [
+                    {
+                      "variable": "parts"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "text": "get count of %parts%, write to %partsCount%",
+      "line": {
+        "number": 16
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "count",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%parts%",
+              "variable": [
+                {
+                  "text": "%parts%",
+                  "code": [
+                    {
+                      "variable": "parts"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%partsCount%",
+              "variable": [
+                {
+                  "text": "%partsCount%",
+                  "code": [
+                    {
+                      "variable": "partsCount"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 15,
+      "text": "assert %partsCount% equals 3",
+      "line": {
+        "number": 17
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%partsCount%",
+              "variable": [
+                {
+                  "text": "%partsCount%",
+                  "code": [
+                    {
+                      "variable": "partsCount"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 16,
+      "text": "get item at index 1 from %myList%, write to %second%",
+      "line": {
+        "number": 19
+      },
+      "comment": "get by index",
+      "code": [
+        {
+          "module": "list",
+          "name": "get",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%myList%",
+              "variable": [
+                {
+                  "text": "%myList%",
+                  "code": [
+                    {
+                      "variable": "myList"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Index",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%second%",
+              "variable": [
+                {
+                  "text": "%second%",
+                  "code": [
+                    {
+                      "variable": "second"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 17,
+      "text": "assert %second% equals 20",
+      "line": {
+        "number": 20
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 20
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%second%",
+              "variable": [
+                {
+                  "text": "%second%",
+                  "code": [
+                    {
+                      "variable": "second"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 18,
+      "text": "remove 20 from %myList%",
+      "line": {
+        "number": 22
+      },
+      "comment": "remove",
+      "code": [
+        {
+          "module": "list",
+          "name": "remove",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%myList%",
+              "variable": [
+                {
+                  "text": "%myList%",
+                  "code": [
+                    {
+                      "variable": "myList"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 20
+            }
+          ],
+          "default": [
+            {
+              "name": "at",
+              "type": {
+                "name": "number"
+              },
+              "value": -1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 19,
+      "text": "check if %myList% contains 20, write to %still20%",
+      "line": {
+        "number": 23
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "compare",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%myList%",
+              "variable": [
+                {
+                  "text": "%myList%",
+                  "code": [
+                    {
+                      "variable": "myList"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "contains"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "number"
+              },
+              "value": 20
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%still20%",
+              "variable": [
+                {
+                  "text": "%still20%",
+                  "code": [
+                    {
+                      "variable": "still20"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 20,
+      "text": "assert %still20% is false",
+      "line": {
+        "number": 24
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isFalse",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%still20%",
+              "variable": [
+                {
+                  "text": "%still20%",
+                  "code": [
+                    {
+                      "variable": "still20"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 21,
+      "text": "get index of 30 in %myList%, write to %idx%",
+      "line": {
+        "number": 26
+      },
+      "comment": "indexOf",
+      "code": [
+        {
+          "module": "list",
+          "name": "indexof",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%myList%",
+              "variable": [
+                {
+                  "text": "%myList%",
+                  "code": [
+                    {
+                      "variable": "myList"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 30
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%idx%",
+              "variable": [
+                {
+                  "text": "%idx%",
+                  "code": [
+                    {
+                      "variable": "idx"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 22,
+      "text": "assert %idx% is greater than -1, \"indexOf should find the item\"",
+      "line": {
+        "number": 27
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "greaterThan",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%idx%",
+              "variable": [
+                {
+                  "text": "%idx%",
+                  "code": [
+                    {
+                      "variable": "idx"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "number"
+              },
+              "value": -1
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "indexOf should find the item"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 23,
+      "text": "set %unsorted% = [3, 1, 2]",
+      "line": {
+        "number": 29
+      },
+      "comment": "sort",
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%unsorted%",
+              "variable": [
+                {
+                  "text": "%unsorted%",
+                  "code": [
+                    {
+                      "variable": "unsorted"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [3,1,2]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "list"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 24,
+      "text": "sort %unsorted%",
+      "line": {
+        "number": 30
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "query",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": "%unsorted%",
+              "variable": [
+                {
+                  "text": "%unsorted%",
+                  "code": [
+                    {
+                      "variable": "unsorted"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Query",
+              "type": {
+                "name": "query"
+              },
+              "value": {"order":" "}
+            }
+          ],
+          "default": [
+            {
+              "name": "execution",
+              "type": {
+                "name": "choice",
+                "kind": "execution"
+              },
+              "value": "sql"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%unsorted%",
+              "variable": [
+                {
+                  "text": "%unsorted%",
+                  "code": [
+                    {
+                      "variable": "unsorted"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 25,
+      "text": "get first item from %unsorted%, write to %sortFirst%",
+      "line": {
+        "number": 31
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "first",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%unsorted%",
+              "variable": [
+                {
+                  "text": "%unsorted%",
+                  "code": [
+                    {
+                      "variable": "unsorted"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%sortFirst%",
+              "variable": [
+                {
+                  "text": "%sortFirst%",
+                  "code": [
+                    {
+                      "variable": "sortFirst"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 26,
+      "text": "assert %sortFirst% equals 1",
+      "line": {
+        "number": 32
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%sortFirst%",
+              "variable": [
+                {
+                  "text": "%sortFirst%",
+                  "code": [
+                    {
+                      "variable": "sortFirst"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 27,
+      "text": "reverse %unsorted%",
+      "line": {
+        "number": 34
+      },
+      "comment": "reverse",
+      "code": [
+        {
+          "module": "list",
+          "name": "reverse",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%unsorted%",
+              "variable": [
+                {
+                  "text": "%unsorted%",
+                  "code": [
+                    {
+                      "variable": "unsorted"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 28,
+      "text": "get first item from %unsorted%, write to %revFirst%",
+      "line": {
+        "number": 35
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "first",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%unsorted%",
+              "variable": [
+                {
+                  "text": "%unsorted%",
+                  "code": [
+                    {
+                      "variable": "unsorted"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%revFirst%",
+              "variable": [
+                {
+                  "text": "%revFirst%",
+                  "code": [
+                    {
+                      "variable": "revFirst"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 29,
+      "text": "assert %revFirst% equals 3",
+      "line": {
+        "number": 36
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%revFirst%",
+              "variable": [
+                {
+                  "text": "%revFirst%",
+                  "code": [
+                    {
+                      "variable": "revFirst"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 30,
+      "text": "set %dupes% = [1, 2, 2, 3, 3, 3]",
+      "line": {
+        "number": 38
+      },
+      "comment": "unique",
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%dupes%",
+              "variable": [
+                {
+                  "text": "%dupes%",
+                  "code": [
+                    {
+                      "variable": "dupes"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [1,2,2,3,3,3]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "list"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 31,
+      "text": "get unique items from %dupes%, write to %uniq%",
+      "line": {
+        "number": 39
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "query",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": "%dupes%",
+              "variable": [
+                {
+                  "text": "%dupes%",
+                  "code": [
+                    {
+                      "variable": "dupes"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Query",
+              "type": {
+                "name": "query"
+              },
+              "value": {"distinct":true}
+            }
+          ],
+          "default": [
+            {
+              "name": "execution",
+              "type": {
+                "name": "choice",
+                "kind": "execution"
+              },
+              "value": "sql"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%uniq%",
+              "variable": [
+                {
+                  "text": "%uniq%",
+                  "code": [
+                    {
+                      "variable": "uniq"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 32,
+      "text": "get count of %uniq%, write to %uniqCount%",
+      "line": {
+        "number": 40
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "count",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%uniq%",
+              "variable": [
+                {
+                  "text": "%uniq%",
+                  "code": [
+                    {
+                      "variable": "uniq"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%uniqCount%",
+              "variable": [
+                {
+                  "text": "%uniqCount%",
+                  "code": [
+                    {
+                      "variable": "uniqCount"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 33,
+      "text": "assert %uniqCount% equals 3",
+      "line": {
+        "number": 41
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%uniqCount%",
+              "variable": [
+                {
+                  "text": "%uniqCount%",
+                  "code": [
+                    {
+                      "variable": "uniqCount"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/list/ListOps.test.goal",
+  "prPath": "/module/list/.build/listops.test.pr",
+  "hash": "550494b84bab14a1eb5e474b6c232dab69d34544ed1e8e67a7e5284344bfdab8"
+}

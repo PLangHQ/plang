@@ -1,0 +1,358 @@
+{
+  "name": "Start",
+  "comment": "Test: verify with wrong hash returns false",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %data% = \"hello world\"",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello world"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "hash %data%, write to %correctHash%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "crypto",
+          "name": "hash",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "algorithm",
+              "type": {
+                "name": "choice",
+                "kind": "hash"
+              },
+              "value": "keccak256"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%correctHash%",
+              "variable": [
+                {
+                  "text": "%correctHash%",
+                  "code": [
+                    {
+                      "variable": "correctHash"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %wrongHash% = \"0000000000000000000000000000000000000000000000000000000000000000\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%wrongHash%",
+              "variable": [
+                {
+                  "text": "%wrongHash%",
+                  "code": [
+                    {
+                      "variable": "wrongHash"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "0000000000000000000000000000000000000000000000000000000000000000"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "verify hash of %data% against %wrongHash%, write to %isValid%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "crypto",
+          "name": "verify",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Hash",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%wrongHash%",
+              "variable": [
+                {
+                  "text": "%wrongHash%",
+                  "code": [
+                    {
+                      "variable": "wrongHash"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "algorithm",
+              "type": {
+                "name": "choice",
+                "kind": "hash"
+              },
+              "value": "keccak256"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%isValid%",
+              "variable": [
+                {
+                  "text": "%isValid%",
+                  "code": [
+                    {
+                      "variable": "isValid"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %isValid% is false, \"verify with wrong hash should return false\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isFalse",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%isValid%",
+              "variable": [
+                {
+                  "text": "%isValid%",
+                  "code": [
+                    {
+                      "variable": "isValid"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "verify with wrong hash should return false"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/crypto/verifywronghash/VerifyWrongHash.test.goal",
+  "prPath": "/module/crypto/verifywronghash/.build/verifywronghash.test.pr",
+  "hash": "cc3622b92f091f6a3eb67a6142d95f995589c10637ba058e97f9b8ef35836c97"
+}

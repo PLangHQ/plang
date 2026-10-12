@@ -1,0 +1,278 @@
+{
+  "name": "Start",
+  "comment": "notEquals",
+  "step": [
+    {
+      "index": 0,
+      "text": "assert 5 not equals 10",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "notEquals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 5
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "number"
+              },
+              "value": 10
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %flag% = false",
+      "line": {
+        "number": 5
+      },
+      "comment": "isFalse",
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%flag%",
+              "variable": [
+                {
+                  "text": "%flag%",
+                  "code": [
+                    {
+                      "variable": "flag"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "bool"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %flag% is false",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isFalse",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%flag%",
+              "variable": [
+                {
+                  "text": "%flag%",
+                  "code": [
+                    {
+                      "variable": "flag"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "set %nothing% = null",
+      "line": {
+        "number": 8
+      },
+      "comment": "isNull",
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%nothing%",
+              "variable": [
+                {
+                  "text": "%nothing%",
+                  "code": [
+                    {
+                      "variable": "nothing"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item"
+              },
+              "value": null
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "null"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %nothing% is null",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%nothing%",
+              "variable": [
+                {
+                  "text": "%nothing%",
+                  "code": [
+                    {
+                      "variable": "nothing"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert 10 is greater than 5",
+      "line": {
+        "number": 11
+      },
+      "comment": "greaterThan",
+      "code": [
+        {
+          "module": "assert",
+          "name": "greaterThan",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "number"
+              },
+              "value": 10
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "number"
+              },
+              "value": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "assert 3 is less than 7",
+      "line": {
+        "number": 13
+      },
+      "comment": "lessThan",
+      "code": [
+        {
+          "module": "assert",
+          "name": "lessThan",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "number"
+              },
+              "value": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/assert/Assert.test.goal",
+  "prPath": "/module/assert/.build/assert.test.pr",
+  "hash": "adbcf3c709cf7ccda27f4945fa94067dc70e432d857aef4b908d5a093c70f694"
+}

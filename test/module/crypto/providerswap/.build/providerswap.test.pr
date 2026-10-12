@@ -1,0 +1,236 @@
+{
+  "name": "Start",
+  "comment": "Test: set crypto provider via settings, then hash — verifies builder recognizes the setting",
+  "step": [
+    {
+      "index": 0,
+      "text": "set the crypto provider as sha256-only",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "code",
+          "name": "setDefault",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "sha256-only"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "choice",
+                "kind": "provider"
+              },
+              "value": "crypto"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %data% = \"hello world\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello world"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "hash %data%, write to %hash%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "crypto",
+          "name": "hash",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "algorithm",
+              "type": {
+                "name": "choice",
+                "kind": "hash"
+              },
+              "value": "keccak256"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%hash%",
+              "variable": [
+                {
+                  "text": "%hash%",
+                  "code": [
+                    {
+                      "variable": "hash"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %hash% is not empty, \"hash with swapped provider should still work\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "notEquals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": ""
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%hash%",
+              "variable": [
+                {
+                  "text": "%hash%",
+                  "code": [
+                    {
+                      "variable": "hash"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "hash with swapped provider should still work"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/crypto/providerswap/ProviderSwap.test.goal",
+  "prPath": "/module/crypto/providerswap/.build/providerswap.test.pr",
+  "hash": "78809e0f2c56312c75fabe3dc7ea2c0e58b053e25ea2ed4cd805ab51cea4aa3b"
+}

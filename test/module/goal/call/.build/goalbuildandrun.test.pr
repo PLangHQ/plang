@@ -1,0 +1,106 @@
+{
+  "name": "TestGoalBuildAndRunAfterRename",
+  "comment": "Cut 1 surface in PLang. Builds and runs after the singular-namespace rename — proves the\ngenerator's string literals and emitted templates ride the new namespaces (a miss surfaces\nhere as \"Action '<module>.<action>' not found\", not in the generator project).",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %greeting% = \"hello\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%greeting%",
+              "variable": [
+                {
+                  "text": "%greeting%",
+                  "code": [
+                    {
+                      "variable": "greeting"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %greeting% equals \"hello\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%greeting%",
+              "variable": [
+                {
+                  "text": "%greeting%",
+                  "code": [
+                    {
+                      "variable": "greeting"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/goal/call/GoalBuildAndRun.test.goal",
+  "prPath": "/module/goal/call/.build/goalbuildandrun.test.pr",
+  "hash": "3ed49bd2418c5d004cdd001f51885bb4000ae2560ab22f2e474a2b3aaf98b27e"
+}

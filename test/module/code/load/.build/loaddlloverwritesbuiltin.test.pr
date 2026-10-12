@@ -1,0 +1,119 @@
+{
+  "name": "Start",
+  "comment": "Smoke: same load as LoadDllRegistersType, distinct goal name to pin that the\noverwrite path (CustomInt re-registers built-in `int`) does not crash on load.\nThe actual runtime-wins precedence assertion (ResolveType(\"int\") returns\nCustomInt; renderer emits \"CUSTOM-INT\") lives in C# TypeProviderDllRoundtripTests.",
+  "step": [
+    {
+      "index": 0,
+      "text": "code.load Path=TypeProvider.dll, on error set %loadFailed% = true",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%loadFailed%",
+              "variable": [
+                {
+                  "text": "%loadFailed%",
+                  "code": [
+                    {
+                      "variable": "loadFailed"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "code",
+          "name": "load",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "TypeProvider.dll"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %loadFailed% is null",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%loadFailed%",
+              "variable": [
+                {
+                  "text": "%loadFailed%",
+                  "code": [
+                    {
+                      "variable": "loadFailed"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/code/load/LoadDllOverwritesBuiltIn.test.goal",
+  "prPath": "/module/code/load/.build/loaddlloverwritesbuiltin.test.pr",
+  "hash": "4b2752e3b09c0469935bdb3ecd8e552e202ff6264023c0189f4d82d2a760026c"
+}

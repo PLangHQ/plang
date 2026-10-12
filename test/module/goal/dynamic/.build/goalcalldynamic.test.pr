@@ -1,0 +1,139 @@
+{
+  "name": "Start",
+  "comment": "call goal by variable name",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %goalName% = \"TargetGoal\"",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%goalName%",
+              "variable": [
+                {
+                  "text": "%goalName%",
+                  "code": [
+                    {
+                      "variable": "goalName"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "TargetGoal"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "call %goalName%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal",
+                "template": "plang"
+              },
+              "value": "%goalName%",
+              "variable": [
+                {
+                  "text": "%goalName%",
+                  "code": [
+                    {
+                      "variable": "goalName"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %dynamicResult% equals \"reached\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "reached"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%dynamicResult%",
+              "variable": [
+                {
+                  "text": "%dynamicResult%",
+                  "code": [
+                    {
+                      "variable": "dynamicResult"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/goal/dynamic/GoalCallDynamic.test.goal",
+  "prPath": "/module/goal/dynamic/.build/goalcalldynamic.test.pr",
+  "hash": "436cbd6a8bad9114308038127dac9c59e7e551e4c2ffcdb323bc66cb6d37edb5"
+}

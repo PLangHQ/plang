@@ -1,0 +1,534 @@
+{
+  "name": "Start",
+  "comment": "Test: list.range generates a sequence",
+  "step": [
+    {
+      "index": 0,
+      "text": "generate range from 1 to 5, write to %rangeResult%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "range",
+          "property": [
+            {
+              "name": "From",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "To",
+              "type": {
+                "name": "number"
+              },
+              "value": 5
+            }
+          ],
+          "default": [
+            {
+              "name": "step",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%rangeResult%",
+              "variable": [
+                {
+                  "text": "%rangeResult%",
+                  "code": [
+                    {
+                      "variable": "rangeResult"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %rangeResult% is not null",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%rangeResult%",
+              "variable": [
+                {
+                  "text": "%rangeResult%",
+                  "code": [
+                    {
+                      "variable": "rangeResult"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %myList% = [10, 20, 30]",
+      "line": {
+        "number": 6
+      },
+      "comment": "Test: list.set mutates by index",
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%myList%",
+              "variable": [
+                {
+                  "text": "%myList%",
+                  "code": [
+                    {
+                      "variable": "myList"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [10,20,30]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "list"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "set item at index 1 in %myList% to 99",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "set",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%myList%",
+              "variable": [
+                {
+                  "text": "%myList%",
+                  "code": [
+                    {
+                      "variable": "myList"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Index",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 99
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "get item at index 1 from %myList%, write to %updated%",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "get",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%myList%",
+              "variable": [
+                {
+                  "text": "%myList%",
+                  "code": [
+                    {
+                      "variable": "myList"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Index",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%updated%",
+              "variable": [
+                {
+                  "text": "%updated%",
+                  "code": [
+                    {
+                      "variable": "updated"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %updated% equals 99",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 99
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%updated%",
+              "variable": [
+                {
+                  "text": "%updated%",
+                  "code": [
+                    {
+                      "variable": "updated"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "set %nested% = [[1, 2], [3, 4]]",
+      "line": {
+        "number": 11
+      },
+      "comment": "Test: list.flatten",
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%nested%",
+              "variable": [
+                {
+                  "text": "%nested%",
+                  "code": [
+                    {
+                      "variable": "nested"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [[1,2],[3,4]]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "list"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "flatten %nested%, write to %flatResult%",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "flatten",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%nested%",
+              "variable": [
+                {
+                  "text": "%nested%",
+                  "code": [
+                    {
+                      "variable": "nested"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%flatResult%",
+              "variable": [
+                {
+                  "text": "%flatResult%",
+                  "code": [
+                    {
+                      "variable": "flatResult"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "assert %flatResult% is not null",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%flatResult%",
+              "variable": [
+                {
+                  "text": "%flatResult%",
+                  "code": [
+                    {
+                      "variable": "flatResult"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/list/ListOps2.test.goal",
+  "prPath": "/module/list/.build/listops2.test.pr",
+  "hash": "0548589de4490fc71c4aefbaca58a7d2f5bbe4d5eab524dda8d4067f35974a61"
+}

@@ -1,0 +1,139 @@
+{
+  "name": "TestSubGoalCallResolvesAfterRename",
+  "comment": "Cut 1 sibling: a goal.call from one goal to another resolves through app.goal[\"name\"]\nafter the accessor reshape (Stage 3). Proves the call-site migration on the goals\nsubsystem — about 9 sites in the architect scan — landed cleanly.",
+  "step": [
+    {
+      "index": 0,
+      "text": "call goal Greet",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Greet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %salutation% equals \"hi\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "hi"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%salutation%",
+              "variable": [
+                {
+                  "text": "%salutation%",
+                  "code": [
+                    {
+                      "variable": "salutation"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Greet",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %salutation% = \"hi\"",
+          "line": {
+            "number": 10
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%salutation%",
+                  "variable": [
+                    {
+                      "text": "%salutation%",
+                      "code": [
+                        {
+                          "variable": "salutation"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "hi"
+                },
+                {
+                  "name": "Type",
+                  "type": {
+                    "name": "type"
+                  },
+                  "value": "text"
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/module/goal/call/SubGoalCallResolves.test.goal",
+      "prPath": "/module/goal/call/.build/subgoalcallresolves.test.pr",
+      "hash": "f852e8c6ef5b3c149eff04851e8cca8ecf3f8b8dd83afce6cc6687ad33d1fca5"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/module/goal/call/SubGoalCallResolves.test.goal",
+  "prPath": "/module/goal/call/.build/subgoalcallresolves.test.pr",
+  "hash": "5c787de33d1773c84a02084eab17e6cefa70ba2c0bc8264a7ed4740a09f17358"
+}

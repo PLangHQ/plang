@@ -1,0 +1,438 @@
+{
+  "name": "Start",
+  "comment": "Cut 3 — write out %dir% is a listing, not a content dump.\nA directory with files. Serialising %dir% emits paths/names, NOT the files' contents.",
+  "step": [
+    {
+      "index": 0,
+      "text": "save 'cut3dir/a.txt' with content 'CUT3-SECRET-ALPHA'",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "cut3dir/a.txt"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "CUT3-SECRET-ALPHA"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "save 'cut3dir/b.txt' with content 'CUT3-SECRET-BETA'",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "cut3dir/b.txt"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "CUT3-SECRET-BETA"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "read file 'cut3dir', write to %dir%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "list",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "cut3dir"
+            }
+          ],
+          "default": [
+            {
+              "name": "pattern",
+              "type": {
+                "name": "text"
+              },
+              "value": "*"
+            },
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%dir%",
+              "variable": [
+                {
+                  "text": "%dir%",
+                  "code": [
+                    {
+                      "variable": "dir"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %dir% is directory",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%dir%",
+              "variable": [
+                {
+                  "text": "%dir%",
+                  "code": [
+                    {
+                      "variable": "dir"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "set %listing% = \"%dir%\"",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%listing%",
+              "variable": [
+                {
+                  "text": "%listing%",
+                  "code": [
+                    {
+                      "variable": "listing"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "%dir%",
+              "variable": [
+                {
+                  "text": "%dir%",
+                  "code": [
+                    {
+                      "variable": "dir"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %listing% contains \"a.txt\"",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%listing%",
+              "variable": [
+                {
+                  "text": "%listing%",
+                  "code": [
+                    {
+                      "variable": "listing"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "a.txt"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "assert %listing% contains \"b.txt\"",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%listing%",
+              "variable": [
+                {
+                  "text": "%listing%",
+                  "code": [
+                    {
+                      "variable": "listing"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "b.txt"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "assert %listing% not contains \"CUT3-SECRET-ALPHA\"",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "notContains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%listing%",
+              "variable": [
+                {
+                  "text": "%listing%",
+                  "code": [
+                    {
+                      "variable": "listing"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "CUT3-SECRET-ALPHA"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "delete file 'cut3dir/a.txt'",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "cut3dir/a.txt"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "text": "delete file 'cut3dir/b.txt'",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "cut3dir/b.txt"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/file/list/Cut3.test.goal",
+  "prPath": "/module/file/list/.build/cut3.test.pr",
+  "hash": "2ea2a4001884ddf4435c3b4f9dd8fee259c3db58e5a28b75df5495ccdec81eb5"
+}

@@ -1,0 +1,116 @@
+{
+  "name": "Start",
+  "comment": "goal call with return value",
+  "step": [
+    {
+      "index": 0,
+      "text": "call ComputeAnswer, write to %answer%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "ComputeAnswer"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%answer%",
+              "variable": [
+                {
+                  "text": "%answer%",
+                  "code": [
+                    {
+                      "variable": "answer"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %answer% is not null",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%answer%",
+              "variable": [
+                {
+                  "text": "%answer%",
+                  "code": [
+                    {
+                      "variable": "answer"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/goal/return/GoalCallReturn.test.goal",
+  "prPath": "/module/goal/return/.build/goalcallreturn.test.pr",
+  "hash": "d4df986048ba6be882eba4c06d189d8d639a861eb5e326d0d660591d66b8dba9"
+}

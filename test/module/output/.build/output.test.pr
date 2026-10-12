@@ -1,0 +1,127 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "write out \"test output message\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "test output message"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %afterWrite% = true",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%afterWrite%",
+              "variable": [
+                {
+                  "text": "%afterWrite%",
+                  "code": [
+                    {
+                      "variable": "afterWrite"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "bool"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %afterWrite% is true, \"write should complete without error\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%afterWrite%",
+              "variable": [
+                {
+                  "text": "%afterWrite%",
+                  "code": [
+                    {
+                      "variable": "afterWrite"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "write should complete without error"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/output/Output.test.goal",
+  "prPath": "/module/output/.build/output.test.pr",
+  "hash": "39d72e0c02b42b1fc9b19d2291efba18ba49499b123c4f4659ea7e472b961dfe"
+}

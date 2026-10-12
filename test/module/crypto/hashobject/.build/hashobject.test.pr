@@ -1,0 +1,310 @@
+{
+  "name": "Start",
+  "comment": "Test: hash a JSON object, verify consistency on re-hash",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %obj% = { \"name\": \"Alice\", \"age\": 30 }",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%obj%",
+              "variable": [
+                {
+                  "text": "%obj%",
+                  "code": [
+                    {
+                      "variable": "obj"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"name":"Alice","age":30}
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "dict"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "hash %obj%, write to %hash1%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "crypto",
+          "name": "hash",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%obj%",
+              "variable": [
+                {
+                  "text": "%obj%",
+                  "code": [
+                    {
+                      "variable": "obj"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "algorithm",
+              "type": {
+                "name": "choice",
+                "kind": "hash"
+              },
+              "value": "keccak256"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%hash1%",
+              "variable": [
+                {
+                  "text": "%hash1%",
+                  "code": [
+                    {
+                      "variable": "hash1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "hash %obj%, write to %hash2%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "crypto",
+          "name": "hash",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%obj%",
+              "variable": [
+                {
+                  "text": "%obj%",
+                  "code": [
+                    {
+                      "variable": "obj"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "algorithm",
+              "type": {
+                "name": "choice",
+                "kind": "hash"
+              },
+              "value": "keccak256"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%hash2%",
+              "variable": [
+                {
+                  "text": "%hash2%",
+                  "code": [
+                    {
+                      "variable": "hash2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %hash1% equals %hash2%, \"hashing same object twice should produce identical hash\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%hash1%",
+              "variable": [
+                {
+                  "text": "%hash1%",
+                  "code": [
+                    {
+                      "variable": "hash1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%hash2%",
+              "variable": [
+                {
+                  "text": "%hash2%",
+                  "code": [
+                    {
+                      "variable": "hash2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "hashing same object twice should produce identical hash"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/crypto/hashobject/HashObject.test.goal",
+  "prPath": "/module/crypto/hashobject/.build/hashobject.test.pr",
+  "hash": "f9c707f1d8c99e1dca0cf67ce7a5a0f33333d2d1684a96840d0f6b962b5c9cd5"
+}
