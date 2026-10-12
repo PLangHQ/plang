@@ -1,0 +1,109 @@
+{
+  "name": "Start",
+  "comment": "The developer's escape hatch for a type-unknown value: cast it with `as json`.\n`as json` stamps a text of kind json; navigation then materialises through the\njson reader and the field resolves. Companion to NavigationOnTypeUnknown_AsksForAsType:\nthat one leaves the value type-unknown, this one casts it so the field resolves.\nDecision 401 — json is a text of kind json; there is no `object` type.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %x% = \"{\\\"port\\\":8080}\" as json",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"port\":8080}"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "dict"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %x.port% equals 8080",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 8080
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x.port%",
+              "variable": [
+                {
+                  "text": "%x.port%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "port"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/test/app/data/AsJson_ResolvesTypeUnknown.test.goal",
+  "prPath": "/test/app/data/.build/asjson_resolvestypeunknown.test.pr",
+  "hash": "7ea23c152e784800c61ccac8b8c4283cd667b88e7bf518a2e642f1617510b5c6"
+}

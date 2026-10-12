@@ -1,0 +1,161 @@
+{
+  "name": "Start",
+  "comment": "Navigation into a type-unknown value yields `item`, NOT an error — we don't know the\nshape at build time, so %x.port% is typed `item` (no guessing). At runtime the value\nresolves through to its item (here 8080); the point is that navigation does not raise.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %x% = \"{\\\"port\\\":8080}\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"port\":8080}"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %p% = %x.port%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%p%",
+              "variable": [
+                {
+                  "text": "%p%",
+                  "code": [
+                    {
+                      "variable": "p"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x.port%",
+              "variable": [
+                {
+                  "text": "%x.port%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    },
+                    {
+                      "property": "port"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %p% equals 8080",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 8080
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%p%",
+              "variable": [
+                {
+                  "text": "%p%",
+                  "code": [
+                    {
+                      "variable": "p"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/test/app/data/NavigationOnTypeUnknown_AsksForAsType.test.goal",
+  "prPath": "/test/app/data/.build/navigationontypeunknown_asksforastype.test.pr",
+  "hash": "fe2cad3336d04cb582725846791b0c777c5f022344a8c5e1e52867a464c510f7"
+}
