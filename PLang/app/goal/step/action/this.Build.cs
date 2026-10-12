@@ -91,20 +91,26 @@ public partial class @this
     /// happens to hold.</summary>
     public void Freeze(global::app.actor.context.@this context)
     {
-        if (Module[Name] is { } catalog)
-            foreach (var declared in catalog.Property)
-            {
-                if (declared.Default == null || this[declared.Name] != null || Default[declared.Name] != null) continue;
-                Default.Add(new global::app.type.property.@this
+        foreach (var row in Frozen(context).ToList()) Default.Add(row);
+        foreach (var held in Held) held.Freeze(context);
+        for (int i = 0; i < Child.Count; i++)
+            foreach (var action in Child[i].Code.Items()) action.Freeze(context);
+    }
+
+    /// <summary>The <c>Default</c> rows this action freezes, and not yet frozen: the class's <c>[Default]</c> of each
+    /// property it doesn't set, born as the property's declared type. What the build freezes and what the check
+    /// before it counts as written are this one answer.</summary>
+    internal IEnumerable<global::app.type.property.@this> Frozen(global::app.actor.context.@this context)
+    {
+        if (Module[Name] is not { } catalog) yield break;
+        foreach (var declared in catalog.Property)
+            if (declared.Default != null && this[declared.Name] == null && Default[declared.Name] == null)
+                yield return new global::app.type.property.@this
                 {
                     Name = declared.Name.ToLowerInvariant(),
                     Type = declared.Type,
                     Value = declared.Type.Make(declared.Default, context),
-                });
-            }
-        foreach (var held in Held) held.Freeze(context);
-        for (int i = 0; i < Child.Count; i++)
-            foreach (var action in Child[i].Code.Items()) action.Freeze(context);
+                };
     }
 
     /// <summary>The same action with the same values.</summary>
