@@ -13,15 +13,13 @@ Builder fixes landed (each with decider-fixture + page-golden re-pins):
 - **condition** — `and`=nested ifs, `or`=if+elseif, `if <file> exists … else …`, `!%b%`→`==false` (if.notes/examples).
 - **issue-75** refusal wording (`formal/reader.cs`); `as list of <type>` + llm `maxTokens`→Limit.token teaching.
 
-## Step-3 run
+## Step-3 run (final)
 
-283 total — **129 pass, 126 fail, 28 stale** (full report: `result.md`). Three failure classes: (1) ~36 sibling helper `.goal` not built (batch built only `.test.goal` entry points; a whole-tree build aborts at the first refusal); (2) 28 stale (builderVersion drift, mostly pre-batch folders); (3) ~90 runtime reds that build clean but fail at run — behaviour shifts from the session's pulled coder runtime changes (coder stopped) → architect/reviewer bots.
+Progression across rebuild passes: baseline **129/126/28** → sibling+stale+wrong-prPath **195/68/15** → coder-rewrites+wrong-saves+E1 **203/61/14** (full report + per-test table: `result.md`). 3 more wrong-prPath fixed after the final run (→ ~206/58 next run).
 
-## What to do next
+Rebuild passes done (siblings — now 0 unbuilt; stale/wrong-prPath rebuilt from test/; coder-triage wrong-saves + 39 coder stale-rewrites built; E1 sort). The remaining 61 fails are genuine RUNTIME reds (build clean, fail at run from the session's coder runtime changes — kind-redesign, signing, on.error) = coder's domain, matching plang-triage.md. The 14 stale are the known next-branch build items + 3 snapshot-by-design.
 
-- **Sibling-goal build pass** (per-goal over all `.goal`, surviving refusals) to clear class 1, then re-run — pending architect's go (build cost).
-- **cache:skip suite rebuild** with the final binary for class 2 — the "whole suite rebuild pass" (build cost).
-- **Class-3 runtime reds** are the coder's (stopped); handed to the architect.
+The baseline is ready for the reviewer bots. Builder's build-side work on the kept tree is done.
 
 ## Left unbuilt by reason (next branch)
 
