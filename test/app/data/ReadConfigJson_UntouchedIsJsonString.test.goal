@@ -7,5 +7,5 @@
 Start
 - read file 'config.json', write to %cfg%
 - assert %cfg!type.name% equals "file"
-- assert %cfg.Type.Kind% equals "json"
+- assert %cfg!type.kind% equals "json"
 - assert %cfg.port% equals 8080

@@ -3,4 +3,4 @@
 Start
 - set %img% = "real.gif" as image/gif strict
 - assert %img!type.name% equals "image"
-- assert %img.Type.Kind% equals "gif"
+- assert %img!type.kind% equals "gif"

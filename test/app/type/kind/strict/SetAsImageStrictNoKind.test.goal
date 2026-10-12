@@ -4,5 +4,5 @@
 Start
 - set %x% = "irrelevant" as image strict
 - assert %x!type.name% equals "image"
-- assert %x.Type.Kind% is null
-- assert %x.Type.Strict% equals true
+- assert %x!type.kind% is null
+- assert %x!type.strict% equals true

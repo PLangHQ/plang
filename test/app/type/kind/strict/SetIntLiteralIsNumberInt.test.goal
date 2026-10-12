@@ -4,4 +4,4 @@
 Start
 - set %x% = 5
 - assert %x!type.name% equals "number"
-- assert %x.Type.Kind% equals "int"
+- assert %x!type.kind% equals "int"

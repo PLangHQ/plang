@@ -5,4 +5,4 @@
 Start
 - set %x% = "readme.md" as TEXT
 - assert %x!type.name% equals "text"
-- assert %x.Type.Kind% is null
+- assert %x!type.kind% is null

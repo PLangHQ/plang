@@ -1,4 +1,8 @@
-/ Outside any on.error scope, %!error% resolves to null (no leakage from prior recovery scopes that have already closed).
+/ Outside any on.error scope no error is current: reading %!error% there is an error (a %!…% node that isn't
+/ there never reads as null), and nothing leaks from recovery scopes that have already closed.
 TestErrorVarIsNullOutsideHandler
-- set %check% = %!error%
-- assert %check% is null
+- set %check% = %!error%, on error call Caught
+- assert %caught% equals "NotFound"
+
+Caught
+- set %caught% = %!error.Key%

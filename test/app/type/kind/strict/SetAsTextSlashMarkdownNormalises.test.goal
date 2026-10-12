@@ -3,4 +3,4 @@
 Start
 - set %x% = "a" as text/markdown
 - assert %x!type.name% equals "text"
-- assert %x.Type.Kind% equals "md"
+- assert %x!type.kind% equals "md"

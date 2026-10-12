@@ -4,4 +4,4 @@
 Start
 - set %doc% = "readme.md" as text
 - assert %doc!type.name% equals "text"
-- assert %doc.Type.Kind% is null
+- assert %doc!type.kind% is null
