@@ -184,7 +184,8 @@ public class PipeTests : IDisposable
     [Test]
     public async Task OpenWithPipe_HeldToPermissions_IsSpawnedHeld()
     {
-        if (!OperatingSystem.IsLinux()) return;
+        // held only where the kernel can hold a program (Landlock on)
+        if (global::app.module.terminal.code.Sandbox.Unavailable() is { } why) Skip.Test(why);
         var outside = Path.Combine(Path.GetTempPath(), "plang_pipe_out_" + Guid.NewGuid().ToString("N"));
         var program = await Open($"(echo x > {outside}) 2>/dev/null && echo free >&4 || echo held >&4; printf '\\0' >&4; cat <&3 >&4",
             ("Permission", new List<object?> { new Dictionary<string, object?> { ["path"] = "/granted", ["verbs"] = new List<object?> { "read" } } }));

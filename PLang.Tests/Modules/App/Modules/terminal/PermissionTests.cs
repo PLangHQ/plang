@@ -56,10 +56,17 @@ public class PermissionTests : IDisposable
 
     private static List<object?> Permissions(params Dictionary<string, object?>[] permissions) => permissions.Cast<object?>().ToList();
 
+    /// <summary>A test of the hold itself runs only where the kernel can hold a program (Linux, Landlock on); elsewhere
+    /// it is skipped, saying why — a refusal there is PermissionNotEnforced, never the hold under test.</summary>
+    private static void Kernel()
+    {
+        if (global::app.module.terminal.code.Sandbox.Unavailable() is { } why) Skip.Test(why);
+    }
+
     [Test]
     public async Task WithPermissions_WritesAndReadsOnlyWhereTheySay()
     {
-        if (!OperatingSystem.IsLinux()) return;
+        Kernel();
         File.WriteAllText(Path.Combine(_outside, "secret.txt"), "s");
         var result = await Sh(
             $"echo in > {_root}/granted/a.txt; cat {_root}/granted/a.txt; " +
@@ -79,7 +86,7 @@ public class PermissionTests : IDisposable
     [Test]
     public async Task ReadOnly_ReadsButNeverWrites()
     {
-        if (!OperatingSystem.IsLinux()) return;
+        Kernel();
         File.WriteAllText(Path.Combine(_root, "granted", "kept.txt"), "kept");
         var result = await Sh(
             $"cat {_root}/granted/kept.txt; (echo x > {_root}/granted/new.txt) 2>/dev/null || echo refused-write",
@@ -95,7 +102,7 @@ public class PermissionTests : IDisposable
     [Test]
     public async Task NoPermissions_InAnEmptyList_HoldsTheProgramToItsBase()
     {
-        if (!OperatingSystem.IsLinux()) return;
+        Kernel();
         var result = await Sh($"(echo x > {_root}/granted/new.txt) 2>/dev/null || echo refused-write", Permissions());
         await result.IsSuccess();
         await Assert.That((await result.Value())?.ToString() ?? "").Contains("refused-write");
@@ -113,7 +120,7 @@ public class PermissionTests : IDisposable
     [Test]
     public async Task UnderLoad_OnlyTheHeldProgramsAreHeld_PlangsOwnThreadsStayFree()
     {
-        if (!OperatingSystem.IsLinux()) return;
+        Kernel();
         // twenty held programs at once, each trying outside; meanwhile plang's own threads and a free program write there
         var held = Enumerable.Range(0, 20).Select(n => Sh(
             $"echo {n} > {_root}/granted/n{n}.txt; (echo x > {_outside}/held{n}.txt) 2>/dev/null || echo refused",
@@ -151,7 +158,8 @@ public class PermissionTests : IDisposable
     [Test]
     public async Task Git_InitAddCommitFetchMoveLink_WorksWithItsPermissions()
     {
-        if (!OperatingSystem.IsLinux() || !File.Exists("/usr/bin/git")) return;
+        Kernel();
+        if (!File.Exists("/usr/bin/git")) return;
         // an origin outside the app, made free (no permissions) with one commit
         var origin = Path.Combine(_outside, "origin.git");
         foreach (var args in new[] { $"init -q --bare {origin}", $"-C {_outside} clone -q {origin} seed" })
@@ -183,7 +191,7 @@ public class PermissionTests : IDisposable
     [Test]
     public async Task Write_NeverDeletes_DeleteDoes()
     {
-        if (!OperatingSystem.IsLinux()) return;
+        Kernel();
         File.WriteAllText(Path.Combine(_root, "granted", "kept.txt"), "k");
         var writeOnly = await Sh($"rm {_root}/granted/kept.txt 2>/dev/null || echo refused-delete; echo new > {_root}/granted/new.txt",
             Permissions(May("/granted", "read", "write")));
@@ -213,7 +221,7 @@ public class PermissionTests : IDisposable
     [Test]
     public async Task AHeldProgram_GetsNoneOfPlangsEnvironment_OnlyWhatTheStepGives()
     {
-        if (!OperatingSystem.IsLinux()) return;
+        Kernel();
         System.Environment.SetEnvironmentVariable("PLANG_TEST_SECRET", "s3cret");
         try
         {
@@ -297,7 +305,7 @@ public class PermissionTests : IDisposable
     [Test]
     public async Task ReadOffAPr_APermissionKeepsItsPathAndVerbs()
     {
-        if (!OperatingSystem.IsLinux()) return;
+        Kernel();
         var script = $"echo in > {_root}/granted/a.txt; (echo out > {_outside}/b.txt) 2>/dev/null || echo refused";
         var result = await Built(
             $"terminal.start(App=\"//bin/sh\", Parameter=[\"-c\", \"{script}\"], Permission=[{{\"path\": \"/granted\", \"verbs\": [\"write\"]}}])");
@@ -321,7 +329,7 @@ public class PermissionTests : IDisposable
     [Test]
     public async Task OnePermissionNotInAList_IsAListOfOne()
     {
-        if (!OperatingSystem.IsLinux()) return;
+        Kernel();
         var result = await Sh($"echo ran > {_root}/granted/ran.txt; (echo out > {_outside}/out.txt) 2>/dev/null || echo refused",
             May("/granted", "write"));
         await result.IsSuccess();

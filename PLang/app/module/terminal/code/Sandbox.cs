@@ -58,14 +58,13 @@ internal sealed class Sandbox
     }
 
     /// <summary>The hold for <paramref name="program"/> under <paramref name="permissions"/> — each one the caller's to
-    /// grant, each an exact path with the verbs it gives; or why not.</summary>
+    /// grant, each an exact path with the verbs it gives; or why not. A permission that is no good is refused as such
+    /// first, whatever the kernel can do; then a kernel that can't hold a program refuses; only then is the caller asked.</summary>
     internal static async Task<(Sandbox? held, data.@this? refused)> Of(IEnumerable<data.@this> permissions, FilePath program,
         actor.context.@this context)
     {
-        if (Unavailable() is { } why)
-            return (null, context.Error(new global::app.error.ActionError(why, "PermissionNotEnforced", 501)));
         var caller = context.Actor?.Name ?? "";
-        var rules = new List<Rule>();
+        var given = new List<(global::app.type.item.path.@this Path, IReadOnlyCollection<Verb> Verbs)>();
         foreach (var row in permissions)
         {
             if (await row.Value<Permission>() is not { } permission)
@@ -87,12 +86,20 @@ internal sealed class Sandbox
                 return (null, carrier.Error != null ? context.Error(carrier.Error) : Invalid($"{permission.Path} is no path"));
             // the place itself, never a link to elsewhere: a permission for a link would hold the program to where it
             // leads, which no one granted
-            // (//tmp/x, an os-absolute path as plang keeps it, is /tmp/x on the disk)
-            if (Landlock.Real(path.Absolute) is { } real
+            // (//tmp/x, an os-absolute path as plang keeps it, is /tmp/x on the disk; the disk is asked on Linux, the only
+            // place a program is held)
+            if (OperatingSystem.IsLinux() && Landlock.Real(path.Absolute) is { } real
                 && real != System.Text.RegularExpressions.Regex.Replace(path.Absolute, "/{2,}", "/").TrimEnd('/'))
                 return (null, Invalid($"{permission.Path} is reached through a link (it is {real}): name the place itself"));
+            given.Add((path, permission.Verbs));
+        }
+        if (Unavailable() is { } why)
+            return (null, context.Error(new global::app.error.ActionError(why, "PermissionNotEnforced", 501)));
+        var rules = new List<Rule>();
+        foreach (var (path, verbs) in given)
+        {
             ulong rights = 0;
-            foreach (var verb in permission.Verbs)
+            foreach (var verb in verbs)
             {
                 var allowed = await path.Authorize(verb, context);
                 if (allowed.Exits || !allowed.Success) return (null, allowed);
