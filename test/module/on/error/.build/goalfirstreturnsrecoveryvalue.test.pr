@@ -1,0 +1,198 @@
+{
+  "name": "TestGoalFirstReturnsRecoveryValue",
+  "comment": "Order=GoalFirst: when recovery's chain succeeds, handle.cs returns recoveryResult and sets Handled=true on the errored Call (lines 109-114). Pinned by the side-effect (%content% set inside recovery) AND by %!error% being null outside the scope — Handled=true and recoveryResult-return live in the same branch, so if a regression replaces them with Ok()+no-flag, %!error% would surface.",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"boom\", on error set %content% = \"from-recovery\", order GoalFirst",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "boom"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Order",
+              "type": {
+                "name": "choice",
+                "kind": "errororder"
+              },
+              "value": "GoalFirst"
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "from-recovery"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %content% equals \"from-recovery\", \"recovery's variable.set must have executed in GoalFirst path\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "from-recovery"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "recovery's variable.set must have executed in GoalFirst path"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %!error% is null, \"Handled flag suppresses the error — proves the recoveryResult-return branch was taken\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!error%",
+              "variable": [
+                {
+                  "text": "%!error%",
+                  "code": [
+                    {
+                      "variable": "!error"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "Handled flag suppresses the error — proves the recoveryResult-return branch was taken"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/GoalFirstReturnsRecoveryValue.test.goal",
+  "prPath": "/module/on/error/.build/goalfirstreturnsrecoveryvalue.test.pr",
+  "hash": "b94028e5d68c4fcf92f6d15eae889443ed74bf3662ffd87a15ca11b649e5461f"
+}

@@ -1,0 +1,117 @@
+{
+  "name": "Start",
+  "comment": "retry then error goal, both fail",
+  "step": [
+    {
+      "index": 0,
+      "text": "call AlwaysFails, on error retry 2 times, then call HandleError",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "AlwaysFails"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "RetryCount",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "HandleError"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %errorHandled% equals true",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%errorHandled%",
+              "variable": [
+                {
+                  "text": "%errorHandled%",
+                  "code": [
+                    {
+                      "variable": "errorHandled"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/chain/ErrorChain.test.goal",
+  "prPath": "/module/on/error/chain/.build/errorchain.test.pr",
+  "hash": "ba1e6e71954ad142fa4b9af44ff5785102d5b20f07e32bdb48183b0f1be36801"
+}

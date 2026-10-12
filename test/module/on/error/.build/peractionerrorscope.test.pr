@@ -1,0 +1,349 @@
+{
+  "name": "TestPerActionErrorScope",
+  "comment": "Verifies error modifier applies only to its action, not subsequent actions.\nStep 1's handler (MarkHandled) fires because MayFail throws.\nStep 2's handler (ignore) is independent — doesn't use step 1's handler.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %handled% = false",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%handled%",
+              "variable": [
+                {
+                  "text": "%handled%",
+                  "code": [
+                    {
+                      "variable": "handled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "bool"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "call MayFail\non error call MarkHandled",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "MayFail"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Order",
+              "type": {
+                "name": "choice",
+                "kind": "errororder"
+              },
+              "value": "GoalFirst"
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "call AlwaysFails\non error ignore",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "AlwaysFails"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %handled% equals true",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%handled%",
+              "variable": [
+                {
+                  "text": "%handled%",
+                  "code": [
+                    {
+                      "variable": "handled"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "MayFail",
+      "comment": "This goal fails — error modifier on step 1 should catch it",
+      "step": [
+        {
+          "index": 0,
+          "text": "throw error 'first action error'",
+          "line": {
+            "number": 14
+          },
+          "code": [
+            {
+              "module": "error",
+              "name": "throw",
+              "property": [
+                {
+                  "name": "Message",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "first action error"
+                }
+              ],
+              "default": [
+                {
+                  "name": "status",
+                  "type": {
+                    "name": "status"
+                  },
+                  "value": 400
+                },
+                {
+                  "name": "key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "error"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/module/on/error/PerActionErrorScope.test.goal",
+      "prPath": "/module/on/error/.build/peractionerrorscope.test.pr",
+      "hash": "099761d0f63205f52155904ae4043a459f03f286077b77d9eb3dc5179a81b8bf"
+    },
+    {
+      "name": "MarkHandled",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %handled% = true",
+          "line": {
+            "number": 17
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%handled%",
+                  "variable": [
+                    {
+                      "text": "%handled%",
+                      "code": [
+                        {
+                          "variable": "handled"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": true
+                },
+                {
+                  "name": "Type",
+                  "type": {
+                    "name": "type"
+                  },
+                  "value": "bool"
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/module/on/error/PerActionErrorScope.test.goal",
+      "prPath": "/module/on/error/.build/peractionerrorscope.test.pr",
+      "hash": "b5ccadf42651c0186b3fa4d67a51ca793610bd5472e21ac114c7b885b664c81d"
+    },
+    {
+      "name": "AlwaysFails",
+      "step": [
+        {
+          "index": 0,
+          "text": "throw error 'second action error'",
+          "line": {
+            "number": 20
+          },
+          "code": [
+            {
+              "module": "error",
+              "name": "throw",
+              "property": [
+                {
+                  "name": "Message",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "second action error"
+                }
+              ],
+              "default": [
+                {
+                  "name": "status",
+                  "type": {
+                    "name": "status"
+                  },
+                  "value": 400
+                },
+                {
+                  "name": "key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "error"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/module/on/error/PerActionErrorScope.test.goal",
+      "prPath": "/module/on/error/.build/peractionerrorscope.test.pr",
+      "hash": "b2506eecab313f2a44bd0174e41423e2d14b6d04aba9de2a933b7a2ca3b2c27b"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/module/on/error/PerActionErrorScope.test.goal",
+  "prPath": "/module/on/error/.build/peractionerrorscope.test.pr",
+  "hash": "f9f6e0f36fdfe7dc505249567d1def3f093c46eff29428ed8059fc90c930ffc4"
+}

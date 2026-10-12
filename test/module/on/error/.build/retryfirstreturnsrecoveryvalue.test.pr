@@ -1,0 +1,205 @@
+{
+  "name": "TestRetryFirstReturnsRecoveryValueAfterRetryExhausts",
+  "comment": "Order=RetryFirst with retry=1: retry runs once (re-throws), then recovery's chain runs and its value propagates (handle.cs:120-131). This is the symmetry the 2026-04-27 fix unblocked — before that, this branch returned Ok() instead of recoveryResult, Handled was not set, and the value was lost. Asserting %!error% null after the scope is the symmetry pin.",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"boom\", on error set %content% = \"from-recovery\", order RetryFirst, retry 1",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "from-recovery"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Order",
+              "type": {
+                "name": "choice",
+                "kind": "errororder"
+              },
+              "value": "RetryFirst"
+            },
+            {
+              "name": "RetryCount",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "boom"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %content% equals \"from-recovery\", \"recovery's variable.set must have executed after retry exhausted\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "from-recovery"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%content%",
+              "variable": [
+                {
+                  "text": "%content%",
+                  "code": [
+                    {
+                      "variable": "content"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "recovery's variable.set must have executed after retry exhausted"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %!error% is null, \"Handled flag must be set in the RetryFirst path too — symmetric with GoalFirst\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!error%",
+              "variable": [
+                {
+                  "text": "%!error%",
+                  "code": [
+                    {
+                      "variable": "!error"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "Handled flag must be set in the RetryFirst path too — symmetric with GoalFirst"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/RetryFirstReturnsRecoveryValue.test.goal",
+  "prPath": "/module/on/error/.build/retryfirstreturnsrecoveryvalue.test.pr",
+  "hash": "a43853bc9335de3c21aeff32a08186f8157982ce14ad3b6fecca2be43edcfb0e"
+}

@@ -1,0 +1,181 @@
+{
+  "name": "TestTimeoutAfterModifierProducesCancellationError",
+  "comment": "A long-running step with `timeout after 100ms` modifier produces a cancellation error distinct from a generic failure. Catches the cancellation via on-error and asserts.",
+  "step": [
+    {
+      "index": 0,
+      "text": "call SlowGoal, timeout after 100ms, on error set %timedOut% = true",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "SlowGoal"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "timeout",
+          "property": [
+            {
+              "name": "After",
+              "type": {
+                "name": "duration"
+              },
+              "value": "100ms"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%timedOut%",
+                      "variable": [
+                        {
+                          "text": "%timedOut%",
+                          "code": [
+                            {
+                              "variable": "timedOut"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%timedOut%",
+              "variable": [
+                {
+                  "text": "%timedOut%",
+                  "code": [
+                    {
+                      "variable": "timedOut"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %timedOut% is true",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%timedOut%",
+              "variable": [
+                {
+                  "text": "%timedOut%",
+                  "code": [
+                    {
+                      "variable": "timedOut"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/timeout/TimeoutProducesCancellation.test.goal",
+  "prPath": "/module/on/timeout/.build/timeoutproducescancellation.test.pr",
+  "hash": "dc4b9c1b4108ef20ba0e140bb8c4bf8226497f1cf41049100937c0fe1539ceaa"
+}

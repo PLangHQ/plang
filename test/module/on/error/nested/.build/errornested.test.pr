@@ -1,0 +1,106 @@
+{
+  "name": "Start",
+  "comment": "nested goal has its own error handler",
+  "step": [
+    {
+      "index": 0,
+      "text": "call OuterGoal",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "OuterGoal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %innerErrorHandled% equals true",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%innerErrorHandled%",
+              "variable": [
+                {
+                  "text": "%innerErrorHandled%",
+                  "code": [
+                    {
+                      "variable": "innerErrorHandled"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %outerCompleted% equals true",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%outerCompleted%",
+              "variable": [
+                {
+                  "text": "%outerCompleted%",
+                  "code": [
+                    {
+                      "variable": "outerCompleted"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/nested/ErrorNested.test.goal",
+  "prPath": "/module/on/error/nested/.build/errornested.test.pr",
+  "hash": "c54f2a70e374b4bd307e7929f2d146d2cf51110d99d22757ce2f85859ff19052"
+}
