@@ -1,0 +1,323 @@
+{
+  "name": "NullsSortLast",
+  "comment": "Sorting a list that contains a null keeps every element (no drop, no throw) and orders the\nnull to the end — the last item of the sorted list is the null value.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %xs% = [3, null, 1]",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%xs%",
+              "variable": [
+                {
+                  "text": "%xs%",
+                  "code": [
+                    {
+                      "variable": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": [3,null,1]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "sort %xs%, write to %sorted%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "query",
+          "property": [
+            {
+              "name": "List",
+              "type": {
+                "name": "list",
+                "template": "plang"
+              },
+              "value": "%xs%",
+              "variable": [
+                {
+                  "text": "%xs%",
+                  "code": [
+                    {
+                      "variable": "xs"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Query",
+              "type": {
+                "name": "query"
+              },
+              "value": {"order":{"field":"null","desc":false}}
+            }
+          ],
+          "default": [
+            {
+              "name": "execution",
+              "type": {
+                "name": "choice",
+                "kind": "execution"
+              },
+              "value": "sql"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%sorted%",
+              "variable": [
+                {
+                  "text": "%sorted%",
+                  "code": [
+                    {
+                      "variable": "sorted"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 1 uses list.query, which the decider was not sure of (0.99)"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %sorted.Count% equals 3",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%sorted.Count%",
+              "variable": [
+                {
+                  "text": "%sorted.Count%",
+                  "code": [
+                    {
+                      "variable": "sorted"
+                    },
+                    {
+                      "property": "Count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "get last item from %sorted%, write to %last%",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "list",
+          "name": "last",
+          "property": [
+            {
+              "name": "ListName",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%sorted%",
+              "variable": [
+                {
+                  "text": "%sorted%",
+                  "code": [
+                    {
+                      "variable": "sorted"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%last%",
+              "variable": [
+                {
+                  "text": "%last%",
+                  "code": [
+                    {
+                      "variable": "last"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %last% is null",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%last%",
+              "variable": [
+                {
+                  "text": "%last%",
+                  "code": [
+                    {
+                      "variable": "last"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/test/app/type/null/NullsSortLast.test.goal",
+  "prPath": "/test/app/type/null/.build/nullssortlast.test.pr",
+  "hash": "6ff63c783755c2377e518c4b4ab5e8186f3b480931c69efbe5f70feae0f9acd7"
+}
