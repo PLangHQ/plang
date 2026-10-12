@@ -285,7 +285,7 @@ public class Default : IBuilder
                 if (await read.Value() is global::app.goal.step.action.list.@this wb)
                 {
                     var at = step.Code.IndexOf(act) + 1;
-                    while (at < step.Code.Count && step.Code[at] is global::app.goal.step.action.clause.@this) at++;
+                    while (at < step.Code.Count && IsClause(step.Code[at])) at++;
                     step.Code.Insert(at, wb);
                 }
             }
@@ -295,6 +295,14 @@ public class Default : IBuilder
         static bool ReadsData(global::app.goal.step.action.@this a)
             => a.Property.Any(p => p.Value is { } v && v.Variable.Any(
                 x => string.Equals(x.Code.Root.Name, "!data", System.StringComparison.OrdinalIgnoreCase)));
+
+        // a clause of the action before it — the `on` module's clause kinds (on.error/on.cache/on.timeout,
+        // the IClause handlers). The write-back goes AFTER these, so a clause anchors to the action that fails,
+        // not the set. (A public IsClause on the catalog action would read cleaner than the names — the
+        // Handler type isn't accessible here; flagged to the architect.)
+        static bool IsClause(global::app.goal.step.action.@this a)
+            => string.Equals(a.Module?.Name, "on", System.StringComparison.OrdinalIgnoreCase)
+               && a.Name is "error" or "cache" or "timeout";
     }
 
     // --- Pick ---
