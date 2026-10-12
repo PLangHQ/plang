@@ -1,0 +1,252 @@
+{
+  "name": "Start",
+  "comment": "Test: multi-action condition with sub-steps — file.exists + indented block",
+  "step": [
+    {
+      "index": 0,
+      "text": "file save \"testfile.txt\", content \"hello\"",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "testfile.txt"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %innerRan% = \"no\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%innerRan%",
+              "variable": [
+                {
+                  "text": "%innerRan%",
+                  "code": [
+                    {
+                      "variable": "innerRan"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "if testfile.txt exists",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "exists",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "testfile.txt"
+            }
+          ]
+        },
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "child": [
+            {
+              "index": 3,
+              "text": "set %innerRan% = \"yes\"",
+              "line": {
+                "number": 6,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%innerRan%",
+                      "variable": [
+                        {
+                          "text": "%innerRan%",
+                          "code": [
+                            {
+                              "variable": "innerRan"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "yes"
+                    },
+                    {
+                      "name": "Type",
+                      "type": {
+                        "name": "type"
+                      },
+                      "value": "text"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 2 uses condition.if, which the decider was not sure of (0.85)"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %innerRan% equals \"yes\", \"sub-steps should execute when file exists\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%innerRan%",
+              "variable": [
+                {
+                  "text": "%innerRan%",
+                  "code": [
+                    {
+                      "variable": "innerRan"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "sub-steps should execute when file exists"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/file/fileexistssubsteps/ConditionFileExistsSubSteps.test.goal",
+  "prPath": "/module/condition/file/fileexistssubsteps/.build/conditionfileexistssubsteps.test.pr",
+  "hash": "e97c91e5383ea2bdfda1a453589241ce4a5320afeff8eb56d41a07e6dd8e72c6"
+}

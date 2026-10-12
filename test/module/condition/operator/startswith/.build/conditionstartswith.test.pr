@@ -1,0 +1,185 @@
+{
+  "name": "Start",
+  "comment": "Test: startswith string operator calls goal when prefix matches",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %name% = \"hello world\"",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%name%",
+              "variable": [
+                {
+                  "text": "%name%",
+                  "code": [
+                    {
+                      "variable": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello world"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "if %name% startswith \"hello\", call WhenStarts",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%name%",
+              "variable": [
+                {
+                  "text": "%name%",
+                  "code": [
+                    {
+                      "variable": "name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "startswith"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.call(Name=\"WhenStarts\")",
+              "line": {
+                "number": 4
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "WhenStarts"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %result% equals \"starts\", \"GoalIfTrue should have been called for startswith\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "starts"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "GoalIfTrue should have been called for startswith"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/operator/startswith/ConditionStartsWith.test.goal",
+  "prPath": "/module/condition/operator/startswith/.build/conditionstartswith.test.pr",
+  "hash": "7d6198d9a1598faaa1f2054d8df30c5fe5ca3f08be80a2bddfcd5898195fbf8a"
+}

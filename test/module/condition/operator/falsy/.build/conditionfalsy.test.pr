@@ -1,0 +1,199 @@
+{
+  "name": "Start",
+  "comment": "Test: falsy value triggers else branch (GoalIfFalse)",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %flag% = false",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%flag%",
+              "variable": [
+                {
+                  "text": "%flag%",
+                  "code": [
+                    {
+                      "variable": "flag"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "bool"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "if %flag%, call HandleTrue, else call HandleFalse",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%flag%",
+              "variable": [
+                {
+                  "text": "%flag%",
+                  "code": [
+                    {
+                      "variable": "flag"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.call(Name=\"HandleTrue\")",
+              "line": {
+                "number": 4
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "HandleTrue"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "condition",
+          "name": "else",
+          "property": [],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.call(Name=\"HandleFalse\")",
+              "line": {
+                "number": 4
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "HandleFalse"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %result% equals \"false-branch\", \"GoalIfFalse should have been called\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "false-branch"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "GoalIfFalse should have been called"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/operator/falsy/ConditionFalsy.test.goal",
+  "prPath": "/module/condition/operator/falsy/.build/conditionfalsy.test.pr",
+  "hash": "18b54d93e36c27ee773bcf721b834e1459fba4a9f6a8d7326f7cf1ed24d35e30"
+}

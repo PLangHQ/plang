@@ -1,0 +1,290 @@
+{
+  "name": "Start",
+  "comment": "Test: compound AND condition — both sides must be true",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %a% = 5",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%a%",
+              "variable": [
+                {
+                  "text": "%a%",
+                  "code": [
+                    {
+                      "variable": "a"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 5
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %b% = 3",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%b%",
+              "variable": [
+                {
+                  "text": "%b%",
+                  "code": [
+                    {
+                      "variable": "b"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "if %a% > 1 and %b% < 10, call DoThing",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%a%",
+              "variable": [
+                {
+                  "text": "%a%",
+                  "code": [
+                    {
+                      "variable": "a"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": ">"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "condition.if(Left=%b%, Operator=\"<\", Right=10) { goal.call(Name=\"DoThing\") }",
+              "line": {
+                "number": 5
+              },
+              "code": [
+                {
+                  "module": "condition",
+                  "name": "if",
+                  "property": [
+                    {
+                      "name": "Left",
+                      "type": {
+                        "name": "item",
+                        "template": "plang"
+                      },
+                      "value": "%b%",
+                      "variable": [
+                        {
+                          "text": "%b%",
+                          "code": [
+                            {
+                              "variable": "b"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Operator",
+                      "type": {
+                        "name": "choice",
+                        "kind": "operator"
+                      },
+                      "value": "<"
+                    },
+                    {
+                      "name": "Right",
+                      "type": {
+                        "name": "number"
+                      },
+                      "value": 10
+                    }
+                  ],
+                  "child": [
+                    {
+                      "index": 0,
+                      "text": "goal.call(Name=\"DoThing\")",
+                      "line": {
+                        "number": 5
+                      },
+                      "code": [
+                        {
+                          "module": "goal",
+                          "name": "call",
+                          "property": [
+                            {
+                              "name": "Name",
+                              "type": {
+                                "name": "goal"
+                              },
+                              "value": "DoThing"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %result% equals \"both-true\", \"AND condition should pass when both sides true\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "both-true"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "AND condition should pass when both sides true"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/compound/and/ConditionCompoundAnd.test.goal",
+  "prPath": "/module/condition/compound/and/.build/conditioncompoundand.test.pr",
+  "hash": "81abba8d2ad4833bb2d81819e2fd9b4c1c26cd77abef853f4082a5c585641cec"
+}

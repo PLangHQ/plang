@@ -1,0 +1,259 @@
+{
+  "name": "Start",
+  "comment": "Test: sub-steps under a false condition are skipped",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %flag% = false",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%flag%",
+              "variable": [
+                {
+                  "text": "%flag%",
+                  "code": [
+                    {
+                      "variable": "flag"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "bool"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %innerRan% = \"no\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%innerRan%",
+              "variable": [
+                {
+                  "text": "%innerRan%",
+                  "code": [
+                    {
+                      "variable": "innerRan"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "if %flag%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%flag%",
+              "variable": [
+                {
+                  "text": "%flag%",
+                  "code": [
+                    {
+                      "variable": "flag"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "child": [
+            {
+              "index": 3,
+              "text": "set %innerRan% = \"yes\"",
+              "line": {
+                "number": 6,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%innerRan%",
+                      "variable": [
+                        {
+                          "text": "%innerRan%",
+                          "code": [
+                            {
+                              "variable": "innerRan"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "yes"
+                    },
+                    {
+                      "name": "Type",
+                      "type": {
+                        "name": "type"
+                      },
+                      "value": "text"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %innerRan% equals \"no\", \"indented steps should be skipped when condition is false\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%innerRan%",
+              "variable": [
+                {
+                  "text": "%innerRan%",
+                  "code": [
+                    {
+                      "variable": "innerRan"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "indented steps should be skipped when condition is false"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/if/substepsfalse/ConditionSubStepsFalse.test.goal",
+  "prPath": "/module/condition/if/substepsfalse/.build/conditionsubstepsfalse.test.pr",
+  "hash": "d98ddd4f364e11504c20780963d41b4485dfaaab0d1bb239dd413798fa2530aa"
+}

@@ -1,0 +1,355 @@
+{
+  "name": "Start",
+  "comment": "Test: sub-steps under a true condition execute",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %flag% = true",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%flag%",
+              "variable": [
+                {
+                  "text": "%flag%",
+                  "code": [
+                    {
+                      "variable": "flag"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "bool"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %innerRan% = false",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%innerRan%",
+              "variable": [
+                {
+                  "text": "%innerRan%",
+                  "code": [
+                    {
+                      "variable": "innerRan"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "bool"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "if %flag%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%flag%",
+              "variable": [
+                {
+                  "text": "%flag%",
+                  "code": [
+                    {
+                      "variable": "flag"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "child": [
+            {
+              "index": 3,
+              "text": "set %innerRan% = true",
+              "line": {
+                "number": 6,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%innerRan%",
+                      "variable": [
+                        {
+                          "text": "%innerRan%",
+                          "code": [
+                            {
+                              "variable": "innerRan"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    },
+                    {
+                      "name": "Type",
+                      "type": {
+                        "name": "type"
+                      },
+                      "value": "bool"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "index": 4,
+              "text": "set %innerValue% = \"executed\"",
+              "line": {
+                "number": 7,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%innerValue%",
+                      "variable": [
+                        {
+                          "text": "%innerValue%",
+                          "code": [
+                            {
+                              "variable": "innerValue"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "executed"
+                    },
+                    {
+                      "name": "Type",
+                      "type": {
+                        "name": "type"
+                      },
+                      "value": "text"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %innerRan% is true, \"indented steps should execute when condition is true\"",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%innerRan%",
+              "variable": [
+                {
+                  "text": "%innerRan%",
+                  "code": [
+                    {
+                      "variable": "innerRan"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "indented steps should execute when condition is true"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "assert %innerValue% equals \"executed\", \"indented set should have run\"",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "executed"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%innerValue%",
+              "variable": [
+                {
+                  "text": "%innerValue%",
+                  "code": [
+                    {
+                      "variable": "innerValue"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "indented set should have run"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/if/substepstrue/ConditionSubStepsTrue.test.goal",
+  "prPath": "/module/condition/if/substepstrue/.build/conditionsubstepstrue.test.pr",
+  "hash": "888393a524c329a40e81527b933b0114abffd1e946cdf62ce92dedf68a08f2a0"
+}

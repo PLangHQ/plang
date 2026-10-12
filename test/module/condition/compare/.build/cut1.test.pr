@@ -1,0 +1,846 @@
+{
+  "name": "Start",
+  "comment": "Cut 1 — cross-type antisymmetry. %a%=\"10\" (text), %b%=9 (number).\nif %a% > %b% AND if %b% < %a% must both fire (numeric, not lexical). \"5\" == 5 → true.\nProves rank + coercion + dispatch + boundary; catches the antisymmetry bug rank exists to prevent.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %a% = \"10\" as text",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%a%",
+              "variable": [
+                {
+                  "text": "%a%",
+                  "code": [
+                    {
+                      "variable": "a"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "10"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %b% = 9",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%b%",
+              "variable": [
+                {
+                  "text": "%b%",
+                  "code": [
+                    {
+                      "variable": "b"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 9
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %gt% = false",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%gt%",
+              "variable": [
+                {
+                  "text": "%gt%",
+                  "code": [
+                    {
+                      "variable": "gt"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "bool"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "set %lt% = false",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%lt%",
+              "variable": [
+                {
+                  "text": "%lt%",
+                  "code": [
+                    {
+                      "variable": "lt"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "bool"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "if %a% > %b% then",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%a%",
+              "variable": [
+                {
+                  "text": "%a%",
+                  "code": [
+                    {
+                      "variable": "a"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": ">"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%b%",
+              "variable": [
+                {
+                  "text": "%b%",
+                  "code": [
+                    {
+                      "variable": "b"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "child": [
+            {
+              "index": 5,
+              "text": "set %gt% = true",
+              "line": {
+                "number": 10,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%gt%",
+                      "variable": [
+                        {
+                          "text": "%gt%",
+                          "code": [
+                            {
+                              "variable": "gt"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    },
+                    {
+                      "name": "Type",
+                      "type": {
+                        "name": "type"
+                      },
+                      "value": "bool"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "if %b% < %a% then",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%b%",
+              "variable": [
+                {
+                  "text": "%b%",
+                  "code": [
+                    {
+                      "variable": "b"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "<"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%a%",
+              "variable": [
+                {
+                  "text": "%a%",
+                  "code": [
+                    {
+                      "variable": "a"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "child": [
+            {
+              "index": 7,
+              "text": "set %lt% = true",
+              "line": {
+                "number": 12,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%lt%",
+                      "variable": [
+                        {
+                          "text": "%lt%",
+                          "code": [
+                            {
+                              "variable": "lt"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    },
+                    {
+                      "name": "Type",
+                      "type": {
+                        "name": "type"
+                      },
+                      "value": "bool"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "assert %gt% is true",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%gt%",
+              "variable": [
+                {
+                  "text": "%gt%",
+                  "code": [
+                    {
+                      "variable": "gt"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "text": "assert %lt% is true",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%lt%",
+              "variable": [
+                {
+                  "text": "%lt%",
+                  "code": [
+                    {
+                      "variable": "lt"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "text": "set %s% = \"5\" as text",
+      "line": {
+        "number": 15
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%s%",
+              "variable": [
+                {
+                  "text": "%s%",
+                  "code": [
+                    {
+                      "variable": "s"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "5"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "text"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "text": "set %n% = 5",
+      "line": {
+        "number": 16
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 5
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "text": "set %eq% = false",
+      "line": {
+        "number": 17
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%eq%",
+              "variable": [
+                {
+                  "text": "%eq%",
+                  "code": [
+                    {
+                      "variable": "eq"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "bool"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "text": "if %s% == %n% then",
+      "line": {
+        "number": 18
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%s%",
+              "variable": [
+                {
+                  "text": "%s%",
+                  "code": [
+                    {
+                      "variable": "s"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "child": [
+            {
+              "index": 14,
+              "text": "set %eq% = true",
+              "line": {
+                "number": 19,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%eq%",
+                      "variable": [
+                        {
+                          "text": "%eq%",
+                          "code": [
+                            {
+                              "variable": "eq"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    },
+                    {
+                      "name": "Type",
+                      "type": {
+                        "name": "type"
+                      },
+                      "value": "bool"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 15,
+      "text": "assert %eq% is true",
+      "line": {
+        "number": 20
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%eq%",
+              "variable": [
+                {
+                  "text": "%eq%",
+                  "code": [
+                    {
+                      "variable": "eq"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/compare/Cut1.test.goal",
+  "prPath": "/module/condition/compare/.build/cut1.test.pr",
+  "hash": "563b153a3d82ba618c97c4c082d1d7606362634c0fd1092a6e423d0630d8c741"
+}
