@@ -1,0 +1,77 @@
+{
+  "name": "CaptureItem",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %captured% = \"%captured%,%item%\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%captured%",
+              "variable": [
+                {
+                  "text": "%captured%",
+                  "code": [
+                    {
+                      "variable": "captured"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "%captured%,%item%",
+              "variable": [
+                {
+                  "text": "%captured%",
+                  "code": [
+                    {
+                      "variable": "captured"
+                    }
+                  ]
+                },
+                {
+                  "text": "%item%",
+                  "code": [
+                    {
+                      "variable": "item"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/variable/scoping/CaptureItem.goal",
+  "prPath": "/module/variable/scoping/.build/captureitem.pr",
+  "hash": "fa6c5aceab9a9d37e8cf50709183f6053772fd5d29e331bade2f9246c44ed0fd"
+}

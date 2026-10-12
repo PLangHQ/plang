@@ -1,0 +1,58 @@
+{
+  "name": "SetFalse",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %wasFalse% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%wasFalse%",
+              "variable": [
+                {
+                  "text": "%wasFalse%",
+                  "code": [
+                    {
+                      "variable": "wasFalse"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/if/basic/SetFalse.goal",
+  "prPath": "/module/condition/if/basic/.build/setfalse.pr",
+  "hash": "f853c946d53ab516d42270c62b6534eafedf2c03170d5bc80fc36b8a4752276b"
+}

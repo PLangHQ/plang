@@ -1,0 +1,58 @@
+{
+  "name": "WhenFalse",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"negated\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "negated"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/operator/not/WhenFalse.goal",
+  "prPath": "/module/condition/operator/not/.build/whenfalse.pr",
+  "hash": "c8d959bc2a1777536cfc0af2221ffa2e1b47334b581384f1011647c951b605e3"
+}

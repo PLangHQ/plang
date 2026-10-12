@@ -1,0 +1,76 @@
+{
+  "name": "Inner",
+  "comment": "Helper goal called by depth tests. Stashes the inner Call's depth so the caller can assert.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %innerDepth% = %!call.Current.Depth%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%innerDepth%",
+              "variable": [
+                {
+                  "text": "%innerDepth%",
+                  "code": [
+                    {
+                      "variable": "innerDepth"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!call.Current.Depth%",
+              "variable": [
+                {
+                  "text": "%!call.Current.Depth%",
+                  "code": [
+                    {
+                      "variable": "!call"
+                    },
+                    {
+                      "property": "Current"
+                    },
+                    {
+                      "property": "Depth"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/Inner.goal",
+  "prPath": "/app/callstack/.build/inner.pr",
+  "hash": "9b26dd3dd5bf79565e2c2e1727a4456ce17876df559ef3f2227e39b9387123d9"
+}

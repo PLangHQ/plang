@@ -1,0 +1,58 @@
+{
+  "name": "MarkBig",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %label% = 'big'",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%label%",
+              "variable": [
+                {
+                  "text": "%label%",
+                  "code": [
+                    {
+                      "variable": "label"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "big"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/build/MarkBig.goal",
+  "prPath": "/module/build/.build/markbig.pr",
+  "hash": "4e227973adb5cddd5d3d5fe08cd002e5ed94acc7ed89a08d6aaaf671d01ffa54"
+}

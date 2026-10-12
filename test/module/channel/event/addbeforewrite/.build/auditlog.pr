@@ -1,0 +1,58 @@
+{
+  "name": "AuditLog",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %auditCalled% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%auditCalled%",
+              "variable": [
+                {
+                  "text": "%auditCalled%",
+                  "code": [
+                    {
+                      "variable": "auditCalled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/event/addbeforewrite/AuditLog.goal",
+  "prPath": "/module/channel/event/addbeforewrite/.build/auditlog.pr",
+  "hash": "991223429d68b1b9c2ef34e49f151cf2600bc3b038283a9b2cdfbb624eb41a7a"
+}

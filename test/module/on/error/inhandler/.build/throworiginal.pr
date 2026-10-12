@@ -1,0 +1,48 @@
+{
+  "name": "ThrowOriginal",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"original error\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "original error"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/inhandler/ThrowOriginal.goal",
+  "prPath": "/module/on/error/inhandler/.build/throworiginal.pr",
+  "hash": "3103283a8b0f2d201687f8bcbfa5d07202c7dd61dd93ec6fa12a339e32595b1e"
+}

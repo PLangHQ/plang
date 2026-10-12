@@ -1,0 +1,340 @@
+{
+  "name": "TestAuditAccumulatesHandledAndUnhandledErrors",
+  "comment": "Audit is the run-wide accumulator of every observed error (per debug.md: \"Run-wide accumulator of every error. Survives Pop.\"). It records the error at each Call frame it propagates through, not once per unique error — so 4 inner throws (each handled) + 1 fourth throw + 2 propagation frames for the fourth (goal.call ThrowItem and the foreach goal.call) = 7. The outer handler catches the fourth, so %finalCaught% becomes true.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %items% = [\"a\", \"b\", \"c\", \"d\"]",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%items%",
+              "variable": [
+                {
+                  "text": "%items%",
+                  "code": [
+                    {
+                      "variable": "items"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "list"
+              },
+              "value": ["a","b","c","d"]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "foreach %items%, call ThrowItem item=%item%, on error set %finalCaught% = true",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "loop",
+          "name": "foreach",
+          "property": [
+            {
+              "name": "Collection",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%items%",
+              "variable": [
+                {
+                  "text": "%items%",
+                  "code": [
+                    {
+                      "variable": "items"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "item",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%item%",
+              "variable": [
+                {
+                  "text": "%item%",
+                  "code": [
+                    {
+                      "variable": "item"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "ThrowItem"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"item","type":{"name":"item","template":"plang"},"value":"%item%","variable":[{"text":"%item%","code":[{"variable":"item"}]}]}]
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Order",
+              "type": {
+                "name": "choice",
+                "kind": "errororder"
+              },
+              "value": "GoalFirst"
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%finalCaught%",
+                      "variable": [
+                        {
+                          "text": "%finalCaught%",
+                          "code": [
+                            {
+                              "variable": "finalCaught"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %finalCaught% is true",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%finalCaught%",
+              "variable": [
+                {
+                  "text": "%finalCaught%",
+                  "code": [
+                    {
+                      "variable": "finalCaught"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "set %auditCount% = %!call.Audit.Count%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%auditCount%",
+              "variable": [
+                {
+                  "text": "%auditCount%",
+                  "code": [
+                    {
+                      "variable": "auditCount"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!call.Audit.Count%",
+              "variable": [
+                {
+                  "text": "%!call.Audit.Count%",
+                  "code": [
+                    {
+                      "variable": "!call"
+                    },
+                    {
+                      "property": "Audit"
+                    },
+                    {
+                      "property": "Count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %auditCount% equals 7",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "7"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%auditCount%",
+              "variable": [
+                {
+                  "text": "%auditCount%",
+                  "code": [
+                    {
+                      "variable": "auditCount"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/Audit.test.goal",
+  "prPath": "/app/callstack/.build/audit.test.pr",
+  "hash": "44e536df73cc79e79530afa1c98fb83c98949e93d1940c3ad763fe23d62fe207"
+}

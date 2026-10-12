@@ -1,0 +1,77 @@
+{
+  "name": "InnerGoal",
+  "step": [
+    {
+      "index": 0,
+      "text": "call ThrowInnerError, on error call InnerHandler",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "ThrowInnerError"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Order",
+              "type": {
+                "name": "choice",
+                "kind": "errororder"
+              },
+              "value": "GoalFirst"
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "InnerHandler"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/nested/InnerGoal.goal",
+  "prPath": "/module/on/error/nested/.build/innergoal.pr",
+  "hash": "7abfbbfeb31472174e5b5539ab9c81e92d2cd71a6aedfa44a21a60985c01f38f"
+}
