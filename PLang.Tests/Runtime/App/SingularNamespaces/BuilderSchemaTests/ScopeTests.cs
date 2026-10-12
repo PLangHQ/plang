@@ -23,11 +23,19 @@ public class ScopeTests
     ];
 
     // Each step's certain picks, taken as the decider's answer would give them.
-    private static async Task Picked(Goal goal, global::app.actor.context.@this context, params (int Step, string Action)[] picks)
+    private static Task Picked(Goal goal, global::app.actor.context.@this context, params (int Step, string Action)[] picks)
+        => Picked(goal, context, System.Array.Empty<(int, string, string)>(), picks);
+
+    // The same, with the option answers a capture needs: a variable.set keeping another module's result is
+    // asked which variable (Name) it keeps it in — the walk types that variable from the Name answer.
+    private static async Task Picked(Goal goal, global::app.actor.context.@this context,
+        (int Step, string Key, string Choice)[] options, params (int Step, string Action)[] picks)
     {
         var answer = new Dictionary<string, object?>();
         foreach (var (step, action) in picks)
             answer[$"s{step}_{action}"] = new Dictionary<string, object?> { ["type"] = "noul", ["noul"] = 0.99 };
+        foreach (var (step, key, choice) in options)
+            answer[$"s{step}_@option.{key}"] = new Dictionary<string, object?> { ["choice"] = choice };
         var dict = Make.Dict(answer, context);
         foreach (var step in goal.Step.Items()) await step.Pick.Take(dict, [], context);
     }
@@ -62,7 +70,8 @@ public class ScopeTests
     {
         await using var app = new global::app.@this("/test").Testing().Building();
         var goal = Build(app.actor.list.User.Context);
-        await Picked(goal, app.actor.list.System.Context, BuildPicks);
+        // step 0's capture keeps build.goals' result in %goals% — the decider's Name answer
+        await Picked(goal, app.actor.list.System.Context, [(0, "variable.set.Name", "%goals%")], BuildPicks);
 
         await goal.Step.Scope(app.actor.list.System.Context);
 

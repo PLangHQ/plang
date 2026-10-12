@@ -337,8 +337,11 @@ public sealed class @this
             }
             else if (name == "variable.set")
             {
-                if (Assigned() is not { } set) continue;
-                line.Add($"variable.set(Name={set.Name}, Value={set.Value})");
+                if (Assigned() is { } set) line.Add($"variable.set(Name={set.Name}, Value={set.Value})");
+                // a capture keeps the step's earlier answer: the decider says which variable (Name), its value is %!data%
+                else if (Chosen(action).FirstOrDefault(c => c.Property.Name == "Name") is { Written: { } named })
+                    line.Add($"variable.set({named}, Value=%!data%)");
+                // else the words name no variable the decider chose: the writer fills Name from the step
             }
             else action.Know(line, $"{name}()");
         }
@@ -571,13 +574,17 @@ public sealed class @this
         // when its action ends up certain
         var actions = _items.Where(p => p.Score is { } s && s >= (number)Near).Select(p => Catalog(p.Name, context))
             .Concat(asked.SelectMany(m => _modules[m].ActionNames.Select(a => _modules[m][a])))
-            .Where(a => a != null && !IsCapture(a)).Select(a => a!).Distinct();
+            .Where(a => a != null).Select(a => a!).Distinct();
         foreach (var action in actions)
         {
             await action.Note.Value(context.Ok());
+            // a capture (variable.set keeping another module's answer) is asked only which variable it keeps the result
+            // in (Name) — never that answer's Type or Default, which aren't the step's to give
+            var capture = IsCapture(action);
             foreach (var line in action.Note.Line)
             {
                 if (line is not { Ask: not null, Name: { } named } || action[named.ToString()] is not { } property) continue;
+                if (capture && property.Name is "Type" or "Default") continue;
                 // an option with nothing to offer isn't asked
                 var offers = (await Offered(action, property, context)).Select(o => Shown(o, context)).ToList();
                 if (offers.Count == 0) continue;
