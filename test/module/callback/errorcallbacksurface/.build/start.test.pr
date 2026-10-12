@@ -1,0 +1,287 @@
+{
+  "name": "Start",
+  "comment": "Reading %!error.callback% inside an error handler resolves through\napp.Errors.Current.Callback to a Data<ErrorCallback>.",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"boom\", on error call HandleErrorCallback",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "boom"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "HandleErrorCallback"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %callbackSeen% is true, \"on-error handler should have run and read callback\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%callbackSeen%",
+              "variable": [
+                {
+                  "text": "%callbackSeen%",
+                  "code": [
+                    {
+                      "variable": "callbackSeen"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "on-error handler should have run and read callback"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "HandleErrorCallback",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %cb% = %!error.callback%",
+          "line": {
+            "number": 8
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%cb%",
+                  "variable": [
+                    {
+                      "text": "%cb%",
+                      "code": [
+                        {
+                          "variable": "cb"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!error.callback%",
+                  "variable": [
+                    {
+                      "text": "%!error.callback%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "callback"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "assert %cb% is not null",
+          "line": {
+            "number": 9
+          },
+          "code": [
+            {
+              "module": "assert",
+              "name": "isNotNull",
+              "property": [
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%cb%",
+                  "variable": [
+                    {
+                      "text": "%cb%",
+                      "code": [
+                        {
+                          "variable": "cb"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "set %callbackSeen% = true",
+          "line": {
+            "number": 10
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%callbackSeen%",
+                  "variable": [
+                    {
+                      "text": "%callbackSeen%",
+                      "code": [
+                        {
+                          "variable": "callbackSeen"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": true
+                },
+                {
+                  "name": "Type",
+                  "type": {
+                    "name": "type"
+                  },
+                  "value": "bool"
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/module/callback/errorcallbacksurface/Start.test.goal",
+      "prPath": "/module/callback/errorcallbacksurface/.build/start.test.pr",
+      "hash": "8d277769c6c04276c6d4dfd4a711603922ad1a81a7ffb053232c48ba6780824b"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/module/callback/errorcallbacksurface/Start.test.goal",
+  "prPath": "/module/callback/errorcallbacksurface/.build/start.test.pr",
+  "hash": "6aa8e6ac321ca8bf4d278f04f68e6e497465d4163065f135ab0c63044c45fc4d"
+}

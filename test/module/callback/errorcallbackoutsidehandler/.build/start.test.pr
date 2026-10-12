@@ -1,0 +1,106 @@
+{
+  "name": "Start",
+  "comment": "Reading %!error.callback% outside an error handler scope: %!error% itself is\nnull (no AsyncLocal-flowed error in this context), so the callback path is\nunresolved. Coder flipped the default from \"throws\" to \"null\" — simpler\nruntime contract, matches how %!error.X% works generally outside scope.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %callbackOutsideScope% = %!error.callback%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%callbackOutsideScope%",
+              "variable": [
+                {
+                  "text": "%callbackOutsideScope%",
+                  "code": [
+                    {
+                      "variable": "callbackOutsideScope"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!error.callback%",
+              "variable": [
+                {
+                  "text": "%!error.callback%",
+                  "code": [
+                    {
+                      "variable": "!error"
+                    },
+                    {
+                      "property": "callback"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %callbackOutsideScope% is null",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%callbackOutsideScope%",
+              "variable": [
+                {
+                  "text": "%callbackOutsideScope%",
+                  "code": [
+                    {
+                      "variable": "callbackOutsideScope"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/callback/errorcallbackoutsidehandler/Start.test.goal",
+  "prPath": "/module/callback/errorcallbackoutsidehandler/.build/start.test.pr",
+  "hash": "c84fbfe9146b61611982822073c3275fba0cb91982b41dc0b0c6b506cb5425c5"
+}

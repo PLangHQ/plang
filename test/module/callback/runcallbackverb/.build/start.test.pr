@@ -1,0 +1,300 @@
+{
+  "name": "Start",
+  "comment": "Materialize a callback via %!error.callback%, then dispatch it via callback.start.\nThe original failing action re-runs through the live execution path.",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"boom\", on error call CaptureCallback",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "boom"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "CaptureCallback"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %ranCallback% is true, \"callback dispatch should have completed\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%ranCallback%",
+              "variable": [
+                {
+                  "text": "%ranCallback%",
+                  "code": [
+                    {
+                      "variable": "ranCallback"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "callback dispatch should have completed"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "CaptureCallback",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %cb% = %!error.callback%",
+          "line": {
+            "number": 8
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%cb%",
+                  "variable": [
+                    {
+                      "text": "%cb%",
+                      "code": [
+                        {
+                          "variable": "cb"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!error.callback%",
+                  "variable": [
+                    {
+                      "text": "%!error.callback%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "callback"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "callback.start callback=%cb%, on error ignore",
+          "line": {
+            "number": 9
+          },
+          "code": [
+            {
+              "module": "callback",
+              "name": "start",
+              "property": [
+                {
+                  "name": "Callback",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%cb%",
+                  "variable": [
+                    {
+                      "text": "%cb%",
+                      "code": [
+                        {
+                          "variable": "cb"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "module": "on",
+              "name": "error",
+              "property": [
+                {
+                  "name": "Ignore",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": true
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "set %ranCallback% = true",
+          "line": {
+            "number": 10
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%ranCallback%",
+                  "variable": [
+                    {
+                      "text": "%ranCallback%",
+                      "code": [
+                        {
+                          "variable": "ranCallback"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": true
+                },
+                {
+                  "name": "Type",
+                  "type": {
+                    "name": "type"
+                  },
+                  "value": "bool"
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/module/callback/runcallbackverb/Start.test.goal",
+      "prPath": "/module/callback/runcallbackverb/.build/start.test.pr",
+      "hash": "9f0c60c8e0071f75dac3149a9886d16aec5a0ff3469eec68bad01d6d458820c4"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/module/callback/runcallbackverb/Start.test.goal",
+  "prPath": "/module/callback/runcallbackverb/.build/start.test.pr",
+  "hash": "e3098481ec9d5c62833e165f8a88e85f495c337f668fd41eb0ecf033f0c9519f"
+}
