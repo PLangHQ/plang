@@ -1,7 +1,8 @@
-/ Navigation into a type-unknown value yields `item`, NOT an error — we don't know the
-/ shape at build time, so %x.port% is typed `item` (no guessing). At runtime the value
-/ resolves through to its item (here 8080); the point is that navigation does not raise.
+/ A plain text with no json kind is not navigable. At BUILD %x.port% is typed `item`
+/ (the shape is unknown, so the step is not refused — no guessing). At RUN, navigating
+/ the text keeps the error (Ingi decision 401: a text whose kind can't navigate keeps
+/ the error). The fix is to cast it (`as json`); see AsJson_ResolvesTypeUnknown.
 Start
 - set %x% = "{\"port\":8080}"
-- set %p% = %x.port%
-- assert %p% equals 8080
+- set %p% = %x.port%, on error key "CantNavigateText", set %navError% = true
+- assert %navError% is true

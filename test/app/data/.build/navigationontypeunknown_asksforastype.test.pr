@@ -1,12 +1,12 @@
 {
   "name": "Start",
-  "comment": "Navigation into a type-unknown value yields `item`, NOT an error — we don't know the\nshape at build time, so %x.port% is typed `item` (no guessing). At runtime the value\nresolves through to its item (here 8080); the point is that navigation does not raise.",
+  "comment": "A plain text with no json kind is not navigable. At BUILD %x.port% is typed `item`\n(the shape is unknown, so the step is not refused — no guessing). At RUN, navigating\nthe text keeps the error (Ingi decision 401: a text whose kind can't navigate keeps\nthe error). The fix is to cast it (`as json`); see AsJson_ResolvesTypeUnknown.",
   "step": [
     {
       "index": 0,
       "text": "set %x% = \"{\\\"port\\\":8080}\"",
       "line": {
-        "number": 5
+        "number": 6
       },
       "code": [
         {
@@ -52,9 +52,9 @@
     },
     {
       "index": 1,
-      "text": "set %p% = %x.port%",
+      "text": "set %p% = %x.port%, on error key \"CantNavigateText\", set %navError% = true",
       "line": {
-        "number": 6
+        "number": 7
       },
       "code": [
         {
@@ -109,40 +109,103 @@
               "value": false
             }
           ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Key",
+              "type": {
+                "name": "text"
+              },
+              "value": "CantNavigateText"
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%navError%",
+                      "variable": [
+                        {
+                          "text": "%navError%",
+                          "code": [
+                            {
+                              "variable": "navError"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
         }
       ]
     },
     {
       "index": 2,
-      "text": "assert %p% equals 8080",
+      "text": "assert %navError% is true",
       "line": {
-        "number": 7
+        "number": 8
       },
       "code": [
         {
           "module": "assert",
-          "name": "equals",
+          "name": "isTrue",
           "property": [
             {
-              "name": "Expected",
-              "type": {
-                "name": "number"
-              },
-              "value": 8080
-            },
-            {
-              "name": "Actual",
+              "name": "Value",
               "type": {
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%p%",
+              "value": "%navError%",
               "variable": [
                 {
-                  "text": "%p%",
+                  "text": "%navError%",
                   "code": [
                     {
-                      "variable": "p"
+                      "variable": "navError"
                     }
                   ]
                 }
@@ -157,5 +220,5 @@
   "visibility": "Public",
   "path": "/test/app/data/NavigationOnTypeUnknown_AsksForAsType.test.goal",
   "prPath": "/test/app/data/.build/navigationontypeunknown_asksforastype.test.pr",
-  "hash": "fe2cad3336d04cb582725846791b0c777c5f022344a8c5e1e52867a464c510f7"
+  "hash": "b41763e253351703eeb162965127e21b63f2db663040336c5d8b99e1fd6586d4"
 }
