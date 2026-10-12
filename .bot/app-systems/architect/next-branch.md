@@ -1,0 +1,9 @@
+# Carried to the next branch
+
+What Ingi put on the list while app-systems is frozen for the merge back to runtime2. Each item names the decision that carried it.
+
+- **Avoid reflection; one door to a type's members** (673). Ingi: "doing reflection should be avoided as possible in general. it is also bad when we have multiple doors, so that needs more inspection." Every member read of goal, step, action, app or actor falls to `item.Get`'s default (`type/item/this.cs:246`), which wraps the item in a clr carrier and asks .NET for the class's properties on each read. Four places answer "what members does this type have?": `type.Property` (the type's own list, built once; the builder's catalog), the reflection kind (`type/item/kind/reflection/this.cs`), `item.Member`/`Marked` (`type/item/this.cs:261–290`, the `[LlmBuilder]` members, cached per class) and `item.Set` (`:177`). The stopgap statics `Property`/`Method`/`Twice` on the reflection kind (00dfc6ffe) go with it. The question for the design: reads go through `type.Property`, so what the builder offers and what a program can read are one list (today any public C# property is readable).
+- **The snapshot plan** (665): `test/plan/snapshot/`, stages 0–4; its 6 C# baseline tests travel with it.
+- **The `Elsewhere` fork** (`goal/this.cs:400`, a goal that runs in the parent app): decided together with 63, a call with a receiver.
+- **63 and the page runtime**: a discussion with Ingi, not settled.
+- **Missing plang tests** (671): crypto encrypt/decrypt, environment.start, module add/remove, on.cancel/unbind/input, identity list/unarchive, code list/remove/setDefault, the os modules.
