@@ -1,7 +1,14 @@
-/ Audit is the run-wide accumulator of every observed error (per debug.md: "Run-wide accumulator of every error. Survives Pop."). It records the error at each Call frame it propagates through, not once per unique error — so 4 inner throws (each handled) + 1 fourth throw + 2 propagation frames for the fourth (goal.call ThrowItem and the foreach goal.call) = 7. The outer handler catches the fourth, so %finalCaught% becomes true.
+/ Audit is the run-wide accumulator of every observed error (per debug.md: "Run-wide accumulator of every error.
+/ Survives Pop."). Every error is recorded — the 4 inner throws (each handled) and the fourth, unhandled one the
+/ outer handler catches. How many call frames record an error as it propagates is not promised, so the fourth is
+/ asked for at least once, not counted.
 TestAuditAccumulatesHandledAndUnhandledErrors
 - set %items% = ["a", "b", "c", "d"]
 - foreach %items%, call ThrowItem item=%item%, on error set %finalCaught% = true
 - assert %finalCaught% is true
-- set %auditCount% = %!call.Audit.Count%
-- assert %auditCount% equals 7
+- set %audit% = %!call.Audit%
+- filter %audit% where Key equals 'ItemFailed', write to %itemFailed%
+- list.count %itemFailed%, write to %itemFailedCount%
+- assert %itemFailedCount% equals 4
+- list.any %audit% where Key equals 'Fourth', write to %hasFourth%
+- assert %hasFourth% is true
