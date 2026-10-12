@@ -101,7 +101,7 @@ public class TypePageTests
     public Task TheParallelPage_IsTheSpecsGolden() => ComparePageToGolden("parallel");
 
     [Test]
-    public Task TheSecretPage_IsTheSpecsGolden() => ComparePageToGolden("secret");
+    public Task TheSensitivePage_IsTheSpecsGolden() => ComparePageToGolden("sensitive");
 
     [Test]
     public Task TheListPage_IsTheSpecsGolden() => ComparePageToGolden("list");

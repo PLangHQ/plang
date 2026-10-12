@@ -1126,7 +1126,7 @@ interface app.type.format.IWriter
   virtual Given() : System.Void
   virtual Raw(System.Byte[] value) : System.Void
   virtual Raw(System.String value) : System.Void
-  virtual Secret(System.String characters) : System.Void
+  virtual Sensitive(System.String characters) : System.Void
   virtual Variable(System.String name) : System.Void
 
 enum app.type.format.TokenKind
@@ -1808,7 +1808,7 @@ class app.type.item.kind.json.Writer : app.type.format.IWriter
   Null() : System.Void
   Raw(System.Byte[] value) : System.Void
   Raw(System.String value) : System.Void
-  Secret(System.String characters) : System.Void
+  Sensitive(System.String characters) : System.Void
   String(System.String value) : System.Void
   TimeSpan(System.TimeSpan value) : System.Void
   Value(System.Object normalized) : System.Void
@@ -2455,18 +2455,18 @@ class app.type.item.prose.this : app.type.item.this
   protected override Type : app.type.this { get; }
   static Internal : System.Boolean { get; }
 
-class app.type.item.secret.serializer.Reader : app.type.reader.ITypeReader
+class app.type.item.sensitive.serializer.Reader : app.type.reader.ITypeReader
   Kind : System.String { get; }
   Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
   ctor()
 
-class app.type.item.secret.this : app.type.item.this, app.type.item.ICreate<app.type.item.secret.this> [PlangType]
+class app.type.item.sensitive.this : app.type.item.this, app.type.item.ICreate<app.type.item.sensitive.this> [PlangType]
   ctor(System.String characters)
   override IsLeaf : System.Boolean { get; }
   override IsTruthy() : System.Boolean
   override ToString() : System.String
   override Write(app.type.format.IWriter w) : System.Void
-  static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.secret.this
+  static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.sensitive.this
   static Shape : System.String { get; }
 
 class app.type.item.separator.kind.comma.this : app.type.item.separator.kind.this
@@ -3609,7 +3609,7 @@ type screen
   .frames : number
   .verbose : bool
 
-type secret
+type sensitive
 
 type separator
 
@@ -4170,7 +4170,7 @@ action on.unbind
 action output.ask
   Question : text required
   Variable : item
-  Secret : bool
+  Sensitive : bool
 
 action output.write
   Data : item required

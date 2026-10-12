@@ -1,9 +1,6 @@
-# secret
-Characters nobody should see — a key or password; shows as **** everywhere but plang's own store.
+# Sensitive values
 
-# Secrets
-
-A `secret` is characters nobody should see — an API key, a password. You make one by asking secretly:
+A `sensitive` value is characters nobody should see — an API key, a password. You make one by asking secretly:
 
 ```plang
 Start

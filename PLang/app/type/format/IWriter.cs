@@ -66,7 +66,7 @@ public interface IWriter
 
     /// <summary>Characters nobody should see (a key, a password). Shown, they are <c>****</c>; a writer of plang's own
     /// store keeps them whole.</summary>
-    void Secret(string characters) => String("****");
+    void Sensitive(string characters) => String("****");
 
     /// <summary>
     /// Characters that are content of a format — a text of kind <paramref name="kind"/> (json, md, …). A writer the

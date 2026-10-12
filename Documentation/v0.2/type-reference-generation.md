@@ -686,17 +686,17 @@ Start
 ```
 ```
 
-## Golden output — secret
+## Golden output — sensitive
 
-The exact literal the generator must produce for the `secret` type. `TypePageTests` diffs against this.
+The exact literal the generator must produce for the `sensitive` type. `TypePageTests` diffs against this.
 
 ```markdown
-# secret
+# sensitive
 Characters nobody should see — a key or password; shows as **** everywhere but plang's own store.
 
-# Secrets
+# Sensitive values
 
-A `secret` is characters nobody should see — an API key, a password. You make one by asking secretly:
+A `sensitive` value is characters nobody should see — an API key, a password. You make one by asking secretly:
 
 ```plang
 Start

@@ -24,10 +24,10 @@ public sealed class @this : global::app.type.item.setting.module.@this
         var asked = await new global::app.goal.step.action.@this(new global::app.module.output.ask(context)
         {
             Question = (global::app.type.item.text.@this)"This program uses an LLM and needs a key. Paste it:",
-            Secret = (global::app.type.item.@bool.@this)true,
+            Sensitive = (global::app.type.item.@bool.@this)true,
         }, context).Start(context);
         // no one answered — no input, or an input with nothing in it — or nothing was given
-        if (!asked.Success || await asked.Value() is not global::app.type.item.secret.@this { Characters.Length: > 0 } secret)
+        if (!asked.Success || await asked.Value() is not global::app.type.item.sensitive.@this { Characters.Length: > 0 } secret)
             return context.Error<global::app.type.item.text.@this>(new global::app.error.Error(
                 "This program uses an LLM and has no key, and no one gave one: set %!llm.setting.key% or the OPENAI_API_KEY environment variable."
                 + (asked.Error is { } why ? $" ({why.Message})" : ""),

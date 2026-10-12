@@ -53,19 +53,19 @@ public partial class ask : IContext
     /// <summary>Resume sentinel — variable name used to inject the answer.</summary>
     public const string AnswerVariableName = "!ask.answer";
 
-    /// <summary>Asked secretly (<c>ask "password?" secretly</c>): the answer is a secret — written as <c>****</c> wherever it
-    /// is shown, kept whole only in plang's own store.</summary>
+    /// <summary>Asked secretly (<c>ask "password?" secretly</c>): the answer is sensitive — written as <c>****</c> wherever
+    /// it is shown, kept whole only in plang's own store.</summary>
     [Default(false)]
-    public partial data.@this<global::app.type.item.@bool.@this> Secret { get; init; }
+    public partial data.@this<global::app.type.item.@bool.@this> Sensitive { get; init; }
 
     // The answer is whatever the user's data is — relayed, never re-made: a bare Data, not Data<T>. Asked secretly, the
-    // answer is a secret of what the user wrote.
+    // answer is a sensitive value of what the user wrote.
     public async Task<data.@this> Start()
     {
         var answer = await Answer();
-        if (!answer.Success || !answer.IsInitialized || !await Secret.ToBooleanAsync()
-            || answer.Peek() is global::app.type.item.secret.@this) return answer;
-        return Context.Ok(new global::app.type.item.secret.@this((await answer.Value())?.ToString() ?? ""));
+        if (!answer.Success || !answer.IsInitialized || !await Sensitive.ToBooleanAsync()
+            || answer.Peek() is global::app.type.item.sensitive.@this) return answer;
+        return Context.Ok(new global::app.type.item.sensitive.@this((await answer.Value())?.ToString() ?? ""));
     }
 
     private async Task<data.@this> Answer()

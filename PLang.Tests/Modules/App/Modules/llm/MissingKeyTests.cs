@@ -3,7 +3,7 @@ namespace PLang.Tests.App.Modules.llm;
 /// <summary>
 /// A program that uses an LLM with no key asks its user once — secretly — saves the answer on the user's own settings
 /// row, and never asks again; with no one to ask it fails naming both ways to give one. The key is never shown: the
-/// answer is a secret, written as **** everywhere but plang's own store.
+/// answer is sensitive, written as **** everywhere but plang's own store.
 /// </summary>
 public class MissingKeyTests
 {
@@ -59,13 +59,13 @@ public class MissingKeyTests
         await Assert.That(asked.Error.Message).Contains("OPENAI_API_KEY");
     }
 
-    // a secret writes **** in a text template and every view but plang's store, where it is whole
+    // a sensitive value writes **** in a text template and every view but plang's store, where it is whole
     [Test]
-    public async Task ASecret_ShowsMasked_ButIsKeptWhole()
+    public async Task ASensitiveValue_ShowsMasked_ButIsKeptWhole()
     {
         await using var app = new global::app.@this("/app").Testing();
         var ctx = app.actor.list.User.Context;
-        await ctx.Variable.Set(new global::app.data.@this("pw", new global::app.type.item.secret.@this(Pasted), context: ctx));
+        await ctx.Variable.Set(new global::app.data.@this("pw", new global::app.type.item.sensitive.@this(Pasted), context: ctx));
 
         var set = Make.Action(ctx, "variable", "set", Make.Param(ctx, "Name", "shown", "variable"), ("Value", "password: %pw%"));
         await (await set.Start(ctx)).IsSuccess();
