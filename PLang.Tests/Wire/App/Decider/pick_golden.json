@@ -2366,7 +2366,7 @@
       },
       "s0_@option.variable.set.Type": {
         "type": "choice",
-        "instructions": "Step 0 is `set default %path% = \"/\"`. which type does the step coerce the value to (`as <type>`)?",
+        "instructions": "Step 0 is `set default %path% = \"/\"`. which type does the step coerce the value to — none unless the step writes `as <type>`, `type=<type>` or `(<kind>)` (a value that merely looks like a dict/list/json is NOT a coercion; leave the type none)?",
         "criteria": {
           "app": null,
           "table": null,
@@ -2488,7 +2488,7 @@
       },
       "s1_@option.variable.set.Type": {
         "type": "choice",
-        "instructions": "Step 1 is `set default %!build.cache% = true`. which type does the step coerce the value to (`as <type>`)?",
+        "instructions": "Step 1 is `set default %!build.cache% = true`. which type does the step coerce the value to — none unless the step writes `as <type>`, `type=<type>` or `(<kind>)` (a value that merely looks like a dict/list/json is NOT a coercion; leave the type none)?",
         "criteria": {
           "app": null,
           "table": null,
@@ -2610,7 +2610,7 @@
       },
       "s2_@option.variable.set.Type": {
         "type": "choice",
-        "instructions": "Step 2 is `set default %!build.summary% = true`. which type does the step coerce the value to (`as <type>`)?",
+        "instructions": "Step 2 is `set default %!build.summary% = true`. which type does the step coerce the value to — none unless the step writes `as <type>`, `type=<type>` or `(<kind>)` (a value that merely looks like a dict/list/json is NOT a coercion; leave the type none)?",
         "criteria": {
           "app": null,
           "table": null,
@@ -6359,7 +6359,7 @@
       },
       "s2_@option.variable.set.Type": {
         "type": "choice",
-        "instructions": "Step 2 is `set %buildStart% = %Now.Ticks%`. which type does the step coerce the value to (`as <type>`)?",
+        "instructions": "Step 2 is `set %buildStart% = %Now.Ticks%`. which type does the step coerce the value to — none unless the step writes `as <type>`, `type=<type>` or `(<kind>)` (a value that merely looks like a dict/list/json is NOT a coercion; leave the type none)?",
         "criteria": {
           "app": null,
           "table": null,
@@ -6485,7 +6485,7 @@
       },
       "s3_@option.variable.set.Type": {
         "type": "choice",
-        "instructions": "Step 3 is `set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": \"%goal.Name%\", \"subGoals\": [], \"durationMs\": 0}`. which type does the step coerce the value to (`as <type>`)?",
+        "instructions": "Step 3 is `set %trace% = {\"id\": \"%!trace.id%\", \"timestamp\": \"%Now%\", \"goal\": \"%goal.Name%\", \"subGoals\": [], \"durationMs\": 0}`. which type does the step coerce the value to — none unless the step writes `as <type>`, `type=<type>` or `(<kind>)` (a value that merely looks like a dict/list/json is NOT a coercion; leave the type none)?",
         "criteria": {
           "app": null,
           "table": null,
@@ -6629,7 +6629,7 @@
       },
       "s5_@option.variable.set.Type": {
         "type": "choice",
-        "instructions": "Step 5 is `set %parentGoal% = %goal%`. which type does the step coerce the value to (`as <type>`)?",
+        "instructions": "Step 5 is `set %parentGoal% = %goal%`. which type does the step coerce the value to — none unless the step writes `as <type>`, `type=<type>` or `(<kind>)` (a value that merely looks like a dict/list/json is NOT a coercion; leave the type none)?",
         "criteria": {
           "app": null,
           "table": null,
@@ -6788,7 +6788,7 @@
       },
       "s7_@option.variable.set.Type": {
         "type": "choice",
-        "instructions": "Step 7 is `set %goal% = %parentGoal%`. which type does the step coerce the value to (`as <type>`)?",
+        "instructions": "Step 7 is `set %goal% = %parentGoal%`. which type does the step coerce the value to — none unless the step writes `as <type>`, `type=<type>` or `(<kind>)` (a value that merely looks like a dict/list/json is NOT a coercion; leave the type none)?",
         "criteria": {
           "app": null,
           "table": null,
@@ -6954,7 +6954,7 @@
       },
       "s10_@option.variable.set.Type": {
         "type": "choice",
-        "instructions": "Step 10 is `set %trace.durationMs% = %elapsedMs%`. which type does the step coerce the value to (`as <type>`)?",
+        "instructions": "Step 10 is `set %trace.durationMs% = %elapsedMs%`. which type does the step coerce the value to — none unless the step writes `as <type>`, `type=<type>` or `(<kind>)` (a value that merely looks like a dict/list/json is NOT a coercion; leave the type none)?",
         "criteria": {
           "app": null,
           "table": null,
@@ -9468,7 +9468,7 @@
       },
       "s0_@option.variable.set.Type": {
         "type": "choice",
-        "instructions": "Step 0 is `set %threshold% = 0.5`. which type does the step coerce the value to (`as <type>`)?",
+        "instructions": "Step 0 is `set %threshold% = 0.5`. which type does the step coerce the value to — none unless the step writes `as <type>`, `type=<type>` or `(<kind>)` (a value that merely looks like a dict/list/json is NOT a coercion; leave the type none)?",
         "criteria": {
           "app": null,
           "table": null,
@@ -9591,7 +9591,7 @@
       },
       "s1_@option.variable.set.Type": {
         "type": "choice",
-        "instructions": "Step 1 is `set %modules% = %!app.module.list%`. which type does the step coerce the value to (`as <type>`)?",
+        "instructions": "Step 1 is `set %modules% = %!app.module.list%`. which type does the step coerce the value to — none unless the step writes `as <type>`, `type=<type>` or `(<kind>)` (a value that merely looks like a dict/list/json is NOT a coercion; leave the type none)?",
         "criteria": {
           "app": null,
           "table": null,
@@ -9715,7 +9715,7 @@
       },
       "s2_@option.variable.set.Type": {
         "type": "choice",
-        "instructions": "Step 2 is `set %state.goal% = %goal.Name%`. which type does the step coerce the value to (`as <type>`)?",
+        "instructions": "Step 2 is `set %state.goal% = %goal.Name%`. which type does the step coerce the value to — none unless the step writes `as <type>`, `type=<type>` or `(<kind>)` (a value that merely looks like a dict/list/json is NOT a coercion; leave the type none)?",
         "criteria": {
           "app": null,
           "table": null,
@@ -12216,7 +12216,7 @@
       },
       "s6_@option.variable.set.Type": {
         "type": "choice",
-        "instructions": "Step 6 is `if %order.country% is \"IS\", set %vat% = 0.24, else set %vat% = 0.25`. which type does the step coerce the value to (`as <type>`)?",
+        "instructions": "Step 6 is `if %order.country% is \"IS\", set %vat% = 0.24, else set %vat% = 0.25`. which type does the step coerce the value to — none unless the step writes `as <type>`, `type=<type>` or `(<kind>)` (a value that merely looks like a dict/list/json is NOT a coercion; leave the type none)?",
         "criteria": {
           "app": null,
           "table": null,
@@ -15074,7 +15074,7 @@
       },
       "s1_@option.variable.set.Type": {
         "type": "choice",
-        "instructions": "Step 1 is `set %errors% = []`. which type does the step coerce the value to (`as <type>`)?",
+        "instructions": "Step 1 is `set %errors% = []`. which type does the step coerce the value to — none unless the step writes `as <type>`, `type=<type>` or `(<kind>)` (a value that merely looks like a dict/list/json is NOT a coercion; leave the type none)?",
         "criteria": {
           "app": null,
           "table": null,
@@ -16078,7 +16078,7 @@
       },
       "s0_@option.variable.set.Type": {
         "type": "choice",
-        "instructions": "Step 0 is `set %template% = \"/system/error/%error.status.code%.txt\"`. which type does the step coerce the value to (`as <type>`)?",
+        "instructions": "Step 0 is `set %template% = \"/system/error/%error.status.code%.txt\"`. which type does the step coerce the value to — none unless the step writes `as <type>`, `type=<type>` or `(<kind>)` (a value that merely looks like a dict/list/json is NOT a coercion; leave the type none)?",
         "criteria": {
           "app": null,
           "table": null,
