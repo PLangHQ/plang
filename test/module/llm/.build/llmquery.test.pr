@@ -1,0 +1,152 @@
+{
+  "name": "Start",
+  "comment": "Simple system+user query — verify we get a non-null response from the LLM",
+  "step": [
+    {
+      "index": 0,
+      "text": "[llm] system: 'You are a helpful assistant'\nuser: 'What is 2+2? Reply with just the number'\nwrite to %result%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "llm",
+          "name": "query",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "list",
+                "kind": "message"
+              },
+              "value": [{"Role":"system","Content":"You are a helpful assistant"},{"Role":"user","Content":"What is 2+2? Reply with just the number"}]
+            }
+          ],
+          "default": [
+            {
+              "name": "conversation",
+              "type": {
+                "name": "conversation"
+              },
+              "value": {}
+            },
+            {
+              "name": "temperature",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            },
+            {
+              "name": "limit",
+              "type": {
+                "name": "limit"
+              },
+              "value": {
+                "token": 16000,
+                "tool": 10,
+                "retry": 0
+              }
+            },
+            {
+              "name": "cache",
+              "type": {
+                "name": "choice",
+                "kind": "cache"
+              },
+              "value": "use"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %result% is not null",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/llm/LlmQuery.test.goal",
+  "prPath": "/module/llm/.build/llmquery.test.pr",
+  "hash": "f769aa55e0d08fd102c5598b58ace4e7aa5efe0a1b9ed14595585017d790b8eb"
+}

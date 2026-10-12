@@ -1,0 +1,188 @@
+{
+  "name": "Start",
+  "comment": "Query with JSON schema — verify response is parsed and dot-navigable",
+  "step": [
+    {
+      "index": 0,
+      "text": "[llm] system: 'You analyze sentiment. Respond in JSON only.'\nuser: 'Analyze: I love sunny days'\nscheme: {sentiment:string, score:number}\nwrite to %result%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "llm",
+          "name": "query",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "list",
+                "kind": "message"
+              },
+              "value": [{"Role":"system","Content":"You analyze sentiment. Respond in JSON only."},{"Role":"user","Content":"Analyze: I love sunny days"}]
+            }
+          ],
+          "default": [
+            {
+              "name": "conversation",
+              "type": {
+                "name": "conversation"
+              },
+              "value": {}
+            },
+            {
+              "name": "temperature",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            },
+            {
+              "name": "limit",
+              "type": {
+                "name": "limit"
+              },
+              "value": {
+                "token": 16000,
+                "tool": 10,
+                "retry": 0
+              }
+            },
+            {
+              "name": "cache",
+              "type": {
+                "name": "choice",
+                "kind": "cache"
+              },
+              "value": "use"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %result% is not null",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %result.sentiment% is not null",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%result.sentiment%",
+              "variable": [
+                {
+                  "text": "%result.sentiment%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    },
+                    {
+                      "property": "sentiment"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/llm/LlmSchema.test.goal",
+  "prPath": "/module/llm/.build/llmschema.test.pr",
+  "hash": "fa70774576146cde3b67d7946e8332654effbe2c0b0d136208e9dddf9045511e"
+}

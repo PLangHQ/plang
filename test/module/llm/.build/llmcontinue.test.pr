@@ -1,0 +1,307 @@
+{
+  "name": "Start",
+  "comment": "Two queries — second uses continuePreviousConversation, verify LLM remembers context",
+  "step": [
+    {
+      "index": 0,
+      "text": "[llm] system: 'You are a helpful assistant'\nuser: 'My favorite color is blue. Remember that.'\nwrite to %first%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "llm",
+          "name": "query",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "list",
+                "kind": "message"
+              },
+              "value": [{"Role":"system","Content":"You are a helpful assistant"},{"Role":"user","Content":"My favorite color is blue. Remember that."}]
+            }
+          ],
+          "default": [
+            {
+              "name": "conversation",
+              "type": {
+                "name": "conversation"
+              },
+              "value": {}
+            },
+            {
+              "name": "temperature",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            },
+            {
+              "name": "limit",
+              "type": {
+                "name": "limit"
+              },
+              "value": {
+                "token": 16000,
+                "tool": 10,
+                "retry": 0
+              }
+            },
+            {
+              "name": "cache",
+              "type": {
+                "name": "choice",
+                "kind": "cache"
+              },
+              "value": "use"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%first%",
+              "variable": [
+                {
+                  "text": "%first%",
+                  "code": [
+                    {
+                      "variable": "first"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "[llm] system: 'You are a helpful assistant'\nuser: 'What is my favorite color?'\ncontinuePreviousConversation: true\nwrite to %second%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "llm",
+          "name": "query",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "list",
+                "kind": "message"
+              },
+              "value": [{"Role":"system","Content":"You are a helpful assistant"},{"Role":"user","Content":"What is my favorite color?"}]
+            },
+            {
+              "name": "Conversation",
+              "type": {
+                "name": "conversation",
+                "template": "plang"
+              },
+              "value": "%!llm.query%",
+              "variable": [
+                {
+                  "text": "%!llm.query%",
+                  "code": [
+                    {
+                      "variable": "!llm"
+                    },
+                    {
+                      "property": "query"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "temperature",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            },
+            {
+              "name": "limit",
+              "type": {
+                "name": "limit"
+              },
+              "value": {
+                "token": 16000,
+                "tool": 10,
+                "retry": 0
+              }
+            },
+            {
+              "name": "cache",
+              "type": {
+                "name": "choice",
+                "kind": "cache"
+              },
+              "value": "use"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%second%",
+              "variable": [
+                {
+                  "text": "%second%",
+                  "code": [
+                    {
+                      "variable": "second"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %first% is not null",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%first%",
+              "variable": [
+                {
+                  "text": "%first%",
+                  "code": [
+                    {
+                      "variable": "first"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %second% is not null",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%second%",
+              "variable": [
+                {
+                  "text": "%second%",
+                  "code": [
+                    {
+                      "variable": "second"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/llm/LlmContinue.test.goal",
+  "prPath": "/module/llm/.build/llmcontinue.test.pr",
+  "hash": "ec4fd724149a319d6c7346bb2c98d1a49debacdd6e31ab410715954d16565884"
+}
