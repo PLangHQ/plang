@@ -1,12 +1,12 @@
 {
   "name": "VerbBasedAnswerer",
-  "comment": "%!data% is overwritten by every action's result, so capture the channel\ninput (the question text) into a local %access% first. Subsequent steps\nbranch on %access% — stable for the whole goal.",
+  "comment": "The channel's written value (the question text) reaches its goal as %message%; capture it into a local\n%access% first. Subsequent steps branch on %access% — stable for the whole goal.",
   "step": [
     {
       "index": 0,
-      "text": "set %access% = %!data%",
+      "text": "set %access% = %message%",
       "line": {
-        "number": 5
+        "number": 4
       },
       "code": [
         {
@@ -36,13 +36,13 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!data%",
+              "value": "%message%",
               "variable": [
                 {
-                  "text": "%!data%",
+                  "text": "%message%",
                   "code": [
                     {
-                      "variable": "!data"
+                      "variable": "message"
                     }
                   ]
                 }
@@ -65,7 +65,7 @@
       "index": 1,
       "text": "if %access% contains 'write' then return \"y\"",
       "line": {
-        "number": 6
+        "number": 5
       },
       "code": [
         {
@@ -111,7 +111,7 @@
               "index": 0,
               "text": "goal.return(Data=\"y\")",
               "line": {
-                "number": 6
+                "number": 5
               },
               "code": [
                 {
@@ -146,7 +146,7 @@
       "index": 2,
       "text": "if %access% contains 'delete' then return \"n\"",
       "line": {
-        "number": 7
+        "number": 6
       },
       "code": [
         {
@@ -192,7 +192,7 @@
               "index": 0,
               "text": "goal.return(Data=\"n\")",
               "line": {
-                "number": 7
+                "number": 6
               },
               "code": [
                 {
@@ -227,7 +227,7 @@
       "index": 3,
       "text": "if %access% contains 'read' then return \"a\"",
       "line": {
-        "number": 8
+        "number": 7
       },
       "code": [
         {
@@ -273,7 +273,7 @@
               "index": 0,
               "text": "goal.return(Data=\"a\")",
               "line": {
-                "number": 8
+                "number": 7
               },
               "code": [
                 {
@@ -308,7 +308,7 @@
       "index": 4,
       "text": "return \"n\"",
       "line": {
-        "number": 9
+        "number": 8
       },
       "code": [
         {
@@ -340,5 +340,5 @@
   "visibility": "Public",
   "path": "/app/permission/authorize/statefulauthorizegrantsandcontinues/VerbBasedAnswerer.goal",
   "prPath": "/app/permission/authorize/statefulauthorizegrantsandcontinues/.build/verbbasedanswerer.pr",
-  "hash": "88fd043662fddc0ed5b6e26c8d01b43ac31fd734b3cdba8f591593671288169a"
+  "hash": "a9eea3b2d0dd57b0efa4e479d8b8949be3d14afaf808933a61e1ae0c503bfc62"
 }

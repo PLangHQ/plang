@@ -4,7 +4,7 @@
   "step": [
     {
       "index": 0,
-      "text": "file.save %!data% to probe-question.txt",
+      "text": "file.save %message% to probe-question.txt",
       "line": {
         "number": 5
       },
@@ -26,13 +26,13 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%!data%",
+              "value": "%message%",
               "variable": [
                 {
-                  "text": "%!data%",
+                  "text": "%message%",
                   "code": [
                     {
-                      "variable": "!data"
+                      "variable": "message"
                     }
                   ]
                 }
@@ -78,5 +78,5 @@
   "visibility": "Public",
   "path": "/app/permission/grantastorespersisted/ProbeAnswerer.goal",
   "prPath": "/app/permission/grantastorespersisted/.build/probeanswerer.pr",
-  "hash": "0980ecfd04ca4af926caeead86541ccfa0344580588f0e065d694fb624d92e9f"
+  "hash": "e6055441d2d4498708616aae444bf85c385fe5f137990aa05579f97c72547a33"
 }

@@ -105,7 +105,7 @@
     },
     {
       "index": 2,
-      "text": "assert %x.Type.Kind% is null",
+      "text": "assert %x!type.kind% is null",
       "line": {
         "number": 6
       },
@@ -120,19 +120,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x.Type.Kind%",
+              "value": "%x!type.kind%",
               "variable": [
                 {
-                  "text": "%x.Type.Kind%",
+                  "text": "%x!type.kind%",
                   "code": [
                     {
                       "variable": "x"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Kind"
+                      "property": "kind"
                     }
                   ]
                 }
@@ -147,5 +147,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetAsTextDefaultNoValidation.test.goal",
   "prPath": "/app/type/kind/strict/.build/setastextdefaultnovalidation.test.pr",
-  "hash": "6b850d9f0960cce5c3e397c77d51118694f7f3ea13554a58658a67486d827194"
+  "hash": "a062cab4f2e0867b62f2968593b0454b8fd86f01e4ca27678d1cd70d30236598"
 }

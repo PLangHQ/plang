@@ -42,7 +42,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "text"
+              "value": "json"
             }
           ],
           "default": [
@@ -122,13 +122,6 @@
             {
               "name": "Expected",
               "type": {
-                "name": "number"
-              },
-              "value": 10
-            },
-            {
-              "name": "Actual",
-              "type": {
                 "name": "item",
                 "template": "plang"
               },
@@ -146,6 +139,13 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "number"
+              },
+              "value": 10
             }
           ]
         }
@@ -165,13 +165,6 @@
             {
               "name": "Expected",
               "type": {
-                "name": "number"
-              },
-              "value": 28
-            },
-            {
-              "name": "Actual",
-              "type": {
                 "name": "item",
                 "template": "plang"
               },
@@ -189,6 +182,13 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "number"
+              },
+              "value": 28
             }
           ]
         }
@@ -208,13 +208,6 @@
             {
               "name": "Expected",
               "type": {
-                "name": "text"
-              },
-              "value": "box"
-            },
-            {
-              "name": "Actual",
-              "type": {
                 "name": "item",
                 "template": "plang"
               },
@@ -232,6 +225,13 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "text"
+              },
+              "value": "box"
             }
           ]
         }

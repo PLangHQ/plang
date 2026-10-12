@@ -9,6 +9,9 @@ Properties: `{"Recovery": [goal.call(Name="HandleContractError")]}`
 Step text: `write 'hi' to dbg, on error set %failed% = true`
 Properties: `{"Recovery": [variable.set(Name="%failed%", Value=true)]}` — the recovery is a `set`; it goes inside `Recovery`, never a top-level variable.set after the clause (that would run every time, not only on error).
 
+Step text: `foreach %items%, call DoItem item=%item%, on error set %caught% = true`
+Properties: `{"Recovery": [variable.set(Name="%caught%", Value=true)]}` — the loop is the step's action (loop.foreach), the on.error comes after it, and the `set` nests in `Recovery`; an empty on.error with the set left beside it does nothing and is refused.
+
 Step text: `save %doc%, on error key Conflict, write out "already exists"`
 Properties: `{"Key": "Conflict", "Recovery": [output.write(Data="already exists")]}` — a named error key filters which errors this handles.
 

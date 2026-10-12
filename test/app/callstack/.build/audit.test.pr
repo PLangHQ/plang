@@ -101,26 +101,6 @@
           ]
         },
         {
-          "module": "goal",
-          "name": "call",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "goal"
-              },
-              "value": "ThrowItem"
-            },
-            {
-              "name": "Parameter",
-              "type": {
-                "name": "list"
-              },
-              "value": [{"name":"item","type":{"name":"item","template":"plang"},"value":"%item%","variable":[{"text":"%item%","code":[{"variable":"item"}]}]}]
-            }
-          ]
-        },
-        {
           "module": "on",
           "name": "error",
           "property": [
@@ -140,41 +120,15 @@
               },
               "value": [
                 {
-                  "module": "variable",
-                  "name": "set",
+                  "module": "goal",
+                  "name": "call",
                   "property": [
                     {
                       "name": "Name",
                       "type": {
-                        "name": "variable"
+                        "name": "goal"
                       },
-                      "value": "%finalCaught%",
-                      "variable": [
-                        {
-                          "text": "%finalCaught%",
-                          "code": [
-                            {
-                              "variable": "finalCaught"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "name": "Value",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": true
-                    }
-                  ],
-                  "default": [
-                    {
-                      "name": "default",
-                      "type": {
-                        "name": "bool"
-                      },
-                      "value": false
+                      "value": "/app/callstack/ThrowItem"
                     }
                   ]
                 }
@@ -184,6 +138,76 @@
           "default": [
             {
               "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "/app/callstack/ThrowItem"
+            },
+            {
+              "name": "Parameter",
+              "type": {
+                "name": "list"
+              },
+              "value": [{"name":"item","type":{"name":"item","template":"plang"},"value":"%item%","variable":[{"text":"%item%","code":[{"variable":"item"}]}]}]
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%finalCaught%",
+              "variable": [
+                {
+                  "text": "%finalCaught%",
+                  "code": [
+                    {
+                      "variable": "finalCaught"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
               "type": {
                 "name": "bool"
               },

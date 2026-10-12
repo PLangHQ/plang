@@ -14,6 +14,13 @@
           "name": "set",
           "property": [
             {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "a"
+            },
+            {
               "name": "Name",
               "type": {
                 "name": "variable"
@@ -29,13 +36,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "a"
             },
             {
               "name": "Type",
@@ -105,7 +105,7 @@
     },
     {
       "index": 2,
-      "text": "assert %x.Type.Kind% equals \"md\"",
+      "text": "assert %x!type.kind% equals \"md\"",
       "line": {
         "number": 6
       },
@@ -127,19 +127,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x.Type.Kind%",
+              "value": "%x!type.kind%",
               "variable": [
                 {
-                  "text": "%x.Type.Kind%",
+                  "text": "%x!type.kind%",
                   "code": [
                     {
                       "variable": "x"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Kind"
+                      "property": "kind"
                     }
                   ]
                 }
@@ -151,7 +151,7 @@
     },
     {
       "index": 3,
-      "text": "assert %x.Type.Strict% equals true",
+      "text": "assert %x!type.strict% equals true",
       "line": {
         "number": 7
       },
@@ -173,19 +173,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x.Type.Strict%",
+              "value": "%x!type.strict%",
               "variable": [
                 {
-                  "text": "%x.Type.Strict%",
+                  "text": "%x!type.strict%",
                   "code": [
                     {
                       "variable": "x"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Strict"
+                      "property": "strict"
                     }
                   ]
                 }
@@ -200,5 +200,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetAsTextSlashMarkdownStrictUnverifiable.test.goal",
   "prPath": "/app/type/kind/strict/.build/setastextslashmarkdownstrictunverifiable.test.pr",
-  "hash": "071797ce7ce96955b51948a09f5c367f21965932be7e3be5dd472f624072136a"
+  "hash": "26d1e801d488597a66bc30b4324b3ea11fa833e804fb3141ffff1cd92830ccbc"
 }

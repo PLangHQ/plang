@@ -105,7 +105,7 @@
     },
     {
       "index": 2,
-      "text": "assert %x.Type.Kind% equals \"md\"",
+      "text": "assert %x!type.kind% equals \"md\"",
       "line": {
         "number": 6
       },
@@ -127,19 +127,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%x.Type.Kind%",
+              "value": "%x!type.kind%",
               "variable": [
                 {
-                  "text": "%x.Type.Kind%",
+                  "text": "%x!type.kind%",
                   "code": [
                     {
                       "variable": "x"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Kind"
+                      "property": "kind"
                     }
                   ]
                 }
@@ -154,5 +154,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetAsTextSlashMarkdownNormalises.test.goal",
   "prPath": "/app/type/kind/strict/.build/setastextslashmarkdownnormalises.test.pr",
-  "hash": "2cdc4266314497689358c515943cbbdf5d1a61bafc131bf59abb9933fa85a4e0"
+  "hash": "01cecdff525fcfcf551b11da57396e74807f9a6d4552723fb9001d26deb634ee"
 }

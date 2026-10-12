@@ -82,30 +82,9 @@
             {
               "name": "Query",
               "type": {
-                "name": "query",
-                "template": "plang"
+                "name": "query"
               },
-              "value": {"order":{"field":"%nums%","desc":false}},
-              "variable": [
-                {
-                  "text": "%nums%",
-                  "code": [
-                    {
-                      "variable": "nums"
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "default": [
-            {
-              "name": "execution",
-              "type": {
-                "name": "choice",
-                "kind": "execution"
-              },
-              "value": "sql"
+              "value": {}
             }
           ]
         },

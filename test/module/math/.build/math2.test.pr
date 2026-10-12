@@ -1,0 +1,205 @@
+{
+  "name": "Start",
+  "comment": "Test: math.random returns a value in range",
+  "step": [
+    {
+      "index": 0,
+      "text": "get random number between 1 and 100, write to %rand%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "math",
+          "name": "random",
+          "property": [
+            {
+              "name": "Min",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ],
+          "default": [
+            {
+              "name": "max",
+              "type": {
+                "name": "number"
+              },
+              "value": 100
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%rand%",
+              "variable": [
+                {
+                  "text": "%rand%",
+                  "code": [
+                    {
+                      "variable": "rand"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %rand% is not null",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%rand%",
+              "variable": [
+                {
+                  "text": "%rand%",
+                  "code": [
+                    {
+                      "variable": "rand"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %rand% is greater than 0",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "greaterThan",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%rand%",
+              "variable": [
+                {
+                  "text": "%rand%",
+                  "code": [
+                    {
+                      "variable": "rand"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %rand% is less than 101",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "lessThan",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%rand%",
+              "variable": [
+                {
+                  "text": "%rand%",
+                  "code": [
+                    {
+                      "variable": "rand"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "number"
+              },
+              "value": 101
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/math/Math2.test.goal",
+  "prPath": "/module/math/.build/math2.test.pr",
+  "hash": "057525b2c4008e45da5bc67ee006ffba6a0cc8748e0c494225627894ee9bc62b"
+}

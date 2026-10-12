@@ -37,6 +37,9 @@ Properties: `{"Name": "%files%", "Value": ["a.txt", "b.txt"], "Type": "list<path
 Step text: `set %cfg% = '{"port": 8080}', type=json`
 Properties: `{"Name": "%cfg%", "Value": "{\"port\": 8080}", "Type": {"name": "json"}}` — `type=json` (or `as json`) keeps the value as text of kind json, written exactly as the step's literal; never parsed into a dict, and `Type` is `json`, never `dict`.
 
+Step text: `convert %json% from json, write to %dict%`
+Properties: `{"Name": "%dict%", "Value": "%json%", "Type": {"name": "dict"}}` — `from json` parses the json text in `%json%` into a dict; the source `%json%` is the Value (never dropped), and `Type` is the target structure that parses it. The opposite of `as json`, which keeps a value as json text.
+
 Step text: `get 'https://example.com/rates.json', write to %rates%`
 
 Step text: `hash %password%, write to %passwordHash%`

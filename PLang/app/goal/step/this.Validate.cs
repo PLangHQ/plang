@@ -60,6 +60,11 @@ public sealed partial class @this
         // doubles a literal's backslashes (\\n for the step's \n) holds a backslash, not what the step says — told so,
         // so the retry writes it as the step does
         var values = Values(Code.Items());
+        // a chosen action's [Default]s are frozen into the built program (Freeze, which runs after this check) — the
+        // step's `100` for a Max that defaults to 100 is in the .pr's "default" rows, frozen, and won't drift if the
+        // default later changes. Freeze hasn't run yet here, so read the declared defaults the way it will and add
+        // their values to what the answer holds: a step literal equal to a frozen default is covered.
+        values.AddRange(Defaults(Code.Items(), context));
         foreach (var l in Literal.Matches(Text).Select(m => m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value).Distinct())
             if (l.Length > 0 && !await Held(l))
                 problems.Add(l.Contains('\\') && await Held(l.Replace("\\", "\\\\"))
@@ -152,6 +157,28 @@ public sealed partial class @this
                 if (p.Value is not (null or global::app.goal.step.action.@this or global::app.goal.step.action.list.@this))
                     values.Add(p.Value);
             foreach (var child in a.Child.Items()) values.AddRange(Values(child.Code.Items()));
+        }
+        return values;
+    }
+
+    // The declared [Default] value of every property a chosen action (or one it holds) leaves unset, born as its
+    // slot's type — the values Freeze will freeze into the action's Default rows after this check. Read the same
+    // source Freeze reads (the catalog element's declared properties); a step literal equal to one of these is in
+    // the built program, so Cover counts it held. Only the forward direction reads these: a default never makes a
+    // value "written" for the invented-text check, which reads the answer's own values alone.
+    private List<global::app.type.item.@this> Defaults(
+        IEnumerable<global::app.goal.step.action.@this> actions, global::app.actor.context.@this context)
+    {
+        var values = new List<global::app.type.item.@this>();
+        foreach (var a in actions)
+        {
+            if (a.Module[a.Name] is { } catalog)
+                foreach (var declared in catalog.Property)
+                    if (declared.Default != null && a[declared.Name] == null
+                        && declared.Type.Make(declared.Default, context) is { } made)
+                        values.Add(made);
+            values.AddRange(Defaults(a.Held, context));
+            foreach (var child in a.Child.Items()) values.AddRange(Defaults(child.Code.Items(), context));
         }
         return values;
     }

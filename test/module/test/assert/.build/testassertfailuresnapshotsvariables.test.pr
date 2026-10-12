@@ -295,6 +295,12 @@
             }
           ]
         }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 3 uses variable.set, which the decider was not sure of (0.89)"
+        }
       ]
     },
     {
@@ -407,7 +413,7 @@
         },
         {
           "key": "Unsure",
-          "message": "step 4 uses variable.set, which the decider was not sure of (0.88)"
+          "message": "step 4 uses variable.set, which the decider was not sure of (0.86)"
         }
       ]
     },

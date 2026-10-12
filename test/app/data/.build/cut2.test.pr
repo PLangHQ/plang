@@ -222,20 +222,9 @@
             {
               "name": "Expected",
               "type": {
-                "name": "item",
-                "template": "plang"
+                "name": "text"
               },
-              "value": "%!data%",
-              "variable": [
-                {
-                  "text": "%!data%",
-                  "code": [
-                    {
-                      "variable": "!data"
-                    }
-                  ]
-                }
-              ]
+              "value": "file"
             },
             {
               "name": "Actual",

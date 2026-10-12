@@ -6,3 +6,4 @@ Default — true when the step says "set default", "default to" or "only if unse
 - `set %x% = …` is one variable.set.
 - `<action>, write to %x%` is that action followed by variable.set(Name=%x%, Value=%!data%) — its own action, never a modifier, and without a Type.
 - `set %x% as list of <type> = [...]` keeps the element type: Type is `list<type>` (e.g. `as list of path` → Type `list<path>`), never a bare `list` — the element is born the element type at its first read.
+- `convert %x% from json, write to %dict%` reads the json text in `%x%` INTO a structure: `variable.set(Name=%dict%, Value=%x%, Type=dict)` (Type `list` when the json is an array). This is the OPPOSITE of `as json`/`type=json`: `as json` keeps a value as json text, `from json` parses json text into a dict/list. The source `%x%` is the Value — NEVER drop it — and Type is the target structure that does the parse.

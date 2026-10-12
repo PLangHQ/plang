@@ -34,7 +34,7 @@
                     "type": {
                       "name": "goal"
                     },
-                    "value": "EchoBack"
+                    "value": "/module/channel/goalchannelrecursion/EchoBack"
                   }
                 ]
               }
@@ -83,7 +83,7 @@
                       "type": {
                         "name": "goal"
                       },
-                      "value": "InspectError"
+                      "value": "/module/channel/goalchannelrecursion/InspectError"
                     }
                   ]
                 }

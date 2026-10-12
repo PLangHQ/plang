@@ -1,6 +1,6 @@
 {
   "name": "Start",
-  "comment": "Pattern-match answerer: VerbBasedAnswerer.goal captures the question text\nfrom %!data% into a local %access% (since %!data% gets clobbered by every\naction's result), then returns \"y\" for write, \"a\" for read, \"n\" for delete.\nHere we exercise WRITE (returns \"y\") then READ (returns \"a\") — both succeed,\n//tmp/plang-pattern.txt round-trips.",
+  "comment": "Pattern-match answerer: VerbBasedAnswerer.goal captures the question text\n(the channel's %message%) into a local %access%, then returns \"y\" for write,\n\"a\" for read, \"n\" for delete.\nHere we exercise WRITE (returns \"y\") then READ (returns \"a\") — both succeed,\n//tmp/plang-pattern.txt round-trips.",
   "step": [
     {
       "index": 0,
@@ -198,5 +198,5 @@
   "visibility": "Public",
   "path": "/app/permission/authorize/statefulauthorizegrantsandcontinues/Start.test.goal",
   "prPath": "/app/permission/authorize/statefulauthorizegrantsandcontinues/.build/start.test.pr",
-  "hash": "45fce1decc7cf777858b4a5c6e70462b01f1a936e55c50cd1bdceb3971168484"
+  "hash": "a927cef003e9122b0afdfa33422104400fd1c88a3d034ae49093faa6da8c5605"
 }

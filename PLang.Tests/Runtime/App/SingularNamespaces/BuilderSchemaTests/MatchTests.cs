@@ -206,6 +206,28 @@ public class MatchTests
         await Assert.That(result.Error!.Message).Contains("0 is in the step but not in your answer");
     }
 
+    // A step number equal to a chosen action's [Default] is covered: the default is frozen into the .pr's default
+    // rows, so the program holds the number even though the answer leaves the property unset. (math.random's Max
+    // defaults to 100.) A different unwritten number — 50, with Max still at its 100 default — is still refused.
+    [Test]
+    public async Task ANumberEqualToAChosenActionsDefault_IsCovered_AnotherUnwrittenNumberIsStillRefused()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var context = app.actor.list.System.Context;
+
+        var covered = Make.Goal(app.actor.list.User.Context, "G", Make.Step("get random number between 1 and 100, write to %rand%"));
+        await Picked(covered, context, (0, "math.random"), (0, "variable.set"));
+        var ok = await Match(covered, "[0] math.random(Min=1); variable.set(Name=%rand%, Value=%!data%)", context);
+
+        var other = Make.Goal(app.actor.list.User.Context, "G", Make.Step("get random number between 1 and 50, write to %rand%"));
+        await Picked(other, context, (0, "math.random"), (0, "variable.set"));
+        var refused = await Match(other, "[0] math.random(Min=1); variable.set(Name=%rand%, Value=%!data%)", context);
+
+        await Assert.That(ok.Error?.Message ?? "").DoesNotContain("is in the step but not in your answer");
+        await refused.IsFailure();
+        await Assert.That(refused.Error!.Message).Contains("50 is in the step but not in your answer");
+    }
+
     // A quoted literal is held by one of the answer's values, never by the line's syntax: `if "= %oldHash%" is
     // "= %hash%"` answered Left=%oldHash%, Operator="==" dropped the "= " the step wrote (the line's `Left=%oldHash%`
     // holds the characters, no value does) — refused; written whole, taken.

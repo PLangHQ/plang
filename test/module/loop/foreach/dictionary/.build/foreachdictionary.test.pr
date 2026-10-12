@@ -95,6 +95,13 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "dict"
             }
           ],
           "default": [
@@ -216,7 +223,7 @@
               "type": {
                 "name": "goal"
               },
-              "value": "ProcessEntry"
+              "value": "/module/loop/foreach/dictionary/ProcessEntry"
             },
             {
               "name": "Parameter",

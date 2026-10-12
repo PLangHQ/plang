@@ -41,13 +41,6 @@
                 "name": "text"
               },
               "value": "system message"
-            },
-            {
-              "name": "channel",
-              "type": {
-                "name": "text"
-              },
-              "value": "system"
             }
           ]
         }

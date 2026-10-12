@@ -1,0 +1,148 @@
+{
+  "name": "SetDeciderKey",
+  "step": [
+    {
+      "index": 0,
+      "text": "output.ask(Question=\"TypeSafe key for the decider?\")",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "ask",
+          "property": [
+            {
+              "name": "Question",
+              "type": {
+                "name": "text"
+              },
+              "value": "TypeSafe key for the decider?"
+            }
+          ],
+          "default": [
+            {
+              "name": "sensitive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "variable.set(Name=%!llm.decider.setting.key%, Value=%!data%)",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%!llm.decider.setting.key%",
+              "variable": [
+                {
+                  "text": "%!llm.decider.setting.key%",
+                  "code": [
+                    {
+                      "variable": "!llm"
+                    },
+                    {
+                      "property": "decider"
+                    },
+                    {
+                      "property": "setting"
+                    },
+                    {
+                      "property": "key"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "setting.save(Setting=%!llm.decider.setting%)",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "setting",
+          "name": "save",
+          "property": [
+            {
+              "name": "Setting",
+              "type": {
+                "name": "setting",
+                "template": "plang"
+              },
+              "value": "%!llm.decider.setting%",
+              "variable": [
+                {
+                  "text": "%!llm.decider.setting%",
+                  "code": [
+                    {
+                      "variable": "!llm"
+                    },
+                    {
+                      "property": "decider"
+                    },
+                    {
+                      "property": "setting"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/SetDeciderKey.goal",
+  "prPath": "/.build/setdeciderkey.pr",
+  "hash": "b2db79a06588cd50690689f5eac366a89a5f4f1433e6a666d583b8290e8ec68e"
+}

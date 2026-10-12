@@ -105,7 +105,7 @@
     },
     {
       "index": 2,
-      "text": "assert %img.Type.Kind% equals \"gif\"",
+      "text": "assert %img!type.kind% equals \"gif\"",
       "line": {
         "number": 9
       },
@@ -127,19 +127,19 @@
                 "name": "item",
                 "template": "plang"
               },
-              "value": "%img.Type.Kind%",
+              "value": "%img!type.kind%",
               "variable": [
                 {
-                  "text": "%img.Type.Kind%",
+                  "text": "%img!type.kind%",
                   "code": [
                     {
                       "variable": "img"
                     },
                     {
-                      "property": "Type"
+                      "property": "!type"
                     },
                     {
-                      "property": "Kind"
+                      "property": "kind"
                     }
                   ]
                 }
@@ -154,5 +154,5 @@
   "visibility": "Public",
   "path": "/app/type/kind/strict/SetAsImageGifStrictMismatch.test.goal",
   "prPath": "/app/type/kind/strict/.build/setasimagegifstrictmismatch.test.pr",
-  "hash": "9e29aa264e8c0958817c8d8365ff9bc3a9c34f26505264292dd958a81778c1db"
+  "hash": "5e800906f6adb33a956ca92d6e221b1ec9816232b76bc41d970d871cf283eefb"
 }

@@ -1,0 +1,4 @@
+SetDeciderKey
+- output.ask(Question="TypeSafe key for the decider?")
+- variable.set(Name=%!llm.decider.setting.key%, Value=%!data%)
+- setting.save(Setting=%!llm.decider.setting%)

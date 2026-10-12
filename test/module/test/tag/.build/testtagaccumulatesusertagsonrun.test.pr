@@ -26,7 +26,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 0 uses test.tag, which the decider was not sure of (0.99)"
+          "message": "step 0 uses test.tag, which the decider was not sure of (0.98)"
         }
       ]
     },
@@ -323,11 +323,11 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 4 uses list.contains, which the decider was not sure of (0.95)"
+          "message": "step 4 uses list.contains, which the decider was not sure of (0.94)"
         },
         {
           "key": "Unsure",
-          "message": "step 4 uses variable.set, which the decider was not sure of (0.89)"
+          "message": "step 4 uses variable.set, which the decider was not sure of (0.88)"
         }
       ]
     },
@@ -593,7 +593,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 8 uses list.contains, which the decider was not sure of (0.97)"
+          "message": "step 8 uses list.contains, which the decider was not sure of (0.98)"
         }
       ]
     },
@@ -635,5 +635,10 @@
   "visibility": "Public",
   "path": "/module/test/tag/TestTagAccumulatesUserTagsOnRun.test.goal",
   "prPath": "/module/test/tag/.build/testtagaccumulatesusertagsonrun.test.pr",
-  "hash": "a6d6b2b3e1a9c2c58839511d165bc98530d8f563b5d2a979110ac9da8360b57e"
+  "hash": "a6d6b2b3e1a9c2c58839511d165bc98530d8f563b5d2a979110ac9da8360b57e",
+  "tag": [
+    "http",
+    "fast",
+    "slow"
+  ]
 }

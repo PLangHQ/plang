@@ -413,9 +413,9 @@
       "index": 9,
       "text": "call InnerWithParam id=42",
       "line": {
-        "number": 17
+        "number": 18
       },
-      "comment": "param value passed into goal: mutating it inside leaks back to caller\n(sequential goal.call has no overlay → all writes hit actor dict)",
+      "comment": "a parameter is the callee's own: changing it inside doesn't reach the caller, and it ends with the call\n(the plan's rule: test/plan/app-systems/module/goal/call/ParameterEndsWithTheCall); a fresh name the callee\nsets still lands with the caller",
       "code": [
         {
           "module": "goal",
@@ -441,24 +441,17 @@
     },
     {
       "index": 10,
-      "text": "assert %id% equals 999",
+      "text": "assert %id% is null, \"the parameter ends with the call\"",
       "line": {
-        "number": 18
+        "number": 19
       },
       "code": [
         {
           "module": "assert",
-          "name": "equals",
+          "name": "isNull",
           "property": [
             {
-              "name": "Expected",
-              "type": {
-                "name": "number"
-              },
-              "value": 999
-            },
-            {
-              "name": "Actual",
+              "name": "Value",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -474,6 +467,13 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "the parameter ends with the call"
             }
           ]
         }
@@ -483,7 +483,7 @@
       "index": 11,
       "text": "assert %user% equals \"alice\"",
       "line": {
-        "number": 19
+        "number": 20
       },
       "code": [
         {
@@ -524,5 +524,5 @@
   "visibility": "Public",
   "path": "/module/variable/scoping/VariableScoping.test.goal",
   "prPath": "/module/variable/scoping/.build/variablescoping.test.pr",
-  "hash": "88ae96e96db86358dbc2c500b6dd02cb61e215ef56984e63359a260d4b830c31"
+  "hash": "7debb1d6e9d24fec72f52efd50b16a2450befb420b5e4b9b499476fe07b8a01d"
 }
