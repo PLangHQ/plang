@@ -486,11 +486,11 @@ public sealed class @this
                .OrderByDescending(m => m.Item2)
                .ToList();
 
-    // Whether `action` is only the step's capture: the variable.set a `write to %x%` makes of another module's answer
-    // (`get random number …, write to %rand%`). It writes %!data% as it is, so its options (a Type) aren't the step's
-    // to give; a step whose main work is variable's own (`set %x% = "5" as number`) still has them.
+    // Whether `action` is only the step's capture: a variable.set on a step whose main work (the decider's answer) is
+    // another module's — it keeps that module's answer as it is, so its options (a Type, a Default) aren't the step's to
+    // give; a step whose main work is variable's own (`set %x% = "5" as number`) still has them.
     private bool IsCapture(global::app.goal.step.action.@this action)
-        => action.Module.Name == "variable" && action.Name == "set" && Destination() != null
+        => action.Module.Name == "variable" && action.Name == "set"
            && Ranked() is [var main, ..] && main.Module != "variable";
 
     // The modules a near-certain common action already answers.
