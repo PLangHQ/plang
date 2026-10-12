@@ -1,0 +1,371 @@
+{
+  "name": "Start",
+  "comment": "Failure — compare %dict% > %number% (order, non-coercible cross-type) → boundary maps Incomparable → PLang error.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %d% = '{\"a\": 1}', type=json",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%d%",
+              "variable": [
+                {
+                  "text": "%d%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"a\": 1}"
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "dict"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %n% = 5",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 5
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %caught% = \"\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%caught%",
+              "variable": [
+                {
+                  "text": "%caught%",
+                  "code": [
+                    {
+                      "variable": "caught"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": ""
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "compare %d% > %n%, on error call Caught",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "compare",
+          "property": [
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": ">"
+            },
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%d%",
+              "variable": [
+                {
+                  "text": "%d%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "Caught"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %caught% equals \"EvaluationError\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "EvaluationError"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%caught%",
+              "variable": [
+                {
+                  "text": "%caught%",
+                  "code": [
+                    {
+                      "variable": "caught"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Caught",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %caught% = %!error.Key%",
+          "line": {
+            "number": 10
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%caught%",
+                  "variable": [
+                    {
+                      "text": "%caught%",
+                      "code": [
+                        {
+                          "variable": "caught"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "item",
+                    "template": "plang"
+                  },
+                  "value": "%!error.Key%",
+                  "variable": [
+                    {
+                      "text": "%!error.Key%",
+                      "code": [
+                        {
+                          "variable": "!error"
+                        },
+                        {
+                          "property": "Key"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/test/module/condition/compare/Failure_DictOrderNumber.test.goal",
+      "prPath": "/test/module/condition/compare/.build/failure_dictordernumber.test.pr",
+      "hash": "ec0f5fc53113edce508631be46166dab0372210530613172a5ff489cca506038"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/test/module/condition/compare/Failure_DictOrderNumber.test.goal",
+  "prPath": "/test/module/condition/compare/.build/failure_dictordernumber.test.pr",
+  "hash": "f6b767a5fedc9fa54934663f29b90a445298a16e081dffccd21316133e92a77f"
+}
