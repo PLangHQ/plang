@@ -3839,12 +3839,6 @@ action crypto.verify
 action debug.tag
   Tags : dict required
 
-action environment.start
-  Goal : action
-  Step : step
-  Action : action
-  Actor : choice<actor>
-
 action error.throw
   Message : text
   Data : item
