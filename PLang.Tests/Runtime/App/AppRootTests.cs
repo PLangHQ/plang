@@ -59,6 +59,29 @@ public class AppRootTests
         await Assert.That(parent.Peek() is global::app.parent.@this).IsTrue();
     }
 
+    private sealed class CasedItem : global::app.type.item.@this
+    {
+        public string Thing { get; set; } = "upper";
+        public string thing { get; set; } = "lower";
+    }
+
+    // a write onto a plang value finds its member the way a read does: two members differing only by case is the error
+    // naming both, under any spelling
+    [Test] public async Task WritingAMemberTwoMembersMatch_IsTheErrorNamingBoth()
+    {
+        await using var app = new global::app.@this("/app").Testing();
+        var ctx = app.actor.list.User.Context;
+        var item = new CasedItem();
+
+        foreach (var spelling in new[] { "thing", "Thing", "THING" })
+        {
+            var refused = await Assert.That(async () => await item.Set(spelling, false, "x", ctx)).Throws<global::app.error.AppException>();
+            await Assert.That(refused!.Error.Message).Contains("has two members named");
+            await Assert.That(refused.Error.Message).Contains("`Thing`");
+            await Assert.That(refused.Error.Message).Contains("`thing`");
+        }
+    }
+
     private sealed class Cased
     {
         public string Thing { get; set; } = "upper";

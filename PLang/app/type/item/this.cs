@@ -176,13 +176,12 @@ public abstract class @this : global::app.data.IBooleanResolvable, ICreate<@this
     /// </summary>
     public virtual async System.Threading.Tasks.ValueTask<@this> Set(string key, bool isIndex, object? value, global::app.actor.context.@this context)
     {
-        var prop = GetType().GetProperty(key, System.Reflection.BindingFlags.Public
-            | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+        // a name is found ignoring its case; two members it names is the error naming both (the reflection kind's one lookup)
+        var prop = global::app.type.item.kind.reflection.@this.Property(this, key);
         if ((prop == null || !prop.CanWrite) && Kept is { } kept && !isIndex)
         {
             // a thing that lives on keeps a member a program adds — never in place of one of its own
-            if (prop != null || GetType().GetMethod(key, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
-                    | System.Reflection.BindingFlags.IgnoreCase) != null)
+            if (prop != null || global::app.type.item.kind.reflection.@this.Method(this, key) != null)
                 throw new global::app.error.AppException(new global::app.error.Error(
                     $"{key} is {Type.Name}'s own — a program adds members beside it, never over it", "OwnMember", 400));
             kept.Add(key, value as global::app.data.@this ?? new global::app.data.@this(key, value, context: context));

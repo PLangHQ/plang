@@ -31,9 +31,10 @@ public sealed class @this : global::app.type.kind.@this
         return members.Length == 0 ? (false, null) : (true, members[0].Invoke(obj, [ctx]));
     }
 
-    // The property `key` names on obj, its case ignored: the most derived type's own, a base's only when no type below
-    // it has one. Two of one type that it names is the error naming both.
-    private System.Reflection.PropertyInfo? Property(object obj, string key)
+    /// <summary>The property <paramref name="key"/> names on <paramref name="obj"/>, its case ignored: the most derived
+    /// type's own, a base's only when no type below it has one. Two of one type that it names is the error naming both.
+    /// The one lookup a member is read and written by — here and on an item's own <see cref="global::app.type.item.@this.Set"/>.</summary>
+    internal static System.Reflection.PropertyInfo? Property(object obj, string key)
     {
         const System.Reflection.BindingFlags Own = System.Reflection.BindingFlags.Public
             | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly;
@@ -48,8 +49,20 @@ public sealed class @this : global::app.type.kind.@this
         return null;
     }
 
+    /// <summary>The method <paramref name="key"/> names on <paramref name="obj"/>, its case ignored (its overloads are one
+    /// name); two names that differ only by case is the error naming both.</summary>
+    internal static System.Reflection.MethodInfo? Method(object obj, string key)
+    {
+        var named = obj.GetType().GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Where(m => !m.IsSpecialName && string.Equals(m.Name, key, System.StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+        var names = named.Select(m => m.Name).Distinct().ToArray();
+        if (names.Length > 1) throw Twice(obj, key, names);
+        return named.FirstOrDefault();
+    }
+
     // The error for a name two members of one type answer to: plang reads names ignoring case, so it can't tell them apart.
-    private global::app.error.AppException Twice(object obj, string key, System.Collections.Generic.IEnumerable<string> names)
+    private static global::app.error.AppException Twice(object obj, string key, System.Collections.Generic.IEnumerable<string> names)
         => new(new global::app.error.Error(
             $"`{(obj is global::app.type.item.@this item ? item.Type.Name : obj.GetType().Name)}` has two members named {key}: "
             + string.Join(", ", names.Select(n => $"`{n}`")), "AmbiguousMember", 400));
