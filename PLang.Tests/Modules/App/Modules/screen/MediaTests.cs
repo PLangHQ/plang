@@ -81,7 +81,8 @@ public class MediaTests
         media.Take(Start());
         media.Take(Sample());
         media.Take(Clock(key: key));
-        return await presented.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        // the first picture is the signal; the bound only means it never came, however slow a loaded machine decodes
+        return await presented.Task.WaitAsync(TimeSpan.FromSeconds(30));
     }
 
     // a player's controls over a magenta key: half-seen black shows half the video, an opaque control stays the page's
@@ -127,7 +128,9 @@ public class MediaTests
     {
         using var media = new Media(new Stand());
         await Playing(media);
-        await Task.Delay(1200);   // the old player's clock stopped
+        // the old player's clock stopped: quiet is "no clock for over a second", real time, so this waits it out — a
+        // loaded machine waking late only makes the old stream quieter, never the test fail
+        await Task.Delay(1200);
         media.Take(Start(2));
         media.Take(Clock(2));
         await Assert.That(media.Numbers).DoesNotContain("stream 1:");
