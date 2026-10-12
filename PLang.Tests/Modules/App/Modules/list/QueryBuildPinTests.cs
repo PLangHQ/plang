@@ -1,14 +1,14 @@
 namespace PLang.Tests.App.actions.list;
 
 // The builder's pick for words → list.query, pinned against the committed golden .pr under
-// test/plan/list-query/module/list/query/build/. These catch a later rebuild that picks an old
+// test/module/list/query/build/. These catch a later rebuild that picks an old
 // action (list.sort/where/group) — which the plang run can miss because sort still sorts. The
 // pin goes red against a .pr built before the list.query teaching (that .pr holds list.sort etc.).
 public class QueryBuildPinTests
 {
     private static (string Pick, string Query) QueryStep(string prName)
     {
-        var path = System.IO.Path.Combine(global::PLang.Tests.Shared.Fixture.Root(), "test", "plan", "list-query",
+        var path = System.IO.Path.Combine(global::PLang.Tests.Shared.Fixture.Root(), "test",
             "module", "list", "query", "build", ".build", prName);
         var pr = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(path)).RootElement;
         foreach (var step in pr.GetProperty("step").EnumerateArray())
