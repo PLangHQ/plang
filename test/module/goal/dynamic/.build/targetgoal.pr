@@ -1,0 +1,58 @@
+{
+  "name": "TargetGoal",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %dynamicResult% = \"reached\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%dynamicResult%",
+              "variable": [
+                {
+                  "text": "%dynamicResult%",
+                  "code": [
+                    {
+                      "variable": "dynamicResult"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "reached"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/goal/dynamic/TargetGoal.goal",
+  "prPath": "/module/goal/dynamic/.build/targetgoal.pr",
+  "hash": "89adab180cf3af07b912435ce9a4c9c9e58bcd9b5433127d1aecd015a3ea0626"
+}

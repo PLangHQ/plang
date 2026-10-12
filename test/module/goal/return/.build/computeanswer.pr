@@ -1,0 +1,58 @@
+{
+  "name": "ComputeAnswer",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = 42",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 42
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/goal/return/ComputeAnswer.goal",
+  "prPath": "/module/goal/return/.build/computeanswer.pr",
+  "hash": "1703c2714d9584714e30e09b11f56e25ddc84fb84b71dbdf295fb1ca9b423293"
+}

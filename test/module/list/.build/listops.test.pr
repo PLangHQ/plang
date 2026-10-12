@@ -35,13 +35,6 @@
                 "name": "list"
               },
               "value": [10,20,30]
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "list"
             }
           ],
           "default": [
@@ -172,13 +165,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "number"
             }
           ],
           "default": [
@@ -190,6 +176,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 2 uses variable.set, which the decider was not sure of (0.88)"
         }
       ]
     },
@@ -320,6 +312,12 @@
             }
           ]
         }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 4 uses variable.set, which the decider was not sure of (0.85)"
+        }
       ]
     },
     {
@@ -441,6 +439,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 6 uses variable.set, which the decider was not sure of (0.86)"
         }
       ]
     },
@@ -585,6 +589,10 @@
         {
           "key": "Unsure",
           "message": "step 8 uses condition.compare, which the decider was not sure of (0.98)"
+        },
+        {
+          "key": "Unsure",
+          "message": "step 8 uses variable.set, which the decider was not sure of (0.68)"
         }
       ]
     },
@@ -703,13 +711,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "text"
             }
           ],
           "default": [
@@ -721,6 +722,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 10 uses variable.set, which the decider was not sure of (0.89)"
         }
       ]
     },
@@ -891,6 +898,12 @@
             }
           ]
         }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 13 uses variable.set, which the decider was not sure of (0.76)"
+        }
       ]
     },
     {
@@ -972,6 +985,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 14 uses variable.set, which the decider was not sure of (0.85)"
         }
       ]
     },
@@ -1102,6 +1121,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 16 uses variable.set, which the decider was not sure of (0.81)"
         }
       ]
     },
@@ -1290,6 +1315,12 @@
             }
           ]
         }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 19 uses variable.set, which the decider was not sure of (0.61)"
+        }
       ]
     },
     {
@@ -1413,6 +1444,12 @@
             }
           ]
         }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 21 uses variable.set, which the decider was not sure of (0.78)"
+        }
       ]
     },
     {
@@ -1497,13 +1534,6 @@
                 "name": "list"
               },
               "value": [3,1,2]
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "list"
             }
           ],
           "default": [
@@ -1552,7 +1582,7 @@
               "type": {
                 "name": "query"
               },
-              "value": {"order":" "}
+              "value": {"order":{}}
             }
           ],
           "default": [
@@ -1688,6 +1718,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 25 uses variable.set, which the decider was not sure of (0.81)"
         }
       ]
     },
@@ -1844,6 +1880,12 @@
             }
           ]
         }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 28 uses variable.set, which the decider was not sure of (0.81)"
+        }
       ]
     },
     {
@@ -1921,13 +1963,6 @@
                 "name": "list"
               },
               "value": [1,2,2,3,3,3]
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "list"
             }
           ],
           "default": [
@@ -2040,6 +2075,12 @@
             }
           ]
         }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 31 uses variable.set, which the decider was not sure of (0.83)"
+        }
       ]
     },
     {
@@ -2121,6 +2162,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 32 uses variable.set, which the decider was not sure of (0.76)"
         }
       ]
     },

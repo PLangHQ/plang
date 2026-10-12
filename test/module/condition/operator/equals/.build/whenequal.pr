@@ -1,0 +1,58 @@
+{
+  "name": "WhenEqual",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"equal\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "equal"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/operator/equals/WhenEqual.goal",
+  "prPath": "/module/condition/operator/equals/.build/whenequal.pr",
+  "hash": "bb4d603fd801e0fb53998d39be20aa32a2e48e31c1b351ce14b6e852ffc45259"
+}

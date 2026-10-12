@@ -1,0 +1,32 @@
+{
+  "name": "LogAfter",
+  "step": [
+    {
+      "index": 0,
+      "text": "write out \"After goal fired\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "After goal fired"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/event/basic/LogAfter.goal",
+  "prPath": "/module/on/event/basic/.build/logafter.pr",
+  "hash": "0d10aeca1af21c7bc868dad989371251325a6f38b099e43db2536dfd5e46403a"
+}

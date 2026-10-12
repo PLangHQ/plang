@@ -1,0 +1,136 @@
+{
+  "name": "TestIndirectGoalCycleThrows",
+  "comment": "Goals A → B → A (indirect cycle) trips ContainsGoal on the second Push of A. Wrap in on.error so the test goal still completes.",
+  "step": [
+    {
+      "index": 0,
+      "text": "call CycleA, on error set %cycleCaught% = true",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "/app/callstack/CycleA"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%cycleCaught%",
+                      "variable": [
+                        {
+                          "text": "%cycleCaught%",
+                          "code": [
+                            {
+                              "variable": "cycleCaught"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %cycleCaught% is true, \"indirect goal cycle A→B→A must trip ContainsGoal at the boundary crossing\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%cycleCaught%",
+              "variable": [
+                {
+                  "text": "%cycleCaught%",
+                  "code": [
+                    {
+                      "variable": "cycleCaught"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "indirect goal cycle A→B→A must trip ContainsGoal at the boundary crossing"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/IndirectGoalCycleThrows.test.goal",
+  "prPath": "/app/callstack/.build/indirectgoalcyclethrows.test.pr",
+  "hash": "fecc11ad9f9b5aa0a50eed6080c9dc9ad9bc2dd91ea8638b4fcffa00317065e6"
+}

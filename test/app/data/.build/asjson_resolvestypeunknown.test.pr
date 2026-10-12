@@ -103,7 +103,7 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/test/app/data/AsJson_ResolvesTypeUnknown.test.goal",
-  "prPath": "/test/app/data/.build/asjson_resolvestypeunknown.test.pr",
+  "path": "/app/data/AsJson_ResolvesTypeUnknown.test.goal",
+  "prPath": "/app/data/.build/asjson_resolvestypeunknown.test.pr",
   "hash": "7ea23c152e784800c61ccac8b8c4283cd667b88e7bf518a2e642f1617510b5c6"
 }

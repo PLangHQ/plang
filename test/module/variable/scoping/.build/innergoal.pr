@@ -1,0 +1,58 @@
+{
+  "name": "InnerGoal",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %x% = \"modified\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "modified"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/variable/scoping/InnerGoal.goal",
+  "prPath": "/module/variable/scoping/.build/innergoal.pr",
+  "hash": "b899bd4a484097be10618f18406007e94cfda3689337974581f5a3e8c4c4602c"
+}

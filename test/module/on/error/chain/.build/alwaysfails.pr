@@ -1,0 +1,48 @@
+{
+  "name": "AlwaysFails",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"always fails\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "always fails"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/chain/AlwaysFails.goal",
+  "prPath": "/module/on/error/chain/.build/alwaysfails.pr",
+  "hash": "bbc2b15bf0083af94ea2613d0ee9f6c349dd71b77545489c5019b5cae7b74987"
+}

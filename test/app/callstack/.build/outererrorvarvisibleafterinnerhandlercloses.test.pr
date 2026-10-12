@@ -1,0 +1,126 @@
+{
+  "name": "TestOuterErrorVarVisibleAfterInnerHandlerCloses",
+  "comment": "After the inner on.error scope closes, the outer recovery body's %!error% restores to the outer caught error via LIFO AsyncLocal scope. Reuses OuterRecoveryWithInnerThrow which sets %outerSeenAfterInner% AFTER its inner handler closes.",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"outer-boom\", on error call OuterRecoveryWithInnerThrow",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "outer-boom"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "/app/callstack/OuterRecoveryWithInnerThrow"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %outerSeenAfterInner% equals \"outer-boom\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "outer-boom"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%outerSeenAfterInner%",
+              "variable": [
+                {
+                  "text": "%outerSeenAfterInner%",
+                  "code": [
+                    {
+                      "variable": "outerSeenAfterInner"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/OuterErrorVarVisibleAfterInnerHandlerCloses.test.goal",
+  "prPath": "/app/callstack/.build/outererrorvarvisibleafterinnerhandlercloses.test.pr",
+  "hash": "8c97834b100132b42101b1d48dd3ad570c655a95ee102f660289510551a5f94c"
+}

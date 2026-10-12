@@ -1,0 +1,48 @@
+{
+  "name": "ThrowError",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw \"intentional error\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "intentional error"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/multilingual/ThrowError.goal",
+  "prPath": "/module/on/error/multilingual/.build/throwerror.pr",
+  "hash": "16ca8267b3cf9a3161f1af4895bcc6ab4f620602294fd62bdbe0e26fd6cd9f75"
+}

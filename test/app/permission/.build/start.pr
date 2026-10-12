@@ -1,0 +1,32 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "write out \"Permission test app\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "Permission test app"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/permission/Start.goal",
+  "prPath": "/app/permission/.build/start.pr",
+  "hash": "9401f425ffdfc4777b7e83556df70d4cad952a932824cdc5df8a0e0295785e3b"
+}

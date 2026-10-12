@@ -34,24 +34,6 @@
           "name": "error",
           "property": [
             {
-              "name": "Key",
-              "type": {
-                "name": "text",
-                "template": "plang"
-              },
-              "value": "%errorKey%",
-              "variable": [
-                {
-                  "text": "%errorKey%",
-                  "code": [
-                    {
-                      "variable": "errorKey"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
               "name": "Recovery",
               "type": {
                 "name": "list",
@@ -169,7 +151,7 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/test/app/channel/ChannelIndexMissThrows.test.goal",
-  "prPath": "/test/app/channel/.build/channelindexmissthrows.test.pr",
+  "path": "/app/channel/ChannelIndexMissThrows.test.goal",
+  "prPath": "/app/channel/.build/channelindexmissthrows.test.pr",
   "hash": "05b81ff15567b46f9545099a70a3dc6531dba25cb438e7c75c9e7394218c8dd8"
 }

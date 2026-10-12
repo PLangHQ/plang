@@ -1,0 +1,58 @@
+{
+  "name": "OutputGoal",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %userOutputCalled% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%userOutputCalled%",
+              "variable": [
+                {
+                  "text": "%userOutputCalled%",
+                  "code": [
+                    {
+                      "variable": "userOutputCalled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/set/contextactor/OutputGoal.goal",
+  "prPath": "/module/channel/set/contextactor/.build/outputgoal.pr",
+  "hash": "d4a17a90ceb2779e056c2decf1392deb0be9e29310aa3b997b386fa04ae0febe"
+}

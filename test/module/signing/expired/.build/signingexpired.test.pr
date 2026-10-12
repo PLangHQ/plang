@@ -46,7 +46,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 0 uses identity.archive, which the decider was not sure of (0.90)"
+          "message": "step 0 uses identity.archive, which the decider was not sure of (0.97)"
         }
       ]
     },
@@ -163,7 +163,7 @@
               "type": {
                 "name": "duration"
               },
-              "value": "50ms"
+              "value": "PT0.05S"
             }
           ]
         }
@@ -185,7 +185,7 @@
               "type": {
                 "name": "duration"
               },
-              "value": "60ms"
+              "value": "PT0.06S"
             }
           ]
         }
@@ -364,13 +364,13 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/test/module/signing/expired/SigningExpired.test.goal",
-      "prPath": "/test/module/signing/expired/.build/signingexpired.test.pr",
+      "path": "/module/signing/expired/SigningExpired.test.goal",
+      "prPath": "/module/signing/expired/.build/signingexpired.test.pr",
       "hash": "9a968dd66fba5f554f539a8992ea1b9c8f370b39562670ad7d5d9c2856cfb901"
     }
   ],
   "visibility": "Public",
-  "path": "/test/module/signing/expired/SigningExpired.test.goal",
-  "prPath": "/test/module/signing/expired/.build/signingexpired.test.pr",
+  "path": "/module/signing/expired/SigningExpired.test.goal",
+  "prPath": "/module/signing/expired/.build/signingexpired.test.pr",
   "hash": "ee3597b157ca30a3ea01cb10586d6e6bdd0632ef94182cb009d236055272489d"
 }

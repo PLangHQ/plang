@@ -84,7 +84,7 @@
               "type": {
                 "name": "query"
               },
-              "value": {"order":"name"}
+              "value": {"order":{}}
             }
           ],
           "default": [
@@ -175,6 +175,12 @@
               "value": false
             }
           ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 1 uses list.query, which the decider was not sure of (0.98)"
         }
       ]
     },

@@ -1,0 +1,58 @@
+{
+  "name": "WhenSmall",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"small\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "small"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/if/elsebranch/WhenSmall.goal",
+  "prPath": "/module/condition/if/elsebranch/.build/whensmall.pr",
+  "hash": "e5bd40573cfc6400c67da4f8c2a321dc7bd5a19a8558e9484e35c2db66535a85"
+}

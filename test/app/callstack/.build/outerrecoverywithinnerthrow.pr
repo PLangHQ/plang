@@ -1,0 +1,188 @@
+{
+  "name": "OuterRecoveryWithInnerThrow",
+  "comment": "Outer recovery body — throws again with its own on-error to capture the inner error message. Used by InnerErrorVarShadowsOuter and OuterErrorVarVisibleAfterInnerHandlerCloses.",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"inner-boom\", on error set %innerSeen% = %!error.Message%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "inner-boom"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%innerSeen%",
+                      "variable": [
+                        {
+                          "text": "%innerSeen%",
+                          "code": [
+                            {
+                              "variable": "innerSeen"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "item",
+                        "template": "plang"
+                      },
+                      "value": "%!error.Message%",
+                      "variable": [
+                        {
+                          "text": "%!error.Message%",
+                          "code": [
+                            {
+                              "variable": "!error"
+                            },
+                            {
+                              "property": "Message"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %outerSeenAfterInner% = %!error.Message%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%outerSeenAfterInner%",
+              "variable": [
+                {
+                  "text": "%outerSeenAfterInner%",
+                  "code": [
+                    {
+                      "variable": "outerSeenAfterInner"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!error.Message%",
+              "variable": [
+                {
+                  "text": "%!error.Message%",
+                  "code": [
+                    {
+                      "variable": "!error"
+                    },
+                    {
+                      "property": "Message"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/OuterRecoveryWithInnerThrow.goal",
+  "prPath": "/app/callstack/.build/outerrecoverywithinnerthrow.pr",
+  "hash": "fe383fc13ee82a85c2ccae65dda87687703386fa89853936b38103a789b9ae40"
+}

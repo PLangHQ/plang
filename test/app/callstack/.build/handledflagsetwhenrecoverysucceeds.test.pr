@@ -1,0 +1,210 @@
+{
+  "name": "TestHandledFlagSetWhenRecoverySucceeds",
+  "comment": "When on.error's recovery body completes successfully, the recovery suppresses the error, %!error% is restored to null after the scope closes, and downstream code continues.",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"boom\", on error set %recovered% = true",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "boom"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%recovered%",
+                      "variable": [
+                        {
+                          "text": "%recovered%",
+                          "code": [
+                            {
+                              "variable": "recovered"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    },
+                    {
+                      "name": "Type",
+                      "type": {
+                        "name": "type"
+                      },
+                      "value": "bool"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %recovered% is true, \"recovery body should have run\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%recovered%",
+              "variable": [
+                {
+                  "text": "%recovered%",
+                  "code": [
+                    {
+                      "variable": "recovered"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "recovery body should have run"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %!error% is null, \"error scope closed — %!error% restores to null\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!error%",
+              "variable": [
+                {
+                  "text": "%!error%",
+                  "code": [
+                    {
+                      "variable": "!error"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "error scope closed — %!error% restores to null",
+              "variable": [
+                {
+                  "text": "%!error%",
+                  "code": [
+                    {
+                      "variable": "!error"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/HandledFlagSetWhenRecoverySucceeds.test.goal",
+  "prPath": "/app/callstack/.build/handledflagsetwhenrecoverysucceeds.test.pr",
+  "hash": "03179583222e4e73b4a57828741a11947f81ff12c2ace6c3220b59eaccd732ac"
+}

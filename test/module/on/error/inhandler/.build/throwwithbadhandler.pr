@@ -1,0 +1,78 @@
+{
+  "name": "ThrowWithBadHandler",
+  "comment": "calls a goal that throws, handler also throws",
+  "step": [
+    {
+      "index": 0,
+      "text": "call ThrowOriginal, on error call BadHandler",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "ThrowOriginal"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Order",
+              "type": {
+                "name": "choice",
+                "kind": "errororder"
+              },
+              "value": "GoalFirst"
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "BadHandler"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/inhandler/ThrowWithBadHandler.goal",
+  "prPath": "/module/on/error/inhandler/.build/throwwithbadhandler.pr",
+  "hash": "867ff3a0816ccc5687d10ec53df67a7b723a4e73b3bf39591615ebf4a38e8386"
+}

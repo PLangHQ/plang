@@ -1,0 +1,80 @@
+{
+  "name": "OuterGoal",
+  "step": [
+    {
+      "index": 0,
+      "text": "call InnerGoal",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "InnerGoal"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %outerCompleted% = true",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%outerCompleted%",
+              "variable": [
+                {
+                  "text": "%outerCompleted%",
+                  "code": [
+                    {
+                      "variable": "outerCompleted"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/nested/OuterGoal.goal",
+  "prPath": "/module/on/error/nested/.build/outergoal.pr",
+  "hash": "e4cf31c1ea866dd540e3057071ae5cfa09fb5a2ed09e59418fe384f79c3cfb70"
+}

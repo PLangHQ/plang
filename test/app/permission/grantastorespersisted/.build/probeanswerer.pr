@@ -1,0 +1,82 @@
+{
+  "name": "ProbeAnswerer",
+  "comment": "Channel-input answerer. Saves the question to an IN-root file (no Authorize\nprompt would fire on this path) for inspection, then returns \"a\". Writing\nto //tmp here would recurse into Authorize → output.ask → stdin EOF.",
+  "step": [
+    {
+      "index": 0,
+      "text": "file.save %!data% to probe-question.txt",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "probe-question.txt"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "return \"a\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "return",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "a"
+            }
+          ],
+          "default": [
+            {
+              "name": "depth",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/permission/grantastorespersisted/ProbeAnswerer.goal",
+  "prPath": "/app/permission/grantastorespersisted/.build/probeanswerer.pr",
+  "hash": "0980ecfd04ca4af926caeead86541ccfa0344580588f0e065d694fb624d92e9f"
+}

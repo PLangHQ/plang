@@ -1,0 +1,104 @@
+{
+  "name": "ReadCached",
+  "step": [
+    {
+      "index": 0,
+      "text": "read file 'testdata.txt', write to %fileData%\ncache for 5 minutes",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "testdata.txt"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "cache",
+          "property": [
+            {
+              "name": "Duration",
+              "type": {
+                "name": "duration"
+              },
+              "value": "5m"
+            }
+          ],
+          "default": [
+            {
+              "name": "sliding",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%fileData%",
+              "variable": [
+                {
+                  "text": "%fileData%",
+                  "code": [
+                    {
+                      "variable": "fileData"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/cache/basic/ReadCached.goal",
+  "prPath": "/module/on/cache/basic/.build/readcached.pr",
+  "hash": "7b9beaef8427cdb7738b7e6a51f8df371c14ebbb6de5d12419ff14bc3c048e77"
+}

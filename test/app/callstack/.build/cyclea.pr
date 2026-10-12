@@ -1,0 +1,33 @@
+{
+  "name": "CycleA",
+  "comment": "Helper for IndirectGoalCycleThrows. Calls CycleB, which calls CycleA — second entry into A trips cycle detection at the goal boundary.",
+  "step": [
+    {
+      "index": 0,
+      "text": "call CycleB",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "CycleB"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/CycleA.goal",
+  "prPath": "/app/callstack/.build/cyclea.pr",
+  "hash": "95f6688be7ac4a80838d6f31b60613b669026cd296859f05938b255abc3c15fe"
+}

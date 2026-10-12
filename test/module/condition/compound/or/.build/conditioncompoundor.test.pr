@@ -235,7 +235,7 @@
       "warning": [
         {
           "key": "Unsure",
-          "message": "step 2 uses condition.elseif, which the decider was not sure of (0.87)"
+          "message": "step 2 uses condition.elseif, which the decider was not sure of (0.89)"
         }
       ]
     },
@@ -289,7 +289,7 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/test/module/condition/compound/or/ConditionCompoundOr.test.goal",
-  "prPath": "/test/module/condition/compound/or/.build/conditioncompoundor.test.pr",
+  "path": "/module/condition/compound/or/ConditionCompoundOr.test.goal",
+  "prPath": "/module/condition/compound/or/.build/conditioncompoundor.test.pr",
   "hash": "48bc75b151c66c2eb8fd293e0857886884a489be565d583c15d8296a41df5e08"
 }

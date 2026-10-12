@@ -165,14 +165,6 @@
           "name": "compare",
           "property": [
             {
-              "name": "Operator",
-              "type": {
-                "name": "choice",
-                "kind": "operator"
-              },
-              "value": ">"
-            },
-            {
               "name": "Left",
               "type": {
                 "name": "item",
@@ -189,6 +181,14 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": ">"
             },
             {
               "name": "Right",
@@ -359,13 +359,13 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/test/module/condition/compare/Failure_DictOrderNumber.test.goal",
-      "prPath": "/test/module/condition/compare/.build/failure_dictordernumber.test.pr",
+      "path": "/module/condition/compare/Failure_DictOrderNumber.test.goal",
+      "prPath": "/module/condition/compare/.build/failure_dictordernumber.test.pr",
       "hash": "ec0f5fc53113edce508631be46166dab0372210530613172a5ff489cca506038"
     }
   ],
   "visibility": "Public",
-  "path": "/test/module/condition/compare/Failure_DictOrderNumber.test.goal",
-  "prPath": "/test/module/condition/compare/.build/failure_dictordernumber.test.pr",
+  "path": "/module/condition/compare/Failure_DictOrderNumber.test.goal",
+  "prPath": "/module/condition/compare/.build/failure_dictordernumber.test.pr",
   "hash": "f6b767a5fedc9fa54934663f29b90a445298a16e081dffccd21316133e92a77f"
 }

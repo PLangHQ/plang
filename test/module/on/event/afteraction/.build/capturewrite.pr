@@ -1,0 +1,58 @@
+{
+  "name": "CaptureWrite",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %actionFired% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%actionFired%",
+              "variable": [
+                {
+                  "text": "%actionFired%",
+                  "code": [
+                    {
+                      "variable": "actionFired"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/event/afteraction/CaptureWrite.goal",
+  "prPath": "/module/on/event/afteraction/.build/capturewrite.pr",
+  "hash": "cab988dda6445f96a40acbb94ea545976b2902cffdcb9de8f676942b4acb27ca"
+}

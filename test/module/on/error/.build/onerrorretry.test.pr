@@ -36,13 +36,6 @@
                 "name": "number"
               },
               "value": 0
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "number"
             }
           ],
           "default": [
@@ -247,13 +240,6 @@
                       ]
                     }
                   ]
-                },
-                {
-                  "name": "Type",
-                  "type": {
-                    "name": "type"
-                  },
-                  "value": "number"
                 }
               ],
               "default": [

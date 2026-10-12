@@ -1,0 +1,149 @@
+{
+  "name": "TestDepthIncreasesOnGoalCall",
+  "comment": "Nested goal.call deepens the Caller chain. Capture depth before the call, have Inner stash its own depth into a context variable, then assert the inner depth is greater than the outer.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %outerDepth% = %!call.Current.Depth%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%outerDepth%",
+              "variable": [
+                {
+                  "text": "%outerDepth%",
+                  "code": [
+                    {
+                      "variable": "outerDepth"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!call.Current.Depth%",
+              "variable": [
+                {
+                  "text": "%!call.Current.Depth%",
+                  "code": [
+                    {
+                      "variable": "!call"
+                    },
+                    {
+                      "property": "Current"
+                    },
+                    {
+                      "property": "Depth"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "call Inner",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Inner"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %innerDepth% is greater than %outerDepth%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "greaterThan",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%innerDepth%",
+              "variable": [
+                {
+                  "text": "%innerDepth%",
+                  "code": [
+                    {
+                      "variable": "innerDepth"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%outerDepth%",
+              "variable": [
+                {
+                  "text": "%outerDepth%",
+                  "code": [
+                    {
+                      "variable": "outerDepth"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/DepthIncreasesOnGoalCall.test.goal",
+  "prPath": "/app/callstack/.build/depthincreasesongoalcall.test.pr",
+  "hash": "1a7d077e4e535f0146300d72e42c7501cb817e1ce98b66940c477c096e317cf5"
+}

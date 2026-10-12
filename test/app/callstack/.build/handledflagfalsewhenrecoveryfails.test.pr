@@ -1,0 +1,239 @@
+{
+  "name": "TestHandledFlagFalseWhenRecoveryFails",
+  "comment": "When the recovery body itself throws, on.error.Wrap leaves Handled=false on the inner Call and re-throws — the original error propagates (with the recovery error chained) and the outer handler catches it. Side-effect proof: %outerCaught% gets set by the outer handler, which only fires if the inner recovery failed and re-threw.",
+  "step": [
+    {
+      "index": 0,
+      "text": "call InnerWithFailingRecovery, on error set %outerCaught% = true",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "InnerWithFailingRecovery"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%outerCaught%",
+                      "variable": [
+                        {
+                          "text": "%outerCaught%",
+                          "code": [
+                            {
+                              "variable": "outerCaught"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %outerCaught% is true, \"outer handler should have caught — recovery body must have re-thrown\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%outerCaught%",
+              "variable": [
+                {
+                  "text": "%outerCaught%",
+                  "code": [
+                    {
+                      "variable": "outerCaught"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "outer handler should have caught — recovery body must have re-thrown"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "InnerWithFailingRecovery",
+      "comment": "Throws \"boom\", whose recovery body itself throws \"recovery-failed\". The outer-most on-error in the test goal is the only one that can catch.",
+      "step": [
+        {
+          "index": 0,
+          "text": "throw error \"boom\", on error throw error \"recovery-failed\"",
+          "line": {
+            "number": 8
+          },
+          "code": [
+            {
+              "module": "error",
+              "name": "throw",
+              "property": [
+                {
+                  "name": "Message",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "boom"
+                }
+              ],
+              "default": [
+                {
+                  "name": "status",
+                  "type": {
+                    "name": "status"
+                  },
+                  "value": 400
+                },
+                {
+                  "name": "key",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "error"
+                }
+              ]
+            },
+            {
+              "module": "on",
+              "name": "error",
+              "property": [
+                {
+                  "name": "Recovery",
+                  "type": {
+                    "name": "list",
+                    "kind": "action"
+                  },
+                  "value": [
+                    {
+                      "module": "error",
+                      "name": "throw",
+                      "property": [
+                        {
+                          "name": "Message",
+                          "type": {
+                            "name": "text"
+                          },
+                          "value": "recovery-failed"
+                        }
+                      ],
+                      "default": [
+                        {
+                          "name": "status",
+                          "type": {
+                            "name": "status"
+                          },
+                          "value": 400
+                        },
+                        {
+                          "name": "key",
+                          "type": {
+                            "name": "text"
+                          },
+                          "value": "error"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "ignore",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/app/callstack/HandledFlagFalseWhenRecoveryFails.test.goal",
+      "prPath": "/app/callstack/.build/handledflagfalsewhenrecoveryfails.test.pr",
+      "hash": "9ca38c54f39cdda2f51d3162f0fad5792a1e4dc37df29e3af7e81ae3fefae32f"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/app/callstack/HandledFlagFalseWhenRecoveryFails.test.goal",
+  "prPath": "/app/callstack/.build/handledflagfalsewhenrecoveryfails.test.pr",
+  "hash": "efe8e7c92d3dfa7886d9604bbf8e2a75cab98d678aaa42753538ea26488dd7f3"
+}

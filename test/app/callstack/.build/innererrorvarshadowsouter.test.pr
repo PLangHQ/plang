@@ -1,0 +1,126 @@
+{
+  "name": "TestInnerErrorVarShadowsOuter",
+  "comment": "Outer on.error catches \"outer-boom\", invokes a recovery goal that throws again with its own handler — inside the inner recovery, %!error.Message% is \"inner-boom\", not the outer one.",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"outer-boom\", on error call OuterRecoveryWithInnerThrow",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "outer-boom"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "/app/callstack/OuterRecoveryWithInnerThrow"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %innerSeen% equals \"inner-boom\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "inner-boom"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%innerSeen%",
+              "variable": [
+                {
+                  "text": "%innerSeen%",
+                  "code": [
+                    {
+                      "variable": "innerSeen"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/InnerErrorVarShadowsOuter.test.goal",
+  "prPath": "/app/callstack/.build/innererrorvarshadowsouter.test.pr",
+  "hash": "f9c8dba30aa42b6363916f55215d7492ddb664ae74c9a92a2cd61d4f9df99dc5"
+}

@@ -21,3 +21,9 @@ Properties: `{"List": "%users%", "Query": {"order": {"field": "age", "desc": tru
 
 Step text: `sort %people% by age`
 Properties: `{"List": "%people%", "Query": {"order": "age"}}` — the step names no destination; write only this query, the builder writes the sorted answer back to %people% for you.
+
+Step text: `sort %nums%`
+Properties: `{"List": "%nums%", "Query": {"order": {}}}` — no "by <field>": a list of plain values orders by the elements themselves, an empty order (no field), never `order: "%nums%"` or a blank field.
+
+Step text: `sort %nums%, highest first`
+Properties: `{"List": "%nums%", "Query": {"order": {"desc": true}}}` — order by the elements, descending.

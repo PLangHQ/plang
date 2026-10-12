@@ -218,7 +218,7 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/test/app/data/NavigationOnTypeUnknown_AsksForAsType.test.goal",
-  "prPath": "/test/app/data/.build/navigationontypeunknown_asksforastype.test.pr",
+  "path": "/app/data/NavigationOnTypeUnknown_AsksForAsType.test.goal",
+  "prPath": "/app/data/.build/navigationontypeunknown_asksforastype.test.pr",
   "hash": "b41763e253351703eeb162965127e21b63f2db663040336c5d8b99e1fd6586d4"
 }

@@ -1,0 +1,58 @@
+{
+  "name": "WhenNotEqual",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"not-equal\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "not-equal"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/operator/notequals/WhenNotEqual.goal",
+  "prPath": "/module/condition/operator/notequals/.build/whennotequal.pr",
+  "hash": "948ea13df07525bd1084030929011cacce36dc966a0ded7cf8071781b8eea42c"
+}

@@ -1,0 +1,791 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "call goal Stage1",
+      "line": {
+        "number": 4
+      },
+      "comment": "task: a call in parallel answers a task; a later step waits for it or cancels it. Each stage is a goal; each\nbehaviour a comment with the test that proves it. The coder rewrites each test in plang that compiles.",
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "call goal Stage2",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "call goal Stage3",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "call goal Stage4",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage4"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Stage1",
+      "step": [
+        {
+          "index": 0,
+          "text": "call goal /module/goal/call/ParallelAnswersATask",
+          "line": {
+            "number": 12
+          },
+          "comment": "The task and the call.\nA call in parallel answers a task, and the next step runs before the called goal ends",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/goal/call/ParallelAnswersATask"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "call goal /module/goal/call/PlainCallWaits",
+          "line": {
+            "number": 14
+          },
+          "comment": "A plain call still waits and answers the goal's result (Parallel is false by default)",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/goal/call/PlainCallWaits"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "call goal /module/goal/call/TaskListedWhileRunning",
+          "line": {
+            "number": 16
+          },
+          "comment": "A running task is in %!app.actor.current.task.list%; once it ends it isn't, and %task% still holds it",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/goal/call/TaskListedWhileRunning"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "call goal /module/goal/call/UnwatchedFailureReported",
+          "line": {
+            "number": 18
+          },
+          "comment": "A task that fails with nobody waiting is reported on its actor's error channel",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/goal/call/UnwatchedFailureReported"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "text": "call goal /module/goal/call/ToolLoopRunsTasks",
+          "line": {
+            "number": 20
+          },
+          "comment": "The llm tool loop runs two Parallel tools as tasks and waits for both (C# pin in the tool-call harness)",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/goal/call/ToolLoopRunsTasks"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/start.goal",
+      "prPath": "/plan/task/.build/start.pr",
+      "hash": "78c48796a6eb33b8cb6090cdd7e6103ceeebdf3e52245104c1cab18566aea5a8"
+    },
+    {
+      "name": "Stage2",
+      "step": [
+        {
+          "index": 0,
+          "text": "call goal /module/task/wait/WaitAnswersResult",
+          "line": {
+            "number": 25
+          },
+          "comment": "The task module.\nwait for %task% answers the goal's result",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/task/wait/WaitAnswersResult"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "call goal /module/task/wait/WaitForSeveral",
+          "line": {
+            "number": 27
+          },
+          "comment": "wait for %a%, %b% answers a list of their results, in order",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/task/wait/WaitForSeveral"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "call goal /module/task/wait/WaitForList",
+          "line": {
+            "number": 29
+          },
+          "comment": "wait for %tasks% (a list of tasks) answers their results, in order",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/task/wait/WaitForList"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "call goal /module/task/wait/FailedTaskFailsWait",
+          "line": {
+            "number": 31
+          },
+          "comment": "A failed task fails the wait step; on error handles it",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/task/wait/FailedTaskFailsWait"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "text": "call goal /module/task/wait/LateWaitGetsFailure",
+          "line": {
+            "number": 33
+          },
+          "comment": "A failure reported while nobody waited is still the answer of a later wait",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/task/wait/LateWaitGetsFailure"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "text": "call goal /module/task/cancel/CancelStops",
+          "line": {
+            "number": 35
+          },
+          "comment": "cancel %task% stops it: a write its goal makes after a sleep never happens",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/task/cancel/CancelStops"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "text": "call goal /module/task/cancel/CancelAnswer",
+          "line": {
+            "number": 37
+          },
+          "comment": "cancel %task%, write to %result%: the result when the task had already ended, null when the cancel stopped it",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/task/cancel/CancelAnswer"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "text": "call goal /module/task/cancel/WaitOnCancelledFails",
+          "line": {
+            "number": 39
+          },
+          "comment": "wait for a cancelled task fails as Cancelled",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/task/cancel/WaitOnCancelledFails"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "text": "call goal /module/task/list/WriteTwiceKeepsBoth",
+          "line": {
+            "number": 41
+          },
+          "comment": "Two calls in parallel written to one %task%: %task.list% holds both, in the order written; %task% is the second",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/task/list/WriteTwiceKeepsBoth"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 9,
+          "text": "call goal /module/task/list/WaitListVersusCurrent",
+          "line": {
+            "number": 43
+          },
+          "comment": "wait for %task.list% answers both results in order; wait for %task% answers only the current one's",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/task/list/WaitListVersusCurrent"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 10,
+          "text": "call goal /module/task/list/OtherTypesReplace",
+          "line": {
+            "number": 45
+          },
+          "comment": "A text written over a text still replaces it (set's meaning is unchanged for every other type)",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/task/list/OtherTypesReplace"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/start.goal",
+      "prPath": "/plan/task/.build/start.pr",
+      "hash": "8f2828371e0cad1046672b24d00792ca9f0b0b38d6aa1340931c678113393338"
+    },
+    {
+      "name": "Stage3",
+      "step": [
+        {
+          "index": 0,
+          "text": "call goal /module/loop/foreach/ParallelAnswersATask",
+          "line": {
+            "number": 50
+          },
+          "comment": "loop.foreach in parallel.\nforeach in parallel answers a task at once; the next step runs before the items end",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/loop/foreach/ParallelAnswersATask"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "call goal /module/loop/foreach/ItemsRunSideBySide",
+          "line": {
+            "number": 52
+          },
+          "comment": "The items run side by side: each item's goal waits on a signal the others set, so a sequential loop would never end",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/loop/foreach/ItemsRunSideBySide"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "call goal /module/loop/foreach/WaitAnswersCountComplete",
+          "line": {
+            "number": 54
+          },
+          "comment": "wait for the loop's task answers {count, complete}",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/loop/foreach/WaitAnswersCountComplete"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "call goal /module/loop/foreach/PlainForeachBlocks",
+          "line": {
+            "number": 56
+          },
+          "comment": "A plain foreach still runs its items one after another and blocks the step",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/loop/foreach/PlainForeachBlocks"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "text": "call goal /module/loop/foreach/CpuCapsItemsAtOnce",
+          "line": {
+            "number": 58
+          },
+          "comment": "parallel(cpu:2) runs at most two items at once: a counter of items running never passes 2",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/loop/foreach/CpuCapsItemsAtOnce"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "text": "call goal /module/loop/foreach/DefaultCpu",
+          "line": {
+            "number": 60
+          },
+          "comment": "in parallel with no cpu runs at most the machine's cores × 0.8 (at least 1)",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/loop/foreach/DefaultCpu"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/start.goal",
+      "prPath": "/plan/task/.build/start.pr",
+      "hash": "10ab84f3a28c2103e37e3b84cc8d00279164aeaef21fe7822013efbb8f1e3d3d"
+    },
+    {
+      "name": "Stage4",
+      "step": [
+        {
+          "index": 0,
+          "text": "call goal /module/loop/foreach/build/InParallel",
+          "line": {
+            "number": 65
+          },
+          "comment": "The builder (built goldens, measured fresh).\n\"foreach %x% in parallel, call Y, write to %task%\" builds loop.foreach with Parallel={}; \"in parallel(cpu:2)\" builds Parallel={cpu: 2}",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/loop/foreach/build/InParallel"
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 0 uses goal.call, which the decider was not sure of (0.89)"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "call goal /module/goal/call/build/InParallel",
+          "line": {
+            "number": 67
+          },
+          "comment": "\"call X in parallel, write to %t%\" builds Parallel=true",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/goal/call/build/InParallel"
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 1 uses goal.call, which the decider was not sure of (0.76)"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "call goal /module/goal/call/build/DontWait",
+          "line": {
+            "number": 69
+          },
+          "comment": "\"call X, don't wait\" and \"call X in the background\" build Parallel=true",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/goal/call/build/DontWait"
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 2 uses goal.call, which the decider was not sure of (0.79)"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "call goal /module/goal/call/build/Plain",
+          "line": {
+            "number": 71
+          },
+          "comment": "\"call X\" builds no Parallel",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/goal/call/build/Plain"
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 3 uses goal.call, which the decider was not sure of (0.72)"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "text": "call goal /module/task/build/WaitNotSleep",
+          "line": {
+            "number": 73
+          },
+          "comment": "\"wait for %t%, write to %r%\" builds task.wait, and \"wait 2 seconds\" still builds timer.sleep",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/task/build/WaitNotSleep"
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 4 uses goal.call, which the decider was not sure of (0.68)"
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/task/start.goal",
+      "prPath": "/plan/task/.build/start.pr",
+      "hash": "6330ee8cd1b05ad69e3b1220ee957ef46e821c6d2138db110722c167a9e89ca7"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/task/start.goal",
+  "prPath": "/plan/task/.build/start.pr",
+  "hash": "b8aa7124fc3ea047e95d31f7e25facbed598cf90058394aa536d3789fe9d88d8"
+}

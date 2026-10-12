@@ -1,0 +1,58 @@
+{
+  "name": "WhenLTE",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"lte\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "lte"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/operator/lte/WhenLTE.goal",
+  "prPath": "/module/condition/operator/lte/.build/whenlte.pr",
+  "hash": "559497abfb5a6b19fce5ff1798d87e6655379609a6558063d5addb1dd064a2d1"
+}

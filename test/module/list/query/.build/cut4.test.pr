@@ -163,13 +163,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "list"
             }
           ],
           "default": [

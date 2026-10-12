@@ -1,0 +1,58 @@
+{
+  "name": "WhenLess",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"less\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "less"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/operator/lessthan/WhenLess.goal",
+  "prPath": "/module/condition/operator/lessthan/.build/whenless.pr",
+  "hash": "73c48024f7a11ad71df604c899bd231e1cda1db4eb18dbe65ad59e4caabb1d97"
+}

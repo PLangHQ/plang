@@ -19,6 +19,13 @@
                 "name": "text"
               },
               "value": "hi"
+            },
+            {
+              "name": "channel",
+              "type": {
+                "name": "text"
+              },
+              "value": "dbg"
             }
           ]
         },

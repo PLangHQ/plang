@@ -1,0 +1,452 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "call goal Stage1",
+      "line": {
+        "number": 4
+      },
+      "comment": "list-query: one step, one query. Each stage is a goal; each behaviour a comment with the test that proves it.\nThe plang here says what is wanted; the coder rewrites each test in plang that compiles.",
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "call goal Stage2",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "call goal Stage3",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage3"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Stage1",
+      "step": [
+        {
+          "index": 0,
+          "text": "call goal /module/list/query/WhereAnd",
+          "line": {
+            "number": 11
+          },
+          "comment": "The type and the action: where with and/or, group, distinct, order; SQL order by default.\nA where with two conditions joined by and keeps only what passes both",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/WhereAnd"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "call goal /module/list/query/WhereOr",
+          "line": {
+            "number": 13
+          },
+          "comment": "A where with or keeps what passes either",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/WhereOr"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "call goal /module/list/query/WhereVariable",
+          "line": {
+            "number": 15
+          },
+          "comment": "A where value given as a %variable% is read when the step runs",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/WhereVariable"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "call goal /module/list/query/OrderBy",
+          "line": {
+            "number": 17
+          },
+          "comment": "Order by a field, ascending and descending",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/OrderBy"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "text": "call goal /module/list/query/Distinct",
+          "line": {
+            "number": 19
+          },
+          "comment": "Distinct drops repeated elements",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/Distinct"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "text": "call goal /module/list/query/GroupThenOrder",
+          "line": {
+            "number": 21
+          },
+          "comment": "Group by a field gives {key, items}; order by after it orders each group's items",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/GroupThenOrder"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "text": "call goal /module/list/query/SqlOrder",
+          "line": {
+            "number": 23
+          },
+          "comment": "The parts run in SQL order whatever order the step says them (\"order by age, where age > 20\" filters first)",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/SqlOrder"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "text": "call goal /module/list/query/WrittenOrder",
+          "line": {
+            "number": 25
+          },
+          "comment": "With %!list.query.setting.execution% = written, the parts run in the order the step says them",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/WrittenOrder"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "text": "call goal /module/list/query/InputUnchanged",
+          "line": {
+            "number": 27
+          },
+          "comment": "The input list is unchanged: the query answers a new list",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/InputUnchanged"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 9,
+          "text": "call goal /module/list/query/UnknownField",
+          "line": {
+            "number": 29
+          },
+          "comment": "A field the elements don't have is an error naming the part (\"where: no field 'agee'\")",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/UnknownField"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/list-query/start.goal",
+      "prPath": "/plan/list-query/.build/start.pr",
+      "hash": "728ab15cb8a358d4eacbb2ca713b7eedbcf59c3d461104a1a3e9f7fa72b601fc"
+    },
+    {
+      "name": "Stage2",
+      "step": [
+        {
+          "index": 0,
+          "text": "call goal /module/list/query/build/ManyPart",
+          "line": {
+            "number": 34
+          },
+          "comment": "The builder picks list.query from the words (built goldens under build/, pinned in C# QueryBuildPinTests).\nA multi-part sentence (where-and, group by city, distinct, order by age) builds to one list.query with those parts",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/build/ManyPart"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "call goal /module/list/query/build/OnePart",
+          "line": {
+            "number": 36
+          },
+          "comment": "A one-part where sentence builds to a one-part query",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/build/OnePart"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "call goal /module/list/query/build/HighestFirst",
+          "line": {
+            "number": 38
+          },
+          "comment": "\"highest first\" builds order with desc (plain order is ascending) — closes #18",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/build/HighestFirst"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/list-query/start.goal",
+      "prPath": "/plan/list-query/.build/start.pr",
+      "hash": "3baaaec01eb56c810197683cd446145600a5220c7399f8e1ec0f4731cc09e3a0"
+    },
+    {
+      "name": "Stage3",
+      "step": [
+        {
+          "index": 0,
+          "text": "call goal /module/list/query/PartialFieldFilters",
+          "line": {
+            "number": 46
+          },
+          "comment": "The four are gone; their behaviours hold through list.query (where/sort/group/unique via the doors that stay).\nThe old where tests, rewritten as queries: partial-field filters (optional data + \"is empty\"), and a where\ncompared to an unset %variable% is an error. (A misspelled field is already proven by UnknownField.)",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/PartialFieldFilters"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "call goal /module/list/query/WhereUnsetVariable",
+          "line": {
+            "number": 47
+          },
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/module/list/query/WhereUnsetVariable"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/list-query/start.goal",
+      "prPath": "/plan/list-query/.build/start.pr",
+      "hash": "49aff010f8080814b658e8ba3e45f0375282c953c56ad23305a77a045966d60a"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/list-query/start.goal",
+  "prPath": "/plan/list-query/.build/start.pr",
+  "hash": "2a0d289da304562935cb6976206ad2303f5eebe1960af6cad379cd60a6f542af"
+}

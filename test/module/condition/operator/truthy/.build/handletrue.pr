@@ -1,0 +1,58 @@
+{
+  "name": "HandleTrue",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"true-branch\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "true-branch"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/operator/truthy/HandleTrue.goal",
+  "prPath": "/module/condition/operator/truthy/.build/handletrue.pr",
+  "hash": "bd971f67348494b8678aee892a8e28adc7770ff4ae53932a94aa6df7b7e62937"
+}

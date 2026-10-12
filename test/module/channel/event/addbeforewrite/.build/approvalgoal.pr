@@ -1,0 +1,58 @@
+{
+  "name": "ApprovalGoal",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %approvalCalled% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%approvalCalled%",
+              "variable": [
+                {
+                  "text": "%approvalCalled%",
+                  "code": [
+                    {
+                      "variable": "approvalCalled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/event/addbeforewrite/ApprovalGoal.goal",
+  "prPath": "/module/channel/event/addbeforewrite/.build/approvalgoal.pr",
+  "hash": "d9fbb156e3aead4196942efb7edab8402e0809d52193eafe3f008b7d74add2c3"
+}

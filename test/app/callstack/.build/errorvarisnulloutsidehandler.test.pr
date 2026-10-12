@@ -1,0 +1,103 @@
+{
+  "name": "TestErrorVarIsNullOutsideHandler",
+  "comment": "Outside any on.error scope, %!error% resolves to null (no leakage from prior recovery scopes that have already closed).",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %check% = %!error%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%check%",
+              "variable": [
+                {
+                  "text": "%check%",
+                  "code": [
+                    {
+                      "variable": "check"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!error%",
+              "variable": [
+                {
+                  "text": "%!error%",
+                  "code": [
+                    {
+                      "variable": "!error"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %check% is null",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%check%",
+              "variable": [
+                {
+                  "text": "%check%",
+                  "code": [
+                    {
+                      "variable": "check"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/ErrorVarIsNullOutsideHandler.test.goal",
+  "prPath": "/app/callstack/.build/errorvarisnulloutsidehandler.test.pr",
+  "hash": "caf1e59df65a23b441e2e1accf10e71ceb21e4831baaadf7b9c19be44729b94a"
+}

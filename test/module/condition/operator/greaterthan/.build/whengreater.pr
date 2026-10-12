@@ -1,0 +1,58 @@
+{
+  "name": "WhenGreater",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"greater\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "greater"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/operator/greaterthan/WhenGreater.goal",
+  "prPath": "/module/condition/operator/greaterthan/.build/whengreater.pr",
+  "hash": "2647e6d79039933667a176fc8d319b23afc0679f35fbc767be4b3f98d4330388"
+}

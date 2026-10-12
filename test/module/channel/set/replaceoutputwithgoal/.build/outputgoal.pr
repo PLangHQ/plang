@@ -1,0 +1,58 @@
+{
+  "name": "OutputGoal",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %outputGoalCalled% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%outputGoalCalled%",
+              "variable": [
+                {
+                  "text": "%outputGoalCalled%",
+                  "code": [
+                    {
+                      "variable": "outputGoalCalled"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/set/replaceoutputwithgoal/OutputGoal.goal",
+  "prPath": "/module/channel/set/replaceoutputwithgoal/.build/outputgoal.pr",
+  "hash": "39b8db132e8e7523337546b42dd4ec7f4d9775ffbdfc5c0a9d2fa66b32b639bf"
+}

@@ -1,0 +1,1036 @@
+{
+  "name": "Start",
+  "comment": "app-systems: every %!app.X% is the type X, and the plang path, the C# path and the file path say the same thing.\nDone: 1–8h and 9a (done.list beside this goal). This goal is the plan's index and its validation:\neach stage is a sub-goal, each comment a behaviour we want, and the step under it runs the test that proves it.\nTests live under this plan's folder at the path of what they test. Checks that can't be a test are in checks.md.\nBuilt only when Ingi says so.",
+  "step": [
+    {
+      "index": 0,
+      "text": "call Stage8h",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage8h"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "call Stage9",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage9"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "call Stage10a",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage10a"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "call Stage10b",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage10b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "call Stage10c",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage10c"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "call Stage10d",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage10d"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "call Stage10e",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage10e"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "call Stage11a",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage11a"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "call Stage11b",
+      "line": {
+        "number": 15
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage11b"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "text": "call Stage11c",
+      "line": {
+        "number": 16
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage11c"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "text": "call Stage12a",
+      "line": {
+        "number": 17
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage12a"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "text": "call Stage12b",
+      "line": {
+        "number": 18
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Stage12b"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "Stage8h",
+      "step": [
+        {
+          "index": 0,
+          "text": "call /plan/app-systems/module/on/error/RetryOnceMeansOneRetry",
+          "line": {
+            "number": 23
+          },
+          "comment": "the builder builds itself, and plain words compile to what they mean (plus checks.md: the rebuild, the eval)\n\"retry once\" is one retry",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/module/on/error/RetryOnceMeansOneRetry"
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 0 uses goal.call, which the decider was not sure of (0.85)"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "call /plan/app-systems/module/condition/if/IfReturnReturns",
+          "line": {
+            "number": 25
+          },
+          "comment": "\"if %done%, return %x%\" returns from inside the if",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/module/condition/if/IfReturnReturns"
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 1 uses goal.call, which the decider was not sure of (0.67)"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "call /plan/app-systems/module/ui/render/RenderTakesNamedArguments",
+          "line": {
+            "number": 27
+          },
+          "comment": "render takes its arguments by name",
+          "code": [
+            {
+              "module": "ui",
+              "name": "render",
+              "property": [
+                {
+                  "name": "Template",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "/plan/app-systems/module/ui/render/RenderTakesNamedArguments"
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 2 uses ui.render, which the decider was not sure of (0.93)"
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/start.goal",
+      "prPath": "/plan/app-systems/.build/start.pr",
+      "hash": "013dab4402d78a356b7318ab886f3e09e3863434c94a483d8f03b42bb741632c"
+    },
+    {
+      "name": "Stage9",
+      "step": [
+        {
+          "index": 0,
+          "text": "call /plan/app-systems/app/type/file/CreateFiresOnBirth",
+          "line": {
+            "number": 32
+          },
+          "comment": "every value is born through its type, so a program can hook any value's birth (plus checks.md: the module pass)\n\"after file create\" fires when a file value is born",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/app/type/file/CreateFiresOnBirth"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "call /plan/app-systems/app/type/path/AsPathIsABirth",
+          "line": {
+            "number": 34
+          },
+          "comment": "converting a value to another type is a birth: \"set %p% as path\" fires \"after path create\"",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/app/type/path/AsPathIsABirth"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "call /plan/app-systems/module/loop/foreach/LoopItemEndsWithTheLoop",
+          "line": {
+            "number": 36
+          },
+          "comment": "a loop's item is the loop's own: it doesn't outlive the loop",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/module/loop/foreach/LoopItemEndsWithTheLoop"
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 2 uses goal.call, which the decider was not sure of (0.61)"
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "text": "call /plan/app-systems/module/loop/foreach/BodyWritesReachTheCaller",
+          "line": {
+            "number": 38
+          },
+          "comment": "the loop body's other writes reach the caller: a running total survives the loop",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/module/loop/foreach/BodyWritesReachTheCaller"
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 3 uses goal.call, which the decider was not sure of (0.77)"
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "text": "call /plan/app-systems/module/goal/call/ParameterEndsWithTheCall",
+          "line": {
+            "number": 40
+          },
+          "comment": "a call's parameter doesn't outlive the call; the caller's variable of that name is its own again",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/module/goal/call/ParameterEndsWithTheCall"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "text": "call /plan/app-systems/module/channel/set/CallbackWriteReachesTheCaller",
+          "line": {
+            "number": 42
+          },
+          "comment": "a callback's write reaches the caller; its %message% ends with it",
+          "code": [
+            {
+              "module": "channel",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "text"
+                  },
+                  "value": "CallbackWriteReachesTheCaller"
+                },
+                {
+                  "name": "Goal",
+                  "type": {
+                    "name": "action"
+                  },
+                  "value": {
+                    "module": "goal",
+                    "name": "call",
+                    "property": [
+                      {
+                        "name": "Name",
+                        "type": {
+                          "name": "goal"
+                        },
+                        "value": "/plan/app-systems/module/channel/set/CallbackWriteReachesTheCaller"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/start.goal",
+      "prPath": "/plan/app-systems/.build/start.pr",
+      "hash": "28248c860dcf2ed62b5860c09d8a57502e589af7843b4211515b8569dfbda75d"
+    },
+    {
+      "name": "Stage10a",
+      "step": [
+        {
+          "index": 0,
+          "text": "call /plan/app-systems/app/type/AppListsItsTypes",
+          "line": {
+            "number": 47
+          },
+          "comment": "registration: %!app.type.list% lists every type a program can use\nthe app lists its types",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/app/type/AppListsItsTypes"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "call /plan/app-systems/app/type/PluginTypeJoinsTheApp",
+          "line": {
+            "number": 49
+          },
+          "comment": "a plugin's type joins the app",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/app/type/PluginTypeJoinsTheApp"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "call /plan/app-systems/app/type/OneNameOneType",
+          "line": {
+            "number": 51
+          },
+          "comment": "one name, one type: a plugin can't take a built-in's name (a clash fails loudly)",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/app/type/OneNameOneType"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/start.goal",
+      "prPath": "/plan/app-systems/.build/start.pr",
+      "hash": "1b3183969045380513a4d1621ec332514c186d3cd08007d5cbb8154b3e4f6f24"
+    },
+    {
+      "name": "Stage10b",
+      "step": [
+        {
+          "index": 0,
+          "text": "call /plan/app-systems/app/type/list/TypedListHoldsItsType",
+          "line": {
+            "number": 56
+          },
+          "comment": "typed lists: list<text> is made by the type itself, a kind carries its element\na typed list holds its type",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/app/type/list/TypedListHoldsItsType"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/start.goal",
+      "prPath": "/plan/app-systems/.build/start.pr",
+      "hash": "e9cd7b1cc2c0a2acfdf981ce824a22daf89304d366165f058f41311988127d26"
+    },
+    {
+      "name": "Stage10c",
+      "step": [
+        {
+          "index": 0,
+          "text": "call /plan/app-systems/app/AppFactsArePlangValues",
+          "line": {
+            "number": 62
+          },
+          "comment": "the app's facts are plang values\n%!app.created% is a datetime, uptime a duration",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/app/AppFactsArePlangValues"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "call /plan/app-systems/app/setting/AppNameIsItsSetting",
+          "line": {
+            "number": 64
+          },
+          "comment": "id, name and environment are the app's settings",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/app/setting/AppNameIsItsSetting"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/start.goal",
+      "prPath": "/plan/app-systems/.build/start.pr",
+      "hash": "675df2f993523a1a43af260fed0e368c6638a459a297e409321a1bf41466645f"
+    },
+    {
+      "name": "Stage10d",
+      "step": [],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/start.goal",
+      "prPath": "/plan/app-systems/.build/start.pr"
+    },
+    {
+      "name": "Stage10e",
+      "step": [
+        {
+          "index": 0,
+          "text": "call /plan/app-systems/app/variable/NowIsReadFresh",
+          "line": {
+            "number": 76
+          },
+          "comment": "one form of computed value: %Now% and %!event% are computed on each read, one way\ntwo reads of %Now% differ, and a copy of it holds still",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/app/variable/NowIsReadFresh"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/start.goal",
+      "prPath": "/plan/app-systems/.build/start.pr",
+      "hash": "ff8cd69819b8d3321724a0dcf8292a441c4b202c0d53e9e42d1ccaf06fcbe313"
+    },
+    {
+      "name": "Stage11a",
+      "step": [
+        {
+          "index": 0,
+          "text": "call /plan/app-systems/app/actor/OneDoorToAnActor",
+          "line": {
+            "number": 80
+          },
+          "comment": "the actor is reached one way: %!app.actor.system% and %!app.actor.user%, no second app.System/app.User",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/app/actor/OneDoorToAnActor"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/start.goal",
+      "prPath": "/plan/app-systems/.build/start.pr",
+      "hash": "a8b3ca8b8cce85e133ba5144ec73442266c58e67ab2aaeaea297b293ca96e381"
+    },
+    {
+      "name": "Stage11b",
+      "step": [],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/start.goal",
+      "prPath": "/plan/app-systems/.build/start.pr"
+    },
+    {
+      "name": "Stage11c",
+      "step": [],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/start.goal",
+      "prPath": "/plan/app-systems/.build/start.pr"
+    },
+    {
+      "name": "Stage12a",
+      "step": [
+        {
+          "index": 0,
+          "text": "call /plan/app-systems/app/type/item/SetChildOnAValueIsAnError",
+          "line": {
+            "number": 93
+          },
+          "comment": "the exception pass: a programmer's mistake reaches the result as an error with its own key, never a crash (plus the C# pins: KeepsItsKeyTests)\na value that takes no child is an error result",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/app/type/item/SetChildOnAValueIsAnError"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "call /plan/app-systems/app/setting/UnknownSettingIsAnError",
+          "line": {
+            "number": 95
+          },
+          "comment": "an unknown setting is an error result",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/app/setting/UnknownSettingIsAnError"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/start.goal",
+      "prPath": "/plan/app-systems/.build/start.pr",
+      "hash": "081423ebc9925185b4ca4c08495e26d06265cb6581a5d63c818e8cad3d392839"
+    },
+    {
+      "name": "Stage12b",
+      "step": [],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/start.goal",
+      "prPath": "/plan/app-systems/.build/start.pr"
+    },
+    {
+      "name": "Stage8g",
+      "comment": "Done, kept as validation that the modifiers-as-clauses logic works",
+      "step": [
+        {
+          "index": 0,
+          "text": "call /plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline",
+          "line": {
+            "number": 104
+          },
+          "comment": "each retry of an action gets a fresh deadline",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline"
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 0 uses goal.call, which the decider was not sure of (0.84)"
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "call /plan/app-systems/module/on/cache/RecoveryIsNeverCached",
+          "line": {
+            "number": 106
+          },
+          "comment": "a recovery's result is never served from the cache",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/module/on/cache/RecoveryIsNeverCached"
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 1 uses goal.call, which the decider was not sure of (0.91)"
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "text": "call /plan/app-systems/module/on/DataIsLeftAloneAfterAClause",
+          "line": {
+            "number": 108
+          },
+          "comment": "%!data% after an action with a clause is the action's result",
+          "code": [
+            {
+              "module": "goal",
+              "name": "call",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "goal"
+                  },
+                  "value": "/plan/app-systems/module/on/DataIsLeftAloneAfterAClause"
+                }
+              ]
+            },
+            {
+              "module": "on",
+              "name": "event",
+              "property": [
+                {
+                  "name": "Event",
+                  "type": {
+                    "name": "event",
+                    "template": "plang"
+                  },
+                  "value": "%!event%",
+                  "variable": [
+                    {
+                      "text": "%!event%",
+                      "code": [
+                        {
+                          "variable": "!event"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "When",
+                  "type": {
+                    "name": "choice",
+                    "kind": "when"
+                  },
+                  "value": "after"
+                },
+                {
+                  "name": "Action",
+                  "type": {
+                    "name": "action",
+                    "template": "plang"
+                  },
+                  "value": "%!data%",
+                  "variable": [
+                    {
+                      "text": "%!data%",
+                      "code": [
+                        {
+                          "variable": "!data"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "default": [
+                {
+                  "name": "scope",
+                  "type": {
+                    "name": "choice",
+                    "kind": "scope"
+                  },
+                  "value": "actor"
+                }
+              ]
+            }
+          ],
+          "warning": [
+            {
+              "key": "Unsure",
+              "message": "step 2 uses goal.call, which the decider was not sure of (0.88)"
+            },
+            {
+              "key": "Unsure",
+              "message": "step 2 uses on.event, which the decider was not sure of (0.51)"
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/plan/app-systems/start.goal",
+      "prPath": "/plan/app-systems/.build/start.pr",
+      "hash": "8d87e9778c9abc3c9e26165f73b7d0cdf2b794826d27af84fd7eabfd9c20cf94"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/plan/app-systems/start.goal",
+  "prPath": "/plan/app-systems/.build/start.pr",
+  "hash": "037a0008698cdc1e25052869c96ab7551cdb1dfcd0cfecfe6eab23d6d8f9fc09"
+}

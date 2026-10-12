@@ -464,10 +464,17 @@
       "code": [
         {
           "module": "assert",
-          "name": "isTrue",
+          "name": "equals",
           "property": [
             {
-              "name": "Value",
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "dict"
+            },
+            {
+              "name": "Actual",
               "type": {
                 "name": "item",
                 "template": "plang"
@@ -620,7 +627,7 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/test/app/data/Cut2.test.goal",
-  "prPath": "/test/app/data/.build/cut2.test.pr",
+  "path": "/app/data/Cut2.test.goal",
+  "prPath": "/app/data/.build/cut2.test.pr",
   "hash": "8b6b6eeb8cb6dce32ffa313a549de8a3f5d531956fc6541bd17d834c1f2723aa"
 }

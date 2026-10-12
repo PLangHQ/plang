@@ -412,7 +412,7 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/test/app/type/bool/IfBoolTruthy.test.goal",
-  "prPath": "/test/app/type/bool/.build/ifbooltruthy.test.pr",
+  "path": "/app/type/bool/IfBoolTruthy.test.goal",
+  "prPath": "/app/type/bool/.build/ifbooltruthy.test.pr",
   "hash": "6d2c63ae1a211ba059618f5449a41eafba1421310c8f875b91f01006b8ab0065"
 }

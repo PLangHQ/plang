@@ -1,0 +1,58 @@
+{
+  "name": "DoThing",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"both-true\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "both-true"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/compound/and/DoThing.goal",
+  "prPath": "/module/condition/compound/and/.build/dothing.pr",
+  "hash": "98e9b030c703ca8932794e1c36fd71b5027ca958c126ca7ff5e5dab57d8d19cf"
+}

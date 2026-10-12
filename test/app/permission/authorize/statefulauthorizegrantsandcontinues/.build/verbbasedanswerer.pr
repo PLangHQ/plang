@@ -1,0 +1,344 @@
+{
+  "name": "VerbBasedAnswerer",
+  "comment": "%!data% is overwritten by every action's result, so capture the channel\ninput (the question text) into a local %access% first. Subsequent steps\nbranch on %access% — stable for the whole goal.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %access% = %!data%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%access%",
+              "variable": [
+                {
+                  "text": "%access%",
+                  "code": [
+                    {
+                      "variable": "access"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "if %access% contains 'write' then return \"y\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%access%",
+              "variable": [
+                {
+                  "text": "%access%",
+                  "code": [
+                    {
+                      "variable": "access"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "contains"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "write"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.return(Data=\"y\")",
+              "line": {
+                "number": 6
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "return",
+                  "property": [
+                    {
+                      "name": "Data",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "y"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "depth",
+                      "type": {
+                        "name": "number"
+                      },
+                      "value": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "if %access% contains 'delete' then return \"n\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%access%",
+              "variable": [
+                {
+                  "text": "%access%",
+                  "code": [
+                    {
+                      "variable": "access"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "contains"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "delete"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.return(Data=\"n\")",
+              "line": {
+                "number": 7
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "return",
+                  "property": [
+                    {
+                      "name": "Data",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "n"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "depth",
+                      "type": {
+                        "name": "number"
+                      },
+                      "value": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "if %access% contains 'read' then return \"a\"",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%access%",
+              "variable": [
+                {
+                  "text": "%access%",
+                  "code": [
+                    {
+                      "variable": "access"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "contains"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "text"
+              },
+              "value": "read"
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.return(Data=\"a\")",
+              "line": {
+                "number": 8
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "return",
+                  "property": [
+                    {
+                      "name": "Data",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "a"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "depth",
+                      "type": {
+                        "name": "number"
+                      },
+                      "value": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "return \"n\"",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "return",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "n"
+            }
+          ],
+          "default": [
+            {
+              "name": "depth",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/permission/authorize/statefulauthorizegrantsandcontinues/VerbBasedAnswerer.goal",
+  "prPath": "/app/permission/authorize/statefulauthorizegrantsandcontinues/.build/verbbasedanswerer.pr",
+  "hash": "88fd043662fddc0ed5b6e26c8d01b43ac31fd734b3cdba8f591593671288169a"
+}

@@ -1,0 +1,33 @@
+{
+  "name": "SlowGoal",
+  "comment": "Helper for TimeoutProducesCancellation. Sleeps long enough that the 100ms timeout trips.",
+  "step": [
+    {
+      "index": 0,
+      "text": "sleep 1000 ms",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "timer",
+          "name": "sleep",
+          "property": [
+            {
+              "name": "Duration",
+              "type": {
+                "name": "duration"
+              },
+              "value": "1000ms"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/SlowGoal.goal",
+  "prPath": "/app/callstack/.build/slowgoal.pr",
+  "hash": "33f04844e91689e4682bbc15f7c9da225a836cac4d30ac5d6727f329b8215988"
+}

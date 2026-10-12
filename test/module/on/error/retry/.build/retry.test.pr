@@ -36,13 +36,6 @@
                 "name": "bool"
               },
               "value": true
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "bool"
             }
           ],
           "default": [
@@ -182,13 +175,6 @@
                 "name": "bool"
               },
               "value": true
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "bool"
             }
           ],
           "default": [
@@ -290,6 +276,14 @@
                 "name": "number"
               },
               "value": 1
+            },
+            {
+              "name": "Order",
+              "type": {
+                "name": "choice",
+                "kind": "errororder"
+              },
+              "value": "RetryFirst"
             },
             {
               "name": "Recovery",

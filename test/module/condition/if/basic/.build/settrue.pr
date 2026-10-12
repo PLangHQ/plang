@@ -1,0 +1,58 @@
+{
+  "name": "SetTrue",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %wasTrue% = true",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%wasTrue%",
+              "variable": [
+                {
+                  "text": "%wasTrue%",
+                  "code": [
+                    {
+                      "variable": "wasTrue"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/if/basic/SetTrue.goal",
+  "prPath": "/module/condition/if/basic/.build/settrue.pr",
+  "hash": "60eb819c02f99b3735df4108ba2a52de60f324f2b5538319643cb58c53452173"
+}

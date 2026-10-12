@@ -36,13 +36,6 @@
                 "name": "bool"
               },
               "value": false
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "bool"
             }
           ],
           "default": [
@@ -85,6 +78,21 @@
                   ]
                 }
               ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
             }
           ],
           "child": [

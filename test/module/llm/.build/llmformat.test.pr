@@ -153,7 +153,7 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/test/module/llm/LlmFormat.test.goal",
-  "prPath": "/test/module/llm/.build/llmformat.test.pr",
+  "path": "/module/llm/LlmFormat.test.goal",
+  "prPath": "/module/llm/.build/llmformat.test.pr",
   "hash": "75d00c5590657a6fecd3e83de6defac3841282136b64dab02c482e99cec2b459"
 }

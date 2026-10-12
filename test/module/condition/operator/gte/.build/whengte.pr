@@ -1,0 +1,58 @@
+{
+  "name": "WhenGTE",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"gte\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "gte"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/operator/gte/WhenGTE.goal",
+  "prPath": "/module/condition/operator/gte/.build/whengte.pr",
+  "hash": "aa3cc784f4afaa97a9b06c8264b5542d29429d682074e616eb9bd95247ea718c"
+}

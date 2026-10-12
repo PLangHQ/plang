@@ -1,0 +1,270 @@
+{
+  "name": "TestErrorCallFramesContainsDeepNestedChain",
+  "comment": "Error in a deeply nested cross-file goal.call chain. After the error is caught, the Audit list captures the failing chain and we assert at least 3 frames are present (Outer → Middle → Throws each pushed a Call).",
+  "step": [
+    {
+      "index": 0,
+      "text": "call ChainOuter, on error set %caught% = true",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "ChainOuter"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%caught%",
+                      "variable": [
+                        {
+                          "text": "%caught%",
+                          "code": [
+                            {
+                              "variable": "caught"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %caught% is true",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%caught%",
+              "variable": [
+                {
+                  "text": "%caught%",
+                  "code": [
+                    {
+                      "variable": "caught"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %!call.Audit% is not null",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!call.Audit%",
+              "variable": [
+                {
+                  "text": "%!call.Audit%",
+                  "code": [
+                    {
+                      "variable": "!call"
+                    },
+                    {
+                      "property": "Audit"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "set %auditCount% = %!call.Audit.Count%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%auditCount%",
+              "variable": [
+                {
+                  "text": "%auditCount%",
+                  "code": [
+                    {
+                      "variable": "auditCount"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!call.Audit.Count%",
+              "variable": [
+                {
+                  "text": "%!call.Audit.Count%",
+                  "code": [
+                    {
+                      "variable": "!call"
+                    },
+                    {
+                      "property": "Audit"
+                    },
+                    {
+                      "property": "Count"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %auditCount% is greater than 0",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "greaterThan",
+          "property": [
+            {
+              "name": "A",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%auditCount%",
+              "variable": [
+                {
+                  "text": "%auditCount%",
+                  "code": [
+                    {
+                      "variable": "auditCount"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "B",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/CrossFileChain.test.goal",
+  "prPath": "/app/callstack/.build/crossfilechain.test.pr",
+  "hash": "2194b3187a906c9ce8c4eb152a934af85ec817155c3f1f8e564b7782d1e2ec41"
+}

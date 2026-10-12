@@ -1,0 +1,136 @@
+{
+  "name": "TestDirectGoalCycleThrows",
+  "comment": "A goal that calls itself directly throws CallStackOverflowException — caught via ContainsGoal on Push. Wrap in on.error so the test goal still completes.",
+  "step": [
+    {
+      "index": 0,
+      "text": "call TestDirectGoalCycleThrows, on error set %cycleCaught% = true",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "TestDirectGoalCycleThrows"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%cycleCaught%",
+                      "variable": [
+                        {
+                          "text": "%cycleCaught%",
+                          "code": [
+                            {
+                              "variable": "cycleCaught"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %cycleCaught% is true, \"self-recursive goal.call must trip ContainsGoal cycle detection\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%cycleCaught%",
+              "variable": [
+                {
+                  "text": "%cycleCaught%",
+                  "code": [
+                    {
+                      "variable": "cycleCaught"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "self-recursive goal.call must trip ContainsGoal cycle detection"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/DirectGoalCycleThrows.test.goal",
+  "prPath": "/app/callstack/.build/directgoalcyclethrows.test.pr",
+  "hash": "62e7d15a95701f0184f5870e54322d02214de4931901369d836a26bb9e533bc6"
+}

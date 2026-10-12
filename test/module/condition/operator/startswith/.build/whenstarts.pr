@@ -1,0 +1,58 @@
+{
+  "name": "WhenStarts",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %result% = \"starts\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "starts"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/operator/startswith/WhenStarts.goal",
+  "prPath": "/module/condition/operator/startswith/.build/whenstarts.pr",
+  "hash": "826bc07e811bfb3ddb90261f178e5eb31103d4f60192eb161933fdb0a39e380c"
+}

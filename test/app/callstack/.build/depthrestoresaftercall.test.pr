@@ -1,0 +1,214 @@
+{
+  "name": "TestDepthRestoresAfterCall",
+  "comment": "After a called goal returns, the Caller-chain depth restores to its pre-call value.",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %before% = %!call.Current.Depth%",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%before%",
+              "variable": [
+                {
+                  "text": "%before%",
+                  "code": [
+                    {
+                      "variable": "before"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!call.Current.Depth%",
+              "variable": [
+                {
+                  "text": "%!call.Current.Depth%",
+                  "code": [
+                    {
+                      "variable": "!call"
+                    },
+                    {
+                      "property": "Current"
+                    },
+                    {
+                      "property": "Depth"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "call Inner",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "goal",
+          "name": "call",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "goal"
+              },
+              "value": "Inner"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %after% = %!call.Current.Depth%",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%after%",
+              "variable": [
+                {
+                  "text": "%after%",
+                  "code": [
+                    {
+                      "variable": "after"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!call.Current.Depth%",
+              "variable": [
+                {
+                  "text": "%!call.Current.Depth%",
+                  "code": [
+                    {
+                      "variable": "!call"
+                    },
+                    {
+                      "property": "Current"
+                    },
+                    {
+                      "property": "Depth"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %after% equals %before%",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%before%",
+              "variable": [
+                {
+                  "text": "%before%",
+                  "code": [
+                    {
+                      "variable": "before"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%after%",
+              "variable": [
+                {
+                  "text": "%after%",
+                  "code": [
+                    {
+                      "variable": "after"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/app/callstack/DepthRestoresAfterCall.test.goal",
+  "prPath": "/app/callstack/.build/depthrestoresaftercall.test.pr",
+  "hash": "c491f6072efa0facbd71d4ec633f90390ad5f1d0fdbf30a38fa55b4dd94fc4f5"
+}

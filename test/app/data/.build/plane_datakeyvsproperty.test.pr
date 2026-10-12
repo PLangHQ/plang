@@ -42,7 +42,7 @@
               "type": {
                 "name": "type"
               },
-              "value": "json"
+              "value": "text"
             }
           ],
           "default": [

@@ -226,13 +226,6 @@
                   ]
                 }
               ]
-            },
-            {
-              "name": "Type",
-              "type": {
-                "name": "type"
-              },
-              "value": "text"
             }
           ],
           "default": [

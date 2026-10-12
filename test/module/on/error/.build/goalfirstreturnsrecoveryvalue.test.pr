@@ -49,50 +49,59 @@
                 "kind": "errororder"
               },
               "value": "GoalFirst"
+            },
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%content%",
+                      "variable": [
+                        {
+                          "text": "%content%",
+                          "code": [
+                            {
+                              "variable": "content"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "from-recovery"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
             }
           ],
           "default": [
             {
               "name": "ignore",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        },
-        {
-          "module": "variable",
-          "name": "set",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "%content%",
-              "variable": [
-                {
-                  "text": "%content%",
-                  "code": [
-                    {
-                      "variable": "content"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "text"
-              },
-              "value": "from-recovery"
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
               "type": {
                 "name": "bool"
               },

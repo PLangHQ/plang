@@ -1,0 +1,48 @@
+{
+  "name": "MixedThrow",
+  "step": [
+    {
+      "index": 0,
+      "text": "throw error \"mixed error\"",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "error",
+          "name": "throw",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "mixed error"
+            }
+          ],
+          "default": [
+            {
+              "name": "status",
+              "type": {
+                "name": "status"
+              },
+              "value": 400
+            },
+            {
+              "name": "key",
+              "type": {
+                "name": "text"
+              },
+              "value": "error"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/on/error/mixed/MixedThrow.goal",
+  "prPath": "/module/on/error/mixed/.build/mixedthrow.pr",
+  "hash": "14374e3f10fb54135c04b668be6b77ab780e6f81fef513c41b17f8b50d156b40"
+}
