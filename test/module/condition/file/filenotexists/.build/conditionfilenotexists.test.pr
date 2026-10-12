@@ -1,0 +1,157 @@
+{
+  "name": "Start",
+  "comment": "Test: multi-action condition — file doesn't exist, else branch runs",
+  "step": [
+    {
+      "index": 0,
+      "text": "if missing_file_abc123.txt exists, call WhenExists, else call WhenMissing",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "exists",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "missing_file_abc123.txt"
+            }
+          ]
+        },
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.call(Name=\"WhenExists\")",
+              "line": {
+                "number": 3
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "WhenExists"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "module": "condition",
+          "name": "else",
+          "property": [],
+          "child": [
+            {
+              "index": 0,
+              "text": "goal.call(Name=\"WhenMissing\")",
+              "line": {
+                "number": 3
+              },
+              "code": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "WhenMissing"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %result% equals \"missing\", \"GoalIfFalse should run when file doesn't exist\"",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "missing"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%result%",
+              "variable": [
+                {
+                  "text": "%result%",
+                  "code": [
+                    {
+                      "variable": "result"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "GoalIfFalse should run when file doesn't exist"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/test/module/condition/file/filenotexists/ConditionFileNotExists.test.goal",
+  "prPath": "/test/module/condition/file/filenotexists/.build/conditionfilenotexists.test.pr",
+  "hash": "2b01ea90cf1660bb2a0aea2e7d9f790cadf2fe10d7fe9c4a5536a0c1db853b32"
+}

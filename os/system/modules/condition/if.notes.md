@@ -23,4 +23,5 @@ Right — what Left is compared to · say: the value after the operator · build
 - `is` and `isnot` take only a type name; a value after "is" is `==`.
 - There is no istrue, isfalse, isnull or isnotnull.
 - `if '<file>' exists` / `when <file> is there`: a file-existence test asks file.exists first and tests its result — `file.exists(Path='<file>'); condition.if(Left=%!data%) { … }`. A quoted file name on its own is text (always true); never `condition.if(Left='file.json')`.
-- `if A and B`: one condition.if cannot hold both. Compare each side with condition.compare, keep each result with variable.set, then one condition.if over the two with Operator `"and"` (or `"or"`).
+- `if A and B`: one condition.if holds only one comparison. `and` is NESTED ifs — the body under both: `condition.if(A) { condition.if(B) { … } }`. `or` is the SAME body under an if and an elseif: `condition.if(A) { … }; condition.elseif(B) { … }`. (No `and`/`or` operator on a single if.)
+- `if <file> exists, call A, else call B`: file.exists first, the if reads its answer, each call in its branch — `file.exists(Path=<file>); condition.if(Left=%!data%) { goal.call(Name="A") }; condition.else() { goal.call(Name="B") }`.

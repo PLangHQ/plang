@@ -404,6 +404,9 @@ Evaluate a condition and execute the then-branch actions; pair with elseif/else 
 - if %content% is not empty, call Process
 - if %flag%, call Go
 - if %done%, return %result%
+- if %x% == 1 or %y% == 2, call Handle
+- if %x% > 1 and %y% < 10, call Handle
+- if data.txt exists, call Found, else call Absent
 
 | Property | How you say it | Type | Required | Default | What it changes |
 |----------|----------------|------|----------|---------|-----------------|

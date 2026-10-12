@@ -3,8 +3,7 @@ Start
 - set %d% = '{"a": 1}', type=json
 - set %n% = 5
 - set %caught% = ""
-- if %d% > %n% then
-    on error call Caught
+- if %d% > %n%, on error call Caught
     - set %never% = true
 - assert %caught% equals "EvaluationError"
 
