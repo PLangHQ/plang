@@ -1,0 +1,80 @@
+{
+  "name": "Start",
+  "comment": "Test: access %MyIdentity% when no identities exist, verify auto-created default identity",
+  "step": [
+    {
+      "index": 0,
+      "text": "assert %MyIdentity% is not null",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%MyIdentity%",
+              "variable": [
+                {
+                  "text": "%MyIdentity%",
+                  "code": [
+                    {
+                      "variable": "MyIdentity"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %MyIdentity.Name% is not null",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%MyIdentity.Name%",
+              "variable": [
+                {
+                  "text": "%MyIdentity.Name%",
+                  "code": [
+                    {
+                      "variable": "MyIdentity"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/identity/autocreate/IdentityAutoCreate.test.goal",
+  "prPath": "/module/identity/autocreate/.build/identityautocreate.test.pr",
+  "hash": "aebea18eefd4b5157f2306d2f88da1662ea30c4fbbaf896eb84adf4194b8895b"
+}

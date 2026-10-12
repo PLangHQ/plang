@@ -1,0 +1,231 @@
+{
+  "name": "Start",
+  "comment": "Test: access %MyIdentity.Name%, %MyIdentity.PublicKey%, %MyIdentity.IsDefault% via dot navigation",
+  "step": [
+    {
+      "index": 0,
+      "text": "archive identity 'TestDotNav', force, on error ignore, force",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "archive",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestDotNav"
+            },
+            {
+              "name": "Force",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 0 uses identity.archive, which the decider was not sure of (0.95)"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "create identity 'TestDotNav', set as default",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "create",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestDotNav"
+            },
+            {
+              "name": "Default",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %MyIdentity.Name% is not null",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%MyIdentity.Name%",
+              "variable": [
+                {
+                  "text": "%MyIdentity.Name%",
+                  "code": [
+                    {
+                      "variable": "MyIdentity"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %MyIdentity.PublicKey% is not null",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%MyIdentity.PublicKey%",
+              "variable": [
+                {
+                  "text": "%MyIdentity.PublicKey%",
+                  "code": [
+                    {
+                      "variable": "MyIdentity"
+                    },
+                    {
+                      "property": "PublicKey"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %MyIdentity.IsDefault% is true",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%MyIdentity.IsDefault%",
+              "variable": [
+                {
+                  "text": "%MyIdentity.IsDefault%",
+                  "code": [
+                    {
+                      "variable": "MyIdentity"
+                    },
+                    {
+                      "property": "IsDefault"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "archive identity 'TestDotNav', force",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "archive",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestDotNav"
+            },
+            {
+              "name": "Force",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 5 uses identity.archive, which the decider was not sure of (0.98)"
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/identity/dotnavigation/IdentityDotNavigation.test.goal",
+  "prPath": "/module/identity/dotnavigation/.build/identitydotnavigation.test.pr",
+  "hash": "e5dce3f50c0b48f5ceec6b89b2b274539b19ad15d58bca126cf78b6c643108a7"
+}

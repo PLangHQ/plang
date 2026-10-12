@@ -1,0 +1,173 @@
+{
+  "name": "Start",
+  "comment": "Test: create an identity as default and verify %MyIdentity% is not null",
+  "step": [
+    {
+      "index": 0,
+      "text": "archive identity 'TestCreate', force, on error ignore, force",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "archive",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestCreate"
+            },
+            {
+              "name": "Force",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 0 uses identity.archive, which the decider was not sure of (0.96)"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "create identity 'TestCreate', set as default",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "create",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestCreate"
+            },
+            {
+              "name": "Default",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %MyIdentity% is not null",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%MyIdentity%",
+              "variable": [
+                {
+                  "text": "%MyIdentity%",
+                  "code": [
+                    {
+                      "variable": "MyIdentity"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "archive identity 'TestCreate', force",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "archive",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestCreate"
+            },
+            {
+              "name": "Force",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 3 uses identity.archive, which the decider was not sure of (0.98)"
+        },
+        {
+          "key": "Popular",
+          "message": "step 3 uses on.error from the decider's popular-action choice (0.37): unsure"
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/identity/create/IdentityCreate.test.goal",
+  "prPath": "/module/identity/create/.build/identitycreate.test.pr",
+  "hash": "fc1d5af9b23da315a3c159a57baadd4c5d7518d872e76fde55748777f34a3be3"
+}

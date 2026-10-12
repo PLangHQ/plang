@@ -1,0 +1,302 @@
+{
+  "name": "Start",
+  "comment": "Test: create two identities, switch default, verify %MyIdentity.Name% reflects new default",
+  "step": [
+    {
+      "index": 0,
+      "text": "archive identity 'TestSwitchA', force, on error ignore, force",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "archive",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestSwitchA"
+            },
+            {
+              "name": "Force",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 0 uses identity.archive, which the decider was not sure of (0.98)"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "archive identity 'TestSwitchB', force, on error ignore, force",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "archive",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestSwitchB"
+            },
+            {
+              "name": "Force",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 1 uses identity.archive, which the decider was not sure of (0.97)"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "create identity 'TestSwitchA', set as default",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "create",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestSwitchA"
+            },
+            {
+              "name": "Default",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "create identity 'TestSwitchB'",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "create",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestSwitchB"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "set default identity to 'TestSwitchB'",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "setDefault",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestSwitchB"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %MyIdentity.Name% equals 'TestSwitchB'",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text",
+                "template": "plang"
+              },
+              "value": "%MyIdentity.Name%",
+              "variable": [
+                {
+                  "text": "%MyIdentity.Name%",
+                  "code": [
+                    {
+                      "variable": "MyIdentity"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestSwitchB"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "archive identity 'TestSwitchA', force",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "archive",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestSwitchA"
+            },
+            {
+              "name": "Force",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 6 uses identity.archive, which the decider was not sure of (0.98)"
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "archive identity 'TestSwitchB', force",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "identity",
+          "name": "archive",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestSwitchB"
+            },
+            {
+              "name": "Force",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 7 uses identity.archive, which the decider was not sure of (0.99)"
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/identity/switchdefault/IdentitySwitchDefault.test.goal",
+  "prPath": "/module/identity/switchdefault/.build/identityswitchdefault.test.pr",
+  "hash": "4d7eb22f4c14248380908b4190e7d9bb2178651f8965588c4906e9638ade4d6e"
+}
