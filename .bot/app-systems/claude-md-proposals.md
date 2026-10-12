@@ -220,3 +220,11 @@ Verified each against code (as for v6/v7); small commits per area.
 ## docs — 2026-10-03 — the locked core (APPLIED)
 **Target:** /CLAUDE.md
 **Why:** Ingi locked the core's surface (relayed by the architect). A repo-wide governance rule every bot must respect — the load-bearing shapes (app members, the type system, the serializer, data/channel/stream, call+variable memory, module registry+catalog, the core value types' public surface) change only by an architect→Ingi proposal; inside them behaviour fixes + private refactors only; new needs go to module-owned types/events; a surface golden in the gate enforces it. APPLIED directly (docs owns CLAUDE.md): new "## The locked core" section after the OBP smells.
+
+## architect — 2026-10-12 — a done plan's tests move into the concept tree
+**Target:** /CLAUDE.md, "Running plang Tests"
+**Why:** Ingi, decision 670: "yes, move them when the plan is done." Plan tests stayed in `test/plan/<id>/` after their plan was done, beside concept-tree tests of the same thing (`plan/app-systems/module/on/cache/RecoveryIsNeverCached` next to `module/on/cache/`), which hid duplicates.
+**Proposed change:** after the bullet that begins "A plan's validation tests live in their own folder", add:
+```
+- When a plan is done, its tests move into the concept tree at the same path (`test/plan/<id>/module/on/cache/X` → `test/module/on/cache/X`); `start.md`, `start.goal` and `done.list` stay as the plan's record, so `test/plan/` holds only plans in progress. A moved test's `.pr` is rebuilt by the builder, never hand-edited.
+```
