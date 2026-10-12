@@ -11,12 +11,12 @@ public partial class Tag : IContext
 {
     public partial data.@this<global::app.type.item.list.@this> Tags { get; init; }
 
-    /// <summary>Stamps the literal tags on the goal being built — the build-scoped <c>%goal%</c>. A
+    /// <summary>Stamps the literal tags on the goal being built — the goal whose frame its steps are checked in. A
     /// %variable% is only known at run, so it has nothing to stamp.</summary>
     public async Task<data.@this> Build()
     {
         if (Tags == null || Tags.HasVariable) return Context.Ok();
-        if (await (await Context.Variable.Get("goal")).Value() is not global::app.goal.@this goal) return Context.Ok();
+        if (Context.call.Current?.Goal is not { } goal) return Context.Ok();
         if (await Tags.Value() is not { } tags) return Context.Ok();
 
         foreach (var row in tags.Items(Context))
