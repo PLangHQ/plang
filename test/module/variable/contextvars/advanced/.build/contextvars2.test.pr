@@ -1,0 +1,156 @@
+{
+  "name": "Start",
+  "comment": "Test: goal name is accessible",
+  "step": [
+    {
+      "index": 0,
+      "text": "assert %!goal.Name% equals \"Start\"",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "Start"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!goal.Name%",
+              "variable": [
+                {
+                  "text": "%!goal.Name%",
+                  "code": [
+                    {
+                      "variable": "!goal"
+                    },
+                    {
+                      "property": "Name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %!step% is not null",
+      "line": {
+        "number": 5
+      },
+      "comment": "Test: step is accessible",
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!step%",
+              "variable": [
+                {
+                  "text": "%!step%",
+                  "code": [
+                    {
+                      "variable": "!step"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %!context% is not null",
+      "line": {
+        "number": 7
+      },
+      "comment": "Test: context is accessible",
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!context%",
+              "variable": [
+                {
+                  "text": "%!context%",
+                  "code": [
+                    {
+                      "variable": "!context"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %!call% is not null",
+      "line": {
+        "number": 9
+      },
+      "comment": "Test: call is accessible",
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!call%",
+              "variable": [
+                {
+                  "text": "%!call%",
+                  "code": [
+                    {
+                      "variable": "!call"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/variable/contextvars/advanced/ContextVars2.test.goal",
+  "prPath": "/module/variable/contextvars/advanced/.build/contextvars2.test.pr",
+  "hash": "19b466576cd502ee4c445c15c270173acecd107c13f6d4f4310a54078e7e4a66"
+}

@@ -1,0 +1,314 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "assert %Now% is not null",
+      "line": {
+        "number": 3
+      },
+      "comment": "Now is not null",
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%Now%",
+              "variable": [
+                {
+                  "text": "%Now%",
+                  "code": [
+                    {
+                      "variable": "Now"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %NowUtc% is not null",
+      "line": {
+        "number": 6
+      },
+      "comment": "NowUtc is not null",
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%NowUtc%",
+              "variable": [
+                {
+                  "text": "%NowUtc%",
+                  "code": [
+                    {
+                      "variable": "NowUtc"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %guid1% = %GUID%",
+      "line": {
+        "number": 9
+      },
+      "comment": "GUID is not null and changes",
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%guid1%",
+              "variable": [
+                {
+                  "text": "%guid1%",
+                  "code": [
+                    {
+                      "variable": "guid1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%GUID%",
+              "variable": [
+                {
+                  "text": "%GUID%",
+                  "code": [
+                    {
+                      "variable": "GUID"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "set %guid2% = %GUID%",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%guid2%",
+              "variable": [
+                {
+                  "text": "%guid2%",
+                  "code": [
+                    {
+                      "variable": "guid2"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%GUID%",
+              "variable": [
+                {
+                  "text": "%GUID%",
+                  "code": [
+                    {
+                      "variable": "GUID"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %guid1% is not null",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%guid1%",
+              "variable": [
+                {
+                  "text": "%guid1%",
+                  "code": [
+                    {
+                      "variable": "guid1"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %guid2% is not null",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isNotNull",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%guid2%",
+              "variable": [
+                {
+                  "text": "%guid2%",
+                  "code": [
+                    {
+                      "variable": "guid2"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "assert %guid1% not equals %guid2%",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "notEquals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%guid1%",
+              "variable": [
+                {
+                  "text": "%guid1%",
+                  "code": [
+                    {
+                      "variable": "guid1"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%guid2%",
+              "variable": [
+                {
+                  "text": "%guid2%",
+                  "code": [
+                    {
+                      "variable": "guid2"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/variable/contextvars/system/SystemVariables.test.goal",
+  "prPath": "/module/variable/contextvars/system/.build/systemvariables.test.pr",
+  "hash": "2d4a4e2d21bbe1dd3887faacc2e135d8e21decd8aedfe5c028d8b32ace8ba5b8"
+}

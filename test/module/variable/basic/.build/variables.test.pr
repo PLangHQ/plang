@@ -1,0 +1,463 @@
+{
+  "name": "Start",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %user% = {name:\"john\", age:20, addresses:[{street:\"first street\", nr:10}, {street:\"second street\", nr:2}]}",
+      "line": {
+        "number": 2
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%user%",
+              "variable": [
+                {
+                  "text": "%user%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"name":"john","age":20,"addresses":[{"street":"first street","nr":10},{"street":"second street","nr":2}]}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %user.name% equals \"john\"",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "john"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.name%",
+              "variable": [
+                {
+                  "text": "%user.name%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "name"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %user.age% equals 20",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 20
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.age%",
+              "variable": [
+                {
+                  "text": "%user.age%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "age"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %user.addresses[0].street% equals \"first street\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "first street"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.addresses[0].street%",
+              "variable": [
+                {
+                  "text": "%user.addresses[0].street%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "addresses"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "street"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "assert %user.addresses[0].nr% equals 10",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 10
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.addresses[0].nr%",
+              "variable": [
+                {
+                  "text": "%user.addresses[0].nr%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "addresses"
+                    },
+                    {
+                      "index": {
+                        "number": 0
+                      }
+                    },
+                    {
+                      "property": "nr"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "text": "assert %user.addresses[1].street% equals \"second street\"",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "second street"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.addresses[1].street%",
+              "variable": [
+                {
+                  "text": "%user.addresses[1].street%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "addresses"
+                    },
+                    {
+                      "index": {
+                        "number": 1
+                      }
+                    },
+                    {
+                      "property": "street"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "assert %user.addresses[1].nr% equals 2",
+      "line": {
+        "number": 8
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 2
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.addresses[1].nr%",
+              "variable": [
+                {
+                  "text": "%user.addresses[1].nr%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "addresses"
+                    },
+                    {
+                      "index": {
+                        "number": 1
+                      }
+                    },
+                    {
+                      "property": "nr"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "set %idx% = 1",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%idx%",
+              "variable": [
+                {
+                  "text": "%idx%",
+                  "code": [
+                    {
+                      "variable": "idx"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 1
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "number"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "assert %user.addresses[idx].street% equals \"second street\"",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "second street"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%user.addresses[idx].street%",
+              "variable": [
+                {
+                  "text": "%user.addresses[idx].street%",
+                  "code": [
+                    {
+                      "variable": "user"
+                    },
+                    {
+                      "property": "addresses"
+                    },
+                    {
+                      "index": {
+                        "variable": [
+                          {
+                            "text": "%idx%",
+                            "code": [
+                              {
+                                "variable": "idx"
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "property": "street"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/variable/basic/Variables.test.goal",
+  "prPath": "/module/variable/basic/.build/variables.test.pr",
+  "hash": "6250dcb9426a0ed449a9a73eb0c2a7d7d6e4b2359d783b962cb66415597b503d"
+}
