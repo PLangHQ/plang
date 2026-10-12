@@ -1,0 +1,159 @@
+{
+  "name": "Start",
+  "comment": "Test that builder.getGoals parses a .goal file and returns Runtime2 Goal objects",
+  "step": [
+    {
+      "index": 0,
+      "text": "save \"TestGoal\\n- step one\\n- step two\" to file 'parse_test/Test.goal'",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "save",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "parse_test/Test.goal"
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "TestGoal\n- step one\n- step two"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "builder.goals from 'parse_test/', write to %goals%",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "build",
+          "name": "goals",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "parse_test/"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%goals%",
+              "variable": [
+                {
+                  "text": "%goals%",
+                  "code": [
+                    {
+                      "variable": "goals"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %goals% is not empty, \"getGoals should return parsed goals from .goal file\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "notEquals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "list"
+              },
+              "value": []
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%goals%",
+              "variable": [
+                {
+                  "text": "%goals%",
+                  "code": [
+                    {
+                      "variable": "goals"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "getGoals should return parsed goals from .goal file"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/build/goals/BuilderParseGoal.test.goal",
+  "prPath": "/module/build/goals/.build/builderparsegoal.test.pr",
+  "hash": "72852aaaea7b64177264493dd8111f307063c1d71f0f132720248fd4ebcaa05f"
+}

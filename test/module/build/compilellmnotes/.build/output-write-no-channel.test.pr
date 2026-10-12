@@ -1,0 +1,218 @@
+{
+  "name": "TestOutputWriteHasNoSpuriousChannel",
+  "comment": "Drift case 1 — the load-bearing reason this branch exists.\n\nStep text `- write out %message%` (from test/Simple/Start.goal:5) carries no\nchannel clause. With per-action notes (os/system/modules/output/write.notes.md)\ncarrying the channel routing rule only when output.write is in the planner's\nset, the LLM should emit:\nparameters: { Data: %message% }   (no channel key)\n\nPre-fix shape this test forbids:\nany 'channel' parameter on output.write when step text had no channel clause\n\nRead .pr requires copying to a .txt first because '.pr' MIME deserializes to a\nGoal object, defeating substring assertions. Copy → read as text → assert.\nThe companion C# test PLang.Tests/Builder/CompilePromptTests/DriftCaseArtifactTests.cs\ndoes the structural check on the parsed Goal — both layers guard the same fact.\n\nArchitect's 3-fresh-cache verification rule runs externally:\nrm -rf test/Simple/.build\nPlangConsole/bin/Debug/net10.0/plang build /test/Simple   # then plang --test (x3)",
+  "step": [
+    {
+      "index": 0,
+      "text": "copy file '../../Simple/.build/start.test.pr' to 'start-out.txt', overwrite",
+      "line": {
+        "number": 21
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "copy",
+          "property": [
+            {
+              "name": "Source",
+              "type": {
+                "name": "path"
+              },
+              "value": "../../Simple/.build/start.test.pr"
+            },
+            {
+              "name": "Destination",
+              "type": {
+                "name": "path"
+              },
+              "value": "start-out.txt"
+            },
+            {
+              "name": "Overwrite",
+              "type": {
+                "name": "bool"
+              },
+              "value": true
+            }
+          ],
+          "default": [
+            {
+              "name": "subfolder",
+              "type": {
+                "name": "choice",
+                "kind": "subfolder"
+              },
+              "value": "include"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "read file 'start-out.txt', write to %pr%",
+      "line": {
+        "number": 22
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "read",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "start-out.txt"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%pr%",
+              "variable": [
+                {
+                  "text": "%pr%",
+                  "code": [
+                    {
+                      "variable": "pr"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": {
+                "name": "file"
+              }
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %pr% contains '\"text\": \"write out '",
+      "line": {
+        "number": 23
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "contains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%pr%",
+              "variable": [
+                {
+                  "text": "%pr%",
+                  "code": [
+                    {
+                      "variable": "pr"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "\"text\": \"write out "
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "assert %pr% does not contain '\"name\": \"channel\"'",
+      "line": {
+        "number": 24
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "notContains",
+          "property": [
+            {
+              "name": "Container",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%pr%",
+              "variable": [
+                {
+                  "text": "%pr%",
+                  "code": [
+                    {
+                      "variable": "pr"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "\"name\": \"channel\""
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/build/compilellmnotes/output-write-no-channel.test.goal",
+  "prPath": "/module/build/compilellmnotes/.build/output-write-no-channel.test.pr",
+  "hash": "c8927dfc8f5eae21fe9520a50db99babf5f837ef6ba9c4600e0ea3a21ef999b6"
+}
