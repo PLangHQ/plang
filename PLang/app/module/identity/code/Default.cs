@@ -49,17 +49,13 @@ public sealed class Default : IIdentity
         if (!genResult.Success) return genResult;
         var identity = (await genResult.Value())!;
 
+        // a new default takes the flag from the old one in the same write: the store never holds a moment with no
+        // default, which a signing read in between would fill by promoting another
         if (await action.Default.ToBooleanAsync())
-        {
             foreach (var existing in items.Where(i => i.IsDefault))
-            {
                 existing.IsDefault = false;
-                var saveResult = await SaveAsync(action, existing);
-                if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
-            }
-        }
 
-        var result = await SaveAsync(action, identity);
+        var result = await SaveAsync(action, [.. items, identity]);
         if (!result.Success) return data.@this<Identity>.From(result);
 
         if (await action.Default.ToBooleanAsync())
@@ -120,15 +116,12 @@ public sealed class Default : IIdentity
         if (target.IsDefault)
             return action.Context.Ok<Identity>(target);
 
+        // the flag moves in one write: the store never holds a moment with no default, which a signing read in
+        // between would fill by promoting another
         foreach (var identity in items.Where(i => i.IsDefault))
-        {
             identity.IsDefault = false;
-            var result = await SaveAsync(action, identity);
-            if (!result.Success) return data.@this<Identity>.From(result);
-        }
-
         target.IsDefault = true;
-        var saveResult = await SaveAsync(action, target);
+        var saveResult = await SaveAsync(action, items);
         if (!saveResult.Success) return data.@this<Identity>.From(saveResult);
 
         app.actor.list.System.Identity = target;
@@ -289,6 +282,14 @@ public sealed class Default : IIdentity
             return data.@this<Identity>.From(result);
         }
         return action.Context.Ok<Identity>(identity);
+    }
+
+    /// <summary>Saves the identities, whole, in one write — each in place of the one by its name. Bare Data;
+    /// callers only check .Success / .Error.</summary>
+    private async Task<data.@this> SaveAsync(IContext action, List<Identity> identities)
+    {
+        var (setting, err) = await Setting(action);
+        return err != null ? action.Context.Error(err) : await Store(action, setting!, identities);
     }
 
     /// <summary>Saves an identity — in place of the one by its name. Bare Data; callers only check
