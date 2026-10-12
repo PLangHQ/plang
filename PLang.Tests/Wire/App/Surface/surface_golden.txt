@@ -85,6 +85,7 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   Error : app.error.Error { get; }
   Event : app.data.this { get; }
   EventsSince(System.DateTimeOffset t) : System.Collections.Generic.IEnumerable<app.call.Diff>
+  Format : app.type.kind.this { get; }
   Goal : app.goal.this { get; }
   History : app.type.item.bool.this { get; }
   Isolate(System.Collections.Generic.IEnumerable<app.data.this> names, app.goal.step.action.this held = …, app.call.this caller = …) : app.call.this
@@ -99,6 +100,7 @@ class app.call.list.this : app.type.item.this, app.snapshot.ISnapshot
   Root : app.call.this { get; }
   Scope : app.call.this { get; }
   Section : System.String { get; }
+  SetFormat(app.type.kind.this format) : System.Boolean
   Setting : app.call.setting.this { get; }
   Step : app.goal.step.this { get; }
   Tags : app.type.item.bool.this { get; }
@@ -137,6 +139,7 @@ class app.call.this : app.type.item.this, System.IAsyncDisposable
   Error : app.error.Error { get; }
   Errors : app.error.list.this { get; }
   Event : app.data.this { get; }
+  Format : app.type.kind.this { get; }
   GetItem<T>() : T
   Handled : app.type.item.bool.this { get; set; }
   Holds(System.String name) : System.Boolean
@@ -252,7 +255,10 @@ abstract class app.channel.type.session.this : app.channel.this
   ctor()
 
 class app.channel.type.stream.this : app.channel.type.session.this
+  End : System.String { get; set; } [Debug]
   Framed : System.Boolean { get; init; } [Debug]
+  InPlay : System.Boolean { get; init; } [Debug]
+  KeepsLast : System.Boolean { get; init; } [Debug]
   ReadAllBytesAsync(System.Threading.CancellationToken cancellationToken = …) : System.Threading.Tasks.Task<System.Byte[]>
   ReadAllTextAsync(System.Threading.CancellationToken cancellationToken = …) : System.Threading.Tasks.Task<System.String>
   Stream : System.IO.Stream { get; }
@@ -886,6 +892,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   goal : app.type.current.this<app.goal.this, app.goal.list.this> { get; }
   module : app.module.this { get; }
   override IsLeaf : System.Boolean { get; }
+  parent : app.parent.this { get; }
   protected override Clone() : app.type.item.this
   shortcut : app.type.this<app.shortcut.this, app.shortcut.list.this> { get; }
   static WireConsoleChannels(app.actor.this actor, System.Boolean interactiveInput) : System.Void
@@ -893,7 +900,7 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   store : app.store.this { get; }
   test : app.type.current.this<app.test.this, app.test.list.this> { get; }
   trace(app.actor.context.this context) : app.actor.context.trace.this [LlmBuilder]
-  type : app.type.this<app.type.this, app.type.list.this> { get; }
+  type : app.type.root.this { get; }
   variable : app.type.this<app.type.item.variable.this, app.type.item.list.this<app.type.item.variable.this>> { get; }
 
 class app.type.clr.this : app.type.item.this, app.type.item.ICreate<app.type.clr.this> [PlangType]
@@ -1223,6 +1230,27 @@ class app.type.item.choice.this<T> : app.type.item.this, app.type.item.ICreate<a
   static Parse(System.String symbol) : app.type.item.choice.this<T>
   static Read<TReader>(TReader& reader) : app.type.item.choice.this<T>
 
+interface app.type.item.clipboard.IHolder
+  abstract Copied(System.String text) : System.Void
+  abstract Copied(app.type.item.this value) : System.Void
+
+class app.type.item.clipboard.serializer.Reader : app.type.reader.ITypeReader
+  Kind : System.String { get; }
+  Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
+  ctor()
+
+class app.type.item.clipboard.this : app.type.item.this, app.type.item.ICreate<app.type.item.clipboard.this> [PlangType]
+  Apply(app.type.item.clipboard.IHolder holder) : System.Void
+  Content : app.type.item.this { get; } [Out]
+  ctor(app.type.item.this content)
+  override IsLeaf : System.Boolean { get; }
+  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
+  override ToString() : System.String
+  override Write(app.type.format.IWriter writer) : System.Void
+  static Create(System.Object raw) : app.type.item.clipboard.this
+  static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.clipboard.this
+  static Shape : System.String { get; }
+
 class app.type.item.computed : app.type.item.this
   ctor(System.Func<app.actor.context.this, app.type.item.this> factory, System.String declaredTypeName = …, System.String declaredKind = …)
   override Cacheable : System.Boolean { get; }
@@ -1516,6 +1544,87 @@ class app.type.item.image.this : app.type.item.this, app.data.IKindValidatable, 
   static Encode(System.IO.Stream stream, app.data.this data, app.actor.context.this context, System.Nullable<app.View> view, System.Text.Encoding encoding, System.Threading.CancellationToken ct) : System.Threading.Tasks.Task<app.data.this>
   static FromBytes(System.Byte[] bytes) : app.type.item.image.this
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
+  static Shape : System.String { get; }
+
+interface app.type.item.input.ITarget
+  abstract Key(app.type.item.input.key.this key) : System.Void
+  abstract Mouse(app.type.item.input.mouse.this mouse) : System.Void
+  abstract Navigate(app.type.item.input.navigate.this navigate) : System.Void
+  abstract Stamped(System.Int64 stamp) : System.Void
+  abstract Text(app.type.item.input.text.this text) : System.Void
+
+enum app.type.item.input.Modifier [PlangType]
+  static const alt : app.type.item.input.Modifier
+  static const ctrl : app.type.item.input.Modifier
+  static const meta : app.type.item.input.Modifier
+  static const shift : app.type.item.input.Modifier
+
+class app.type.item.input.key.this : app.type.item.input.this
+  Down : app.type.item.bool.this { get; } [Out]
+  Extended : app.type.item.bool.this { get; } [Out]
+  Modifiers : app.type.item.list.this<app.type.item.choice.this<app.type.item.input.Modifier>> { get; } [Out]
+  Name : app.type.item.text.this { get; } [Out]
+  Scancode : app.type.item.number.this { get; } [Out]
+  Vk : app.type.item.number.this { get; } [Out]
+  ctor(System.Boolean down, System.UInt32 scancode, System.Boolean extended = …, System.Int32 vk = …, System.String name = …, System.Int32 mods = …, System.Nullable<System.Int64> stamp = …)
+  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
+  override Write(app.type.format.IWriter writer) : System.Void
+
+enum app.type.item.input.mouse.Button [PlangType]
+  static const back : app.type.item.input.mouse.Button
+  static const forward : app.type.item.input.mouse.Button
+  static const left : app.type.item.input.mouse.Button
+  static const middle : app.type.item.input.mouse.Button
+  static const none : app.type.item.input.mouse.Button
+  static const right : app.type.item.input.mouse.Button
+
+enum app.type.item.input.mouse.Gesture [PlangType]
+  static const down : app.type.item.input.mouse.Gesture
+  static const move : app.type.item.input.mouse.Gesture
+  static const up : app.type.item.input.mouse.Gesture
+  static const wheel : app.type.item.input.mouse.Gesture
+
+class app.type.item.input.mouse.this : app.type.item.input.this
+  Action : app.type.item.choice.this<app.type.item.input.mouse.Gesture> { get; } [Out]
+  Button : app.type.item.choice.this<app.type.item.input.mouse.Button> { get; } [Out]
+  Clicks : app.type.item.number.this { get; } [Out]
+  Dx : app.type.item.number.this { get; } [Out]
+  Dy : app.type.item.number.this { get; } [Out]
+  Modifiers : app.type.item.list.this<app.type.item.choice.this<app.type.item.input.Modifier>> { get; } [Out]
+  X : app.type.item.number.this { get; } [Out]
+  Y : app.type.item.number.this { get; } [Out]
+  ctor(app.type.item.input.mouse.Gesture action, System.Int32 x, System.Int32 y, app.type.item.input.mouse.Button button = …, System.Int32 clicks = …, System.Int32 dx = …, System.Int32 dy = …, System.Int32 mods = …, System.Nullable<System.Int64> stamp = …)
+  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
+  override Write(app.type.format.IWriter writer) : System.Void
+
+enum app.type.item.input.navigate.Direction [PlangType]
+  static const back : app.type.item.input.navigate.Direction
+  static const forward : app.type.item.input.navigate.Direction
+  static const reload : app.type.item.input.navigate.Direction
+
+class app.type.item.input.navigate.this : app.type.item.input.this
+  To : app.type.item.choice.this<app.type.item.input.navigate.Direction> { get; } [Out]
+  ctor(app.type.item.input.navigate.Direction to, System.Nullable<System.Int64> stamp = …)
+  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
+  override Write(app.type.format.IWriter writer) : System.Void
+
+class app.type.item.input.serializer.Reader : app.type.reader.ITypeReader
+  Kind : System.String { get; }
+  Read<TReader>(TReader& reader, System.String kind, app.type.reader.ReadContext ctx) : app.type.item.this
+  ctor()
+
+class app.type.item.input.text.this : app.type.item.input.this
+  Typed : app.type.item.text.this { get; } [Out]
+  ctor(System.String typed, System.Nullable<System.Int64> stamp = …)
+  override Output(app.type.format.IWriter writer, app.View mode, app.actor.context.this context) : System.Threading.Tasks.ValueTask
+  override Write(app.type.format.IWriter writer) : System.Void
+
+abstract class app.type.item.input.this : app.type.item.this, app.type.item.ICreate<app.type.item.input.this> [Kinds, PlangType]
+  Apply(app.type.item.input.ITarget target) : System.Void
+  Stamp : app.type.item.number.this { get; } [Out]
+  override IsLeaf : System.Boolean { get; }
+  static Create(System.Object raw) : app.type.item.input.this
+  static Create(System.Object raw, app.type.this declared, app.data.this data) : app.type.item.input.this
   static Shape : System.String { get; }
 
 class app.type.item.kept.list.this : app.snapshot.ISnapshot
@@ -2079,6 +2188,7 @@ class app.type.item.path.file.this : app.type.item.path.this [PathScheme]
   override Write(System.IO.Stream content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
   override WriteBytes(System.Byte[] content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
   override WriteText(System.String content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
+  static Program(System.String name, app.actor.context.this context) : app.type.item.path.file.this
   static Resolve(System.String rawPath, app.actor.context.this context) : app.type.item.path.file.this
   static ValidatePath(System.String path, app.this app) : System.String
 
@@ -2105,7 +2215,7 @@ class app.type.item.path.http.this : app.type.item.path.this, app.type.item.ICre
   override WithName(System.String name) : app.type.item.path.this
   override WriteBytes(System.Byte[] content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
   override WriteText(System.String content, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
-  protected override AuthorizationHint(app.type.item.permission.Verb verb) : System.String
+  protected override AuthorizationHint(app.type.item.permission.Verb verb, app.actor.context.this context) : System.String
   static Create(System.Object value) : app.type.item.path.http.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.path.http.this
   static Resolve(System.String rawPath, app.actor.context.this context) : app.type.item.path.http.this
@@ -2133,7 +2243,7 @@ enum app.type.item.path.subfolder [PlangType]
   static const skip : app.type.item.path.subfolder
 
 abstract class app.type.item.path.this : app.type.item.this, app.type.item.ICreate<app.type.item.path.this> [Kinds, PlangType]
-  Authorize(app.type.item.permission.Verb verb, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
+  Authorize(app.type.item.permission.Verb verb, app.actor.context.this context, System.Boolean named = …) : System.Threading.Tasks.Task<app.data.this>
   Delete(app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this<app.type.item.path.this>>
   IsUnder(app.type.item.path.this root) : app.type.item.bool.this
   Kind(app.actor.context.this context) : app.type.this
@@ -2173,7 +2283,7 @@ abstract class app.type.item.path.this : app.type.item.this, app.type.item.ICrea
   protected Reference(System.String type, app.actor.context.this context) : app.type.this
   protected SignAndStore(app.actor.this actor, app.type.item.permission.Verb verb, System.Boolean persist, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
   protected override Type : app.type.this { get; }
-  protected virtual AuthorizationHint(app.type.item.permission.Verb verb) : System.String
+  protected virtual AuthorizationHint(app.type.item.permission.Verb verb, app.actor.context.this context) : System.String
   static Create(System.Object value) : app.type.item.path.this
   static Create(System.Object value, app.type.this declared, app.data.this data) : app.type.item.path.this
   static OwnedClrTypes : System.Collections.Generic.IReadOnlyList<app.type.convert.OwnedClr> { get; }
@@ -2972,6 +3082,7 @@ class app.type.list.this : app.type.item.list.this<app.type.this>
   Assemblies : System.Collections.Generic.List<System.Reflection.Assembly> { get; }
   Contains(System.String name) : System.Boolean
   Extension(System.String extension, app.actor.context.this context) : app.type.this
+  Format(System.String named) : app.type.kind.this
   HasKind(System.String name) : System.Boolean
   Item[System.String] : app.type.this { get; }
   Item[System.Type] : app.type.this { get; }
@@ -3055,6 +3166,14 @@ class app.type.reader.this+Read : System.MulticastDelegate
   virtual BeginInvoke(System.Object raw, System.String kind, app.type.reader.ReadContext ctx, System.AsyncCallback callback, System.Object object) : System.IAsyncResult
   virtual EndInvoke(System.IAsyncResult result) : System.Object
   virtual Invoke(System.Object raw, System.String kind, app.type.reader.ReadContext ctx) : System.Object
+
+class app.type.root.this : app.type.this<app.type.this, app.type.list.this>
+  Format : app.type.kind.this { get; set; }
+  FormatOf(app.actor.context.this context) : app.type.kind.this
+  Named(System.String named) : app.type.kind.this
+  ctor(app.this app)
+  override Get(app.data.this parent, System.String key) : System.Threading.Tasks.ValueTask<app.data.this>
+  override Set(System.String key, System.Boolean isIndex, System.Object value, app.actor.context.this context) : System.Threading.Tasks.ValueTask<app.type.item.this>
 
 class app.type.serializer.Reader : app.type.reader.ITypeReader
   Kind : System.String { get; }
@@ -3183,9 +3302,19 @@ type app.event.binding.clause
 
 type app.event.on
 
+type app.module.browser.type.cdp
+
+type app.module.browser.type.cdp.session
+
 type app.module.code.defaultoverride
 
 type app.module.code.registration
+
+type app.module.screen.type.element.list
+
+type app.module.window.type.window.list
+
+type app.parent
 
 type app.store.sqlite
 
@@ -3197,6 +3326,12 @@ type app.type.item.note.line
 
 type app.type.item.prose
 
+type app.type.root
+  .description : app.type.item.prose
+  .example : app.type.item.prose
+  .notes : file
+  .guide : file
+
 type archive
 
 type ask
@@ -3207,12 +3342,20 @@ type binary
 
 type bool
 
+type browser
+  .url : text
+  .width : number
+  .height : number
+  .running : bool
+
 type channel
 
 type choice
 
 type clause
   .name : text
+
+type clipboard
 
 type clr
 
@@ -3224,6 +3367,8 @@ type content
 type conversation
 
 type culture
+
+type cursor
 
 type date
 
@@ -3253,6 +3398,9 @@ type duration
   .minutes : number
   .seconds : number
   .milliseconds : number
+
+type element
+  .selector : text
 
 type entity
 
@@ -3285,6 +3433,8 @@ type identity
 
 type image
   .path : path
+
+type input
 
 type item
 
@@ -3334,11 +3484,25 @@ type path
 
 type permission
 
+type process
+  .program : text
+  .id : number
+  .running : bool
+  .pipe : app.channel.type.stream
+
 type progress
 
 type query
 
 type redirect
+
+type screen
+  .title : text
+  .width : number
+  .height : number
+  .closed : bool
+  .frames : number
+  .verbose : bool
 
 type secret
 
@@ -3393,6 +3557,11 @@ type url
   .path : path
 
 type variable
+
+type window
+  .id : number
+  .url : text
+  .title : text
 
 type wire
 
@@ -3453,6 +3622,23 @@ action assert.notEquals
   Expected : item
   Actual : item
   Message : text
+
+action browser.send
+  Data : input required
+  Browser : browser required
+
+action browser.start
+  Url : text required
+  Width : number
+  Height : number
+  Format : text
+  Quality : number
+  OnFrame : action
+  OnMessage : action
+  Screen : screen
+
+action browser.stop
+  Browser : browser required
 
 action build.appSave
 
@@ -3867,6 +4053,9 @@ action on.event
   Action : action required
   Scope : choice<scope>
 
+action on.input
+  Action : action required
+
 action on.timeout
   After : duration required
 
@@ -3881,6 +4070,29 @@ action output.ask
 action output.write
   Data : item required
   channel : text
+
+action screen.close
+  Screen : screen required
+
+action screen.draw
+  Data : item required
+  Screen : screen required
+
+action screen.listen
+  Screen : screen required
+
+action screen.open
+  Title : text
+  Width : number
+  Height : number
+  OnInput : action
+  OnClose : action
+  ToOutput : bool
+  OnWindow : action
+
+action screen.send
+  Data : item required
+  Screen : screen required
 
 action setting.remove
   Setting : setting required
@@ -3909,6 +4121,44 @@ action task.cancel
 action task.wait
   Task : task
   List : list
+
+action terminal.open
+  App : text required
+  Parameter : list
+  Environment : dict
+  WorkingDirectory : path
+  Permission : list<permission>
+  OnOutput : action
+  Binary : bool
+  OutputTo : screen
+  OnError : action
+  Pipe : bool
+  Clean : bool
+  Keep : list
+
+action terminal.send
+  Data : item required
+  Process : process required
+
+action terminal.start
+  App : text required
+  Parameter : list
+  Environment : dict
+  WorkingDirectory : path
+  Permission : list<permission>
+  Clean : bool
+  Keep : list
+  Input : text
+  Interactive : bool
+  Administrator : bool
+  OnOutput : action
+  OnError : action
+
+action terminal.stop
+  Process : process required
+
+action terminal.wait
+  Process : process required
 
 action test.discover
   Path : path
@@ -3954,3 +4204,35 @@ action variable.set
   Value : item required
   Type : type
   Default : bool
+
+action window.call
+  Name : text required
+  Parameter : list
+  Window : item required
+  Browser : browser
+
+action window.close
+  Window : item required
+  Browser : browser
+
+action window.navigate
+  Window : item required
+  Url : text required
+  Browser : browser
+
+action window.open
+  Url : text required
+  Browser : browser required
+
+action window.post
+  Data : item required
+  Window : item required
+  Browser : browser
+
+action window.reload
+  Window : item required
+  Browser : browser
+
+action window.screenshot
+  Window : item required
+  Browser : browser
