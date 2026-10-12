@@ -44,12 +44,6 @@ public class NonNullInvariantTests
         await Assert.That(clr!.Namespace).IsEqualTo("app.type.item.path");
     }
 
-    [Test] public async Task AppParent_OnRootApp_IsNull_ByDesign()
-    {
-        await using var app = new PLangEngine("/test");
-        await Assert.That(app.Parent).IsNull();
-    }
-
     [Test] public async Task StepGoal_OnOwnedStep_IsNonNull_AfterBackRefFlip()
     {
         var stepGoalProp = typeof(global::app.goal.step.@this).GetProperty("Goal");

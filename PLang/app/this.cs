@@ -75,15 +75,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     public string AbsolutePath { get; }
 
     /// <summary>
-    /// Parent app, when this app was constructed as a child of another.
-    /// A child inherits its parent's filesystem scope: <c>path.@this.IsInRoot</c>
-    /// walks the Parent chain, so a child app rooted at a narrower
-    /// subdirectory still treats the parent's <c>AbsolutePath</c> as in-root.
-    /// Null for top-level apps.
-    /// </summary>
-    public app.@this? Parent { get; }
-
-    /// <summary>
     /// The computed <c>os/</c> folder next to the executable. App-level constant
     /// (not file-scheme-specific): the path base's <c>Authorize</c> and
     /// <c>FilePath.ValidatePath</c> both anchor system goals against it, so it
@@ -270,13 +261,6 @@ public sealed partial class @this : global::app.type.item.@this, IAsyncDisposabl
     /// disposed on App.DisposeAsync.
     /// </summary>
     public keepalive.@this KeepAlive { get; } = new();
-
-    /// <summary>A child of <paramref name="parent"/> — rooted at the parent's root, with its os/ folder
-    /// (a test's App: the .pr files' root-relative paths resolve as they were built).</summary>
-    public @this(@this parent) : this(parent.AbsolutePath)
-    {
-        Parent = parent;
-    }
 
     public @this(string absolutePath,
         string? environment = null,

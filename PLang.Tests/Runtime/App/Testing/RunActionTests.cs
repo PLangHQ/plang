@@ -250,7 +250,7 @@ public class RunActionTests
         await Assert.That(observed.Any(x => x == ("variable", "set"))).IsTrue();
     }
 
-    // The os root is the executable's: every app — a test's child app too — resolves shared os/ goals
+    // The os root is the executable's: every app — a test's own app too — resolves shared os/ goals
     // (e.g. setup helpers) from the same folder, derived, never set or copied.
     // Uses the test list's Made hook to snapshot the child's os root.
     [Test]

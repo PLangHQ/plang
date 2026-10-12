@@ -865,7 +865,6 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   Mode : app.type.item.choice.this<app.Mode> { get; }
   Name(app.actor.context.this context) : app.type.item.text.this [LlmBuilder]
   OsAbsolutePath : System.String { get; }
-  Parent : app.this { get; }
   RequestShutdown() : System.Void
   Restore(app.snapshot.this s, app.actor.context.this context) : System.Threading.Tasks.Task
   ResumeFromWire(System.String json, app.actor.context.this context) : System.Threading.Tasks.Task<app.data.this>
@@ -885,7 +884,6 @@ class app.this : app.type.item.this, System.IAsyncDisposable, app.snapshot.ISnap
   actor : app.type.current.this<app.actor.this, app.actor.list.this> { get; }
   call(app.actor.context.this context) : app.call.list.this [LlmBuilder]
   ctor(System.String absolutePath, System.String environment = …, System.Boolean autoWireConsoleChannels = …)
-  ctor(app.this parent)
   data(app.actor.context.this context) : app.data.this [LlmBuilder]
   error : app.type.current.this<app.error.Error, app.error.list.this> { get; }
   event(app.actor.context.this context) : app.data.this [LlmBuilder]

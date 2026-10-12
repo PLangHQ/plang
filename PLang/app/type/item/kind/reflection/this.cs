@@ -13,26 +13,46 @@ public sealed class @this : global::app.type.kind.@this
 
     protected internal override string Owner => "item";
 
-    // Descend one property. Bottom-up + DeclaredOnly + IgnoreCase so a shadowing derived
-    // property wins and GetProperty never throws Ambiguous. The name as written wins over its other
-    // casings: a type may declare both (the app's Parent app, and parent — the plang that started it).
-    // List index / dict key are NOT here — the list/dict kinds own those; navigation re-derives to them per hop.
+    // Descend one property. A name is read ignoring its case; a derived type's property shadows a base one (bottom-up,
+    // each type's own). Two members of one type that the name matches is the program's error, naming both — never one
+    // picked over the other. List index / dict key are NOT here — the list/dict kinds own those; navigation re-derives
+    // to them per hop.
     public override (bool, object?) Descend(object obj, string key, bool isIndex, global::app.actor.context.@this ctx)
+    {
+        if (Property(obj, key) is { } prop) return (true, prop.GetValue(obj));
+        // A member that answers as its asker (the app's name, as the asker's settings have it) is a one-context
+        // method the catalog lists as a property — read the same, with the asker's context.
+        var members = obj.GetType().GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+            .Where(m => string.Equals(m.Name, key, System.StringComparison.OrdinalIgnoreCase)
+                 && System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void)
+                 && m.GetParameters() is [{ ParameterType: var p }] && p == typeof(global::app.actor.context.@this))
+            .ToArray();
+        if (members.Length > 1) throw Twice(obj, key, members.Select(m => m.Name));
+        return members.Length == 0 ? (false, null) : (true, members[0].Invoke(obj, [ctx]));
+    }
+
+    // The property `key` names on obj, its case ignored: the most derived type's own, a base's only when no type below
+    // it has one. Two of one type that it names is the error naming both.
+    private System.Reflection.PropertyInfo? Property(object obj, string key)
     {
         const System.Reflection.BindingFlags Own = System.Reflection.BindingFlags.Public
             | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.DeclaredOnly;
-        System.Reflection.PropertyInfo? prop = null;
-        for (var t = obj.GetType(); t != null && prop == null; t = t.BaseType)
-            prop = t.GetProperty(key, Own) ?? t.GetProperty(key, Own | System.Reflection.BindingFlags.IgnoreCase);
-        if (prop != null) return (true, prop.GetValue(obj));
-        // A member that answers as its asker (the app's name, as the asker's settings have it) is a one-context
-        // method the catalog lists as a property — read the same, with the asker's context.
-        var member = System.Array.Find(obj.GetType().GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance),
-            m => string.Equals(m.Name, key, System.StringComparison.OrdinalIgnoreCase)
-                 && System.Attribute.IsDefined(m, typeof(global::app.LlmBuilderAttribute)) && m.ReturnType != typeof(void)
-                 && m.GetParameters() is [{ ParameterType: var p }] && p == typeof(global::app.actor.context.@this));
-        return member == null ? (false, null) : (true, member.Invoke(obj, [ctx]));
+        for (var t = obj.GetType(); t != null; t = t.BaseType)
+        {
+            var named = t.GetProperties(Own)
+                .Where(p => p.GetIndexParameters().Length == 0 && string.Equals(p.Name, key, System.StringComparison.OrdinalIgnoreCase))
+                .ToArray();
+            if (named.Length > 1) throw Twice(obj, key, named.Select(p => p.Name));
+            if (named.Length == 1) return named[0];
+        }
+        return null;
     }
+
+    // The error for a name two members of one type answer to: plang reads names ignoring case, so it can't tell them apart.
+    private global::app.error.AppException Twice(object obj, string key, System.Collections.Generic.IEnumerable<string> names)
+        => new(new global::app.error.Error(
+            $"`{(obj is global::app.type.item.@this item ? item.Type.Name : obj.GetType().Name)}` has two members named {key}: "
+            + string.Join(", ", names.Select(n => $"`{n}`")), "AmbiguousMember", 400));
 
     public override System.Collections.Generic.IEnumerable<global::app.data.@this> Enumerate(
         object obj, global::app.actor.context.@this ctx)
@@ -48,8 +68,7 @@ public sealed class @this : global::app.type.kind.@this
     public override global::System.Threading.Tasks.ValueTask<global::app.type.item.@this> Set(
         object host, string key, bool isIndex, object? value, global::app.actor.context.@this ctx)
     {
-        var prop = host.GetType().GetProperty(key, System.Reflection.BindingFlags.Public
-            | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.IgnoreCase);
+        var prop = Property(host, key);
         if (prop == null || !prop.CanWrite)
             throw new System.NotSupportedException(
                 $"'{host.GetType().Name}' has no writable property '{key}'");

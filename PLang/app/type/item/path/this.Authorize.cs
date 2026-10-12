@@ -67,26 +67,14 @@ public partial class @this
     protected permission.@this BuildRequest(actor.@this actor, Verb verb) =>
         permission.@this.Request(actor.Name, Absolute, verb, MatchMode.exact);
 
-    // A child app inherits its parent's filesystem scope: paths under the
-    // parent's root are still in-root from a child's perspective. The os folder
-    // is never in-root: its access is the actors' standing grants (permission
-    // list, seeded at boot). The MaxDepth cap turns an accidental Parent cycle into a quiet
-    // false (out-of-root) instead of an infinite loop on the Authorize hot
-    // path; 16 is well above any legitimate child-app nesting.
+    // In-root is under the app's own folder. The os folder is never in-root, even when an app is rooted there: what an
+    // actor may do there is its standing grants (every actor reads and runs; only the system writes).
     protected bool IsInRoot(actor.context.@this context)
     {
         var app = context.App;
         if (app == null) return false;
-        const int MaxDepth = 16;
-        for (int depth = 0; app != null && depth < MaxDepth; depth++)
-        {
-            // the runtime's shared os folder is never an actor's own, even when an app is rooted there: what an
-            // actor may do there is its standing grants (every actor reads and runs; only the system writes)
-            if (IsUnder(app.OsAbsolutePath, RootComparison)) return false;
-            if (IsUnder(app.AbsolutePath, RootComparison)) return true;
-            app = app.Parent;
-        }
-        return false;
+        if (IsUnder(app.OsAbsolutePath, RootComparison)) return false;
+        return IsUnder(app.AbsolutePath, RootComparison);
     }
 
     // The running app's anchors: the only variables a goal that ships with plang may hold in what it names itself and

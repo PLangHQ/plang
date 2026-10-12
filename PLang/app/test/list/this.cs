@@ -142,14 +142,15 @@ public sealed class @this : global::app.type.item.list.@this<global::app.test.@t
     }
 
     // One test: this run's coverage takes in the goals it reaches (a site that never runs still shows); a test
-    // that isn't Ready is recorded, not run; a Ready one runs itself in an App of its own, a child of this one,
-    // testing it (its session open) — the App lives exactly as long as the run.
+    // that isn't Ready is recorded, not run; a Ready one runs itself in an App of its own, rooted at this one's folder
+    // (the .pr files' root-relative paths resolve as they were built), testing it (its session open) — the App lives
+    // exactly as long as the run.
     private async Task Run(global::app.test.@this test, actor.context.@this context)
     {
         foreach (var goal in test.Reach) Report.Coverage.Add(goal);
         if (test.Status == Status.Ready)
         {
-            await using var app = new global::app.@this(_app);
+            await using var app = new global::app.@this(_app.AbsolutePath);
             app.test.list.Open(test);
             Made?.Invoke(app);
             await test.Start(app, context);
