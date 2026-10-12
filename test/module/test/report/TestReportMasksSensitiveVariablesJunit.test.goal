@@ -11,6 +11,6 @@ TestReportMasksSensitiveVariablesJunit
 - assert %report!summaryFail% equals 1
 - assert %report!content% contains '<testsuites'
 - assert %report!content% contains 'privateKey'
-- assert %report!content% contains '******'
+- assert %report!content% contains '****'
 - assert %report!content% contains 'publicKey'
 - file.save path='snapshots/junit_sensitive_masked.xml', content=%report!content%

@@ -1,0 +1,12 @@
+/ Runs a passing fixture via test.run, then test.report in its default (json)
+/ format: the content is the run — each test by name with its status — and the
+/ report file is written. (Coverage is printed with the run, not kept in the report.)
+TestReportWritesTheRunAsJson
+- test.discover tests in '_fixtures_pass', pattern='*.fixture.goal', recursive, write to %tests%
+- test.run tests %tests%, write to %results%
+- test.report, write to %report%
+- assert %report!content% contains 'TrivialPass'
+- assert %report!content% contains '"status"'
+- assert %report!summaryPass% equals 1
+- file.exists %report!reportPath%, write to %exists%
+- assert %exists% is true
