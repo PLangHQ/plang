@@ -40,7 +40,10 @@ namespace PLang.Modules.ImageModule
 			try
 			{
 
-				request.FilePath = GetPath(request.FilePath);
+				// A step that only wants the data uri gives no path, and resolving an empty one
+				// returned the app root, which the renderers then tried to write to: every such
+				// step failed with "Access to the path '/the/app' is denied".
+				if (!string.IsNullOrEmpty(request.FilePath)) request.FilePath = GetPath(request.FilePath);
 
 				var eccLevel = ParseEccLevel(request.ErrorCorrection);
 				var payloadData = CreatePayload(request);
