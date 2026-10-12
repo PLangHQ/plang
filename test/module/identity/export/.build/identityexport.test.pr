@@ -209,7 +209,7 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/test/module/identity/export/IdentityExport.test.goal",
-  "prPath": "/test/module/identity/export/.build/identityexport.test.pr",
+  "path": "/module/identity/export/IdentityExport.test.goal",
+  "prPath": "/module/identity/export/.build/identityexport.test.pr",
   "hash": "be73b892f487bbc09c8cfca5050febb8ba1ba5a3a2f3cd222b4916da374ac4d2"
 }

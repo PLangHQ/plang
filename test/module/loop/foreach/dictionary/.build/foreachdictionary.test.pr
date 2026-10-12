@@ -272,7 +272,7 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/test/module/loop/foreach/dictionary/ForeachDictionary.test.goal",
-  "prPath": "/test/module/loop/foreach/dictionary/.build/foreachdictionary.test.pr",
+  "path": "/module/loop/foreach/dictionary/ForeachDictionary.test.goal",
+  "prPath": "/module/loop/foreach/dictionary/.build/foreachdictionary.test.pr",
   "hash": "e41287488ca04d8bb3351c8decd2a7a6e9ab2de02006958a3970603f92214a45"
 }

@@ -151,7 +151,7 @@
   ],
   "child": [],
   "visibility": "Public",
-  "path": "/test/module/condition/file/filenotexists/ConditionFileNotExists.test.goal",
-  "prPath": "/test/module/condition/file/filenotexists/.build/conditionfilenotexists.test.pr",
+  "path": "/module/condition/file/filenotexists/ConditionFileNotExists.test.goal",
+  "prPath": "/module/condition/file/filenotexists/.build/conditionfilenotexists.test.pr",
   "hash": "2b01ea90cf1660bb2a0aea2e7d9f790cadf2fe10d7fe9c4a5536a0c1db853b32"
 }
