@@ -1,0 +1,496 @@
+{
+  "name": "Start",
+  "comment": "Test: nested conditions — inner false only skips inner block, outer continues",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %x% = 10",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 10
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %y% = 3",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%y%",
+              "variable": [
+                {
+                  "text": "%y%",
+                  "code": [
+                    {
+                      "variable": "y"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 3
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %innerRan% = \"no\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%innerRan%",
+              "variable": [
+                {
+                  "text": "%innerRan%",
+                  "code": [
+                    {
+                      "variable": "innerRan"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "set %outerAfterRan% = \"no\"",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%outerAfterRan%",
+              "variable": [
+                {
+                  "text": "%outerAfterRan%",
+                  "code": [
+                    {
+                      "variable": "outerAfterRan"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "if %x% > 5",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%x%",
+              "variable": [
+                {
+                  "text": "%x%",
+                  "code": [
+                    {
+                      "variable": "x"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": ">"
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "number"
+              },
+              "value": 5
+            }
+          ],
+          "child": [
+            {
+              "index": 5,
+              "text": "if %y% > 100",
+              "line": {
+                "number": 8,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "condition",
+                  "name": "if",
+                  "property": [
+                    {
+                      "name": "Left",
+                      "type": {
+                        "name": "item",
+                        "template": "plang"
+                      },
+                      "value": "%y%",
+                      "variable": [
+                        {
+                          "text": "%y%",
+                          "code": [
+                            {
+                              "variable": "y"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Operator",
+                      "type": {
+                        "name": "choice",
+                        "kind": "operator"
+                      },
+                      "value": ">"
+                    },
+                    {
+                      "name": "Right",
+                      "type": {
+                        "name": "number"
+                      },
+                      "value": 100
+                    }
+                  ],
+                  "child": [
+                    {
+                      "index": 6,
+                      "text": "set %innerRan% = \"yes\"",
+                      "line": {
+                        "number": 9,
+                        "indent": 2
+                      },
+                      "code": [
+                        {
+                          "module": "variable",
+                          "name": "set",
+                          "property": [
+                            {
+                              "name": "Name",
+                              "type": {
+                                "name": "variable"
+                              },
+                              "value": "%innerRan%",
+                              "variable": [
+                                {
+                                  "text": "%innerRan%",
+                                  "code": [
+                                    {
+                                      "variable": "innerRan"
+                                    }
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "name": "Value",
+                              "type": {
+                                "name": "text"
+                              },
+                              "value": "yes"
+                            }
+                          ],
+                          "default": [
+                            {
+                              "name": "default",
+                              "type": {
+                                "name": "bool"
+                              },
+                              "value": false
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "index": 7,
+              "text": "set %outerAfterRan% = \"yes\"",
+              "line": {
+                "number": 10,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%outerAfterRan%",
+                      "variable": [
+                        {
+                          "text": "%outerAfterRan%",
+                          "code": [
+                            {
+                              "variable": "outerAfterRan"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "text"
+                      },
+                      "value": "yes"
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "assert %innerRan% equals \"no\", \"inner block should be skipped (y not > 100)\"",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "no"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%innerRan%",
+              "variable": [
+                {
+                  "text": "%innerRan%",
+                  "code": [
+                    {
+                      "variable": "innerRan"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "inner block should be skipped (y not > 100)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 9,
+      "text": "assert %outerAfterRan% equals \"yes\", \"outer block step after inner-if should execute\"",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "text"
+              },
+              "value": "yes"
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%outerAfterRan%",
+              "variable": [
+                {
+                  "text": "%outerAfterRan%",
+                  "code": [
+                    {
+                      "variable": "outerAfterRan"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "outer block step after inner-if should execute"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/if/nested/ConditionNested.test.goal",
+  "prPath": "/module/condition/if/nested/.build/conditionnested.test.pr",
+  "hash": "70a28777f84f5cd77a527c8b7912e072a2ecb0516afd46e5e54c4f089cc39a7a"
+}

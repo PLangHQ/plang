@@ -1,0 +1,702 @@
+{
+  "name": "Start",
+  "comment": "Plane — every %x% == null works regardless of x's type (null is never Incomparable; equality carve-out).",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %d% = '{\"a\": 1}', type=json",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "{\"a\": 1}"
+            },
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%d%",
+              "variable": [
+                {
+                  "text": "%d%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Type",
+              "type": {
+                "name": "type"
+              },
+              "value": "dict"
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "set %n% = 5",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "number"
+              },
+              "value": 5
+            },
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "set %t% = \"hello\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "text"
+              },
+              "value": "hello"
+            },
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%t%",
+              "variable": [
+                {
+                  "text": "%t%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "text": "set %dictIsNull% = false",
+      "line": {
+        "number": 6
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%dictIsNull%",
+              "variable": [
+                {
+                  "text": "%dictIsNull%",
+                  "code": [
+                    {
+                      "variable": "dictIsNull"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "text": "if %d% == null then",
+      "line": {
+        "number": 7
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%d%",
+              "variable": [
+                {
+                  "text": "%d%",
+                  "code": [
+                    {
+                      "variable": "d"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "item"
+              },
+              "value": null
+            }
+          ],
+          "child": [
+            {
+              "index": 5,
+              "text": "set %dictIsNull% = true",
+              "line": {
+                "number": 8,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    },
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%dictIsNull%",
+                      "variable": [
+                        {
+                          "text": "%dictIsNull%",
+                          "code": [
+                            {
+                              "variable": "dictIsNull"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "text": "assert %dictIsNull% is false",
+      "line": {
+        "number": 9
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isFalse",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%dictIsNull%",
+              "variable": [
+                {
+                  "text": "%dictIsNull%",
+                  "code": [
+                    {
+                      "variable": "dictIsNull"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "text": "set %numIsNull% = false",
+      "line": {
+        "number": 10
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%numIsNull%",
+              "variable": [
+                {
+                  "text": "%numIsNull%",
+                  "code": [
+                    {
+                      "variable": "numIsNull"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "text": "if %n% == null then",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%n%",
+              "variable": [
+                {
+                  "text": "%n%",
+                  "code": [
+                    {
+                      "variable": "n"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "item"
+              },
+              "value": null
+            }
+          ],
+          "child": [
+            {
+              "index": 9,
+              "text": "set %numIsNull% = true",
+              "line": {
+                "number": 12,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    },
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%numIsNull%",
+                      "variable": [
+                        {
+                          "text": "%numIsNull%",
+                          "code": [
+                            {
+                              "variable": "numIsNull"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "text": "assert %numIsNull% is false",
+      "line": {
+        "number": 13
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isFalse",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%numIsNull%",
+              "variable": [
+                {
+                  "text": "%numIsNull%",
+                  "code": [
+                    {
+                      "variable": "numIsNull"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 11,
+      "text": "set %textIsNull% = false",
+      "line": {
+        "number": 14
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            },
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%textIsNull%",
+              "variable": [
+                {
+                  "text": "%textIsNull%",
+                  "code": [
+                    {
+                      "variable": "textIsNull"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "text": "if %t% == null then",
+      "line": {
+        "number": 15
+      },
+      "code": [
+        {
+          "module": "condition",
+          "name": "if",
+          "property": [
+            {
+              "name": "Left",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%t%",
+              "variable": [
+                {
+                  "text": "%t%",
+                  "code": [
+                    {
+                      "variable": "t"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Operator",
+              "type": {
+                "name": "choice",
+                "kind": "operator"
+              },
+              "value": "=="
+            },
+            {
+              "name": "Right",
+              "type": {
+                "name": "item"
+              },
+              "value": null
+            }
+          ],
+          "child": [
+            {
+              "index": 13,
+              "text": "set %textIsNull% = true",
+              "line": {
+                "number": 16,
+                "indent": 1
+              },
+              "code": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    },
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%textIsNull%",
+                      "variable": [
+                        {
+                          "text": "%textIsNull%",
+                          "code": [
+                            {
+                              "variable": "textIsNull"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 14,
+      "text": "assert %textIsNull% is false",
+      "line": {
+        "number": 17
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isFalse",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%textIsNull%",
+              "variable": [
+                {
+                  "text": "%textIsNull%",
+                  "code": [
+                    {
+                      "variable": "textIsNull"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/condition/compare/Plane_NullComparisonsWork.test.goal",
+  "prPath": "/module/condition/compare/.build/plane_nullcomparisonswork.test.pr",
+  "hash": "45534d9392a66ba93fa11decb05134f6f6431dad8541cf4da97d5016dd357c65"
+}
