@@ -12,7 +12,5 @@ TypedSnapshotString_NavigateEditResume_PersistsEdit
 # watched flake (2026-10-03, not on the baseline): Cancel_StopsTheGoal_AnswersNothing_AndALaterWaitFailsCancelled_NeverReported (Runtime, TaskTests) — once in a sweep at load ~42: "cancelled.Peek().IsNull" false, the task ended before Cancel so Cancel answered its result; green 3x alone. A second sighting means hold the task open on a signal, not a sleep.
 # watched flake (2026-10-12, not on the baseline): ErrorInPlay_DuringRecovery_IsTheTimeoutsOwnVerdict — in gate 165 under load; 2/2 alone.
 # fixed (2026-10-12, ede6e1b67): TwoVideosAtOverlappingPlaces_BothPlay — both streams were clocked at the very same place, where a stream quiet for over a second is ended as the old player's; under load the first one was. The second now overlaps without matching.
-# watched flake (2026-10-12, not on the baseline): ANewPicture_SaysItsPlace_AndShowsThere — in gate 167 at load ~17–19; 2/2 alone.
-# watched flake (2026-10-12, not on the baseline): ANewVideoAtTheSamePlace_EndsAQuietOne — in gate 167 at load ~17–19; 2/2 alone.
-# the os video tests above: a sighting at normal load means a bound that only means a hang (as CdpEventTests).
+# fixed (2026-10-12, 1cc02e738): ANewPicture_SaysItsPlace_AndShowsThere, ANewVideoAtTheSamePlace_EndsAQuietOne — MediaTests' Playing waited 5 s for the first picture, a speed limit under load; the bound is now 30 s, meaning only a hang.
 # watched flake (2026-10-12, not on the baseline): Sleep_LastsItsDuration(0.5s) — in gate 172 at 17 s under load ~17; 3/3 alone.
