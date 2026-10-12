@@ -1,0 +1,129 @@
+{
+  "name": "Start",
+  "comment": "Writing to an unregistered channel raises ChannelNotFound — caught via on-error.",
+  "step": [
+    {
+      "index": 0,
+      "text": "write 'hi' to dbg, on error set %unknownChannelError% = true",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "output",
+          "name": "write",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "text"
+              },
+              "value": "hi"
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "variable",
+                  "name": "set",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "variable"
+                      },
+                      "value": "%unknownChannelError%",
+                      "variable": [
+                        {
+                          "text": "%unknownChannelError%",
+                          "code": [
+                            {
+                              "variable": "unknownChannelError"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Value",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": true
+                    }
+                  ],
+                  "default": [
+                    {
+                      "name": "default",
+                      "type": {
+                        "name": "bool"
+                      },
+                      "value": false
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "assert %unknownChannelError% is true",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%unknownChannelError%",
+              "variable": [
+                {
+                  "text": "%unknownChannelError%",
+                  "code": [
+                    {
+                      "variable": "unknownChannelError"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [],
+  "visibility": "Public",
+  "path": "/module/channel/writetounknownchannel/Start.test.goal",
+  "prPath": "/module/channel/writetounknownchannel/.build/start.test.pr",
+  "hash": "941e4f4e95976942d3158d5f0dbcccf697e02e3c981ef5282cca10ad5c976d0b"
+}
