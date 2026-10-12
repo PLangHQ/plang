@@ -28,6 +28,25 @@ public partial class OnError : IContext, IClause, IAction
 
     public Task<global::app.data.@this> Start() => Task.FromResult(Context.Ok());
 
+    /// <summary>An on.error must DO something when it takes the failure — retry, recover, or carry on.
+    /// A clause with none (an empty on.error, or one that only filters) does nothing. The common mis-build
+    /// is the recovery hoisted to a top-level action AFTER the clause instead of inside Recovery; refusing
+    /// the empty clause makes the retry nest it. Structural — reads presence, no words.</summary>
+    public async Task<global::app.error.Error?> Validate()
+    {
+        // Absent properties are the typed Uninitialized citizen, NOT C# null — read the value, as Catch does.
+        var recovery = Recovery == null ? null : await Recovery.Value();
+        bool hasRecovery = recovery is { CountRaw: > 0 };
+        var retries = RetryCount == null ? null : await RetryCount.Value();
+        bool hasRetry = retries != null && retries.ToInt32() > 0;
+        bool carriesOn = await Ignore.ToBooleanAsync();
+        if (!hasRecovery && !hasRetry && !carriesOn)
+            return new global::app.error.Error(
+                "on.error does nothing: its recovery goes inside Recovery=[...], not as an action after it",
+                "OnErrorDoesNothing", 400);
+        return null;
+    }
+
     public void Bind(Action clause, Action action)
         => action.Own().Bind("error", global::app.@event.When.before, side => new global::app.@event.binding.clause.@this(
             side, clause, action, (handler, a, failed, context) => ((OnError)handler).Catch(a, failed, context)));

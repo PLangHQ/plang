@@ -481,4 +481,38 @@ public class MatchTests
 
         await result.IsSuccess();
     }
+
+    // An on.error must do something when it takes the failure (retry, recover, or carry on). An empty
+    // on.error is refused — this catches the common mis-build where the recovery is hoisted to a
+    // top-level action AFTER the clause instead of inside Recovery. Structural, reads no words.
+    [Test]
+    public async Task AnOnErrorThatDoesNothing_IsRefused()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step("call Flaky, on error"));
+        await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"));
+
+        var result = await Match(goal, "[0] goal.call(Name=\"Flaky\"); on.error()", app.actor.list.System.Context);
+
+        await result.IsFailure();
+        await Assert.That(result.Error!.Message).Contains("on.error does nothing");
+    }
+
+    [Test]
+    public async Task AnOnErrorThatRetriesIgnoresOrRecovers_IsNotRefusedForDoingNothing()
+    {
+        await using var app = new global::app.@this("/test").Testing().Building();
+        foreach (var (text, answer) in new[]
+        {
+            ("call Flaky, on error ignore", "[0] goal.call(Name=\"Flaky\"); on.error(Ignore=true)"),
+            ("call Flaky, on error retry 2 times", "[0] goal.call(Name=\"Flaky\"); on.error(RetryCount=2)"),
+            ("call Flaky, on error call Rollback", "[0] goal.call(Name=\"Flaky\"); on.error(Recovery=[goal.call(Name=\"Rollback\")])"),
+        })
+        {
+            var goal = Make.Goal(app.actor.list.User.Context, "G", Make.Step(text));
+            await Picked(goal, app.actor.list.System.Context, (0, "goal.call"), (0, "on.error"));
+            var result = await Match(goal, answer, app.actor.list.System.Context);
+            await Assert.That(result.Error?.Message ?? "").DoesNotContain("on.error does nothing");
+        }
+    }
 }
