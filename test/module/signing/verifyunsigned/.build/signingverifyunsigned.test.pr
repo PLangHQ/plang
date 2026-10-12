@@ -1,0 +1,235 @@
+{
+  "name": "Start",
+  "comment": "Test: verify data that was never signed",
+  "step": [
+    {
+      "index": 0,
+      "text": "set %data% = { \"payload\": \"unsigned\" }",
+      "line": {
+        "number": 3
+      },
+      "code": [
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "dict"
+              },
+              "value": {"payload":"unsigned"}
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "verify %data% with contracts ['C0'], on error call HandleNoSig",
+      "line": {
+        "number": 4
+      },
+      "code": [
+        {
+          "module": "signing",
+          "name": "verify",
+          "property": [
+            {
+              "name": "Data",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%data%",
+              "variable": [
+                {
+                  "text": "%data%",
+                  "code": [
+                    {
+                      "variable": "data"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Contracts",
+              "type": {
+                "name": "list"
+              },
+              "value": ["C0"]
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "HandleNoSig"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "text": "assert %noSig% is true, \"verify unsigned data should fail\"",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%noSig%",
+              "variable": [
+                {
+                  "text": "%noSig%",
+                  "code": [
+                    {
+                      "variable": "noSig"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Message",
+              "type": {
+                "name": "text"
+              },
+              "value": "verify unsigned data should fail"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "child": [
+    {
+      "name": "HandleNoSig",
+      "step": [
+        {
+          "index": 0,
+          "text": "set %noSig% = true",
+          "line": {
+            "number": 8
+          },
+          "code": [
+            {
+              "module": "variable",
+              "name": "set",
+              "property": [
+                {
+                  "name": "Name",
+                  "type": {
+                    "name": "variable"
+                  },
+                  "value": "%noSig%",
+                  "variable": [
+                    {
+                      "text": "%noSig%",
+                      "code": [
+                        {
+                          "variable": "noSig"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "name": "Value",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": true
+                }
+              ],
+              "default": [
+                {
+                  "name": "default",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "child": [],
+      "visibility": "Private",
+      "path": "/module/signing/verifyunsigned/SigningVerifyUnsigned.test.goal",
+      "prPath": "/module/signing/verifyunsigned/.build/signingverifyunsigned.test.pr",
+      "hash": "7945b90f0ca7ad935b9e91a14cb49e553fec319ca57ea34cfa8510759396e4bb"
+    }
+  ],
+  "visibility": "Public",
+  "path": "/module/signing/verifyunsigned/SigningVerifyUnsigned.test.goal",
+  "prPath": "/module/signing/verifyunsigned/.build/signingverifyunsigned.test.pr",
+  "hash": "81c33cba427658b86a08c7514fffd9df87c023a095a64da159c1bd27e9f3b8e1"
+}
