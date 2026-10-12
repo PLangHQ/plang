@@ -15,3 +15,4 @@ TypedSnapshotString_NavigateEditResume_PersistsEdit
 # watched flake (2026-10-12, not on the baseline): ANewPicture_SaysItsPlace_AndShowsThere — in gate 167 at load ~17–19; 2/2 alone.
 # watched flake (2026-10-12, not on the baseline): ANewVideoAtTheSamePlace_EndsAQuietOne — in gate 167 at load ~17–19; 2/2 alone.
 # the os video tests above: a sighting at normal load means a bound that only means a hang (as CdpEventTests).
+# watched flake (2026-10-12, not on the baseline): Sleep_LastsItsDuration(0.5s) — in gate 172 at 17 s under load ~17; 3/3 alone.
