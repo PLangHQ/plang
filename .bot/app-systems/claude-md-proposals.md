@@ -282,3 +282,17 @@ Verified each against code (as for v6/v7); small commits per area.
 - 3. **Run the full test suite.** Both C# (`dotnet run --project PLang.Tests`) and PLang (`plang --test`).
 + 3. **Run the full test suite.** `./dev.sh build`, then C# with `./dev.sh test`, then PLang with `cd test && ../PlangConsole/bin/Debug/net10.0/plang --test`.
 ```
+
+## docs — proposal-pass decisions — 2026-10-13
+
+Applied the pending list + the entries after the 10-03 ones (Ingi, before the reviewer bots). Verified each against code. Commits per area.
+
+**APPLIED to /CLAUDE.md** (commit on this pass): architect 09-26 #1 (comment→next-line + folder `start.md`, PLang Syntax); architect 09-26 #2 (plang vocabulary lowercase in members — verified `app/this.cs` exposes `type`/`goal`/`module`/`variable`/`data`/`@event`/`actor` as lowercase nodes; corrected the proposal's `app/type/type/this.cs` → `app/type/item/text/this.cs`; folded the nodes-lowercase/verbs-PascalCase addendum; lowercased line-10 `app.Module` → `app.module`, noting `Module(name)` stays the PascalCase verb); coder v2 (`Run()`→`Start()` header + cross-ref + Handler-naming `Start()` sentence — verified `ICodeGenerated.Start()` and `action.@this.Start(context)`); coder v6 (variable parser bullet — **dropped the retired `tools/decider/variables.py` twin line**); architect 09-28 owners-take-values (verified `.Use(` in file module); architect 09-29 error-answers (verified `AppException`, `Error.FromException`); architect 09-29 Normalize/[Out] (verified `data.Normalize`, `NoWireContract`); architect 09-30 value-writes-what-it-is; architect v3 glued-name (under Shape); architect v5 flag-false (verified `conventions.md` §"A Flag Is False By Default"); architect 10-12 done-plan-tests-move (670, Running plang Tests); architect 10-12 events-in-locked-core (689 — verified `Attributes/EventsAttribute.cs`, `event/on/`); architect 10-13 Key Files repaths (verified every new path exists; old `PLang/Runtime2/**` gone); architect 10-13 never-hand-edit-a-.pr (720, ## Build).
+
+**APPLIED to Documentation/** : architect 09-28 envelope smell → `obp-smells.md` Value layer (full, with the kept-unfixed specimen `llm/code/OpenAi.cs` `RestoreFromCache` — verified still present) + a one-line tell in CLAUDE.md's OBP quick list. builder v3's two docs scrubs → `obp-cleanup.md:219` and `todos.md:2124` (retired `tools/decider` refs reworded to the C# `PickListTests` golden).
+
+**APPLIED to characters/ (mounted, WRITABLE — not EROFS — but `characters/` is gitignored, so these edits take effect in the live mounted files the bots load; they are NOT committed to app-systems):** architect 10-13 production-C#-is-the-coder's (718) → `characters/builder/character.md` lines 22 + 125; architect 10-13 tester-runs-C#-through-dev.sh (D) → `characters/tester/character.md:19` and `characters/builder2/character.md:133`.
+
+**REJECTED:** architect v4 (builder character owns module C#) — dropped per Ingi's 10-13 instruction; superseded by 718 (production C# is the coder's), which is applied instead.
+
+**LEFT TO OWNERS (out of docs' scope):** builder v3's `characters/architect/memory/*` and `characters/os/memory/*` `tools/decider` references — those memory files belong to the architect and os bots to clean; flagged here, not edited.

@@ -102,6 +102,7 @@ Ingi has **locked the core's surface.** These are the load-bearing shapes the re
 ## Build
 - Always run `plang build` without specifying a goal name — it builds everything
 - NEVER delete .build folders
+- NEVER hand-edit a `.pr` file, by any tool, even to fix only a path. A `.pr` is what the builder writes. When a rebuild can't reproduce one, report it and leave the file as built.
 - Use `PlangConsole/bin/Debug/net10.0/plang.exe` for net10.0 builds
 - Don't use Select-String in bash — it doesn't work
 - **How a build answer is judged** (what Cover, Agree, the decider's stage 2 and the step-fixer refuse): `Documentation/v0.2/build-checks.md`.
