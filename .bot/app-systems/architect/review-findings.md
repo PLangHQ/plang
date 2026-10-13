@@ -68,3 +68,10 @@ Each finding the reviewer bots report, checked against the code before it goes a
 | kind/dict and kind/list (the C# host codecs) | every behaviour on a carried list: member access via the reflection kind (673), Convert narrowing `clr(JsonElement)` (717), Output through `WriteReflected` (two more sites of F5.2), Set throwing on a bad index (59's remainder) | carried |
 | kind/reflection | the carried 673 door; `Property`/`Method`/`Twice` (`reflection/this.cs:36/56/69`) are the stopgap statics 673 names; `Tagged.cs` the one owner of which C# properties ship ([Out]/[Sensitive]/[Masked], 681) | carried |
 | F5.1 one more stale `Normalize`: `reflection/Tagged.cs:8` | grep confirmed | fix (batch 1, with F5.1) |
+
+## codeanalyzer (plang-ae), area 7: the module registry and app (96e7f7955)
+
+| finding | checked | status |
+|---|---|---|
+| actions resolve by a dictionary lookup, no switch on the action name; the clause/loop/keep/plain mint runs once at registration; `app` owns each collection once, no naked public collection, no service locator; path schemes register with factories (`app/this.cs:310–312`) | its reading | cleared |
+| reflection at `module/this.cs:194, 203–215`, `app/this.cs:432`; the reader's thrown refusal at `app/this.cs:437` | cited | carried (673, 714) |
