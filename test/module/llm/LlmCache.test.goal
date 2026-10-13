@@ -1,4 +1,8 @@
-/ Cache hit — same query twice, verify second returns cached result
+/ Cache hit — same query twice; the second must come back from the cache.
+/ The query result carries a `Cached` property (false on a live call, true when
+/ restored from the LlmCache store), so %second!Cached% is the discriminator:
+/ with `cache: true` the second query hits the cache and Cached is true; turn the
+/ second query's cache off and it goes live, Cached is false, and this test goes red.
 Start
 - [llm] system: 'You are a helpful assistant'
     user: 'What is the capital of Iceland?'
@@ -10,3 +14,4 @@ Start
     write to %second%
 - assert %first% is not null
 - assert %second% is not null
+- assert %second!Cached% is true

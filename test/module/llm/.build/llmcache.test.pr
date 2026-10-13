@@ -1,118 +1,10 @@
 {
   "name": "Start",
-  "comment": "Cache hit — same query twice, verify second returns cached result",
+  "comment": "Cache hit — same query twice; the second must come back from the cache.\nThe query result carries a `Cached` property (false on a live call, true when\nrestored from the LlmCache store), so %second!Cached% is the discriminator:\nwith `cache: true` the second query hits the cache and Cached is true; turn the\nsecond query's cache off and it goes live, Cached is false, and this test goes red.",
   "step": [
     {
       "index": 0,
       "text": "[llm] system: 'You are a helpful assistant'\nuser: 'What is the capital of Iceland?'\ncache: true\nwrite to %first%",
-      "line": {
-        "number": 3
-      },
-      "code": [
-        {
-          "module": "llm",
-          "name": "query",
-          "property": [
-            {
-              "name": "Message",
-              "type": {
-                "name": "list",
-                "kind": "message"
-              },
-              "value": [{"Role":"system","Content":"You are a helpful assistant"},{"Role":"user","Content":"What is the capital of Iceland?"}]
-            }
-          ],
-          "default": [
-            {
-              "name": "conversation",
-              "type": {
-                "name": "conversation"
-              },
-              "value": {}
-            },
-            {
-              "name": "temperature",
-              "type": {
-                "name": "number"
-              },
-              "value": 0
-            },
-            {
-              "name": "limit",
-              "type": {
-                "name": "limit"
-              },
-              "value": {
-                "token": 16000,
-                "tool": 10,
-                "retry": 0
-              }
-            },
-            {
-              "name": "cache",
-              "type": {
-                "name": "choice",
-                "kind": "cache"
-              },
-              "value": "use"
-            }
-          ]
-        },
-        {
-          "module": "variable",
-          "name": "set",
-          "property": [
-            {
-              "name": "Name",
-              "type": {
-                "name": "variable"
-              },
-              "value": "%first%",
-              "variable": [
-                {
-                  "text": "%first%",
-                  "code": [
-                    {
-                      "variable": "first"
-                    }
-                  ]
-                }
-              ]
-            },
-            {
-              "name": "Value",
-              "type": {
-                "name": "item",
-                "template": "plang"
-              },
-              "value": "%!data%",
-              "variable": [
-                {
-                  "text": "%!data%",
-                  "code": [
-                    {
-                      "variable": "!data"
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "default": [
-            {
-              "name": "default",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "index": 1,
-      "text": "[llm] system: 'You are a helpful assistant'\nuser: 'What is the capital of Iceland?'\ncache: true\nwrite to %second%",
       "line": {
         "number": 7
       },
@@ -175,6 +67,142 @@
               "type": {
                 "name": "variable"
               },
+              "value": "%first%",
+              "variable": [
+                {
+                  "text": "%first%",
+                  "code": [
+                    {
+                      "variable": "first"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "default",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
+          "module": "on",
+          "name": "cache",
+          "property": [
+            {
+              "name": "Duration",
+              "type": {
+                "name": "duration"
+              },
+              "value": "PT0S"
+            }
+          ],
+          "default": [
+            {
+              "name": "sliding",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 0 uses on.cache, which the decider was not sure of (0.89)"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "text": "[llm] system: 'You are a helpful assistant'\nuser: 'What is the capital of Iceland?'\ncache: true\nwrite to %second%",
+      "line": {
+        "number": 11
+      },
+      "code": [
+        {
+          "module": "llm",
+          "name": "query",
+          "property": [
+            {
+              "name": "Message",
+              "type": {
+                "name": "list",
+                "kind": "message"
+              },
+              "value": [{"Role":"system","Content":"You are a helpful assistant"},{"Role":"user","Content":"What is the capital of Iceland?"}]
+            }
+          ],
+          "default": [
+            {
+              "name": "conversation",
+              "type": {
+                "name": "conversation"
+              },
+              "value": {}
+            },
+            {
+              "name": "temperature",
+              "type": {
+                "name": "number"
+              },
+              "value": 0
+            },
+            {
+              "name": "limit",
+              "type": {
+                "name": "limit"
+              },
+              "value": {
+                "token": 16000,
+                "tool": 10,
+                "retry": 0
+              }
+            },
+            {
+              "name": "cache",
+              "type": {
+                "name": "choice",
+                "kind": "cache"
+              },
+              "value": "use"
+            }
+          ]
+        },
+        {
+          "module": "variable",
+          "name": "set",
+          "property": [
+            {
+              "name": "Name",
+              "type": {
+                "name": "variable"
+              },
               "value": "%second%",
               "variable": [
                 {
@@ -215,6 +243,34 @@
               "value": false
             }
           ]
+        },
+        {
+          "module": "on",
+          "name": "cache",
+          "property": [
+            {
+              "name": "Duration",
+              "type": {
+                "name": "duration"
+              },
+              "value": "PT0S"
+            }
+          ],
+          "default": [
+            {
+              "name": "sliding",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 1 uses on.cache, which the decider was not sure of (0.89)"
         }
       ]
     },
@@ -222,7 +278,7 @@
       "index": 2,
       "text": "assert %first% is not null",
       "line": {
-        "number": 11
+        "number": 15
       },
       "code": [
         {
@@ -255,7 +311,7 @@
       "index": 3,
       "text": "assert %second% is not null",
       "line": {
-        "number": 12
+        "number": 16
       },
       "code": [
         {
@@ -283,11 +339,47 @@
           ]
         }
       ]
+    },
+    {
+      "index": 4,
+      "text": "assert %second!Cached% is true",
+      "line": {
+        "number": 17
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%second!Cached%",
+              "variable": [
+                {
+                  "text": "%second!Cached%",
+                  "code": [
+                    {
+                      "variable": "second"
+                    },
+                    {
+                      "property": "!Cached"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "child": [],
   "visibility": "Public",
   "path": "/module/llm/LlmCache.test.goal",
   "prPath": "/module/llm/.build/llmcache.test.pr",
-  "hash": "df403ba4beecc5ab4626b83b45a5e63c26ad15d17d08ee7de01d9dc44efad754"
+  "hash": "fad6baa7b69f602a0233f7e41e39162961a31b8d533b228a3d46ebd022c691ce"
 }
