@@ -236,3 +236,41 @@ Verified each against code (as for v6/v7); small commits per area.
 ```
 **events** — the event door (`event.on`), the core events and `[Events(...)]`;
 ```
+
+## architect — 2026-10-13 — Key Files points at paths that no longer exist
+**Target:** /CLAUDE.md, "## Key Files"
+**Why:** Every `PLang/Runtime2/...` path in the section is gone (the code lives under `PLang/app/` since the app-lowercase and singular-namespaces work), and `system/builder` is `os/system/builder`. The reviewer bots read CLAUDE.md first (decision 718), so a stale map sends them to files that don't exist. TypeMapping.cs and GoalMapper.cs no longer exist; their lines go.
+**Proposed change:** replace the section's bullets with:
+```
+- PlangConsole is the executable project (not PLang which is a library)
+- os/system/builder/*.goal — the PLang builder written in PLang
+- PLang/app/this.cs — the app, root of every concept (`app.@this`)
+- PLang/app/goal/this.cs, PLang/app/goal/step/this.cs — goal and step
+- PLang/app/module/<module>/<action>.cs — action handlers; PLang/app/module/IClass.cs, ICodeGenerated.cs — handler interfaces
+- PLang/app/data/this.cs — Data, the universal result and value carrier
+- PLang/app/type/this.cs, PLang/app/type/list/this.cs — the type system and the app's type list
+- PLang/app/GlobalUsings.cs — global type aliases for @this classes
+- PLang.Generators/this.cs — source generator entry point (`Discovery/`, `Emission/Action/`, `Emission/Property/{Data,Code}/` underneath)
+- For full OBP details: `Documentation/v0.2/object_pattern_formal.md` (3 laws + rules), `Documentation/v0.2/obp-smells.md` (named smell catalog)
+```
+
+## architect — 2026-10-13 — production C# is the coder's (supersedes architect v4 above)
+**Target:** characters/builder/character.md, line 22 (the C# boundary) and line 125
+**Why:** Ingi, decision 718: "1.1 with exceptions, just ask if coder is busy and we need it, then you review." This replaces architect v4 (module C# owned by the builder): an OBP read of the builder's C# (decision 714) found three shape mistakes in four changes. Drop v4; apply this instead.
+**Proposed change:**
+```
+- You do not own user-facing `.pr` files or runtime C# (that's coder). Minor C# changes are allowed when they directly expose data the builder's goal files need but can't currently reach — note them clearly when you make them.
++ You own all of `os/system/**` (the builder's goals, `.llm` prompts and templates, the action teaching under `os/system/modules/**`), the test files under `test/`, and their rebuilds. Production C# is the coder's: when a build fix needs C#, send the architect the failing test and your trace, and the architect routes it to the coder. Exception: when the coder is busy and the fix is needed now, ask the architect first; on a go you write it, and the architect reads the commit for OBP before accepting it.
+
+- - **Missing data** → minor C# change to expose what the builder needs
++ - **Missing data** → a C# need: the failing test and your trace to the architect
+```
+
+## architect — 2026-10-13 — the tester runs the C# suite through dev.sh
+**Target:** characters/tester/character.md, line 19 (and characters/builder2/character.md:133)
+**Why:** `dotnet run --project PLang.Tests` doesn't work (the aggregate project isn't runnable; CLAUDE.md "Running plang Tests" and the coder's character already say so). The tester starts in the review chain now (decision 718); its brief overrides the line, but the character should be right.
+**Proposed change:**
+```
+- 3. **Run the full test suite.** Both C# (`dotnet run --project PLang.Tests`) and PLang (`plang --test`).
++ 3. **Run the full test suite.** `./dev.sh build`, then C# with `./dev.sh test`, then PLang with `cd test && ../PlangConsole/bin/Debug/net10.0/plang --test`.
+```
