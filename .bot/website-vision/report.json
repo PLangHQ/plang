@@ -1,0 +1,25 @@
+{
+  "branch": "website-vision",
+  "sessions": [
+    {
+      "id": "c33ef226-611a-4bac-9a7e-a7fb41fc998c",
+      "bot": "web",
+      "timestamp_start": "2026-10-13T21:18:17Z",
+      "intent": "Define the brand foundation (vision, belief, promise, proof) for a redesigned plang.is before any visual design",
+      "before": {
+        "assumptions": "Vision C chosen by Ingi. Current plang.is content describes v0.1. The puffin artwork stays as is.",
+        "risk": "Proof claims may not match runtime2 reality; each one is marked for confirmation"
+      },
+      "plan": ".bot/website-vision/web/v1/plan.md",
+      "actions": [
+        {
+          "paths": [".bot/website-vision/web/v1/brand.md"],
+          "type": "create",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Brand foundation from vision C; proof pillars sourced from os/system/modules and Tests/Http/GetRequest/.build. Pillar 5 (signing by default) unconfirmed."
+        }
+      ]
+    }
+  ]
+}
