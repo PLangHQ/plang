@@ -190,4 +190,21 @@ The CLAUDE.md invariants hold, verified in code:
 
 - **F5.1 (+1 site).** `reflection/Tagged.cs:8` doc says "Consumed by `Data.Normalize` when walking a non-primitive value" — a **third stale reference to the deleted `Normalize` tree** (with `IWriter.cs:7,11,126` and `json/writer.cs:200`). The live consumer is `WriteReflected`/the reflection `Output`. Same doc-cleanup fix.
 
-*Areas 7-8 pending (module registry/app, builder pipeline).*
+## Area 7 — the module registry and app (`PLang/app/module/this.cs`, `PLang/app/this.cs`)
+
+**Diff:** `module/this.cs` +215 −575, `app/this.cs` +330 −355 — both big net-deletion rewrites of the two highest-fan-in types. Read in full.
+
+**Tooling:** full read + fork/is-X/reflection grep + registry-constructs/prose-claims census + match against 673/714.
+
+### Verdict: CLEAN (no merge blockers; no new findings)
+
+- **The module registry resolves actions by dict lookup, not a name-switch.** `_action` is a private `ConcurrentDictionary<string, action.@this>` (`:57`); `this[actionName]` (`:172`) is a `TryGetValue`. Every action flows through a lookup — the worst-case fork (a `switch` on action name) is **not** here.
+- **Role is minted by type, once, at registration ("the type IS the role").** `:151-162` picks `clause.@this`/`loop.@this`/`keep.@this`/plain `action.@this` by `IsAssignableFrom(IClause/ILoop/IKeep)` as each handler registers. This reads like a type-ladder but is **registration-time subtype selection** (the comment at `:53-56` defends it: decided once, no flag, no second map), not a runtime behaviour fork — reviewed, acceptable.
+- **`app.@this` is the composition root done to the CLAUDE.md "app.X is the collection node" rule.** Each concept — `module`, `goal`, `test`, `error`, `variable`, `shortcut`, `type`, `actor` — is a collection node owned **once** as a `{ get; }` (`type.current<…>`/`type.root`); services (`Code`, `FileSystem`, `Cache`, `Build`, `Debug`) owned once; `call`/`trace`/`data` are context-scoped reads, not app state. **No naked public collection** (grep clean), **no `Get<T>()` service-locator**. Path schemes register with factories at `:310-312` (the clean factory registry validated from the path side in area 3).
+
+### Carried (cite, not re-raised)
+
+- **Member-read reflection (673):** `module/this.cs:194 Declares` (`GetType().GetProperty`), `:203-215` (action-by-CLR-type lookup + `Activator.CreateInstance`), `app/this.cs:432` (`reflection.@this().Read` of an identity). The module navigating its own members / minting handlers by reflection is the carried member-read door.
+- **Reader throws its refusal (714):** `app/this.cs:437` catches `DeclinedException` → `Unreadable` — **named on next-branch's 714 list**. `:438` filters specific json/format/cast exceptions (boundary).
+
+*Area 8 pending (builder pipeline).*

@@ -1558,6 +1558,13 @@
           "category": "code",
           "confidence": "high",
           "context": "Area 5b (type/item/kind/{dict,list,reflection}) - brief's corrected serializer scope. No new findings; all carried or already filed. kind/dict+kind/list are CLR-host codecs: member access delegates to * reflection kind (673); Convert narrows clr(JsonElement) via json.Parse (717); Output is two more F5.2 sites; Set throws (#59). kind/reflection is entirely carried 673 door - Property/Method/Twice are the stopgap statics 673 names; :329 catch->OutputException is the getter->wire boundary. Tagged.cs is the single [Out]/[Sensitive]/[Masked] wire-visibility filter (681), not a fork. Extends F5.1: Tagged.cs:8 is a 3rd stale-Normalize doc ref. Verdict: CLEAN, no merge blockers."
+        },
+        {
+          "paths": ["PLang/app/module/this.cs", "PLang/app/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Area 7 (module registry + app) OBP scan. Both big net-deletion rewrites (module +215-575, app +330-355). No new findings. Module registry resolves actions by ConcurrentDictionary lookup (not a name-switch); role minted by type (IClause/ILoop/IKeep) once at registration ('the type IS the role'), not a runtime fork. app.@this is the composition root per CLAUDE.md 'app.X is collection node': each concept owned once as a get-property, services owned once, no naked collection, no Get<T> service-locator, path schemes register with factories (:310-312). Carried: 673 member-read reflection (module:194/203-215, app:432); 714 reader-throws (app:437). Verdict: CLEAN, no merge blockers."
         }
       ],
       "after": {}
