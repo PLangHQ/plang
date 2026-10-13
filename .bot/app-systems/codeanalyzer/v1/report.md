@@ -45,4 +45,27 @@ The new surface is OBP-exemplary and the weighted smells present are all already
 
 ---
 
-*Areas 2-8 pending (channel/stream, core value types, type system, serializer, call/variable/events, module registry/app, builder pipeline).*
+## Area 2 — channel and stream (`PLang/app/channel/`)
+
+**Diff:** +529 −2,284 across 24 files. The entire `channel/serializer/` subtree (Json, Text, filters, writers, the plang serializer — ~1,700 lines) was **deleted**, folded into the type serializer (area 5). Grown: `type/stream/this.cs` (+191), `type/goal/this.cs` (+123), `type/test/this.cs` (+47 new). Rewritten: `channel/this.cs`, `channel/list/this.cs`.
+
+**Tooling:** `git diff` per file + full read of `channel/this.cs`, `list/this.cs`, `type/{stream,goal,file}/this.cs` + grep for the weighted smells + `ObpScan`.
+
+### Verdict: CLEAN (no merge blockers)
+
+The dominant feature here — a repeated `catch (Exception ex) when (ex is not fatal)` across every channel — reads like a generic-catch smell but is the opposite: a **deliberate, consistent I/O-boundary** that converts a .NET transport throw into a typed `Error` result while *preserving* the specific ones.
+
+### Reviewed, correct (no finding)
+
+- **The channel I/O boundary** (`this.cs:140-148,165-170,189-194`; `stream:135,197`; `goal:151`). Each wraps the leaf transport call and excludes exactly the right set: `AppException` (a program's own error — `%var%` not set) passes through with its key and travels to the action; `NullReferenceException`/`OOM`/`StackOverflow` rethrow; `stream:197` also excludes `OperationCanceledException` so a cancel isn't reported as an `AskError`. Transport failures become `ServiceError{Exception=ex}`. This is "convert at the boundary, don't mask the specific" — not the masking smell.
+- **`list/this.cs`** — the user-facing `Remove` returns proper error results (`ChannelNotFound` 404, `ChannelInvariantViolation` 400). The throwing `this[string]` indexer (`:141-143`) is the documented hard-miss accessor, paired with the nullable `Get(name)` — the standard nullable-get / throwing-indexer pair, not a fork. `this[System.Type]` selects a channel by its concrete class (infrastructure lookup — "what a channel IS beside its name"), acceptable.
+- **`type/goal/this.cs`** — the `_executing` AsyncLocal reentrancy guard (a goal body writing to its own channel can't loop) matches the `Available` contract; `%message%`/`%where%` bindings are built coherently. Clean.
+- **`ResolveEncoding` / `WriteText` / `Read`** throws (`this.cs:216,239`) are wiring/boundary translations (no context, or `Encoding.GetEncoding`'s unavoidable `ArgumentException` → a named `InvalidOperationException`), same class as `code/Default.cs`'s Regex translation.
+
+### Minor findings (do not block the merge)
+
+- **F2.1 — borderline clr read at a leaf.** `type/stream/this.cs:160` `question?.Clr<string>()` pulls a raw CLR string from the prompt value only to run `IsNullOrEmpty` (is there a prompt to write). It's a leaf and the value doesn't travel, but the idiomatic form is the value's own emptiness/truthiness, not a `.Clr<string>()` decompose. **Carry (note). Surface change: no.**
+- **F2.2 — borderline redundant inner catch (stored-twice shape).** The base `WriteAsync`/`ReadAsync`/`AskAsync` (`this.cs:132-197`) already own the transport-throw→Error boundary around the abstract `Write`/`Read`/`Ask`. `stream`'s concrete `Read`/`Ask` (`:135,197`) and `goal`'s `Start` wrap *again* with the same conversion, so the base's catch is effectively dead for those kinds. Defensible (the concrete gives a kind-specific message/key), but it is the same boundary written twice. Low confidence. **Carry (note). Surface change: no.**
+- **F2.3 — possible legacy surface.** `type/stream/this.cs:247-258 ReadAllBytesAsync`, commented "Convenience surface kept for v1 callers," throws `InvalidOperationException` on `!CanRead` (`:250`) — internal, caught by the base. If the v1 callers are gone it's a deletion candidate; flagged for the architect to confirm, not asserted. **Carry (note). Surface change: no.**
+
+*Areas 3-8 pending (core value types, type system, serializer, call/variable/events, module registry/app, builder pipeline).*

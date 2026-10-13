@@ -1516,6 +1516,13 @@
           "category": "code",
           "confidence": "high",
           "context": "Area 1 (data+wire) OBP scan. New surface (schema registry, Operator registry, data reader, Comparison, this.Output) is OBP-correct, no forks. 3 weighted smells present are all carried (set-child bridge, reader-throws, json clr-leak). 2 minor cleanup: dead const MaxNormalizeDepth (this.Output.cs:21), IsDataMarked placement. Verdict for area: CLEAN, no merge blockers."
+        },
+        {
+          "paths": ["PLang/app/channel/"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Area 2 (channel+stream) OBP scan. -1755 net; whole channel/serializer subtree deleted (folded into type serializer). The repeated catch-when-not-fatal across channels is the correct I/O boundary (preserves AppException+fatals, converts transport throws to typed Error), not a masking smell. list returns errors on user path, throwing indexer is documented hard-miss. 3 minor borderline notes: .Clr<string>() leaf read (stream:160), redundant inner catch vs base (stored-twice shape), ReadAllBytesAsync v1-legacy throw. Verdict: CLEAN, no merge blockers."
         }
       ],
       "after": {}
