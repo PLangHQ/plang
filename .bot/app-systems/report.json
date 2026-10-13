@@ -55,7 +55,7 @@
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Compile re-recorded; python check refused a missing entry as whole-answer while C# refuses per step — python now follows C#; BootstrapTests green"
+          "context": "Compile re-recorded; python check refused a missing entry as whole-answer while C# refuses per step \u2014 python now follows C#; BootstrapTests green"
         },
         {
           "paths": [
@@ -78,7 +78,7 @@
       "bot": "coder",
       "timestamp_start": "2026-09-27T01:35:00Z",
       "timestamp_end": "2026-09-27T02:10:00Z",
-      "intent": "Stage 1: Run → Start, the entry verb of everything that runs",
+      "intent": "Stage 1: Run \u2192 Start, the entry verb of everything that runs",
       "before": {
         "assumptions": "the generator emits one await Run() for every handler, so all 125 are renamed together; callback.run and the v0.1 dll/pdb follow Ingi's rulings",
         "risk": "a stale PlangConsole binary rebuilding os/system/test.goal with the old action name"
@@ -96,7 +96,7 @@
           "type": "rename",
           "category": "code",
           "confidence": "high",
-          "context": "Run → Start end to end; the dispatcher is an explicit ICodeGenerated.Start beside the handler's own Start(); 123 handler declarations renamed by three parallel agents, diff reviewed"
+          "context": "Run \u2192 Start end to end; the dispatcher is an explicit ICodeGenerated.Start beside the handler's own Start(); 123 handler declarations renamed by three parallel agents, diff reviewed"
         },
         {
           "paths": [
@@ -110,7 +110,7 @@
           "type": "rename",
           "category": "code",
           "confidence": "high",
-          "context": "environment/test/callback .run → .start; test.goal rebuilt by the installed builder (first try used a stale binary; the cached step failed its check and was reopened)"
+          "context": "environment/test/callback .run \u2192 .start; test.goal rebuilt by the installed builder (first try used a stale binary; the cached step failed its check and was reopened)"
         },
         {
           "paths": [
@@ -142,7 +142,7 @@
       "bot": "coder",
       "timestamp_start": "2026-09-27T02:15:00Z",
       "timestamp_end": "2026-09-27T04:35:05Z",
-      "intent": "Stage 3: one set of types — trace first, bring back what doesn't hold, then implement",
+      "intent": "Stage 3: one set of types \u2014 trace first, bring back what doesn't hold, then implement",
       "before": {
         "assumptions": "the registry's seven stores can collapse into one list of types; the facts computed per type keep prompt C byte-equal",
         "risk": "kind never null ripples to ~110 null checks; types born bare still need the registry for their C# class"
@@ -173,7 +173,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "one set of types (4bfd09c61): seven stores → one list; facts per type; Add answers errors as results; Loader, primitive table, Kinds, Richness, spelled-name splits deleted"
+          "context": "one set of types (4bfd09c61): seven stores \u2192 one list; facts per type; Add answers errors as results; Loader, primitive table, Kinds, Richness, spelled-name splits deleted"
         },
         {
           "paths": [
@@ -185,7 +185,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "ClrType is the item class; items pass typeof(@this); types born through the list; typed null keeps its declared type (35e553e62) — ruling 2, taken to Ingi by plang-40"
+          "context": "ClrType is the item class; items pass typeof(@this); types born through the list; typed null keeps its declared type (35e553e62) \u2014 ruling 2, taken to Ingi by plang-40"
         },
         {
           "paths": [
@@ -211,8 +211,8 @@
         }
       ],
       "after": {
-        "status": "stage 3 done and pushed (4bfd09c61 … f88e1f8d3)",
-        "health": "six suites at or under baseline (Types 23→19, Data 45→44); prompt twins byte-equal; plang --test 7/0/317 as baseline",
+        "status": "stage 3 done and pushed (4bfd09c61 \u2026 f88e1f8d3)",
+        "health": "six suites at or under baseline (Types 23\u219219, Data 45\u219244); prompt twins byte-equal; plang --test 7/0/317 as baseline",
         "notes": "next: stage 4 after the architect's go; fixture DLLs need rebuilding (pre-existing)"
       }
     },
@@ -221,7 +221,7 @@
       "bot": "coder",
       "timestamp_start": "2026-09-27T04:40:00Z",
       "timestamp_end": "2026-09-27T07:10:00Z",
-      "intent": "Stage 4: the collected type — trace, bring back what doesn't hold, implement",
+      "intent": "Stage 4: the collected type \u2014 trace, bring back what doesn't hold, implement",
       "before": {
         "assumptions": "the registry can become a list<type>; App.Type sites move mechanically",
         "risk": "list walks under the lock on every type lookup; two ways into the types' slots"
@@ -274,11 +274,11 @@
           "type": "rename",
           "category": "code",
           "confidence": "high",
-          "context": "App.Type → app.type (type<type, type.list>); ~80 production sites to app.type.list by Edit, tests by the helper agent; group 3 names to await app.type.Get"
+          "context": "App.Type \u2192 app.type (type<type, type.list>); ~80 production sites to app.type.list by Edit, tests by the helper agent; group 3 names to await app.type.Get"
         }
       ],
       "after": {
-        "status": "stage 4 done and pushed (010bfa885 … 0af97062c)",
+        "status": "stage 4 done and pushed (010bfa885 \u2026 0af97062c)",
         "health": "six suites at or under baseline (Types 17, Data 44); prompt twins byte-equal; plang --test 7/0/317; no timing regression",
         "notes": "next: stage 5 trace"
       }
@@ -288,7 +288,7 @@
       "bot": "coder",
       "timestamp_start": "2026-09-27T07:10:00Z",
       "timestamp_end": "2026-09-27T09:30:00Z",
-      "intent": "Stage 5: faces and honest facts — trace, one eval, goal descriptions above names",
+      "intent": "Stage 5: faces and honest facts \u2014 trace, one eval, goal descriptions above names",
       "before": {
         "assumptions": "facts change prompt C's text (one eval run); a comment move re-saves .pr with every step cached",
         "risk": "the face leaking onto the wire; steps re-asking the decider on re-save"
@@ -519,7 +519,7 @@
           "type": "modify",
           "category": "code",
           "confidence": "high",
-          "context": "7d (a2493fc74): IList.Of(context) — the asker's list; app.variable over context.Variable.list (a view); C# app.variable.list throws"
+          "context": "7d (a2493fc74): IList.Of(context) \u2014 the asker's list; app.variable over context.Variable.list (a view); C# app.variable.list throws"
         },
         {
           "paths": [
@@ -529,7 +529,7 @@
           "type": "move",
           "category": "code",
           "confidence": "medium",
-          "context": "7e-1 (664dfc3a4 deletions only — a failed git add in an && chain; d4de3fb80 the rest): app.store; settings machinery per actor; 74f9dc8f9 store dispose fix"
+          "context": "7e-1 (664dfc3a4 deletions only \u2014 a failed git add in an && chain; d4de3fb80 the rest): app.store; settings machinery per actor; 74f9dc8f9 store dispose fix"
         },
         {
           "paths": [
@@ -758,7 +758,7 @@
       "timestamp_end": "2026-10-01T17:00:07Z",
       "intent": "Understand the rearchitected builder and refresh/relocate the builder docs to co-located .code.md files",
       "before": {
-        "assumptions": "Docs in Documentation/v0.2 describe the old two-phase Plan→Compile builder; source on app-systems is the three-stage Decide→Properties→match pipeline with a new .pr format",
+        "assumptions": "Docs in Documentation/v0.2 describe the old two-phase Plan\u2192Compile builder; source on app-systems is the three-stage Decide\u2192Properties\u2192match pipeline with a new .pr format",
         "risk": "Docs drifted through a full pipeline + .pr-format rewrite; moving docs must keep inbound cross-links working"
       },
       "plan": ".bot/app-systems/builder/v1/plan.md",
@@ -924,77 +924,112 @@
       "plan": ".bot/app-systems/builder/v3/plan.md",
       "actions": [
         {
-          "paths": ["os/system/Build_dpricated.goal2"],
+          "paths": [
+            "os/system/Build_dpricated.goal2"
+          ],
           "type": "delete",
           "category": "code",
           "confidence": "high",
           "context": "stray v0.1 builder sketch with non-.goal extension; only .bot bookkeeping referenced it (item 5)"
         },
         {
-          "paths": ["PLang/app/goal/step/pick/list/this.cs", "PLang/app/goal/step/pick/listed/this.cs", "os/system/builder/llm/templates/properties.template"],
+          "paths": [
+            "PLang/app/goal/step/pick/list/this.cs",
+            "PLang/app/goal/step/pick/listed/this.cs",
+            "os/system/builder/llm/templates/properties.template"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "Issue 25 C4: confirmed STATICALLY that a chosen option (Template=plang) is placed only by Call() <- Prefill() over Mark.Certain entries, so a listed-but-uncertain file.read never gets it. No trace needed (403 blocked builds anyway); the code path is unambiguous. Shape: add listed.Option (coder), render on => decider: line (builder)."
         },
         {
-          "paths": ["os/system/builder/llm/templates/decider1.template", "PLang/app/goal/step/this.cs"],
+          "paths": [
+            "os/system/builder/llm/templates/decider1.template",
+            "PLang/app/goal/step/this.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "medium",
           "context": "Issue 32: decider1.template renders s.Text raw, so a module name inside a variable path is read as a step word. No masked-text property on step. Direction (architect-flagged, not committed): core masked-text + template use; measure against a control. Needs the key."
         },
         {
-          "paths": ["PLang/app/goal/step/pick/list/this.cs"],
+          "paths": [
+            "PLang/app/goal/step/pick/list/this.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "medium",
           "context": "Issue 2 with key: Code() reads 'as %x%' (As regex) but no 'with key %k%' anywhere in pick/. Robust fix = Option-question v2 (decision 496, Ingi gate). Shape with architect before building."
         },
         {
-          "paths": [".bot/app-systems/builder/v3/result.md", ".bot/app-systems/builder/to-architect.md"],
+          "paths": [
+            ".bot/app-systems/builder/v3/result.md",
+            ".bot/app-systems/builder/to-architect.md"
+          ],
           "type": "decision",
           "category": "doc",
           "confidence": "high",
           "context": "Wrote the diagnoses+shapes for the architect. Issues 25/32/2 core (pick/decider/step). Trimmed to-architect.md section 1 (ratified decision 452) per architect peer msg."
         },
         {
-          "paths": ["/shared/educator/work/lv-samples2/c4-1", "/shared/educator/work/lv-samples2/c4-2", "/shared/educator/work/guide-examples/runs/loop-dict-1", "/shared/educator/work/modules-probe"],
+          "paths": [
+            "/shared/educator/work/lv-samples2/c4-1",
+            "/shared/educator/work/lv-samples2/c4-2",
+            "/shared/educator/work/guide-examples/runs/loop-dict-1",
+            "/shared/educator/work/modules-probe"
+          ],
           "type": "review",
           "category": "test",
           "confidence": "high",
           "context": "Decider key provisioned mid-session (Ingi: /shared/hopkaup/secrets/typesafe.txt via TYPESAFE_API_KEY). Measured fresh/cache-off: Issue 25 C4 10/10 PRESENT (file.read 0.98 Certain -> Prefill fills Template; symptom resolved on head, was 4/6 on aa9cadcd5). Issue 2 loop-with-key REPRODUCES Item+Key 3/5 present, 2/5 both dropped. Issue 32b REPRODUCES 5/5 (call goal Page module=%!app.module.file% -> Name=%!app.module.file%, Page lost; note already correct, writer misreads dotted variable). Educator build artifacts cleaned after."
         },
         {
-          "paths": [".bot/app-systems/builder/v3/option-v2-shape.md"],
+          "paths": [
+            ".bot/app-systems/builder/v3/option-v2-shape.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "Drafted Option-question v2 shape, then updated to the architect's accepted design: offer comes from one member on the property's type (no choice-or-not branch, no question.Variable); Prefill writes the plain pick incl. Conversation=%answer% (conversation.Create does the {continue:} shaping, coder). My part: ask: note lines on loop.foreach Item/Key + llm Conversation, landed with the core."
         },
         {
-          "paths": ["os/system/modules/goal/call.examples.md"],
+          "paths": [
+            "os/system/modules/goal/call.examples.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
           "context": "Issue 32b: tried the architect's cheap lever (a generic goal.call example), measured 5/5 - still Name=%!app.module.file%. Writer gets a clean goal.call(Name) slot (decider 0.96) and fills it with the dotted variable; examples reach the decider (decider.state.template) not the writer (properties.template). Example REVERTED - no in-lane lever. Goes to the opaque-variable core direction (coder); I own the template side later."
         },
         {
-          "paths": ["os/.build/start.pr", "os/system/builder/.build/build.pr", "os/system/builder/BuildGoal/.build/decide.pr", "os/system/builder/BuildGoal/.build/start.pr", "os/system/shortcut/.build/goal.pr"],
+          "paths": [
+            "os/.build/start.pr",
+            "os/system/builder/.build/build.pr",
+            "os/system/builder/BuildGoal/.build/decide.pr",
+            "os/system/builder/BuildGoal/.build/start.pr",
+            "os/system/shortcut/.build/goal.pr"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
           "context": "Issue 30 pass 2 (closed by architect): rebuilt the stale os/ .pr (cache off). All 15 remaining os/ goals build clean / current valid .pr; no refusals remain. These 5 dropped the deprecated isSetup/isEvent/isSystem/isTest fields (819f239c6; hash+steps unchanged) - kept. Table in v3/result.md."
         },
         {
-          "paths": ["os/system/builder/Build.goal", "os/system/builder/.build/build.pr", ".bot/app-systems/builder/v3/cache-false-diagnosis.md"],
+          "paths": [
+            "os/system/builder/Build.goal",
+            "os/system/builder/.build/build.pr",
+            ".bot/app-systems/builder/v3/cache-false-diagnosis.md"
+          ],
           "type": "modify",
           "category": "code",
           "confidence": "high",
           "context": "cache:false regression, builder-lane fix (architect-directed): deleted Build.goal:7 'set default %!build.setting.cache% = true' - the setting class already defaults Cache=true (build/setting/this.cs:10), so the line was a redundant default; removing it let cache-off rebuild. Rebuilt Build.goal .pr (bootstrap cwd=os/, cache:false). VALIDATED on hash-take: unchanged cache:false now rebuilds (Building goal: Start / Saved 8.0s, .pr mtime changes; md5 identical = deterministic/correct). Wire: 9 failed/480 passed, all 9 baseline, zero new. CORRECTION (coder): my earlier 'reads undefined / .setting projection bug' claim came from a buggy debug watch (debug/this.cs:344,351 reduced the watched var to its root and read only the store, so every watched setting printed undefined); the setting actually reads correctly, no separate core bug owed. Diag at v3/cache-false-diagnosis.md."
         },
         {
-          "paths": [".bot/app-systems/builder/v3/issue32-masking-shape.md"],
+          "paths": [
+            ".bot/app-systems/builder/v3/issue32-masking-shape.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
@@ -1039,21 +1074,30 @@
       "plan": ".bot/app-systems/builder/v3/issue40-remeasure.md",
       "actions": [
         {
-          "paths": ["os/system/builder/BuildGoal/.build/properties.pr"],
+          "paths": [
+            "os/system/builder/BuildGoal/.build/properties.pr"
+          ],
           "type": "review",
           "category": "test",
           "confidence": "high",
           "context": "10 fresh builds of Properties.goal in place, cache:skip, jq-counted step 4 goal.call: 10/10 LISTED (was 4/10), 0 NO-SAVE (was 6/10). Kept rebuilt .pr (decider confidence 0.55->0.98, mapped actions identical)."
         },
         {
-          "paths": [".bot/app-systems/builder/v3/issue40-remeasure.md", ".bot/app-systems/builder/summary.md"],
+          "paths": [
+            ".bot/app-systems/builder/v3/issue40-remeasure.md",
+            ".bot/app-systems/builder/summary.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "Recorded the re-measure table + guard (write out 'hi' stays Certain) and the cache-choice note."
         },
         {
-          "paths": ["memory/reference_plang_cli.md", "memory/feedback_builder_scope.md", "memory/feedback_keep_rebuilt_pr_files.md"],
+          "paths": [
+            "memory/reference_plang_cli.md",
+            "memory/feedback_builder_scope.md",
+            "memory/feedback_keep_rebuilt_pr_files.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
@@ -1079,28 +1123,40 @@
       "plan": ".bot/app-systems/builder/v3/issue41-window-callgoal.md",
       "actions": [
         {
-          "paths": ["/shared/plangos/p41_call", "/shared/plangos/p41_call_noshow", "/shared/plangos/p41_open"],
+          "paths": [
+            "/shared/plangos/p41_call",
+            "/shared/plangos/p41_call_noshow",
+            "/shared/plangos/p41_open"
+          ],
           "type": "review",
           "category": "test",
           "confidence": "high",
           "context": "Reproduced on plang-os-stable, faithful probes, 5 fresh builds each cache:skip jq-counted. call-in-window: window.callGoal 0/5 (3 wrong goal.call, 2 parse-error). Control (no ShowFiles) 1/5 - d2aa1358d offers NOT the lever. open step 5/5 right in isolation (reported drop not reproduced). Root: goal.call is a stage-1 common action marked Certain, module skips stage 2; window.callGoal can't displace it despite the decider state carrying the exact counter-example."
         },
         {
-          "paths": ["os/system/builder/llm/decider.json"],
+          "paths": [
+            "os/system/builder/llm/decider.json"
+          ],
           "type": "modify",
           "category": "config",
           "confidence": "high",
           "context": "goal.call common-action false side: added generic counter-case (call X in %window%/%browser% is window.callGoal). Measured on plang-os-stable: window.callGoal 5/5 (was 0/5); guards plain call 5/5 goal.call, 32b 5/5 goal.call. Re-validated no-regression on app-systems."
         },
         {
-          "paths": ["os/system/modules/condition/compare.notes.md"],
+          "paths": [
+            "os/system/modules/condition/compare.notes.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
           "context": "Inlined the operator table; it said 'see if.notes table' but notes render only for the picked action, so a compare step never received it. compare still maps Operator correctly on app-systems."
         },
         {
-          "paths": [".bot/app-systems/builder/friction.md", ".bot/app-systems/builder/v3/issue41-window-callgoal.md", ".bot/app-systems/builder/summary.md"],
+          "paths": [
+            ".bot/app-systems/builder/friction.md",
+            ".bot/app-systems/builder/v3/issue41-window-callgoal.md",
+            ".bot/app-systems/builder/summary.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
@@ -1126,21 +1182,31 @@
       "plan": ".bot/app-systems/builder/v3/issue41-window-callgoal.md",
       "actions": [
         {
-          "paths": ["test/serialization/.build/compressroundtrip.test.pr"],
+          "paths": [
+            "test/serialization/.build/compressroundtrip.test.pr"
+          ],
           "type": "create",
           "category": "test",
           "confidence": "high",
           "context": "Built fresh cache:skip. jq-verified: step1 archive.pack Value=%original%, step2 assert.equals Actual=%archived!type.name% Expected=archive (!type.name reads), step3 archive.unpack Value=%archived%; no variable.compress. Committed as the correct build (cb4e7bffe)."
         },
         {
-          "paths": ["os/_archpack", "os/_archunpack", "os/_archcompress", "os/_archdecompress"],
+          "paths": [
+            "os/_archpack",
+            "os/_archunpack",
+            "os/_archcompress",
+            "os/_archdecompress"
+          ],
           "type": "review",
           "category": "test",
           "confidence": "high",
           "context": "Mapping probes, 5 builds each, cache:skip, jq step0. pack->archive.pack 5/5; unpack->archive.unpack 5/5; old wording compress->archive.pack 5/5; decompress->archive.unpack 5/5. Probes removed after."
         },
         {
-          "paths": ["PLang/app/module/archive/type/archive/kind/compression/this.cs", "PLang/app/module/signing/code/Ed25519.cs"],
+          "paths": [
+            "PLang/app/module/archive/type/archive/kind/compression/this.cs",
+            "PLang/app/module/signing/code/Ed25519.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
@@ -1166,21 +1232,37 @@
       "plan": ".bot/app-systems/docs/v1/plan.md",
       "actions": [
         {
-          "paths": ["os/system/type/text/type.guide.md", "os/system/type/text/length.notes.md", "os/system/type/text/toUpper.notes.md", "os/system/type/text/toLower.notes.md", "os/system/type/text/trim.notes.md", "os/system/type/text/replace.notes.md", "os/system/type/text/maxLength.notes.md", "os/system/type/text/grep.notes.md", "os/system/type/text/grepCount.notes.md"],
+          "paths": [
+            "os/system/type/text/type.guide.md",
+            "os/system/type/text/length.notes.md",
+            "os/system/type/text/toUpper.notes.md",
+            "os/system/type/text/toLower.notes.md",
+            "os/system/type/text/trim.notes.md",
+            "os/system/type/text/replace.notes.md",
+            "os/system/type/text/maxLength.notes.md",
+            "os/system/type/text/grep.notes.md",
+            "os/system/type/text/grepCount.notes.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
           "context": "text type teaching: guide + per-member notes. Member set + semantics verified against PLang/app/type/item/text/this.cs (grep lines=context default 0; maxLength '...' marks cut). say forms per decision 574 (methods mirror C# names, parens, dot)."
         },
         {
-          "paths": ["Documentation/v0.2/type-reference-generation.md", "docs/Types.goal", "docs/templates/type.template"],
+          "paths": [
+            "Documentation/v0.2/type-reference-generation.md",
+            "docs/Types.goal",
+            "docs/templates/type.template"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "medium",
           "context": "Generator spec mirroring module-reference-generation.md with a byte-exact text golden; Types.goal + type.template mirror Modules.goal + module.template. Ready once coder exposes member .Note. Member order in golden reconciled at first render."
         },
         {
-          "paths": ["Documentation/v0.2/path-polymorphism-plan.md"],
+          "paths": [
+            "Documentation/v0.2/path-polymorphism-plan.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
@@ -1199,60 +1281,112 @@
       "timestamp_start": "2026-10-03T06:20:00Z",
       "timestamp_end": "2026-10-03T06:34:48Z",
       "intent": "Fix the teaching misses found in the batch-3 examples sweep (channel.set name/goal inversion, ui.render arg-name drop) and route the rest to the architect.",
-      "before": { "assumptions": "channel.set and ui.render notes described the fields but not the grammar position / the keep-arg-name rule; the writer inverted or dropped them.", "risk": "Any os/system/modules/**/*.md edit moves the decider fixtures and must be re-pinned in the same commit." },
+      "before": {
+        "assumptions": "channel.set and ui.render notes described the fields but not the grammar position / the keep-arg-name rule; the writer inverted or dropped them.",
+        "risk": "Any os/system/modules/**/*.md edit moves the decider fixtures and must be re-pinned in the same commit."
+      },
       "plan": "Measured in-session; no separate plan.md (continuation of v3 bug-fixing round).",
       "actions": [
         {
-          "paths": ["os/system/modules/channel/set.notes.md"],
+          "paths": [
+            "os/system/modules/channel/set.notes.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "high",
-          "context": "Made the grammar positional: the channel name is the word BEFORE 'channel'; the backing goal is AFTER 'as'/'call', never the current goal; inline 'set output channel as MyGoal' → Name=output, Goal=call(MyGoal). CH1 5/5, CH2 4/5 (was 1/3)."
+          "context": "Made the grammar positional: the channel name is the word BEFORE 'channel'; the backing goal is AFTER 'as'/'call', never the current goal; inline 'set output channel as MyGoal' \u2192 Name=output, Goal=call(MyGoal). CH1 5/5, CH2 4/5 (was 1/3)."
         },
         {
-          "paths": ["os/system/modules/ui/render.notes.md"],
+          "paths": [
+            "os/system/modules/ui/render.notes.md"
+          ],
           "type": "modify",
           "category": "doc",
           "confidence": "medium",
-          "context": "Carried goal.call's keep-the-arg-name rule into ui.render's Parameter note (even when the name is a plang word like 'error' and the value is a same-named var). UR2 0/3 → 3/5; residual is the writer collapsing a single same-named arg — kernel-level, flagged."
+          "context": "Carried goal.call's keep-the-arg-name rule into ui.render's Parameter note (even when the name is a plang word like 'error' and the value is a same-named var). UR2 0/3 \u2192 3/5; residual is the writer collapsing a single same-named arg \u2014 kernel-level, flagged."
         },
         {
-          "paths": ["PLang.Tests/Wire/App/Decider/pick_golden.json"],
+          "paths": [
+            "PLang.Tests/Wire/App/Decider/pick_golden.json"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "high",
-          "context": "Re-pinned via PickListTests AcceptTheFixture — prompt C renders channel.set (step [3]) and ui.render notes. Word-diff confirms only my two edits moved; other three decider fixtures unchanged. All four green."
+          "context": "Re-pinned via PickListTests AcceptTheFixture \u2014 prompt C renders channel.set (step [3]) and ui.render notes. Word-diff confirms only my two edits moved; other three decider fixtures unchanged. All four green."
         },
         {
-          "paths": ["os/system/builder/llm/decider.json"],
+          "paths": [
+            "os/system/builder/llm/decider.json"
+          ],
           "type": "decision",
           "category": "config",
           "confidence": "high",
-          "context": "Tried an output.write false-side counter-case for 'write test report'; measured 0/5 (test module never reaches stage-2) and it named a real action, so reverted. TR1 is decider module-retrieval (below teaching) → routed to architect, parked by architect."
+          "context": "Tried an output.write false-side counter-case for 'write test report'; measured 0/5 (test module never reaches stage-2) and it named a real action, so reverted. TR1 is decider module-retrieval (below teaching) \u2192 routed to architect, parked by architect."
         },
         {
-          "paths": ["os/system/modules/setting/save.notes.md", "os/system/modules/setting/save.examples.md", "os/system/modules/setting/remove.notes.md", "os/system/modules/setting/remove.examples.md", "PLang.Tests/Wire/App/Decider/pick_golden.json"],
+          "paths": [
+            "os/system/modules/setting/save.notes.md",
+            "os/system/modules/setting/save.examples.md",
+            "os/system/modules/setting/remove.notes.md",
+            "os/system/modules/setting/remove.examples.md",
+            "PLang.Tests/Wire/App/Decider/pick_golden.json"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Taught the untaught setting module (architect pick #1). Both actions take one Setting=%!…setting% node. Disambiguated from variable.set (set %!x.setting.field% changes one value this run) and file.save (save to a path). Measured: SV1 5/5, SV2 3/3, RM1 5/5, SV3 guard 5/5 (set %!…setting.cache% stays variable.set). Caught + removed a contrast example that the examples parser was advertising as a setting e.g.; re-pinned pick_golden (net +4 setting e.g. lines, nothing else)."
+          "context": "Taught the untaught setting module (architect pick #1). Both actions take one Setting=%!\u2026setting% node. Disambiguated from variable.set (set %!x.setting.field% changes one value this run) and file.save (save to a path). Measured: SV1 5/5, SV2 3/3, RM1 5/5, SV3 guard 5/5 (set %!\u2026setting.cache% stays variable.set). Caught + removed a contrast example that the examples parser was advertising as a setting e.g.; re-pinned pick_golden (net +4 setting e.g. lines, nothing else)."
         },
         {
-          "paths": ["os/system/modules/signing/sign.notes.md", "os/system/modules/signing/sign.examples.md", "os/system/modules/signing/verify.notes.md", "os/system/modules/signing/verify.examples.md"],
+          "paths": [
+            "os/system/modules/signing/sign.notes.md",
+            "os/system/modules/signing/sign.examples.md",
+            "os/system/modules/signing/verify.notes.md",
+            "os/system/modules/signing/verify.examples.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Taught signing (sign, verify). Disambiguated from crypto (hash/verify-against-digest). Measured: SG1 5/5, SG2 5/5 (Contracts), SG3 3/3 (Expires), VF1 5/5, VF2 5/5 (Contracts); guards CR1 'verify %content% against %hash%' → crypto.verify 5/5 and CR2 'hash %content%' → crypto.hash 5/5 (neither leaked to signing)."
+          "context": "Taught signing (sign, verify). Disambiguated from crypto (hash/verify-against-digest). Measured: SG1 5/5, SG2 5/5 (Contracts), SG3 3/3 (Expires), VF1 5/5, VF2 5/5 (Contracts); guards CR1 'verify %content% against %hash%' \u2192 crypto.verify 5/5 and CR2 'hash %content%' \u2192 crypto.hash 5/5 (neither leaked to signing)."
         },
         {
-          "paths": ["os/system/modules/identity/export.notes.md", "os/system/modules/identity/export.examples.md", "os/system/modules/identity/get.notes.md", "os/system/modules/identity/get.examples.md", "os/system/modules/identity/list.notes.md", "os/system/modules/identity/list.examples.md", "os/system/modules/identity/create.notes.md", "os/system/modules/identity/create.examples.md", "os/system/modules/identity/rename.notes.md", "os/system/modules/identity/rename.examples.md", "os/system/modules/identity/setDefault.notes.md", "os/system/modules/identity/setDefault.examples.md", "os/system/modules/identity/archive.notes.md", "os/system/modules/identity/archive.examples.md", "os/system/modules/identity/unarchive.notes.md", "os/system/modules/identity/unarchive.examples.md"],
+          "paths": [
+            "os/system/modules/identity/export.notes.md",
+            "os/system/modules/identity/export.examples.md",
+            "os/system/modules/identity/get.notes.md",
+            "os/system/modules/identity/get.examples.md",
+            "os/system/modules/identity/list.notes.md",
+            "os/system/modules/identity/list.examples.md",
+            "os/system/modules/identity/create.notes.md",
+            "os/system/modules/identity/create.examples.md",
+            "os/system/modules/identity/rename.notes.md",
+            "os/system/modules/identity/rename.examples.md",
+            "os/system/modules/identity/setDefault.notes.md",
+            "os/system/modules/identity/setDefault.examples.md",
+            "os/system/modules/identity/archive.notes.md",
+            "os/system/modules/identity/archive.examples.md",
+            "os/system/modules/identity/unarchive.notes.md",
+            "os/system/modules/identity/unarchive.examples.md"
+          ],
           "type": "create",
           "category": "doc",
           "confidence": "high",
-          "context": "Taught identity (8 actions). Export hands out a private key — notes restrict it to steps that say 'export', and a guard: 'get my identity' never builds export. Measured all 10 scenarios clean: IDGETME (guard) → identity.get, no Name, NOT export 5/5; IDEXP → export 5/5; get/list/create(+Default)/setDefault/archive/rename/unarchive all 3-5/5. Re-pinned pick_golden with signing in one pass (net +signing & +identity e.g. lines only; all four decider fixtures green; no page golden for these modules)."
+          "context": "Taught identity (8 actions). Export hands out a private key \u2014 notes restrict it to steps that say 'export', and a guard: 'get my identity' never builds export. Measured all 10 scenarios clean: IDGETME (guard) \u2192 identity.get, no Name, NOT export 5/5; IDEXP \u2192 export 5/5; get/list/create(+Default)/setDefault/archive/rename/unarchive all 3-5/5. Re-pinned pick_golden with signing in one pass (net +signing & +identity e.g. lines only; all four decider fixtures green; no page golden for these modules)."
         },
         {
-          "paths": ["test/plan/task/module/goal/call/PlainCallWaits.test.goal", "test/plan/task/module/goal/call/ParallelAnswersATask.test.goal", "test/plan/task/module/goal/call/TaskListedWhileRunning.test.goal", "test/plan/task/module/task/cancel/CancelStops.test.goal", "test/plan/task/module/task/cancel/CancelAnswer.test.goal", "test/plan/task/module/task/cancel/WaitOnCancelledFails.test.goal", "test/plan/task/module/task/wait/WaitAnswersResult.test.goal", "test/plan/task/module/task/wait/WaitForSeveral.test.goal", "test/plan/task/module/task/wait/WaitForList.test.goal", "test/plan/task/module/task/wait/LateWaitGetsFailure.test.goal", "test/plan/app-systems/app/variable/NowIsReadFresh.test.goal", "test/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline.test.goal"],
+          "paths": [
+            "test/plan/task/module/goal/call/PlainCallWaits.test.goal",
+            "test/plan/task/module/goal/call/ParallelAnswersATask.test.goal",
+            "test/plan/task/module/goal/call/TaskListedWhileRunning.test.goal",
+            "test/plan/task/module/task/cancel/CancelStops.test.goal",
+            "test/plan/task/module/task/cancel/CancelAnswer.test.goal",
+            "test/plan/task/module/task/cancel/WaitOnCancelledFails.test.goal",
+            "test/plan/task/module/task/wait/WaitAnswersResult.test.goal",
+            "test/plan/task/module/task/wait/WaitForSeveral.test.goal",
+            "test/plan/task/module/task/wait/WaitForList.test.goal",
+            "test/plan/task/module/task/wait/LateWaitGetsFailure.test.goal",
+            "test/plan/app-systems/app/variable/NowIsReadFresh.test.goal",
+            "test/plan/app-systems/module/on/timeout/RetryGetsAFreshDeadline.test.goal"
+          ],
           "type": "modify",
           "category": "test",
           "confidence": "high",
@@ -1260,9 +1394,9 @@
         }
       ],
       "after": {
-        "status": "All assigned work landed + measured: channel.set, ui.render, setting, UR2 kernel, signing, identity, assert (10/10 real test goals, 20/20 asserts right), error.throw (Data 5/5), snapshot 58 confirmed (resume %snap% saves), timer 59 (12 goals migrated, 58 pass, committed 74c0d75fb). Core findings routed: TR1 (parked), SL2 folded into 59, Cover-vs-duration-normalization. Next queued: issue 41 regression on plang-os-stable (window.callGoal->window.call) — a branch switch. db/environment on hold.",
+        "status": "All assigned work landed + measured: channel.set, ui.render, setting, UR2 kernel, signing, identity, assert (10/10 real test goals, 20/20 asserts right), error.throw (Data 5/5), snapshot 58 confirmed (resume %snap% saves), timer 59 (12 goals migrated, 58 pass, committed 74c0d75fb). Core findings routed: TR1 (parked), SL2 folded into 59, Cover-vs-duration-normalization. Next queued: issue 41 regression on plang-os-stable (window.callGoal->window.call) \u2014 a branch switch. db/environment on hold.",
         "health": "green",
-        "notes": "Properties.llm (writer system prompt) is NOT pinned by the four decider fixtures or ModulePageTests — generalizing line 40 (named-arg keeps its name even matching its var) moved none of them. Each os/system/modules/**/*.md commit still runs all four decider fixtures; re-pin what moved. Examples parser takes each 'Step text:' as an e.g. for THAT action — never put another module's contrast step in an examples file (notes only)."
+        "notes": "Properties.llm (writer system prompt) is NOT pinned by the four decider fixtures or ModulePageTests \u2014 generalizing line 40 (named-arg keeps its name even matching its var) moved none of them. Each os/system/modules/**/*.md commit still runs all four decider fixtures; re-pin what moved. Examples parser takes each 'Step text:' as an e.g. for THAT action \u2014 never put another module's contrast step in an examples file (notes only)."
       }
     },
     {
@@ -1271,23 +1405,120 @@
       "timestamp_start": "2026-10-12T08:00:00Z",
       "timestamp_end": "2026-10-12T20:00:00Z",
       "intent": "Work the architect's ordered queue for app-systems: test fixes, baseline tidy, 10b, 681, 228, Cover Holds.",
-      "before": { "assumptions": "17 known C# failures on the baseline; Landlock off on this kernel", "risk": "core list read path (10b) touches every list read" },
+      "before": {
+        "assumptions": "17 known C# failures on the baseline; Landlock off on this kernel",
+        "risk": "core list read path (10b) touches every list read"
+      },
       "plan": ".bot/app-systems/coder/summary.md",
       "actions": [
-        { "paths": ["PLang/app/module/terminal/code/Sandbox.cs", "PLang.Tests/Modules/App/Modules/terminal/"], "type": "modify", "category": "code", "confidence": "high", "context": "validate permissions before the kernel check; hold tests skip without Landlock" },
-        { "paths": ["PLang.Tests/Wire/App/Surface/", "PLang/app/event/on/this.cs"], "type": "modify", "category": "test", "confidence": "high", "context": "app.event joins the surface golden (689)" },
-        { "paths": ["PLang.Tests/Runtime/App/Goals/TaskTests.cs", "PLang.Tests/Modules/App/Modules/browser/CdpEventTests.cs", "PLang.Tests/Modules/App/Modules/llm/LlmSnapshotHelper.cs"], "type": "modify", "category": "test", "confidence": "high", "context": "pins and timing fixes, mutation-checked" },
-        { "paths": ["PLang/app/type/item/text/this.cs", "PLang/app/type/item/this.cs", "PLang/app/module/llm/type/message/this.cs"], "type": "modify", "category": "code", "confidence": "high", "context": "Cover's Holds: text by characters; containers by rows; message by Content" },
-        { "paths": [".bot/app-systems/coder/baseline-failures.txt"], "type": "modify", "category": "test", "confidence": "high", "context": "baseline 17 -> 6 carried" },
-        { "paths": ["PLang/app/type/item/sensitive/", "os/system/type/sensitive/"], "type": "rename", "category": "code", "confidence": "high", "context": "681 secret -> sensitive" },
-        { "paths": ["PLang/app/module/environment/start.cs"], "type": "delete", "category": "code", "confidence": "high", "context": "228" },
-        { "paths": ["PLang/app/type/item/list/this.cs", "PLang/app/type/item/list/this.Generic.cs"], "type": "modify", "category": "code", "confidence": "high", "context": "10b: element born through T.Create at first read, kept; T.Create over type.Make because Make keeps a dict a dict for record element types" }
+        {
+          "paths": [
+            "PLang/app/module/terminal/code/Sandbox.cs",
+            "PLang.Tests/Modules/App/Modules/terminal/"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "validate permissions before the kernel check; hold tests skip without Landlock"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Wire/App/Surface/",
+            "PLang/app/event/on/this.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "app.event joins the surface golden (689)"
+        },
+        {
+          "paths": [
+            "PLang.Tests/Runtime/App/Goals/TaskTests.cs",
+            "PLang.Tests/Modules/App/Modules/browser/CdpEventTests.cs",
+            "PLang.Tests/Modules/App/Modules/llm/LlmSnapshotHelper.cs"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "pins and timing fixes, mutation-checked"
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/text/this.cs",
+            "PLang/app/type/item/this.cs",
+            "PLang/app/module/llm/type/message/this.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "Cover's Holds: text by characters; containers by rows; message by Content"
+        },
+        {
+          "paths": [
+            ".bot/app-systems/coder/baseline-failures.txt"
+          ],
+          "type": "modify",
+          "category": "test",
+          "confidence": "high",
+          "context": "baseline 17 -> 6 carried"
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/sensitive/",
+            "os/system/type/sensitive/"
+          ],
+          "type": "rename",
+          "category": "code",
+          "confidence": "high",
+          "context": "681 secret -> sensitive"
+        },
+        {
+          "paths": [
+            "PLang/app/module/environment/start.cs"
+          ],
+          "type": "delete",
+          "category": "code",
+          "confidence": "high",
+          "context": "228"
+        },
+        {
+          "paths": [
+            "PLang/app/type/item/list/this.cs",
+            "PLang/app/type/item/list/this.Generic.cs"
+          ],
+          "type": "modify",
+          "category": "code",
+          "confidence": "high",
+          "context": "10b: element born through T.Create at first read, kept; T.Create over type.Make because Make keeps a dict a dict for record element types"
+        }
       ],
       "after": {
         "status": "queue done; waiting on the architect's gate",
         "health": "green except the 6 carried snapshot tests",
         "notes": "Open: LlmProperties' Cover refusal needs the builder's refusal text; plan test TypedListHoldsItsType needs a builder build."
       }
+    },
+    {
+      "id": "3e5a0c28-539d-421b-9a0a-c4b2df3ab45e",
+      "bot": "codeanalyzer",
+      "timestamp_start": "2026-10-13T19:47:51.945453+00:00",
+      "timestamp_end": null,
+      "intent": "Pre-merge OBP scan of app-systems locked core + builder pipeline (decision 721)",
+      "before": {
+        "assumptions": "977 C# files changed since runtime2; no OBP pass since 06-07; locked-core shape mistakes cost most. Running in isolated worktree.",
+        "risk": "Missing a cross-file fork or a clr leak in the core that the merge then carries into runtime2."
+      },
+      "plan": ".bot/app-systems/codeanalyzer/v1/plan.md",
+      "actions": [
+        {
+          "paths": ["PLang/app/data/", "PLang/app/data/Wire.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Area 1 (data+wire) OBP scan. New surface (schema registry, Operator registry, data reader, Comparison, this.Output) is OBP-correct, no forks. 3 weighted smells present are all carried (set-child bridge, reader-throws, json clr-leak). 2 minor cleanup: dead const MaxNormalizeDepth (this.Output.cs:21), IsDataMarked placement. Verdict for area: CLEAN, no merge blockers."
+        }
+      ],
+      "after": {}
     }
   ]
 }
