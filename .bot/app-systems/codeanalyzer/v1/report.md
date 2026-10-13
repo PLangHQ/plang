@@ -138,4 +138,16 @@ The CLAUDE.md invariants hold, verified in code:
 
 - **F5.1 — stale doc narrating a deleted mechanism.** `format/IWriter.cs:7,11,126` still describes the serialize pipeline as "`Normalize()` walks the in-memory value… Dispatched by `Normalize`." **The `Normalize` tree was deleted this branch** (`data/this.Normalize.cs` −276, area 1); the live mechanism is each value writing itself via `item.Output`. A grep confirms no live `Normalize` dispatcher remains (only an unrelated `tag` trim and error strings). The interface contract now misdescribes the architecture — a reader looks for a `Normalize` dispatcher that isn't there. Sibling instance: `type/item/kind/json/writer.cs:200`'s error string "Normalize is missing a case for this type." Fix: update the `IWriter` doc (and the json writer's message) to describe the self-writing `Output` path. **Carry (doc cleanup; a reviewer bot leaves the write to docs/coder). Surface change: no.**
 
+### F5.2 — fork + stored twice: the sync `Value(object)` write door beside self-writing `Output` (added after architect review; my Area-5 grep was scoped to the three brief paths and missed `type/item/kind/json/`)
+
+**Correction to the verdict above:** "each value writes itself, no switch on value type" holds for `Encode`/`Output`, but a **second write door** sits beside it and does type-switch. The serializer as a whole is **not** fork-free.
+
+- **Fork (two paths for one operation).** Writing a value to the wire has two doors: the async `item.Output(writer, mode, context)` (each value writes itself — the live path `Encode` and `WriteReflected` use) and the sync `IWriter.Value(object)` + `item.Write(IWriter)` (`type/item/this.cs:838`, 61 overrides). The code itself names the second one legacy: `item/this.cs:917` routes a Data through `Output` "NOT through writer.Value (sync, peels to **the OLD Peek().Write path**)." Still reached with plang values at `type/kind/this.cs:340`, `type/item/this.cs:937`, `type/item/signature/this.cs:221`, `type/item/kind/dict/this.cs:45`.
+- **Stored twice.** `json/writer.cs Value(object)` (`:131-203`) has explicit `dict` (`:154`) and `list` (`:171`) arms that write the object/array wire shape — while `dict`/`list` **also** write that shape themselves (`dict/this.cs:175`, `list/this.cs:299 Output`). One wire shape, two writers that can drift.
+- **Witness tell.** `Value(object)`'s own comment (`:181-187`) states "the writer never type-switches per type (OBP Rule 9)" — directly above the `dict`/`list` arms that do exactly that.
+- **Fix direction:** one write door. Everything routes through the value's own self-write (`Output`); `Value(object)`'s `dict`/`list`/`item` arms collapse into "the value writes itself," and the sync `Write`/`Value(object)` door retires once its four callers move to `Output`.
+- **Blocks the merge: no.** Both paths agree today (tests green — an agreeing fork is rot, not a bug). **Surface change: yes** (`IWriter.Value` and `item.Write` are locked core). This is the strongest shape finding of the run and is **not** on next-branch or obp-cleanup — it belongs on next-branch as a new systemic locked-core fork (I flag it; the write is architect/docs').
+
+---
+
 *Areas 6-8 pending (call/variable/events, module registry/app, builder pipeline).*
