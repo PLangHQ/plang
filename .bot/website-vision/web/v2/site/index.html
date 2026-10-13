@@ -57,6 +57,8 @@ section.band { background: var(--band); }
 .nav a:not(.brand) { text-decoration: none; color: var(--muted); }
 .nav a:not(.brand):hover { color: var(--fg); }
 @media (max-width: 600px) { .nav .hide-sm { display: none; } }
+.theme { background: transparent; border: 1px solid var(--line); color: var(--fg); border-radius: 980px; width: 32px; height: 32px; font-size: 15px; cursor: pointer; display: grid; place-items: center; padding: 0; }
+.theme:hover { border-color: var(--fg); }
 
 .btn { display: inline-flex; align-items: center; background: var(--btn-bg); color: var(--btn-fg); border-radius: 980px; padding: 12px 24px; font: 500 17px var(--font); text-decoration: none; border: 0; cursor: pointer; }
 .btn:hover { opacity: 0.86; }
@@ -172,6 +174,7 @@ footer a:hover { color: var(--fg); }
     <a class="hide-sm" href="#builders">For builders</a>
     <a class="hide-sm" href="#">Docs</a>
     <a href="#start">Get PLang</a>
+    <button type="button" class="theme" id="theme" aria-label="Switch to light mode">☀</button>
   </div>
 </nav>
 
@@ -365,6 +368,25 @@ footer a:hover { color: var(--fg); }
     b.addEventListener('click', function () { clearInterval(timer); show(+b.dataset.ex); });
   });
   if (!reduce) timer = setInterval(function () { show((current + 1) % ex.length); }, 6000);
+
+  var root = document.documentElement, tbtn = document.getElementById('theme');
+  function isDark() {
+    var t = root.getAttribute('data-theme');
+    return t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function syncTheme() {
+    var dark = isDark();
+    tbtn.textContent = dark ? '☀' : '☾';
+    tbtn.setAttribute('aria-label', dark ? 'Switch to light mode' : 'Switch to dark mode');
+  }
+  try { var saved = localStorage.getItem('plang-theme'); if (saved) root.setAttribute('data-theme', saved); } catch (e) {}
+  syncTheme();
+  tbtn.addEventListener('click', function () {
+    var next = isDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('plang-theme', next); } catch (e) {}
+    syncTheme();
+  });
 
   var copy = document.getElementById('copy');
   copy.addEventListener('click', function () {
