@@ -24,9 +24,9 @@ PLang keeps the intent as the source. The code is build output, like a binary.
 |---|---|---|---|---|
 | 1 | **Readable** | The source is the intent. | A goal file, full size, readable by anyone | ✅ |
 | 2 | **Compiled** | AI at build time. Not at runtime. | Each step → its compiled `.pr` action (module, action, parameters), side by side | ✅ `Tests/Http/GetRequest/.build/` |
-| 3 | **Inspectable** | Every step, open. | The `.pr` JSON is plain and versionable. View source on everything. | ✅ |
+| 3 | **Transparent** | Every step, open. | The `.pr` JSON is plain and versionable. View source on everything. | ✅ |
 | 4 | **Complete** | Batteries included. | A module grid: http, db, file, llm, crypto, identity, signing, ui, timer, cache… (~35) | ✅ `os/system/modules/` |
-| 5 | **Trusted** | Identity is built in. | Requests are signed by default (`unsigned` is the opt-out). Every actor has a keypair. | ⚠️ confirm the default |
+| 5 | **Signed I/O** | Everything in and out is signed. | All I/O is signed by default (`unsigned` is the opt-out). Every actor has a keypair. | ✅ confirmed by Ingi |
 | 6 | **Contained** | Apps can't reach outside their root. | Filesystem permission gate on every file access | ✅ (AuthGate) |
 
 Example of pillar 2, taken from the repo:
@@ -60,7 +60,10 @@ Headline register:
 - **The puffin is the signature, not wallpaper.** Logo, one appearance in the hero, footer. Same artwork, used sparingly.
 - **Motion has one job:** showing intent becoming compiled steps.
 
+## Release
+The site sells **PLang 1.0b** (runtime2). Install is a script: `.ps1` on Windows, bash on macOS/Linux.
+
 ## Open
-1. Does the site sell runtime2/v0.2? If so, confirm the LLM providers, how builds are paid for, and the install command.
-2. Is signing on by default for http? (pillar 5)
+1. LLM providers at build time, and how building is paid for (own API key? credits?).
+2. The exact install one-liners. No install scripts exist in the repo yet.
 3. A higher-resolution puffin, plus Ingi's favourite examples.
