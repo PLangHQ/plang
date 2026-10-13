@@ -46,8 +46,19 @@ HTTP, database, files, LLM, crypto, identity, UI, timers, cache. Built in, not i
 
 ### 7 · Start (how do I begin?)
 **Start writing what you mean.**
-PLang 1.0b. Open source.
-*Visual:* two install one-liners (Windows `.ps1` / macOS & Linux bash), a copy button, and links to GitHub, Docs and Discord.
+PLang 1.0b. Open source. One line on Windows 10/11, with nothing else to install.
+*Visual:* one command with a copy button:
+```
+irm https://plang.is/start.ps1 | iex
+```
+Below it, four quiet facts (from the os bot, confirmed by Ingi):
+- Downloads PLang and checks every download's sha256.
+- Opens `.goal` files with PLang, so a double-click runs a goal.
+- Runs PlangOS, a small Linux in WSL where only PLang runs.
+- Keeps your files on their own disk, so updates never touch them.
+
+macOS/Linux: "coming", stated plainly. No fake command.
+Links: GitHub · Docs · Discord.
 
 ### Footer
 The puffin, small. The early-stage note in one quiet line: "1.0 beta: expect rough edges." Links to terms and privacy.

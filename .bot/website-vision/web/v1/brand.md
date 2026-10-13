@@ -65,7 +65,9 @@ The site sells **PLang 1.0b** (runtime2). Install is a script: `.ps1` on Windows
 
 Install state per the os bot (2026-10-13): the only script is PlangOS's Windows launcher (`irm https://plang.is/start.ps1 | iex`). It is unpublished (version 0.0.0) and installs **PlangOS** (a WSL desktop), not plain PLang. No bash installer exists. Today's build uses OpenAI (`OPENAI_API_KEY`); "llm.plang.is, no key" is a later idea. The design uses placeholders until Ingi decides.
 
+**Decided (Ingi via os bot):** 1.0b installs through `irm https://plang.is/start.ps1 | iex`. It needs only Windows 10/11. It downloads PLang with a sha256 check, associates `.goal` files, installs WSL and the PlangOS image (sha256-checked), keeps user files on a separate data disk, and opens the PlangOS desktop. Re-running it updates.
+
 ## Open
-1. Which installer ships with 1.0b: a plain PLang runtime installer, or PlangOS? Plus the Windows and macOS/Linux one-liners.
+1. macOS/Linux install: no installer yet. The site says "coming".
 2. Build-time LLM for 1.0b: own OpenAI key, credits, or llm.plang.is?
 3. A higher-resolution puffin, plus Ingi's favourite examples.
