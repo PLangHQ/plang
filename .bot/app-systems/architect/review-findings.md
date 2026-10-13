@@ -41,3 +41,11 @@ Each finding the reviewer bots report, checked against the code before it goes a
 
 - F2.3: remove stream's `ReadAllBytesAsync`/`ReadAllTextAsync` ("kept for v1 callers"; no production caller but the stream's own Read).
 - F4.1: `property.IsDefault(value)` becomes async with a context, answered by the value's own `Compare`.
+
+## codeanalyzer (plang-ae), area 5: the serializer (cd9381622)
+
+| finding | checked | status |
+|---|---|---|
+| one wire serializer; Encode calls `data.Output`; sign-if-missing in Encode | its trace, followed from Encode into `data.Output` | cleared |
+| F5.1 the writer contract still names `Normalize`, deleted this branch: `format/IWriter.cs:7,11,126`, `kind/json/writer.cs:12,129,155,194,200`, `NormalizeException` | grep: no live Normalize dispatcher; the docs and the exception's name describe a pipeline that's gone | fix (batch 1: comments and the error text; the exception's rename rides with F5.2) |
+| **F5.2 (found by the architect checking F5.1; sent back to the codeanalyzer to write up)** a second write door decides by type: `IWriter.Value(object)` (`format/IWriter.cs:129`; json at `kind/json/writer.cs:131–203`) switches on the runtime type, with its own Data, dict and list cases beside the CLR primitives, while dict and list also write themselves (`dict/this.cs:175`, `list/this.cs:299`); and item has two self-write doors, the sync `Write(IWriter)` (`type/item/this.cs:838`, 61 overrides) and the async `Output` (`:916–918` calls the sync one "the OLD Peek().Write path"). Still reached from `type/kind/this.cs:340`, `type/item/this.cs:937`, `signature/this.cs:221`, `kind/dict/this.cs:45` | read in full; not on next-branch.md or obp-cleanup.md | pending the codeanalyzer's write-up; likely carry with a surface ask (IWriter and item are locked) |
