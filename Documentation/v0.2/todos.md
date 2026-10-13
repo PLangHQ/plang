@@ -2121,7 +2121,7 @@ now reads each through its Data. The test is green and off the baseline.
 
 ## 2026-10-01 — one flaky step sinks a whole goal's eval round
 
-In the decider eval (`tools/decider/c_eval.py`), the `build` goal failed all 11 of its steps in one round because
+In the decider eval (then `tools/decider/c_eval.py`, since retired — now the C# `PickListTests` golden), the `build` goal failed all 11 of its steps in one round because
 step 3 (`set channel "builder" call BuilderChannel` → `channel.set Goal=`) was refused twice: a goal whose answer
 can't be read fails whole, so one flaky step scores as eleven failures. The eval (and the builder) could keep the
 steps that read and fail only the refused one, so a round measures steps, not the worst step of a goal.

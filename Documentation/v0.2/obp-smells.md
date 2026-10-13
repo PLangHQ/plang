@@ -92,6 +92,8 @@ The tell: you `await X.Value()` an operand only to pass the raw inside to someth
 
 **late stamp** — construct-then-stamp: `new X(...) { Context = ... }` or `Context ??=` instead of born-with-context. A context-less instance exists for a window, and in that window it mis-types, can't navigate, and forces null checks on everyone downstream. Context is a private non-nullable field set at construction.
 
+**envelope** — a hand-built wrapper around Data's shape, usually to carry what `[JsonIgnore]` keeps off the wire or out of the store: `new Dictionary<string, object?> { ["Value"] = …, ["Model"] = … }` stored, then unpacked by name (`entry.Name == "Value"`). The field list gets written at every site that packs or unpacks it, and the value is often kept twice (read and raw). Fix: store the Data whole and mark what should persist for the view (`[Out]`/`[Store]`); if a module wraps Data to cache it, it is doing the cache's job. Tells: `\["Value"\]` or `Name == "Value"` outside `app/data/`; a comment saying code goes around `[JsonIgnore]`. *Worked example (kept unfixed as the sweep's specimen):* the llm query's own cache (`llm/code/OpenAi.cs`, `RestoreFromCache`).
+
 ### Design alarms
 
 **fork** — two execution paths for one operation. Four shapes: a behavioral `if`/`switch` (choosing *how* to do the same thing — reading distinct fields of a structured object is not a fork); a generic/fallback/"default" path beside per-type handlers; a type-switch inside a registry (`is X.subtype` → behave differently — push it onto the element as a virtual member); an optional-override branch (`is INamedThing ? declared : derived` — two ways to get one thing). Forks are where code diverges over time; the pattern-doc rule behind this is "never diverge."

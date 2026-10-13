@@ -216,7 +216,7 @@ Not a blocker — the settings reshape (c13532536) already avoids `CountRaw` in 
 `type/format/formal/writer.cs`, whose doc says the writer owns the layout. Pick needs HOLES (`?`,
 `Recovery=[goal.call(Name=?)]`), which the writer can't write: its values are real values. Fix when cheap:
 a hole value the writer writes as `?`, and the prefill built as catalog actions with hole rows, written by
-the writer. The eval twin (`tools/decider/prompt_c.py` `Line`/`prefill`) moves with it.
+the writer. The decider's prompt-C golden (`PickListTests`, C#) moves with it.
 
 ## list.Add chooses extend or append by asking what the value is [logged 2026-09-28, stage 9b list]
 
