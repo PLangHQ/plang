@@ -1,0 +1,377 @@
+<title>plang.is</title>
+<style>
+/* Layout: one centred column, one idea per screen; alternating white / soft-grey bands like a product page. */
+:root {
+  --bg: #ffffff;
+  --band: #f5f5f7;
+  --surface: #ffffff;
+  --fg: #1d1d1f;
+  --muted: #6e6e73;
+  --line: #d9d9de;
+  --accent: #b5501a;          /* puffin beak, deep enough for text */
+  --accent-soft: #fdf0e7;
+  --ok: #1f7a43;
+  --bad: #b3261e;
+  --btn-bg: #1d1d1f;
+  --btn-fg: #ffffff;
+  --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 24px 48px -24px rgba(0,0,0,0.16);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161618; --band: #1d1d20; --surface: #232326; --fg: #f5f5f7; --muted: #a1a1a6; --line: #36363b;
+    --accent: #ff9f5a; --accent-soft: #3a2618; --ok: #5fd08a; --bad: #ff7b72; --btn-bg: #f5f5f7; --btn-fg: #161618;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 24px 48px -24px rgba(0,0,0,0.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161618; --band: #1d1d20; --surface: #232326; --fg: #f5f5f7; --muted: #a1a1a6; --line: #36363b;
+  --accent: #ff9f5a; --accent-soft: #3a2618; --ok: #5fd08a; --bad: #ff7b72; --btn-bg: #f5f5f7; --btn-fg: #161618;
+  --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 24px 48px -24px rgba(0,0,0,0.6);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 17px; line-height: 1.47; -webkit-font-smoothing: antialiased; }
+h1, h2, h3, p, ul, dl, dd { margin: 0; padding: 0; }
+ul { list-style: none; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+h1, h2 { text-wrap: balance; font-weight: 700; letter-spacing: -0.035em; line-height: 1.05; }
+h2 { font-size: clamp(36px, 5.6vw, 64px); }
+
+.wrap { max-width: 1040px; margin: 0 auto; padding-inline: 20px; }
+section { padding-block: clamp(72px, 11vw, 128px); }
+section.band { background: var(--band); }
+.head { display: grid; gap: 16px; justify-items: center; text-align: center; margin-bottom: clamp(40px, 6vw, 64px); }
+.head p { font-size: clamp(19px, 2.2vw, 23px); color: var(--muted); max-width: 36ch; line-height: 1.38; }
+.eyebrow { font-size: 17px; font-weight: 600; color: var(--accent); }
+
+/* Nav */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: saturate(180%) blur(18px); -webkit-backdrop-filter: saturate(180%) blur(18px); border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.nav .wrap { display: flex; align-items: center; gap: 28px; height: 52px; font-size: 13px; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; text-decoration: none; margin-right: auto; }
+.brand img { height: 26px; width: auto; }
+.nav a:not(.brand) { text-decoration: none; color: var(--muted); }
+.nav a:not(.brand):hover { color: var(--fg); }
+@media (max-width: 600px) { .nav .hide-sm { display: none; } }
+
+.btn { display: inline-flex; align-items: center; background: var(--btn-bg); color: var(--btn-fg); border-radius: 980px; padding: 12px 24px; font: 500 17px var(--font); text-decoration: none; border: 0; cursor: pointer; }
+.btn:hover { opacity: 0.86; }
+.link { color: var(--accent); text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.ctas { display: flex; gap: 28px; align-items: center; justify-content: center; flex-wrap: wrap; }
+
+/* Hero */
+.hero { padding-block: clamp(64px, 9vw, 112px) clamp(72px, 10vw, 120px); }
+.hero .head { margin-bottom: 0; gap: 22px; }
+.hero h1 { font-size: clamp(46px, 8.4vw, 96px); max-width: 13ch; }
+.hero .head p { font-size: clamp(21px, 2.6vw, 28px); color: var(--fg); font-weight: 500; letter-spacing: -0.01em; }
+.hero .ctas { margin-top: 8px; }
+
+.stage { margin-top: clamp(48px, 7vw, 80px); display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1.15fr); gap: 28px; align-items: center; }
+.ask { display: flex; gap: 14px; align-items: flex-start; min-width: 0; }
+.ask .avatar { flex: none; width: 48px; height: 48px; border-radius: 50%; background: var(--accent-soft); display: grid; place-items: center; overflow: hidden; }
+.ask .avatar img { height: 40px; width: auto; margin-top: 8px; }
+.bubble { background: var(--band); border-radius: 22px 22px 22px 6px; padding: 18px 22px; font-size: clamp(18px, 2vw, 21px); line-height: 1.4; min-width: 0; }
+.bubble small { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.arrow { color: var(--muted); font-size: 28px; }
+.appwin { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
+.appwin .bar { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 600; }
+.appwin .bar .dots { display: flex; gap: 6px; margin-right: 6px; }
+.appwin .bar .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.appwin .body { padding: 6px 16px 10px; }
+.appwin table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+.appwin td { padding: 9px 0; border-bottom: 1px solid var(--line); }
+.appwin tr:last-child td { border-bottom: 0; }
+.appwin td:nth-child(2), .appwin td:nth-child(3) { text-align: right; color: var(--muted); }
+.appwin .foot { display: flex; flex-wrap: wrap; gap: 8px 16px; padding: 12px 16px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); }
+.appwin .foot span::before { content: "✓"; color: var(--ok); margin-right: 6px; font-weight: 700; }
+.examples { display: flex; gap: 8px; justify-content: center; margin-top: 28px; flex-wrap: wrap; }
+.examples button { font: 14px var(--font); color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 980px; padding: 7px 14px; cursor: pointer; }
+.examples button[aria-pressed="true"] { color: var(--fg); border-color: var(--fg); }
+@media (max-width: 760px) {
+  .stage { grid-template-columns: minmax(0, 1fr); }
+  .arrow { justify-self: center; transform: rotate(90deg); }
+}
+
+/* Spec list (Yours) */
+.spec { max-width: 720px; margin: 0 auto; display: grid; }
+.spec div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; padding: 22px 0; border-top: 1px solid var(--line); align-items: baseline; }
+.spec div:last-child { border-bottom: 1px solid var(--line); }
+.spec dt { color: var(--muted); font-size: 17px; }
+.spec dd { font-size: clamp(21px, 2.6vw, 28px); font-weight: 600; letter-spacing: -0.015em; }
+
+/* Identity */
+.ids { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.id { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: grid; gap: 14px; min-width: 0; }
+.id .who { display: flex; align-items: center; gap: 12px; font-weight: 600; font-size: 19px; }
+.id .mark { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); font-weight: 700; flex: none; }
+.id .mark.app { border-radius: 11px; }
+.id .kind { font-size: 13px; color: var(--muted); font-weight: 400; display: block; }
+.id code { font: 13px var(--mono); color: var(--muted); overflow-wrap: anywhere; }
+.under { text-align: center; color: var(--muted); margin-top: 28px; font-size: 17px; }
+@media (max-width: 760px) { .ids { grid-template-columns: minmax(0, 1fr); } }
+
+/* Signed */
+.msgs { max-width: 680px; margin: 0 auto; display: grid; gap: 16px; }
+.msg { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 20px 22px; display: grid; gap: 10px; }
+.msg .meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+.msg .text { font-size: 19px; }
+.msg .status { font-size: 15px; font-weight: 600; }
+.msg.ok .status { color: var(--ok); }
+.msg.bad { opacity: 0.92; }
+.msg.bad .text del { color: var(--muted); }
+.msg.bad .text ins { text-decoration: none; background: color-mix(in srgb, var(--bad) 14%, transparent); border-radius: 4px; padding: 0 4px; }
+.msg.bad .status { color: var(--bad); }
+
+/* Open */
+.open { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; min-width: 0; }
+.panel h3 { font: 13px var(--mono); color: var(--muted); padding: 12px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; font-weight: 400; }
+.panel pre { margin: 0; padding: 18px 20px 22px; font: 14.5px/1.75 var(--mono); overflow-x: auto; }
+.panel .v { color: var(--accent); }
+.panel .d { color: var(--muted); }
+.panel.say p { padding: 20px; font-size: 19px; line-height: 1.45; }
+.facts { display: flex; justify-content: center; gap: 12px 36px; flex-wrap: wrap; margin-top: 32px; color: var(--muted); }
+.facts li::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 10px; vertical-align: 3px; }
+@media (max-width: 760px) { .open { grid-template-columns: minmax(0, 1fr); } }
+
+/* Builders */
+.mods { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 760px; margin: 0 auto; }
+.mods li { font: 15px var(--mono); padding: 8px 16px; border: 1px solid var(--line); border-radius: 980px; color: var(--muted); }
+
+/* Start */
+.cmd { max-width: 620px; margin: 0 auto; display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 8px 8px 8px 20px; box-shadow: var(--shadow); }
+.cmd code { flex: 1; min-width: 0; font: 16px var(--mono); overflow-x: auto; white-space: nowrap; padding-block: 8px; }
+.cmd button { flex: none; font: 500 15px var(--font); background: var(--btn-bg); color: var(--btn-fg); border: 0; border-radius: 980px; padding: 9px 18px; cursor: pointer; }
+.cmd-note { text-align: center; color: var(--muted); font-size: 15px; margin-top: 14px; }
+.steps { max-width: 620px; margin: 40px auto 0; display: grid; gap: 14px; }
+.steps li { display: flex; gap: 14px; font-size: 17px; }
+.steps li::before { content: "✓"; color: var(--ok); font-weight: 700; }
+
+footer { border-top: 1px solid var(--line); padding-block: 40px 56px; }
+footer .wrap { display: flex; align-items: center; gap: 16px 28px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+footer img { height: 34px; width: auto; }
+footer .grow { margin-right: auto; }
+footer a { text-decoration: none; }
+footer a:hover { color: var(--fg); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .appwin, .bubble { transition: opacity 0.35s ease; }
+  .swapping .appwin, .swapping .bubble { opacity: 0; }
+}
+</style>
+
+<nav class="nav">
+  <div class="wrap">
+    <a class="brand" href="#"><img src="puffin.png" alt="">PLang</a>
+    <a class="hide-sm" href="#how">How it works</a>
+    <a class="hide-sm" href="#builders">For builders</a>
+    <a class="hide-sm" href="#">Docs</a>
+    <a href="#start">Get PLang</a>
+  </div>
+</nav>
+
+<!-- 1 · Hero -->
+<section class="hero">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">PLang 1.0 beta</p>
+      <h1>An internet made by the people who use&nbsp;it.</h1>
+      <p>Say what you need. Own what you get.</p>
+      <div class="ctas"><a class="btn" href="#start">Get PLang</a><a class="link" href="#how">See how it works ›</a></div>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="ask">
+        <div class="avatar"><img src="puffin.png" alt=""></div>
+        <div class="bubble"><small id="who">Anna, running club</small><span id="said">Let our running club log times. Only members can see them.</span></div>
+      </div>
+      <div class="arrow" aria-hidden="true">→</div>
+      <div class="appwin" aria-live="polite">
+        <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span id="appname">Club Times</span></div>
+        <div class="body"><table id="apptable">
+          <tr><td>Anna</td><td>10 km</td><td>48:12</td></tr>
+          <tr><td>Bjarni</td><td>10 km</td><td>51:40</td></tr>
+          <tr><td>Sólveig</td><td>5 km</td><td>23:05</td></tr>
+        </table></div>
+        <div class="foot" id="appfoot"><span>On Anna's computer</span><span>4 members</span><span>Signed</span></div>
+      </div>
+    </div>
+    <div class="examples" role="group" aria-label="Examples">
+      <button type="button" aria-pressed="true" data-ex="0">Running club</button>
+      <button type="button" aria-pressed="false" data-ex="1">Small shop</button>
+      <button type="button" aria-pressed="false" data-ex="2">School</button>
+    </div>
+  </div>
+</section>
+
+<!-- 2 · Yours -->
+<section class="band" id="how">
+  <div class="wrap">
+    <div class="head">
+      <h2>It's yours.</h2>
+      <p>What you ask for is built for you and runs where you are. Nobody rents it to you. Nobody reads your data.</p>
+    </div>
+    <dl class="spec">
+      <div><dt>Where it runs</dt><dd>Your computer</dd></div>
+      <div><dt>Where your data lives</dt><dd>Your disk</dd></div>
+      <div><dt>What it can reach</dt><dd>Only its own folder</dd></div>
+      <div><dt>Monthly fee</dt><dd>None</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- 3 · Identity -->
+<section>
+  <div class="wrap">
+    <div class="head">
+      <h2>No passwords. No accounts.</h2>
+      <p>Every person and every app has its own identity. It proves who you are without anyone holding a password for you.</p>
+    </div>
+    <div class="ids">
+      <div class="id"><div class="who"><span class="mark">A</span><span>Anna<span class="kind">Person</span></span></div><code>key 7f3a·91c2·e04d·5b18</code></div>
+      <div class="id"><div class="who"><span class="mark app">CT</span><span>Club Times<span class="kind">App</span></span></div><code>key 2c88·0a7e·f913·64d0</code></div>
+      <div class="id"><div class="who"><span class="mark">B</span><span>Bjarni<span class="kind">Person</span></span></div><code>key b51e·3d06·a2f7·c98b</code></div>
+    </div>
+    <p class="under">They connect directly, with no middleman in between.</p>
+  </div>
+</section>
+
+<!-- 4 · Signed -->
+<section class="band">
+  <div class="wrap">
+    <div class="head">
+      <h2>Everything is signed.</h2>
+      <p>What you send arrives exactly as you sent it. If anything changes on the way, it is rejected before it runs.</p>
+    </div>
+    <div class="msgs">
+      <div class="msg ok">
+        <div class="meta"><span>From Bjarni → Club Times</span><span>Signed by b51e·3d06</span></div>
+        <p class="text">10 km, 51:40</p>
+        <p class="status">✓ Verified. Saved.</p>
+      </div>
+      <div class="msg bad">
+        <div class="meta"><span>From Bjarni → Club Times</span><span>Signed by b51e·3d06</span></div>
+        <p class="text">10 km, <del>51:40</del> <ins>41:40</ins></p>
+        <p class="status">✕ Changed after signing. Rejected.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · Open -->
+<section>
+  <div class="wrap">
+    <div class="head">
+      <h2>Open all the way down.</h2>
+      <p>Every app is written in plain language. You never have to read it. Anyone can.</p>
+    </div>
+    <div class="open">
+      <div class="panel say"><h3><span>What Anna said</span></h3><p>Let our running club log times. Only members can see them.</p></div>
+      <div class="panel"><h3><span>LogRun.goal</span><span>what was built</span></h3>
+<pre><span class="d">-</span> ask user for distance and time, write to <span class="v">%run%</span>
+<span class="d">-</span> set <span class="v">%run.runner%</span> = <span class="v">%MyIdentity.Name%</span>
+<span class="d">-</span> append <span class="v">%run%</span> to runs.json
+<span class="d">-</span> send <span class="v">%run%</span> to club members</pre></div>
+    </div>
+    <ul class="facts">
+      <li>AI builds it once</li>
+      <li>Then it runs without AI</li>
+      <li>Built on llm.plang.is, no API key</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 6 · Builders -->
+<section class="band" id="builders">
+  <div class="wrap">
+    <div class="head">
+      <h2>Rather write it yourself?</h2>
+      <p>You can. The language is the same plain English, with everything built in.</p>
+    </div>
+    <ul class="mods">
+      <li>http</li><li>file</li><li>llm</li><li>identity</li><li>signing</li><li>crypto</li><li>ui</li><li>timer</li><li>cache</li><li>event</li><li>list</li><li>math</li><li>test</li>
+    </ul>
+    <p class="under"><a class="link" href="#">Read the docs ›</a> &nbsp; <a class="link" href="#">GitHub ›</a></p>
+  </div>
+</section>
+
+<!-- 7 · Start -->
+<section id="start">
+  <div class="wrap">
+    <div class="head">
+      <h2>Start with one line.</h2>
+      <p>Windows 10 or 11. Nothing else to install.</p>
+    </div>
+    <div class="cmd"><code id="cmd">irm https://plang.is/start.ps1 | iex</code><button type="button" id="copy">Copy</button></div>
+    <p class="cmd-note">Paste into PowerShell. macOS and Linux are coming.</p>
+    <ul class="steps">
+      <li>Every download is checked before it is used.</li>
+      <li>Runs in its own secure space on your computer.</li>
+      <li>Your files live on their own disk, so updates never touch them.</li>
+      <li>Run it again any time to update.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <img src="puffin.png" alt="The PLang puffin">
+    <span class="grow">PLang 1.0 beta. Expect rough edges.</span>
+    <a href="#">GitHub</a><a href="#">Discord</a><a href="#">Terms</a><a href="#">Privacy</a>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var ex = [
+    { who: "Anna, running club", said: "Let our running club log times. Only members can see them.", name: "Club Times",
+      rows: [["Anna","10 km","48:12"],["Bjarni","10 km","51:40"],["Sólveig","5 km","23:05"]],
+      foot: ["On Anna's computer","4 members","Signed"] },
+    { who: "Gunnar, bike shop", said: "Every Monday, send me a summary of last week's invoices.", name: "Invoice Digest",
+      rows: [["Invoices","12",""],["Total","1.284.000 kr",""],["Next run","Mon 08:00",""]],
+      foot: ["On Gunnar's computer","Runs weekly","Signed"] },
+    { who: "Elín, school parents", said: "A sign-up list for the bake sale. Parents sign up with their name and what they bring.", name: "Bake Sale",
+      rows: [["Kristín","Chocolate cake",""],["Jón","Pancakes",""],["Ásta","Kleinur",""]],
+      foot: ["On Elín's computer","23 signed up","Signed"] }
+  ];
+  var stage = document.getElementById('stage');
+  var buttons = document.querySelectorAll('.examples button');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var current = 0, timer;
+  function esc(s) { return s.replace(/[&<>]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c]; }); }
+  function render(i) {
+    var e = ex[i];
+    document.getElementById('who').textContent = e.who;
+    document.getElementById('said').textContent = e.said;
+    document.getElementById('appname').textContent = e.name;
+    document.getElementById('apptable').innerHTML = e.rows.map(function (r) {
+      return '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td><td>' + esc(r[2]) + '</td></tr>';
+    }).join('');
+    document.getElementById('appfoot').innerHTML = e.foot.map(function (f) { return '<span>' + esc(f) + '</span>'; }).join('');
+    buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(+b.dataset.ex === i)); });
+  }
+  function show(i) {
+    current = i;
+    if (reduce) { render(i); return; }
+    stage.classList.add('swapping');
+    setTimeout(function () { render(i); stage.classList.remove('swapping'); }, 350);
+  }
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () { clearInterval(timer); show(+b.dataset.ex); });
+  });
+  if (!reduce) timer = setInterval(function () { show((current + 1) % ex.length); }, 6000);
+
+  var copy = document.getElementById('copy');
+  copy.addEventListener('click', function () {
+    var text = document.getElementById('cmd').textContent;
+    function done() { copy.textContent = 'Copied'; setTimeout(function () { copy.textContent = 'Copy'; }, 1600); }
+    function fallback() { var r = document.createRange(); r.selectNodeContents(document.getElementById('cmd')); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+    try { navigator.clipboard.writeText(text).then(done, fallback); } catch (e) { fallback(); }
+  });
+})();
+</script>

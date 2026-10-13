@@ -1,17 +1,18 @@
 # web — summary
 
-**Version:** v1 (in progress, waiting on Ingi's review of the words)
+**Version:** v2 (draft homepage, waiting on Ingi's review)
 
-**What this is:** A redesign of plang.is, done the way an agency would: vision → belief → promise → proof → voice/look → site. The aim is an Apple-like, simple, factual site. The puffin artwork stays as is.
+**What this is:** A redesign of plang.is, done the way an agency would: vision first, then proof, then the page. PLang is presented as a **platform, a new internet**, not as a programming language. Regular users describe what they want, the LLM writes PLang, and they never see the language.
 
 **What was done:**
-- Ingi chose vision C, "Intent is the new source code."
-- Wrote the brand foundation in `.bot/website-vision/web/v1/brand.md`: belief, promise ("Write what you mean. Keep what you wrote."), six proof pillars with sources in the repo, voice rules, and visual principles.
-- The current plang.is content was used for information only. It describes v0.1.
+- v1: brand foundation around "Intent is the new source code", plus three hero prototypes. Ingi rejected them: too programming-focused, and nothing special. He wants a white background, not black.
+- v2: vision **"An internet made by the people who use it."** and promise **"Say what you need. Own what you get."** (`v2/brand.md`).
+- Full draft homepage at `v2/site/index.html` (+ `puffin.png`). Sections: Hero (a person's request becomes an app, with 3 rotating examples) → It's yours → No passwords → Everything is signed → Open all the way down → For builders → Start → Footer.
+- Rules: never mention PlangOS. The language appears only as proof (Open, Builders). White background, dark mode in dark grey.
 
-**Next:** Ingi reviews brand.md. Then the one-page narrative, then 2–3 hero prototypes, then the full single-file page.
+**Next:** Ingi's review of the draft. Then copy polish, a real example goal verified on 1.0b, a hi-res puffin, and hosting.
 
-**Open:** v0.2 facts (LLM providers, how builds are paid for, install command), whether http signs by default, a higher-res puffin, Ingi's favourite examples.
+**Open:** The example apps (Club Times, Invoice Digest, Bake Sale) and the LogRun.goal are illustrative and not built. "Monthly fee: None" needs confirming against llm.plang.is pricing. macOS/Linux install is not available yet.
 
-**Code example (proof pillar 2):**
-`get https://httpbin.org/get, unsigned, write to %response%` → `http.request Url=… Method=GET Unsigned=true` + `variable.set Name=%response%`
+**Code example (hero data shape):**
+`{ who: "Anna, running club", said: "Let our running club log times…", name: "Club Times", foot: ["On Anna's computer","4 members","Signed"] }`

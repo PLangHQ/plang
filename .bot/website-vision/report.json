@@ -18,8 +18,28 @@
           "category": "doc",
           "confidence": "medium",
           "context": "Brand foundation from vision C; proof pillars sourced from os/system/modules and Tests/Http/GetRequest/.build. Pillar 5 (signing by default) unconfirmed."
+        },
+        {
+          "paths": [".bot/website-vision/web/v1/hero/index.html"],
+          "type": "create",
+          "category": "code",
+          "confidence": "medium",
+          "context": "Three hero directions (Statement/Compile/Keynote). Rejected by Ingi: too programming-focused, no black."
+        },
+        {
+          "paths": [".bot/website-vision/web/v2/brand.md", ".bot/website-vision/web/v2/site/index.html"],
+          "type": "decision",
+          "category": "doc",
+          "confidence": "medium",
+          "context": "Reframed to platform vision 'An internet made by the people who use it.' Language demoted to proof. Full draft homepage, white + dark mode, no PlangOS mention."
         }
-      ]
+      ],
+      "after": {
+        "status": "v2 draft homepage published for review",
+        "health": "Copy and structure ready for feedback; examples illustrative",
+        "notes": "Pending: Ingi review, verify 'no monthly fee', real example goal, hi-res puffin"
+      },
+      "timestamp_end": "2026-10-13T22:30:00Z"
     }
   ]
 }
