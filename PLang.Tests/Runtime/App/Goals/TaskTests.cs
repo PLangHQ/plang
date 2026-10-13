@@ -459,6 +459,28 @@ public class TaskTests
         await Assert.That((await results[1].Value())?.ToString()).IsEqualTo("second");
     }
 
+    // a task's list holds the task itself: its debug dump writes without it, and %task.list% still answers every task
+    // written there, the last itself
+    [Test]
+    public async Task ATaskKeptInAVariable_WritesItsDebugFace_AndItsListStillNavigates()
+    {
+        await Load("First", Make.Step("return first", Make.Action(Ctx, "goal", "return", ("Data", "first"))));
+        await Load("Second", Make.Step("return second", Make.Action(Ctx, "goal", "return", ("Data", "second"))));
+        var caller = await Load("Caller",
+            Make.Step("call First in parallel, write to %task%", InParallel("First"), Set("task", "%!data%")),
+            Make.Step("call Second in parallel, write to %task%", InParallel("Second"), Set("task", "%!data%")));
+        await (await caller.Start(Ctx)).IsSuccess();
+        var task = (global::app.task.@this)(await Ctx.Variable.Get("task")).Peek()!;
+
+        var dump = await task.Debug(Ctx);
+
+        await Assert.That(dump).Contains(task.Id.ToString());
+        var waited = await Action("task", "wait", ("List", "%task.list%"));
+        var results = ((global::app.type.item.list.@this)(await waited.Value())!).Items(Ctx).ToList();
+        await Assert.That(results.Count).IsEqualTo(2);
+        await Assert.That((await results[1].Value())?.ToString()).IsEqualTo("second");
+    }
+
     // every other value replaces as it did: nothing written before it is kept
     [Test]
     public async Task ATextOrADictWrittenOverItsKind_Replaces()
