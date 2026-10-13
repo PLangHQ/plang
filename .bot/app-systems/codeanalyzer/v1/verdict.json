@@ -1,0 +1,4 @@
+{
+  "status": "pass",
+  "summary": "app-systems pre-merge OBP scan (areas 1-8 + 5b): merge-clean on behaviour, no blocking findings. New surface is OBP-exemplary. One locked-core shape debt the merge carries (F5.2: two write doors) + 6 non-blocking cleanup/surface proposals; everything else cited to the carry list."
+}

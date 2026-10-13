@@ -207,4 +207,45 @@ The CLAUDE.md invariants hold, verified in code:
 - **Member-read reflection (673):** `module/this.cs:194 Declares` (`GetType().GetProperty`), `:203-215` (action-by-CLR-type lookup + `Activator.CreateInstance`), `app/this.cs:432` (`reflection.@this().Read` of an identity). The module navigating its own members / minting handlers by reflection is the carried member-read door.
 - **Reader throws its refusal (714):** `app/this.cs:437` catches `DeclinedException` → `Unreadable` — **named on next-branch's 714 list**. `:438` filters specific json/format/cast exceptions (boundary).
 
-*Area 8 pending (builder pipeline).*
+## Area 8 — the builder pipeline (`PLang/app/goal/step/`, `PLang/app/module/build/`)
+
+**Diff:** +4,861 new — `goal/step/` +4,192 (the formal reader +564 / writer +235, Cover/Validate, the pick list +600 and its line/listed/question parts, the action catalog + clause/loop/keep subtypes, the serializers), `module/build/` +669. The branch's weighted smells were found live here, so every file read in full.
+
+**Tooling:** grep for name-string/capture forks + the "action slot" predicate census + the stored-twice census on Cover/Freeze + the catch census + `ObpScan`.
+
+### Verdict: CLEAN behaviourally (no merge blockers); one new cleanup finding + the heavy carried 677/714 cluster
+
+### Carried (cite, not re-raised)
+
+- **677 — the decider's pick list reads actions by name string.** `pick/list/this.cs`: `Code()` forks on names (`:333 name == "loop.foreach"`, `:338 name == "variable.set"`), `:342 Property.Name == "Name"`, `IsCapture` (`:470-471 Module.Name == "variable" && Name == "set"`, used `:216,:234,:583`), and `:587 property.Name is "Type" or "Default"`. All **named on next-branch's 677/714 entries** (line numbers shifted slightly from the carried `:355-365/:341/:470/:587`; same code). Additional same-family site: `:308 _listed.Any(l => l.Name is "condition.elseif" or "condition.else")` (the elseif/else chain by name) — folds under 677's "reads actions by name string"; noted, not re-raised.
+- **714 — reader throws its refusal.** `formal/writer.cs:172` throws `NormalizeException` (fail-closed on a non-tree value); the formal reader's internal `Invalid` (`reader.cs:65`) is thrown by `cursor.Fail` and caught once at the entry (`:57`) → a clean `FormalInvalid` error — the contained parser-stop pattern, same rationale as 714.
+- **Execution-path catches are the correct boundary** (`step/this.cs:132-133`, `action/this.cs:329-330`, `+ CallStackOverflowException`): preserve `AppException`'s key, exclude fatals + `OperationCanceledException`, convert the rest to a Data error — the pattern cleared in areas 1-2.
+- **The carried Cover↔Freeze stored-twice is fixed.** `Freeze` is now one method (`action/this.Build.cs:92`, recursing `Held` + `Child.Code`); `Cover` (`step/this.Validate.cs:37`) writes via the formal `Writer` and compares — it does **not** re-walk freeze. Cover is long but is one cohesive validator (coverage across variable/literal/path/number/text dimensions), not distributed behaviour crammed in — not raised.
+
+### Finding
+
+- **F8.1 — stored twice / identity by name: the "action slot" predicate. NEW (not carried).** "Is this slot an action, or a list of actions?" — `slot.Type.Name == "action" || (slot.Type.Name == "list" && slot.Type.kind.Name == "action")` — is re-derived by type-name string at **3 independent sites**: `action/this.Validate.cs:54-55`, `action/formal/reader.cs:221` (list-of-action) + `:349` (action), `action/serializer/Reader.cs:153-154`. The two-part shape (the `list`+`kind=="action"` half) is exactly what a fourth site will forget. Fix direction: the type/slot answers it once — `slot.Type.IsActionSlot` (or the action type answers "am I an action-valued slot"). **Carry (cleanup). Surface change: yes** if it becomes a member on `type` (Ingi's call); **no** if a shared builder-internal predicate. **Blocks: no.** *Plang reaching it:* any step whose action takes a sub-action slot, e.g. `if %x% > 5, call Foo` — `call`'s action argument and `on error` clauses are action-valued slots read through all three sites.
+
+### Reviewed, acceptable (no finding)
+
+- **The formal reader's per-type parse dispatch** (`reader.cs:317 text`, `:323 duration`, `:338 variable`, `:349 action`, `:359/:500 list`) — `declared.Type.Name == "..."` picking the parse production. This reads like is-X-by-name, but the formal reader is **the single owner of plang's surface grammar** (the writer is its inverse); dispatching the parse by the declared type is parser design (the grammar lives in one place), not behaviour that belongs scattered on the types. Distinct from F8.1, which is one *predicate* re-derived in three *different* files.
+- `module/build/code/Default.cs:37` (`searchPath == "." || "/" || "\\"`): leaf root-path normalization in the build's code search — minor, not raised.
+
+---
+
+## Overall verdict — app-systems pre-merge OBP scan (areas 1-8 + 5b)
+
+**MERGE-CLEAN on behaviour.** Across the locked core's 977-file diff and the new builder pipeline, **no finding blocks the merge.** The new surface is, with one exception, OBP-exemplary: registries with behaviour on the element (schema, Operator, path scheme, module actions, event kinds), single owners for cross-type relations (the number Ladder, Comparison), and `app.@this` as a clean composition root.
+
+**The one shape debt the merge carries is F5.2** (two write doors — the self-writing `Output` vs the sync `IWriter.Value(object)` type-switch; dict/list wire shape written in several places). It is behaviourally sound (agreeing fork, tests green) but is the heaviest locked-core shape debt and is **not** yet on next-branch — it should be, for Ingi.
+
+**New findings (none blocking), all cleanup/surface proposals for the next branch:**
+- F4.1 — `IsDefault` default-equality forks by type-name; the value should answer via `Compare` (surface: IsDefault signature).
+- F5.1 — stale `Normalize` doc in 3 places (`IWriter.cs`, `json/writer.cs:200`, `Tagged.cs:8`) (surface: no).
+- F5.2 — the write-path fork above (surface: yes; the headline).
+- F8.1 — the "action slot" predicate re-derived in 3 files (surface: maybe).
+- F3.1 — the parse-vs-convert failure face duplicated across 9 value types (surface: no).
+- F1.1 — dead const `MaxNormalizeDepth` (surface: no).
+- F6.1 — the system/user-variable predicate repeated (carried; architect read the two subsets as intentional).
+
+Everything else reduces to the carry list (673 reflection, 714 reader-throws, 717 json clr-leak, #59 set-child bridge, 677 pick-by-name, 681 Sensitive, 711 kind-is-type) — cited, not re-raised.

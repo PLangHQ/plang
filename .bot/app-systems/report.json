@@ -1502,7 +1502,7 @@
       "id": "3e5a0c28-539d-421b-9a0a-c4b2df3ab45e",
       "bot": "codeanalyzer",
       "timestamp_start": "2026-10-13T19:47:51.945453+00:00",
-      "timestamp_end": null,
+      "timestamp_end": "2026-10-13T21:15:07.099027+00:00",
       "intent": "Pre-merge OBP scan of app-systems locked core + builder pipeline (decision 721)",
       "before": {
         "assumptions": "977 C# files changed since runtime2; no OBP pass since 06-07; locked-core shape mistakes cost most. Running in isolated worktree.",
@@ -1511,63 +1511,112 @@
       "plan": ".bot/app-systems/codeanalyzer/v1/plan.md",
       "actions": [
         {
-          "paths": ["PLang/app/data/", "PLang/app/data/Wire.cs"],
+          "paths": [
+            "PLang/app/data/",
+            "PLang/app/data/Wire.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "Area 1 (data+wire) OBP scan. New surface (schema registry, Operator registry, data reader, Comparison, this.Output) is OBP-correct, no forks. 3 weighted smells present are all carried (set-child bridge, reader-throws, json clr-leak). 2 minor cleanup: dead const MaxNormalizeDepth (this.Output.cs:21), IsDataMarked placement. Verdict for area: CLEAN, no merge blockers."
         },
         {
-          "paths": ["PLang/app/channel/"],
+          "paths": [
+            "PLang/app/channel/"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "Area 2 (channel+stream) OBP scan. -1755 net; whole channel/serializer subtree deleted (folded into type serializer). The repeated catch-when-not-fatal across channels is the correct I/O boundary (preserves AppException+fatals, converts transport throws to typed Error), not a masking smell. list returns errors on user path, throwing indexer is documented hard-miss. 3 minor borderline notes: .Clr<string>() leaf read (stream:160), redundant inner catch vs base (stored-twice shape), ReadAllBytesAsync v1-legacy throw. Verdict: CLEAN, no merge blockers."
         },
         {
-          "paths": ["PLang/app/type/item/text/", "PLang/app/type/item/number/", "PLang/app/type/item/bool/", "PLang/app/type/item/list/", "PLang/app/type/item/dict/", "PLang/app/type/item/path/", "PLang/app/type/item/datetime/", "PLang/app/type/item/duration/"],
+          "paths": [
+            "PLang/app/type/item/text/",
+            "PLang/app/type/item/number/",
+            "PLang/app/type/item/bool/",
+            "PLang/app/type/item/list/",
+            "PLang/app/type/item/dict/",
+            "PLang/app/type/item/path/",
+            "PLang/app/type/item/datetime/",
+            "PLang/app/type/item/duration/"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "Area 3 (core value types) OBP scan. +7294 near-new, the native value-model. Every fork-risk seam is single-owner/registry: number Ladder (one owner of cross-kind promotion keyed by kind name), path scheme (kind+factory registry), list Clr(target) (single interop door, each row lowers itself - inherent reflection not member-read reflection). Arithmetic catches are specific boundary translations. F3.1 stored-twice (systemic, carry): parse-vs-convert failure idiom duplicated across 9 value types' Create - corrected fix (per architect): the source value answers its own failure face, no helper on item. F3.2 borderline (carry): dict:84 JsonException-as-answer (same class as F1.3), dict:89 accommodates carried json-clr-leak. Verdict: CLEAN, no merge blockers."
         },
         {
-          "paths": ["PLang/app/type/this.cs", "PLang/app/type/list/", "PLang/app/type/kind/", "PLang/app/type/property/", "PLang/app/type/item/this.cs"],
+          "paths": [
+            "PLang/app/type/this.cs",
+            "PLang/app/type/list/",
+            "PLang/app/type/kind/",
+            "PLang/app/type/property/",
+            "PLang/app/type/item/this.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "Area 4 (type system) OBP scan. type.@this +692-311, item base +941, kind +503. All reflection here is carried member-read/catalog machinery (673); type/this.cs:321 carried reader-throws (714); property/list:86 clr-skip carried (711 family). F4.1 NEW fork-by-name/type: IsDefault (type/property/this.cs:118-138) switches 4 ways (bool/variable/number/else) doing default-equality the value should own via Compare - silent-divergence risk for a new type; carry (works today), surface change yes (architect refined: fix is value.Compare(Type.Make(Default)), only IsDefault signature goes async+context). F4.2 generic-display by name list (type/this.cs:547 Name==list||dict||choice) carried under 711. Census clean. Verdict: CLEAN, no merge blockers."
         },
         {
-          "paths": ["PLang/app/type/format/", "PLang/app/type/serializer/", "PLang/app/type/item/wire/"],
+          "paths": [
+            "PLang/app/type/format/",
+            "PLang/app/type/serializer/",
+            "PLang/app/type/item/wire/"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "Area 5 (serializer) OBP scan. +671 all new (IReader/IWriter/IOutput spine, value reader, plang wire kind). CLAUDE.md invariants verified in code: one wire serializer (application/plang), each value writes itself (Encode delegates to data.Output), sign-if-missing inside Encode. value/reader.cs scalar reader not a fork. Carried reader-throws (714): serializer/Reader.cs:50, wire/kind/plang/this.cs:101. F5.1 stale doc (carry): IWriter.cs:7,11,126 describes deleted Normalize pipeline. F5.2 (added after architect review of my scope-miss): fork + stored-twice - sync IWriter.Value(object) (json/writer.cs:131-203) type-switches (dict/list/item arms) beside async self-writing Output; dict/list wire shape in two places; item has two self-write doors (code calls Value 'the OLD Peek().Write path'); surface change yes (locked), does not block (agreeing fork), belongs on next-branch - largest shape debt. Verdict: CLEAN behaviorally; F5.2 is the shape debt."
         },
         {
-          "paths": ["PLang/app/call/", "PLang/app/type/item/variable/list/", "PLang/app/event/"],
+          "paths": [
+            "PLang/app/call/",
+            "PLang/app/type/item/variable/list/",
+            "PLang/app/event/"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "Area 6 (call+variable memory+events) OBP scan. +1281 call, +596 variable, event rewrite to on/ family. Events (locked 689): on/ family is registry (Made dict) + per-kind types, no fork. call locks all own-field (correct smell#1/#2 resolution). No courier Rule-9 violation (DynamicData checks are the memory's own storage). variable exports are copies. F6.1 repetition (carry): system/user-visible variable predicate (StartsWith('!') +/- DynamicData) open-coded ~10 sites in variable/list. Architect refined: the two subsets (listing keeps Now/GUID; snapshot drops always-fresh) are two intentional questions, not drift; carried to next branch, no surface ask. Blocks: no. Verdict: CLEAN, no merge blockers."
         },
         {
-          "paths": ["PLang/app/type/item/kind/dict/", "PLang/app/type/item/kind/list/", "PLang/app/type/item/kind/reflection/"],
+          "paths": [
+            "PLang/app/type/item/kind/dict/",
+            "PLang/app/type/item/kind/list/",
+            "PLang/app/type/item/kind/reflection/"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "Area 5b (type/item/kind/{dict,list,reflection}) - brief's corrected serializer scope. No new findings; all carried or already filed. kind/dict+kind/list are CLR-host codecs: member access delegates to * reflection kind (673); Convert narrows clr(JsonElement) via json.Parse (717); Output is two more F5.2 sites; Set throws (#59). kind/reflection is entirely carried 673 door - Property/Method/Twice are the stopgap statics 673 names; :329 catch->OutputException is the getter->wire boundary. Tagged.cs is the single [Out]/[Sensitive]/[Masked] wire-visibility filter (681), not a fork. Extends F5.1: Tagged.cs:8 is a 3rd stale-Normalize doc ref. Verdict: CLEAN, no merge blockers."
         },
         {
-          "paths": ["PLang/app/module/this.cs", "PLang/app/this.cs"],
+          "paths": [
+            "PLang/app/module/this.cs",
+            "PLang/app/this.cs"
+          ],
           "type": "review",
           "category": "code",
           "confidence": "high",
           "context": "Area 7 (module registry + app) OBP scan. Both big net-deletion rewrites (module +215-575, app +330-355). No new findings. Module registry resolves actions by ConcurrentDictionary lookup (not a name-switch); role minted by type (IClause/ILoop/IKeep) once at registration ('the type IS the role'), not a runtime fork. app.@this is the composition root per CLAUDE.md 'app.X is collection node': each concept owned once as a get-property, services owned once, no naked collection, no Get<T> service-locator, path schemes register with factories (:310-312). Carried: 673 member-read reflection (module:194/203-215, app:432); 714 reader-throws (app:437). Verdict: CLEAN, no merge blockers."
+        },
+        {
+          "paths": [
+            "PLang/app/goal/step/",
+            "PLang/app/module/build/"
+          ],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Area 8 (builder pipeline, +4861 new) OBP scan. No merge blockers. Carried 677/714 pick-list name forks (pick/list/this.cs Code()/IsCapture/Property.Name/Type-Default, + :308 condition-chain same family). Carried Cover<->Freeze stored-twice is FIXED (Freeze one method, Build.cs:92). Execution-path catches are correct boundary. F8.1 NEW stored-twice/identity-by-name: 'action slot' predicate (Type.Name=='action' || list+kind=='action') re-derived at 3 sites (action/this.Validate.cs:54-55, formal/reader.cs:221/349, serializer/Reader.cs:153-154); fix slot.Type.IsActionSlot; surface change maybe; blocks no. Formal reader per-type parse dispatch reviewed acceptable (single owner of surface grammar). Verdict: CLEAN, no merge blockers."
         }
       ],
-      "after": {}
+      "after": {
+        "status": "PASS \u2014 app-systems merge-clean on behaviour across areas 1-8 + 5b; no blocking findings.",
+        "health": "The locked core's new surface is OBP-exemplary. One locked-core shape debt the merge carries (F5.2: two write doors, agreeing fork, not yet on next-branch). 6 other non-blocking cleanup/surface proposals (F4.1, F8.1, F3.1, F5.1, F6.1, F1.1). Everything else cited to the carry list (673/714/717/#59/677/681/711).",
+        "notes": "Ran in isolated worktree /workspace/plang-app-systems (shared checkout on compare-redesign untouched). Each area committed + pushed (rebasing onto architect pushes) + messaged to architect [5f776d], who verified each against the code (.bot/app-systems/architect/review-findings.md). F5.2/F4.1/F8.1/F2.3 batched to Ingi as surface asks. Next bot: tester (nothing routes to coder as a merge blocker). Full report: .bot/app-systems/codeanalyzer/v1/report.md; verdict: v1/verdict.json."
+      }
     }
   ]
 }
