@@ -53,3 +53,10 @@ Each finding the reviewer bots report, checked against the code before it goes a
 **F5.2 confirmed** by the codeanalyzer (2c28ddcf7): fork and stored twice; surface change yes; doesn't block (both doors agree and are green), but the heaviest shape debt the merge carries, so named for Ingi. Its fix direction: one door, every value through its own `Output`; the writer's dict, list and item arms collapse to "the value writes itself"; the sync `Write`/`Value(object)` retire once their four callers move to `Output`. The miss was the brief's: area 5's paths left out `type/item/kind/` (+1,376, all new), now added; the codeanalyzer scans the rest of it.
 
 - Added to the surface asks: **F5.2**, retire item's sync `Write(IWriter)` and `IWriter.Value(object)`'s plang arms (carry to the next branch; named as the largest shape debt).
+
+## codeanalyzer (plang-ae), area 6: call and variable memory, events (e2417e57c)
+
+| finding | checked | status |
+|---|---|---|
+| the `on/` events: a registry and one type per event kind, no dispatcher on the name; call/'s collections each lock their own private field; variable memory reading its own entries isn't a courier | its summary | cleared |
+| F6.1 "is this a system variable" (`StartsWith("!")`) and "is it worth saving" (`is not DynamicData`) open-coded across variable memory | grep: 10 sites in `variable/list/this.cs` (`:362, 377, 394, 406, 408, 418, 438–441, 474, 496–497`), `this.Snapshot.cs:25–29`, `this.SnapshotAt.cs:39`. Two questions, not drift: a listing keeps `Now`/`GUID` (they're readable variables), a snapshot drops them (always fresh, not worth saving). The shape is each answering for itself: the name says it's a system name, the Data says it's always fresh (a member on data, locked). A private predicate would only gather the `is DynamicData` type check in one place | carry (next-branch) |
