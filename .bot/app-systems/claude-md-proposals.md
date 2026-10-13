@@ -266,6 +266,14 @@ Verified each against code (as for v6/v7); small commits per area.
 + - **Missing data** → a C# need: the failing test and your trace to the architect
 ```
 
+## architect — 2026-10-13 — never hand-edit a .pr
+**Target:** /CLAUDE.md, "## Build", after "NEVER delete .build folders"
+**Why:** Ingi, decision 720: "revert it, we should never hand edit pr files." The builder bot fixed two path strings in a committed `.pr` by hand because a fresh build refused; the shell hook blocks `.pr` edits through the shell, but the rule itself wasn't written in CLAUDE.md, so an edit through the Edit tool went through.
+**Proposed change:**
+```
++ - NEVER hand-edit a `.pr` file, by any tool, even to fix only a path. A `.pr` is what the builder writes. When a rebuild can't reproduce one, report it and leave the file as built.
+```
+
 ## architect — 2026-10-13 — the tester runs the C# suite through dev.sh
 **Target:** characters/tester/character.md, line 19 (and characters/builder2/character.md:133)
 **Why:** `dotnet run --project PLang.Tests` doesn't work (the aggregate project isn't runnable; CLAUDE.md "Running plang Tests" and the coder's character already say so). The tester starts in the review chain now (decision 718); its brief overrides the line, but the character should be right.
