@@ -60,3 +60,11 @@ Each finding the reviewer bots report, checked against the code before it goes a
 |---|---|---|
 | the `on/` events: a registry and one type per event kind, no dispatcher on the name; call/'s collections each lock their own private field; variable memory reading its own entries isn't a courier | its summary | cleared |
 | F6.1 "is this a system variable" (`StartsWith("!")`) and "is it worth saving" (`is not DynamicData`) open-coded across variable memory | grep: 10 sites in `variable/list/this.cs` (`:362, 377, 394, 406, 408, 418, 438–441, 474, 496–497`), `this.Snapshot.cs:25–29`, `this.SnapshotAt.cs:39`. Two questions, not drift: a listing keeps `Now`/`GUID` (they're readable variables), a snapshot drops them (always fresh, not worth saving). The shape is each answering for itself: the name says it's a system name, the Data says it's always fresh (a member on data, locked). A private predicate would only gather the `is DynamicData` type check in one place | carry (next-branch) |
+
+## codeanalyzer (plang-ae), area 5b: the item codecs, `type/item/kind/{dict,list,reflection}` (a397379d9)
+
+| finding | checked | status |
+|---|---|---|
+| kind/dict and kind/list (the C# host codecs) | every behaviour on a carried list: member access via the reflection kind (673), Convert narrowing `clr(JsonElement)` (717), Output through `WriteReflected` (two more sites of F5.2), Set throwing on a bad index (59's remainder) | carried |
+| kind/reflection | the carried 673 door; `Property`/`Method`/`Twice` (`reflection/this.cs:36/56/69`) are the stopgap statics 673 names; `Tagged.cs` the one owner of which C# properties ship ([Out]/[Sensitive]/[Masked], 681) | carried |
+| F5.1 one more stale `Normalize`: `reflection/Tagged.cs:8` | grep confirmed | fix (batch 1, with F5.1) |
