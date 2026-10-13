@@ -195,11 +195,29 @@ unchanged() { # $1 = the stamp of what was built
 # (MSBuild node, VBCSCompiler) started by a niced build is niced too; one already running keeps its
 # priority until `dotnet build-server shutdown`.
 NICE=(nice -n 10)
+# The builds run -t:Build without -restore (a no-op restore costs seconds every build), so a project
+# never restored (a fresh checkout) or whose project file changed since its last restore is restored
+# here first, serially (-m:1): parallel restores race on the assets file of a project they share
+# (Shared, PLang). Restore walks each project's references, so the library and generators come along.
+restore() {
+  local f
+  for f in PLang.Tests/*/PLang.Tests.*.csproj PlangConsole/PLangConsole.csproj PLang/*.csproj PLang.Generators/*.csproj; do
+    # -nt is also true when the assets file doesn't exist
+    if [ "$f" -nt "$(dirname "$f")/obj/project.assets.json" ]; then
+      local started=$SECONDS
+      scream_build "restore (NuGet) of the test projects + PlangConsole" /tmp/devsh_restore.log \
+        "${NICE[@]}" dotnet msbuild PLang.Tests/All.proj -t:Restore -m:1 -v:q -nologo
+      echo "→ restore: $((SECONDS - started))s"
+      return 0
+    fi
+  done
+}
 # Test projects AND the console in one MSBuild evaluation (PLang.Tests/All.proj holds both) — the
 # console is a dependency of every plang test; a stale plang.exe lies just like a stale dll.
 # Nothing is built when no source changed. A whole build is also every test project's own build.
 build_all() {
   local started=$SECONDS p
+  restore
   if unchanged "$STAMP"; then echo "→ no source changed since the last build — skipping it"; return 0; fi
   scream_build "test projects + PlangConsole (+PLang library)" /tmp/devsh_build.log \
     "${NICE[@]}" dotnet msbuild PLang.Tests/All.proj -t:Build "${DEVFLAGS[@]}"
@@ -210,6 +228,7 @@ build_all() {
 # builds only that one. Same global properties as All.proj passes, so the incremental state is shared.
 build_project() { # $1 = the suite
   local started=$SECONDS
+  restore
   if unchanged "$STAMP.$1"; then echo "→ no source changed since $1 was built — skipping it"; return 0; fi
   scream_build "PLang.Tests.$1 (+PLang library)" /tmp/devsh_build.log \
     "${NICE[@]}" dotnet msbuild "PLang.Tests/$1/PLang.Tests.$1.csproj" -t:Build "${DEVFLAGS[@]}"
@@ -285,6 +304,7 @@ case "${1:-build}" in
     # never invalidates the analyzers-off Debug incremental state. PLang.csproj turns analyzers off
     # only for Debug, so under Gate they run on the library too (PLNG001/PLNG002).
     # Still routed through scream_build so a compile error screams and hard-stops.
+    restore
     scream_build "test projects + PlangConsole (Gate, analyzers ON)" /tmp/devsh_build.log \
       nice -n 10 dotnet msbuild PLang.Tests/All.proj -t:Build -p:Configuration=Gate -p:RunAnalyzers=true -v:q -nologo
     fail=0
@@ -293,6 +313,7 @@ case "${1:-build}" in
     exit $fail
     ;;
   warm)
+    restore
     dotnet msbuild PLang.Tests/All.proj -t:Build "${DEVFLAGS[@]}" >/dev/null 2>&1 || true
     echo warm
     ;;
