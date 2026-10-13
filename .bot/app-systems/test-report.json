@@ -1,0 +1,105 @@
+{
+  "branch": "app-systems",
+  "bot": "tester",
+  "version": "v23",
+  "base": "origin/app-systems 8918a214a",
+  "worktree": "/workspace/plang-app-systems-tester (app-systems-tester)",
+  "date": "2026-10-13",
+  "baseline": {
+    "csharp": {
+      "result": "matches baseline",
+      "fail": 6,
+      "detail": "all SnapshotWireTests, each [Property(\"carried\",\"test/plan/snapshot\")]; Generator 188, Types 852, Data 849, Modules 1284, Runtime 1043, Wire 534, all other suites green",
+      "sweep": "./dev.sh test --force"
+    },
+    "plang": {
+      "result": "modal baseline reproduced, non-deterministic by the llm family",
+      "runs": [
+        {"run": 1, "pass": 245, "fail": 16, "stale": 12, "skip": 3},
+        {"run": 2, "pass": 244, "fail": 17, "stale": 12, "skip": 3},
+        {"run": 3, "pass": 245, "fail": 16, "stale": 12, "skip": 3}
+      ],
+      "fail_names_match_baseline": true,
+      "git_clean_after_runs": true,
+      "note": "run 2's extra fail was LlmCache (live OpenAI call, transient 'network unreachable')"
+    }
+  },
+  "findings": [
+    {
+      "id": "T1",
+      "title": "LlmCache is a live-network flake with a weak assertion",
+      "area": "part1/part2",
+      "test": "module/llm/LlmCache.test.goal",
+      "step_says": "titled 'Cache hit — verify second returns cached result'",
+      "pr_or_code_does": "asserts only %first%/%second% is not null; never that %second% was served from cache; first call hits api.openai.com so it reds offline (1 of 3 runs)",
+      "verdict": "carry",
+      "status_routed": "builder (assert a cache hit, red when cache off); live-OpenAI carried to next branch",
+      "recommendation": "skip-guard when no key/network (mirror the Landlock skip); assert %second% equals %first% or a cache-hit signal"
+    },
+    {
+      "id": "T5",
+      "title": "GoalCallReturn is a false-green on the return value it names",
+      "area": "part2",
+      "test": "module/goal/return/GoalCallReturn.test.goal",
+      "step_says": "'goal call with return value' — call ComputeAnswer (returns 42), write to %answer%",
+      "pr_or_code_does": "assert %answer% is not null — never checks the value is 42, so any non-null return passes",
+      "verdict": "carry",
+      "recommendation": "assert %answer% equals 42"
+    },
+    {
+      "id": "T2",
+      "title": "task plan's plang rewrite is incomplete (C# backstops it)",
+      "area": "part3",
+      "test": "plan/task/start.goal",
+      "step_says": "indexes ~29 behaviours; Stage3 foreach-parallel (6), Stage4 builder goldens (5), Stage2 task/list (3) each name a plang test",
+      "pr_or_code_does": "~14 of those .test.goal files do not exist; the task module core is tested+green and all missing behaviours are covered by PLang.Tests/Runtime/App/Goals/TaskTests.cs (39 tests); task/list is next-branch (723)",
+      "verdict": "carry",
+      "recommendation": "finish the plang rewrite on the next branch; the plan index currently reads as if the tests exist"
+    },
+    {
+      "id": "T3",
+      "title": "list-query plan index points to a stale test name",
+      "area": "part3",
+      "test": "plan/list-query/start.goal",
+      "step_says": "call /module/list/query/WhereUnsetVariable",
+      "pr_or_code_does": "the file is WhereUnsetVariableIsNotFound.test.goal (exists, passes); the indexed name would not resolve if the index chain ran",
+      "verdict": "carry",
+      "recommendation": "rename the index reference to WhereUnsetVariableIsNotFound"
+    },
+    {
+      "id": "T4a",
+      "title": "the run's coverage report under-credits",
+      "area": "part4",
+      "step_says": "coverage block reports 94/142 and marks on.cache and on.timeout uncovered",
+      "pr_or_code_does": "both appear in built, passing test .pr (timeoutproducescancellation builds on.timeout(After='100ms'); ClausesCompose builds on.cache)",
+      "verdict": "note",
+      "recommendation": "do not take 94/142 at face value; the report misses actions used as clauses"
+    },
+    {
+      "id": "T4b",
+      "title": "genuine plang coverage gaps",
+      "area": "part4",
+      "actions": ["http.download", "http.upload", "timer.start", "timer.end", "variable.get", "variable.exists"],
+      "pr_or_code_does": "no plang test; http.request/timer.sleep/variable.set+clear+remove are tested; variable.get/exists likely C#-backstopped (VariablesTests.cs, VariableCodeTests.cs)",
+      "verdict": "carry",
+      "recommendation": "add plang tests on the next branch; excludes next-branch-owned and os/ui/builder-internal actions"
+    },
+    {
+      "id": "T6",
+      "title": "weak-only passing tests (strengthen or accept)",
+      "area": "part2",
+      "tests": ["app/stepresult/StepResult", "module/identity/create", "module/identity/export", "module/identity/autocreate", "module/channel/event/addonask/start"],
+      "pr_or_code_does": "only assert isNotNull/isNotEmpty; StepResult's %!data% is 'hello' but unchecked; the others are production smoke tests",
+      "verdict": "carry",
+      "recommendation": "StepResult could assert equals 'hello'; the rest are defensible"
+    }
+  ],
+  "part5_csharp_quality": {
+    "added_test_files": 313,
+    "sampled": ["BoolWrapperTests (strong)", "GivenSlotTests (strong)", "Stage1_ComparisonEnumTests (borderline change-detector)"],
+    "false_greens_in_sample": 0,
+    "conclusion": "added C# tests predominantly drive real actions/types and assert observable outcomes; one enum-membership shape-pin"
+  },
+  "merge_blockers": [],
+  "summary": "No merge blocker. Baseline is honest and git-clean; C# green but for 6 carried snapshot. All findings are test-quality (carry): two clear false-greens on named value/cache contracts (T5, T1), an incomplete plang rewrite with C# backstop (T2), a stale index name (T3), a coverage report that under-credits (T4a) and a handful of real plang coverage gaps (T4b)."
+}
