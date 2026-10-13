@@ -75,3 +75,14 @@ Each finding the reviewer bots report, checked against the code before it goes a
 |---|---|---|
 | actions resolve by a dictionary lookup, no switch on the action name; the clause/loop/keep/plain mint runs once at registration; `app` owns each collection once, no naked public collection, no service locator; path schemes register with factories (`app/this.cs:310–312`) | its reading | cleared |
 | reflection at `module/this.cs:194, 203–215`, `app/this.cs:432`; the reader's thrown refusal at `app/this.cs:437` | cited | carried (673, 714) |
+
+## codeanalyzer (plang-ae), area 8: the builder pipeline (5903dc85c), and the verdict
+
+| finding | checked | status |
+|---|---|---|
+| the pick list's name forks (`Code()` on "loop.foreach"/"variable.set", IsCapture, the Type/Default/Name checks) plus one more of the family, the elseif/else chain read by name (`pick/list/this.cs:308`) | cited | carried (677) |
+| Cover and Freeze: one answer (`action/this.Build.cs:92`), Cover doesn't re-walk it | read | cleared (b982cbc94) |
+| the formal reader's parse by type name | the reader owns plang's surface grammar (the writer its inverse); parser design, not behaviour scattered on the types | cleared |
+| F8.1 "is this an action slot": `Type.Name == "action" \|\| (Type.Name == "list" && kind.Name == "action")` | grep: four sites in three files, `action/this.Validate.cs:54–55`, `formal/reader.cs:221` and `:349`, `action/serializer/Reader.cs:153–154`. Stored twice, and "is X?" by name. The shape isn't a better predicate (`IsActionSlot`, a member on locked type); the action type and a list of actions each read their own value, so no site asks. A kind being a type (711) is where `list<action>` answers for itself | carry (next-branch, with 711) |
+
+**Verdict (the codeanalyzer): PASS, merge-clean on behaviour.** Checked: agreed. Batch 1 (five fixes) is with the coder. The surface asks are F2.3, F4.1, F5.2 and F8.1, all carried to the next branch; none is needed for the merge. F5.2 was already on next-branch.md (added with 724).
