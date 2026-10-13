@@ -1523,6 +1523,13 @@
           "category": "code",
           "confidence": "high",
           "context": "Area 2 (channel+stream) OBP scan. -1755 net; whole channel/serializer subtree deleted (folded into type serializer). The repeated catch-when-not-fatal across channels is the correct I/O boundary (preserves AppException+fatals, converts transport throws to typed Error), not a masking smell. list returns errors on user path, throwing indexer is documented hard-miss. 3 minor borderline notes: .Clr<string>() leaf read (stream:160), redundant inner catch vs base (stored-twice shape), ReadAllBytesAsync v1-legacy throw. Verdict: CLEAN, no merge blockers."
+        },
+        {
+          "paths": ["PLang/app/type/item/text/", "PLang/app/type/item/number/", "PLang/app/type/item/bool/", "PLang/app/type/item/list/", "PLang/app/type/item/dict/", "PLang/app/type/item/path/", "PLang/app/type/item/datetime/", "PLang/app/type/item/duration/"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Area 3 (core value types) OBP scan. +7294 near-new, the native value-model. Every fork-risk seam is single-owner/registry: number Ladder (one owner of cross-kind promotion keyed by kind name), path scheme (kind+factory registry), list Clr(target) (single interop door, each row lowers itself - inherent reflection not member-read reflection). Arithmetic catches are specific boundary translations. F3.1 stored-twice (systemic, carry): parse-vs-convert failure idiom duplicated across 9 value types' Create - fix is one protected helper on item.@this. F3.2 borderline (carry): dict:84 JsonException-as-answer (same class as F1.3), dict:89 accommodates carried json-clr-leak. Verdict: CLEAN, no merge blockers."
         }
       ],
       "after": {}

@@ -68,4 +68,26 @@ The dominant feature here — a repeated `catch (Exception ex) when (ex is not f
 - **F2.2 — borderline redundant inner catch (stored-twice shape).** The base `WriteAsync`/`ReadAsync`/`AskAsync` (`this.cs:132-197`) already own the transport-throw→Error boundary around the abstract `Write`/`Read`/`Ask`. `stream`'s concrete `Read`/`Ask` (`:135,197`) and `goal`'s `Start` wrap *again* with the same conversion, so the base's catch is effectively dead for those kinds. Defensible (the concrete gives a kind-specific message/key), but it is the same boundary written twice. Low confidence. **Carry (note). Surface change: no.**
 - **F2.3 — possible legacy surface.** `type/stream/this.cs:247-258 ReadAllBytesAsync`, commented "Convenience surface kept for v1 callers," throws `InvalidOperationException` on `!CanRead` (`:250`) — internal, caught by the base. If the v1 callers are gone it's a deletion candidate; flagged for the architect to confirm, not asserted. **Carry (note). Surface change: no.**
 
-*Areas 3-8 pending (core value types, type system, serializer, call/variable/events, module registry/app, builder pipeline).*
+## Area 3 — the core value types (`type/item/{text,number,bool,list,dict,path,datetime,duration}/`)
+
+**Diff:** +7,294 across 87 files, almost all additions — the native value-model itself. path +2,498, list +1,389, number +1,322, text +859, dict +531.
+
+**Tooling:** grep for the weighted smells across all 8 type trees + full read of the seams most at risk of a fork (number Ladder, path scheme dispatch, list `Clr(target)`, each type's `Create` path) + the catch census + `ObpScan`.
+
+### Verdict: CLEAN (no merge blockers)
+
+Every seam that could have been a per-type fork is a single-owner or registry design instead:
+
+- **`number/this.Ladder.cs` — the one owner of cross-kind promotion.** Keyed by kind NAME (the kind's identity); "int overflows to long" lives here, not on int or long. `Mint`/`CategoryOf`/`Narrow` switch on the kind token because this IS the one place that knows the order. Not a behaviour fork — the single documented home for a cross-type relation (the Comparison-boundary pattern).
+- **`path/scheme/this.cs` — scheme dispatch by registry+factory.** A `scheme.@this` IS a `type.kind` holding a factory; file/http/https registered per-App, `code.load` adds more. `path.Resolve` (`path/this.cs:113-121`) parses the scheme, looks up `kind[name]`, mints via the factory. No `if scheme=="file"` fork. Unknown scheme → `SchemeNotRegistered` (AppException carried with a FixSuggestion), converted to a Data error at the `Create` boundary (`path/this.cs:94-103`).
+- **`list/this.cs Clr(target)` (`:653-699`) — the single CLR-interop door.** Branches by the *target's* CLR shape (array / `List<T>` / `IReadOnlyList<T>` ctor / record), each row lowering ITSELF via its own `Clr`. The reflection (`MakeGenericType`, `Activator`, `GetConstructor`) is inherent interop — you cannot build a `List<T>` for a runtime `T` otherwise. This is NOT the carried member-read reflection (reading goal/step/app members); it's value→CLR conversion at the leaf. Acceptable.
+- **The catch census is clean:** `number/this.Arithmetic.cs:46-50` translate each specific .NET arithmetic throw (`DivideByZero`, `Overflow`, …) into a typed-key AppException (operators can't return an error); `path/file/this.Operations.cs` and `path/http/this.cs` filter on specific `IOException`/`IsNetworkError`; `list/this.Generic.cs:102` is the **carried** reader-throws catch-site (next-branch "714").
+
+### Findings
+
+- **F3.1 — stored twice (systemic cleanup).** The parse-vs-convert failure classification
+  `(((value as item.@this)?.Clr<object>() ?? value) is string s) ? <parse-failed> : <convert-failed>`
+  is written **9 times**, once in each value type's `Create(value, declared, data)`: `bool:79`, `duration:80`, `datetime`, `date`, `time`, `size`, `image`, `guid`, `list:110`. Same rule (was I handed a string to parse, or the wrong type?) in nine files. Fix direction: one protected helper on `item.@this` — `data.FailCreate(value, "<typename>", "<parse hint>")` — each type passing its name and hint; the unwrap-and-classify lives once. **Carry (cleanup). Surface change: no** (protected helper, the `Create`/ICreate signature is untouched). *Plang that reaches it:* `- set %flag% as bool = "banana"` (any failed coercion of a string literal to a scalar type lands one of the nine messages).
+- **F3.2 — borderline (same class as F1.3).** `dict/this.cs:84` `catch (JsonException) { return null; }` answers "is this text a dict?" by swallowing a parse throw. STJ has no non-throwing parse and the exception means exactly what the null means ("not JSON" = "not a dict"), so it is control-flow-by-exception, not a masked error. Noted, not a blocker. Separately, `dict/this.cs:89` narrows a `clr(JsonElement)` source into a dict — a **consumer accommodating the carried json-clr-leak** (next-branch "the {item, json} door, 717"), not a new finding. **Carry (note). Surface change: no.**
+
+*Areas 4-8 pending (type system, serializer, call/variable/events, module registry/app, builder pipeline).*
