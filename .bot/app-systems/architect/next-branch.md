@@ -43,4 +43,6 @@ What Ingi put on the list while app-systems is frozen for the merge back to runt
 - **The snapshot plan** (665): `test/plan/snapshot/`, stages 0–4; its 6 C# baseline tests travel with it.
 - **The `Elsewhere` fork** (`goal/this.cs:400`, a goal that runs in the parent app): decided together with 63, a call with a receiver.
 - **63 and the page runtime**: a discussion with Ingi, not settled.
-- **Missing plang tests** (671): crypto encrypt/decrypt, environment.start, module add/remove, on.cancel/unbind/input, identity list/unarchive, code list/remove/setDefault, the os modules.
+- **Missing plang tests** (671): crypto encrypt/decrypt, environment.start, module add/remove, on.cancel/unbind/input, identity list/unarchive, code list/remove/setDefault, the os modules. **Also (the tester, T4b):** http.download/upload (the http module has no test of its own), timer.start/end, variable.get/exists (likely C#-backstopped).
+- **The task plan's plang tests** (the tester, T2): `test/plan/task/start.goal` indexes about 29 behaviours, and about 14 have no `.test.goal` (Stage 3 foreach-in-parallel, all 6; Stage 4 the builder goldens, all 5; Stage 2's `task/list/{WriteTwiceKeepsBoth,WaitListVersusCurrent,OtherTypesReplace}`); `TaskTests.cs` (39) covers them in C#. Write them in plang, or say in the index that C# is their proof.
+- **The test report counts clauses** (the tester, T4a): its coverage block marks on.cache and on.timeout uncovered although passing tests build them (`timeoutproducescancellation`, `ClausesCompose`), so 94/142 undercounts.
