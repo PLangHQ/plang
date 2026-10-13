@@ -67,6 +67,8 @@ Install state per the os bot (2026-10-13): the only script is PlangOS's Windows 
 
 **Decided (Ingi via os bot):** 1.0b installs through `irm https://plang.is/start.ps1 | iex`. It needs only Windows 10/11. It downloads PLang with a sha256 check, associates `.goal` files, installs WSL and the PlangOS image (sha256-checked), keeps user files on a separate data disk, and opens the PlangOS desktop. Re-running it updates.
 
+**Decided (Ingi):** builds compile on **llm.plang.is**. Public line: "Compiled on llm.plang.is. No API key." (No pricing claim until the model is set.)
+
 ## Open
 1. macOS/Linux install: no installer yet. The site says "coming".
 2. Build-time LLM for 1.0b: own OpenAI key, credits, or llm.plang.is?

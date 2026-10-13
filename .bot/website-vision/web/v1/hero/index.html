@@ -1,0 +1,238 @@
+<title>PLang Hero Studies</title>
+<style>
+/* Layout: three full-width hero studies stacked, each a self-contained first screen of plang.is. */
+:root {
+  --bg: #fbfbfd;
+  --surface: #ffffff;
+  --fg: #1d1d1f;
+  --muted: #6e6e73;
+  --line: #e3e3e8;
+  --accent: #c2541a;        /* puffin beak, deepened for text contrast */
+  --accent-soft: #fbe9dc;
+  --btn-bg: #1d1d1f;
+  --btn-fg: #fbfbfd;
+  --code-dim: #a1a1a6;
+  /* Keynote section is dark in both themes by design */
+  --k-bg: #000000;
+  --k-fg: #f5f5f7;
+  --k-muted: #a1a1a6;
+  --k-accent: #ff9a52;
+  --k-line: #2a2a2d;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0b0c; --surface: #161618; --fg: #f5f5f7; --muted: #a1a1a6; --line: #2c2c2f;
+    --accent: #ff9a52; --accent-soft: #3a2415; --btn-bg: #f5f5f7; --btn-fg: #0b0b0c; --code-dim: #6e6e73;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0b0b0c; --surface: #161618; --fg: #f5f5f7; --muted: #a1a1a6; --line: #2c2c2f;
+  --accent: #ff9a52; --accent-soft: #3a2415; --btn-bg: #f5f5f7; --btn-fg: #0b0b0c; --code-dim: #6e6e73;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 17px; line-height: 1.47; -webkit-font-smoothing: antialiased; }
+h1, h2, p { margin: 0; }
+h1 { text-wrap: balance; letter-spacing: -0.035em; line-height: 1.04; font-weight: 700; }
+a { color: inherit; }
+a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+
+/* Study frame */
+.study-head { max-width: 1080px; margin: 0 auto; padding: 56px 20px 8px; display: grid; gap: 10px; }
+.study-head h2 { font-size: 28px; letter-spacing: -0.02em; font-weight: 600; }
+.study-head p { color: var(--muted); max-width: 60ch; }
+.label { max-width: 1080px; margin: 0 auto; padding: 48px 20px 12px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.label b { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+.label span { font-size: 15px; color: var(--muted); }
+
+.frame { border-block: 1px solid var(--line); }
+
+/* Shared nav */
+.nav { max-width: 1080px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; gap: 24px; font-size: 13px; }
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; text-decoration: none; margin-right: auto; }
+.brand img { height: 24px; width: auto; }
+.nav a:not(.brand) { text-decoration: none; color: var(--muted); }
+.nav a:not(.brand):hover { color: var(--fg); }
+@media (max-width: 560px) { .nav .hide-sm { display: none; } }
+
+.btn { display: inline-flex; align-items: center; gap: 8px; background: var(--btn-bg); color: var(--btn-fg); border: 0; border-radius: 980px; padding: 12px 22px; font: 500 17px var(--font); text-decoration: none; cursor: pointer; }
+.btn:hover { opacity: 0.86; }
+.link { color: var(--accent); text-decoration: none; font-size: 17px; }
+.link:hover { text-decoration: underline; }
+.ctas { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; }
+
+/* Code */
+.code { font-family: var(--mono); font-size: 15px; line-height: 1.75; white-space: pre; overflow-x: auto; margin: 0; }
+.code .g { font-weight: 600; }
+.code .d { color: var(--code-dim); }
+.code .v { color: var(--accent); }
+.code .m { color: var(--muted); }
+
+/* ---------- A · Statement ---------- */
+.a { padding: 72px 20px 88px; text-align: center; display: grid; gap: 22px; justify-items: center; }
+.a .eyebrow { font-size: 17px; color: var(--accent); font-weight: 600; }
+.a h1 { font-size: clamp(44px, 8vw, 88px); max-width: 12ch; }
+.a .sub { font-size: clamp(19px, 2.2vw, 24px); color: var(--muted); max-width: 34ch; line-height: 1.35; }
+.a .ctas { justify-content: center; margin-top: 6px; }
+.a .stage { position: relative; margin-top: 48px; width: 100%; max-width: 760px; }
+.a .card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; text-align: left; box-shadow: 0 30px 60px -30px rgba(0,0,0,0.18); }
+.a .card .tab { padding: 12px 20px; border-bottom: 1px solid var(--line); font: 13px var(--mono); color: var(--muted); }
+.a .card .code { padding: 22px 24px 26px; font-size: clamp(14px, 1.8vw, 17px); }
+.a .stage img { position: absolute; right: -28px; bottom: -18px; height: 150px; width: auto; }
+@media (max-width: 760px) { .a .stage img { height: 96px; right: -6px; bottom: -14px; } }
+
+/* ---------- B · Compile ---------- */
+.b { max-width: 1080px; margin: 0 auto; padding: 72px 20px 88px; display: grid; gap: 48px; }
+.b .intro { display: grid; gap: 20px; max-width: 720px; }
+.b h1 { font-size: clamp(40px, 6.4vw, 72px); }
+.b .sub { font-size: clamp(19px, 2vw, 22px); color: var(--muted); max-width: 40ch; line-height: 1.4; }
+.b .pair { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); border: 1px solid var(--line); border-radius: 18px; background: var(--surface); overflow: hidden; }
+.b .col { min-width: 0; }
+.b .col + .col { border-left: 1px solid var(--line); }
+.b .col h3 { margin: 0; padding: 12px 20px; border-bottom: 1px solid var(--line); font: 13px var(--mono); color: var(--muted); font-weight: 400; display: flex; justify-content: space-between; gap: 12px; }
+.b .rows { display: grid; padding: 10px 0; }
+.b .row { font-family: var(--mono); font-size: 14.5px; line-height: 1.5; padding: 9px 20px; min-height: 58px; display: flex; align-items: center; transition: background 0.4s; overflow-x: auto; white-space: nowrap; }
+.b .row.on { background: var(--accent-soft); }
+.b .row.title { min-height: 0; font-weight: 600; padding-bottom: 4px; }
+.b .act { display: flex; gap: 8px; flex-wrap: wrap; }
+.b .act code { font: 13.5px var(--mono); padding: 3px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); }
+.b .act code b { font-weight: 400; color: var(--muted); }
+.b .note { font-size: 15px; color: var(--muted); display: flex; gap: 24px; flex-wrap: wrap; }
+.b .note span::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 8px; vertical-align: 2px; }
+@media (max-width: 760px) {
+  .b .pair { grid-template-columns: minmax(0, 1fr); }
+  .b .col + .col { border-left: 0; border-top: 1px solid var(--line); }
+  .b .row { min-height: 0; }
+  .b .col.compiled .row.title { display: none; }
+}
+
+/* ---------- C · Keynote ---------- */
+.c-wrap { background: var(--k-bg); color: var(--k-fg); color-scheme: dark; }
+.c-wrap .nav a:not(.brand) { color: var(--k-muted); }
+.c-wrap .nav a:not(.brand):hover { color: var(--k-fg); }
+.c { padding: 40px 20px 96px; display: grid; justify-items: center; text-align: center; gap: 22px; }
+.c .lit { position: relative; display: grid; place-items: center; width: min(420px, 100%); aspect-ratio: 1 / 1; max-width: 100%; }
+.c .lit::before { content: ""; position: absolute; inset: 8%; border-radius: 50%; background: radial-gradient(closest-side, rgba(255,154,82,0.22), rgba(255,154,82,0.06) 60%, transparent); }
+.c .lit img { position: relative; height: 88%; width: auto; filter: drop-shadow(0 30px 40px rgba(0,0,0,0.6)); }
+.c h1 { font-size: clamp(44px, 8vw, 92px); max-width: 12ch; }
+.c .sub { font-size: clamp(20px, 2.4vw, 26px); color: var(--k-muted); }
+.c .chip { font: 15px var(--mono); border: 1px solid var(--k-line); border-radius: 980px; padding: 10px 18px; color: var(--k-muted); max-width: 100%; overflow-x: auto; white-space: nowrap; }
+.c .chip .v { color: var(--k-accent); }
+.c .btn { background: var(--k-fg); color: var(--k-bg); }
+.c .link { color: var(--k-accent); }
+.c .ctas { justify-content: center; }
+
+.study-foot { max-width: 1080px; margin: 0 auto; padding: 40px 20px 72px; color: var(--muted); font-size: 14px; display: grid; gap: 6px; }
+
+@media (prefers-reduced-motion: reduce) { .b .row { transition: none; } }
+</style>
+
+<header class="study-head">
+  <h2>Hero studies for plang.is</h2>
+  <p>Three directions for the first screen. The words are the same in all three; what changes is where the weight sits: on the statement, on the compile step, or on the puffin.</p>
+</header>
+
+<!-- A -->
+<div class="label"><b>A · Statement</b><span>Apple product page. The goal file is the product shot.</span></div>
+<section class="frame">
+  <nav class="nav">
+    <a class="brand" href="#"><img src="puffin.png" alt="">PLang</a>
+    <a class="hide-sm" href="#">Docs</a><a class="hide-sm" href="#">GitHub</a><a class="hide-sm" href="#">Discord</a><a href="#">Install</a>
+  </nav>
+  <div class="a">
+    <p class="eyebrow">PLang 1.0 beta</p>
+    <h1>Intent is the new source code.</h1>
+    <p class="sub">Write what you mean in plain language. PLang compiles it into software you can read, own and trust.</p>
+    <div class="ctas"><a class="btn" href="#">Install for Windows</a><a class="link" href="#">Read the docs ›</a></div>
+    <div class="stage">
+      <div class="card">
+        <div class="tab">Digest.goal</div>
+<pre class="code"><span class="g">Digest</span>
+<span class="d">-</span> get https://api.example.com/news, write to <span class="v">%news%</span>
+<span class="d">-</span> <span class="m">[llm]</span> summarize <span class="v">%news%</span> in three bullet points, write to <span class="v">%summary%</span>
+<span class="d">-</span> save <span class="v">%summary%</span> to digest.md
+<span class="d">-</span> write out <span class="v">%summary%</span></pre>
+      </div>
+      <img src="puffin.png" alt="The PLang puffin">
+    </div>
+  </div>
+</section>
+
+<!-- B -->
+<div class="label"><b>B · Compile</b><span>Leads with the proof. Each step lines up with what it became.</span></div>
+<section class="frame">
+  <nav class="nav">
+    <a class="brand" href="#"><img src="puffin.png" alt="">PLang</a>
+    <a class="hide-sm" href="#">Docs</a><a class="hide-sm" href="#">GitHub</a><a class="hide-sm" href="#">Discord</a><a href="#">Install</a>
+  </nav>
+  <div class="b">
+    <div class="intro">
+      <h1>Intent is the new source code.</h1>
+      <p class="sub">You write the steps. PLang compiles each one, once, at build time. What runs is plain, deterministic code.</p>
+      <div class="ctas"><a class="btn" href="#">Install for Windows</a><a class="link" href="#">Read the docs ›</a></div>
+    </div>
+    <div class="pair" id="pair">
+      <div class="col">
+        <h3><span>Digest.goal</span><span>you write</span></h3>
+        <div class="rows">
+          <div class="row title">Digest</div>
+          <div class="row" data-i="0"><span><span class="code d" style="display:inline">- </span>get https://api.example.com/news, write to <span class="code v" style="display:inline">%news%</span></span></div>
+          <div class="row" data-i="1"><span><span class="code d" style="display:inline">- </span><span class="code m" style="display:inline">[llm]</span> summarize <span class="code v" style="display:inline">%news%</span> in three bullet points, write to <span class="code v" style="display:inline">%summary%</span></span></div>
+          <div class="row" data-i="2"><span><span class="code d" style="display:inline">- </span>save <span class="code v" style="display:inline">%summary%</span> to digest.md</span></div>
+          <div class="row" data-i="3"><span><span class="code d" style="display:inline">- </span>write out <span class="code v" style="display:inline">%summary%</span></span></div>
+        </div>
+      </div>
+      <div class="col compiled">
+        <h3><span>.build/digest.pr</span><span>it runs</span></h3>
+        <div class="rows">
+          <div class="row title">&nbsp;</div>
+          <div class="row" data-i="0"><div class="act"><code><b>http.</b>request</code><code><b>variable.</b>set</code></div></div>
+          <div class="row" data-i="1"><div class="act"><code><b>llm.</b>query</code><code><b>variable.</b>set</code></div></div>
+          <div class="row" data-i="2"><div class="act"><code><b>file.</b>save</code></div></div>
+          <div class="row" data-i="3"><div class="act"><code><b>output.</b>write</code></div></div>
+        </div>
+      </div>
+    </div>
+    <p class="note"><span>Compiled on llm.plang.is. No API key.</span><span>No AI at runtime.</span><span>Every step signed.</span></p>
+  </div>
+</section>
+
+<!-- C -->
+<div class="label"><b>C · Keynote</b><span>The puffin as the product, lit on black. Quietest copy, strongest identity.</span></div>
+<section class="frame c-wrap">
+  <nav class="nav">
+    <a class="brand" href="#"><img src="puffin.png" alt="">PLang</a>
+    <a class="hide-sm" href="#">Docs</a><a class="hide-sm" href="#">GitHub</a><a class="hide-sm" href="#">Discord</a><a href="#">Install</a>
+  </nav>
+  <div class="c">
+    <div class="lit"><img src="puffin.png" alt="The PLang puffin"></div>
+    <h1>Intent is the new source code.</h1>
+    <p class="sub">Write what you mean. Keep what you wrote.</p>
+    <div class="chip">- summarize <span class="v">%news%</span> in three bullet points, write to <span class="v">%summary%</span></div>
+    <div class="ctas"><a class="btn" href="#">Install for Windows</a><a class="link" href="#">Read the docs ›</a></div>
+  </div>
+</section>
+
+<footer class="study-foot">
+  <p>The Digest example uses real 1.0b modules (http, llm, file, output). It has not been built yet.</p>
+  <p>The puffin is the current 404×617 artwork. At hero size on retina screens it needs a 2× file.</p>
+</footer>
+
+<script>
+(function () {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var pair = document.getElementById('pair');
+  var i = 0;
+  function step() {
+    pair.querySelectorAll('.row.on').forEach(function (r) { r.classList.remove('on'); });
+    pair.querySelectorAll('.row[data-i="' + i + '"]').forEach(function (r) { r.classList.add('on'); });
+    i = (i + 1) % 4;
+  }
+  step();
+  setInterval(step, 1800);
+})();
+</script>
