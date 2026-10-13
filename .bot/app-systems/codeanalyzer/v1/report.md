@@ -116,4 +116,26 @@ The spine's reflection is all the **carried** member-read/catalog machinery, and
 - `type/this.cs:218 IsNull => Name == "null"`: the null sentinel's identity predicate, not a behaviour fork.
 - `type/list/Registry.cs:64` (registry mints `text.@this` of registered names): a single listing mint, not a domain-value factory on the wrong owner.
 
-*Areas 5-8 pending (serializer, call/variable/events, module registry/app, builder pipeline).*
+## Area 5 — the serializer (`type/format/`, `type/serializer/`, `type/item/wire/`)
+
+**Diff:** +671, all new — the interface spine (`IReader` +111, `IWriter` +130, `IOutput`, `format/value/reader.cs` +80), `serializer/Reader.cs` +55, `item/wire/` (+258: the `wire.@this` carrier, `template.cs`, the `plang` wire kind).
+
+**Tooling:** grep for value-type forks / clr / late-stamp + full read of `wire/kind/plang/this.cs`, `format/value/reader.cs`, `wire/this.cs`, `serializer/Reader.cs` + liveness check on the `Normalize` mechanism.
+
+### Verdict: CLEAN (no merge blockers)
+
+The CLAUDE.md invariants hold, verified in code:
+- **One wire serializer.** `wire/kind/plang/this.cs` is the single `application/plang` (+`+json`) Encode/Decode. No parallel "Envelope"/"Wrapper" type.
+- **Each value writes itself.** `Encode` (`:50-55`) delegates to `data.Output(writer, …, layer:true)` / `sig.Output(…)` — no central writer switching on value type. The value slot is each item's own `Output`.
+- **Sign-if-missing inside the boundary.** `Encode:38-49` signs a Data crossing without a signature (asker's actor), owners don't call `EnsureSigned()` at egress — exactly as CLAUDE.md "Sign-if-missing — the converter does it" states. Out refuses unsigned content on Decode (`:95-97`).
+- `format/value/reader.cs` is a scalar-only `IReader`; its `Peek()` switch classifies its own single value's token, and the structural pulls throw a "wrong reader, use a parser" guard (by design) — not a fork.
+
+### Carried (cite, not re-raised) — reader throws its refusal (714)
+
+`serializer/Reader.cs:50` (`FormatException` → `DeclinedException` "TemplateInvalid") and `wire/kind/plang/this.cs:101` (catches `DeclinedException` → error) — both **named on next-branch's 714 list**. The other catches here (`plang/this.cs:60-65,102-106`, `format/value/reader.cs:43`) are the wire encode/decode boundary converting STJ/`NotSupported`/`FormatException` throws into typed Data errors — the same boundary pattern cleared in areas 1-2.
+
+### Finding
+
+- **F5.1 — stale doc narrating a deleted mechanism.** `format/IWriter.cs:7,11,126` still describes the serialize pipeline as "`Normalize()` walks the in-memory value… Dispatched by `Normalize`." **The `Normalize` tree was deleted this branch** (`data/this.Normalize.cs` −276, area 1); the live mechanism is each value writing itself via `item.Output`. A grep confirms no live `Normalize` dispatcher remains (only an unrelated `tag` trim and error strings). The interface contract now misdescribes the architecture — a reader looks for a `Normalize` dispatcher that isn't there. Sibling instance: `type/item/kind/json/writer.cs:200`'s error string "Normalize is missing a case for this type." Fix: update the `IWriter` doc (and the json writer's message) to describe the self-writing `Output` path. **Carry (doc cleanup; a reviewer bot leaves the write to docs/coder). Surface change: no.**
+
+*Areas 6-8 pending (call/variable/events, module registry/app, builder pipeline).*

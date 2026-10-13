@@ -1536,7 +1536,14 @@
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Area 4 (type system) OBP scan. type.@this +692-311, item base +941, kind +503. All reflection here is carried member-read/catalog machinery (673); type/this.cs:321 carried reader-throws (714); property/list:86 clr-skip carried (711 family). F4.1 NEW fork-by-name/type: IsDefault (type/property/this.cs:118-138) switches 4 ways (bool/variable/number/else) doing default-equality the value should own via Compare - silent-divergence risk for a new type; carry (works today), surface change yes. F4.2 generic-display by name list (type/this.cs:547 Name==list||dict||choice) carried under 711. Census clean (one benign registry text-mint). Verdict: CLEAN, no merge blockers."
+          "context": "Area 4 (type system) OBP scan. type.@this +692-311, item base +941, kind +503. All reflection here is carried member-read/catalog machinery (673); type/this.cs:321 carried reader-throws (714); property/list:86 clr-skip carried (711 family). F4.1 NEW fork-by-name/type: IsDefault (type/property/this.cs:118-138) switches 4 ways (bool/variable/number/else) doing default-equality the value should own via Compare - silent-divergence risk for a new type; carry (works today), surface change yes (architect refined: fix is value.Compare(Type.Make(Default)), only IsDefault signature goes async+context). F4.2 generic-display by name list (type/this.cs:547 Name==list||dict||choice) carried under 711. Census clean. Verdict: CLEAN, no merge blockers."
+        },
+        {
+          "paths": ["PLang/app/type/format/", "PLang/app/type/serializer/", "PLang/app/type/item/wire/"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Area 5 (serializer) OBP scan. +671 all new (IReader/IWriter/IOutput spine, value reader, plang wire kind). CLAUDE.md invariants verified in code: one wire serializer (application/plang), each value writes itself (Encode delegates to data.Output, no central type-switch), sign-if-missing inside Encode (owners don't call EnsureSigned). value/reader.cs scalar reader not a fork. Carried reader-throws (714): serializer/Reader.cs:50, wire/kind/plang/this.cs:101. F5.1 stale doc (carry): format/IWriter.cs:7,11,126 still describes the deleted Normalize pipeline; live mechanism is self-writing Output; sibling at json/writer.cs:200. Verdict: CLEAN, no merge blockers."
         }
       ],
       "after": {}
