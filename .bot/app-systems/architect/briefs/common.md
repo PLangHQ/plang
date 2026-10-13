@@ -40,6 +40,19 @@ Read "The locked core" in `CLAUDE.md`. Its surface (app's members, the type syst
 
 app-systems is frozen: cleanup only (Ingi, 665). Bigger work goes to the next branch. So a finding is either **blocks the merge** (say why) or **carry** (say where it belongs). Mark each one.
 
+## Messages to the architect
+
+When you message the architect, use this shape (Ingi, 2026-10-13):
+
+```
+<subject: what was done>
+Done
+- <what was done>
+HASH: <commit>
+CHECK: <the result that proves it>
+OPEN: <what couldn't be done or needs a decision; "none">
+```
+
 ## Where your output goes
 
 `.bot/app-systems/<you>/` as your character says, with your report json at `.bot/app-systems/`. The architect reads it, verifies each finding against the code, and brings the merge-blocking ones to Ingi.
