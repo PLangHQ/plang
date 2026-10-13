@@ -44,15 +44,28 @@ app-systems is frozen: cleanup only (Ingi, 665). Bigger work goes to the next br
 
 ## Messages to the architect
 
-When you message the architect, use this shape (Ingi, 2026-10-13):
+Two messages per part of your work (an area, a plan, a module), each with **text, then plang** (Ingi, 2026-10-13: "it would be nice to get similar in start and in both cases show the plang code if there is one"):
+
+**At the start of a part:** a few plain sentences on what you're about to look at and why, then its steps:
 
 ```
-<subject: what was done>
+<part> starting
+Start
+- <what you'll do>
+```
+
+**At the end of a part:** a short summary in plain words (what you found, what it means, what's new or simpler), then the result, and for each finding a plang step reaches, that step:
+
+```
+<part> done
 Done
 - <what was done>
 HASH: <commit>
 CHECK: <the result that proves it>
 OPEN: <what couldn't be done or needs a decision; "none">
+
+/ a finding a plang step reaches
+/ - <the step>        <what happens, file:line>
 ```
 
 ## Where your output goes
