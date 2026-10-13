@@ -99,6 +99,22 @@ section.band { background: var(--band); }
   .arrow { justify-self: center; transform: rotate(90deg); }
 }
 
+/* Any language */
+.langs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; max-width: 920px; margin: 0 auto; }
+.langs figure { grid-column: span 2; margin: 0; background: var(--surface); border-radius: 22px 22px 22px 6px; padding: 20px 22px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.langs figure:nth-child(4) { grid-column: 2 / span 2; }
+.langs figcaption { font-size: 13px; color: var(--muted); }
+.langs blockquote { margin: 0; font-size: 19px; line-height: 1.4; }
+.same { display: flex; justify-content: center; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 36px; color: var(--muted); }
+.same b { color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 8px 16px; font-size: 17px; box-shadow: var(--shadow); }
+.same span::after { content: " →"; }
+@media (max-width: 860px) {
+  .langs { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .langs figure, .langs figure:nth-child(4) { grid-column: auto; }
+  .langs figure:last-child { grid-column: 1 / -1; }
+}
+@media (max-width: 520px) { .langs { grid-template-columns: minmax(0, 1fr); } .langs figure:last-child { grid-column: auto; } }
+
 /* Spec list (Yours) */
 .spec { max-width: 720px; margin: 0 auto; display: grid; }
 .spec div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; padding: 22px 0; border-top: 1px solid var(--line); align-items: baseline; }
@@ -171,7 +187,7 @@ footer a:hover { color: var(--fg); }
   <div class="wrap">
     <a class="brand" href="#"><img src="puffin.png" alt="">PLang</a>
     <a class="hide-sm" href="#how">How it works</a>
-    <a class="hide-sm" href="#builders">For builders</a>
+    <a class="hide-sm" href="#makers">For makers</a>
     <a class="hide-sm" href="#">Docs</a>
     <a href="#start">Get PLang</a>
     <button type="button" class="theme" id="theme" aria-label="Switch to light mode">☀</button>
@@ -212,8 +228,26 @@ footer a:hover { color: var(--fg); }
   </div>
 </section>
 
-<!-- 2 · Yours -->
+<!-- 2 · Any language -->
 <section class="band" id="how">
+  <div class="wrap">
+    <div class="head">
+      <h2>Say it in your own language.</h2>
+      <p>English, German, Chinese, French, Icelandic. Describe what you need the way you would say it.</p>
+    </div>
+    <div class="langs">
+      <figure lang="en"><figcaption>English</figcaption><blockquote>Let our running club log times. Only members can see them.</blockquote></figure>
+      <figure lang="de"><figcaption>Deutsch</figcaption><blockquote>Unser Laufclub soll Zeiten eintragen können. Nur Mitglieder sehen sie.</blockquote></figure>
+      <figure lang="zh"><figcaption>中文</figcaption><blockquote>让我们的跑步俱乐部记录成绩。只有会员可以查看。</blockquote></figure>
+      <figure lang="fr"><figcaption>Français</figcaption><blockquote>Notre club de course doit pouvoir noter ses temps. Seuls les membres les voient.</blockquote></figure>
+      <figure lang="is"><figcaption>Íslenska</figcaption><blockquote>Hlaupahópurinn okkar á að geta skráð tíma. Aðeins meðlimir sjá þá.</blockquote></figure>
+    </div>
+    <p class="same"><span>Same app, whatever the language</span><b>Club Times</b></p>
+  </div>
+</section>
+
+<!-- 3 · Yours -->
+<section>
   <div class="wrap">
     <div class="head">
       <h2>It's yours.</h2>
@@ -228,8 +262,8 @@ footer a:hover { color: var(--fg); }
   </div>
 </section>
 
-<!-- 3 · Identity -->
-<section>
+<!-- 4 · Identity -->
+<section class="band">
   <div class="wrap">
     <div class="head">
       <h2>No passwords. No accounts.</h2>
@@ -244,8 +278,8 @@ footer a:hover { color: var(--fg); }
   </div>
 </section>
 
-<!-- 4 · Signed -->
-<section class="band">
+<!-- 5 · Signed -->
+<section>
   <div class="wrap">
     <div class="head">
       <h2>Everything is signed.</h2>
@@ -266,8 +300,8 @@ footer a:hover { color: var(--fg); }
   </div>
 </section>
 
-<!-- 5 · Open -->
-<section>
+<!-- 6 · Open -->
+<section class="band">
   <div class="wrap">
     <div class="head">
       <h2>Open all the way down.</h2>
@@ -289,8 +323,8 @@ footer a:hover { color: var(--fg); }
   </div>
 </section>
 
-<!-- 6 · Builders -->
-<section class="band" id="builders">
+<!-- 7 · Makers -->
+<section id="makers">
   <div class="wrap">
     <div class="head">
       <h2>Rather write it yourself?</h2>
@@ -303,8 +337,8 @@ footer a:hover { color: var(--fg); }
   </div>
 </section>
 
-<!-- 7 · Start -->
-<section id="start">
+<!-- 8 · Start -->
+<section class="band" id="start">
   <div class="wrap">
     <div class="head">
       <h2>Start with one line.</h2>
