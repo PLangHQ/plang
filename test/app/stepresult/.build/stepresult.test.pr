@@ -82,11 +82,45 @@
           ]
         }
       ]
+    },
+    {
+      "index": 2,
+      "text": "assert %!data% is true",
+      "line": {
+        "number": 7
+      },
+      "comment": "a variable.set reports success, so its step result %!data% is the boolean true,\nnot the assigned value — asserting that is what makes \"!data available\" actually bite",
+      "code": [
+        {
+          "module": "assert",
+          "name": "isTrue",
+          "property": [
+            {
+              "name": "Value",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%!data%",
+              "variable": [
+                {
+                  "text": "%!data%",
+                  "code": [
+                    {
+                      "variable": "!data"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "child": [],
   "visibility": "Public",
   "path": "/app/stepresult/StepResult.test.goal",
   "prPath": "/app/stepresult/.build/stepresult.test.pr",
-  "hash": "7ce59503c260f9f63dbd32c2733efe1d49a33f6c7bdc27f2780641ec2dedaa57"
+  "hash": "ec44fea338d3bc886a2716fb0bf7c9cbdaf2478d0c6627b40c6cb724bdadadca"
 }

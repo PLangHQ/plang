@@ -18,7 +18,7 @@
               "type": {
                 "name": "goal"
               },
-              "value": "ComputeAnswer"
+              "value": "/module/goal/return/ComputeAnswer"
             }
           ]
         },
@@ -106,11 +106,51 @@
           ]
         }
       ]
+    },
+    {
+      "index": 2,
+      "text": "assert %answer% equals 42",
+      "line": {
+        "number": 5
+      },
+      "code": [
+        {
+          "module": "assert",
+          "name": "equals",
+          "property": [
+            {
+              "name": "Expected",
+              "type": {
+                "name": "number"
+              },
+              "value": 42
+            },
+            {
+              "name": "Actual",
+              "type": {
+                "name": "item",
+                "template": "plang"
+              },
+              "value": "%answer%",
+              "variable": [
+                {
+                  "text": "%answer%",
+                  "code": [
+                    {
+                      "variable": "answer"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "child": [],
   "visibility": "Public",
   "path": "/module/goal/return/GoalCallReturn.test.goal",
   "prPath": "/module/goal/return/.build/goalcallreturn.test.pr",
-  "hash": "d4df986048ba6be882eba4c06d189d8d639a861eb5e326d0d660591d66b8dba9"
+  "hash": "e7a225a0b74e49029e7d9c98489b560fa0ec95e573d6df7a7df66c48be3735b7"
 }

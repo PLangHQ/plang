@@ -2,3 +2,6 @@
 Start
 - set %x% = "hello"
 - assert %!data% is not null
+/ a variable.set reports success, so its step result %!data% is the boolean true,
+/ not the assigned value — asserting that is what makes "!data available" actually bite
+- assert %!data% is true

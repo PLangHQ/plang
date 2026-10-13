@@ -2,3 +2,4 @@
 Start
 - call ComputeAnswer, write to %answer%
 - assert %answer% is not null
+- assert %answer% equals 42
