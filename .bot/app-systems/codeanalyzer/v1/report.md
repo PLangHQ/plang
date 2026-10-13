@@ -87,7 +87,33 @@ Every seam that could have been a per-type fork is a single-owner or registry de
 
 - **F3.1 — stored twice (systemic cleanup).** The parse-vs-convert failure classification
   `(((value as item.@this)?.Clr<object>() ?? value) is string s) ? <parse-failed> : <convert-failed>`
-  is written **9 times**, once in each value type's `Create(value, declared, data)`: `bool:79`, `duration:80`, `datetime`, `date`, `time`, `size`, `image`, `guid`, `list:110`. Same rule (was I handed a string to parse, or the wrong type?) in nine files. Fix direction: one protected helper on `item.@this` — `data.FailCreate(value, "<typename>", "<parse hint>")` — each type passing its name and hint; the unwrap-and-classify lives once. **Carry (cleanup). Surface change: no** (protected helper, the `Create`/ICreate signature is untouched). *Plang that reaches it:* `- set %flag% as bool = "banana"` (any failed coercion of a string literal to a scalar type lands one of the nine messages).
+  is written **9 times**, once in each value type's `Create(value, declared, data)`: `bool:79`, `duration:80`, `datetime`, `date`, `time`, `size`, `image`, `guid`, `list:110`. Same rule (was I handed a string to parse, or the wrong type?) in nine files. Fix direction *(corrected per architect)*: not a helper on `item.@this` (that would itself be an addition to item's locked surface) — the **source answers its own failure face**: a text says "cannot parse 'x' as T", anything else says "cannot convert Y to T", and T supplies only its hint. That removes the nine copies without adding a member. **Carry (cleanup). Surface change: no** (the classifying behaviour moves onto the value the convert already has; no new member on item). *Plang that reaches it:* `- set %flag% as bool = "banana"` (any failed coercion of a string literal to a scalar type lands one of the nine messages).
 - **F3.2 — borderline (same class as F1.3).** `dict/this.cs:84` `catch (JsonException) { return null; }` answers "is this text a dict?" by swallowing a parse throw. STJ has no non-throwing parse and the exception means exactly what the null means ("not JSON" = "not a dict"), so it is control-flow-by-exception, not a masked error. Noted, not a blocker. Separately, `dict/this.cs:89` narrows a `clr(JsonElement)` source into a dict — a **consumer accommodating the carried json-clr-leak** (next-branch "the {item, json} door, 717"), not a new finding. **Carry (note). Surface change: no.**
 
-*Areas 4-8 pending (type system, serializer, call/variable/events, module registry/app, builder pipeline).*
+## Area 4 — the type system (`type/this.cs`, `type/list/`, `type/kind/`, `type/property/`, `type/item/this.cs`)
+
+**Diff:** `type/this.cs` +692 −311, `type/item/this.cs` +941 (item's apex), `type/kind/` +503, `type/list/` +620 −377, `type/property/` +348. `type/convert/this.cs` −121 (deleted — the `OwnedClr` ownership moved onto each type's `this.Owns.cs`, seen in area 3).
+
+**Tooling:** grep for forks/is-X/reflection + the cross-file fork census (registry-constructs, signature) + full read of the flagged sites + `ObpScan`.
+
+### Verdict: CLEAN (no merge blockers)
+
+The spine's reflection is all the **carried** member-read/catalog machinery, and the one genuinely new shape issue works today. Nothing here blocks the merge.
+
+### Carried (cite, not re-raised)
+
+- **Member-read reflection — 673.** `type/this.cs:514,518,540,734-805` (type descriptor built from a CLR class: `Resolve`/`Internal`/`Create`/`Default` statics, property/method walk), `type/item/this.cs:261-290` incl. `:272-276` (`item.Get` default — `AsTask`/`Result` unwrap), `type/list/Registry.cs:149,154,335`, `type/property/list/this.cs:69-77`, `type/property/this.cs:43-47`. All are "what members does this type have?" → **carried:** next-branch "Avoid reflection; one door to a type's members (673)."
+- **Reader throws its refusal — 714.** `type/this.cs:321` catches `DeclinedException` → error — **carried** (next-branch names this exact site).
+- **clr skip in the catalog.** `type/property/list/this.cs:86` `property.Type.Name is "clr"` continue — skipping clr carriers from the readable catalog → **carried** clr/kind-is-type family (711).
+
+### Findings
+
+- **F4.1 — fork by name/type: `IsDefault` (`type/property/this.cs:118-138`). NEW (not on any carry list).** The "is this written value the property's default?" test switches four ways in one body: `Default is bool` (:131), `Type.Name == "variable"` (:132, `%`-trim), number double-parse (:134), else raw string compare (:137). Four per-type equality rules keyed by name/CLR-type — a type-switch doing equality the value should own (`Operator.Equal` already routes equality through the value's own `Compare`). **Risk:** a new type whose written form needs normalization silently falls to the raw string arm and misreports "not default" (same-shape-second-site / silent divergence). **Fix direction:** the value answers whether it equals the property's default (through its own equality/`Compare`), so a new type needs no new arm here. **Carry** (frozen-branch cleanup — it works today, not a correctness regression). **Surface change: yes** (the value answering default-equality adds a member on item/property — Ingi's call). *Plang reaching it:* build-time omission of a param equal to its default (e.g. a step whose value equals the declared default) — this is the comparison that decides whether the param is persisted.
+- **F4.2 — generic-display by name list: `type/this.cs:547`.** `ToString()` renders `name<kind>` only for `Name == "list" || "dict" || "choice"`, else bare `Name` — whether a type shows its kind in angle brackets is a hardcoded name set, not a property the type answers. → **carried:** next-branch "a kind is a type (711)" — the generic-vs-sub-kind distinction ("a generic's element `list<path>` already is one"; the written `.pr` form `{name, kind}`) is exactly what 711 resolves. Concrete site noted; not re-raised. **Surface change: yes** (711 is Ingi's).
+
+### Noise cleared
+
+- `type/this.cs:218 IsNull => Name == "null"`: the null sentinel's identity predicate, not a behaviour fork.
+- `type/list/Registry.cs:64` (registry mints `text.@this` of registered names): a single listing mint, not a domain-value factory on the wrong owner.
+
+*Areas 5-8 pending (serializer, call/variable/events, module registry/app, builder pipeline).*

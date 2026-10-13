@@ -1529,7 +1529,14 @@
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Area 3 (core value types) OBP scan. +7294 near-new, the native value-model. Every fork-risk seam is single-owner/registry: number Ladder (one owner of cross-kind promotion keyed by kind name), path scheme (kind+factory registry), list Clr(target) (single interop door, each row lowers itself - inherent reflection not member-read reflection). Arithmetic catches are specific boundary translations. F3.1 stored-twice (systemic, carry): parse-vs-convert failure idiom duplicated across 9 value types' Create - fix is one protected helper on item.@this. F3.2 borderline (carry): dict:84 JsonException-as-answer (same class as F1.3), dict:89 accommodates carried json-clr-leak. Verdict: CLEAN, no merge blockers."
+          "context": "Area 3 (core value types) OBP scan. +7294 near-new, the native value-model. Every fork-risk seam is single-owner/registry: number Ladder (one owner of cross-kind promotion keyed by kind name), path scheme (kind+factory registry), list Clr(target) (single interop door, each row lowers itself - inherent reflection not member-read reflection). Arithmetic catches are specific boundary translations. F3.1 stored-twice (systemic, carry): parse-vs-convert failure idiom duplicated across 9 value types' Create - corrected fix (per architect): the source value answers its own failure face, no helper on item. F3.2 borderline (carry): dict:84 JsonException-as-answer (same class as F1.3), dict:89 accommodates carried json-clr-leak. Verdict: CLEAN, no merge blockers."
+        },
+        {
+          "paths": ["PLang/app/type/this.cs", "PLang/app/type/list/", "PLang/app/type/kind/", "PLang/app/type/property/", "PLang/app/type/item/this.cs"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Area 4 (type system) OBP scan. type.@this +692-311, item base +941, kind +503. All reflection here is carried member-read/catalog machinery (673); type/this.cs:321 carried reader-throws (714); property/list:86 clr-skip carried (711 family). F4.1 NEW fork-by-name/type: IsDefault (type/property/this.cs:118-138) switches 4 ways (bool/variable/number/else) doing default-equality the value should own via Compare - silent-divergence risk for a new type; carry (works today), surface change yes. F4.2 generic-display by name list (type/this.cs:547 Name==list||dict||choice) carried under 711. Census clean (one benign registry text-mint). Verdict: CLEAN, no merge blockers."
         }
       ],
       "after": {}
