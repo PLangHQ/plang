@@ -95,3 +95,17 @@ Each finding the reviewer bots report, checked against the code before it goes a
 | run 2 was 244/17: the llm tests call api.openai.com live, and a transient "network unreachable" failed LlmCache | the llm tests need the network and a key | carry (next-branch: llm tests run offline, recorded answers or a skip without a key) |
 | T1 `test/module/llm/LlmCache.test.goal` passes for the wrong reason: titled "verify second returns cached result", it only asserts both answers are not null | read the goal: the two asserts are `is not null` | fixed (builder, 8f8e0bebf: `assert %second!Cached% is true`, the query result's own cache-hit signal; red with the second query's cache off, then reverted) |
 | `./dev.sh build` doesn't restore a fresh checkout | dev.sh's msbuild calls (`:205`, `:215`) run `-t:Build` without `-restore`. The tester's "exits 0" was its own pipe (`./dev.sh build 2>&1 \| tail -30` reports tail's exit); dev.sh exited 2 with NETSDK1004 | fixed (coder, 181468c11: a never-restored or changed project is restored first, serially; a failed restore exits 2) |
+
+## tester (plang-4f), parts 2–5 (59cb79017; notes in `.bot/app-systems/tester/v23/`, report `test-report.json`)
+
+| finding | checked | status |
+|---|---|---|
+| part 2: no mechanical wrong save in any of the 265 test `.pr` (dropped operand, type word as a truth check, dropped channel, an on.error doing nothing), except the carried goalchannelrecursion | its scan scripts (`smell.py`, `weakonly.py`) | cleared |
+| T5 `module/goal/return/GoalCallReturn`: titled "with return value", asserts only not null | read: one assert, `%answer% is not null` | fix (builder: `equals 42`) |
+| weak-only `app/stepresult/StepResult`: asserts only `%!data% is not null` after `set %x% = "hello"` | its notes | fix (builder: `equals "hello"`); the identity and binding smoke tests stay |
+| T3 `plan/list-query/start.goal:47` calls `WhereUnsetVariable`; the file is `WhereUnsetVariableIsNotFound` | grep: confirmed | fix (builder) |
+| T2 the task plan's plang rewrite is about 14 tests short (Stage 3 foreach-in-parallel, Stage 4 the builder goldens, three of Stage 2's list tests); `TaskTests.cs` (39) covers them all in C# | its notes | carry (next-branch: finish the task plan's plang tests) |
+| T4a the run's coverage report marks on.cache and on.timeout uncovered though passing tests build them (94/142 undercounts) | its notes | carry (next-branch: the report counts clauses) |
+| T4b no plang test for http.download/upload, timer.start/end, variable.get/exists | its notes | carry (next-branch's missing-tests list) |
+
+**The tester's verdict: no merge blocker.** Agreed.
