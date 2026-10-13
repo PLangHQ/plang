@@ -47,18 +47,6 @@ public partial class @this
     /// <summary>The <see cref="WireSchema"/> value that identifies a Data.</summary>
     public const string WireSchemaData = "data";
 
-    /// <summary>
-    /// True when a JSON object carries the <c>@schema:"data"</c> marker — i.e. it IS a
-    /// serialized Data, not a user map. The single recognizer for every read path (the
-    /// universal json entry parse (<c>item.serializer.json.Parse</c>) and the wire reader), so a Data is
-    /// lifted back to a Data everywhere a marked object is parsed.
-    /// </summary>
-    internal static bool IsDataMarked(System.Text.Json.JsonElement element)
-        => element.ValueKind == System.Text.Json.JsonValueKind.Object
-           && element.TryGetProperty(WireSchema, out var s)
-           && s.ValueKind == System.Text.Json.JsonValueKind.String
-           && s.GetString() == WireSchemaData;
-
     [JsonPropertyName("name")]
     public string Name { get; set; }
 

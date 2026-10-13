@@ -157,7 +157,7 @@ public sealed class @this : global::app.channel.type.session.@this
         // question — and the answer comes back as Data: a program running this plang sees an ask, not a line.
         var format = FormatFor(action.Context);
         var whole = InPlay && !format.IsText;
-        if (!string.IsNullOrEmpty(question?.Clr<string>()))
+        if (question?.IsTruthy() == true)
         {
             var output = action.Context?.Actor?.Channel.Get(global::app.channel.list.@this.Output);
             global::app.data.@this asked = whole ? action.Context!.Ok(new module.output.Ask { Question = question }) : action.Context!.Ok(question);
@@ -180,26 +180,18 @@ public sealed class @this : global::app.channel.type.session.@this
 
         // A question waits for its answer — no limit of its own. The program's limit (a timeout on the ask) and the
         // run's cancellation arrive through ct.
-        try
-        {
-            var line = await Lines.ReadLineAsync(ct);
-            // Null from ReadLineAsync = stream EOF. There's no interactive
-            // answerer (closed pipe, redirected stdin, non-interactive runner).
-            // Fail-fast instead of letting the caller loop on "" forever.
-            if (line == null)
-                return action.Context.Error(new global::app.error.NoAnswer(
-                    $"Channel '{Name}' has no interactive answerer (stream EOF)"));
-            // in plang's own format the answer is Data, read in that format; a line typed is text — the user's data itself
-            if (whole)
-                return await format.Decode(ResolveEncoding().GetBytes(line), action.Context, Name, ct: ct);
-            return action.Context.Ok(new global::app.type.item.text.@this(line));
-        }
-        catch (Exception ex) when (ex is not (NullReferenceException or OutOfMemoryException or StackOverflowException
-                                                 or OperationCanceledException))
-        {
-            return action.Context.Error(new ServiceError(
-                $"Failed to ask on channel '{Name}': {ex.Message}", "AskError") { Exception = ex });
-        }
+        // A transport failure or a cancel goes out to AskAsync, the channel's one boundary that answers them.
+        var line = await Lines.ReadLineAsync(ct);
+        // Null from ReadLineAsync = stream EOF. There's no interactive
+        // answerer (closed pipe, redirected stdin, non-interactive runner).
+        // Fail-fast instead of letting the caller loop on "" forever.
+        if (line == null)
+            return action.Context.Error(new global::app.error.NoAnswer(
+                $"Channel '{Name}' has no interactive answerer (stream EOF)"));
+        // in plang's own format the answer is Data, read in that format; a line typed is text — the user's data itself
+        if (whole)
+            return await format.Decode(ResolveEncoding().GetBytes(line), action.Context, Name, ct: ct);
+        return action.Context.Ok(new global::app.type.item.text.@this(line));
     }
 
     // what was read past the last message's end: the start of the next one

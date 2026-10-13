@@ -13,13 +13,6 @@ namespace app.data;
 /// </summary>
 public partial class @this
 {
-    /// <summary>
-    /// Hard cap on Normalize depth. Mirrors <c>MaxRehydrationDepth</c> in
-    /// <see cref="this.Transport.cs"/> — past this is almost certainly an
-    /// unbounded structure rather than legitimate nesting.
-    /// </summary>
-    private const int MaxNormalizeDepth = 128;
-
     /// <summary>Cap on variable-resolution recursion at output. A self-referential variable chain
     /// (<c>a=%b%</c>, <c>b=%a%</c>) resolves forever; this bounds it to a typed error. NOT a general
     /// graph-depth cap — Output serializes plang TREES (from wire/literals; the writer fail-closes on

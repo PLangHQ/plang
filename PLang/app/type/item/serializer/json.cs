@@ -82,6 +82,13 @@ public partial class json
            && t.TryGetProperty("name", out _)
            && element.TryGetProperty("value", out _);
 
+    // A json object carrying the @schema:"data" marker: a serialized Data, not a user map.
+    private static bool IsDataMarked(System.Text.Json.JsonElement element)
+        => element.ValueKind == System.Text.Json.JsonValueKind.Object
+           && element.TryGetProperty(global::app.data.@this.WireSchema, out var s)
+           && s.ValueKind == System.Text.Json.JsonValueKind.String
+           && s.GetString() == global::app.data.@this.WireSchemaData;
+
     /// <summary>The container entry <paramref name="utf8"/> is, when it is a typed value (a Data row a
     /// list or dict wrote: <c>{type:{name,…}, value:…}</c>, or <c>@schema:data</c>) — read as that Data, as
     /// every nested entry reads; null for any other value, which the container's element type reads. A row
@@ -91,7 +98,7 @@ public partial class json
         using var doc = System.Text.Json.JsonDocument.Parse(utf8);
         var element = doc.RootElement;
         return element.ValueKind == System.Text.Json.JsonValueKind.Object
-               && (global::app.data.@this.IsDataMarked(element) || IsTypedEntry(element))
+               && (IsDataMarked(element) || IsTypedEntry(element))
             ? new global::app.data.reader.@this().Read(utf8, new global::app.type.reader.ReadContext(_context, Verify: false, IsBuilt: ctx.IsBuilt))
             : null;
     }
@@ -184,7 +191,7 @@ public partial class json
             System.Text.Json.JsonValueKind.False => false,
             System.Text.Json.JsonValueKind.Null => null,
             System.Text.Json.JsonValueKind.Undefined => null,
-            System.Text.Json.JsonValueKind.Object => global::app.data.@this.IsDataMarked(element) || IsTypedEntry(element)
+            System.Text.Json.JsonValueKind.Object => IsDataMarked(element) || IsTypedEntry(element)
                 ? new global::app.data.reader.@this().Read(System.Text.Encoding.UTF8.GetBytes(element.GetRawText()),
                     new global::app.type.reader.ReadContext(_context, Verify: false, IsBuilt: ctx?.IsBuilt ?? false))
                 : ObjectLeaf(element, ctx, depth),

@@ -4,9 +4,9 @@ using System.Reflection;
 namespace app.type.item.kind.reflection;
 
 /// <summary>
-/// Tagged-view filter: decides which properties on a CLR type ship on the
-/// wire. Consumed by <c>Data.Normalize</c> when walking a non-primitive
-/// value into its property-bag child list.
+/// Tagged-view filter: decides which properties on a CLR type a view writes.
+/// Read by an item's tagged <c>Output</c> and the reflection kind's, which
+/// write those properties as the value's property bag.
 ///
 /// <para>Three modes:</para>
 /// <list type="bullet">

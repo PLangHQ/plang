@@ -9,9 +9,9 @@ namespace app.type.item.kind.json;
 /// <c>{name, type, value, properties, signature}</c> for records, native JSON
 /// tokens for primitives, JSON arrays for lists.
 ///
-/// <para>The writer never reflects: Normalize has already decomposed any C#
-/// object into a tree of primitives / byte[] / Data / List, so writing is a
-/// pure dispatch on the runtime type of each visited value.</para>
+/// <para>The writer never reflects: each value writes itself through its own
+/// <c>Output</c>, and <see cref="Value"/> takes only the C# values of the tree
+/// contract (primitives / byte[] / Data / collections).</para>
 /// </summary>
 public sealed class Writer : IWriter
 {
@@ -123,10 +123,9 @@ public sealed class Writer : IWriter
         "JsonWriter.EndRecord requires the Data record reference — call EndRecord(Data) instead.");
 
     /// <summary>
-    /// Writes a normalized value. The value must already be one of:
-    /// null, primitive (string, int, long, double, float, bool, DateTime, decimal),
-    /// byte[], <see cref="app.data.@this"/>, or <see cref="System.Collections.IEnumerable"/>
-    /// of normalized values. Normalize is the producer; the writer is the consumer.
+    /// Writes a C# value: null, a primitive (string, int, long, double, float, bool,
+    /// DateTime, decimal), byte[], <see cref="app.data.@this"/> as its record, or an
+    /// <see cref="System.Collections.IEnumerable"/> of these. A plang value writes itself.
     /// </summary>
     public void Value(object? normalized)
     {
@@ -152,9 +151,8 @@ public sealed class Writer : IWriter
                 EndRecord(nested);
                 return;
             case app.type.item.dict.@this dict:
-                // The native object shape. Normalize hands the writer a `dict`
-                // for every object form — a json-object value, a raw infra dict,
-                // and a reflected C# domain record all converge here. Emit as a
+                // The native object shape: a json-object value and a raw infra
+                // dict both converge here. Emit as a
                 // JSON object keyed by entry name, including the empty case so a
                 // record-with-no-properties round-trips as `{}` not `[]`. The
                 // writer disambiguates object-vs-array by value type: `dict`→`{}`,
@@ -191,13 +189,13 @@ public sealed class Writer : IWriter
                 EndArray();
                 return;
             default:
-                // Reaching here means Normalize handed off a value whose runtime
-                // type isn't in the tree contract. Falling back to STJ would
+                // Reaching here means a caller handed the writer a C# value whose
+                // runtime type isn't in the tree contract. Falling back to STJ would
                 // reflect every public property and bypass [Out]/[Sensitive]/[Masked]
                 // discipline — the wire could leak fields the filter excludes.
                 // Fail closed instead.
                 throw new app.data.NormalizeException(
-                    $"json.Writer received a value of type {normalized.GetType().FullName} that isn't part of the tree contract. Normalize is missing a case for this type.",
+                    $"json.Writer received a value of type {normalized.GetType().FullName} that isn't part of the tree contract; a value of this type has to write itself.",
                     "NormalizeUnexpectedLeafType");
         }
     }

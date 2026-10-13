@@ -182,6 +182,21 @@ public class Stage8_ChannelEventsTests : System.IAsyncDisposable
         await Assert.That((await received!.Value())?.ToString()).IsEqualTo("answer");
     }
 
+    // A question nobody answers before its asker stops waiting: the ask answers Cancelled, not a transport failure.
+    [Test]
+    public async Task AnAskCancelledWhileWaiting_AnswersCancelled()
+    {
+        var pipe = new global::System.IO.Pipelines.Pipe();
+        var ch = new StreamChannel("i3", pipe.Reader.AsStream(), ChannelDirection.Input, ownsStream: false) { Mime = "text/plain" };
+        app.actor.list.User.Channel.Register(ch);
+        using var stop = new CancellationTokenSource(TimeSpan.FromMilliseconds(200));
+
+        var result = await ch.AskAsync(new global::app.module.output.ask(app.actor.list.User.Context)
+            { Question = new global::app.data.@this<global::app.type.item.text.@this>("", "") }, stop.Token);
+
+        await Assert.That(result.Error?.Key).IsEqualTo("Cancelled");
+    }
+
     // Two answers already in the stream (piped in at once): each question gets its own — the reader that read past
     // the first answer is the one the second question reads from.
     [Test]
