@@ -109,3 +109,5 @@ Each finding the reviewer bots report, checked against the code before it goes a
 | T4b no plang test for http.download/upload, timer.start/end, variable.get/exists | its notes | carry (next-branch's missing-tests list) |
 
 **The tester's verdict: no merge blocker.** Agreed.
+
+**The builder's fixes (9e74112f3):** GoalCallReturn asserts `equals 42` (red with 41, put back); the list-query index points at `WhereUnsetVariableIsNotFound`; StepResult asserts `%!data% is true`, not "hello": after `set %x% = "hello"` the step's answer is the set's success (`name.Set`), which the run showed (`Actual: true`). That answer differs from `set default`'s (the existing value, `variable/set.cs:130–134`), so what a set answers is on next-branch.md for Ingi. Suite 245/16/12/3.
