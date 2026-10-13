@@ -146,7 +146,7 @@ The CLAUDE.md invariants hold, verified in code:
 - **Stored twice.** `json/writer.cs Value(object)` (`:131-203`) has explicit `dict` (`:154`) and `list` (`:171`) arms that write the object/array wire shape — while `dict`/`list` **also** write that shape themselves (`dict/this.cs:175`, `list/this.cs:299 Output`). One wire shape, two writers that can drift.
 - **Witness tell.** `Value(object)`'s own comment (`:181-187`) states "the writer never type-switches per type (OBP Rule 9)" — directly above the `dict`/`list` arms that do exactly that.
 - **Fix direction:** one write door. Everything routes through the value's own self-write (`Output`); `Value(object)`'s `dict`/`list`/`item` arms collapse into "the value writes itself," and the sync `Write`/`Value(object)` door retires once its four callers move to `Output`.
-- **Blocks the merge: no.** Both paths agree today (tests green — an agreeing fork is rot, not a bug). **Surface change: yes** (`IWriter.Value` and `item.Write` are locked core). This is the strongest shape finding of the run and is **not** on next-branch or obp-cleanup — it belongs on next-branch as a new systemic locked-core fork (I flag it; the write is architect/docs').
+- **Blocks the merge: no.** Both paths agree today (tests green — an agreeing fork is rot, not a bug). **Surface change: yes** (`IWriter.Value` and `item.Write` are locked core). This is the strongest shape finding of the run. *(Confirmed after filing: it is already on `next-branch.md`, added with decision 724.)*
 
 ---
 
@@ -224,7 +224,7 @@ The CLAUDE.md invariants hold, verified in code:
 
 ### Finding
 
-- **F8.1 — stored twice / identity by name: the "action slot" predicate. NEW (not carried).** "Is this slot an action, or a list of actions?" — `slot.Type.Name == "action" || (slot.Type.Name == "list" && slot.Type.kind.Name == "action")` — is re-derived by type-name string at **3 independent sites**: `action/this.Validate.cs:54-55`, `action/formal/reader.cs:221` (list-of-action) + `:349` (action), `action/serializer/Reader.cs:153-154`. The two-part shape (the `list`+`kind=="action"` half) is exactly what a fourth site will forget. Fix direction: the type/slot answers it once — `slot.Type.IsActionSlot` (or the action type answers "am I an action-valued slot"). **Carry (cleanup). Surface change: yes** if it becomes a member on `type` (Ingi's call); **no** if a shared builder-internal predicate. **Blocks: no.** *Plang reaching it:* any step whose action takes a sub-action slot, e.g. `if %x% > 5, call Foo` — `call`'s action argument and `on error` clauses are action-valued slots read through all three sites.
+- **F8.1 — stored twice / identity by name: the "action slot" predicate.** "Is this slot an action, or a list of actions?" — `slot.Type.Name == "action" || (slot.Type.Name == "list" && slot.Type.kind.Name == "action")` — is re-derived by type-name string at **4 sites in 3 files**: `action/this.Validate.cs:54-55`, `action/formal/reader.cs:221` (list-of-action) + `:349` (action), `action/serializer/Reader.cs:153-154`. The two-part shape (the `list`+`kind=="action"` half) is exactly what a fourth site will forget. **Fix direction (per architect, decision 725):** *not* an `IsActionSlot` on `type` — `type` is locked, and the fix is the OBP one the carry already names: the action type and a list-of-actions **read their own value**, so no site needs to ask the type what it is. → **carried with 711** (a kind is a type; the value answers for itself). **Blocks: no. Surface change: no** (no new member; the sites stop asking). *Plang reaching it:* any step whose action takes a sub-action slot, e.g. `if %x% > 5, call Foo` — `call`'s action argument and `on error` clauses are action-valued slots read through all four sites.
 
 ### Reviewed, acceptable (no finding)
 
@@ -237,13 +237,13 @@ The CLAUDE.md invariants hold, verified in code:
 
 **MERGE-CLEAN on behaviour.** Across the locked core's 977-file diff and the new builder pipeline, **no finding blocks the merge.** The new surface is, with one exception, OBP-exemplary: registries with behaviour on the element (schema, Operator, path scheme, module actions, event kinds), single owners for cross-type relations (the number Ladder, Comparison), and `app.@this` as a clean composition root.
 
-**The one shape debt the merge carries is F5.2** (two write doors — the self-writing `Output` vs the sync `IWriter.Value(object)` type-switch; dict/list wire shape written in several places). It is behaviourally sound (agreeing fork, tests green) but is the heaviest locked-core shape debt and is **not** yet on next-branch — it should be, for Ingi.
+**The one shape debt the merge carries is F5.2** (two write doors — the self-writing `Output` vs the sync `IWriter.Value(object)` type-switch; dict/list wire shape written in several places). It is behaviourally sound (agreeing fork, tests green) but is the heaviest locked-core shape debt. *(It is on next-branch, added with decision 724.)*
 
 **New findings (none blocking), all cleanup/surface proposals for the next branch:**
 - F4.1 — `IsDefault` default-equality forks by type-name; the value should answer via `Compare` (surface: IsDefault signature).
 - F5.1 — stale `Normalize` doc in 3 places (`IWriter.cs`, `json/writer.cs:200`, `Tagged.cs:8`) (surface: no).
-- F5.2 — the write-path fork above (surface: yes; the headline).
-- F8.1 — the "action slot" predicate re-derived in 3 files (surface: maybe).
+- F5.2 — the write-path fork above (surface: yes; the headline; on next-branch via 724).
+- F8.1 — the "action slot" predicate re-derived in 4 sites / 3 files (surface: no; carried with 711 — the value reads its own, no site asks the type).
 - F3.1 — the parse-vs-convert failure face duplicated across 9 value types (surface: no).
 - F1.1 — dead const `MaxNormalizeDepth` (surface: no).
 - F6.1 — the system/user-variable predicate repeated (carried; architect read the two subsets as intentional).

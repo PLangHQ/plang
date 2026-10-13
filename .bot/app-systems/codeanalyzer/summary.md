@@ -19,9 +19,9 @@ Scanned in 9 sections (one per brief area, resumable; `v1/report.md` has them in
 
 | ID | What | Surface change | Fix direction |
 |----|------|----------------|---------------|
-| **F5.2** | **Two write doors** — self-writing `Output` vs the sync `IWriter.Value(object)` type-switch; dict/list wire shape written in several places. The heaviest shape debt the merge carries; **not yet on next-branch**. | yes (locked) | one door — everything through `Output`; retire `Value(object)`/sync `Write` |
+| **F5.2** | **Two write doors** — self-writing `Output` vs the sync `IWriter.Value(object)` type-switch; dict/list wire shape written in several places. The heaviest shape debt the merge carries (on next-branch via 724). | yes (locked) | one door — everything through `Output`; retire `Value(object)`/sync `Write` |
 | F4.1 | `IsDefault` (`type/property/this.cs:118-138`) forks default-equality by type-name | yes (IsDefault sig) | value answers via `Compare(Type.Make(Default))` |
-| F8.1 | the "action slot" predicate re-derived in 3 files | maybe | `slot.Type.IsActionSlot` once |
+| F8.1 | the "action slot" predicate re-derived in 4 sites / 3 files (carried with 711) | no | the value reads its own — no site asks the type what it is |
 | F3.1 | parse-vs-convert failure face duplicated across 9 value types | no | the source value answers its own failure face |
 | F5.1 | stale `Normalize` doc in 3 places (`IWriter.cs`, `json/writer.cs:200`, `Tagged.cs:8`) | no | update docs to the self-writing `Output` path |
 | F6.1 | system/user-variable predicate repeated (~10 sites) | no | carried; architect reads the two subsets as intentional |
