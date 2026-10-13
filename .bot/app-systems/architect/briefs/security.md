@@ -1,5 +1,7 @@
 # security: app-systems
 
+Traces to: decisions 382 (the os/ write hole closed), 681 (one Sensitive mechanism, carried), 690 (312 not a leak), 712 (who may name another actor, an open brainstorm; it corrects 708) and 664 (the terminal's tests skip without Landlock), in `.bot/app-systems/architect/summary.md`.
+
 Read `common.md` beside this file first, then your character's threat model (PLang is user-sovereign).
 
 ## Why
@@ -12,7 +14,7 @@ No security pass has run on this line since runtime2 (2026-06-05): eight branche
 2. **The terminal's sandbox:** Landlock (`terminal` module); on a kernel without Landlock the 16 permission tests skip and production fails closed. Verify "fails closed".
 3. **Secrets:** the `[Sensitive]` attribute (masked `******` in debug) and the `sensitive` type (masked `****`) are two mechanisms; unifying them is carried (next-branch.md, 681), so don't re-raise the duplication. Do check that neither leaks a value through any writer, the debug channel, an error message, a test report or the wire. The llm keys are read through settings (`%!llm.decider.setting.key%`, `llm.setting.Asked`).
 4. **Signing:** sign-if-missing inside `Wire.Write` (`PLang/app/data/Wire.cs`); identity keys (`identity` module), `%Identity%` (the actor's own key, else the system's). Can unsigned data pass as signed, or a signature be replayed onto other content?
-5. **The settings store:** rows `<actor>!<path>` in `/.data/data.sqlite`. Can one actor read or write another's settings? (Who may name another actor is an open design question with Ingi, 708; report what is possible today, not what it should be.)
+5. **The settings store:** rows `<actor>!<path>` in `/.data/data.sqlite`. Can one actor read or write another's settings? (Who may name another actor is an open design question with Ingi, 712; report what is possible today, not what it should be.)
 6. **Bans:** `System.IO.*` and `Console.*` in production C# (CLAUDE.md; PLNG002 is a build error). Look for reaches that bypass the gate another way.
 
 ## Known, not findings
@@ -47,7 +49,7 @@ WHY: no security pass has run on this line since runtime2 (2026-06-05); the perm
 / - two masking mechanisms, [Sensitive] and the sensitive type: carried (next-branch.md, 681); check for leaks, not the duplication
 / - the keys that leaked into transcripts: rotation skipped by Ingi
 / - 312, a goal written out showing current values: ruled not a leak (690)
-/ - who may name another actor in a setting: open with Ingi (708)
+/ - who may name another actor in a setting: open with Ingi (712)
 /
 / the shape of a check, in plang (each as a user program, not the system actor)
 / - save "x" to file '/os/system/builder/Build.goal'

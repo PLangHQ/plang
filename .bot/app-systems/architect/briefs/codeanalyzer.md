@@ -1,5 +1,7 @@
 # codeanalyzer: app-systems
 
+Traces to: decisions 651 and 689 (the locked core), 673 (avoid reflection; one door to a type's members), 714 (the OBP read of the builder's C#, the source of the smells weighted highest) and 717 (the json kind's clr carrier), in `.bot/app-systems/architect/summary.md`.
+
 Read `common.md` beside this file first.
 
 ## Why you first

@@ -1,5 +1,7 @@
 # app-systems review: what every reviewer reads first
 
+Traces to: the conversation with Ingi logged in `.bot/app-systems/architect/summary.md` as decisions 665 (the bar, the reviewers, the freeze), 670 (plan tests move when done), 689 (events locked), 717 (the final baseline) and 718 (C# is the coder's; the readiness check). Chain: idea → conversation → summary (this text) → code (the plang in each brief).
+
 ## Why
 
 Ingi (2026-10-12): "I would like to merge all the way back to runtime2 … only coder has been doing the work, and we havent been going throught the right process, e.g. coder -> tester -> security -> audit … is there anything critical left that we should fix before we merge into parent branch." No branch on the line since runtime2 (`0ea5a4b94`, 2026-06-05) has had a tester, security or auditor pass. You are that pass, for the whole line, reviewed on `app-systems`, its tip.

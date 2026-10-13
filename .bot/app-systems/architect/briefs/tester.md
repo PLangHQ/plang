@@ -1,5 +1,7 @@
 # tester: app-systems
 
+Traces to: decisions 671 (the test tree: what stays, what goes), 716 (`is file` saved as a truth check; ReadCsv passing by luck), 717 (the final baseline), 718 (the baseline checked on a clean checkout; tests leaving files) and 719 (test hygiene; a `.pr` edited by hand), in `.bot/app-systems/architect/summary.md`.
+
 Read `common.md` beside this file first. Your version folder is `v23` (the coder's latest is `.bot/app-systems/coder/v23/`); the coder's state is in `.bot/app-systems/coder/summary.md`.
 
 ## Why

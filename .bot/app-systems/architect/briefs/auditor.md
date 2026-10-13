@@ -1,5 +1,7 @@
 # auditor: app-systems
 
+Traces to: decisions 665 (Ingi: "we need to make sure all the plans are checked off"; the bar is owned, not green), 670 (a done plan's tests move into the tree) and 651 and 689 (the locked core and its surface golden), in `.bot/app-systems/architect/summary.md`.
+
 Read `common.md` beside this file first. You run after codeanalyzer, tester and security; read their reports first (`.bot/app-systems/{codeanalyzer,tester,security}/`, `test-report.json`, `security-report.json`).
 
 ## Why
