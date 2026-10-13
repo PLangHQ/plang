@@ -150,4 +150,24 @@ The CLAUDE.md invariants hold, verified in code:
 
 ---
 
-*Areas 6-8 pending (call/variable/events, module registry/app, builder pipeline).*
+## Area 6 — call & variable memory, events (`PLang/app/call/`, `type/item/variable/list/`, `PLang/app/event/`)
+
+**Diff:** `call/` +1,281 (CallStack, frames, snapshot/diff), `variable/list/` +596 (memory + snapshot), `event/` +748 −387 (a rewrite: old `lifecycle/binding` + `event/list` deleted; the `on/` family — one file per event kind — replaces them). Events are **locked** (689), so any shape fix there is a proposal.
+
+**Tooling:** grep for courier(Rule 9)/naked-collection/cross-file-lock/event-name-fork + full read of `event/on/this.cs`, `variable/list/this.cs` + the stored-twice check across the snapshot/diff and the filter predicates + `ObpScan`.
+
+### Verdict: CLEAN (no merge blockers)
+
+### Reviewed, correct (no finding)
+
+- **The `on/` event family — registry + per-kind types, no fork.** `event/on/this.cs` maps event name → constructor in one `Made` FrozenDictionary ("the one place an event's class is named"), and each kind (`start`, `load`, `set`, `write`, `read`, `ask`, `error`, …) is its own type answering with its own before/after binding lists. Typed virtual accessors + the `this[name]` indexer are the standard typed/by-name pair, not a fork. The item's own events (`own`) override the virtuals. Clean (and locked — 689).
+- **Locks are own-field.** `call/child/list/`, `call/diff/`, `call/list/this.Snapshot.cs`, `event/binding/list/` each `lock` a **private** field guarding a **private** collection with an `Add`/indexer/`ToArray` surface — exactly OBP smell #1/#2's *correct* resolution (collection owns its data and its discipline), not a cross-file lock.
+- **No courier violation (Rule 9).** The `kvp.Value is data.DynamicData` checks in `variable/list` are the variable memory reading its **own** stored entries to decide snapshot inclusion — the leaf owner of that storage, not a relay cracking someone else's `Data.Value`.
+- **`variable/list` exports are copies.** `Save()` (`:452`), `ToDictionary()` (`:469`), `GetChangedSince()` (`:357`) return fresh collections; the internal `_variables` (`ConcurrentDictionary`, private, `:20`) is never handed out. No naked-collection smell.
+- `call/` does **not** repeat the variable filter below (grep clean) — it's contained to `variable/list`.
+
+### Finding
+
+- **F6.1 — stored twice / repeated rule: the "system / user-visible variable" predicate.** The test `name.StartsWith("!")` (system var) — and its stronger form `… && value is not data.DynamicData` (snapshottable user var) — is open-coded across **~9 sites** in `variable/list/this.cs`: `:362, :377, :394 (GetNames), :406-408 (GetAll), :418 (Clear), :441 (Clone), :474 (ToDictionary), :496-497 (Snapshot)`, plus `this.Snapshot.cs:29` and `this.SnapshotAt.cs:39`. **The drift the smell warns about is already here:** `GetNames`/`GetAll`/`ToDictionary` filter `!` only (keep DynamicData), while `Clear`/`Clone`/`Snapshot` also drop DynamicData — and nothing at a call site tells a reader whether including DynamicData is intended or an oversight. Fix direction: the predicate lives once — minimally a private `IsUser(kvp)` the sites share (no surface change); more fully, the variable/its `Data` answers `IsSystem` and the list exposes the user-vars view once. **Carry (cleanup; variable memory is locked core — architect confirms the chosen fix). Surface change: no** for the contained private-predicate fix (yes only if `Data.IsSystem` is the chosen route). **Blocks: no.** *Plang reaching it:* any snapshot/restore or failure-diagnostic path, e.g. an `assert` that fails dumps `%!error.Variables%` built by `Snapshot()`, while `write out %!goal%`-style variable listings use the `!`-only filter — two different subsets from "the variables."
+
+*Areas 5b, 7-8 pending (type/item/kind/{dict,list,reflection}, module registry/app, builder pipeline).*

@@ -1543,7 +1543,14 @@
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Area 5 (serializer) OBP scan. +671 all new (IReader/IWriter/IOutput spine, value reader, plang wire kind). CLAUDE.md invariants verified in code: one wire serializer (application/plang), each value writes itself (Encode delegates to data.Output, no central type-switch), sign-if-missing inside Encode (owners don't call EnsureSigned). value/reader.cs scalar reader not a fork. Carried reader-throws (714): serializer/Reader.cs:50, wire/kind/plang/this.cs:101. F5.1 stale doc (carry): format/IWriter.cs:7,11,126 still describes the deleted Normalize pipeline; live mechanism is self-writing Output; sibling at json/writer.cs:200. Verdict: CLEAN, no merge blockers."
+          "context": "Area 5 (serializer) OBP scan. +671 all new (IReader/IWriter/IOutput spine, value reader, plang wire kind). CLAUDE.md invariants verified in code: one wire serializer (application/plang), each value writes itself (Encode delegates to data.Output), sign-if-missing inside Encode. value/reader.cs scalar reader not a fork. Carried reader-throws (714): serializer/Reader.cs:50, wire/kind/plang/this.cs:101. F5.1 stale doc (carry): IWriter.cs:7,11,126 describes deleted Normalize pipeline. F5.2 (added after architect review of my scope-miss): fork + stored-twice - sync IWriter.Value(object) (json/writer.cs:131-203) type-switches (dict/list/item arms) beside async self-writing Output; dict/list wire shape in two places; item has two self-write doors (code calls Value 'the OLD Peek().Write path'); surface change yes (locked), does not block (agreeing fork), belongs on next-branch - largest shape debt. Verdict: CLEAN behaviorally; F5.2 is the shape debt."
+        },
+        {
+          "paths": ["PLang/app/call/", "PLang/app/type/item/variable/list/", "PLang/app/event/"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Area 6 (call+variable memory+events) OBP scan. +1281 call, +596 variable, event rewrite to on/ family. Events (locked 689): on/ family is registry (Made dict) + per-kind types, no fork. call locks all own-field (correct smell#1/#2 resolution). No courier Rule-9 violation (DynamicData checks are the memory's own storage). variable exports are copies. F6.1 stored-twice (carry): the system/user-visible variable predicate (StartsWith('!') +/- DynamicData) open-coded ~9 sites in variable/list/this.cs with real drift (GetNames/GetAll/ToDictionary keep DynamicData; Clear/Clone/Snapshot drop it). Fix: one IsUser predicate / Data.IsSystem. Surface change: no (private predicate) or yes (Data.IsSystem route). Blocks: no. Verdict: CLEAN, no merge blockers."
         }
       ],
       "after": {}
