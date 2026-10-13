@@ -55,7 +55,7 @@ section.band { background: var(--band); }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 16px; text-decoration: none; margin-right: auto; }
 .brand img { height: 26px; width: auto; }
 .nav a:not(.brand) { text-decoration: none; color: var(--muted); }
-.nav a:not(.brand):hover { color: var(--fg); }
+.nav a:not(.brand):hover, .nav a[aria-current="page"] { color: var(--fg); }
 @media (max-width: 600px) { .nav .hide-sm { display: none; } }
 .theme { background: transparent; border: 1px solid var(--line); color: var(--fg); border-radius: 980px; width: 32px; height: 32px; font-size: 15px; cursor: pointer; display: grid; place-items: center; padding: 0; }
 .theme:hover { border-color: var(--fg); }
@@ -157,6 +157,33 @@ section.band { background: var(--band); }
 .facts li::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 10px; vertical-align: 3px; }
 @media (max-width: 760px) { .open { grid-template-columns: minmax(0, 1fr); } }
 
+/* Geek view */
+.pipe { list-style: none; margin: clamp(48px, 7vw, 72px) 0 0; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr) auto minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.pipe li:not(.to) { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 8px; align-content: start; box-shadow: var(--shadow); min-width: 0; }
+.pipe code { font: 600 15px var(--mono); overflow-wrap: anywhere; }
+.pipe span { font-size: 14px; color: var(--muted); line-height: 1.4; }
+.pipe .to { align-self: center; color: var(--muted); font-size: 22px; }
+@media (max-width: 860px) {
+  .pipe { grid-template-columns: minmax(0, 1fr); }
+  .pipe .to { justify-self: center; transform: rotate(90deg); }
+}
+.annot { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+.keys { display: grid; }
+.keys div { padding: 14px 0; border-top: 1px solid var(--line); display: grid; gap: 4px; }
+.keys div:last-child { border-bottom: 1px solid var(--line); }
+.keys dt { font-weight: 600; }
+.keys dt code { font: 600 15px var(--mono); color: var(--accent); }
+.keys dd { color: var(--muted); font-size: 16px; }
+.keys code, code.inline { font-family: var(--mono); font-size: 0.92em; }
+.keys.tight { align-self: center; }
+.panel .g { font-weight: 600; }
+.panel .m { color: var(--muted); }
+.panel .s { color: var(--ok); }
+.panel .k { color: var(--accent); }
+.panel.say code.inline { font-size: 16px; line-height: 1.6; overflow-wrap: anywhere; }
+.wire { max-width: 760px; margin: 0 auto; }
+@media (max-width: 860px) { .annot { grid-template-columns: minmax(0, 1fr); } }
+
 /* Builders */
 .mods { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 760px; margin: 0 auto; }
 .mods li { font: 15px var(--mono); padding: 8px 16px; border: 1px solid var(--line); border-radius: 980px; color: var(--muted); }
@@ -185,23 +212,25 @@ footer a:hover { color: var(--fg); }
 
 <nav class="nav">
   <div class="wrap">
-    <a class="brand" href="#"><img src="puffin.png" alt="">PLang</a>
+    <a class="brand" href="#"><img src="puffin.png" alt="">plang</a>
     <a class="hide-sm" href="#how">How it works</a>
     <a class="hide-sm" href="#makers">For makers</a>
+    <a class="hide-sm" href="#geek" id="geeklink">I'm a geek</a>
     <a class="hide-sm" href="#">Docs</a>
-    <a href="#start">Get PLang</a>
+    <a href="#start">Get plang</a>
     <button type="button" class="theme" id="theme" aria-label="Switch to light mode">☀</button>
   </div>
 </nav>
 
+<main id="home">
 <!-- 1 · Hero -->
 <section class="hero">
   <div class="wrap">
     <div class="head">
-      <p class="eyebrow">PLang 1.0 beta</p>
+      <p class="eyebrow">plang 1.0b</p>
       <h1>An internet made by the people who use&nbsp;it.</h1>
       <p>Say what you need. Own what you get.</p>
-      <div class="ctas"><a class="btn" href="#start">Get PLang</a><a class="link" href="#how">See how it works ›</a></div>
+      <div class="ctas"><a class="btn" href="#start">Get plang</a><a class="link" href="#how">See how it works ›</a></div>
     </div>
 
     <div class="stage" id="stage">
@@ -333,7 +362,7 @@ footer a:hover { color: var(--fg); }
     <ul class="mods">
       <li>http</li><li>file</li><li>llm</li><li>identity</li><li>signing</li><li>crypto</li><li>ui</li><li>timer</li><li>cache</li><li>event</li><li>list</li><li>math</li><li>test</li>
     </ul>
-    <p class="under"><a class="link" href="#">Read the docs ›</a> &nbsp; <a class="link" href="#">GitHub ›</a></p>
+    <p class="under"><a class="link" href="#geek">I'm a geek ›</a> &nbsp; <a class="link" href="#">Read the docs ›</a> &nbsp; <a class="link" href="https://github.com/PLangHQ/plang">GitHub ›</a></p>
   </div>
 </section>
 
@@ -354,11 +383,215 @@ footer a:hover { color: var(--fg); }
     </ul>
   </div>
 </section>
+</main>
+
+<main id="geek" hidden>
+<!-- G1 · Pipeline -->
+<section class="hero">
+  <div class="wrap">
+    <div class="head">
+      <p class="eyebrow">I'm a geek</p>
+      <h1>How plang works.</h1>
+      <p>Natural language in. A deterministic, signed, sandboxed program out. This is everything in between.</p>
+    </div>
+    <ol class="pipe" aria-label="Build pipeline">
+      <li><code>Start.goal</code><span>Steps in plain language</span></li>
+      <li class="to" aria-hidden="true">→</li>
+      <li><code>plang build</code><span>LLM on llm.plang.is, build time only</span></li>
+      <li class="to" aria-hidden="true">→</li>
+      <li><code>.build/start.pr</code><span>Plain JSON: module, action, typed parameters</span></li>
+      <li class="to" aria-hidden="true">→</li>
+      <li><code>plang</code><span>.NET runtime. No LLM.</span></li>
+    </ol>
+  </div>
+</section>
+
+<!-- G2 · Goals -->
+<section class="band" id="geek-goals">
+  <div class="wrap">
+    <div class="head">
+      <h2>A goal is a list of steps.</h2>
+      <p>A goal is like a function. Steps run top to bottom. That's the whole grammar.</p>
+    </div>
+    <div class="annot">
+      <div class="panel"><h3><span>LlmSchema.test.goal</span><span>from the test suite</span></h3>
+<pre><span class="g">Start</span>
+<span class="d">/ Query with JSON schema — verify response is parsed and dot-navigable</span>
+<span class="d">-</span> <span class="m">[llm]</span> system: 'You analyze sentiment. Respond in JSON only.'
+    user: 'Analyze: I love sunny days'
+    scheme: {sentiment:string, score:number}
+    write to <span class="v">%result%</span>
+<span class="d">-</span> assert <span class="v">%result%</span> is not null
+<span class="d">-</span> assert <span class="v">%result.sentiment%</span> is not null</pre></div>
+      <dl class="keys">
+        <div><dt><code>Start</code></dt><dd>Goal name. <code>Start</code> is the entry point.</dd></div>
+        <div><dt><code>- step</code></dt><dd>One step per dash. Indented lines continue it.</dd></div>
+        <div><dt><code>%var%</code></dt><dd>Variables, with dot navigation into any value.</dd></div>
+        <div><dt><code>[llm]</code></dt><dd>Optional hint that names the module.</dd></div>
+        <div><dt><code>/ text</code></dt><dd>Comment. It is kept with the step.</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- G3 · Compile -->
+<section>
+  <div class="wrap">
+    <div class="head">
+      <h2>Each step compiles to actions.</h2>
+      <p>The builder maps every step to module actions with typed parameters. After that, the LLM is out of the loop.</p>
+    </div>
+    <div class="open">
+      <div class="panel say"><h3><span>Step</span></h3><p><code class="inline">get https://httpbin.org/get, unsigned, write to <span class="v">%response%</span></code></p></div>
+      <div class="panel"><h3><span>.build/getrequest.test.pr</span><span>excerpt</span></h3>
+<pre>"actions": [
+  { "module": <span class="s">"http"</span>, "action": <span class="s">"request"</span>,
+    "parameters": [
+      { "name": "Url",      "value": <span class="s">"https://httpbin.org/get"</span>, "type": "string" },
+      { "name": "Method",   "value": <span class="s">"GET"</span>,  "type": "string" },
+      { "name": "Unsigned", "value": true,   "type": "bool" } ] },
+  { "module": <span class="s">"variable"</span>, "action": <span class="s">"set"</span>,
+    "parameters": [
+      { "name": "Name",  "value": <span class="s">"%response%"</span> },
+      { "name": "Value", "value": <span class="s">"%!data%"</span> } ] }
+]</pre></div>
+    </div>
+    <ul class="facts">
+      <li>One .pr file per goal</li>
+      <li>Commit it, diff it, review it</li>
+      <li>Runs the same way every time</li>
+    </ul>
+  </div>
+</section>
+
+<!-- G4 · Data -->
+<section class="band">
+  <div class="wrap">
+    <div class="head">
+      <h2>Everything is Data.</h2>
+      <p>Variables, files, HTTP responses and errors all share one shape. It crosses the wire as itself, signed.</p>
+    </div>
+    <div class="wire">
+      <div class="panel"><h3><span>application/plang</span><span>wire shape</span></h3>
+<pre>{
+  "name":       <span class="s">"response"</span>,
+  "type":       <span class="s">"object"</span>,
+  "value":      { … },
+  "properties": { … },
+  "signature":  { … }
+}</pre></div>
+    </div>
+  </div>
+</section>
+
+<!-- G5 · Identity + signing -->
+<section>
+  <div class="wrap">
+    <div class="head">
+      <h2>Signed by default.</h2>
+      <p>Every actor has its own identity. All I/O is signed unless a step says otherwise, and signatures are checked before anything runs.</p>
+    </div>
+    <div class="open">
+      <div class="panel"><h3><span>IdentityGetByName.test.goal</span><span>adapted from the test suite</span></h3>
+<pre><span class="d">-</span> create identity 'Anna', set as default
+<span class="d">-</span> assert <span class="v">%MyIdentity.Name%</span> equals 'Anna'
+<span class="d">-</span> assert <span class="v">%MyIdentity.PublicKey%</span> is not null</pre></div>
+      <dl class="keys tight">
+        <div><dt>Actors</dt><dd><code>User</code>, <code>Service</code>, <code>System</code>, each with its own keys and resources.</dd></div>
+        <div><dt>Opt out</dt><dd>Write <code>unsigned</code> in the step. The default is signed.</dd></div>
+        <div><dt>Missing or altered signature</dt><dd>Hard error before dispatch.</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- G6 · Sandbox -->
+<section class="band">
+  <div class="wrap">
+    <div class="head">
+      <h2>One gate for the filesystem.</h2>
+      <p>Every file operation goes through the same permission check, against the app's own root. Anything outside the root is denied.</p>
+    </div>
+    <dl class="spec">
+      <div><dt>File access</dt><dd>Through path verbs only</dd></div>
+      <div><dt>Outside the app root</dt><dd>Denied</dd></div>
+      <div><dt>Module that calls System.IO directly</dt><dd>Build error PLNG002</dd></div>
+    </dl>
+  </div>
+</section>
+
+<!-- G7 · Callbacks -->
+<section>
+  <div class="wrap">
+    <div class="head">
+      <h2>Pause, ask, resume.</h2>
+      <p>A run can stop to ask a person or another app, and continue when the answer arrives. The pause is a signed value, so the answer can't be forged.</p>
+    </div>
+    <div class="wire">
+      <div class="panel"><h3><span>Charge.goal</span><span>Wallet app</span></h3>
+<pre><span class="d">-</span> ask user llm "Do you want to confirm this contract?", <span class="v">%contract%</span>, "y|n",
+    write to <span class="v">%confirm%</span>
+<span class="d">-</span> if <span class="v">%confirm%</span> == "y", call /services/<span class="v">%service%</span>/ConfirmContract, else call CancelContract</pre></div>
+    </div>
+  </div>
+</section>
+
+<!-- G8 · Modules -->
+<section class="band">
+  <div class="wrap">
+    <div class="head">
+      <h2>Built in.</h2>
+      <p>Thirty-one modules ship with the runtime. Nothing to install.</p>
+    </div>
+    <ul class="mods">
+      <li>assert</li><li>builder</li><li>cache</li><li>callback</li><li>channel</li><li>code</li><li>condition</li><li>crypto</li><li>debug</li><li>environment</li><li>error</li><li>event</li><li>file</li><li>goal</li><li>http</li><li>identity</li><li>list</li><li>llm</li><li>loop</li><li>math</li><li>mock</li><li>module</li><li>output</li><li>settings</li><li>signing</li><li>snapshot</li><li>test</li><li>timeout</li><li>timer</li><li>ui</li><li>variable</li>
+    </ul>
+  </div>
+</section>
+
+<!-- G9 · Extend -->
+<section>
+  <div class="wrap">
+    <div class="head">
+      <h2>Extend it in C#.</h2>
+      <p>A module action is one small class. Parameters are typed properties, and a source generator resolves <code class="inline">%variables%</code> on first access.</p>
+    </div>
+    <div class="wire">
+      <div class="panel"><h3><span>app/module/file/exists.cs</span><span>real</span></h3>
+<pre>[Action(<span class="s">"exists"</span>)]
+<span class="k">public partial class</span> Exists : IContext
+{
+    <span class="k">public partial</span> data.@this&lt;path&gt; Path { <span class="k">get</span>; <span class="k">init</span>; }
+
+    <span class="k">public</span> Task&lt;data.@this&lt;path&gt;&gt; Run() =&gt; Task.FromResult(Path);
+}</pre></div>
+    </div>
+  </div>
+</section>
+
+<!-- G10 · CLI -->
+<section class="band">
+  <div class="wrap">
+    <div class="head">
+      <h2>Three commands.</h2>
+      <p>Build, run, test. Add <code class="inline">--debug</code> to step through any goal.</p>
+    </div>
+    <div class="wire">
+      <div class="panel"><h3><span>Terminal</span></h3>
+<pre><span class="d">$</span> plang build
+<span class="d">$</span> plang
+<span class="d">$</span> plang --test
+<span class="d">$</span> plang '--debug={"goal":"Start","step":3}'</pre></div>
+    </div>
+    <p class="under"><a class="link" href="#start">Install plang ›</a> &nbsp; <a class="link" href="https://github.com/PLangHQ/plang">Source on GitHub ›</a></p>
+  </div>
+</section>
+</main>
 
 <footer>
   <div class="wrap">
-    <img src="puffin.png" alt="The PLang puffin">
-    <span class="grow">PLang 1.0 beta. Expect rough edges.</span>
+    <img src="puffin.png" alt="The plang puffin">
+    <span class="grow">plang 1.0b. Expect rough edges.</span>
     <a href="#">GitHub</a><a href="#">Discord</a><a href="#">Terms</a><a href="#">Privacy</a>
   </div>
 </footer>
@@ -402,6 +635,21 @@ footer a:hover { color: var(--fg); }
     b.addEventListener('click', function () { clearInterval(timer); show(+b.dataset.ex); });
   });
   if (!reduce) timer = setInterval(function () { show((current + 1) % ex.length); }, 6000);
+
+  // Two views in one file: #geek… shows the technical page, anything else shows home.
+  var home = document.getElementById('home'), geek = document.getElementById('geek'), glink = document.getElementById('geeklink');
+  function route() {
+    var h = location.hash.slice(1);
+    var isGeek = h.indexOf('geek') === 0;
+    var was = !geek.hidden;
+    geek.hidden = !isGeek; home.hidden = isGeek;
+    glink.setAttribute('aria-current', isGeek ? 'page' : 'false');
+    var target = h && h !== 'geek' ? document.getElementById(h) : null;
+    if (target) target.scrollIntoView();
+    else if (was !== isGeek || !h) window.scrollTo(0, 0);
+  }
+  window.addEventListener('hashchange', route);
+  route();
 
   var root = document.documentElement, tbtn = document.getElementById('theme');
   function isDark() {
