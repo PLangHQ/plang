@@ -14,7 +14,7 @@ The line has 977 changed C# files since runtime2. The locked core is where a sha
 2. **channel and stream:** `PLang/app/channel/`.
 3. **the core value types:** `PLang/app/type/item/{text,number,bool,list,dict,path,datetime,duration}/`.
 4. **the type system:** `PLang/app/type/this.cs`, `type/list/`, `type/kind/`, `type/property/`, `type/item/this*.cs` (item's base virtuals).
-5. **the serializer:** `PLang/app/type/format/`, `type/serializer/`, `type/item/wire/`.
+5. **the serializer:** `PLang/app/type/format/`, `type/serializer/`, `type/item/wire/`, and the item codecs `type/item/kind/{json,dict,list,reflection}/` (+1,376, all new; added after area 5's first pass, which missed the json writer's second write door, F5.2, because this folder wasn't in the brief).
 6. **call and variable memory, events:** `PLang/app/call/`, `PLang/app/type/item/variable/list/`, `PLang/app/event/`.
 7. **the module registry and catalog, app:** `PLang/app/module/this.cs`, `PLang/app/this.cs`.
 8. **the builder pipeline (new on this branch, +4.2k):** `PLang/app/goal/step/` (Cover/Validate, the decider's pick list, the formal reader and writer), `PLang/app/module/build/`.
@@ -51,7 +51,7 @@ Start
 - area: channel and stream — PLang/app/channel/
 - area: the core value types — PLang/app/type/item/{text,number,bool,list,dict,path,datetime,duration}/
 - area: the type system — PLang/app/type/this.cs, type/list/, type/kind/, type/property/, type/item/this*.cs
-- area: the serializer — PLang/app/type/format/, type/serializer/, type/item/wire/
+- area: the serializer — PLang/app/type/format/, type/serializer/, type/item/wire/, type/item/kind/{json,dict,list,reflection}/
 - area: call and variable memory, events — PLang/app/call/, PLang/app/type/item/variable/list/, PLang/app/event/
 - area: the module registry and app — PLang/app/module/this.cs, PLang/app/this.cs
 - area: the builder pipeline (new on this branch, +4.2k) — PLang/app/goal/step/, PLang/app/module/build/
