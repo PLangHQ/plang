@@ -19,7 +19,9 @@ Start
 - delete file 'cut2.json'
 
 NotAFile
+- delete file 'cut2.json'
 - throw "cfg is not a file"
 
 NotADict
+- delete file 'cut2.json'
 - throw "cfg is not a dict"

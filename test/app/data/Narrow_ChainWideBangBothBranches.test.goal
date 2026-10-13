@@ -19,7 +19,9 @@ Start
 - delete file 'narrowchain.json'
 
 NotAFile
+- delete file 'narrowchain.json'
 - throw "config is not a file"
 
 NotADict
+- delete file 'narrowchain.json'
 - throw "config is not a dict"

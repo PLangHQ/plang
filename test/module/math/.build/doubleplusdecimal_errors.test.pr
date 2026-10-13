@@ -173,6 +173,43 @@
           ]
         },
         {
+          "module": "on",
+          "name": "error",
+          "property": [
+            {
+              "name": "Recovery",
+              "type": {
+                "name": "list",
+                "kind": "action"
+              },
+              "value": [
+                {
+                  "module": "goal",
+                  "name": "call",
+                  "property": [
+                    {
+                      "name": "Name",
+                      "type": {
+                        "name": "goal"
+                      },
+                      "value": "CaughtIt"
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "default": [
+            {
+              "name": "ignore",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        },
+        {
           "module": "variable",
           "name": "set",
           "property": [
@@ -221,49 +258,6 @@
               "value": false
             }
           ]
-        },
-        {
-          "module": "on",
-          "name": "error",
-          "property": [
-            {
-              "name": "Recovery",
-              "type": {
-                "name": "list",
-                "kind": "action"
-              },
-              "value": [
-                {
-                  "module": "goal",
-                  "name": "call",
-                  "property": [
-                    {
-                      "name": "Name",
-                      "type": {
-                        "name": "goal"
-                      },
-                      "value": "CaughtIt"
-                    }
-                  ]
-                }
-              ]
-            }
-          ],
-          "default": [
-            {
-              "name": "ignore",
-              "type": {
-                "name": "bool"
-              },
-              "value": false
-            }
-          ]
-        }
-      ],
-      "warning": [
-        {
-          "key": "Unsure",
-          "message": "step 2 uses math.add, which the decider was not sure of (0.97)"
         }
       ]
     },
@@ -363,13 +357,13 @@
       ],
       "child": [],
       "visibility": "Private",
-      "path": "/test/module/math/DoublePlusDecimal_Errors.test.goal",
-      "prPath": "/test/module/math/.build/doubleplusdecimal_errors.test.pr",
+      "path": "/module/math/DoublePlusDecimal_Errors.test.goal",
+      "prPath": "/module/math/.build/doubleplusdecimal_errors.test.pr",
       "hash": "65f7d0491a73798a96498734ceb97da8861cbad66923811b17d66f4a32c781d4"
     }
   ],
   "visibility": "Public",
-  "path": "/test/module/math/DoublePlusDecimal_Errors.test.goal",
-  "prPath": "/test/module/math/.build/doubleplusdecimal_errors.test.pr",
+  "path": "/module/math/DoublePlusDecimal_Errors.test.goal",
+  "prPath": "/module/math/.build/doubleplusdecimal_errors.test.pr",
   "hash": "4219a262a32ddcd4ad4860fdbde83a3e8013401a56a14e5caff97b71d5830cec"
 }

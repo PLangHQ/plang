@@ -520,6 +520,12 @@
             }
           ]
         }
+      ],
+      "warning": [
+        {
+          "key": "Unsure",
+          "message": "step 8 uses goal.call, which the decider was not sure of (0.89)"
+        }
       ]
     },
     {
@@ -728,9 +734,40 @@
       "step": [
         {
           "index": 0,
-          "text": "throw \"config is not a file\"",
+          "text": "delete file 'narrowchain.json'",
           "line": {
             "number": 22
+          },
+          "code": [
+            {
+              "module": "file",
+              "name": "delete",
+              "property": [
+                {
+                  "name": "Path",
+                  "type": {
+                    "name": "path"
+                  },
+                  "value": "narrowchain.json"
+                }
+              ],
+              "default": [
+                {
+                  "name": "recursive",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "throw \"config is not a file\"",
+          "line": {
+            "number": 23
           },
           "code": [
             {
@@ -769,16 +806,47 @@
       "visibility": "Private",
       "path": "/app/data/Narrow_ChainWideBangBothBranches.test.goal",
       "prPath": "/app/data/.build/narrow_chainwidebangbothbranches.test.pr",
-      "hash": "771079e87779e4be05ab82151de859898ee1e2d55d06cb9fc3173c26545abf79"
+      "hash": "467455a8df10811f3cb7b4601c9910b384c9ef0788f75212efa56e1d96d60521"
     },
     {
       "name": "NotADict",
       "step": [
         {
           "index": 0,
+          "text": "delete file 'narrowchain.json'",
+          "line": {
+            "number": 26
+          },
+          "code": [
+            {
+              "module": "file",
+              "name": "delete",
+              "property": [
+                {
+                  "name": "Path",
+                  "type": {
+                    "name": "path"
+                  },
+                  "value": "narrowchain.json"
+                }
+              ],
+              "default": [
+                {
+                  "name": "recursive",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
           "text": "throw \"config is not a dict\"",
           "line": {
-            "number": 25
+            "number": 27
           },
           "code": [
             {
@@ -817,7 +885,7 @@
       "visibility": "Private",
       "path": "/app/data/Narrow_ChainWideBangBothBranches.test.goal",
       "prPath": "/app/data/.build/narrow_chainwidebangbothbranches.test.pr",
-      "hash": "0fc3d8292008456a4e6c9de4afb3b207004b252be30ead9738d63c7793002dd5"
+      "hash": "35b2fa17293094543975ad207e8fb60c2e32553bd4220224336ca6d38093f2b8"
     }
   ],
   "visibility": "Public",

@@ -2,11 +2,13 @@
 
 **Suite:** `cd test && ../PlangConsole/bin/Debug/net10.0/plang --test`, against HEAD (incl. coder's Freeze/Cover refactor b982cbc94).
 
-**Totals: 276 — 245 pass / 16 fail / 12 stale / 3 skipped.** (Progression: 220/33/21 → 231/30/12 → 239/22/12 → **245/16/12/3**.)
+**Totals: 276 — 246 pass / 15 fail / 12 stale / 3 skipped.** (Progression: 220/33/21 → 231/30/12 → 239/22/12 → 245/16/12/3 → **246/15/12/3** after the test-hygiene pass.)
+
+**Test-hygiene pass (decision 718):** IfExists/Cut2/Narrow now leave nothing behind whichever way they run (end-delete for the pass path; the `NotAFile`/`NotADict` handler goals delete-then-throw on the fail path). DoublePlusDecimal_Errors and SigningHeaderMismatch had `.pr` paths built from the repo root (`/test/module/…`); both corrected to the test-rooted form (`/module/…`). **SigningHeaderMismatch flipped fail → pass**: its run-failure was purely the wrong embedded path (the committed `.pr` content was already correct — which is why a fresh `cache:skip` rebuild *refuses*, so the path was corrected in place, not rebuilt). DoublePlus stays a real red with its path now correct.
 
 No builder-mapping refusal that a teaching edit can fix remains. Every fail/stale below is a coder-domain runtime red, a carried builder limitation, a next-branch item, or by-design-unbuilt.
 
-## Fails (16)
+## Fails (15)
 
 | test | owner | reason |
 |---|---|---|
@@ -24,8 +26,7 @@ No builder-mapping refusal that a teaching edit can fix remains. Every fail/stal
 | module/condition/compare/Failure_DictOrderDict | next-branch (issue 76) | same (on-error on block-if) |
 | module/condition/compare/Cut5 | next-branch (issue 76) | same — `if %d% > %n% then` + indented `on error call CaughtOrder` saved as condition.if alone, clause dropped |
 | module/channel/goalchannelrecursion | carried (next-branch: channel slot offers) | helper EchoBack `write %message% to echo` drops the channel — the channel slot is a CHOICE over the step's variables + none, so a literal channel name (`echo`) is never offered; the decider picks none. The slot should offer the channels the goal has registered (the build simulates `set channel "echo"`) |
-| module/signing/headermismatch/SigningHeaderMismatch | carried-builder (B3) | decider pre-empts the main action when an on-error clause trails |
-| module/math/DoublePlusDecimal_Errors | carried-builder | `as number/decimal` kind dropped (kinded Type choice) |
+| module/math/DoublePlusDecimal_Errors | carried-builder | `as number/decimal` kind dropped (kinded Type choice); `.pr` path now test-rooted |
 
 ## Stale (12) — unbuilt, each by reason
 
@@ -47,7 +48,7 @@ No builder-mapping refusal that a teaching edit can fix remains. Every fail/stal
 ## Owner summary
 - **coder** (runtime reds / kind-redesign C#): DataTypeReadsEntity, BareLiteral, 4 kind/strict.
 - **next-branch (`{item, json}` → native dict/list)**: Cut2, Narrow — save + is-file builds FIXED and the tests are right; `%cfg% is dict` answers false because item's json kind holds parsed json as a C# carrier (clr(JsonElement)), not a plang dict.
-- **carried-builder** (no teaching fix this branch): ListIsItemSortsAsBefore + Failure_SortMixedIncomparable (A, empty query), SigningHeaderMismatch (B3), DoublePlusDecimal.
+- **carried-builder** (no teaching fix this branch): ListIsItemSortsAsBefore + Failure_SortMixedIncomparable (A, empty query), DoublePlusDecimal. (SigningHeaderMismatch was listed here under B3 — it now PASSES: the run-failure was the wrong embedded `.pr` path, not the pre-emption. The committed `.pr` is correct and a fresh rebuild would regress, so the path was corrected in place.)
 - **next-branch** (deferred, listed with Ingi): Plane_DataKey + TypedListHoldsItsType (kinded Type choices); Failure_DictEqNumber/DictOrderDict/Cut5 (issue 76 — on-error on a block-if); goalchannelrecursion (the channel slot should offer the goal's registered channels, not just the step's variables, so a literal channel name is offered); issue-74 trio; LlmProperties; RoundTrip + UnknownSettingIsAnError; the empty-query Parse-preempt seam; `throw` in an if-body → `throw.error` (reader rejects).
 - **FIXED this pass (teaching)**: `is`/`is not <type>` is the type check (not `==`/`!=`) — ReadCsv_LandsAsTable now a real pass (was pass-by-luck), Cut2/Narrow build correctly. output.write bare `to <name>` channel (literal form). llm.query schema spelled schema/scheme/block. on.error after an erroring `if`.
 - **by-design**: 3 snapshot callback Starts.

@@ -9,3 +9,4 @@ Start
 - if 'gone.json' exists, set %missing% = true
 - assert %seen% is true
 - assert %missing% is empty
+- delete file 'here.json'

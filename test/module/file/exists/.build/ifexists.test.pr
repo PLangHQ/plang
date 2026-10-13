@@ -22,8 +22,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 1,
@@ -52,8 +51,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 2,
@@ -101,7 +99,7 @@
           "child": [
             {
               "index": 0,
-              "text": "variable.set(Name=%seen%, Value=true)",
+              "text": "variable.set(Name=%seen%, Value=true, Type=\"bool\")",
               "line": {
                 "number": 8
               },
@@ -133,6 +131,13 @@
                         "name": "bool"
                       },
                       "value": true
+                    },
+                    {
+                      "name": "Type",
+                      "type": {
+                        "name": "type"
+                      },
+                      "value": "bool"
                     }
                   ],
                   "default": [
@@ -145,13 +150,11 @@
                     }
                   ]
                 }
-              ],
-              "waitForExecution": true
+              ]
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 3,
@@ -199,7 +202,7 @@
           "child": [
             {
               "index": 0,
-              "text": "variable.set(Name=%missing%, Value=true)",
+              "text": "variable.set(Name=%missing%, Value=true, Type=\"bool\")",
               "line": {
                 "number": 9
               },
@@ -231,6 +234,13 @@
                         "name": "bool"
                       },
                       "value": true
+                    },
+                    {
+                      "name": "Type",
+                      "type": {
+                        "name": "type"
+                      },
+                      "value": "bool"
                     }
                   ],
                   "default": [
@@ -243,13 +253,11 @@
                     }
                   ]
                 }
-              ],
-              "waitForExecution": true
+              ]
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 4,
@@ -282,8 +290,7 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
     },
     {
       "index": 5,
@@ -316,17 +323,43 @@
             }
           ]
         }
-      ],
-      "waitForExecution": true
+      ]
+    },
+    {
+      "index": 6,
+      "text": "delete file 'here.json'",
+      "line": {
+        "number": 12
+      },
+      "code": [
+        {
+          "module": "file",
+          "name": "delete",
+          "property": [
+            {
+              "name": "Path",
+              "type": {
+                "name": "path"
+              },
+              "value": "here.json"
+            }
+          ],
+          "default": [
+            {
+              "name": "recursive",
+              "type": {
+                "name": "bool"
+              },
+              "value": false
+            }
+          ]
+        }
+      ]
     }
   ],
   "child": [],
   "visibility": "Public",
   "path": "/module/file/exists/IfExists.test.goal",
   "prPath": "/module/file/exists/.build/ifexists.test.pr",
-  "hash": "179b3888ce88946393dad4900163a2250a5d3a8984c5d8709da769e34a7f7e3c",
-  "isSetup": false,
-  "isEvent": false,
-  "isSystem": false,
-  "isTest": true
+  "hash": "b245561b5dba80e73a6f7f241e5f906c04e315fc824d06b7729ce22742912e4b"
 }

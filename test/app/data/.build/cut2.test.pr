@@ -755,9 +755,40 @@
       "step": [
         {
           "index": 0,
-          "text": "throw \"cfg is not a file\"",
+          "text": "delete file 'cut2.json'",
           "line": {
             "number": 22
+          },
+          "code": [
+            {
+              "module": "file",
+              "name": "delete",
+              "property": [
+                {
+                  "name": "Path",
+                  "type": {
+                    "name": "path"
+                  },
+                  "value": "cut2.json"
+                }
+              ],
+              "default": [
+                {
+                  "name": "recursive",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
+          "text": "throw \"cfg is not a file\"",
+          "line": {
+            "number": 23
           },
           "code": [
             {
@@ -796,16 +827,47 @@
       "visibility": "Private",
       "path": "/app/data/Cut2.test.goal",
       "prPath": "/app/data/.build/cut2.test.pr",
-      "hash": "afe1e3e48d013a7c34bb6a5ea8b3e06c8c86831520ee7a71c8c6a62af71e95f4"
+      "hash": "7620e6d5530f02e76202383bb37117be19c99b4cd6dde01fcba79aeb3d86875e"
     },
     {
       "name": "NotADict",
       "step": [
         {
           "index": 0,
+          "text": "delete file 'cut2.json'",
+          "line": {
+            "number": 26
+          },
+          "code": [
+            {
+              "module": "file",
+              "name": "delete",
+              "property": [
+                {
+                  "name": "Path",
+                  "type": {
+                    "name": "path"
+                  },
+                  "value": "cut2.json"
+                }
+              ],
+              "default": [
+                {
+                  "name": "recursive",
+                  "type": {
+                    "name": "bool"
+                  },
+                  "value": false
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 1,
           "text": "throw \"cfg is not a dict\"",
           "line": {
-            "number": 25
+            "number": 27
           },
           "code": [
             {
@@ -844,7 +906,7 @@
       "visibility": "Private",
       "path": "/app/data/Cut2.test.goal",
       "prPath": "/app/data/.build/cut2.test.pr",
-      "hash": "74f11921efb9f7d585e16519e2840baf8efbdfb1f89ec55cfe8f634cb34a2fdf"
+      "hash": "13f0a160dab9774a56fa584e56ccf448bfcc5917ff5b47ccf6c8101a1aa98949"
     }
   ],
   "visibility": "Public",
