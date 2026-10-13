@@ -211,6 +211,10 @@ internal sealed class Frame
     /// its samples, 12 its clock and place, 13 it ends — see the browser's video type for each one's bytes.</summary>
     internal void Media(byte kind, ReadOnlySpan<byte> payload) => Message(kind, payload);
 
+    /// <summary>An error PlangOS showed, for the host to keep (json: what was written to the shell's errorlog channel),
+    /// beside the frames: kind 14.</summary>
+    internal void Error(ReadOnlySpan<byte> json) => Message(14, json);
+
     private void Message(byte kind, ReadOnlySpan<byte> payload)
     {
         if (output == null) return;

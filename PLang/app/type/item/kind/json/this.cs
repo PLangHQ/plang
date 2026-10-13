@@ -51,9 +51,10 @@ public sealed class @this : global::app.type.kind.@this
             await utf8.FlushAsync(ct);
             return context.Ok();
         }
-        // a write that refused itself (a getter that threw, a type with no wire contract) is the encode's answer
+        // a write that refused itself (a getter that threw, a type with no wire contract, a value nested past the
+        // writer's depth — .NET's writer throws InvalidOperationException for that) is the encode's answer
         catch (global::app.error.AppException ex) { return context.Error(ex.Error); }
-        catch (System.Exception ex) when (ex is JsonException or System.NotSupportedException)
+        catch (System.Exception ex) when (ex is JsonException or System.NotSupportedException or System.InvalidOperationException)
         {
             return context.Error(new global::app.error.ServiceError($"JSON serialize failed: {ex.Message}", "JsonSerializeError", 400) { Exception = ex });
         }

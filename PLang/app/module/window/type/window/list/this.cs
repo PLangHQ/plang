@@ -35,14 +35,13 @@ public sealed class @this(Browser browser) : global::app.type.item.@this
     /// <summary>The window numbered <paramref name="id"/> on the screen, if there is one.</summary>
     internal Window? ById(long id) => id == Desktop.Number ? Desktop : _shown.GetValueOrDefault(id);
 
-    /// <summary>One step by index: a window's number on the screen; none there is nothing.</summary>
+    /// <summary>One step by index is a window, by its number on the screen (<c>%browser.window[1]%</c>); none there is
+    /// nothing. One step by name is the list's own — its events (<c>%browser.window.on.closed%</c>, every window's).</summary>
     public override ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key, bool isIndex)
-        => Get(parent, key);
-
-    public override ValueTask<global::app.data.@this> Get(global::app.data.@this parent, string key)
-        => ValueTask.FromResult(long.TryParse(key, out var number) && ById(number) is { } window
-            ? new global::app.data.@this(key, window, parent: parent)
-            : global::app.data.@this.NotFound(key, parent.Context));
+        => !isIndex ? base.Get(parent, key, isIndex)
+            : ValueTask.FromResult(long.TryParse(key, out var number) && ById(number) is { } window
+                ? new global::app.data.@this(key, window, parent: parent)
+                : global::app.data.@this.NotFound(key, parent.Context));
 
     /// <summary>A dict of the windows by their number on the screen — the desktop (0) first, then the rest as they
     /// came: <c>foreach %browser.window%</c> gives each number and its window.</summary>

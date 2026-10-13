@@ -134,6 +134,48 @@ public class TaskTests
         await Assert.That((await (await two.Wait()).Value())?.ToString()).IsEqualTo("second");
     }
 
+    // PlangOS's Claude box: Say calls Turn content=%content% in parallel; Turn calls the parent's goal with
+    // message=%content% — the argument goes up as the json of what %content% holds (it failed: "CurrentDepth (1000)")
+    [Test]
+    public async Task AParallelCallsParameter_GoesUpToTheParent_AsWhatItHolds()
+    {
+        string? sent = null;
+        System.IO.Directory.CreateDirectory(_app.AbsolutePath);
+        System.IO.File.WriteAllText(System.IO.Path.Combine(_app.AbsolutePath, "agent.md"), "Answer in json.");
+        System.IO.File.WriteAllText(System.IO.Path.Combine(_app.AbsolutePath, "instructions.md"), "{% if window == 0 %}be brief{% endif %}");
+        _app.parent.Link = json =>
+        {
+            sent = json;
+            var id = System.Text.Json.JsonDocument.Parse(json).RootElement.GetProperty("call").GetProperty("id").GetString();
+            _app.parent.Answered(System.Text.Json.JsonDocument.Parse("{\"id\":\"" + id + "\",\"result\":\"ok\"}").RootElement);
+            return Task.CompletedTask;
+        };
+        await Load("Turn", Make.Step("call the parent's Claude with message=%content%, write to %reply%",
+            Make.Action(Ctx, "goal", "call", ("Name", "%!app.parent.goal[\"Claude\"]%"),
+                ("Parameter", new List<object?> { Make.Built(Ctx, "message", "%content%") })),
+            Set("reply", "%!data%")));
+        var caller = await Load("Say",
+            // as the shell makes its instructions: a template rendered with the window's numbers
+            Make.Step("render the instructions", Make.Action(Ctx, "ui", "render", ("Template", "/instructions.md"), ("IsFile", true),
+                    ("Parameter", new List<object?> { Make.Built(Ctx, "window", "0") })),
+                Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "instructions", "variable"), ("Value", "%!data%"))),
+            // as the shell reads its standard: a file read, set as text
+            Make.Step("read the standard", Make.Action(Ctx, "file", "read", ("Path", "/agent.md")),
+                Make.Action(Ctx, "variable", "set", Make.Param(Ctx, "Name", "standard", "variable"), ("Value", "%!data%"), ("Type", "text"))),
+            Make.Step("set asked", Set("asked", new Dictionary<string, object?> { ["say"] = "hello" })),
+            // as the shell makes it: a list whose text is a template of other variables
+            Make.Step("set content", Set("content", new List<object?> { new Dictionary<string, object?> { ["type"] = "text", ["text"] = "%instructions%\n\n%standard%\n\n---\n\n%asked.say%" } })),
+            Make.Step("call Turn content=%content% in parallel, write to %turn%",
+                InParallel("Turn", ("Parameter", new List<object?> { Make.Built(Ctx, "content", "%content%") })), Set("turn", "%!data%")));
+
+        await (await caller.Start(Ctx)).IsSuccess();
+        var turn = (global::app.task.@this)(await Ctx.Variable.Get("turn")).Peek()!;
+        var done = await turn.Wait();
+
+        await Assert.That(done.Success).IsTrue().Because(done.Error?.Message ?? "");
+        await Assert.That(sent).Contains("Answer in json.\\n\\n---\\n\\nhello");
+    }
+
     // The run's cancellation cancels its actors: the wait ends, the task Cancelled and never reported
     [Test]
     public async Task CancellingTheActor_EndsTheWait_TheTaskCancelled_NotReported()

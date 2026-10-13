@@ -55,6 +55,16 @@ internal sealed class Display : global::app.type.item.input.ITarget, global::app
         }
     }
 
+    /// <summary>An error the shell showed, up to the host, now — beside the frames (kind 14): the host keeps it.</summary>
+    internal void Error(ReadOnlySpan<byte> json)
+    {
+        lock (Gate)
+        {
+            Frame.Error(json);
+            Flush();
+        }
+    }
+
     /// <summary>The window parts whose click PLang bound (<c>bot</c> for <c>#window.bot</c>): a click on one is PLang's.</summary>
     internal HashSet<string> Bound { get; } = new(StringComparer.OrdinalIgnoreCase);
 

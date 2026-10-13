@@ -27,15 +27,44 @@ public sealed class @this : screen.@this
     {
         // what the window says: input and the clipboard as values; the rest as text, until each has its type
         var events = System.Threading.Channels.Channel.CreateUnbounded<global::app.type.item.@this>();
+        var errors = System.Threading.Channels.Channel.CreateUnbounded<byte[]>();
         Text closedLine = "{\"closed\":true}";
         var window = new Native(title, width, height,
             onEvent: e => events.Writer.TryWrite(e),
-            onClosed: () => events.Writer.TryWrite(closedLine));
+            onClosed: () => { events.Writer.TryWrite(closedLine); errors.Writer.TryComplete(); },
+            onError: json => errors.Writer.TryWrite(json));
         var failed = window.Show();
         if (failed != null)
             return global::app.data.@this<screen.@this>.From(context.Error(new ActionError("Could not open the screen: " + failed, "ScreenOpenFailed", 500)));
         _ = Said(events.Reader, closedLine, onInput, onClose, context);
+        _ = Kept(errors.Reader, context);
         return context.Ok<screen.@this>(new @this(title, width, height, window));
+    }
+
+    // PlangOS's errors (what its desktop lists, sent up through the shell's errorlog channel), kept in errors.jsonl in
+    // the app's folder — read on the host, no copying from the screen. Each a record: when, where, the error itself,
+    // written by the json writer, one per line; kept across starts.
+    internal static async Task Kept(System.Threading.Channels.ChannelReader<byte[]> errors, global::app.actor.context.@this context)
+    {
+        var file = global::app.type.item.path.file.@this.Resolve(PathHelper.Combine(context.App.AbsolutePath, "errors.jsonl"), context);
+        var json = context.App.type.list.Mime("application/json");
+        await foreach (var sent in errors.ReadAllAsync())
+        {
+            // what came up is what the shell wrote through its json channel: read back through the json kind; what
+            // doesn't read as that is kept as its text, the error itself
+            var said = await json.Decode(sent, context, "error");
+            var error = await said.Get("error");
+            var where = await said.Get("where");
+            var record = new global::app.type.item.dict.@this()
+                .Set("at", (Text)DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture))
+                .Set("where", where.Success ? await where.Value() : null)
+                .Set("error", error.Success && await error.Value() is { IsNull: false } what ? what : (Text)System.Text.Encoding.UTF8.GetString(sent));
+            var value = new global::app.data.@this("error", record, context: context);
+            using var written = new MemoryStream();
+            if (!(await json.Encode(written, value, context)).Success) continue;
+            var line = System.Text.Encoding.UTF8.GetString(written.ToArray()) + "\n";
+            await (await (await file.Exists(context)).ToBooleanAsync() ? file.Append(line, context) : file.WriteText(line, context));
+        }
     }
 
     // what the window says, in order: its stats to stats.jsonl, an input to OnInput as itself (is input), the rest as

@@ -37,6 +37,21 @@ public class DeclaredEventsTests : System.IAsyncDisposable
         await raised.IsSuccess();
     }
 
+    // a goal binds every window's event through the list (on.event Event=%browser.window.on.closed%, PlangOS's shell):
+    // a step by name is the list's own, its events with it; a step by index is a window
+    [Test] public async Task TheWindowListsEvents_AreReachedByName_AnIndexIsAWindow()
+    {
+        var list = new global::app.module.window.type.window.list.@this(null!);
+        var held = new global::app.data.@this("windows", list, context: Ctx);
+
+        var closed = await held.Get("on.closed");
+        await closed.IsSuccess();
+        var desktop = await held.Get("[0]");
+        await desktop.IsSuccess();   // [0], the desktop: an index is a window
+        var none = await held.Get("[7]");
+        await Assert.That((await none.Value())?.IsNull ?? true).IsTrue();   // no window 7: nothing (not found)
+    }
+
     [Test] public async Task ACoreItem_HasNoClick_AndANameItsTypeDoesntDeclareIsRefused()
     {
         var text = (global::app.type.item.text.@this)"plain";

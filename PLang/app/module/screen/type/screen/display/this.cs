@@ -71,6 +71,11 @@ public sealed class @this : screen.@this
         // the screen's output is the pipe to the host plang that started this one: the host is %!app.parent%, and
         // a call to one of its goals goes up beside the frames (its answer comes down the input: screen.listen)
         if (output != null) context.App.parent.Link = json => { display.Up(json); return Task.CompletedTask; };
+        // and its errorlog channel: what the shell writes there (an error it showed) goes up beside the frames, for
+        // the host to keep — the shell names the door, the display never reads what goes through
+        if (output != null)
+            context.Actor.Channel.Register(new global::app.channel.type.stream.@this("errorlog", new code.Errorlog(display),
+                global::app.channel.ChannelDirection.Output) { Framed = true, Mime = "application/json" });
 
         var opened = context.Ok<screen.@this>(screen);
         // the screen in play for the goals here: %!screen% — a bare #window.bot in a step is one of its elements

@@ -31,10 +31,13 @@ internal sealed class Window
     public bool Closed { get; private set; }
     public int Frames;
 
-    public Window(string title, int width, int height, Action<global::app.type.item.@this> onEvent, Action onClosed)
+    // an error PlangOS showed (kind 14, its json): the host keeps it
+    private readonly Action<byte[]>? onError;
+
+    public Window(string title, int width, int height, Action<global::app.type.item.@this> onEvent, Action onClosed, Action<byte[]>? onError = null)
     {
         this.title = title; this.width = width; this.height = height;
-        this.onEvent = onEvent; this.onClosed = onClosed;
+        this.onEvent = onEvent; this.onClosed = onClosed; this.onError = onError;
         pixels = new byte[width * height * 4];
         frameWidth = width; frameHeight = height;
         proc = Proc;
@@ -154,7 +157,8 @@ internal sealed class Window
     /// opens with a move, 3/4 an input's echo (for latency) — these keep their order in the decode
     /// queue — 2 the pointer to show, 5 text PlangOS copied, 9 a message from PlangOS's PLang for
     /// this one (json; it reaches OnInput as the events do), 10–13 a page's video this window plays
-    /// itself (see <see cref="Media"/>). False when it isn't one (an image, say). Its first message
+    /// itself (see <see cref="Media"/>), 14 an error PlangOS showed (json), for this host to keep.
+    /// False when it isn't one (an image, say). Its first message
     /// tells PlangOS the codecs Windows decodes here: from then on PlangOS passes those videos on.
     /// </summary>
     public bool Take(byte[] message)
@@ -169,6 +173,7 @@ internal sealed class Window
             case 5: Clipboard(System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1)); return true;
             case 9: onEvent((global::app.type.item.text.@this)("{\"guest\":" + System.Text.Encoding.UTF8.GetString(message, 1, message.Length - 1) + "}")); return true;
             case >= 10 and <= 13: return media.Take(message);
+            case 14: onError?.Invoke(message[1..]); return true;
             default: return false;
         }
     }
