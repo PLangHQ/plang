@@ -184,6 +184,45 @@ section.band { background: var(--band); }
 .wire { max-width: 760px; margin: 0 auto; }
 @media (max-width: 860px) { .annot { grid-template-columns: minmax(0, 1fr); } }
 
+/* Docs view */
+.docs { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 56px; padding-block: 48px 96px; align-items: start; }
+.side { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 76px); display: grid; gap: 6px; font-size: 15px; }
+.side .grp { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-top: 18px; }
+.side .grp:first-child { margin-top: 0; }
+.side ul { display: grid; gap: 2px; }
+.side a { display: block; text-decoration: none; color: var(--muted); padding: 5px 10px; margin-left: -10px; border-radius: 8px; }
+.side a:hover { color: var(--fg); }
+.side a[aria-current="page"] { color: var(--fg); background: var(--band); font-weight: 500; }
+.doc { min-width: 0; max-width: 720px; }
+.doc article { display: grid; gap: 16px; }
+.doc .crumb { font-size: 14px; color: var(--accent); font-weight: 600; }
+.doc h1 { font-size: clamp(36px, 5vw, 52px); }
+.doc .lead { font-size: 21px; line-height: 1.45; color: var(--muted); margin-bottom: 8px; }
+.doc h2 { font-size: 26px; letter-spacing: -0.02em; margin-top: 28px; line-height: 1.2; }
+.doc p { max-width: 68ch; }
+.doc code { font: 0.9em var(--mono); background: var(--band); padding: 1px 5px; border-radius: 5px; }
+.doc table { width: 100%; border-collapse: collapse; font-size: 15px; display: block; overflow-x: auto; }
+.doc th { text-align: left; font-weight: 600; color: var(--muted); font-size: 13px; padding: 8px 16px 8px 0; border-bottom: 1px solid var(--line); }
+.doc td { padding: 10px 16px 10px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.doc td:first-child { white-space: nowrap; }
+.doc td code { background: transparent; padding: 0; }
+.doc .dl { display: grid; gap: 8px; padding-left: 20px; list-style: disc; }
+.cb { margin: 0; background: var(--band); border-radius: 14px; padding: 18px 20px; font: 14.5px/1.75 var(--mono); overflow-x: auto; }
+.cb .g { font-weight: 600; } .cb .d { color: var(--muted); } .cb .v { color: var(--accent); }
+.doc .next { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); }
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 12px; }
+.cards a { display: grid; gap: 8px; align-content: start; text-decoration: none; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; }
+.cards a:hover { border-color: var(--fg); }
+.cards b { font-size: 19px; }
+.cards span { color: var(--muted); font-size: 15px; }
+@media (max-width: 860px) {
+  .docs { grid-template-columns: minmax(0, 1fr); gap: 28px; padding-block: 24px 72px; }
+  .side { position: static; border-bottom: 1px solid var(--line); padding-bottom: 16px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .side .grp { grid-column: 1 / -1; }
+  .side ul { display: contents; }
+  .cards { grid-template-columns: minmax(0, 1fr); }
+}
+
 /* Builders */
 .mods { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 760px; margin: 0 auto; }
 .mods li { font: 15px var(--mono); padding: 8px 16px; border: 1px solid var(--line); border-radius: 980px; color: var(--muted); }
@@ -216,7 +255,7 @@ footer a:hover { color: var(--fg); }
     <a class="hide-sm" href="#how">How it works</a>
     <a class="hide-sm" href="#makers">For makers</a>
     <a class="hide-sm" href="#geek" id="geeklink">I'm a geek</a>
-    <a class="hide-sm" href="#">Docs</a>
+    <a class="hide-sm" href="#docs" id="docslink">Docs</a>
     <a href="#start">Get plang</a>
     <button type="button" class="theme" id="theme" aria-label="Switch to light mode">☀</button>
   </div>
@@ -502,6 +541,7 @@ footer a:hover { color: var(--fg); }
         <div><dt>Missing or altered signature</dt><dd>Hard error before dispatch.</dd></div>
       </dl>
     </div>
+    <p class="under"><a class="link" href="#docs-identity">Identity ›</a> &nbsp; <a class="link" href="#docs-signatures">Signatures ›</a></p>
   </div>
 </section>
 
@@ -583,10 +623,171 @@ footer a:hover { color: var(--fg); }
 <span class="d">$</span> plang --test
 <span class="d">$</span> plang '--debug={"goal":"Start","step":3}'</pre></div>
     </div>
-    <p class="under"><a class="link" href="#start">Install plang ›</a> &nbsp; <a class="link" href="https://github.com/PLangHQ/plang">Source on GitHub ›</a></p>
+    <p class="under"><a class="link" href="#start">Install plang ›</a> &nbsp; <a class="link" href="#docs">Read the docs ›</a> &nbsp; <a class="link" href="https://github.com/PLangHQ/plang">Source on GitHub ›</a></p>
   </div>
 </section>
 </main>
+
+<div id="docs" class="docs wrap" hidden>
+  <aside class="side" aria-label="Documentation">
+    <p class="grp">Getting started</p>
+    <ul>
+      <li><a href="#docs-install">Install</a></li>
+      <li><a href="#docs-hello">Hello world</a></li>
+      <li><a href="#docs-folders">Folder structure</a></li>
+    </ul>
+    <p class="grp">Concepts</p>
+    <ul>
+      <li><a href="#docs-build">Build and run</a></li>
+      <li><a href="#docs-goals">Goals and steps</a></li>
+      <li><a href="#docs-data">Data</a></li>
+      <li><a href="#docs-identity">Identity</a></li>
+      <li><a href="#docs-signatures">Signatures</a></li>
+      <li><a href="#docs-sandbox">The filesystem gate</a></li>
+      <li><a href="#docs-callbacks">Pause and resume</a></li>
+    </ul>
+    <p class="grp">Modules</p>
+    <ul>
+      <li><a href="#docs-modules">All 31 modules</a></li>
+    </ul>
+  </aside>
+
+  <div class="doc">
+    <!-- Docs landing -->
+    <article data-doc="docs">
+      <p class="crumb">Documentation</p>
+      <h1>plang documentation</h1>
+      <p class="lead">Three parts. Start with the first hour, then learn how plang thinks, then look things up.</p>
+      <div class="cards">
+        <a href="#docs-install"><b>Getting started</b><span>Install, write a first goal, see what plang puts on disk.</span></a>
+        <a href="#docs-signatures"><b>Concepts</b><span>Build and run, Data, identity, signatures, the filesystem gate.</span></a>
+        <a href="#docs-modules"><b>Modules</b><span>Every action in all 31 built-in modules.</span></a>
+      </div>
+    </article>
+
+    <!-- Identity -->
+    <article data-doc="docs-identity">
+      <p class="crumb">Concepts</p>
+      <h1>Identity</h1>
+      <p class="lead">An identity is a key pair. The public key says who you are. The private key proves it. There are no passwords, no accounts and no server that holds them for you.</p>
+
+      <h2>What an identity is</h2>
+      <p>Each identity is an Ed25519 key pair with a name. It is created and stored on your own machine. The private key stays there unless you export it.</p>
+      <table>
+        <tr><th>Property</th><th>Meaning</th></tr>
+        <tr><td><code>name</code></td><td>The identity's name, unique and case-insensitive</td></tr>
+        <tr><td><code>publicKey</code></td><td>Ed25519 public key, base64</td></tr>
+        <tr><td><code>isDefault</code></td><td>Whether this is the identity plang uses by default</td></tr>
+        <tr><td><code>isArchived</code></td><td>Archived identities keep their keys but are hidden</td></tr>
+        <tr><td><code>created</code></td><td>When the identity was created</td></tr>
+      </table>
+
+      <h2>%MyIdentity%</h2>
+      <p>The default identity is always available as <code>%MyIdentity%</code>. If none exists, plang creates one named <code>default</code> the first time you use it. In text, <code>%MyIdentity%</code> is the public key.</p>
+<pre class="cb"><span class="g">Start</span>
+<span class="d">-</span> write out 'My name: <span class="v">%MyIdentity.Name%</span>'
+<span class="d">-</span> write out 'My public key: <span class="v">%MyIdentity%</span>'</pre>
+
+      <h2>Instead of passwords</h2>
+      <p>When your app calls another plang app, the request is signed with your identity. The receiving side reads the public key from the signature and knows who is calling. Nothing to log in to, no password to store and no API key to leak. How the signature itself works is in <a class="link" href="#docs-signatures">Signatures</a>.</p>
+
+      <h2>Actors</h2>
+      <p>An app runs as three actors: <code>User</code>, <code>Service</code> and <code>System</code>. Each has its own identity and its own resources, so what the system does and what a user does are never the same signer.</p>
+
+      <h2>Managing identities</h2>
+      <table>
+        <tr><th>Step</th><th>What it does</th></tr>
+        <tr><td><code>create identity 'alice', set as default</code></td><td>New key pair, optionally the default</td></tr>
+        <tr><td><code>get identity 'alice', write to %id%</code></td><td>One identity, or the default when no name is given</td></tr>
+        <tr><td><code>get identities, write to %all%</code></td><td>All identities that are not archived</td></tr>
+        <tr><td><code>set default identity to 'alice'</code></td><td>Switch the default</td></tr>
+        <tr><td><code>rename identity 'alice' to 'alice-prod'</code></td><td>Keys are kept</td></tr>
+        <tr><td><code>archive identity 'alice'</code></td><td>Hide it. The default can't be archived.</td></tr>
+        <tr><td><code>export identity 'alice', write to %x%</code></td><td>Includes the private key. Keep it secret.</td></tr>
+      </table>
+
+      <h2>Example</h2>
+<pre class="cb"><span class="g">Start</span>
+<span class="d">-</span> create identity 'personal'
+<span class="d">-</span> create identity 'work', set as default
+<span class="d">-</span> write out 'Now using: <span class="v">%MyIdentity.Name%</span>'
+<span class="d">-</span> set default identity to 'personal'
+<span class="d">-</span> write out 'Now using: <span class="v">%MyIdentity.Name%</span>'</pre>
+      <p class="next">Next: <a class="link" href="#docs-signatures">Signatures ›</a> &nbsp; Reference: <a class="link" href="https://github.com/PLangHQ/plang/blob/runtime2/docs/modules/identity.md">identity module ›</a></p>
+    </article>
+
+    <!-- Signatures -->
+    <article data-doc="docs-signatures">
+      <p class="crumb">Concepts</p>
+      <h1>Signatures</h1>
+      <p class="lead">Everything plang sends carries a signature: proof of who sent it, and proof that it hasn't changed. You don't add it. It's already there.</p>
+
+      <h2>What a signature is</h2>
+      <p>A signature is a short value computed from the data and the sender's private key. Anyone who has the sender's public key can check it. If a single byte of the data changes, the check fails.</p>
+      <p>plang hashes the data with Keccak-256 and signs with Ed25519, using the sender's <a class="link" href="#docs-identity">identity</a>.</p>
+
+      <h2>What gets signed</h2>
+      <p>Every value in plang is <a class="link" href="#docs-data">Data</a>. When Data leaves your app, over HTTP, through a channel or as a callback, it is signed on the way out if it isn't signed already.</p>
+      <ul class="dl">
+        <li>The signature covers the name, type, value, properties and any signatures nested inside.</li>
+        <li>Forwarding keeps provenance. If Bob forwards Anna's signed message inside his own, both signatures travel and both can be checked.</li>
+        <li>Signing again is a no-op. Data that already carries a signature keeps it.</li>
+      </ul>
+
+      <h2>HTTP</h2>
+      <p>Requests carry an <code>X-Signature</code> header by default, and signed responses are verified. To send a request without a signature, say so in the step.</p>
+<pre class="cb"><span class="d">-</span> get https://api.example.com/orders, write to <span class="v">%orders%</span>
+<span class="d">-</span> get https://httpbin.org/get, unsigned, write to <span class="v">%response%</span></pre>
+
+      <h2>What a signature contains</h2>
+      <table>
+        <tr><th>Field</th><th>Purpose</th></tr>
+        <tr><td>identity</td><td>The signer's public key</td></tr>
+        <tr><td>created</td><td>When it was signed</td></tr>
+        <tr><td>nonce</td><td>A one-time value, so a captured message can't be replayed</td></tr>
+        <tr><td>hash</td><td>Keccak-256 of the data</td></tr>
+        <tr><td>contracts</td><td>What the signature is for, for example <code>['Payment', 'v1']</code>. Default <code>C0</code>.</td></tr>
+        <tr><td>expires</td><td>Optional end of validity</td></tr>
+        <tr><td>headers</td><td>Optional extra fields bound to the signature</td></tr>
+        <tr><td>signature</td><td>The Ed25519 signature over all of the above</td></tr>
+      </table>
+
+      <h2>Verification</h2>
+      <p>Callbacks are always verified before they run: a missing or altered signature is a hard error. Anywhere else you verify explicitly with <code>verify</code>. A check runs nine steps, and each failure has its own error key.</p>
+      <table>
+        <tr><th>Error key</th><th>Cause</th></tr>
+        <tr><td><code>NoSignature</code></td><td>The data has no signature</td></tr>
+        <tr><td><code>InvalidType</code></td><td>The signature type is wrong</td></tr>
+        <tr><td><code>TimedOut</code></td><td>Older than the timeout (5 minutes by default)</td></tr>
+        <tr><td><code>Expired</code></td><td>Past its explicit expiry</td></tr>
+        <tr><td><code>NonceReplay</code></td><td>This nonce was already seen</td></tr>
+        <tr><td><code>ContractMismatch</code></td><td>Contracts don't match what was expected</td></tr>
+        <tr><td><code>HeaderMismatch</code></td><td>Headers don't match what was expected</td></tr>
+        <tr><td><code>DataHashMismatch</code></td><td>The data was changed</td></tr>
+        <tr><td><code>SignatureInvalid</code></td><td>The cryptographic check failed</td></tr>
+      </table>
+
+      <h2>Sign and verify yourself</h2>
+<pre class="cb"><span class="g">Start</span>
+<span class="d">-</span> set <span class="v">%message%</span> = 'Hello, signed world'
+<span class="d">-</span> sign <span class="v">%message%</span>, write to <span class="v">%signed%</span>
+<span class="d">-</span> verify <span class="v">%signed%</span>, write to <span class="v">%isValid%</span>
+<span class="d">-</span> write out 'Valid: <span class="v">%isValid%</span>'</pre>
+      <p>Bind a signature to a purpose and give it a short life:</p>
+<pre class="cb"><span class="d">-</span> sign <span class="v">%payload%</span> with contracts ['Payment', 'v1'], expires in 60000ms, write to <span class="v">%signed%</span>
+<span class="d">-</span> verify <span class="v">%signed%</span> with contracts ['Payment', 'v1'], write to <span class="v">%isValid%</span></pre>
+      <p class="next">Previous: <a class="link" href="#docs-identity">‹ Identity</a> &nbsp; Reference: <a class="link" href="https://github.com/PLangHQ/plang/blob/runtime2/docs/modules/signing.md">signing module ›</a></p>
+    </article>
+
+    <!-- Not yet written -->
+    <article data-doc="pending">
+      <p class="crumb" id="pending-crumb">Documentation</p>
+      <h1 id="pending-title">Being written</h1>
+      <p class="lead">This page is being rewritten for plang 1.0b. Until then, the current version is on GitHub.</p>
+      <p><a class="link" href="https://github.com/PLangHQ/plang/tree/runtime2/docs">plang docs on GitHub ›</a></p>
+    </article>
+  </div>
+</div>
 
 <footer>
   <div class="wrap">
@@ -636,17 +837,32 @@ footer a:hover { color: var(--fg); }
   });
   if (!reduce) timer = setInterval(function () { show((current + 1) % ex.length); }, 6000);
 
-  // Two views in one file: #geek… shows the technical page, anything else shows home.
-  var home = document.getElementById('home'), geek = document.getElementById('geek'), glink = document.getElementById('geeklink');
+  // Three views in one file: #geek… technical page, #docs… documentation, anything else home.
+  var views = { home: document.getElementById('home'), geek: document.getElementById('geek'), docs: document.getElementById('docs') };
+  var glink = document.getElementById('geeklink'), dlink = document.getElementById('docslink');
+  var articles = views.docs.querySelectorAll('article[data-doc]');
+  var currentView = null;
+  function showDoc(h) {
+    var found = false;
+    articles.forEach(function (a) { var on = a.dataset.doc === h; a.hidden = !on; if (on) found = true; });
+    if (!found) {
+      var link = views.docs.querySelector('.side a[href="#' + h + '"]');
+      document.getElementById('pending-title').textContent = link ? link.textContent : 'Being written';
+      views.docs.querySelector('article[data-doc="pending"]').hidden = false;
+    }
+    views.docs.querySelectorAll('.side a').forEach(function (a) { a.setAttribute('aria-current', a.getAttribute('href') === '#' + h ? 'page' : 'false'); });
+  }
   function route() {
     var h = location.hash.slice(1);
-    var isGeek = h.indexOf('geek') === 0;
-    var was = !geek.hidden;
-    geek.hidden = !isGeek; home.hidden = isGeek;
-    glink.setAttribute('aria-current', isGeek ? 'page' : 'false');
+    var view = h.indexOf('geek') === 0 ? 'geek' : h.indexOf('docs') === 0 ? 'docs' : 'home';
+    var changed = view !== currentView; currentView = view;
+    Object.keys(views).forEach(function (k) { views[k].hidden = k !== view; });
+    glink.setAttribute('aria-current', view === 'geek' ? 'page' : 'false');
+    dlink.setAttribute('aria-current', view === 'docs' ? 'page' : 'false');
+    if (view === 'docs') { showDoc(h); window.scrollTo(0, 0); return; }
     var target = h && h !== 'geek' ? document.getElementById(h) : null;
     if (target) target.scrollIntoView();
-    else if (was !== isGeek || !h) window.scrollTo(0, 0);
+    else if (changed || !h) window.scrollTo(0, 0);
   }
   window.addEventListener('hashchange', route);
   route();
