@@ -86,3 +86,12 @@ Each finding the reviewer bots report, checked against the code before it goes a
 | F8.1 "is this an action slot": `Type.Name == "action" \|\| (Type.Name == "list" && kind.Name == "action")` | grep: four sites in three files, `action/this.Validate.cs:54–55`, `formal/reader.cs:221` and `:349`, `action/serializer/Reader.cs:153–154`. Stored twice, and "is X?" by name. The shape isn't a better predicate (`IsActionSlot`, a member on locked type); the action type and a list of actions each read their own value, so no site asks. A kind being a type (711) is where `list<action>` answers for itself | carry (next-branch, with 711) |
 
 **Verdict (the codeanalyzer): PASS, merge-clean on behaviour.** Checked: agreed. Batch 1 (five fixes) is with the coder. The surface asks are F2.3, F4.1, F5.2 and F8.1, all carried to the next branch; none is needed for the merge. F5.2 was already on next-branch.md (added with 724).
+
+## tester (plang-4f), part 1: the baseline
+
+| finding | checked | status |
+|---|---|---|
+| the baseline reproduces: C# only the 6 carried; plang 245/16/12/3 in 2 of 3 clean runs, the same 16 names; `git status` clean after each run | its runs | cleared |
+| run 2 was 244/17: the llm tests call api.openai.com live, and a transient "network unreachable" failed LlmCache | the llm tests need the network and a key | carry (next-branch: llm tests run offline, recorded answers or a skip without a key) |
+| T1 `test/module/llm/LlmCache.test.goal` passes for the wrong reason: titled "verify second returns cached result", it only asserts both answers are not null | read the goal: the two asserts are `is not null` | fix (builder: assert the cache hit, red with the cache off) |
+| `./dev.sh build` reports success on a fresh checkout without restoring | dev.sh's msbuild calls (`:205`, `:215`) run `-t:Build` without `-restore`; `:296` ends in `>/dev/null 2>&1 \|\| true` | fix (coder: restore when needed, fail non-zero) |
