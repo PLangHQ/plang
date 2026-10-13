@@ -1550,7 +1550,14 @@
           "type": "review",
           "category": "code",
           "confidence": "high",
-          "context": "Area 6 (call+variable memory+events) OBP scan. +1281 call, +596 variable, event rewrite to on/ family. Events (locked 689): on/ family is registry (Made dict) + per-kind types, no fork. call locks all own-field (correct smell#1/#2 resolution). No courier Rule-9 violation (DynamicData checks are the memory's own storage). variable exports are copies. F6.1 stored-twice (carry): the system/user-visible variable predicate (StartsWith('!') +/- DynamicData) open-coded ~9 sites in variable/list/this.cs with real drift (GetNames/GetAll/ToDictionary keep DynamicData; Clear/Clone/Snapshot drop it). Fix: one IsUser predicate / Data.IsSystem. Surface change: no (private predicate) or yes (Data.IsSystem route). Blocks: no. Verdict: CLEAN, no merge blockers."
+          "context": "Area 6 (call+variable memory+events) OBP scan. +1281 call, +596 variable, event rewrite to on/ family. Events (locked 689): on/ family is registry (Made dict) + per-kind types, no fork. call locks all own-field (correct smell#1/#2 resolution). No courier Rule-9 violation (DynamicData checks are the memory's own storage). variable exports are copies. F6.1 repetition (carry): system/user-visible variable predicate (StartsWith('!') +/- DynamicData) open-coded ~10 sites in variable/list. Architect refined: the two subsets (listing keeps Now/GUID; snapshot drops always-fresh) are two intentional questions, not drift; carried to next branch, no surface ask. Blocks: no. Verdict: CLEAN, no merge blockers."
+        },
+        {
+          "paths": ["PLang/app/type/item/kind/dict/", "PLang/app/type/item/kind/list/", "PLang/app/type/item/kind/reflection/"],
+          "type": "review",
+          "category": "code",
+          "confidence": "high",
+          "context": "Area 5b (type/item/kind/{dict,list,reflection}) - brief's corrected serializer scope. No new findings; all carried or already filed. kind/dict+kind/list are CLR-host codecs: member access delegates to * reflection kind (673); Convert narrows clr(JsonElement) via json.Parse (717); Output is two more F5.2 sites; Set throws (#59). kind/reflection is entirely carried 673 door - Property/Method/Twice are the stopgap statics 673 names; :329 catch->OutputException is the getter->wire boundary. Tagged.cs is the single [Out]/[Sensitive]/[Masked] wire-visibility filter (681), not a fork. Extends F5.1: Tagged.cs:8 is a 3rd stale-Normalize doc ref. Verdict: CLEAN, no merge blockers."
         }
       ],
       "after": {}

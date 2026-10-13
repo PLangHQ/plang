@@ -170,4 +170,24 @@ The CLAUDE.md invariants hold, verified in code:
 
 - **F6.1 — stored twice / repeated rule: the "system / user-visible variable" predicate.** The test `name.StartsWith("!")` (system var) — and its stronger form `… && value is not data.DynamicData` (snapshottable user var) — is open-coded across **~9 sites** in `variable/list/this.cs`: `:362, :377, :394 (GetNames), :406-408 (GetAll), :418 (Clear), :441 (Clone), :474 (ToDictionary), :496-497 (Snapshot)`, plus `this.Snapshot.cs:29` and `this.SnapshotAt.cs:39`. **The drift the smell warns about is already here:** `GetNames`/`GetAll`/`ToDictionary` filter `!` only (keep DynamicData), while `Clear`/`Clone`/`Snapshot` also drop DynamicData — and nothing at a call site tells a reader whether including DynamicData is intended or an oversight. Fix direction: the predicate lives once — minimally a private `IsUser(kvp)` the sites share (no surface change); more fully, the variable/its `Data` answers `IsSystem` and the list exposes the user-vars view once. **Carry (cleanup; variable memory is locked core — architect confirms the chosen fix). Surface change: no** for the contained private-predicate fix (yes only if `Data.IsSystem` is the chosen route). **Blocks: no.** *Plang reaching it:* any snapshot/restore or failure-diagnostic path, e.g. an `assert` that fails dumps `%!error.Variables%` built by `Snapshot()`, while `write out %!goal%`-style variable listings use the `!`-only filter — two different subsets from "the variables."
 
-*Areas 5b, 7-8 pending (type/item/kind/{dict,list,reflection}, module registry/app, builder pipeline).*
+## Area 5b — `type/item/kind/{dict,list,reflection}` (brief's corrected serializer scope)
+
+**Diff:** `kind/dict` +67, `kind/list` +105, `kind/reflection` +497 (`this.cs` +341 + `Tagged.cs` +156). The json writer in this tree was covered as F5.2.
+
+**Tooling:** full read of all four files + grep for fork/is-X/clr/catch + match against the carried lists (673, 717, 681, #59) and F5.2.
+
+### Verdict: CLEAN — no new findings; all carried or already-filed
+
+- **`kind/dict` + `kind/list` are the CLR-host codecs** (`IDictionary`/`IEnumerable` hosts — a POCO's `Dictionary<,>`/`List<Step>`), distinct from the plang dict/list *value* types in area 3. Three things, all already filed:
+  - Member access on a host (`.Count`) delegates to the `*` reflection kind (`kind/list/this.cs:32,41`) → **carried 673**.
+  - `Convert` narrows a `clr(JsonElement)` source into a native dict/list via `item.serializer.json.Parse` (`kind/dict:50-66`, `kind/list:88-104`) → **carried 717** (the `{item,json}` door). The two `Convert` bodies are identical but for the error string — that duplication lives inside the 717 cluster (it collapses when json parses natively), not a new finding.
+  - `Output` (`kind/dict:36`, `kind/list:75`) writes the object/array wire shape via `WriteReflected` — **two more sites of F5.2**'s sequence/object write fork (the shape is now written in the value type's `Output`, the json writer's `Value(object)` arms, *and* these kind codecs). Reinforces F5.2; no separate finding.
+  - `kind/list/this.cs:44 Set` throws `NotSupportedException` on a bad index → **carried #59** (set-child bridge).
+- **`kind/reflection` is entirely the carried member-read door (673).** `this.cs:36 Property`, `:56 Method`, `:69 Twice` are exactly the stopgap statics **673 names** ("go with it"). The `GetProperties`/`GetMethods`/`value.Clr(PropertyType)` calls are member-read + value→CLR interop; `:329 catch → OutputException` is the reflected-getter→wire boundary (a C# getter can throw anything), converted to an AppException the Encode boundary catches. No fork, no is-X (grep clean).
+- **`Tagged.cs` is the single wire-visibility filter** (`[Out]`/`[Sensitive]`/`[Masked]`, View-moded) — the correct one owner of "which CLR properties ship"; its `[Sensitive]`/`[Masked]` handling is the **carried 681** Sensitive mechanism. The View-mode `switch` is view-dispatch (Out/Store/Debug), not a type fork.
+
+### Extends an existing finding
+
+- **F5.1 (+1 site).** `reflection/Tagged.cs:8` doc says "Consumed by `Data.Normalize` when walking a non-primitive value" — a **third stale reference to the deleted `Normalize` tree** (with `IWriter.cs:7,11,126` and `json/writer.cs:200`). The live consumer is `WriteReflected`/the reflection `Output`. Same doc-cleanup fix.
+
+*Areas 7-8 pending (module registry/app, builder pipeline).*
