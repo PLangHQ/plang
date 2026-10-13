@@ -19,4 +19,13 @@ Each finding the reviewer bots report, checked against the code before it goes a
 | the channels' `catch (Exception) when (not fatal)` | read: the base doors (`channel/this.cs:143,166,190`) turn a transport throw into a typed error and let `AppException` keep its key; a real I/O boundary, not a smell | cleared |
 | F2.1 `question?.Clr<string>()` for an emptiness check, `stream/this.cs:160` | read: lowers the question to a CLR string to ask "is it empty"; the value answers its own emptiness (opened box / clr leak at a leaf) | fix (batch 1) |
 | F2.2 the transport boundary twice | read: `AskAsync` (`channel/this.cs:189–194`) catches what `stream.Ask` (`stream/this.cs:197–202`) already catches, and `ReadAsync` (`:165–170`) what `stream.Read` (`:135–139`) does; the two disagree: stream lets `OperationCanceledException` pass, then the base turns it into AskError (stored twice, and the cancel is lost). One boundary, in the base door, cancel excluded; the coder checks for direct callers of `stream.Read`/`Ask` first | fix (batch 1) |
+| F2.3a (moved below) | | |
 | F2.3 `ReadAllBytesAsync` throws on `!CanRead`, "kept for v1 callers", `stream/this.cs:245–264` | grep: `ReadAllTextAsync` has no production caller (two tests); `ReadAllBytesAsync` has one, the stream's own `Read` (`:130`), whose catch turns the throw into ReadError. Both are public on stream, a locked surface: removing them changes the surface golden | carry (a surface removal is Ingi's; batch it with other surface asks) |
+
+## codeanalyzer (plang-ae), area 3: the core value types (3d45490d8)
+
+| finding | checked | status |
+|---|---|---|
+| the seams (number's Ladder, path's scheme registry, list's one door to C#) | its summary: one owner or a registry at each, no per-type fork; list's reflection is interop (building a `List<T>` for a runtime T), not the carried member-read reflection | cleared |
+| F3.1 the parse-or-convert failure written nine times | grep: `((value as item)?.Clr<object>() ?? value) is string` in bool, datetime, date, time, duration, size, guid, image, list (`bool/this.cs:79–81` read). Stored twice, and each copy lowers the source to C# to ask "were you text?". Its suggested fix, a protected helper on `item`, is an addition to item's locked surface and a helper; the shape is the source answering its own failure (a text says "cannot parse 'x' as T", anything else "cannot convert Y to T"), T giving only its hint | carry (next-branch) |
+| F3.2 `dict/this.cs:84` `catch (JsonException) { return null; }` | read: "is this text a dict" answered by a swallowed parse; the dict narrowing a `clr(JsonElement)` at `:89` accommodates the carried `{item, json}` door | carry (with the `{item, json}` door) |
